@@ -1,10 +1,9 @@
 "use client";
-import Link from "next/link";
 import { ButtonLink, ProductCard, Vessel } from "@/components/site";
 import { products } from "@/lib/products";
 import { useLocale } from "@/components/i18n";
 export default function Home() {
-  const { t, href, locale } = useLocale();
+  const { t, locale } = useLocale();
   const steps = [
     [locale === "fa" ? "۰۱" : "01", t("step1Title"), t("step1Body")],
     [locale === "fa" ? "۰۲" : "02", t("step2Title"), t("step2Body")],
@@ -36,35 +35,59 @@ export default function Home() {
           </div>
           <span className="one-badge">
             <b>{locale === "fa" ? "۱ / ۱" : "1 / 1"}</b>
-            {t("onlyOne")}
           </span>
           <span className="sun-disc" />
           <Vessel product={products[0]} />
-          <small>{t("artworkLabel")}</small>
         </div>
       </section>
-      <section className="ticker" aria-label={t("featureHandmade")}>
-        <span>{t("featureHandmade")}</span>
-        <i>•</i>
-        <span>{t("featureUnique")}</span>
-        <i>•</i>
-        <span>{t("featureTehran")}</span>
-        <i>•</i>
-        <span>{t("featureIran")}</span>
+      <section className="section evidence-film">
+        <div className="film-copy"><span className="eyebrow">{locale === "fa" ? "مدرک ساخت" : "EVIDENCE OF MAKING"}</span><h2>{locale === "fa" ? "دست، خاک، آتش." : "Hand, clay, fire."}</h2><p>{locale === "fa" ? "شش ثانیه از مسیر واقعی یک فرم؛ از خاک نرم تا امضای ۱/۱." : "Six seconds in the life of a form—from soft clay to its 1/1 signature."}</p></div>
+        <img className="studio-film" src="/studio-process.svg" alt={locale === "fa" ? "ویدیوی کوتاه مسیر ساخت یک قطعه سرامیکی" : "Short loop showing a ceramic piece being made"} />
       </section>
-      <section className="section collection">
+      <section
+        className="entry-paths section"
+        aria-label={locale === "fa" ? "دو مسیر رَد" : "Two ways into RAD"}
+      >
+        <article>
+          <span>01 — {locale === "fa" ? "انتخاب" : "OWN"}</span>
+          <h2>{locale === "fa" ? "یک رَد را انتخاب کنید" : "Own a RAD"}</h2>
+          <p>
+            {locale === "fa"
+              ? "اثری آماده، شماره‌گذاری‌شده و تنها در یک نسخه."
+              : "Choose a finished, numbered work that exists only once."}
+          </p>
+          <ButtonLink href="/products" outline>
+            {t("viewWorks")}
+          </ButtonLink>
+        </article>
+        <article>
+          <span>02 — {locale === "fa" ? "خلق" : "CREATE"}</span>
+          <h2>
+            {locale === "fa" ? "رَد خودتان را بسازید" : "Create your RAD"}
+          </h2>
+          <p>
+            {locale === "fa"
+              ? "از ایده و تصویر اولیه تا بررسی هنرمند و ساخت یک قطعه شخصی."
+              : "Move from an idea and first visualization to artist review and a personal piece."}
+          </p>
+          <ButtonLink href="/studio" outline>
+            {t("designMine")}
+          </ButtonLink>
+        </article>
+      </section>
+      <section className="section collection archive-section">
         <header className="section-heading">
           <div>
-            <span className="eyebrow">{t("collectionEyebrow")}</span>
-            <h2>{t("collectionTitle")}</h2>
-            <p>{t("collectionBody")}</p>
+            <span className="eyebrow">{locale === "fa" ? "آرشیو رَد" : "RAD ARCHIVE"}</span>
+            <h2>{locale === "fa" ? "آثار موجود و فروخته‌شده" : "Available and collected works"}</h2>
+            <p>{locale === "fa" ? "اثر فروخته‌شده از آرشیو حذف نمی‌شود؛ مسیر رَد را کامل می‌کند." : "Collected works remain visible; they complete RAD’s story."}</p>
           </div>
           <ButtonLink href="/products" outline>
             {t("allWorks")}
           </ButtonLink>
         </header>
         <div className="product-grid home-products">
-          {products.slice(0, 3).map((p, i) => (
+          {products.slice(0, 6).map((p, i) => (
             <ProductCard product={p} index={i} key={p.slug} />
           ))}
         </div>
@@ -77,23 +100,63 @@ export default function Home() {
         </div>
         <div>
           <span className="eyebrow">{t("studioEyebrow")}</span>
-          <h2>
-            {t("studioTitle1")}
-            <br />
-            {t("studioTitle2")}
-          </h2>
-          <p>{t("studioBody")}</p>
+          <h2>{locale === "fa" ? "چیزی را که هنوز وجود ندارد، تصور کن." : "Imagine what does not exist yet."}</h2>
+          <p>{locale === "fa" ? "رَد کمک می‌کند آن را ببینی و بسازی." : "RAD helps you see it and make it."}</p>
           <ButtonLink href="/studio" light>
             {t("enterStudio")}
           </ButtonLink>
         </div>
       </section>
-      <section id="story" className="section story">
+      <section id="story" className="section story human-story">
         <span className="big-number">{locale === "fa" ? "۱/۱" : "1/1"}</span>
         <div>
           <span className="eyebrow">{t("philosophy")}</span>
-          <h2>{t("philosophyTitle")}</h2>
-          <p>{t("philosophyBody")}</p>
+          <h2>{locale === "fa" ? "رَد از میل به ساختن اشیایی شروع شد که برای هیچ‌کس دیگری ساخته نشده‌اند." : "RAD began with the desire to make objects created for no one else."}</h2>
+          <p>{locale === "fa" ? "هر فرم در تهران، با گفت‌وگوی مستقیم میان دست، خاک و آتش شکل می‌گیرد. تفاوت‌ها نقص نیستند؛ امضای فرآیندند." : "Each form takes shape in Tehran through a direct conversation between hand, clay, and fire. Variations are the process’s signature."}</p>
+        </div>
+      </section>
+      <section className="provenance section">
+        <header>
+          <span className="eyebrow">
+            03 — {locale === "fa" ? "منشأ اثر" : "PROVENANCE"}
+          </span>
+          <h2>
+            {locale === "fa"
+              ? "ارزش یک اثر، در مسیر ساخت آن است."
+              : "A work earns its value through how it is made."}
+          </h2>
+        </header>
+        <div className="provenance-grid">
+          <article>
+            <b>{locale === "fa" ? "ساخت در تهران" : "Made in Tehran"}</b>
+            <p>
+              {locale === "fa"
+                ? "فرم‌دهی، پرداخت، لعاب و پخت هر قطعه در استودیوی رَد پیگیری می‌شود."
+                : "Forming, finishing, glazing, and firing are followed through in the RAD studio."}
+            </p>
+          </article>
+          <article>
+            <b>
+              {locale === "fa"
+                ? "ردِ دست حفظ می‌شود"
+                : "The hand remains visible"}
+            </b>
+            <p>
+              {locale === "fa"
+                ? "تفاوت‌های طبیعی خاک و آتش پنهان نمی‌شوند؛ همان‌ها هویت اثرند."
+                : "Natural variations from clay and fire are kept visible as part of the work's identity."}
+            </p>
+          </article>
+          <article>
+            <b>
+              {locale === "fa" ? "شماره و شناسنامه" : "Numbered provenance"}
+            </b>
+            <p>
+              {locale === "fa"
+                ? "هر اثر با شماره، متریال، سال و نشان ۱/۱ ثبت می‌شود."
+                : "Each work is recorded with its number, material, year, and 1/1 mark."}
+            </p>
+          </article>
         </div>
       </section>
       <section className="section process">
@@ -113,25 +176,12 @@ export default function Home() {
           ))}
         </div>
       </section>
-      <section id="journal" className="journal section">
-        <div className="journal-art">
-          <div className="clay-rings" />
-        </div>
-        <div>
-          <span className="eyebrow">
-            {locale === "fa" ? "ژورنال رَد" : "RAD JOURNAL"}
-          </span>
-          <h2>
-            {t("journalTitle1")}
-            <br />
-            {t("journalTitle2")}
-          </h2>
-          <p>{t("journalBody")}</p>
-          <Link href={href("/#journal")} className="text-link">
-            {t("readJournal")}
-          </Link>
-        </div>
+      <section className="section collector-story">
+        <blockquote>{locale === "fa" ? "هر بار که نور عوض می‌شود، انگار اثر دیگری روی میز من است." : "Each time the light changes, it feels like a different work on my table."}</blockquote>
+        <p>{locale === "fa" ? "— مجموعه‌دار رَد، تهران" : "— RAD collector, Tehran"}</p>
       </section>
+      <section className="section orders-entry"><div><span className="eyebrow">{locale === "fa" ? "سفارش‌های شما" : "YOUR ORDERS"}</span><h2>{locale === "fa" ? "مسیر ساخت قطعه‌تان را دنبال کنید." : "Follow your piece as it is made."}</h2><p>{locale === "fa" ? "از تأیید طرح و انتخاب خاک تا پخت نهایی، امضا و ارسال." : "From concept approval and clay selection to final firing, signature, and delivery."}</p></div><ButtonLink href="/orders" outline>{locale === "fa" ? "دیدن سفارش‌ها" : "View orders"}</ButtonLink></section>
+      <section className="section final-cta"><span className="eyebrow">{locale === "fa" ? "قطعه شما" : "YOUR OBJECT"}</span><h2>{locale === "fa" ? "چیزی را شروع کنید که فقط یک بار ساخته می‌شود." : "Start something that will be made only once."}</h2><ButtonLink href="/studio">{t("designMine")}</ButtonLink></section>
     </>
   );
 }

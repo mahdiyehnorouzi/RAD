@@ -4,7 +4,6 @@ import { Header, Footer } from "@/components/site";
 import { CartProvider } from "@/components/cart";
 import { LocaleProvider } from "@/components/i18n";
 import { CommerceProvider } from "@/components/commerce";
-import { PwaRegistrar } from "@/components/pwa";
 import { RouteScrollReset } from "@/components/route-scroll-reset";
 export const metadata: Metadata = {
   title: "رَد — استودیو سرامیک",
@@ -21,7 +20,6 @@ export default function RootLayout({
         <LocaleProvider>
           <CommerceProvider>
             <CartProvider>
-              <PwaRegistrar />
               <RouteScrollReset />
               <Header />
               <main>{children}</main>

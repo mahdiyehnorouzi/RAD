@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Check, PackageCheck } from "lucide-react";
+import { PackageCheck } from "lucide-react";
 import { products, productCopy } from "@/lib/products";
 import { formatTotal } from "./cart";
 import { type Order, useCommerce } from "./commerce";
@@ -9,18 +9,13 @@ import { useLocale } from "./i18n";
 
 const demoStageDuration = 60_000;
 const stageFor = (order: Order) =>
-  Math.min(3, Math.floor((Date.now() - order.createdAt) / demoStageDuration));
+  Math.min(9, Math.floor((Date.now() - order.createdAt) / demoStageDuration));
 
 export function OrdersPage() {
   const { orders } = useCommerce();
   const { locale, t, href, number } = useLocale();
 
-  const stages = [
-    t("orderReceived"),
-    t("orderProcessing"),
-    t("orderShipped"),
-    t("orderDelivered"),
-  ];
+  const stages = locale === "fa" ? ["تأیید طرح", "انتخاب خاک", "فرم‌دهی", "خشک‌شدن", "پخت اول", "لعاب‌کاری", "پخت نهایی", "کنترل کیفیت", "امضا و شماره ۱/۱", "ارسال"] : ["Concept approved", "Clay selected", "Forming", "Drying", "Bisque firing", "Glazing", "Final firing", "Quality check", "Signed 1/1", "Shipped"];
 
   return (
     <section className="orders-page section">
@@ -58,13 +53,7 @@ export function OrdersPage() {
                       className={index <= activeStage ? "complete" : ""}
                       aria-current={index === activeStage ? "step" : undefined}
                     >
-                      <i>
-                        {index < activeStage ? (
-                          <Check aria-hidden="true" />
-                        ) : (
-                          number(index + 1)
-                        )}
-                      </i>
+                      <i>{number(index + 1)}</i>
                       <span>{stage}</span>
                     </li>
                   ))}

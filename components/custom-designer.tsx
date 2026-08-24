@@ -12,6 +12,14 @@ export function CustomDesigner() {
   );
   const [image, setImage] = useState("");
   const [error, setError] = useState("");
+  const [brief, setBrief] = useState({
+    use: "",
+    form: "",
+    size: "",
+    surface: "",
+    budget: "",
+  });
+  const [direction, setDirection] = useState(0);
   const abort = useRef<AbortController | null>(null);
 
   async function submit(event: FormEvent) {
@@ -24,7 +32,9 @@ export function CustomDesigner() {
       const response = await fetch("/api/design", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt }),
+        body: JSON.stringify({
+          prompt: `${prompt}. ${Object.values(brief).filter(Boolean).join(", ")}. Concept direction ${direction + 1}`,
+        }),
         signal: abort.current.signal,
       });
       const data = await response.json();
@@ -43,12 +53,68 @@ export function CustomDesigner() {
     <div className="designer-grid">
       <form className="designer-form" onSubmit={submit} noValidate>
         <span className="eyebrow">{t("designerEyebrow")}</span>
-        <h1>
-          {t("designerTitle1")}
-          <br />
-          {t("designerTitle2")}
-        </h1>
-        <p>{t("designerBody")}</p>
+        <h1>{locale === "fa" ? "چیزی را که هنوز وجود ندارد، تصور کن." : "Imagine what does not exist yet."}</h1>
+        <p>{locale === "fa" ? "رَد کمک می‌کند آن را ببینی و بسازی." : "RAD helps you see it and make it."}</p>
+        <fieldset className="brief-fields">
+          <legend>{locale === "fa" ? "مشخصات اولیه" : "Starting brief"}</legend>
+          {[
+            [
+              "use",
+              locale === "fa" ? "کاربرد" : "Use",
+              locale === "fa"
+                ? ["گلدان", "ظرف", "آبجکت هنری"]
+                : ["Vase", "Tableware", "Art object"],
+            ],
+            [
+              "form",
+              locale === "fa" ? "فرم" : "Form",
+              locale === "fa"
+                ? ["کشیده", "پهن", "نامتقارن"]
+                : ["Tall", "Wide", "Asymmetric"],
+            ],
+            [
+              "size",
+              locale === "fa" ? "ابعاد" : "Scale",
+              locale === "fa"
+                ? ["کوچک", "متوسط", "بزرگ"]
+                : ["Small", "Medium", "Large"],
+            ],
+            [
+              "surface",
+              locale === "fa" ? "سطح" : "Surface",
+              locale === "fa"
+                ? ["خام", "مات", "براق"]
+                : ["Raw", "Matte", "Glossy"],
+            ],
+            [
+              "budget",
+              locale === "fa" ? "بازه بودجه" : "Budget",
+              locale === "fa"
+                ? ["تا ۱۰ میلیون", "۱۰ تا ۲۰ میلیون", "بیش از ۲۰ میلیون"]
+                : ["Up to $120", "$120–$240", "$240+"],
+            ],
+          ].map(([key, label, options]) => (
+            <label key={key as string}>
+              <span>{label as string}</span>
+              <select
+                value={brief[key as keyof typeof brief]}
+                onChange={(event) =>
+                  setBrief((current) => ({
+                    ...current,
+                    [key as string]: event.target.value,
+                  }))
+                }
+              >
+                <option value="">
+                  {locale === "fa" ? "انتخاب کنید" : "Choose"}
+                </option>
+                {(options as string[]).map((option) => (
+                  <option key={option}>{option}</option>
+                ))}
+              </select>
+            </label>
+          ))}
+        </fieldset>
         <label htmlFor="ceramic-prompt">{t("promptLabel")}</label>
         <textarea
           id="ceramic-prompt"
@@ -73,6 +139,27 @@ export function CustomDesigner() {
             </button>
           ))}
         </div>
+        <div
+          className="concept-directions"
+          aria-label={locale === "fa" ? "جهت طراحی" : "Design direction"}
+        >
+          {[
+            locale === "fa" ? "آرام و متعادل" : "Quiet balance",
+            locale === "fa" ? "خام و نامتقارن" : "Raw asymmetry",
+            locale === "fa" ? "پیکره‌وار و جسور" : "Sculptural statement",
+          ].map((label, index) => (
+            <button
+              type="button"
+              key={label}
+              className={direction === index ? "active" : ""}
+              onClick={() => setDirection(index)}
+              aria-pressed={direction === index}
+            >
+              <small>0{index + 1}</small>
+              <span>{label}</span>
+            </button>
+          ))}
+        </div>
         {error && (
           <p className="form-error" role="alert">
             {error}
@@ -89,7 +176,7 @@ export function CustomDesigner() {
             </button>
           ) : (
             <button className="button" disabled={!prompt.trim()}>
-              {t("generate")} <span>✦</span>
+              {locale === "fa" ? "تصورش کن →" : "Imagine it →"}
             </button>
           )}
         </div>

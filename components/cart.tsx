@@ -14,6 +14,8 @@ type CartContextValue = {
 
 const CartContext = createContext<CartContextValue | null>(null);
 const storageKey = "rad-cart-v1";
+const reservationKey = "rad-reservations-v1";
+const reservationDuration = 10 * 60 * 1000;
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [slugs, setSlugs] = useState<string[]>([]);
@@ -40,12 +42,18 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     () => ({
       slugs,
       count: slugs.length,
-      add: (product) =>
-        setSlugs((current) =>
-          current.includes(product.slug) ? current : [...current, product.slug],
-        ),
-      remove: (slug) =>
-        setSlugs((current) => current.filter((item) => item !== slug)),
+      add: (product) => {
+        if (product.status === "sold") return;
+        try {
+          const reservations = JSON.parse(localStorage.getItem(reservationKey) ?? "{}");
+          localStorage.setItem(reservationKey, JSON.stringify({ ...reservations, [product.slug]: Date.now() + reservationDuration }));
+        } catch {}
+        setSlugs((current) => current.includes(product.slug) ? current : [...current, product.slug]);
+      },
+      remove: (slug) => {
+        try { const reservations = JSON.parse(localStorage.getItem(reservationKey) ?? "{}"); delete reservations[slug]; localStorage.setItem(reservationKey, JSON.stringify(reservations)); } catch {}
+        setSlugs((current) => current.filter((item) => item !== slug));
+      },
       has: (slug) => slugs.includes(slug),
       clear: () => setSlugs([]),
     }),

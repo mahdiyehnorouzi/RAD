@@ -1,15 +1,15 @@
 ---
 version: alpha
 colors:
-  primary: "#8b2e25"
-  canvas: "#ebe4d8"
-  paper: "#f4f0e8"
-  ink: "#1d1a17"
-  clay: "#8b2e25"
-  sand: "#d3bd95"
-  moss: "#59604b"
-  muted: "#6e685f"
-  line: "#d8d1c6"
+  primary: "#263d34"
+  canvas: "#eee7dc"
+  paper: "#f7f2e9"
+  ink: "#18231f"
+  clay: "#8a4938"
+  sand: "#cbb892"
+  moss: "#263d34"
+  muted: "#6f726b"
+  line: "#d6cfc3"
 typography:
   display:
     fontFamily: "Vazirmatn, Vazir, Tahoma, sans-serif"
@@ -38,7 +38,7 @@ components:
 
 ## Colors
 
-Warm paper and plaster tones carry the gallery register. Oxide red is rare and meaningful: identifiers, active states, maker marks, and primary commitments. Moss is reserved for the co-creation studio. Runtime ownership is `app/globals.css` variables with exact mirrored values.
+Warm paper and plaster tones carry the gallery register. The new RAD mark defines the system: deep kiln green is the primary signature, while oxide red is secondary and rare. Runtime ownership is `app/globals.css` variables with exact mirrored values.
 
 ## Typography
 
@@ -62,11 +62,11 @@ Brand CTAs and artwork fields are nearly square with a 0–4px radius. Circular 
 
 ## Components
 
-Header, footer, product cards, vessel artwork and buttons are shared across routes. Primary navigation is limited to works, custom studio, and the RAD story; Journal is footer-level until it has a real content library. Buttons expose solid, text-link and restrained outline treatments with consistent focus states.
+Header, footer, product cards, vessel artwork and buttons are shared across routes. Primary navigation is limited to works, custom studio, and the RAD story; Journal stays absent until it has a real content library. Buttons expose solid and text-link treatments with consistent focus states.
 
 Commerce utilities use the Lucide line-icon family with compact count badges. Basket, favourites, account, search, and notifications stay visible in the sticky header; on phones their text labels collapse before any operation disappears. Product-card hearts sit on the artwork field like a maker's annotation. Account, orders, reviews, and checkout surfaces retain the gallery palette and use bordered paper panels instead of introducing a separate dashboard style.
 
-Header commerce actions are icon-only at every desktop width, with counts anchored to their owning icon. Header overlays are mutually exclusive. Product cards expose a compact, reversible add/remove action on the artwork edge so shopping never requires entering the PDP while the ceramic remains unobscured. The action reads as a maker annotation rather than a fast-commerce banner.
+Header commerce actions are limited to search, favourites, and bag, with counts anchored to their owning icon. Profile and orders live in the account route/mobile menu. Header overlays are mutually exclusive. Product cards lead to the work itself; selection happens deliberately inside the PDP rather than through quick commerce.
 
 Product media is a gallery rather than a single fixed image: PDP thumbnails select the active image, while missing media always resolves to a localized branded placeholder. Lightweight localized toast feedback confirms favourite, basket, and review actions without changing page context.
 

@@ -7,7 +7,6 @@ import { useLocale } from "./i18n";
 import { productCopy, products, type Product } from "@/lib/products";
 import { productPrice } from "./cart";
 import { FavoriteButton } from "./commerce";
-import { Reviews } from "./reviews";
 
 export function ProductDetail({ product }: { product: Product }) {
   const { locale, t, href } = useLocale();
@@ -80,7 +79,20 @@ export function ProductDetail({ product }: { product: Product }) {
           <p className="shipping">{t("shipping")}</p>
         </div>
       </section>
-      <Reviews product={product} />
+      <section className="section shipping-faq">
+        <header><span className="eyebrow">{locale === "fa" ? "ارسال آثار رَد" : "RAD DELIVERY"}</span><h2>{locale === "fa" ? "پیش از خرید بدانید" : "Before you buy"}</h2></header>
+        <div>{(locale === "fa" ? [
+          ["اگر اثر در ارسال آسیب ببیند؟", "تمام آثار بیمه‌اند. آسیب را تا ۲۴ ساعت با عکس اعلام کنید؛ رَد مسئول پیگیری و جبران است."],
+          ["بسته‌بندی چگونه است؟", "هر اثر در جعبه دولایه، با محافظ متناسب با فرم و شناسنامه امضاشده ارسال می‌شود."],
+          ["زمان و محدوده ارسال؟", "تهران ۲ تا ۴ روز کاری و شهرستان ۴ تا ۸ روز کاری؛ ارسال بیمه‌شده رایگان است."],
+          ["رنگ لعاب و مرجوعی", "نور نمایشگر می‌تواند رنگ را کمی تغییر دهد. آثار آماده تا ۴۸ ساعت امکان درخواست بازگشت دارند؛ سفارش شخصی مرجوع نمی‌شود."]
+        ] : [
+          ["What if it is damaged?", "Every work is insured. Report damage with photos within 24 hours; RAD manages the resolution."],
+          ["How is it packed?", "Each work travels in a double box with form-fitted protection and a signed certificate."],
+          ["When will it arrive?", "Tehran: 2–4 working days. Other cities: 4–8. Insured delivery is complimentary."],
+          ["Glaze colour and returns", "Screens may shift glaze colour slightly. Ready works can be returned within 48 hours; custom works cannot be returned."]
+        ]).map(([q,a])=><details key={q}><summary>{q}</summary><p>{a}</p></details>)}</div>
+      </section>
       <section className="section related">
         <header className="section-heading">
           <div>

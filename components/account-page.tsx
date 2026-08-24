@@ -3,15 +3,18 @@ import Link from "next/link";
 import { FormEvent, useRef, useState } from "react";
 import { useCommerce } from "./commerce";
 import { useLocale } from "./i18n";
-import { PwaPanel } from "./pwa";
 import { Heart, PackageSearch } from "lucide-react";
+
 export function AccountPage() {
   const { user, login, logout, favorites, orders } = useCommerce();
   const { locale, t, href, number } = useLocale();
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
+
   const nameRef = useRef<HTMLInputElement>(null);
+
   const pageTitle = locale === "fa" ? "حساب کاربری | رَد" : "Account | RAD";
+
   const handleLogin = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
@@ -26,6 +29,7 @@ export function AccountPage() {
     setError("");
     login({ name, email });
   };
+
   if (!user)
     return (
       <>
@@ -87,6 +91,7 @@ export function AccountPage() {
         </section>
       </>
     );
+
   return (
     <>
       <title>{pageTitle}</title>
@@ -131,7 +136,6 @@ export function AccountPage() {
               {t("orders")}
             </Link>
           </section>
-          <PwaPanel />
         </div>
       </section>
     </>

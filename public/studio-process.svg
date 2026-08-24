@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900">
+  <rect width="1600" height="900" fill="#cbb892"/>
+  <circle cx="800" cy="460" r="330" fill="#ead9bd" opacity=".58"><animate attributeName="r" values="320;340;320" dur="6s" repeatCount="indefinite"/></circle>
+  <ellipse cx="800" cy="730" rx="390" ry="72" fill="#263d34" opacity=".18"/>
+  <g><animateTransform attributeName="transform" type="translate" values="0 8;0 -8;0 8" dur="6s" repeatCount="indefinite"/>
+  <path d="M610 735C560 610 575 380 680 270c36-38 70-58 120-58s84 20 120 58c105 110 120 340 70 465z" fill="#9f4030"/>
+  <rect x="700" y="170" width="200" height="165" rx="28" fill="#9f4030"/>
+  <ellipse cx="800" cy="180" rx="100" ry="28" fill="#18231f"/>
+  <path d="M650 565c170-70 280-80 395-57" fill="none" stroke="#f7f2e9" stroke-width="19" stroke-linecap="round"/></g>
+  <path d="M170 205c150 10 270 105 340 250" fill="none" stroke="#263d34" stroke-width="72" stroke-linecap="round" opacity=".9"><animateTransform attributeName="transform" type="rotate" values="-2 170 205;2 170 205;-2 170 205" dur="6s" repeatCount="indefinite"/></path>
+  <path d="M1430 205c-150 10-270 105-340 250" fill="none" stroke="#263d34" stroke-width="72" stroke-linecap="round" opacity=".9"><animateTransform attributeName="transform" type="rotate" values="2 1430 205;-2 1430 205;2 1430 205" dur="6s" repeatCount="indefinite"/></path>
+  <g fill="#f7f2e9"><circle cx="180" cy="760" r="62"/><circle cx="1420" cy="760" r="62"/></g>
+  <g fill="#263d34"><path d="M151 760h58M180 731v58" stroke="#263d34" stroke-width="8"/><path d="M1391 760h58" stroke="#263d34" stroke-width="8"/></g>
+</svg>

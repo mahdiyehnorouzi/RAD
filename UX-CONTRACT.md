@@ -4,7 +4,7 @@ RAD is a bilingual hybrid storefront. Persian is the default RTL locale; English
 
 ## Canonical owners
 
-- Header utilities: `components/site.tsx`; basket, favourites, account, search, and notifications remain available on every route. On narrow screens labels collapse but controls remain visible.
+- Header utilities: `components/site.tsx`; search, favourites, and basket remain available on every route. Profile and orders live in the account route and mobile menu so the brand header stays quiet.
 - Header overlays: search, notifications, and the mobile navigation are mutually exclusive; opening one closes the others.
 - Local session, favourites, notification history, orders, and reviews: `components/commerce.tsx`. This prototype stores only profile name/email and never stores passwords.
 - Basket: `components/cart.tsx`; one-of-one products appear only once and persist locally.
@@ -13,7 +13,7 @@ RAD is a bilingual hybrid storefront. Persian is the default RTL locale; English
 - Reviews: `components/reviews.tsx`; signed-in users can add one-to-five-star ratings, text, and an optional JPEG/PNG/WebP image up to 1 MB.
 - Orders: `components/orders-page.tsx`; locally completed checkout orders remain available from the account area.
 - Pricing: Persian uses stored toman prices; English uses explicit product-level USD prices. Totals never convert a localized display string.
-- PWA and device notifications: `components/pwa.tsx` owns install guidance and permission requests; `public/sw.js` owns notification display/click routing. Install guidance appears from the second visit onward, and notification permission is requested only after a user action.
+- PWA and device notifications remain technical capabilities but are not promoted in the MVP interface. Installation guidance and permission requests stay absent until the user has demonstrated meaningful intent.
 - Offline navigation: the Service Worker may reuse the exact requested route only. It must never render cached Home content under a different URL.
 - Forms: app-owned validation with `noValidate`, inline errors, first-invalid focus, masked passwords, and duplicate-safe native buttons.
 - Notifications: the shared centre is a non-modal popover with localized history, unread count, Escape close, and mark-all-read.
@@ -29,7 +29,6 @@ RAD is a bilingual hybrid storefront. Persian is the default RTL locale; English
 | Save favourite | Heart control | Toggle in place; show a localized toast for save or removal | Storage failure keeps current in-memory state |
 | Share favourites | Share action | Native share sheet or copied URL with public product slugs | Cancellation leaves list unchanged |
 | Add to basket | PDP action | Disable add, increment persistent header badge, notify | Storage failure keeps in-memory basket |
-| Quick add | Product-card artwork action | Add the one-of-one work in place, show a localized toast, switch to an explicit remove action, update the icon badge | A second click removes the work without leaving the listing and restores the initial outline state |
 | Submit review | PDP review form | Add review immediately and show confirmation toast | Inline rating/comment/media validation; preserve entered text |
 | Checkout | Basket summary | Details → review → local demo success, save order, then clear basket | Field-specific inline validation; no payment is attempted |
 | Track order | Header/account/order-success link | Show received → processing → shipped → delivered progress | Existing prototype orders derive USD totals from their saved products |

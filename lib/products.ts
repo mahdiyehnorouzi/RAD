@@ -16,7 +16,7 @@ export type Product = {
   accent: string;
   shape: "tall" | "round" | "wide";
   category: "vases" | "tableware" | "sculpture";
-  status?: string;
+  status?: "available" | "sold";
   story: string;
   details: string[];
   images?: ProductImage[];
@@ -34,9 +34,27 @@ export const products: Product[] = [
     shape: "tall",
     category: "vases",
     images: [
-      { alt: "نمای روبه‌روی کوزه سرخ", enAlt: "Front view of the red vessel", color: "#9f4030", accent: "#ead9bd", shape: "tall" },
-      { alt: "نمای کناری کوزه سرخ", enAlt: "Side view of the red vessel", color: "#87382c", accent: "#ead9bd", shape: "tall" },
-      { alt: "جزئیات لعاب کوزه سرخ", enAlt: "Red vessel glaze detail", color: "#ad4b38", accent: "#f0dfc2", shape: "round" },
+      {
+        alt: "نمای روبه‌روی کوزه سرخ",
+        enAlt: "Front view of the red vessel",
+        color: "#9f4030",
+        accent: "#ead9bd",
+        shape: "tall",
+      },
+      {
+        alt: "نمای کناری کوزه سرخ",
+        enAlt: "Side view of the red vessel",
+        color: "#87382c",
+        accent: "#ead9bd",
+        shape: "tall",
+      },
+      {
+        alt: "جزئیات لعاب کوزه سرخ",
+        enAlt: "Red vessel glaze detail",
+        color: "#ad4b38",
+        accent: "#f0dfc2",
+        shape: "round",
+      },
     ],
     story:
       "ردّ حرکت دست روی این کوزه حفظ شده است؛ خطی که از دهانه آغاز می‌شود و در آتش به رنگ خاک گرم درآمده.",
@@ -70,8 +88,20 @@ export const products: Product[] = [
     shape: "round",
     category: "vases",
     images: [
-      { alt: "نمای روبه‌روی حافظه زیتونی", enAlt: "Front view of Olive Memory", color: "#4b513c", accent: "#dbc7a5", shape: "round" },
-      { alt: "جزئیات لعاب زیتونی", enAlt: "Olive glaze detail", color: "#5c634a", accent: "#e0ceb0", shape: "wide" },
+      {
+        alt: "نمای روبه‌روی حافظه زیتونی",
+        enAlt: "Front view of Olive Memory",
+        color: "#4b513c",
+        accent: "#dbc7a5",
+        shape: "round",
+      },
+      {
+        alt: "جزئیات لعاب زیتونی",
+        enAlt: "Olive glaze detail",
+        color: "#5c634a",
+        accent: "#e0ceb0",
+        shape: "wide",
+      },
     ],
     story:
       "فرمی آرام و متراکم برای شاخه‌های کوتاه؛ سطح مات آن نور را نگه می‌دارد و با گذر روز تغییر می‌کند.",
@@ -128,6 +158,7 @@ export const products: Product[] = [
   },
   {
     slug: "night-clay",
+    status: "sold",
     name: "خاکِ شب",
     subtitle: "لعاب مشکی نیمه‌براق",
     price: "۱۱٬۲۰۰٬۰۰۰ تومان",
@@ -185,6 +216,7 @@ export const products: Product[] = [
   },
   {
     slug: "white-silence",
+    status: "sold",
     name: "سکوتِ سفید",
     subtitle: "پرسلان بدون لعاب",
     price: "۱۳٬۵۰۰٬۰۰۰ تومان",

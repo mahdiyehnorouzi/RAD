@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { Product } from "@/lib/products";
@@ -8,18 +9,12 @@ import { productPrice, useCart } from "./cart";
 import { useLocale } from "./i18n";
 import { SiteSearch } from "./search";
 import {
-  AccountLink,
   FavoriteButton,
-  NotificationCenter,
-  useCommerce,
 } from "./commerce";
 import {
   Heart,
   ImageOff,
   Menu as MenuIcon,
-  Minus,
-  PackageSearch,
-  Plus,
   ShoppingBag,
   X,
 } from "lucide-react";
@@ -50,7 +45,9 @@ export function Header() {
         aria-label={t("home")}
         onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
       >
-        <b>رَد</b>
+        <span className="logo-mark" aria-hidden="true">
+          <Image src="/rad-logo.png" alt="" width={1254} height={1254} priority />
+        </span>
         <span>{t("logoSubtitle")}</span>
       </Link>
       <nav className={open ? "nav open" : "nav"} aria-label={t("navAria")}>
@@ -101,14 +98,6 @@ export function Header() {
         >
           <Heart aria-hidden="true" />
         </Link>
-        <NotificationCenter />
-        <Link
-          href={href("/orders")}
-          className="utility-button orders-link"
-          aria-label={t("orders")}
-        >
-          <PackageSearch aria-hidden="true" />
-        </Link>
         <Link
           href={href("/cart")}
           className="utility-button cart-button"
@@ -117,7 +106,6 @@ export function Header() {
           <ShoppingBag aria-hidden="true" />
           <i>{number(count)}</i>
         </Link>
-        <AccountLink />
         <button
           className="language-switch"
           onClick={() => {
@@ -158,8 +146,10 @@ export function Footer() {
   return (
     <footer className="footer">
       <div>
-        <Link href={href("/")} className="footer-logo">
-          رَد
+        <Link href={href("/")} className="footer-logo" aria-label={t("home")}>
+          <span className="footer-logo-image" aria-hidden="true">
+            <Image src="/rad-logo.png" alt="" width={1254} height={1254} />
+          </span>
         </Link>
         <p>{t("footerTagline")}</p>
       </div>
@@ -172,7 +162,7 @@ export function Footer() {
         <section>
           <b>{t("footerRad")}</b>
           <Link href={href("/#story")}>{t("footerStory")}</Link>
-          <Link href={href("/#journal")}>{t("navJournal")}</Link>
+          <Link href={href("/account")}>{t("profile")}</Link>
         </section>
       </div>
       <small>{t("footerCopyright")}</small>
@@ -247,10 +237,7 @@ export function ProductCard({
   index: number;
 }) {
   const { locale, t, href, number } = useLocale();
-  const { add, remove, has } = useCart();
-  const { addNotice } = useCommerce();
   const copy = productCopy(product, locale);
-  const inBag = has(product.slug);
   const category =
     product.category === "vases"
       ? t("filterVases")
@@ -261,21 +248,6 @@ export function ProductCard({
     <article className="product-card">
       <div className="product-media-shell">
         <FavoriteButton slug={product.slug} compact />
-        <button
-          className={inBag ? "quick-add added" : "quick-add"}
-          type="button"
-          onClick={() => {
-            if (inBag) remove(product.slug);
-            else {
-              add(product);
-              addNotice("cart", product.slug);
-            }
-          }}
-          aria-label={`${inBag ? t("removeBag") : t("quickAdd")} ${copy.name}`}
-        >
-          {inBag ? <Minus aria-hidden="true" /> : <Plus aria-hidden="true" />}
-          <span>{inBag ? t("removeBag") : t("quickAdd")}</span>
-        </button>
         <Link
           href={href(`/products/${product.slug}`)}
           className="product-art"
