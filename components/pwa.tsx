@@ -13,6 +13,7 @@ export function PwaRegistrar() {
   const [installEvent, setInstallEvent] = useState<InstallEvent | null>(null);
   const [dismissed, setDismissed] = useState(false);
   const [standalone, setStandalone] = useState(false);
+  const [eligible, setEligible] = useState(false);
 
   useEffect(() => {
     if ("serviceWorker" in navigator)
@@ -21,6 +22,13 @@ export function PwaRegistrar() {
         .then((registration) => registration.update())
         .catch(() => undefined);
     setStandalone(window.matchMedia("(display-mode: standalone)").matches);
+    const visits = Number.parseInt(
+      window.localStorage.getItem("rad-visit-count") || "0",
+      10,
+    );
+    const nextVisits = Number.isFinite(visits) ? visits + 1 : 1;
+    window.localStorage.setItem("rad-visit-count", String(nextVisits));
+    setEligible(nextVisits >= 2);
     const capture = (event: Event) => {
       event.preventDefault();
       setInstallEvent(event as InstallEvent);
@@ -29,7 +37,7 @@ export function PwaRegistrar() {
     return () => window.removeEventListener("beforeinstallprompt", capture);
   }, []);
 
-  if (standalone || dismissed) return null;
+  if (standalone || dismissed || !eligible) return null;
   const install = async () => {
     if (!installEvent) return;
     await installEvent.prompt();

@@ -13,7 +13,7 @@ RAD is a bilingual hybrid storefront. Persian is the default RTL locale; English
 - Reviews: `components/reviews.tsx`; signed-in users can add one-to-five-star ratings, text, and an optional JPEG/PNG/WebP image up to 1 MB.
 - Orders: `components/orders-page.tsx`; locally completed checkout orders remain available from the account area.
 - Pricing: Persian uses stored toman prices; English uses explicit product-level USD prices. Totals never convert a localized display string.
-- PWA and device notifications: `components/pwa.tsx` owns install guidance and permission requests; `public/sw.js` owns notification display/click routing. Permission is requested only after a user action.
+- PWA and device notifications: `components/pwa.tsx` owns install guidance and permission requests; `public/sw.js` owns notification display/click routing. Install guidance appears from the second visit onward, and notification permission is requested only after a user action.
 - Offline navigation: the Service Worker may reuse the exact requested route only. It must never render cached Home content under a different URL.
 - Forms: app-owned validation with `noValidate`, inline errors, first-invalid focus, masked passwords, and duplicate-safe native buttons.
 - Notifications: the shared centre is a non-modal popover with localized history, unread count, Escape close, and mark-all-read.

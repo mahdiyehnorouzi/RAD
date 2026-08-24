@@ -30,6 +30,10 @@ export default function Home() {
           </div>
         </div>
         <div className="hero-art">
+          <div className="hero-identifier" aria-hidden="true">
+            <span>RĀD / 027</span>
+            <span>{locale === "fa" ? "تهران / ۱۴۰۵" : "TEHRAN / 2026"}</span>
+          </div>
           <span className="one-badge">
             <b>{locale === "fa" ? "۱ / ۱" : "1 / 1"}</b>
             {t("onlyOne")}

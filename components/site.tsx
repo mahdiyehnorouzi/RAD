@@ -63,9 +63,6 @@ export function Header() {
         <Link href={href("/#story")} onClick={() => setOpen(false)}>
           {t("navAbout")}
         </Link>
-        <Link href={href("/#journal")} onClick={() => setOpen(false)}>
-          {t("navJournal")}
-        </Link>
         <Link
           className="mobile-nav-link"
           href={href("/favorites")}
@@ -157,7 +154,7 @@ export function Header() {
   );
 }
 export function Footer() {
-  const { t, href } = useLocale();
+  const { t, href, locale } = useLocale();
   return (
     <footer className="footer">
       <div>
@@ -177,13 +174,12 @@ export function Footer() {
           <Link href={href("/#story")}>{t("footerStory")}</Link>
           <Link href={href("/#journal")}>{t("navJournal")}</Link>
         </section>
-        <section>
-          <b>{t("footerCommunity")}</b>
-          <a href="#">{t("footerInstagram")}</a>
-          <a href="#">{t("footerNewsletter")}</a>
-        </section>
       </div>
       <small>{t("footerCopyright")}</small>
+      <div className="footer-signature" aria-hidden="true">
+        <span>1 / 1</span>
+        <span>{locale === "fa" ? "تهران — ۱۴۰۵" : "TEHRAN — 2026"}</span>
+      </div>
     </footer>
   );
 }

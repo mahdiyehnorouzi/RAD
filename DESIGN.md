@@ -1,50 +1,52 @@
 ---
 version: alpha
 colors:
-  primary: "#a13d2e"
-  canvas: "#eee7da"
-  paper: "#fbf8f1"
-  ink: "#201b17"
-  clay: "#a13d2e"
-  sand: "#cfb890"
-  moss: "#4a5039"
+  primary: "#8b2e25"
+  canvas: "#ebe4d8"
+  paper: "#f4f0e8"
+  ink: "#1d1a17"
+  clay: "#8b2e25"
+  sand: "#d3bd95"
+  moss: "#59604b"
+  muted: "#6e685f"
+  line: "#d8d1c6"
 typography:
   display:
     fontFamily: "Vazirmatn, Vazir, Tahoma, sans-serif"
   body:
     fontFamily: "Vazirmatn, Vazir, Tahoma, sans-serif"
 rounded:
-  control: "999px"
-  card: "1.5rem"
-  artwork: "3rem"
+  control: "2px"
+  card: "4px"
+  artwork: "4px"
 spacing:
   page: "clamp(1.25rem, 5vw, 5rem)"
-  section: "clamp(4rem, 9vw, 8rem)"
+  section: "clamp(5rem, 11vw, 11rem)"
 components:
   button:
     rounded: "{rounded.control}"
     backgroundColor: "{colors.primary}"
     textColor: "#ffffff"
   productCard:
-    rounded: "{rounded.card}"
+    rounded: "{rounded.artwork}"
     backgroundColor: "{colors.sand}"
 ---
 
 ## Overview
 
-رَد is a hybrid editorial storefront and product tool for Iranian collectors of one-of-one ceramics. It should feel like entering a working pottery studio: mineral colors, hand-shaped silhouettes, useful annotations, and deliberate empty space. The signature is the living ceramic silhouette—each product has its own CSS-built vessel rather than a generic ecommerce photograph.
+رَد is a hybrid editorial storefront and product tool for Iranian collectors of one-of-one ceramics. Its North Star is a quiet studio archive: raw, exact, and calm. The signature is the maker identifier—RĀD number, Tehran/date, and 1/1—used consistently beside hand-shaped silhouettes and deliberately uneven compositions.
 
 ## Colors
 
-Canvas and paper carry the gallery register. Clay marks brand actions and sold/limited states; moss is reserved for the AI studio. Runtime ownership is `app/globals.css` variables with exact mirrored values.
+Warm paper and plaster tones carry the gallery register. Oxide red is rare and meaningful: identifiers, active states, maker marks, and primary commitments. Moss is reserved for the co-creation studio. Runtime ownership is `app/globals.css` variables with exact mirrored values.
 
 ## Typography
 
-All Persian and Latin interface text uses Vazirmatn/Vazir. Large Persian headlines use weight and line rhythm instead of a foreign display serif.
+All Persian and Latin interface text uses Vazirmatn/Vazir to preserve the project's explicit type requirement. Large Persian headlines use scale, regular-to-medium weight, and line rhythm rather than heavy weight. Hierarchy comes from size and space, not ubiquitous boldness.
 
 ## Layout
 
-RTL by default, wide asymmetrical compositions on desktop, single-column reading order below 760px. Product information remains visible without hover.
+RTL by default, wide curated asymmetrical compositions on desktop, intentional mixed-width sequencing on mobile, and single-column reading order where clarity requires it. Product information remains visible without hover. Home and PLP should read as an exhibition archive rather than a uniform ecommerce grid.
 
 The interface supports Persian (`fa`, default, RTL) and English (`en`, LTR). Locale is owned by `components/i18n.tsx`; all shared navigation, commerce copy, product content, numbers, and accessibility labels must follow the active locale. Internal links preserve English with the shareable `?lang=en` parameter.
 
@@ -52,19 +54,19 @@ Never mix scripts in owned interface copy: Persian mode uses Persian wording and
 
 ## Elevation & Depth
 
-Flat surfaces with borders; depth comes from overlapping vessel forms and tonal fields, not generic shadows.
+Flat surfaces with almost no containers. Separation comes from whitespace, typography, image scale, and occasional hairlines; depth comes from overlapping vessel forms and tonal fields, not generic shadows.
 
 ## Shapes
 
-Controls are pill-shaped. Content cards are softly rounded. Artwork fields use exaggerated asymmetric radii that reference thrown clay.
+Brand CTAs and artwork fields are nearly square with a 0–4px radius. Circular 1/1 stamps are the intentional exception. Application forms may retain slightly softer geometry for usability.
 
 ## Components
 
-Header, footer, product cards, vessel artwork and buttons are shared across routes. Buttons expose solid, outline and light treatments with consistent focus states.
+Header, footer, product cards, vessel artwork and buttons are shared across routes. Primary navigation is limited to works, custom studio, and the RAD story; Journal is footer-level until it has a real content library. Buttons expose solid, text-link and restrained outline treatments with consistent focus states.
 
 Commerce utilities use the Lucide line-icon family with compact count badges. Basket, favourites, account, search, and notifications stay visible in the sticky header; on phones their text labels collapse before any operation disappears. Product-card hearts sit on the artwork field like a maker's annotation. Account, orders, reviews, and checkout surfaces retain the gallery palette and use bordered paper panels instead of introducing a separate dashboard style.
 
-Header commerce actions are icon-only at every desktop width, with counts anchored to their owning icon. Header overlays are mutually exclusive. Product cards expose a compact, reversible add/remove action on the lower artwork edge so shopping never requires entering the PDP while the ceramic remains unobscured.
+Header commerce actions are icon-only at every desktop width, with counts anchored to their owning icon. Header overlays are mutually exclusive. Product cards expose a compact, reversible add/remove action on the artwork edge so shopping never requires entering the PDP while the ceramic remains unobscured. The action reads as a maker annotation rather than a fast-commerce banner.
 
 Product media is a gallery rather than a single fixed image: PDP thumbnails select the active image, while missing media always resolves to a localized branded placeholder. Lightweight localized toast feedback confirms favourite, basket, and review actions without changing page context.
 
@@ -78,4 +80,4 @@ Every product owns an explicit category (`vases`, `tableware`, or `sculpture`). 
 
 ## Do's and Don'ts
 
-Do use real Persian copy, Persian numerals and one-of-one inventory language. Do not use stock luxury imagery, glassmorphism, generic gradients, or hover-only product details.
+Do use real Persian copy, Persian numerals, generous uneven whitespace, curated image ratios, and one-of-one inventory language. Do use the numbering system as structural information. Do not use stock luxury imagery, glassmorphism, generic gradients, uniform card grids, decorative borders, or hover-only product details.
