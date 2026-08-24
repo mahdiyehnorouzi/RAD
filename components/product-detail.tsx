@@ -14,10 +14,19 @@ export function ProductDetail({ product }: { product: Product }) {
   const router = useRouter();
   const carouselRef = useRef<HTMLDivElement>(null);
   const [activeImage, setActiveImage] = useState(0);
+
   const imageCount = product.images?.length ?? 1;
+
   const copy = productCopy(product, locale);
   const price = productPrice(product, locale);
-  const category = product.category === "vases" ? t("filterVases") : product.category === "tableware" ? t("filterTableware") : t("filterSculpture");
+
+  const category =
+    product.category === "vases"
+      ? t("filterVases")
+      : product.category === "tableware"
+        ? t("filterTableware")
+        : t("filterSculpture");
+
   return (
     <>
       <section className="pdp section">
@@ -40,11 +49,23 @@ export function ProductDetail({ product }: { product: Product }) {
             <ProductMedia product={product} imageIndex={activeImage} />
           </div>
           <div className="pdp-detail-art">
-            {Array.from({ length: Math.max(imageCount, 1) }, (_, index) => <button key={index} type="button" className={activeImage === index ? "active" : ""} onClick={() => setActiveImage(index)} aria-label={`${t("imageNumber")} ${locale === "fa" ? new Intl.NumberFormat("fa-IR").format(index + 1) : index + 1}`}><ProductMedia product={product} imageIndex={index} /></button>)}
+            {Array.from({ length: Math.max(imageCount, 1) }, (_, index) => (
+              <button
+                key={index}
+                type="button"
+                className={activeImage === index ? "active" : ""}
+                onClick={() => setActiveImage(index)}
+                aria-label={`${t("imageNumber")} ${locale === "fa" ? new Intl.NumberFormat("fa-IR").format(index + 1) : index + 1}`}
+              >
+                <ProductMedia product={product} imageIndex={index} />
+              </button>
+            ))}
           </div>
         </div>
         <div className="pdp-info">
-          <span className="eyebrow">{category} · {t("uniqueAvailable")}</span>
+          <span className="eyebrow">
+            {category} · {t("uniqueAvailable")}
+          </span>
           <h1>{copy.name}</h1>
           <p className="subtitle">{copy.subtitle}</p>
           <p className="price">{price}</p>

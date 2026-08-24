@@ -13,7 +13,10 @@ export function CartPage() {
   const items = slugs
     .map((slug) => products.find((product) => product.slug === slug))
     .filter(Boolean);
-  const total = cartTotal(items.filter((item): item is (typeof products)[number] => Boolean(item)), locale);
+  const total = cartTotal(
+    items.filter((item): item is (typeof products)[number] => Boolean(item)),
+    locale,
+  );
 
   if (!items.length)
     return (
@@ -66,9 +69,7 @@ export function CartPage() {
                       {t("removeBag")}
                     </button>
                   </div>
-                  <strong>
-                    {productPrice(product, locale)}
-                  </strong>
+                  <strong>{productPrice(product, locale)}</strong>
                 </article>
               ),
           )}
@@ -77,9 +78,7 @@ export function CartPage() {
           <span>{t("orderSummary")}</span>
           <div>
             <span>{t("worksSubtotal")}</span>
-            <b>
-              {formatTotal(total, locale)}
-            </b>
+            <b>{formatTotal(total, locale)}</b>
           </div>
           <div>
             <span>{t("insuredShipping")}</span>
@@ -87,9 +86,7 @@ export function CartPage() {
           </div>
           <div className="cart-total">
             <span>{t("finalTotal")}</span>
-            <b>
-              {formatTotal(total, locale)}
-            </b>
+            <b>{formatTotal(total, locale)}</b>
           </div>
           <Link className="button" href={href("/checkout")}>
             {t("checkout")}

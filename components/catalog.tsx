@@ -16,7 +16,11 @@ export function Catalog() {
     { id: "sculpture", label: t("filterSculpture") },
   ];
   const [active, setActive] = useState("all");
-  const visible = active === "all" ? products : products.filter((product) => product.category === active);
+  const visible =
+    active === "all"
+      ? products
+      : products.filter((product) => product.category === active);
+
   return (
     <>
       <div className="filterbar">
@@ -63,7 +67,10 @@ export function AddToBag({ product }: { product: Product }) {
   return (
     <button
       className="button add"
-      onClick={() => { add(product); addNotice("cart", product.slug); }}
+      onClick={() => {
+        add(product);
+        addNotice("cart", product.slug);
+      }}
       disabled={added}
       aria-live="polite"
     >

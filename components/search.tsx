@@ -9,9 +9,12 @@ import { Search, X } from "lucide-react";
 export function SiteSearch() {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
+
   const inputRef = useRef<HTMLInputElement>(null);
+
   const { locale, t, href } = useLocale();
   const normalizedQuery = query.trim().toLocaleLowerCase(locale);
+
   const results = useMemo(
     () =>
       normalizedQuery
@@ -28,14 +31,20 @@ export function SiteSearch() {
   useEffect(() => {
     if (open) inputRef.current?.focus();
   }, [open]);
+
   useEffect(() => {
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") setOpen(false);
     };
     window.addEventListener("keydown", closeOnEscape);
-    const close = (event: Event) => { if ((event as CustomEvent<string>).detail !== "search") setOpen(false); };
+    const close = (event: Event) => {
+      if ((event as CustomEvent<string>).detail !== "search") setOpen(false);
+    };
     window.addEventListener("rad:header-overlay", close);
-    return () => { window.removeEventListener("keydown", closeOnEscape); window.removeEventListener("rad:header-overlay", close); };
+    return () => {
+      window.removeEventListener("keydown", closeOnEscape);
+      window.removeEventListener("rad:header-overlay", close);
+    };
   }, []);
 
   return (
@@ -43,7 +52,16 @@ export function SiteSearch() {
       <button
         className="search-toggle"
         type="button"
-        onClick={() => setOpen((current) => { const next = !current; if (next) window.dispatchEvent(new CustomEvent("rad:header-overlay", { detail: "search" })); return next; })}
+        onClick={() =>
+          setOpen((current) => {
+            const next = !current;
+            if (next)
+              window.dispatchEvent(
+                new CustomEvent("rad:header-overlay", { detail: "search" }),
+              );
+            return next;
+          })
+        }
         aria-expanded={open}
         aria-controls="site-search-panel"
         aria-label={open ? t("closeSearch") : t("searchAria")}

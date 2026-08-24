@@ -24,12 +24,16 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       if (Array.isArray(saved))
         setSlugs(saved.filter((item) => typeof item === "string"));
     } catch {
-      try { localStorage.removeItem(storageKey); } catch {}
+      try {
+        localStorage.removeItem(storageKey);
+      } catch {}
     }
   }, []);
 
   useEffect(() => {
-    try { localStorage.setItem(storageKey, JSON.stringify(slugs)); } catch {}
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(slugs));
+    } catch {}
   }, [slugs]);
 
   const value = useMemo<CartContextValue>(
@@ -73,15 +77,27 @@ export function formatToman(value: number) {
 export function productPrice(product: Product, locale: Locale) {
   return locale === "fa"
     ? product.price
-    : new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(product.usdPrice);
+    : new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency: "USD",
+        maximumFractionDigits: 0,
+      }).format(product.usdPrice);
 }
 
 export function cartTotal(products: Product[], locale: Locale) {
-  return products.reduce((sum, product) => sum + (locale === "fa" ? priceToNumber(product.price) : product.usdPrice), 0);
+  return products.reduce(
+    (sum, product) =>
+      sum + (locale === "fa" ? priceToNumber(product.price) : product.usdPrice),
+    0,
+  );
 }
 
 export function formatTotal(value: number, locale: Locale) {
   return locale === "fa"
     ? formatToman(value)
-    : new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(value);
+    : new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency: "USD",
+        maximumFractionDigits: 0,
+      }).format(value);
 }

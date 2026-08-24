@@ -172,11 +172,13 @@ const messages = {
     accountEyebrow: "حساب رَد",
     loginTitle: "ورود به فضای شخصی",
     loginBody: "علاقه‌مندی‌ها، اعلان‌ها و مسیر سفارش را در یک‌جا نگه دارید.",
-    localAccountNote: "نسخه نمایشی: اطلاعات حساب فقط روی همین دستگاه نگهداری می‌شود و رمز عبور ذخیره نمی‌شود.",
+    localAccountNote:
+      "نسخه نمایشی: اطلاعات حساب فقط روی همین دستگاه نگهداری می‌شود و رمز عبور ذخیره نمی‌شود.",
     nameLabel: "نام و نام خانوادگی",
     emailLabel: "ایمیل",
     passwordLabel: "رمز عبور",
-    passwordHelp: "حداقل ۸ نویسه؛ امکان چسباندن و استفاده از مدیر رمز عبور فعال است.",
+    passwordHelp:
+      "حداقل ۸ نویسه؛ امکان چسباندن و استفاده از مدیر رمز عبور فعال است.",
     showPassword: "نمایش رمز عبور",
     hidePassword: "پنهان‌کردن رمز عبور",
     loginError: "نام، ایمیل معتبر و رمز عبور حداقل ۸ نویسه‌ای را وارد کنید.",
@@ -184,7 +186,8 @@ const messages = {
     hello: "سلام،",
     favoriteEyebrow: "علاقه‌مندی‌ها",
     savedWorks: "اثر ذخیره‌شده",
-    favoriteProfileBody: "فهرست شخصی‌تان را ببینید یا آن را با دوستانتان به اشتراک بگذارید.",
+    favoriteProfileBody:
+      "فهرست شخصی‌تان را ببینید یا آن را با دوستانتان به اشتراک بگذارید.",
     viewFavorites: "دیدن علاقه‌مندی‌ها",
     favoritesTitle: "فهرست آثار محبوب",
     sharedListEyebrow: "فهرست مشترک",
@@ -195,10 +198,13 @@ const messages = {
     emptyFavoritesBody: "روی نشان قلب هر اثر بزنید تا به این فهرست اضافه شود.",
     pwaEyebrow: "برنامه رَد",
     pwaTitle: "رَد روی دستگاه شما",
-    pwaInstallHelp: "از منوی مرورگر، «افزودن به صفحه اصلی» را انتخاب کنید تا رَد مانند یک برنامه اجرا شود.",
+    pwaInstallHelp:
+      "از منوی مرورگر، «افزودن به صفحه اصلی» را انتخاب کنید تا رَد مانند یک برنامه اجرا شود.",
     pwaPromptTitle: "رَد را روی صفحه اصلی داشته باشید",
-    pwaPromptBody: "سایت را مثل یک برنامه باز کنید و سریع‌تر به سفارش‌ها و آثار ذخیره‌شده برسید.",
-    pwaInstallSteps: "آیفون و آیپد: در Safari روی اشتراک‌گذاری و سپس «افزودن به صفحه اصلی» بزنید. اندروید: منوی Chrome را باز کنید و «نصب برنامه» را انتخاب کنید.",
+    pwaPromptBody:
+      "سایت را مثل یک برنامه باز کنید و سریع‌تر به سفارش‌ها و آثار ذخیره‌شده برسید.",
+    pwaInstallSteps:
+      "آیفون و آیپد: در Safari روی اشتراک‌گذاری و سپس «افزودن به صفحه اصلی» بزنید. اندروید: منوی Chrome را باز کنید و «نصب برنامه» را انتخاب کنید.",
     installApp: "افزودن به صفحه اصلی",
     dismissInstall: "فعلاً نه",
     pwaInstalled: "نسخه نصب‌شده رَد روی این دستگاه در حال اجراست.",
@@ -208,7 +214,8 @@ const messages = {
     notificationReadyBody: "خبر آثار ذخیره‌شده و سفارش‌ها را اینجا می‌بینید.",
     checkoutEyebrow: "ثبت سفارش نمایشی",
     checkoutTitle: "جزئیات دریافت اثر",
-    checkoutBody: "این جریان برای بررسی تجربه خرید است و هیچ پرداخت واقعی انجام نمی‌شود.",
+    checkoutBody:
+      "این جریان برای بررسی تجربه خرید است و هیچ پرداخت واقعی انجام نمی‌شود.",
     phoneLabel: "شماره تماس",
     cityLabel: "شهر",
     addressLabel: "نشانی",
@@ -221,7 +228,8 @@ const messages = {
     editDetails: "ویرایش اطلاعات",
     placeDemoOrder: "ثبت درخواست سفارش",
     orderSuccessTitle: "درخواست شما ثبت شد.",
-    orderSuccessBody: "این ثبت، نمایشی است و مبلغی پرداخت نشده. در نسخه متصل به فروشگاه، ادامه از طریق درگاه امن انجام می‌شود.",
+    orderSuccessBody:
+      "این ثبت، نمایشی است و مبلغی پرداخت نشده. در نسخه متصل به فروشگاه، ادامه از طریق درگاه امن انجام می‌شود.",
     returnHome: "بازگشت به خانه",
     toman: "تومان",
     designerTitle1: "قطعه‌ای که هنوز",
@@ -414,15 +422,19 @@ const messages = {
     checkoutNote: "Online payment will be enabled in the next store release.",
     accountEyebrow: "RAD ACCOUNT",
     loginTitle: "Sign in to your space",
-    loginBody: "Keep favourites, notifications, and your order journey in one place.",
-    localAccountNote: "Demo version: account details stay on this device and the password is never stored.",
+    loginBody:
+      "Keep favourites, notifications, and your order journey in one place.",
+    localAccountNote:
+      "Demo version: account details stay on this device and the password is never stored.",
     nameLabel: "Full name",
     emailLabel: "Email",
     passwordLabel: "Password",
-    passwordHelp: "At least 8 characters. Paste and password managers are supported.",
+    passwordHelp:
+      "At least 8 characters. Paste and password managers are supported.",
     showPassword: "Show password",
     hidePassword: "Hide password",
-    loginError: "Enter your name, a valid email, and a password of at least 8 characters.",
+    loginError:
+      "Enter your name, a valid email, and a password of at least 8 characters.",
     profileEyebrow: "YOUR PROFILE",
     hello: "Hello,",
     favoriteEyebrow: "FAVOURITES",
@@ -438,20 +450,25 @@ const messages = {
     emptyFavoritesBody: "Select the heart on any work to add it to this list.",
     pwaEyebrow: "RAD APP",
     pwaTitle: "RAD on your device",
-    pwaInstallHelp: "Choose Add to Home Screen from your browser menu to run RAD like an app.",
+    pwaInstallHelp:
+      "Choose Add to Home Screen from your browser menu to run RAD like an app.",
     pwaPromptTitle: "Add RAD to your Home Screen",
-    pwaPromptBody: "Open the studio like an app and reach your orders and saved works faster.",
-    pwaInstallSteps: "iPhone and iPad: open Safari, tap Share, then Add to Home Screen. Android: open the Chrome menu and choose Install app.",
+    pwaPromptBody:
+      "Open the studio like an app and reach your orders and saved works faster.",
+    pwaInstallSteps:
+      "iPhone and iPad: open Safari, tap Share, then Add to Home Screen. Android: open the Chrome menu and choose Install app.",
     installApp: "Add to Home Screen",
     dismissInstall: "Not now",
     pwaInstalled: "The installed RAD app is running on this device.",
     enableNotifications: "Enable device notifications",
     notificationsEnabled: "Device notifications enabled",
     notificationReady: "RAD notifications enabled",
-    notificationReadyBody: "Updates about saved works and orders will appear here.",
+    notificationReadyBody:
+      "Updates about saved works and orders will appear here.",
     checkoutEyebrow: "DEMO ORDER",
     checkoutTitle: "Delivery details",
-    checkoutBody: "This flow demonstrates the purchase experience. No real payment is made.",
+    checkoutBody:
+      "This flow demonstrates the purchase experience. No real payment is made.",
     phoneLabel: "Phone number",
     cityLabel: "City",
     addressLabel: "Address",
@@ -464,7 +481,8 @@ const messages = {
     editDetails: "Edit details",
     placeDemoOrder: "Place demo order",
     orderSuccessTitle: "Your request is recorded.",
-    orderSuccessBody: "This is a demo record and no payment was made. The connected store will continue through a secure payment gateway.",
+    orderSuccessBody:
+      "This is a demo record and no payment was made. The connected store will continue through a secure payment gateway.",
     returnHome: "Return home",
     toman: "USD",
     designerTitle1: "A piece that does not",
@@ -511,7 +529,9 @@ export function LocaleProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const query = new URLSearchParams(window.location.search).get("lang");
     let saved: string | null = null;
-    try { saved = localStorage.getItem(storageKey); } catch {}
+    try {
+      saved = localStorage.getItem(storageKey);
+    } catch {}
     const initial: Locale =
       query === "en" || query === "fa" ? query : saved === "en" ? "en" : "fa";
     setLocaleState(initial);
@@ -520,13 +540,36 @@ export function LocaleProvider({ children }: { children: React.ReactNode }) {
     document.documentElement.lang = locale;
     document.documentElement.dir = locale === "fa" ? "rtl" : "ltr";
     document.documentElement.dataset.locale = locale;
-    try { localStorage.setItem(storageKey, locale); } catch {}
+    try {
+      localStorage.setItem(storageKey, locale);
+    } catch {}
     const route = pathname;
-    const labels = locale === "fa"
-      ? { account: "حساب کاربری", favorites: "علاقه‌مندی‌ها", cart: "کیسه خرید", checkout: "ثبت سفارش", products: "آثار", studio: "طراحی اختصاصی" }
-      : { account: "Account", favorites: "Favourites", cart: "Shopping bag", checkout: "Checkout", products: "Works", studio: "Custom design" };
-    const section = Object.entries(labels).find(([key]) => route.includes(key))?.[1];
-    document.title = section ? `${section} | ${locale === "fa" ? "رَد" : "RAD"}` : locale === "fa" ? "رَد — استودیو سرامیک" : "RAD — Ceramic Studio";
+    const labels =
+      locale === "fa"
+        ? {
+            account: "حساب کاربری",
+            favorites: "علاقه‌مندی‌ها",
+            cart: "کیسه خرید",
+            checkout: "ثبت سفارش",
+            products: "آثار",
+            studio: "طراحی اختصاصی",
+          }
+        : {
+            account: "Account",
+            favorites: "Favourites",
+            cart: "Shopping bag",
+            checkout: "Checkout",
+            products: "Works",
+            studio: "Custom design",
+          };
+    const section = Object.entries(labels).find(([key]) =>
+      route.includes(key),
+    )?.[1];
+    document.title = section
+      ? `${section} | ${locale === "fa" ? "رَد" : "RAD"}`
+      : locale === "fa"
+        ? "رَد — استودیو سرامیک"
+        : "RAD — Ceramic Studio";
   }, [locale, pathname]);
   const value = useMemo<LocaleContextValue>(
     () => ({

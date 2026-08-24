@@ -7,18 +7,49 @@ import { productCopy } from "@/lib/products";
 import { productPrice, useCart } from "./cart";
 import { useLocale } from "./i18n";
 import { SiteSearch } from "./search";
-import { AccountLink, FavoriteButton, NotificationCenter, useCommerce } from "./commerce";
-import { Heart, ImageOff, Menu as MenuIcon, Minus, PackageSearch, Plus, ShoppingBag, X } from "lucide-react";
+import {
+  AccountLink,
+  FavoriteButton,
+  NotificationCenter,
+  useCommerce,
+} from "./commerce";
+import {
+  Heart,
+  ImageOff,
+  Menu as MenuIcon,
+  Minus,
+  PackageSearch,
+  Plus,
+  ShoppingBag,
+  X,
+} from "lucide-react";
+
 export function Header() {
   const [open, setOpen] = useState(false);
+
   const pathname = usePathname();
+
   const { count } = useCart();
   const { locale, setLocale, t, href, number } = useLocale();
+
   useEffect(() => setOpen(false), [pathname]);
-  useEffect(() => { const close = (event: Event) => { if ((event as CustomEvent<string>).detail !== "menu") setOpen(false); }; window.addEventListener("rad:header-overlay", close); return () => window.removeEventListener("rad:header-overlay", close); }, []);
+
+  useEffect(() => {
+    const close = (event: Event) => {
+      if ((event as CustomEvent<string>).detail !== "menu") setOpen(false);
+    };
+    window.addEventListener("rad:header-overlay", close);
+    return () => window.removeEventListener("rad:header-overlay", close);
+  }, []);
+
   return (
     <header className="header">
-      <Link href={href("/")} className="logo" aria-label={t("home")} onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>
+      <Link
+        href={href("/")}
+        className="logo"
+        aria-label={t("home")}
+        onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+      >
         <b>رَد</b>
         <span>{t("logoSubtitle")}</span>
       </Link>
@@ -35,26 +66,50 @@ export function Header() {
         <Link href={href("/#journal")} onClick={() => setOpen(false)}>
           {t("navJournal")}
         </Link>
-        <Link className="mobile-nav-link" href={href("/favorites")} onClick={() => setOpen(false)}>
+        <Link
+          className="mobile-nav-link"
+          href={href("/favorites")}
+          onClick={() => setOpen(false)}
+        >
           {t("favoritesTitle")}
         </Link>
-        <Link className="mobile-nav-link" href={href("/account")} onClick={() => setOpen(false)}>
+        <Link
+          className="mobile-nav-link"
+          href={href("/account")}
+          onClick={() => setOpen(false)}
+        >
           {t("profile")}
         </Link>
-        <Link className="mobile-nav-link" href={href("/cart")} onClick={() => setOpen(false)}>
+        <Link
+          className="mobile-nav-link"
+          href={href("/cart")}
+          onClick={() => setOpen(false)}
+        >
           {t("shoppingBag")}
         </Link>
-        <Link className="mobile-nav-link" href={href("/orders")} onClick={() => setOpen(false)}>
+        <Link
+          className="mobile-nav-link"
+          href={href("/orders")}
+          onClick={() => setOpen(false)}
+        >
           {t("orders")}
         </Link>
       </nav>
       <div className="header-actions">
         <SiteSearch />
-        <Link href={href("/favorites")} className="utility-button header-favorites" aria-label={t("favoritesTitle")}>
+        <Link
+          href={href("/favorites")}
+          className="utility-button header-favorites"
+          aria-label={t("favoritesTitle")}
+        >
           <Heart aria-hidden="true" />
         </Link>
         <NotificationCenter />
-        <Link href={href("/orders")} className="utility-button orders-link" aria-label={t("orders")}>
+        <Link
+          href={href("/orders")}
+          className="utility-button orders-link"
+          aria-label={t("orders")}
+        >
           <PackageSearch aria-hidden="true" />
         </Link>
         <Link
@@ -62,12 +117,18 @@ export function Header() {
           className="utility-button cart-button"
           aria-label={t("bagAria")}
         >
-          <ShoppingBag aria-hidden="true" /><i>{number(count)}</i>
+          <ShoppingBag aria-hidden="true" />
+          <i>{number(count)}</i>
         </Link>
         <AccountLink />
         <button
           className="language-switch"
-          onClick={() => { window.dispatchEvent(new CustomEvent("rad:header-overlay", { detail: "language" })); setLocale(locale === "fa" ? "en" : "fa"); }}
+          onClick={() => {
+            window.dispatchEvent(
+              new CustomEvent("rad:header-overlay", { detail: "language" }),
+            );
+            setLocale(locale === "fa" ? "en" : "fa");
+          }}
           aria-label={
             locale === "fa" ? "Switch to English" : "تغییر زبان به فارسی"
           }
@@ -76,7 +137,16 @@ export function Header() {
         </button>
         <button
           className="menu"
-          onClick={() => setOpen((current) => { const next = !current; if (next) window.dispatchEvent(new CustomEvent("rad:header-overlay", { detail: "menu" })); return next; })}
+          onClick={() =>
+            setOpen((current) => {
+              const next = !current;
+              if (next)
+                window.dispatchEvent(
+                  new CustomEvent("rad:header-overlay", { detail: "menu" }),
+                );
+              return next;
+            })
+          }
           aria-expanded={open}
           aria-label={open ? t("closeMenu") : t("openMenu")}
         >
@@ -139,12 +209,39 @@ export function Vessel({
     </div>
   );
 }
-export function ProductMedia({ product, imageIndex = 0 }: { product: Product; imageIndex?: number }) {
+export function ProductMedia({
+  product,
+  imageIndex = 0,
+}: {
+  product: Product;
+  imageIndex?: number;
+}) {
   const { locale, t } = useLocale();
-  if (product.images && product.images.length === 0) return <div className="product-fallback"><ImageOff aria-hidden="true" /><span>{t("imageUnavailable")}</span></div>;
+  if (product.images && product.images.length === 0)
+    return (
+      <div className="product-fallback">
+        <ImageOff aria-hidden="true" />
+        <span>{t("imageUnavailable")}</span>
+      </div>
+    );
   const media = product.images?.[imageIndex] ?? product.images?.[0];
-  if (media?.src) return <img className="product-photo" src={media.src} alt={locale === "fa" ? media.alt : media.enAlt} />;
-  return <Vessel product={{ color: media?.color ?? product.color, accent: media?.accent ?? product.accent, shape: media?.shape ?? product.shape }} />;
+  if (media?.src)
+    return (
+      <img
+        className="product-photo"
+        src={media.src}
+        alt={locale === "fa" ? media.alt : media.enAlt}
+      />
+    );
+  return (
+    <Vessel
+      product={{
+        color: media?.color ?? product.color,
+        accent: media?.accent ?? product.accent,
+        shape: media?.shape ?? product.shape,
+      }}
+    />
+  );
 }
 export function ProductCard({
   product,
@@ -158,7 +255,12 @@ export function ProductCard({
   const { addNotice } = useCommerce();
   const copy = productCopy(product, locale);
   const inBag = has(product.slug);
-  const category = product.category === "vases" ? t("filterVases") : product.category === "tableware" ? t("filterTableware") : t("filterSculpture");
+  const category =
+    product.category === "vases"
+      ? t("filterVases")
+      : product.category === "tableware"
+        ? t("filterTableware")
+        : t("filterSculpture");
   return (
     <article className="product-card">
       <div className="product-media-shell">
