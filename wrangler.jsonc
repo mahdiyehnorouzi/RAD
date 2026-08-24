@@ -1,11 +1,14 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "main": ".open-next/worker.js",
+  "main": "vinext/server/fetch-handler",
   "name": "rad-studio-ceramic",
   "compatibility_date": "2026-08-24",
-  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "compatibility_flags": ["nodejs_compat"],
   "assets": {
-    "directory": ".open-next/assets",
+    "directory": "dist/client",
+    "not_found_handling": "none",
     "binding": "ASSETS"
   }
+,
+  "cache": { "enabled": true }
 }
