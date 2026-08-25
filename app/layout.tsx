@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { localFixes } from "./local-fixes";
 import { Header, Footer } from "@/components/site";
 import { CartProvider } from "@/components/cart";
 import { LocaleProvider } from "@/components/i18n";
@@ -18,6 +19,7 @@ export default function RootLayout({
   return (
     <html lang="fa" dir="rtl">
       <body>
+        <style dangerouslySetInnerHTML={{ __html: localFixes }} />
         <LocaleProvider>
           <CommerceProvider>
             <CartProvider>

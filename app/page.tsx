@@ -5,10 +5,10 @@ import { useLocale } from "@/components/i18n";
 export default function Home() {
   const { t, locale } = useLocale();
   const steps = [
-    [locale === "fa" ? "۰۱ / ۰۴" : "01 / 04", t("step1Title"), t("step1Body")],
-    [locale === "fa" ? "۰۲ / ۰۴" : "02 / 04", t("step2Title"), t("step2Body")],
-    [locale === "fa" ? "۰۳ / ۰۴" : "03 / 04", t("step3Title"), t("step3Body")],
-    [locale === "fa" ? "۰۴ / ۰۴" : "04 / 04", t("step4Title"), t("step4Body")],
+    [locale === "fa" ? "۰۱/۰۴" : "01/04", t("step1Title"), t("step1Body")],
+    [locale === "fa" ? "۰۲/۰۴" : "02/04", t("step2Title"), t("step2Body")],
+    [locale === "fa" ? "۰۳/۰۴" : "03/04", t("step3Title"), t("step3Body")],
+    [locale === "fa" ? "۰۴/۰۴" : "04/04", t("step4Title"), t("step4Body")],
   ];
   return (
     <>

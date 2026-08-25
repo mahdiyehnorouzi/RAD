@@ -2109,6 +2109,273 @@ select:focus-visible {
   }
 }
 
+/* Local RTL/process/FAQ correction — keep at the end of the cascade. */
+.process .steps article > span {
+  width: 58px !important;
+  min-width: 58px !important;
+  height: 58px !important;
+  padding: 0 !important;
+  border-radius: 50% !important;
+  aspect-ratio: 1 !important;
+  font-size: .68rem !important;
+  direction: ltr !important;
+  place-items: center !important;
+}
+[dir="rtl"] .process .steps {
+  direction: rtl !important;
+}
+[dir="rtl"] .process .steps article {
+  direction: rtl !important;
+  text-align: right !important;
+}
+[dir="rtl"] .process .steps article > span {
+  justify-self: start !important;
+}
+[dir="rtl"] .process .steps article h3,
+[dir="rtl"] .process .steps article p {
+  text-align: right !important;
+  justify-self: stretch !important;
+}
+
+.shipping-faq .faq-list details {
+  border-top: 1px solid var(--line) !important;
+  padding: 0 !important;
+}
+.shipping-faq .faq-list summary,
+.shipping-faq .faq-list summary::marker {
+  list-style: none !important;
+}
+.shipping-faq .faq-list summary::marker {
+  content: "" !important;
+}
+.shipping-faq .faq-list summary::-webkit-details-marker {
+  display: none !important;
+}
+.shipping-faq .faq-list summary {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 1rem !important;
+  min-height: 78px !important;
+  padding: 1rem 0 !important;
+  cursor: pointer;
+}
+.shipping-faq .faq-title {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: .9rem !important;
+}
+.shipping-faq .faq-title svg {
+  width: 23px !important;
+  height: 23px !important;
+  flex: 0 0 23px !important;
+  color: #8a4938 !important;
+  stroke-width: 1.5 !important;
+}
+.shipping-faq .faq-chevron {
+  display: block !important;
+  width: 19px !important;
+  height: 19px !important;
+  flex: 0 0 19px !important;
+  transition: transform 240ms ease-out !important;
+}
+.shipping-faq details[open] .faq-chevron {
+  transform: rotate(180deg) !important;
+}
+
+@media (max-width: 900px) {
+  [dir="rtl"] .process .steps article {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) 58px !important;
+    grid-template-rows: auto auto !important;
+    column-gap: 1rem !important;
+  }
+  [dir="rtl"] .process .steps article > span {
+    grid-column: 2 !important;
+    grid-row: 1 / span 2 !important;
+    justify-self: end !important;
+  }
+  [dir="rtl"] .process .steps article h3,
+  [dir="rtl"] .process .steps article p {
+    grid-column: 1 !important;
+  }
+  [dir="rtl"] .process .steps article h3 { grid-row: 1 !important; }
+  [dir="rtl"] .process .steps article p { grid-row: 2 !important; }
+}
+
+/* Local QA pass: controls, catalog alignment, guest makers, FAQ and process */
+.button,
+.button:hover,
+.button:active {
+  box-shadow: none !important;
+}
+.button:focus-visible {
+  outline: 0 !important;
+  box-shadow: inset 0 -2px 0 currentColor !important;
+}
+.button.outline {
+  border: 1px solid var(--moss) !important;
+  border-radius: 2px !important;
+  padding: .7rem 1.25rem !important;
+  min-height: 48px !important;
+}
+.button.outline:hover {
+  border-color: var(--moss) !important;
+}
+
+.vendor-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: .45rem;
+  width: fit-content;
+  margin: 0 0 .8rem;
+  padding: .35rem .55rem;
+  border: 1px solid color-mix(in srgb, #8a4938 55%, transparent);
+  color: #8a4938;
+  font-size: .75rem;
+  line-height: 1.45;
+}
+.vendor-badge b {
+  font-weight: 500;
+}
+.product-meta > div {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+[data-locale="fa"] .product-meta > div {
+  align-items: flex-end;
+}
+.product-category {
+  display: block;
+  margin-bottom: .45rem;
+}
+
+.plp-head {
+  max-width: 62rem;
+  margin-inline-start: 0;
+  text-align: start;
+}
+.filterbar {
+  width: 100%;
+  align-items: center !important;
+}
+.filterbar > div {
+  flex-wrap: wrap;
+  row-gap: .65rem;
+}
+.filterbar > span {
+  flex: 0 0 auto;
+  white-space: nowrap;
+  line-height: 1.4;
+}
+[data-locale="fa"] .filterbar > div,
+[data-locale="fa"] .filterbar > span {
+  text-align: right;
+}
+
+.shipping-faq .faq-list details {
+  padding: 0 !important;
+}
+.shipping-faq .faq-list summary {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  min-height: 76px;
+  padding: 1rem 0;
+}
+.shipping-faq .faq-list summary::-webkit-details-marker {
+  display: none;
+}
+.faq-title {
+  display: inline-flex;
+  align-items: center;
+  gap: .85rem;
+}
+.faq-title svg {
+  width: 22px;
+  height: 22px;
+  flex: 0 0 22px;
+  stroke-width: 1.5;
+  color: #8a4938;
+}
+.faq-chevron {
+  width: 19px;
+  height: 19px;
+  flex: 0 0 19px;
+  stroke-width: 1.5;
+  transition: transform 240ms ease-out;
+}
+.shipping-faq details[open] .faq-chevron {
+  transform: rotate(180deg);
+}
+.shipping-faq details p {
+  padding: 0 2.25rem 1.2rem 0;
+  margin: 0 !important;
+}
+[data-locale="en"] .shipping-faq details p {
+  padding: 0 0 1.2rem 2.25rem;
+}
+
+.process .steps article > span {
+  width: 52px !important;
+  min-width: 52px !important;
+  height: 52px !important;
+  padding: 0 !important;
+  border-radius: 50% !important;
+  aspect-ratio: 1 !important;
+  font-size: .78rem !important;
+  line-height: 1 !important;
+}
+[data-locale="fa"] .process .steps article > span {
+  justify-self: end !important;
+}
+
+@media (max-width: 900px) {
+  .filterbar {
+    align-items: flex-start !important;
+  }
+  .filterbar > div {
+    gap: 1rem;
+  }
+  .process .steps article,
+  [data-locale="fa"] .process .steps article {
+    grid-template-columns: minmax(0, 1fr) 52px !important;
+    column-gap: 1rem !important;
+  }
+  [data-locale="en"] .process .steps article {
+    grid-template-columns: 52px minmax(0, 1fr) !important;
+  }
+  [data-locale="fa"] .process .steps article > span {
+    grid-column: 2 !important;
+  }
+  [data-locale="fa"] .process .steps article h3,
+  [data-locale="fa"] .process .steps article p {
+    grid-column: 1 !important;
+    text-align: right !important;
+  }
+}
+
+@media (max-width: 600px) {
+  .filterbar {
+    gap: 1rem;
+    padding-block: 1rem;
+  }
+  .filterbar > div {
+    width: 100%;
+    justify-content: flex-start;
+  }
+  .shipping-faq .faq-list summary {
+    min-height: 68px;
+    font-size: 1rem;
+  }
+  .faq-title {
+    gap: .65rem;
+  }
+}
+
 /* RAD editorial refinement — final cascade owner */
 .hero { min-height:auto!important; padding-block:clamp(3.5rem,7vw,7rem)!important; grid-template-columns:minmax(280px,.72fr) minmax(420px,1.28fr)!important; align-items:center!important; }
 .hero-copy { align-self:center!important; }
