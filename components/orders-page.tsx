@@ -6,16 +6,18 @@ import { products, productCopy } from "@/lib/products";
 import { formatTotal } from "./cart";
 import { type Order, useCommerce } from "./commerce";
 import { useLocale } from "./i18n";
+import { useOrderStages } from "@/hooks/use-order-stage";
 
-const demoStageDuration = 60_000;
-const stageFor = (order: Order) =>
-  Math.min(9, Math.floor((Date.now() - order.createdAt) / demoStageDuration));
+function OrderTimeline({ activeStage, stages, number, label }: { activeStage: number; stages: string[]; number: (value: number) => string; label: string }) {
+  return <ol className="order-progress" aria-label={label}>{stages.map((stage, index) => <li key={stage} className={index <= activeStage ? "complete" : ""} aria-current={index === activeStage ? "step" : undefined}><i>{number(index + 1)}</i><span>{stage}</span></li>)}</ol>;
+}
 
 export function OrdersPage() {
   const { orders } = useCommerce();
   const { locale, t, href, number } = useLocale();
 
   const stages = locale === "fa" ? ["تأیید طرح", "انتخاب خاک", "فرم‌دهی", "خشک‌شدن", "پخت اول", "لعاب‌کاری", "پخت نهایی", "کنترل کیفیت", "امضا و شماره ۱/۱", "ارسال"] : ["Concept approved", "Clay selected", "Forming", "Drying", "Bisque firing", "Glazing", "Final firing", "Quality check", "Signed 1/1", "Shipped"];
+  const activeStages = useOrderStages(orders, stages.length);
 
   return (
     <section className="orders-page section">
@@ -26,7 +28,7 @@ export function OrdersPage() {
       {orders.length ? (
         <div className="orders-list">
           {orders.map((order) => {
-            const activeStage = stageFor(order);
+            const activeStage = activeStages[order.id] ?? 0;
             const usdTotal =
               order.usdTotal ??
               order.slugs.reduce(
@@ -46,18 +48,7 @@ export function OrdersPage() {
                   </div>
                   <span className="order-status">{stages[activeStage]}</span>
                 </header>
-                <ol className="order-progress" aria-label={t("orderProgress")}>
-                  {stages.map((stage, index) => (
-                    <li
-                      key={stage}
-                      className={index <= activeStage ? "complete" : ""}
-                      aria-current={index === activeStage ? "step" : undefined}
-                    >
-                      <i>{number(index + 1)}</i>
-                      <span>{stage}</span>
-                    </li>
-                  ))}
-                </ol>
+                <OrderTimeline activeStage={activeStage} stages={stages} number={number} label={t("orderProgress")} />
                 <dl>
                   <div>
                     <dt>{t("orderDate")}</dt>

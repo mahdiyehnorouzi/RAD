@@ -2,6 +2,10 @@
   "name": "rad-studio",
   "version": "1.0.0",
   "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
     "dev": "next dev -H localhost",
     "build": "next build",
@@ -11,7 +15,10 @@
     "dev:vinext": "vinext dev --port 3001",
     "build:vinext": "vinext build",
     "start:vinext": "wrangler dev --config dist/server/wrangler.json",
-    "deploy:vinext": "vinext-cloudflare deploy --config dist/server/wrangler.json"
+    "deploy:vinext": "vinext-cloudflare deploy --config dist/server/wrangler.json",
+    "dev:admin": "npm run dev --workspace @rad/admin",
+    "build:admin": "npm run build --workspace @rad/admin",
+    "typecheck:all": "npm run typecheck && npm run typecheck --workspace @rad/admin"
   },
   "dependencies": {
     "@vinext/cloudflare": "^1.0.0-beta.6",
@@ -19,7 +26,8 @@
     "next": "16.3.2",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
-    "react-server-dom-webpack": "^19.2.8"
+    "react-server-dom-webpack": "^19.2.8",
+    "zustand": "^5.0.15"
   },
   "devDependencies": {
     "@cloudflare/vite-plugin": "^1.53.1",
@@ -29,6 +37,9 @@
     "@types/react-dom": "^19",
     "@vitejs/plugin-react": "^6.1.0",
     "@vitejs/plugin-rsc": "^0.5.34",
+    "autoprefixer": "^10.5.4",
+    "postcss": "^8.5.26",
+    "tailwindcss": "^3.4.19",
     "typescript": "^5.8",
     "vinext": "^1.0.0-beta.8",
     "vite": "^8.2.2",

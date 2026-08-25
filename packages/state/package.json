@@ -1,0 +1,8 @@
+{
+  "name": "@rad/state",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "dependencies": { "zustand": "^5.0.11" },
+  "exports": { ".": "./src/index.ts" }
+}

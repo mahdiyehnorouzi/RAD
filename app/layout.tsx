@@ -5,6 +5,7 @@ import { CartProvider } from "@/components/cart";
 import { LocaleProvider } from "@/components/i18n";
 import { CommerceProvider } from "@/components/commerce";
 import { RouteScrollReset } from "@/components/route-scroll-reset";
+import { HomeBanner } from "@/components/home-banner";
 export const metadata: Metadata = {
   title: "رَد — استودیو سرامیک",
   description: "آثار یگانه و سرامیک سفارشی، ساخته‌شده در تهران",
@@ -21,6 +22,7 @@ export default function RootLayout({
           <CommerceProvider>
             <CartProvider>
               <RouteScrollReset />
+              <HomeBanner />
               <Header />
               <main>{children}</main>
               <Footer />

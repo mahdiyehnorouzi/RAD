@@ -1,0 +1,7 @@
+{
+  "name": "@rad/i18n",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": { "./fa": "./src/fa.ts", "./en": "./src/en.ts" }
+}

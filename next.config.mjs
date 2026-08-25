@@ -3,6 +3,7 @@ import { fileURLToPath } from "node:url";
 const projectRoot = path.dirname(fileURLToPath(import.meta.url));
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  transpilePackages: ["@rad/ui", "@rad/types", "@rad/state", "@rad/i18n"],
   turbopack: { root: projectRoot },
   async headers() { return [
     { source: "/(.*)", headers: [{ key: "X-Content-Type-Options", value: "nosniff" }, { key: "X-Frame-Options", value: "DENY" }, { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" }] },

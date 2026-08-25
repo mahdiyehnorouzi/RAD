@@ -1,72 +1,14 @@
 "use client";
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import type { ReactNode } from "react";
 import type { Product } from "@/lib/products";
 import type { Locale } from "./i18n";
+import { useCartStore } from "@rad/state";
 
-type CartContextValue = {
-  slugs: string[];
-  count: number;
-  add: (product: Product) => void;
-  remove: (slug: string) => void;
-  has: (slug: string) => boolean;
-  clear: () => void;
-};
-
-const CartContext = createContext<CartContextValue | null>(null);
-const storageKey = "rad-cart-v1";
-const reservationKey = "rad-reservations-v1";
-const reservationDuration = 10 * 60 * 1000;
-
-export function CartProvider({ children }: { children: React.ReactNode }) {
-  const [slugs, setSlugs] = useState<string[]>([]);
-
-  useEffect(() => {
-    try {
-      const saved = JSON.parse(localStorage.getItem(storageKey) ?? "[]");
-      if (Array.isArray(saved))
-        setSlugs(saved.filter((item) => typeof item === "string"));
-    } catch {
-      try {
-        localStorage.removeItem(storageKey);
-      } catch {}
-    }
-  }, []);
-
-  useEffect(() => {
-    try {
-      localStorage.setItem(storageKey, JSON.stringify(slugs));
-    } catch {}
-  }, [slugs]);
-
-  const value = useMemo<CartContextValue>(
-    () => ({
-      slugs,
-      count: slugs.length,
-      add: (product) => {
-        if (product.status === "sold") return;
-        try {
-          const reservations = JSON.parse(localStorage.getItem(reservationKey) ?? "{}");
-          localStorage.setItem(reservationKey, JSON.stringify({ ...reservations, [product.slug]: Date.now() + reservationDuration }));
-        } catch {}
-        setSlugs((current) => current.includes(product.slug) ? current : [...current, product.slug]);
-      },
-      remove: (slug) => {
-        try { const reservations = JSON.parse(localStorage.getItem(reservationKey) ?? "{}"); delete reservations[slug]; localStorage.setItem(reservationKey, JSON.stringify(reservations)); } catch {}
-        setSlugs((current) => current.filter((item) => item !== slug));
-      },
-      has: (slug) => slugs.includes(slug),
-      clear: () => setSlugs([]),
-    }),
-    [slugs],
-  );
-
-  return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
-}
+export function CartProvider({ children }: { children: ReactNode }) { return children; }
 
 export function useCart() {
-  const cart = useContext(CartContext);
-  if (!cart) throw new Error("useCart must be used inside CartProvider");
-  return cart;
+  const store = useCartStore();
+  return { ...store, count: store.slugs.length };
 }
 
 export function priceToNumber(price: string) {

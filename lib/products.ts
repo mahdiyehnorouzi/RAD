@@ -1,27 +1,5 @@
-export type ProductImage = {
-  src?: string;
-  alt: string;
-  enAlt: string;
-  color?: string;
-  accent?: string;
-  shape?: "tall" | "round" | "wide";
-};
-export type Product = {
-  slug: string;
-  name: string;
-  subtitle: string;
-  price: string;
-  usdPrice: number;
-  color: string;
-  accent: string;
-  shape: "tall" | "round" | "wide";
-  category: "vases" | "tableware" | "sculpture";
-  status?: "available" | "sold";
-  story: string;
-  details: string[];
-  images?: ProductImage[];
-  en: { name: string; subtitle: string; story: string; details: string[] };
-};
+import type { Product } from "@rad/types";
+export type { Product, ProductImage } from "@rad/types";
 export const products: Product[] = [
   {
     slug: "red-vessel-27",
@@ -79,6 +57,7 @@ export const products: Product[] = [
   },
   {
     slug: "olive-memory",
+    vendor: { id: "artist-sahar", displayName: "سحر میرزایی", displayNameEn: "Sahar Mirzaei", kind: "guest_artist", verified: true },
     name: "حافظه‌ی زیتونی",
     subtitle: "لعاب مات و خاک نخودی",
     price: "۹٬۶۰۰٬۰۰۰ تومان",

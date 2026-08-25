@@ -18,6 +18,7 @@ import {
   ShoppingBag,
   X,
 } from "lucide-react";
+import { VendorBadge } from "@rad/ui";
 
 export function Header() {
   const [open, setOpen] = useState(false);
@@ -262,6 +263,7 @@ export function ProductCard({
       </div>
       <div className="product-meta">
         <div>
+          <VendorBadge vendor={product.vendor} locale={locale} />
           <small className="product-category">{category}</small>
           <h3>
             <Link href={href(`/products/${product.slug}`)}>{copy.name}</Link>
