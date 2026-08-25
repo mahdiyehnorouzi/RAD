@@ -5,28 +5,21 @@ import { useLocale } from "@/components/i18n";
 export default function Home() {
   const { t, locale } = useLocale();
   const steps = [
-    [locale === "fa" ? "۰۱" : "01", t("step1Title"), t("step1Body")],
-    [locale === "fa" ? "۰۲" : "02", t("step2Title"), t("step2Body")],
-    [locale === "fa" ? "۰۳" : "03", t("step3Title"), t("step3Body")],
-    [locale === "fa" ? "۰۴" : "04", t("step4Title"), t("step4Body")],
+    [locale === "fa" ? "۰۱ / ۰۴" : "01 / 04", t("step1Title"), t("step1Body")],
+    [locale === "fa" ? "۰۲ / ۰۴" : "02 / 04", t("step2Title"), t("step2Body")],
+    [locale === "fa" ? "۰۳ / ۰۴" : "03 / 04", t("step3Title"), t("step3Body")],
+    [locale === "fa" ? "۰۴ / ۰۴" : "04 / 04", t("step4Title"), t("step4Body")],
   ];
   return (
     <>
       <section className="hero section">
         <div className="hero-copy">
-          <span className="eyebrow">{t("heroEyebrow")}</span>
           <h1>
             {t("heroTitle1")}
             <br />
             {t("heroTitle2")}
           </h1>
-          <p>{t("heroBody")}</p>
-          <div className="actions">
-            <ButtonLink href="/studio">{t("designMine")}</ButtonLink>
-            <ButtonLink href="/products" outline>
-              {t("viewWorks")}
-            </ButtonLink>
-          </div>
+          <p className="hero-thesis">{locale === "fa" ? "یک اثر. یک ردِ دست. یک بار." : "One work. One maker’s trace. Made once."}</p>
         </div>
         <div className="hero-art">
           <div className="hero-identifier" aria-hidden="true">
@@ -42,14 +35,14 @@ export default function Home() {
       </section>
       <section className="section evidence-film">
         <div className="film-copy"><span className="eyebrow">{locale === "fa" ? "مدرک ساخت" : "EVIDENCE OF MAKING"}</span><h2>{locale === "fa" ? "دست، خاک، آتش." : "Hand, clay, fire."}</h2><p>{locale === "fa" ? "شش ثانیه از مسیر واقعی یک فرم؛ از خاک نرم تا امضای ۱/۱." : "Six seconds in the life of a form—from soft clay to its 1/1 signature."}</p></div>
-        <img className="studio-film" src="/studio-process.svg" alt={locale === "fa" ? "ویدیوی کوتاه مسیر ساخت یک قطعه سرامیکی" : "Short loop showing a ceramic piece being made"} />
+        <figure className="film-frame"><img className="studio-film" src="/studio-process.svg" alt={locale === "fa" ? "ویدیوی کوتاه مسیر ساخت یک قطعه سرامیکی" : "Short loop showing a ceramic piece being made"} /><figcaption>{locale === "fa" ? "تهران / خاک، فرم‌دهی، لعاب، آتش" : "TEHRAN / CLAY, FORM, GLAZE, FIRE"}</figcaption></figure>
       </section>
       <section
         className="entry-paths section"
         aria-label={locale === "fa" ? "دو مسیر رَد" : "Two ways into RAD"}
       >
         <article>
-          <span>01 — {locale === "fa" ? "انتخاب" : "OWN"}</span>
+          <span>I — {locale === "fa" ? "انتخاب" : "OWN"}</span>
           <h2>{locale === "fa" ? "یک رَد را انتخاب کنید" : "Own a RAD"}</h2>
           <p>
             {locale === "fa"
@@ -61,7 +54,7 @@ export default function Home() {
           </ButtonLink>
         </article>
         <article>
-          <span>02 — {locale === "fa" ? "خلق" : "CREATE"}</span>
+          <span>II — {locale === "fa" ? "خلق" : "CREATE"}</span>
           <h2>
             {locale === "fa" ? "رَد خودتان را بسازید" : "Create your RAD"}
           </h2>
@@ -118,7 +111,7 @@ export default function Home() {
       <section className="provenance section">
         <header>
           <span className="eyebrow">
-            03 — {locale === "fa" ? "منشأ اثر" : "PROVENANCE"}
+            III — {locale === "fa" ? "منشأ اثر" : "PROVENANCE"}
           </span>
           <h2>
             {locale === "fa"
@@ -175,10 +168,6 @@ export default function Home() {
             </article>
           ))}
         </div>
-      </section>
-      <section className="section collector-story">
-        <blockquote>{locale === "fa" ? "هر بار که نور عوض می‌شود، انگار اثر دیگری روی میز من است." : "Each time the light changes, it feels like a different work on my table."}</blockquote>
-        <p>{locale === "fa" ? "— مجموعه‌دار رَد، تهران" : "— RAD collector, Tehran"}</p>
       </section>
       <section className="section orders-entry"><div><span className="eyebrow">{locale === "fa" ? "سفارش‌های شما" : "YOUR ORDERS"}</span><h2>{locale === "fa" ? "مسیر ساخت قطعه‌تان را دنبال کنید." : "Follow your piece as it is made."}</h2><p>{locale === "fa" ? "از تأیید طرح و انتخاب خاک تا پخت نهایی، امضا و ارسال." : "From concept approval and clay selection to final firing, signature, and delivery."}</p></div><ButtonLink href="/orders" outline>{locale === "fa" ? "دیدن سفارش‌ها" : "View orders"}</ButtonLink></section>
       <section className="section final-cta"><span className="eyebrow">{locale === "fa" ? "قطعه شما" : "YOUR OBJECT"}</span><h2>{locale === "fa" ? "چیزی را شروع کنید که فقط یک بار ساخته می‌شود." : "Start something that will be made only once."}</h2><ButtonLink href="/studio">{t("designMine")}</ButtonLink></section>

@@ -135,7 +135,7 @@ const messages = {
     filterVases: "گلدان",
     filterTableware: "ظروف",
     filterSculpture: "مجسمه",
-    availableWorks: "اثر موجود",
+    availableWorks: "اثر در مجموعه",
     emptyTitle: "فعلاً اثری در این گروه نیست.",
     emptyBody:
       "مجموعه‌ی رَد دائماً تغییر می‌کند؛ گروه دیگری را ببینید یا قطعه‌ی خودتان را طراحی کنید.",
@@ -386,7 +386,7 @@ const messages = {
     filterVases: "Vases",
     filterTableware: "Tableware",
     filterSculpture: "Sculpture",
-    availableWorks: "works available",
+    availableWorks: "works in the collection",
     emptyTitle: "There are no works in this group yet.",
     emptyBody:
       "The RAD collection is always changing. Explore another group or design your own piece.",

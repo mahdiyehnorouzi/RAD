@@ -124,7 +124,7 @@ export function CustomDesigner() {
           aria-describedby="prompt-help"
         />
         <small id="prompt-help">{t("promptHelp")}</small>
-        <div className="preset-row">
+        <div className="preset-row" aria-label={locale === "fa" ? "واژه‌های پیشنهادی" : "Suggested words"}>
           {presets.map((x) => (
             <button
               type="button"

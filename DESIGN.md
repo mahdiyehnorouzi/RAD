@@ -34,7 +34,7 @@ components:
 
 ## Overview
 
-رَد is a hybrid editorial storefront and product tool for Iranian collectors of one-of-one ceramics. Its North Star is a quiet studio archive: raw, exact, and calm. The signature is the maker identifier—RĀD number, Tehran/date, and 1/1—used consistently beside hand-shaped silhouettes and deliberately uneven compositions.
+رَد is a hybrid editorial storefront and product tool for Iranian collectors of one-of-one ceramics. Its North Star is a quiet studio archive: raw, exact, and calm. The signature is the maker identifier—`RĀD / 027` plus `1 / 1`—used consistently beside hand-shaped silhouettes. No competing serial-number notation is permitted.
 
 ## Colors
 
@@ -46,7 +46,7 @@ All Persian and Latin interface text uses Vazirmatn/Vazir to preserve the projec
 
 ## Layout
 
-RTL by default, wide curated asymmetrical compositions on desktop, intentional mixed-width sequencing on mobile, and single-column reading order where clarity requires it. Product information remains visible without hover. Home and PLP should read as an exhibition archive rather than a uniform ecommerce grid.
+RTL by default, wide curated asymmetrical compositions on desktop, intentional mixed-width sequencing on mobile, and single-column reading order where clarity requires it. Product information remains visible without hover. Home and PLP should read as an exhibition archive rather than a commodity ecommerce grid. Home alternates quiet ivory, full-width dark evidence, sand archive, and mineral studio surfaces to pace a long editorial journey.
 
 The interface supports Persian (`fa`, default, RTL) and English (`en`, LTR). Locale is owned by `components/i18n.tsx`; all shared navigation, commerce copy, product content, numbers, and accessibility labels must follow the active locale. Internal links preserve English with the shareable `?lang=en` parameter.
 
@@ -66,7 +66,7 @@ Header, footer, product cards, vessel artwork and buttons are shared across rout
 
 Commerce utilities use the Lucide line-icon family with compact count badges. Basket, favourites, account, search, and notifications stay visible in the sticky header; on phones their text labels collapse before any operation disappears. Product-card hearts sit on the artwork field like a maker's annotation. Account, orders, reviews, and checkout surfaces retain the gallery palette and use bordered paper panels instead of introducing a separate dashboard style.
 
-Header commerce actions are limited to search, favourites, and bag, with counts anchored to their owning icon. Profile and orders live in the account route/mobile menu. Header overlays are mutually exclusive. Product cards lead to the work itself; selection happens deliberately inside the PDP rather than through quick commerce.
+Header commerce actions are limited to search, favourites, and bag, with counts anchored to their owning icon. Profile and orders live in the account route/mobile menu. Header overlays are mutually exclusive. Product cards lead to the work itself; selection happens deliberately inside the PDP rather than through quick commerce. Home section identifiers use Roman numerals while process steps use `01 / 04`, keeping editorial taxonomy separate from sequence.
 
 Product media is a gallery rather than a single fixed image: PDP thumbnails select the active image, while missing media always resolves to a localized branded placeholder. Lightweight localized toast feedback confirms favourite, basket, and review actions without changing page context.
 

@@ -255,7 +255,7 @@ export function ProductCard({
         >
           <span className="edition">{locale === "fa" ? "۱/۱" : "1/1"}</span>
           <small className="product-index">
-            {number(index + 1).padStart(2, locale === "fa" ? "۰" : "0")}
+            RĀD / {number(27 + index).padStart(3, locale === "fa" ? "۰" : "0")}
           </small>
           <ProductMedia product={product} />
         </Link>
