@@ -1,6 +1,6 @@
 # RAD architecture
 
-RAD is an npm-workspaces monorepo. The production storefront remains at the repository root to preserve the existing Sites deployment. `apps/admin` is the operations prototype. Shared contracts live in `packages/types`, reusable UI in `packages/ui`, persisted client state in `packages/state`, and locale-owned copy in `packages/i18n`.
+RAD is an npm-workspaces monorepo with two independently runnable Next.js applications. The customer storefront and all of its routes live in `apps/storefront`; the operations application and its routes live in `apps/admin`. Shared contracts live in `packages/types`, reusable UI in `packages/ui`, persisted client state in `packages/state`, and locale-owned copy in `packages/i18n`.
 
 ## Security boundary
 
@@ -11,5 +11,7 @@ RAD is an npm-workspaces monorepo. The production storefront remains at the repo
 
 ## Applications
 
-- Storefront: customer-facing bilingual archive, custom design and commerce prototype.
-- Admin: product, guest-artist, order and AI-concept review prototype.
+- `apps/storefront`: customer-facing bilingual archive, custom design and commerce experience.
+- `apps/admin`: product, guest-artist, order and AI-concept review experience.
+
+Each application owns its own `app`, app-specific components, hooks, local data, public assets, Next.js configuration, and TypeScript configuration. Only code that is consumed by more than one application belongs in `packages`.

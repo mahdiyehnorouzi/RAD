@@ -4,6 +4,11 @@ RAD is a bilingual hybrid storefront. Persian is the default RTL locale; English
 
 ## Canonical owners
 
+- Admin operations: `apps/admin/components/admin-dashboard.tsx`; overview, catalog, orders, and access management share one application shell and reusable dialog/field/status primitives.
+- Admin prototype state: `apps/admin/hooks/use-admin-workspace.ts`; products, orders, and invitations persist locally for evaluation. Browser-stored roles are never an authorization boundary.
+- Admin data contracts: `apps/admin/lib/admin-data.ts`; product image arrays, one-of-one inventory status, ceramic order stages, roles, and permission labels are defined centrally.
+- Admin select ownership: native `select` controls are intentional for compact role, status and category editing; they retain visible labels and accessible names.
+
 - Header utilities: `components/site.tsx`; search, favourites, and basket remain available on every route. Profile and orders live in the account route and mobile menu so the brand header stays quiet.
 - Header overlays: search, notifications, and the mobile navigation are mutually exclusive; opening one closes the others.
 - Local session, favourites, notification history, orders, and reviews: `components/commerce.tsx`. This prototype stores only profile name/email and never stores passwords.

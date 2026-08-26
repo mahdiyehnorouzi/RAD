@@ -80,4 +80,8 @@ Every product owns an explicit category (`vases`, `tableware`, or `sculpture`). 
 
 ## Do's and Don'ts
 
+## Admin application
+
+The admin application uses the same kiln-green, paper, oxide and Vazirmatn foundations, but shifts to a denser operational rhythm. Its sidebar owns section navigation; paper panels own data views; product, order and member rows stay readable without hover. Product editing uses one shared dialog pattern with app-owned validation, while destructive actions always require an explicit confirmation dialog.
+
 Do use real Persian copy, Persian numerals, generous uneven whitespace, curated image ratios, and one-of-one inventory language. Do use the numbering system as structural information. Do not use stock luxury imagery, glassmorphism, generic gradients, uniform card grids, decorative borders, or hover-only product details.
