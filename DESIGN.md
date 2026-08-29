@@ -34,7 +34,7 @@ components:
 
 ## Overview
 
-رَد is a hybrid editorial storefront and product tool for Iranian collectors of one-of-one ceramics. Its North Star is a quiet studio archive: raw, exact, and calm. The signature is the maker identifier—`RĀD / 027` plus `1 / 1`—used consistently beside hand-shaped silhouettes. No competing serial-number notation is permitted.
+رَد is a hybrid editorial storefront and product tool for Iranian collectors of one-of-one art and design, including ceramics, painting, textile, woodwork, sculpture, jewellery, and hand printing. Its North Star is a quiet living archive: raw, exact, and calm. The signature is the maker identifier—`RĀD / 027` plus `1 / 1`—used consistently beside material-specific silhouettes. No competing serial-number notation is permitted.
 
 ## Colors
 
@@ -68,15 +68,17 @@ Commerce utilities use the Lucide line-icon family with compact count badges. Ba
 
 Header commerce actions are limited to search, favourites, and bag, with counts anchored to their owning icon. Profile and orders live in the account route/mobile menu. Header overlays are mutually exclusive. Product cards lead to the work itself; selection happens deliberately inside the PDP rather than through quick commerce. Home section identifiers use Roman numerals while process steps use `01 / 04`, keeping editorial taxonomy separate from sequence.
 
+Every non-home route exposes one quiet back control immediately below the global header. Sold works remain visible in the archive and carry the same oxide-coloured sold badge on every product image surface, including cards, PDP media, thumbnails, and bag previews.
+
 Product media is a gallery rather than a single fixed image: PDP thumbnails select the active image, while missing media always resolves to a localized branded placeholder. Lightweight localized toast feedback confirms favourite, basket, and review actions without changing page context.
 
-Desktop PDP media uses one generous contained stage with a horizontal thumbnail rail; never use a tall sliver thumbnail column. Uploaded imagery is contained rather than cropped, and missing media sits inside a smaller dashed maker-frame so absence does not become the dominant artwork.
+Desktop PDP media uses one generous contained stage with a horizontal thumbnail rail; never use a tall sliver thumbnail column. Uploaded imagery is contained rather than cropped, and mock media must visually reflect its category rather than defaulting every work to a ceramic vessel. Missing media sits inside a smaller dashed maker-frame so absence does not become the dominant artwork.
 
 English commerce surfaces use curated USD prices with the dollar symbol; Persian commerce keeps toman values and Persian numerals. Order status is shown as a restrained four-step kiln-to-delivery progress line rather than a generic dashboard timeline.
 
 The profile uses a maker-mark avatar, two compact collection cards, and one moss installation panel. Mobile type deliberately steps down across heroes, application headings, actions, and the footer; the artwork remains the dominant object.
 
-Every product owns an explicit category (`vases`, `tableware`, or `sculpture`). Category labels appear on cards and PDP context, and PLP filters use that data directly.
+Every product owns an explicit category (`ceramics`, `painting`, `textile`, `woodwork`, `sculpture`, `jewelry`, or `print`). Category labels appear on cards and PDP context, PLP filters use that data directly, and custom design starts with the same canonical category list before revealing category-specific options.
 
 ## Do's and Don'ts
 

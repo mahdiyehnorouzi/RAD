@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { usePathname } from "next/navigation";
+import { mockStorefront } from "@/lib/mock-data";
 
 export type Locale = "fa" | "en";
 
@@ -70,12 +71,12 @@ const messages = {
     noticeWelcome: "خوش آمدید؛ پروفایل شما روی این دستگاه فعال شد.",
     noticeOrder: "درخواست سفارش شما در نسخه نمایشی ثبت شد.",
     home: "خانه رَد",
-    logoSubtitle: "استودیو سرامیک",
+    logoSubtitle: "گالری آثار یکتا",
     collectionEyebrow: "مجموعه ۰۱",
     studioEyebrow: "رَد × تصویرساز هوشمند",
     processEyebrow: "فرآیند سفارش",
     shopEyebrow: "فروشگاه آثار یگانه",
-    relatedEyebrow: "تازه از کوره",
+    relatedEyebrow: "آثار پیشنهادی",
     bagEyebrow: "کیسه شما",
     designerEyebrow: "رَد × تصویرساز هوشمند",
     footerTagline: "هر اثر، یک‌بار.",
@@ -88,11 +89,11 @@ const messages = {
     footerInstagram: "اینستاگرام",
     footerNewsletter: "خبرنامه",
     footerCopyright: "© ۱۴۰۵ استودیو رَد — تهران",
-    heroEyebrow: "سرامیک دست‌ساز • تهران",
+    heroEyebrow: "آثار یکتای هنری • تهران",
     heroTitle1: "هیچ‌چیز دوبار",
     heroTitle2: "ساخته نمی‌شود.",
     heroBody:
-      "هر قطعه از رَد یک اثر یگانه است؛ ساخته‌شده با دست، آتش و ردّی که فقط یک‌بار به‌جا می‌ماند.",
+      "هر اثر رَد یگانه است؛ ساخته‌شده با دست و ردّی که فقط یک‌بار به‌جا می‌ماند.",
     designMine: "طراحی قطعه‌ی من ←",
     viewWorks: "دیدن آثار",
     onlyOne: "تنها یک نسخه",
@@ -103,30 +104,30 @@ const messages = {
     featureIran: "ارسال به سراسر ایران",
     collectionTitle: "آثار یگانه",
     collectionBody:
-      "قطعات تازه از کوره؛ هرکدام شماره‌گذاری شده و غیرقابل تکرار.",
+      "نقاشی، پارچه، چوب، سرامیک و اشیای هنری؛ هرکدام شماره‌گذاری‌شده و غیرقابل تکرار.",
     allWorks: "همه‌ی آثار ←",
     studioTitle1: "خیال شما،",
-    studioTitle2: "در قالب خاک.",
+    studioTitle2: "در قالب یک اثر.",
     studioBody:
       "ایده‌ی قطعه‌ی دلخواه‌تان را بنویسید، تصویر اولیه را با هوش مصنوعی بسازید و همراه هنرمند رَد آن را برای ساخت نهایی کنید.",
     enterStudio: "ورود به استودیوی طراحی ✦",
     philosophy: "فلسفه‌ی رَد",
     philosophyTitle: "ارزش در تکرارناپذیری است.",
     philosophyBody:
-      "ما قالب ثابت نداریم. هر اثر از گفت‌وگوی خاک، دست و آتش شکل می‌گیرد و تفاوت‌های کوچک آن بخشی از هویت قطعه است، نه نقص آن. رَد در تهران و در تیراژ یک تولید می‌کند.",
-    processTitle: "از خیال تا خاک",
+      "ما قالب ثابت نداریم. هر اثر از گفت‌وگوی ماده، نگاه و دست هنرمند شکل می‌گیرد. تفاوت‌های کوچک بخشی از هویت اثرند، نه نقص آن. رَد هر اثر را در تیراژ یک ارائه می‌کند.",
+    processTitle: "از خیال تا اثر",
     step1Title: "توصیف کنید",
     step1Body: "ایده، کاربرد و حسی را که می‌خواهید بنویسید.",
     step2Title: "تصویر بسازید",
-    step2Body: "هوش مصنوعی فرم اولیه را برایتان تجسم می‌کند.",
+    step2Body: "هوش مصنوعی تصویر اولیه را برایتان تجسم می‌کند.",
     step3Title: "با ما نهایی کنید",
     step3Body: "هنرمند رَد امکان ساخت و جزئیات را بررسی می‌کند.",
     step4Title: "تنها برای شما",
-    step4Body: "قطعه با دست ساخته و شماره‌گذاری می‌شود.",
-    journalTitle1: "آتش، خاک و",
+    step4Body: "اثر با دست ساخته و شماره‌گذاری می‌شود.",
+    journalTitle1: "ماده، رنگ و",
     journalTitle2: "حافظه‌ی دست",
     journalBody:
-      "قصه‌ی مواد، آزمون‌های لعاب و زندگی آرام اشیایی که هر روز کنارمان هستند.",
+      "قصه‌ی هنرمندان، مواد، رنگ‌ها و زندگی آرام اشیایی که هر روز کنارمان هستند.",
     readJournal: "خواندن ژورنال ←",
     shopTitle: "همه‌ی آثار",
     shopBody:
@@ -153,11 +154,12 @@ const messages = {
     addBag: "افزودن به کیسه",
     quickAdd: "افزودن سریع",
     inBag: "در کیسه است ✓",
+    soldOut: "فروش رفته",
     shipping: "ارسال رایگان و بیمه‌شده در ایران • آماده‌سازی ۲ تا ۴ روز کاری",
     moreWorks: "آثار دیگر",
     emptyBag: "کیسه‌ی شما خالی است.",
     emptyBagBody:
-      "هر اثر رَد فقط یک نسخه دارد. مجموعه‌ی تازه از کوره را ببینید و قطعه‌ی خودتان را انتخاب کنید.",
+      "هر اثر رَد فقط یک نسخه دارد. مجموعه‌ی تازه را ببینید و اثر خودتان را انتخاب کنید.",
     shoppingBag: "کیسه‌ی خرید",
     clearBag: "خالی‌کردن کیسه",
     uniquePiece: "اثر یگانه • ۱/۱",
@@ -235,10 +237,10 @@ const messages = {
     designerTitle1: "قطعه‌ای که هنوز",
     designerTitle2: "وجود ندارد.",
     designerBody:
-      "ایده‌تان را به فارسی بنویسید. فرم، رنگ، لعاب و حس اثر را توصیف کنید؛ هوش مصنوعی یک تصویر اولیه برای گفت‌وگو با هنرمند رَد می‌سازد.",
+      "ابتدا نوع اثر را انتخاب کنید، سپس فرم، رنگ، متریال و حس آن را بنویسید؛ هوش مصنوعی یک تصویر اولیه برای گفت‌وگو با هنرمند می‌سازد.",
     promptLabel: "توصیف قطعه‌ی شما",
     promptPlaceholder:
-      "مثلاً یک گلدان بلند با فرم نامتقارن، لعاب سبز زیتونی و خطوط الهام‌گرفته از کویر لوت…",
+      "مثلاً یک دیوارکوب پارچه‌ای با خطوط آزاد، رنگ‌های خاکی و بافت طبیعی…",
     promptHelp:
       "هرچه درباره اندازه، بافت و کاربرد دقیق‌تر بنویسید، نتیجه نزدیک‌تر می‌شود.",
     stopGeneration: "توقف ساخت",
@@ -247,15 +249,15 @@ const messages = {
     preview: "پیش‌نمایش قطعه اینجا ساخته می‌شود",
     anotherVersion: "ساخت نسخه‌ی دیگر",
     talkArtist: "گفت‌وگو با هنرمند",
-    generatedAlt: "تصویر پیشنهادی قطعه سرامیکی شما",
+    generatedAlt: "تصویر پیشنهادی اثر سفارشی شما",
     designError: "تصویر ساخته نشد.",
     note1: "تصویر اولیه، طرح قطعی ساخت نیست.",
     note2: "هر سفارش پیش از ساخت توسط هنرمند بررسی می‌شود.",
     note3: "زمان معمول ساخت: ۴ تا ۸ هفته.",
-    preset1: "لعاب سبز زیتونی",
-    preset2: "فرم نامتقارن",
-    preset3: "الهام از کویر لوت",
-    preset4: "بافت خام خاک",
+    preset1: "رنگ‌های خاکی",
+    preset2: "خطوط آزاد",
+    preset3: "بافت طبیعی",
+    preset4: "هندسه ساده",
   },
   en: {
     navProducts: "Works",
@@ -321,12 +323,12 @@ const messages = {
     noticeWelcome: "Welcome—your local profile is now active.",
     noticeOrder: "Your demo order request was recorded.",
     home: "RAD home",
-    logoSubtitle: "CERAMIC STUDIO",
+    logoSubtitle: "UNIQUE WORKS",
     collectionEyebrow: "COLLECTION 01",
     studioEyebrow: "RAD × AI IMAGE",
     processEyebrow: "CUSTOM PROCESS",
     shopEyebrow: "ONE OF ONE / SHOP",
-    relatedEyebrow: "MORE FROM THE KILN",
+    relatedEyebrow: "RELATED WORKS",
     bagEyebrow: "YOUR BAG",
     designerEyebrow: "RAD × AI IMAGE",
     footerTagline: "One work. One time.",
@@ -339,11 +341,11 @@ const messages = {
     footerInstagram: "Instagram",
     footerNewsletter: "Newsletter",
     footerCopyright: "© 2026 RAD Studio — Tehran",
-    heroEyebrow: "HANDMADE CERAMICS • TEHRAN",
+    heroEyebrow: "ONE-OF-ONE ARTWORKS • TEHRAN",
     heroTitle1: "Nothing is ever",
     heroTitle2: "made twice.",
     heroBody:
-      "Every RAD piece is a singular work, shaped by hand, fire, and a trace that can only happen once.",
+      "Every RAD piece is singular, shaped by hand and a trace that can only happen once.",
     designMine: "Design my piece →",
     viewWorks: "View works",
     onlyOne: "Only one exists",
@@ -354,18 +356,18 @@ const messages = {
     featureIran: "Shipping across Iran",
     collectionTitle: "Singular works",
     collectionBody:
-      "Fresh from the kiln; each piece is numbered and cannot be repeated.",
+      "Painting, textile, wood, ceramic and art objects—each numbered and impossible to repeat.",
     allWorks: "All works →",
     studioTitle1: "Your imagination,",
-    studioTitle2: "shaped in clay.",
+    studioTitle2: "made into a work.",
     studioBody:
       "Describe the piece you imagine, generate an initial image with AI, and refine it with the RAD artist for production.",
     enterStudio: "Enter the design studio ✦",
     philosophy: "RAD PHILOSOPHY",
     philosophyTitle: "Value lives in the unrepeatable.",
     philosophyBody:
-      "We do not use fixed moulds. Each work grows from a conversation between clay, hand, and fire. Its small variations are part of its identity—not a defect. RAD makes one of each in Tehran.",
-    processTitle: "From idea to clay",
+      "We do not use fixed formulas. Each work grows from a conversation between material, vision, and the maker’s hand. Small variations belong to its identity. RAD presents one of each.",
+    processTitle: "From idea to artwork",
     step1Title: "Describe it",
     step1Body: "Write the function, feeling, and idea you have in mind.",
     step2Title: "Visualize it",
@@ -374,10 +376,10 @@ const messages = {
     step3Body: "The RAD artist reviews feasibility and details.",
     step4Title: "Made only for you",
     step4Body: "Your piece is made by hand and individually numbered.",
-    journalTitle1: "Fire, clay, and",
+    journalTitle1: "Material, colour, and",
     journalTitle2: "the memory of hands",
     journalBody:
-      "Stories of materials, glaze tests, and the quiet lives of objects we keep close every day.",
+      "Stories of artists, materials, colour, and the quiet lives of objects we keep close every day.",
     readJournal: "Read the journal →",
     shopTitle: "All works",
     shopBody:
@@ -404,11 +406,12 @@ const messages = {
     addBag: "Add to bag",
     quickAdd: "Quick add",
     inBag: "In your bag ✓",
+    soldOut: "Sold",
     shipping: "Free insured shipping in Iran • dispatch in 2–4 business days",
     moreWorks: "More works",
     emptyBag: "Your bag is empty.",
     emptyBagBody:
-      "Every RAD work has only one edition. Explore the latest pieces from the kiln and choose yours.",
+      "Every RAD work has only one edition. Explore the latest collection and choose yours.",
     shoppingBag: "Shopping bag",
     clearBag: "Clear bag",
     uniquePiece: "Unique work • 1/1",
@@ -488,10 +491,10 @@ const messages = {
     designerTitle1: "A piece that does not",
     designerTitle2: "exist yet.",
     designerBody:
-      "Describe your idea in Persian or English—its form, colour, glaze, and mood. AI will create a first image for your conversation with the RAD artist.",
+      "Choose an artwork category, then describe its form, colour, material, and mood. AI will create a first image for your conversation with a maker.",
     promptLabel: "Describe your piece",
     promptPlaceholder:
-      "For example: a tall asymmetric vase with olive-green glaze and lines inspired by the Lut Desert…",
+      "For example: a textile wall piece with free lines, earth tones, and natural texture…",
     promptHelp: "Include size, texture, and function for a closer result.",
     stopGeneration: "Stop generation",
     generate: "Create with GPT",
@@ -499,16 +502,16 @@ const messages = {
     preview: "Your piece preview will appear here",
     anotherVersion: "Create another version",
     talkArtist: "Talk to the artist",
-    generatedAlt: "AI concept for your ceramic piece",
+    generatedAlt: "AI concept for your commissioned artwork",
     designError: "The image could not be created.",
     note1:
       "The generated image is an initial concept, not a final production design.",
     note2: "Every order is reviewed by the artist before production.",
     note3: "Typical production time: 4–8 weeks.",
-    preset1: "Olive-green glaze",
-    preset2: "Asymmetric form",
-    preset3: "Inspired by the Lut Desert",
-    preset4: "Raw clay texture",
+    preset1: "Earth tones",
+    preset2: "Free lines",
+    preset3: "Natural texture",
+    preset4: "Simple geometry",
   },
 } as const;
 
@@ -568,8 +571,8 @@ export function LocaleProvider({ children }: { children: React.ReactNode }) {
     document.title = section
       ? `${section} | ${locale === "fa" ? "رَد" : "RAD"}`
       : locale === "fa"
-        ? "رَد — استودیو سرامیک"
-        : "RAD — Ceramic Studio";
+        ? mockStorefront.brand.title.fa
+        : mockStorefront.brand.title.en;
   }, [locale, pathname]);
   const value = useMemo<LocaleContextValue>(
     () => ({

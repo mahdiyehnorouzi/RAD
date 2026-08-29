@@ -1,10 +1,11 @@
 "use client";
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { Product } from "@/lib/products";
 import { productCopy } from "@/lib/products";
+import { mockCategoryLabel, mockStorefront } from "@/lib/mock-data";
 import { productPrice, useCart } from "./cart";
 import { useLocale } from "./i18n";
 import { SiteSearch } from "./search";
@@ -14,6 +15,8 @@ import {
 import {
   Heart,
   ImageOff,
+  ArrowLeft,
+  ArrowRight,
   Menu as MenuIcon,
   ShoppingBag,
   X,
@@ -49,7 +52,7 @@ export function Header() {
         <span className="logo-mark" aria-hidden="true">
           <Image src="/rad-logo.png" alt="" width={1254} height={1254} priority />
         </span>
-        <span>{t("logoSubtitle")}</span>
+        <span>{mockStorefront.brand.subtitle[locale]}</span>
       </Link>
       <nav className={open ? "nav open" : "nav"} aria-label={t("navAria")}>
         <Link href={href("/products")} onClick={() => setOpen(false)}>
@@ -142,6 +145,31 @@ export function Header() {
     </header>
   );
 }
+
+export function PageBackNavigation() {
+  const pathname = usePathname();
+  const router = useRouter();
+  const { locale, t, href } = useLocale();
+
+  if (pathname === "/") return null;
+
+  const BackIcon = locale === "fa" ? ArrowRight : ArrowLeft;
+
+  return (
+    <div className="route-back-bar">
+      <button
+        type="button"
+        className="route-back-button"
+        onClick={() =>
+          window.history.length > 1 ? router.back() : router.push(href("/"))
+        }
+      >
+        <BackIcon aria-hidden="true" />
+        <span>{t("previousPage")}</span>
+      </button>
+    </div>
+  );
+}
 export function Footer() {
   const { t, href, locale } = useLocale();
   return (
@@ -196,6 +224,39 @@ export function Vessel({
     </div>
   );
 }
+
+export function ArtworkVisual({
+  visual = "vessel",
+  color,
+  accent,
+  shape = "round",
+  className = "",
+}: {
+  visual?: Product["visual"];
+  color: string;
+  accent: string;
+  shape?: Product["shape"];
+  className?: string;
+}) {
+  if (visual === "vessel")
+    return <Vessel product={{ color, accent, shape }} className={className} />;
+
+  return (
+    <div
+      className={`mock-artwork ${visual} ${className}`}
+      style={
+        {
+          "--art-color": color,
+          "--art-accent": accent,
+        } as React.CSSProperties
+      }
+      aria-hidden="true"
+    >
+      <span />
+      <i />
+    </div>
+  );
+}
 export function ProductMedia({
   product,
   imageIndex = 0,
@@ -204,31 +265,39 @@ export function ProductMedia({
   imageIndex?: number;
 }) {
   const { locale, t } = useLocale();
-  if (product.images && product.images.length === 0)
-    return (
+  const soldBadge = product.status === "sold" ? (
+    <span className="sold-media-badge">{t("soldOut")}</span>
+  ) : null;
+
+  if (product.images && product.images.length === 0) {
+    return <>
       <div className="product-fallback">
         <ImageOff aria-hidden="true" />
         <span>{t("imageUnavailable")}</span>
       </div>
-    );
+      {soldBadge}
+    </>;
+  }
   const media = product.images?.[imageIndex] ?? product.images?.[0];
-  if (media?.src)
-    return (
+  if (media?.src) {
+    return <>
       <img
         className="product-photo"
         src={media.src}
         alt={locale === "fa" ? media.alt : media.enAlt}
       />
-    );
-  return (
-    <Vessel
-      product={{
-        color: media?.color ?? product.color,
-        accent: media?.accent ?? product.accent,
-        shape: media?.shape ?? product.shape,
-      }}
-    />
-  );
+      {soldBadge}
+    </>;
+  }
+  return <>
+      <ArtworkVisual
+        visual={product.visual}
+        color={media?.color ?? product.color}
+        accent={media?.accent ?? product.accent}
+        shape={media?.shape ?? product.shape}
+      />
+      {soldBadge}
+    </>;
 }
 export function ProductCard({
   product,
@@ -239,12 +308,7 @@ export function ProductCard({
 }) {
   const { locale, t, href, number } = useLocale();
   const copy = productCopy(product, locale);
-  const category =
-    product.category === "vases"
-      ? t("filterVases")
-      : product.category === "tableware"
-        ? t("filterTableware")
-        : t("filterSculpture");
+  const category = mockCategoryLabel(product.category, locale);
   return (
     <article className="product-card">
       <div className="product-media-shell">
@@ -280,19 +344,23 @@ export function ButtonLink({
   children,
   light = false,
   outline = false,
+  arrow = false,
 }: {
   href: string;
   children: React.ReactNode;
   light?: boolean;
   outline?: boolean;
+  arrow?: boolean;
 }) {
-  const { href: localizedHref } = useLocale();
+  const { href: localizedHref, locale } = useLocale();
+  const ArrowIcon = locale === "fa" ? ArrowLeft : ArrowRight;
   return (
     <Link
       className={`button ${light ? "light" : ""} ${outline ? "outline" : ""}`}
       href={localizedHref(href)}
     >
-      {children}
+      <span>{children}</span>
+      {arrow ? <ArrowIcon className="button-arrow" aria-hidden="true" /> : null}
     </Link>
   );
 }

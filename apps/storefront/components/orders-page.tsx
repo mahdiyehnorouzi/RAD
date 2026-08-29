@@ -18,7 +18,7 @@ export function OrdersPage() {
   const { locale, t, href, number } = useLocale();
   const { getProduct } = useCatalog();
 
-  const stages = locale === "fa" ? ["تأیید طرح", "انتخاب خاک", "فرم‌دهی", "خشک‌شدن", "پخت اول", "لعاب‌کاری", "پخت نهایی", "کنترل کیفیت", "امضا و شماره ۱/۱", "ارسال"] : ["Concept approved", "Clay selected", "Forming", "Drying", "Bisque firing", "Glazing", "Final firing", "Quality check", "Signed 1/1", "Shipped"];
+  const stages = locale === "fa" ? ["تأیید طرح", "انتخاب هنرمند", "انتخاب متریال", "نمونه اولیه", "ساخت", "پرداخت نهایی", "کنترل کیفیت", "امضا و شماره ۱/۱", "بسته‌بندی", "ارسال"] : ["Concept approved", "Maker selected", "Material selected", "First study", "Making", "Final finish", "Quality check", "Signed 1/1", "Packed", "Shipped"];
   const activeStages = useOrderStages(orders, stages.length);
 
   return (

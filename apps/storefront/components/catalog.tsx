@@ -6,15 +6,18 @@ import { useCart } from "./cart";
 import { useLocale } from "./i18n";
 import { useCommerce } from "./commerce";
 import { useCatalog } from "./catalog-provider";
+import { mockCategories } from "@/lib/mock-data";
+import { MoveLeft, MoveRight } from "lucide-react";
 
 export function Catalog() {
-  const { t, number } = useLocale();
+  const { t, number, locale } = useLocale();
   const { products } = useCatalog();
   const filters = [
     { id: "all", label: t("filterAll") },
-    { id: "vases", label: t("filterVases") },
-    { id: "tableware", label: t("filterTableware") },
-    { id: "sculpture", label: t("filterSculpture") },
+    ...mockCategories.map((category) => ({
+      id: category.id,
+      label: category.label[locale],
+    })),
   ];
   const [active, setActive] = useState("all");
   const visible =
@@ -25,19 +28,33 @@ export function Catalog() {
   return (
     <>
       <div className="filterbar">
-        <div>
-          {filters.map((x) => (
-            <button
-              key={x.id}
-              className={active === x.id ? "active" : ""}
-              onClick={() => setActive(x.id)}
-              aria-pressed={active === x.id}
-            >
-              {x.label}
-            </button>
-          ))}
+        <div className="filter-heading">
+          <b>{locale === "fa" ? "دسته‌بندی آثار" : "Artwork categories"}</b>
+          <span className="filter-scroll-hint">
+            {locale === "fa" ? "برای دیدن بیشتر بکشید" : "Swipe to see more"}
+            {locale === "fa" ? <MoveLeft aria-hidden="true" /> : <MoveRight aria-hidden="true" />}
+          </span>
         </div>
-        <span>
+        <div className="filter-scroll-shell">
+          <div
+            className="filter-scroll"
+            tabIndex={0}
+            aria-label={locale === "fa" ? "فیلتر دسته‌بندی آثار" : "Filter artwork categories"}
+          >
+            {filters.map((x) => (
+              <button
+                type="button"
+                key={x.id}
+                className={active === x.id ? "active" : ""}
+                onClick={() => setActive(x.id)}
+                aria-pressed={active === x.id}
+              >
+                {x.label}
+              </button>
+            ))}
+          </div>
+        </div>
+        <span className="filter-count">
           {number(visible.length)} {t("availableWorks")}
         </span>
       </div>
@@ -65,8 +82,10 @@ export function AddToBag({ product }: { product: Product }) {
   const { t } = useLocale();
   const { addNotice } = useCommerce();
   const added = has(product.slug);
+  const soldOut = product.status === "sold";
   return (
     <button
+      type="button"
       className="button add"
       onClick={async () => {
         await add(product);
@@ -75,7 +94,7 @@ export function AddToBag({ product }: { product: Product }) {
       disabled={added || product.status === "sold" || product.status === "reserved"}
       aria-live="polite"
     >
-      {added ? t("inBag") : t("addBag")}
+      {soldOut ? t("soldOut") : added ? t("inBag") : t("addBag")}
     </button>
   );
 }

@@ -1,6 +1,21 @@
 export type Locale = "fa" | "en";
 export type ProductShape = "tall" | "round" | "wide";
-export type ProductCategory = "vases" | "tableware" | "sculpture";
+export type ProductCategory =
+  | "ceramics"
+  | "painting"
+  | "textile"
+  | "woodwork"
+  | "sculpture"
+  | "jewelry"
+  | "print";
+export type ProductVisual =
+  | "vessel"
+  | "painting"
+  | "textile"
+  | "wood"
+  | "sculpture"
+  | "jewelry"
+  | "print";
 export type ProductStatus = "draft" | "review" | "available" | "reserved" | "sold";
 
 export interface Vendor {
@@ -30,6 +45,7 @@ export interface Product {
   accent: string;
   shape: ProductShape;
   category: ProductCategory;
+  visual?: ProductVisual;
   status?: ProductStatus;
   story: string;
   details: string[];

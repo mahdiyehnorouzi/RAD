@@ -1,30 +1,43 @@
 "use client";
+
 import { FormEvent, useRef, useState } from "react";
-import { Vessel } from "./site";
+import type { ProductCategory } from "@rad/types";
+import { ArtworkVisual } from "./site";
 import { useLocale } from "./i18n";
+import {
+  getMockCategory,
+  mockCategories,
+  mockStorefront,
+} from "@/lib/mock-data";
 
 export function CustomDesigner() {
   const { t, locale } = useLocale();
-  const presets = [t("preset1"), t("preset2"), t("preset3"), t("preset4")];
+  const [category, setCategory] = useState<ProductCategory | "">("");
   const [prompt, setPrompt] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "done" | "error">(
     "idle",
   );
   const [image, setImage] = useState("");
   const [error, setError] = useState("");
-  const [brief, setBrief] = useState({
-    use: "",
-    form: "",
-    size: "",
-    surface: "",
-    budget: "",
-  });
+  const [brief, setBrief] = useState<Record<string, string>>({});
   const [direction, setDirection] = useState(0);
   const abort = useRef<AbortController | null>(null);
 
+  const selectedCategory = category ? getMockCategory(category) : null;
+  const presets = mockStorefront.design.presets[locale];
+  const directions = mockStorefront.design.directions[locale];
+
+  function chooseCategory(next: ProductCategory) {
+    setCategory(next);
+    setBrief({});
+    setImage("");
+    setStatus("idle");
+    setError("");
+  }
+
   async function submit(event: FormEvent) {
     event.preventDefault();
-    if (!prompt.trim() || status === "loading") return;
+    if (!category || !prompt.trim() || status === "loading") return;
     setStatus("loading");
     setError("");
     abort.current = new AbortController();
@@ -33,7 +46,12 @@ export function CustomDesigner() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          prompt: `${prompt}. ${Object.values(brief).filter(Boolean).join(", ")}. Concept direction ${direction + 1}`,
+          prompt: [
+            selectedCategory?.label[locale],
+            prompt,
+            ...Object.values(brief).filter(Boolean),
+            directions[direction],
+          ].join("، "),
         }),
         signal: abort.current.signal,
       });
@@ -53,101 +71,127 @@ export function CustomDesigner() {
     <div className="designer-grid">
       <form className="designer-form" onSubmit={submit} noValidate>
         <span className="eyebrow">{t("designerEyebrow")}</span>
-        <h1>{locale === "fa" ? "چیزی را که هنوز وجود ندارد، تصور کن." : "Imagine what does not exist yet."}</h1>
-        <p>{locale === "fa" ? "رَد کمک می‌کند آن را ببینی و بسازی." : "RAD helps you see it and make it."}</p>
-        <fieldset className="brief-fields">
-          <legend>{locale === "fa" ? "مشخصات اولیه" : "Starting brief"}</legend>
-          {[
-            [
-              "use",
-              locale === "fa" ? "کاربرد" : "Use",
-              locale === "fa"
-                ? ["گلدان", "ظرف", "آبجکت هنری"]
-                : ["Vase", "Tableware", "Art object"],
-            ],
-            [
-              "form",
-              locale === "fa" ? "فرم" : "Form",
-              locale === "fa"
-                ? ["کشیده", "پهن", "نامتقارن"]
-                : ["Tall", "Wide", "Asymmetric"],
-            ],
-            [
-              "size",
-              locale === "fa" ? "ابعاد" : "Scale",
-              locale === "fa"
-                ? ["کوچک", "متوسط", "بزرگ"]
-                : ["Small", "Medium", "Large"],
-            ],
-            [
-              "surface",
-              locale === "fa" ? "سطح" : "Surface",
-              locale === "fa"
-                ? ["خام", "مات", "براق"]
-                : ["Raw", "Matte", "Glossy"],
-            ],
-            [
-              "budget",
-              locale === "fa" ? "بازه بودجه" : "Budget",
-              locale === "fa"
-                ? ["تا ۱۰ میلیون", "۱۰ تا ۲۰ میلیون", "بیش از ۲۰ میلیون"]
-                : ["Up to $120", "$120–$240", "$240+"],
-            ],
-          ].map(([key, label, options]) => (
-            <label key={key as string}>
-              <span>{label as string}</span>
-              <select
-                value={brief[key as keyof typeof brief]}
-                onChange={(event) =>
-                  setBrief((current) => ({
-                    ...current,
-                    [key as string]: event.target.value,
-                  }))
-                }
+        <h1>
+          {locale === "fa"
+            ? "چیزی را که هنوز وجود ندارد، تصور کن."
+            : "Imagine what does not exist yet."}
+        </h1>
+        <p>
+          {locale === "fa"
+            ? "رَد شما را به هنرمند و مسیر ساخت مناسب متصل می‌کند."
+            : "RAD connects your idea to the right maker and process."}
+        </p>
+
+        <fieldset className="design-category-fieldset">
+          <legend>
+            <small>{locale === "fa" ? "مرحله اول" : "STEP ONE"}</small>
+            {locale === "fa"
+              ? "چه نوع اثری می‌خواهید؟"
+              : "What would you like to commission?"}
+          </legend>
+          <div className="design-category-grid">
+            {mockCategories.map((item) => (
+              <button
+                type="button"
+                key={item.id}
+                className={category === item.id ? "active" : ""}
+                onClick={() => chooseCategory(item.id)}
+                aria-pressed={category === item.id}
               >
-                <option value="">
-                  {locale === "fa" ? "انتخاب کنید" : "Choose"}
-                </option>
-                {(options as string[]).map((option) => (
-                  <option key={option}>{option}</option>
-                ))}
-              </select>
-            </label>
-          ))}
+                <span
+                  className={`category-swatch ${item.visual}`}
+                  style={
+                    {
+                      "--swatch": item.preview.color,
+                      "--swatch-accent": item.preview.accent,
+                    } as React.CSSProperties
+                  }
+                  aria-hidden="true"
+                />
+                {item.label[locale]}
+              </button>
+            ))}
+          </div>
         </fieldset>
-        <label htmlFor="ceramic-prompt">{t("promptLabel")}</label>
+
+        {selectedCategory && (
+          <fieldset className="brief-fields">
+            <legend>
+              <small>{locale === "fa" ? "مرحله دوم" : "STEP TWO"}</small>
+              {locale === "fa"
+                ? `جزئیات ${selectedCategory.shortLabel.fa}`
+                : `${selectedCategory.shortLabel.en} details`}
+            </legend>
+            {selectedCategory.fields.map((field) => (
+              <div className="brief-choice" key={field.key}>
+                <span>{field.label[locale]}</span>
+                <div>
+                  {field.options[locale].map((option) => (
+                    <button
+                      type="button"
+                      key={option}
+                      className={brief[field.key] === option ? "active" : ""}
+                      onClick={() =>
+                        setBrief((current) => ({
+                          ...current,
+                          [field.key]: option,
+                        }))
+                      }
+                      aria-pressed={brief[field.key] === option}
+                    >
+                      {option}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </fieldset>
+        )}
+
+        <label htmlFor="artwork-prompt">{t("promptLabel")}</label>
         <textarea
-          id="ceramic-prompt"
+          id="artwork-prompt"
+          className="resize-none designer-prompt"
           value={prompt}
-          onChange={(e) => setPrompt(e.target.value)}
-          placeholder={t("promptPlaceholder")}
+          onChange={(event) => setPrompt(event.target.value)}
+          placeholder={
+            category
+              ? t("promptPlaceholder")
+              : locale === "fa"
+                ? "ابتدا نوع اثر را انتخاب کنید…"
+                : "Choose an artwork category first…"
+          }
           aria-describedby="prompt-help"
+          disabled={!category}
         />
         <small id="prompt-help">{t("promptHelp")}</small>
-        <div className="preset-row" aria-label={locale === "fa" ? "واژه‌های پیشنهادی" : "Suggested words"}>
-          {presets.map((x) => (
+
+        <div
+          className="preset-row"
+          aria-label={locale === "fa" ? "واژه‌های پیشنهادی" : "Suggested words"}
+        >
+          {presets.map((preset) => (
             <button
               type="button"
-              key={x}
+              key={preset}
+              disabled={!category}
               onClick={() =>
                 setPrompt(
-                  (p) => `${p}${p ? (locale === "fa" ? "، " : ", ") : ""}${x}`,
+                  (current) =>
+                    `${current}${current ? (locale === "fa" ? "، " : ", ") : ""}${preset}`,
                 )
               }
             >
-              {x}
+              {preset}
             </button>
           ))}
         </div>
+
         <div
           className="concept-directions"
           aria-label={locale === "fa" ? "جهت طراحی" : "Design direction"}
         >
-          {[
-            locale === "fa" ? "آرام و متعادل" : "Quiet balance",
-            locale === "fa" ? "خام و نامتقارن" : "Raw asymmetry",
-            locale === "fa" ? "پیکره‌وار و جسور" : "Sculptural statement",
-          ].map((label, index) => (
+          {directions.map((label, index) => (
             <button
               type="button"
               key={label}
@@ -160,6 +204,7 @@ export function CustomDesigner() {
             </button>
           ))}
         </div>
+
         {error && (
           <p className="form-error" role="alert">
             {error}
@@ -175,32 +220,53 @@ export function CustomDesigner() {
               {t("stopGeneration")}
             </button>
           ) : (
-            <button className="button" disabled={!prompt.trim()}>
+            <button
+              type="submit"
+              className="button"
+              disabled={!category || !prompt.trim()}
+            >
               {locale === "fa" ? "تصورش کن →" : "Imagine it →"}
             </button>
           )}
         </div>
       </form>
+
       <section className={`designer-preview ${status}`} aria-live="polite">
         {image ? (
           <img src={image} alt={t("generatedAlt")} />
-        ) : (
+        ) : selectedCategory ? (
           <>
             <div className="preview-orbit" />
-            <Vessel
-              product={{ color: "#4a5039", accent: "#ead9bd", shape: "tall" }}
+            <ArtworkVisual
+              visual={selectedCategory.visual}
+              color={selectedCategory.preview.color}
+              accent={selectedCategory.preview.accent}
+              className="designer-artwork"
             />
             <p>{status === "loading" ? t("generating") : t("preview")}</p>
           </>
+        ) : (
+          <div className="designer-empty-preview">
+            <span>1 / 1</span>
+            <p>
+              {locale === "fa"
+                ? "برای شروع، نوع اثر را انتخاب کنید."
+                : "Choose an artwork category to begin."}
+            </p>
+          </div>
         )}
         {status === "done" && (
           <div className="preview-actions">
-            <button className="button light" onClick={() => setStatus("idle")}>
+            <button
+              type="button"
+              className="button light"
+              onClick={() => setStatus("idle")}
+            >
               {t("anotherVersion")}
             </button>
             <a
               className="button"
-              href="mailto:studio@rad.ir?subject=Custom ceramic"
+              href="mailto:studio@rad.ir?subject=Custom artwork"
             >
               {t("talkArtist")}
             </a>

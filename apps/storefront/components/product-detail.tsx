@@ -1,6 +1,5 @@
 "use client";
 import { useRef, useState } from "react";
-import { useRouter } from "next/navigation";
 import { ProductMedia, ProductCard } from "./site";
 import { AddToBag } from "./catalog";
 import { useLocale } from "./i18n";
@@ -10,10 +9,10 @@ import { FavoriteButton } from "./commerce";
 import { ChevronDown, PackageCheck, Palette, ShieldCheck, Truck } from "lucide-react";
 import { Reviews } from "./reviews";
 import { useCatalog } from "./catalog-provider";
+import { mockCategoryLabel } from "@/lib/mock-data";
 
 export function ProductDetail({ product }: { product: Product }) {
-  const { locale, t, href } = useLocale();
-  const router = useRouter();
+  const { locale, t } = useLocale();
   const carouselRef = useRef<HTMLDivElement>(null);
   const [activeImage, setActiveImage] = useState(0);
   const { products } = useCatalog();
@@ -23,29 +22,11 @@ export function ProductDetail({ product }: { product: Product }) {
   const copy = productCopy(product, locale);
   const price = productPrice(product, locale);
 
-  const category =
-    product.category === "vases"
-      ? t("filterVases")
-      : product.category === "tableware"
-        ? t("filterTableware")
-        : t("filterSculpture");
+  const category = mockCategoryLabel(product.category, locale);
 
   return (
     <>
       <section className="pdp section">
-        <div className="pdp-topbar">
-          <button
-            type="button"
-            className="back"
-            onClick={() =>
-              window.history.length > 1
-                ? router.back()
-                : router.push(href("/products"))
-            }
-          >
-            {t("previousPage")}
-          </button>
-        </div>
         <div className="pdp-gallery">
           <div className="pdp-main-art">
             <span className="edition">{locale === "fa" ? "۱/۱" : "1/1"}</span>
@@ -89,12 +70,12 @@ export function ProductDetail({ product }: { product: Product }) {
           ["اگر اثر در ارسال آسیب ببیند؟", "تمام آثار بیمه‌اند. آسیب را تا ۲۴ ساعت با عکس اعلام کنید؛ رَد مسئول پیگیری و جبران است."],
           ["بسته‌بندی چگونه است؟", "هر اثر در جعبه دولایه، با محافظ متناسب با فرم و شناسنامه امضاشده ارسال می‌شود."],
           ["زمان و محدوده ارسال؟", "تهران ۲ تا ۴ روز کاری و شهرستان ۴ تا ۸ روز کاری؛ ارسال بیمه‌شده رایگان است."],
-          ["رنگ لعاب و مرجوعی", "نور نمایشگر می‌تواند رنگ را کمی تغییر دهد. آثار آماده تا ۴۸ ساعت امکان درخواست بازگشت دارند؛ سفارش شخصی مرجوع نمی‌شود."]
+          ["رنگ، متریال و مرجوعی", "نور نمایشگر می‌تواند رنگ و بافت را کمی تغییر دهد. آثار آماده تا ۴۸ ساعت امکان درخواست بازگشت دارند؛ سفارش شخصی مرجوع نمی‌شود."]
         ] : [
           ["What if it is damaged?", "Every work is insured. Report damage with photos within 24 hours; RAD manages the resolution."],
           ["How is it packed?", "Each work travels in a double box with form-fitted protection and a signed certificate."],
           ["When will it arrive?", "Tehran: 2–4 working days. Other cities: 4–8. Insured delivery is complimentary."],
-          ["Glaze colour and returns", "Screens may shift glaze colour slightly. Ready works can be returned within 48 hours; custom works cannot be returned."]
+          ["Colour, material, and returns", "Screens may shift colour and texture slightly. Ready works can be returned within 48 hours; custom works cannot be returned."]
         ]).map(([q,a], index) => {
           const icons = [ShieldCheck, PackageCheck, Truck, Palette];
           const Icon = icons[index];
