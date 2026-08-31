@@ -1,7 +1,40 @@
 export type Locale = "fa" | "en";
 export type ProductShape = "tall" | "round" | "wide";
-export type ProductCategory = "vases" | "tableware" | "sculpture";
+export type ProductVisual =
+  | "vessel"
+  | "painting"
+  | "textile"
+  | "wood"
+  | "sculpture"
+  | "jewelry"
+  | "print";
+export type ProductCategory =
+  | "ceramics"
+  | "painting"
+  | "textile"
+  | "woodwork"
+  | "sculpture"
+  | "jewelry"
+  | "print"
+  | "vases"
+  | "tableware";
 export type ProductStatus = "draft" | "review" | "available" | "reserved" | "sold";
+
+const categoryVisual: Record<string, ProductVisual> = {
+  ceramics: "vessel",
+  vases: "vessel",
+  tableware: "vessel",
+  painting: "painting",
+  textile: "textile",
+  woodwork: "wood",
+  sculpture: "sculpture",
+  jewelry: "jewelry",
+  print: "print",
+};
+
+export function visualForCategory(category: string): ProductVisual {
+  return categoryVisual[category] ?? "vessel";
+}
 
 export interface Vendor {
   id: string;
@@ -30,6 +63,7 @@ export interface Product {
   accent: string;
   shape: ProductShape;
   category: ProductCategory;
+  visual?: ProductVisual;
   status?: ProductStatus;
   story: string;
   details: string[];

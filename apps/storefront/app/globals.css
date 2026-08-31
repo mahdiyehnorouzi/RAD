@@ -524,6 +524,215 @@ button:disabled {
   width: 74%;
   border-radius: 45% 45% 30% 30%/25% 25% 35% 35%;
 }
+.mock-artwork {
+  width: 58%;
+  height: 62%;
+  position: relative;
+  background: var(--art-color);
+}
+.mock-artwork span,
+.mock-artwork i {
+  position: absolute;
+  background: var(--art-accent);
+  display: block;
+}
+.mock-artwork.painting {
+  width: 62%;
+  height: auto;
+  aspect-ratio: 4 / 5;
+}
+.mock-artwork.painting span {
+  inset: 12% 14% 30% 14%;
+  opacity: 0.42;
+}
+.mock-artwork.painting i {
+  width: 46%;
+  height: 7px;
+  inset-inline-start: 14%;
+  bottom: 16%;
+}
+.mock-artwork.textile {
+  width: 54%;
+  height: 70%;
+}
+.mock-artwork.textile span {
+  inset: 10%;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--art-accent),
+    var(--art-accent) 8px,
+    transparent 8px,
+    transparent 16px
+  );
+  opacity: 0.55;
+}
+.mock-artwork.textile i {
+  width: 70%;
+  height: 12%;
+  inset-inline-start: 15%;
+  bottom: 18%;
+  opacity: 0.7;
+}
+.mock-artwork.wood {
+  width: 56%;
+  height: 48%;
+  border-radius: 50% 50% 42% 42%;
+}
+.mock-artwork.wood span {
+  inset: 18% 12% 28% 12%;
+  border-radius: 50%;
+  opacity: 0.35;
+}
+.mock-artwork.wood i {
+  width: 64%;
+  height: 10px;
+  inset-inline-start: 18%;
+  bottom: 22%;
+  border-radius: 999px;
+}
+.mock-artwork.jewelry {
+  width: 38%;
+  aspect-ratio: 1;
+  height: auto;
+  border-radius: 50%;
+}
+.mock-artwork.jewelry span {
+  inset: 22%;
+  border-radius: 50%;
+  background: transparent;
+  border: 6px solid var(--art-accent);
+}
+.mock-artwork.jewelry i {
+  width: 14%;
+  aspect-ratio: 1;
+  height: auto;
+  border-radius: 50%;
+  inset-inline-start: 43%;
+  top: 12%;
+}
+.mock-artwork.print {
+  width: 60%;
+  height: auto;
+  aspect-ratio: 5 / 4;
+}
+.mock-artwork.print span {
+  inset: 14% 16% 22% 16%;
+  opacity: 0.4;
+}
+.mock-artwork.print i {
+  width: 8px;
+  height: 46%;
+  inset-inline-start: 22%;
+  top: 18%;
+}
+.mock-artwork.sculpture {
+  width: 42%;
+  height: 68%;
+  clip-path: polygon(20% 8%, 80% 0, 100% 78%, 48% 100%, 0 70%);
+}
+.mock-artwork.sculpture span {
+  inset: 20% 18% 30% 18%;
+  opacity: 0.35;
+}
+.mock-artwork.sculpture i {
+  width: 70%;
+  height: 8px;
+  bottom: 16%;
+  inset-inline-start: 15%;
+}
+.product-art .mock-artwork,
+.hero-art .mock-artwork,
+.studio-visual .mock-artwork {
+  z-index: 1;
+}
+.design-category-fieldset,
+.brief-fields {
+  border: 1px solid rgba(247, 242, 233, 0.28);
+  margin: 1.75rem 0 0;
+  padding: 1.1rem 0 0;
+}
+.design-category-fieldset legend,
+.brief-fields legend {
+  display: grid;
+  gap: 0.2rem;
+  padding-inline-end: 0.8rem;
+}
+.design-category-fieldset legend small,
+.brief-fields legend small {
+  color: #cbb892;
+  letter-spacing: 0.12em;
+  font-size: 0.7rem;
+}
+.design-category-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.6rem;
+  margin: 1rem 0 0.4rem;
+}
+.design-category-grid button {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  text-align: start;
+  color: inherit;
+  background: transparent;
+  border: 1px solid rgba(247, 242, 233, 0.28);
+  min-height: 64px;
+  padding: 0.7rem 0.85rem;
+  cursor: pointer;
+}
+.design-category-grid button.active {
+  background: var(--moss);
+  border-color: var(--moss);
+}
+.category-swatch {
+  width: 1.4rem;
+  height: 1.4rem;
+  flex: 0 0 1.4rem;
+  background: var(--swatch);
+  box-shadow: inset 0 0 0 4px color-mix(in srgb, var(--swatch-accent) 70%, transparent);
+}
+.brief-choice {
+  margin: 1rem 0;
+}
+.brief-choice span {
+  display: block;
+  margin-bottom: 0.5rem;
+}
+.brief-choice div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+.brief-choice button {
+  background: transparent;
+  color: inherit;
+  border: 1px solid rgba(247, 242, 233, 0.35);
+  padding: 0.35rem 0.75rem;
+  cursor: pointer;
+}
+.brief-choice button.active {
+  background: var(--paper);
+  color: var(--ink);
+}
+.filter-scroll {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  overflow-x: auto;
+  max-width: min(70vw, 720px);
+  padding-bottom: 0.2rem;
+}
+.designer-empty-preview {
+  text-align: center;
+  z-index: 2;
+}
+.designer-preview .mock-artwork,
+.designer-preview .designer-artwork {
+  width: 42%;
+  height: 54%;
+  z-index: 2;
+}
 .ticker {
   display: flex;
   gap: 2.4rem;

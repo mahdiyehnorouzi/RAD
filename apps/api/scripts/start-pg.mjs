@@ -1,5 +1,5 @@
 import EmbeddedPostgres from "embedded-postgres";
-import { mkdirSync } from "node:fs";
+import { existsSync, mkdirSync } from "node:fs";
 import path from "node:path";
 
 const databaseDir = path.resolve(process.cwd(), "data/pg");
@@ -13,7 +13,9 @@ const pg = new EmbeddedPostgres({
   persistent: true,
 });
 
-await pg.initialise();
+if (!existsSync(path.join(databaseDir, "PG_VERSION"))) {
+  await pg.initialise();
+}
 await pg.start();
 try {
   await pg.createDatabase("rad");

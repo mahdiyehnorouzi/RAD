@@ -19,6 +19,8 @@ import {
   X,
 } from "lucide-react";
 import { VendorBadge } from "@rad/ui";
+import type { ProductShape, ProductVisual } from "@rad/types";
+import { artworkVisual, categoryLabel } from "@/lib/artwork";
 
 export function Header() {
   const [open, setOpen] = useState(false);
@@ -196,6 +198,38 @@ export function Vessel({
     </div>
   );
 }
+export function Artwork({
+  visual = "vessel",
+  color,
+  accent,
+  shape = "round",
+  className = "",
+}: {
+  visual?: ProductVisual;
+  color: string;
+  accent: string;
+  shape?: ProductShape;
+  className?: string;
+}) {
+  if (visual === "vessel") {
+    return <Vessel product={{ color, accent, shape }} className={className} />;
+  }
+  return (
+    <div
+      className={`mock-artwork ${visual} ${className}`}
+      style={
+        {
+          "--art-color": color,
+          "--art-accent": accent,
+        } as React.CSSProperties
+      }
+      aria-hidden="true"
+    >
+      <span />
+      <i />
+    </div>
+  );
+}
 export function ProductMedia({
   product,
   imageIndex = 0,
@@ -221,12 +255,11 @@ export function ProductMedia({
       />
     );
   return (
-    <Vessel
-      product={{
-        color: media?.color ?? product.color,
-        accent: media?.accent ?? product.accent,
-        shape: media?.shape ?? product.shape,
-      }}
+    <Artwork
+      visual={artworkVisual(product)}
+      color={media?.color ?? product.color}
+      accent={media?.accent ?? product.accent}
+      shape={media?.shape ?? product.shape}
     />
   );
 }
@@ -239,12 +272,7 @@ export function ProductCard({
 }) {
   const { locale, t, href, number } = useLocale();
   const copy = productCopy(product, locale);
-  const category =
-    product.category === "vases"
-      ? t("filterVases")
-      : product.category === "tableware"
-        ? t("filterTableware")
-        : t("filterSculpture");
+  const category = categoryLabel(product.category, locale);
   return (
     <article className="product-card">
       <div className="product-media-shell">

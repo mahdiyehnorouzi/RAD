@@ -10,6 +10,7 @@ import { FavoriteButton } from "./commerce";
 import { ChevronDown, PackageCheck, Palette, ShieldCheck, Truck } from "lucide-react";
 import { Reviews } from "./reviews";
 import { useCatalog } from "./catalog-provider";
+import { categoryLabel } from "@/lib/artwork";
 
 export function ProductDetail({ product }: { product: Product }) {
   const { locale, t, href } = useLocale();
@@ -23,12 +24,7 @@ export function ProductDetail({ product }: { product: Product }) {
   const copy = productCopy(product, locale);
   const price = productPrice(product, locale);
 
-  const category =
-    product.category === "vases"
-      ? t("filterVases")
-      : product.category === "tableware"
-        ? t("filterTableware")
-        : t("filterSculpture");
+  const category = categoryLabel(product.category, locale);
 
   return (
     <>

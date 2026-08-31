@@ -6,15 +6,17 @@ import { useCart } from "./cart";
 import { useLocale } from "./i18n";
 import { useCommerce } from "./commerce";
 import { useCatalog } from "./catalog-provider";
+import { artworkCategories } from "@/lib/artwork";
 
 export function Catalog() {
-  const { t, number } = useLocale();
+  const { t, number, locale } = useLocale();
   const { products } = useCatalog();
   const filters = [
     { id: "all", label: t("filterAll") },
-    { id: "vases", label: t("filterVases") },
-    { id: "tableware", label: t("filterTableware") },
-    { id: "sculpture", label: t("filterSculpture") },
+    ...artworkCategories.map((category) => ({
+      id: category.id,
+      label: category.label[locale],
+    })),
   ];
   const [active, setActive] = useState("all");
   const visible =
@@ -25,7 +27,10 @@ export function Catalog() {
   return (
     <>
       <div className="filterbar">
-        <div>
+        <div className="filter-heading">
+          <b>{locale === "fa" ? "دسته‌بندی آثار" : "Artwork categories"}</b>
+        </div>
+        <div className="filter-scroll">
           {filters.map((x) => (
             <button
               key={x.id}

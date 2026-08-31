@@ -1,5 +1,15 @@
 import type { Prisma, Product, ProductImage, Vendor } from "@prisma/client";
 
+function visualForCategory(category: string) {
+  if (category === "painting") return "painting";
+  if (category === "textile") return "textile";
+  if (category === "woodwork") return "wood";
+  if (category === "jewelry") return "jewelry";
+  if (category === "print") return "print";
+  if (category === "sculpture") return "sculpture";
+  return "vessel";
+}
+
 const persianDigits = "۰۱۲۳۴۵۶۷۸۹";
 
 function toPersianDigits(value: string) {
@@ -62,6 +72,7 @@ export function toProduct(product: ProductRecord) {
     accent: product.accent,
     shape: product.shape,
     category: product.category,
+    visual: visualForCategory(product.category),
     status: product.status,
     story: product.story,
     details,
