@@ -1,0 +1,146 @@
+@import url("https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800;900&display=swap");
+
+:root {
+  --font-sans: "Vazirmatn", "Vazir", Tahoma, sans-serif;
+  --font: var(--font-sans);
+
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+
+  --leading-tight: 1.2;
+  --leading-body: 1.8;
+  --leading-prose: 1.85;
+  --leading-quote: 1.55;
+  --leading-display: 0.8;
+
+  --tracking-label: 0.12em;
+  --tracking-index: 0.11em;
+
+  --text-label: 0.68rem;
+  --text-caption: 0.72rem;
+  --text-identifier: 0.78rem;
+  --text-eyebrow: 0.8rem;
+  --text-button: 0.95rem;
+  --text-body: 17px;
+  --text-price: 1.05rem;
+  --text-faq: 1.15rem;
+  --text-lede: clamp(1rem, 1.3vw, 1.18rem);
+  --text-prose: clamp(1rem, 1.25vw, 1.125rem);
+  --text-product-title: clamp(1.4rem, 2vw, 1.75rem);
+  --text-h3: clamp(1.75rem, 2.3vw, 2.25rem);
+  --text-h2: clamp(3rem, 4.4vw, 4rem);
+  --text-designer: clamp(3.2rem, 5vw, 5.5rem);
+  --text-quote: clamp(2rem, 4vw, 3.75rem);
+  --text-hero: clamp(4.5rem, 7vw, 6.75rem);
+  --text-display: clamp(7rem, 16vw, 15rem);
+}
+
+@media (max-width: 600px) {
+  :root {
+    --text-body: 16px;
+    --leading-body: 1.85;
+    --text-prose: 1rem;
+    --text-h3: clamp(1.5rem, 7vw, 1.875rem);
+    --text-h2: clamp(2.15rem, 9vw, 2.65rem);
+    --text-designer: clamp(2.65rem, 12vw, 3.25rem);
+    --text-hero: clamp(2.65rem, 12vw, 3.25rem);
+  }
+}
+
+.type-label {
+  font-size: var(--text-label);
+  font-weight: var(--font-weight-regular);
+  letter-spacing: var(--tracking-index);
+}
+
+.type-caption {
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-regular);
+  letter-spacing: var(--tracking-label);
+}
+
+.type-identifier {
+  font-size: var(--text-identifier);
+  font-weight: var(--font-weight-regular);
+  letter-spacing: var(--tracking-label);
+}
+
+.type-eyebrow {
+  font-size: var(--text-eyebrow);
+  font-weight: var(--font-weight-regular);
+}
+
+.type-button {
+  font-size: var(--text-button);
+  font-weight: var(--font-weight-medium);
+}
+
+.type-body {
+  font-size: var(--text-body);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--leading-body);
+}
+
+.type-price {
+  font-size: var(--text-price);
+  font-weight: var(--font-weight-regular);
+}
+
+.type-faq {
+  font-size: var(--text-faq);
+  font-weight: var(--font-weight-medium);
+}
+
+.type-lede {
+  font-size: var(--text-lede);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--leading-prose);
+}
+
+.type-prose {
+  font-size: var(--text-prose);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--leading-prose);
+}
+
+.type-product-title {
+  font-size: var(--text-product-title);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--leading-tight);
+}
+
+.type-h3 {
+  font-size: var(--text-h3);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--leading-tight);
+}
+
+.type-h2 {
+  font-size: var(--text-h2);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--leading-tight);
+}
+
+.type-designer {
+  font-size: var(--text-designer);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--leading-tight);
+}
+
+.type-quote {
+  font-size: var(--text-quote);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--leading-quote);
+}
+
+.type-hero {
+  font-size: var(--text-hero);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--leading-tight);
+}
+
+.type-display {
+  font-size: var(--text-display);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--leading-display);
+}
