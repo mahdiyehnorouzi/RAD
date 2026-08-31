@@ -29,7 +29,7 @@ export function CustomDesigner() {
     setError("");
     abort.current = new AbortController();
     try {
-      const response = await fetch("/api/design", {
+      const response = await fetch("/backend/design", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

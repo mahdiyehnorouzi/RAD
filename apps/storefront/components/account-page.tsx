@@ -15,7 +15,7 @@ export function AccountPage() {
 
   const pageTitle = locale === "fa" ? "حساب کاربری | رَد" : "Account | RAD";
 
-  const handleLogin = (event: FormEvent<HTMLFormElement>) => {
+  const handleLogin = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
     const name = String(data.get("name") ?? "").trim();
@@ -26,8 +26,13 @@ export function AccountPage() {
       nameRef.current?.focus();
       return;
     }
-    setError("");
-    login({ name, email });
+    try {
+      setError("");
+      await login({ name, email, password });
+    } catch {
+      setError(t("loginError"));
+      nameRef.current?.focus();
+    }
   };
 
   if (!user)

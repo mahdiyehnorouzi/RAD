@@ -2,26 +2,24 @@
 
 import { useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
-import { products } from "@/lib/products";
 import { useCommerce } from "./commerce";
 import { useLocale } from "./i18n";
 import { ProductCard } from "./site";
+import { useCatalog } from "./catalog-provider";
 
 export function FavoritesPage() {
   const params = useSearchParams();
   const { favorites } = useCommerce();
   const { t, number } = useLocale();
+  const { getProduct } = useCatalog();
   const [shared, setShared] = useState(false);
 
   const sharedSlugs = params.get("items")?.split(",").filter(Boolean);
   const slugs = sharedSlugs?.length ? sharedSlugs : favorites;
 
   const items = useMemo(
-    () =>
-      slugs
-        .map((slug) => products.find((item) => item.slug === slug))
-        .filter(Boolean),
-    [slugs.join(",")],
+    () => slugs.map((slug) => getProduct(slug)).filter(Boolean),
+    [slugs.join(","), getProduct],
   );
 
   const share = async () => {

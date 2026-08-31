@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: rad-postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: rad
+      POSTGRES_PASSWORD: rad
+      POSTGRES_DB: rad
+    volumes:
+      - rad_postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U rad -d rad"]
+      interval: 3s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  rad_postgres:

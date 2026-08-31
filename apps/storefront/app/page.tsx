@@ -1,9 +1,10 @@
 "use client";
 import { ButtonLink, ProductCard, Vessel } from "@/components/site";
-import { products } from "@/lib/products";
 import { useLocale } from "@/components/i18n";
+import { useCatalog } from "@/components/catalog-provider";
 export default function Home() {
   const { t, locale } = useLocale();
+  const { products } = useCatalog();
   const steps = [
     [locale === "fa" ? "۰۱/۰۴" : "01/04", t("step1Title"), t("step1Body")],
     [locale === "fa" ? "۰۲/۰۴" : "02/04", t("step2Title"), t("step2Body")],
@@ -30,7 +31,7 @@ export default function Home() {
             <b>{locale === "fa" ? "۱ / ۱" : "1 / 1"}</b>
           </span>
           <span className="sun-disc" />
-          <Vessel product={products[0]} />
+          {products[0] ? <Vessel product={products[0]} /> : null}
         </div>
       </section>
       <section className="section evidence-film">
@@ -89,7 +90,7 @@ export default function Home() {
         <div className="studio-visual">
           <span className="orbit o1" />
           <span className="orbit o2" />
-          <Vessel product={products[1]} />
+          {products[1] ? <Vessel product={products[1]} /> : null}
         </div>
         <div>
           <span className="eyebrow">{t("studioEyebrow")}</span>

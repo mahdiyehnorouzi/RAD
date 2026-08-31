@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { productCopy, products } from "@/lib/products";
+import { productCopy } from "@/lib/products";
 import { useLocale } from "./i18n";
 import { Search, X } from "lucide-react";
+import { useCatalog } from "./catalog-provider";
 
 export function SiteSearch() {
   const [open, setOpen] = useState(false);
@@ -13,6 +14,7 @@ export function SiteSearch() {
   const inputRef = useRef<HTMLInputElement>(null);
 
   const { locale, t, href } = useLocale();
+  const { products } = useCatalog();
   const normalizedQuery = query.trim().toLocaleLowerCase(locale);
 
   const results = useMemo(
@@ -25,7 +27,7 @@ export function SiteSearch() {
               .includes(normalizedQuery);
           })
         : [],
-    [locale, normalizedQuery],
+    [locale, normalizedQuery, products],
   );
 
   useEffect(() => {

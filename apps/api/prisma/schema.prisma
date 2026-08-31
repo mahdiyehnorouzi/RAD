@@ -1,0 +1,151 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         String   @default("customer")
+  adminRole    String?
+  status       String   @default("active")
+  createdAt    DateTime @default(now())
+  reviews      Review[]
+}
+
+model Vendor {
+  id            String    @id
+  displayName   String
+  displayNameEn String
+  kind          String
+  verified      Boolean   @default(false)
+  products      Product[]
+}
+
+model Product {
+  id         String         @id @default(cuid())
+  slug       String         @unique
+  name       String
+  subtitle   String
+  tomanPrice Int
+  usdPrice   Int
+  color      String
+  accent     String
+  shape      String
+  category   String
+  status     String         @default("available")
+  story      String
+  details    Json
+  en         Json
+  sortOrder  Int            @default(0)
+  vendorId   String?
+  vendor     Vendor?        @relation(fields: [vendorId], references: [id])
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+  images     ProductImage[]
+  cartItems  CartItem[]
+  favorites  Favorite[]
+  reviews    Review[]
+  orderItems OrderItem[]
+}
+
+model ProductImage {
+  id          String  @id @default(cuid())
+  productSlug String
+  product     Product @relation(fields: [productSlug], references: [slug], onDelete: Cascade)
+  alt         String
+  enAlt       String
+  color       String?
+  accent      String?
+  shape       String?
+  src         String?
+  sortOrder   Int     @default(0)
+}
+
+model CartItem {
+  id          String   @id @default(cuid())
+  ownerKey    String
+  productSlug String
+  product     Product  @relation(fields: [productSlug], references: [slug])
+  createdAt   DateTime @default(now())
+
+  @@unique([ownerKey, productSlug])
+  @@index([ownerKey])
+}
+
+model Favorite {
+  id          String   @id @default(cuid())
+  ownerKey    String
+  productSlug String
+  product     Product  @relation(fields: [productSlug], references: [slug])
+  createdAt   DateTime @default(now())
+
+  @@unique([ownerKey, productSlug])
+  @@index([ownerKey])
+}
+
+model Review {
+  id          String   @id @default(cuid())
+  productSlug String
+  product     Product  @relation(fields: [productSlug], references: [slug])
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  author      String
+  rating      Int
+  comment     String
+  image       String?
+  createdAt   DateTime @default(now())
+}
+
+model Order {
+  id        String         @id
+  ownerKey  String
+  userId    String?
+  total     Int
+  usdTotal  Int
+  status    String         @default("received")
+  name      String
+  city      String
+  phone     String         @default("")
+  address   String         @default("")
+  createdAt DateTime       @default(now())
+  items     OrderItem[]
+  payment   PaymentIntent?
+
+  @@index([ownerKey])
+}
+
+model OrderItem {
+  id          String  @id @default(cuid())
+  orderId     String
+  order       Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productSlug String
+  product     Product @relation(fields: [productSlug], references: [slug])
+}
+
+model Notice {
+  id          String   @id @default(cuid())
+  ownerKey    String
+  kind        String
+  productSlug String?
+  read        Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  @@index([ownerKey])
+}
+
+model PaymentIntent {
+  id       String @id @default(cuid())
+  orderId  String @unique
+  order    Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  amount   Int
+  currency String
+  provider String @default("sandbox")
+  status   String @default("verified")
+}

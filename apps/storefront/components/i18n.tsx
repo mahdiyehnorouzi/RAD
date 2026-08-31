@@ -173,7 +173,7 @@ const messages = {
     loginTitle: "ورود به فضای شخصی",
     loginBody: "علاقه‌مندی‌ها، اعلان‌ها و مسیر سفارش را در یک‌جا نگه دارید.",
     localAccountNote:
-      "نسخه نمایشی: اطلاعات حساب فقط روی همین دستگاه نگهداری می‌شود و رمز عبور ذخیره نمی‌شود.",
+      "رمز عبور روی سرور ذخیره می‌شود و نشست با کوکی امن نگهداری می‌گردد.",
     nameLabel: "نام و نام خانوادگی",
     emailLabel: "ایمیل",
     passwordLabel: "رمز عبور",
@@ -425,7 +425,7 @@ const messages = {
     loginBody:
       "Keep favourites, notifications, and your order journey in one place.",
     localAccountNote:
-      "Demo version: account details stay on this device and the password is never stored.",
+      "Your password is stored on the server and the session is kept in a secure cookie.",
     nameLabel: "Full name",
     emailLabel: "Email",
     passwordLabel: "Password",

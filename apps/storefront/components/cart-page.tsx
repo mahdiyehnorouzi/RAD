@@ -2,19 +2,18 @@
 import Link from "next/link";
 import { useCart, cartTotal, formatTotal, productPrice } from "./cart";
 import { Vessel } from "./site";
-import { products } from "@/lib/products";
 import { productCopy } from "@/lib/products";
 import { useLocale } from "./i18n";
+import { useCatalog } from "./catalog-provider";
 
 export function CartPage() {
   const { locale, t, href, number } = useLocale();
   const { slugs, remove, clear } = useCart();
+  const { getProduct } = useCatalog();
 
-  const items = slugs
-    .map((slug) => products.find((product) => product.slug === slug))
-    .filter(Boolean);
+  const items = slugs.map((slug) => getProduct(slug)).filter(Boolean);
   const total = cartTotal(
-    items.filter((item): item is (typeof products)[number] => Boolean(item)),
+    items.filter((item): item is NonNullable<typeof item> => Boolean(item)),
     locale,
   );
 

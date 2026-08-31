@@ -9,3 +9,6 @@ dist/
 work/
 .vinext/
 .wrangler/
+*.db
+*.db-journal
+apps/api/data/

@@ -5,6 +5,7 @@ import { Header, Footer } from "@/components/site";
 import { CartProvider } from "@/components/cart";
 import { LocaleProvider } from "@/components/i18n";
 import { CommerceProvider } from "@/components/commerce";
+import { CatalogProvider } from "@/components/catalog-provider";
 import { RouteScrollReset } from "@/components/route-scroll-reset";
 import { HomeBanner } from "@/components/home-banner";
 export const metadata: Metadata = {
@@ -21,15 +22,17 @@ export default function RootLayout({
       <body>
         <style dangerouslySetInnerHTML={{ __html: localFixes }} />
         <LocaleProvider>
-          <CommerceProvider>
-            <CartProvider>
-              <RouteScrollReset />
-              <HomeBanner />
-              <Header />
-              <main>{children}</main>
-              <Footer />
-            </CartProvider>
-          </CommerceProvider>
+          <CatalogProvider>
+            <CommerceProvider>
+              <CartProvider>
+                <RouteScrollReset />
+                <HomeBanner />
+                <Header />
+                <main>{children}</main>
+                <Footer />
+              </CartProvider>
+            </CommerceProvider>
+          </CatalogProvider>
         </LocaleProvider>
       </body>
     </html>

@@ -38,7 +38,34 @@ export interface Product {
   en: { name: string; subtitle: string; story: string; details: string[] };
 }
 
-export interface AuthUser { id: string; name: string; email: string; role: "customer" | "artist" | "admin"; }
-export interface Order { id: string; slugs: string[]; total: number; usdTotal?: number; createdAt: number; status: "received"; delivery: { name: string; city: string }; }
+export interface AuthUser {
+  id: string;
+  name: string;
+  email: string;
+  role: "customer" | "artist" | "admin";
+  adminRole?: "owner" | "manager" | "editor" | "viewer" | null;
+}
+export type OrderStatus =
+  | "received"
+  | "approved"
+  | "forming"
+  | "drying"
+  | "firing"
+  | "glazing"
+  | "quality"
+  | "shipped"
+  | "delivered";
+export interface Order {
+  id: string;
+  slugs: string[];
+  total: number;
+  usdTotal?: number;
+  createdAt: number;
+  status: OrderStatus;
+  delivery: { name: string; city: string };
+}
 export interface Review { id: string; productSlug: string; author: string; rating: number; comment: string; image?: string; createdAt: number; }
 export interface PaymentIntent { id: string; orderId: string; amount: number; currency: "IRR" | "USD"; provider: "sandbox" | "zarinpal"; status: "created" | "redirected" | "verified" | "failed"; }
+export type NoticeKind = "favorite" | "cart" | "welcome" | "order";
+export interface Notice { id: string; kind: NoticeKind; productSlug?: string; read: boolean; createdAt: number; }
+export interface CartSnapshot { slugs: string[]; }

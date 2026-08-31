@@ -1,44 +1,48 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent } from "react";
+import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useCart, cartTotal, formatTotal } from "./cart";
 import { useCommerce } from "./commerce";
 import { useLocale } from "./i18n";
-import { products } from "@/lib/products";
+import { useCatalog } from "./catalog-provider";
+import type { Product } from "@/lib/products";
 
 export function CheckoutPage() {
   const { slugs, clear } = useCart();
-  const { user, addNotice, placeOrder } = useCommerce();
+  const { user, placeOrder } = useCommerce();
   const { locale, t, href, number } = useLocale();
+  const { getProduct } = useCatalog();
   const router = useRouter();
+  const [error, setError] = useState("");
 
   const items = slugs
-    .map((slug) => products.find((product) => product.slug === slug))
-    .filter((item): item is (typeof products)[number] => Boolean(item));
+    .map((slug) => getProduct(slug))
+    .filter((item): item is Product => Boolean(item));
   const total = cartTotal(items, locale);
-  const totalToman = cartTotal(items, "fa");
-  const totalUsd = cartTotal(items, "en");
 
-  const submitDemoOrder = (event: FormEvent<HTMLFormElement>) => {
+  const submitDemoOrder = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
     const name = String(data.get("name") ?? "").trim();
     const city = String(data.get("city") ?? "").trim();
+    const phone = String(data.get("phone") ?? "").trim();
+    const address = String(data.get("address") ?? "").trim();
 
-    placeOrder({
-      slugs: [...slugs],
-      total: totalToman,
-      usdTotal: totalUsd,
-      delivery: {
+    try {
+      setError("");
+      await placeOrder({
         name: name || user?.name || (locale === "fa" ? "کاربر رَد" : "RAD collector"),
         city: city || (locale === "fa" ? "تهران" : "Tehran"),
-      },
-    });
-    addNotice("order");
-    clear();
-    router.push(href("/orders"));
+        phone,
+        address,
+      });
+      await clear();
+      router.push(href("/orders"));
+    } catch (err) {
+      setError((err as Error).message);
+    }
   };
 
   if (!items.length) {
@@ -61,6 +65,11 @@ export function CheckoutPage() {
       </header>
       <div className="checkout-grid">
         <form className="checkout-form" onSubmit={submitDemoOrder} noValidate>
+          {error && (
+            <p className="form-error" role="alert">
+              {error}
+            </p>
+          )}
           <label htmlFor="checkout-name">{t("nameLabel")}</label>
           <input id="checkout-name" name="name" defaultValue={user?.name ?? ""} autoComplete="name" />
           <label htmlFor="checkout-phone">{t("phoneLabel")}</label>

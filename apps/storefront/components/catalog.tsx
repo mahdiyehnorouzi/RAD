@@ -1,14 +1,15 @@
 "use client";
 import { useState } from "react";
-import { products } from "@/lib/products";
 import { ProductCard } from "./site";
 import type { Product } from "@/lib/products";
 import { useCart } from "./cart";
 import { useLocale } from "./i18n";
 import { useCommerce } from "./commerce";
+import { useCatalog } from "./catalog-provider";
 
 export function Catalog() {
   const { t, number } = useLocale();
+  const { products } = useCatalog();
   const filters = [
     { id: "all", label: t("filterAll") },
     { id: "vases", label: t("filterVases") },
@@ -67,11 +68,11 @@ export function AddToBag({ product }: { product: Product }) {
   return (
     <button
       className="button add"
-      onClick={() => {
-        add(product);
-        addNotice("cart", product.slug);
+      onClick={async () => {
+        await add(product);
+        await addNotice("cart", product.slug);
       }}
-      disabled={added}
+      disabled={added || product.status === "sold" || product.status === "reserved"}
       aria-live="polite"
     >
       {added ? t("inBag") : t("addBag")}

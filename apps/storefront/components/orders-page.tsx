@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { PackageCheck } from "lucide-react";
-import { products, productCopy } from "@/lib/products";
+import { productCopy } from "@/lib/products";
 import { formatTotal } from "./cart";
-import { type Order, useCommerce } from "./commerce";
+import { useCommerce } from "./commerce";
 import { useLocale } from "./i18n";
 import { useOrderStages } from "@/hooks/use-order-stage";
+import { useCatalog } from "./catalog-provider";
 
 function OrderTimeline({ activeStage, stages, number, label }: { activeStage: number; stages: string[]; number: (value: number) => string; label: string }) {
   return <ol className="order-progress" aria-label={label}>{stages.map((stage, index) => <li key={stage} className={index <= activeStage ? "complete" : ""} aria-current={index === activeStage ? "step" : undefined}><i>{number(index + 1)}</i><span>{stage}</span></li>)}</ol>;
@@ -15,6 +16,7 @@ function OrderTimeline({ activeStage, stages, number, label }: { activeStage: nu
 export function OrdersPage() {
   const { orders } = useCommerce();
   const { locale, t, href, number } = useLocale();
+  const { getProduct } = useCatalog();
 
   const stages = locale === "fa" ? ["تأیید طرح", "انتخاب خاک", "فرم‌دهی", "خشک‌شدن", "پخت اول", "لعاب‌کاری", "پخت نهایی", "کنترل کیفیت", "امضا و شماره ۱/۱", "ارسال"] : ["Concept approved", "Clay selected", "Forming", "Drying", "Bisque firing", "Glazing", "Final firing", "Quality check", "Signed 1/1", "Shipped"];
   const activeStages = useOrderStages(orders, stages.length);
@@ -34,8 +36,7 @@ export function OrdersPage() {
               order.slugs.reduce(
                 (sum, slug) =>
                   sum +
-                  (products.find((product) => product.slug === slug)
-                    ?.usdPrice ?? 0),
+                  (getProduct(slug)?.usdPrice ?? 0),
                 0,
               );
             return (
@@ -66,7 +67,7 @@ export function OrdersPage() {
                 </dl>
                 <ul>
                   {order.slugs.map((slug) => {
-                    const product = products.find((item) => item.slug === slug);
+                    const product = getProduct(slug);
                     return product ? (
                       <li key={slug}>
                         <Link href={href(`/products/${slug}`)}>

@@ -4,16 +4,19 @@ import { useRouter } from "next/navigation";
 import { ProductMedia, ProductCard } from "./site";
 import { AddToBag } from "./catalog";
 import { useLocale } from "./i18n";
-import { productCopy, products, type Product } from "@/lib/products";
+import { productCopy, type Product } from "@/lib/products";
 import { productPrice } from "./cart";
 import { FavoriteButton } from "./commerce";
 import { ChevronDown, PackageCheck, Palette, ShieldCheck, Truck } from "lucide-react";
+import { Reviews } from "./reviews";
+import { useCatalog } from "./catalog-provider";
 
 export function ProductDetail({ product }: { product: Product }) {
   const { locale, t, href } = useLocale();
   const router = useRouter();
   const carouselRef = useRef<HTMLDivElement>(null);
   const [activeImage, setActiveImage] = useState(0);
+  const { products } = useCatalog();
 
   const imageCount = product.images?.length ?? 1;
 
@@ -147,6 +150,7 @@ export function ProductDetail({ product }: { product: Product }) {
             ))}
         </div>
       </section>
+      <Reviews product={product} />
     </>
   );
 }

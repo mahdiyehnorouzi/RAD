@@ -1,26 +1,31 @@
 "use client";
 
 import Link from "next/link";
-import { ChangeEvent, FormEvent, useRef, useState } from "react";
+import { ChangeEvent, FormEvent, useEffect, useRef, useState } from "react";
 import { Camera, Star, X } from "lucide-react";
 import type { Product } from "@/lib/products";
+import type { Review } from "@rad/types";
 import { useCommerce } from "./commerce";
 import { useLocale } from "./i18n";
+import { api } from "@/lib/api";
 
 export function Reviews({ product }: { product: Product }) {
-  const { user, reviews, addReview } = useCommerce();
+  const { user, addReview } = useCommerce();
   const { locale, t, href, number } = useLocale();
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
   const [image, setImage] = useState<string>();
   const [fileName, setFileName] = useState("");
   const [error, setError] = useState("");
+  const [productReviews, setProductReviews] = useState<Review[]>([]);
 
   const commentRef = useRef<HTMLTextAreaElement>(null);
 
-  const productReviews = reviews.filter(
-    (review) => review.productSlug === product.slug,
-  );
+  useEffect(() => {
+    api<Review[]>(`/products/${product.slug}/reviews`)
+      .then(setProductReviews)
+      .catch(() => setProductReviews([]));
+  }, [product.slug]);
 
   const average = productReviews.length
     ? productReviews.reduce((sum, review) => sum + review.rating, 0) /
@@ -51,20 +56,23 @@ export function Reviews({ product }: { product: Product }) {
     reader.readAsDataURL(file);
   };
 
-  const submit = (event: FormEvent<HTMLFormElement>) => {
+  const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!rating || comment.trim().length < 3) {
       setError(t("reviewError"));
       commentRef.current?.focus();
       return;
     }
-    addReview({
+    await addReview({
       productSlug: product.slug,
       author: user!.name,
       rating,
       comment: comment.trim(),
       image,
     });
+    setProductReviews(
+      await api<Review[]>(`/products/${product.slug}/reviews`).catch(() => []),
+    );
     setRating(0);
     setComment("");
     setImage(undefined);
