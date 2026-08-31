@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800;900&display=swap");
+@import "../styles/typography.css";
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -13,7 +13,6 @@
   --page: clamp(1.25rem, 5vw, 5rem);
   --section: clamp(4rem, 9vw, 8rem);
   --radius: 1.5rem;
-  --font: "Vazirmatn", "Vazir", Tahoma, sans-serif;
   scrollbar-color: var(--clay) var(--canvas);
   scrollbar-width: thin;
 }
@@ -109,7 +108,7 @@ body {
   background: var(--canvas);
   color: var(--ink);
   font-family: var(--font);
-  line-height: 1.75;
+  line-height: var(--leading-body);
 }
 button,
 a {
@@ -1553,17 +1552,17 @@ button:disabled {
 
 /* RAD calibrated editorial system — Aug 2026 */
 :root { --section: clamp(4.5rem, 7vw, 7rem); }
-body { font-size: 17px; font-weight: 400; line-height: 1.8; }
-h1,h2,h3,h4,b,strong { font-weight: 500; }
-h1,h2,h3 { line-height: 1.2; }
-.hero h1 { font-size: clamp(4.5rem, 7vw, 6.75rem); }
-.section h2 { font-size: clamp(3rem, 4.4vw, 4rem); }
-.section h3 { font-size: clamp(1.75rem, 2.3vw, 2.25rem); }
-.section p { font-size: clamp(1rem, 1.25vw, 1.125rem); line-height: 1.85; }
-.eyebrow,.product-category { font-size: .8rem; font-weight: 400; }
-.button,button { font-weight: 500; font-size: .95rem; }
-.price,.product-meta>span { font-size: 1.05rem; font-weight: 400; }
-.product-meta h3 { font-size: clamp(1.4rem, 2vw, 1.75rem); }
+body { font-size: var(--text-body); font-weight: var(--font-weight-regular); line-height: var(--leading-body); }
+h1,h2,h3,h4,b,strong { font-weight: var(--font-weight-medium); }
+h1,h2,h3 { line-height: var(--leading-tight); }
+.hero h1 { font-size: var(--text-hero); }
+.section h2 { font-size: var(--text-h2); }
+.section h3 { font-size: var(--text-h3); }
+.section p { font-size: var(--text-prose); line-height: var(--leading-prose); }
+.eyebrow,.product-category { font-size: var(--text-eyebrow); font-weight: var(--font-weight-regular); }
+.button,button { font-weight: var(--font-weight-medium); font-size: var(--text-button); }
+.price,.product-meta>span { font-size: var(--text-price); font-weight: var(--font-weight-regular); }
+.product-meta h3 { font-size: var(--text-product-title); }
 .hero,.section { padding-block: var(--section); }
 .hero { min-height: auto; padding-top: clamp(3.5rem,6vw,6rem); }
 .hero-art::after { content: none !important; }
@@ -1582,14 +1581,14 @@ h1,h2,h3 { line-height: 1.2; }
 .steps article>span { width:48px;height:48px;border-radius:50%;display:grid;place-items:center;background:var(--canvas);position:relative;z-index:1;font-size:.8rem; }
 .steps article h3 { margin-top:2rem; }
 .human-story { display:grid;grid-template-columns:.7fr 1.3fr;gap:clamp(3rem,7vw,8rem);align-items:end; }
-.human-story .big-number { font-size:clamp(7rem,16vw,15rem);line-height:.8; }
+.human-story .big-number { font-size:var(--text-display);line-height:var(--leading-display); }
 .collector-story { text-align:center;max-width:1000px;margin:auto; }
-.collector-story blockquote { font-size:clamp(2rem,4vw,3.75rem);line-height:1.55;font-weight:400; }
+.collector-story blockquote { font-size:var(--text-quote);line-height:var(--leading-quote);font-weight:var(--font-weight-regular); }
 .final-cta { text-align:center;max-width:1200px;margin:auto; }
 .final-cta .button { margin-top:2rem; }
 .shipping-faq { display:grid;grid-template-columns:.7fr 1.3fr;gap:clamp(3rem,8vw,9rem); }
 .shipping-faq details { border-top:1px solid var(--line);padding:1.2rem 0; }
-.shipping-faq summary { cursor:pointer;font-size:1.15rem;font-weight:500; }
+.shipping-faq summary { cursor:pointer;font-size:var(--text-faq);font-weight:var(--font-weight-medium); }
 .shipping-faq details p { color:var(--muted);max-width:65ch;margin-top:.7rem; }
 .order-progress { grid-template-columns:repeat(10,minmax(90px,1fr));overflow-x:auto; }
 .footer { padding-block:4rem 2rem !important; min-height:0 !important; }
@@ -1605,8 +1604,8 @@ h1,h2,h3 { line-height: 1.2; }
 }
 @media (max-width:600px){
   :root{--section:3.75rem}.hero,.section{padding-block:var(--section)}
-  .hero h1{font-size:clamp(2.65rem,12vw,3.25rem)}.section h2{font-size:clamp(2.15rem,9vw,2.65rem)}.section h3{font-size:clamp(1.5rem,7vw,1.875rem)}
-  body{font-size:16px;line-height:1.85}.section p{font-size:1rem}
+  .hero h1{font-size:var(--text-hero)}.section h2{font-size:var(--text-h2)}.section h3{font-size:var(--text-h3)}
+  body{font-size:var(--text-body);line-height:var(--leading-body)}.section p{font-size:var(--text-prose)}
   .product-grid,.home-products{grid-template-columns:1fr!important;gap:3rem}
   .product-grid>.product-card{width:100%;max-width:390px;padding-bottom:2rem}
   .product-art .view-work{display:none}.product-art .one-badge,.one-badge{max-width:74px;max-height:74px}
