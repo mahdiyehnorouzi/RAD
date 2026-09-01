@@ -1,11 +1,11 @@
 import { spawn } from "node:child_process";
 
-function sleep(ms: number) {
+function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-function run(command: string, args: string[]) {
-  return new Promise<void>((resolve, reject) => {
+function run(command, args) {
+  return new Promise((resolve, reject) => {
     const child = spawn(command, args, {
       stdio: "inherit",
       env: process.env,
@@ -18,8 +18,8 @@ function run(command: string, args: string[]) {
   });
 }
 
-async function runWithRetry(command: string, args: string[], attempts = 6) {
-  let lastError: unknown;
+async function runWithRetry(command, args, attempts = 6) {
+  let lastError;
   for (let attempt = 1; attempt <= attempts; attempt += 1) {
     try {
       await run(command, args);
