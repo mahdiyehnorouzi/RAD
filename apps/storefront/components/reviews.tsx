@@ -1,12 +1,12 @@
 "use client";
 
-import Link from "next/link";
 import { ChangeEvent, FormEvent, useEffect, useRef, useState } from "react";
 import { Camera, Star, X } from "lucide-react";
 import type { Product } from "@/lib/products";
 import type { Review } from "@rad/types";
 import { useCommerce } from "./commerce";
 import { useLocale } from "./i18n";
+import { ButtonLink } from "./site";
 import { api } from "@/lib/api";
 
 export function Reviews({ product }: { product: Product }) {
@@ -208,9 +208,9 @@ export function Reviews({ product }: { product: Product }) {
         ) : (
           <div className="review-login">
             <p>{t("loginToReview")}</p>
-            <Link className="button" href={href("/account")}>
+            <ButtonLink href="/account">
               {t("login")}
-            </Link>
+            </ButtonLink>
           </div>
         )}
       </div>

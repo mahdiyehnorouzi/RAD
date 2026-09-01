@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   ForbiddenException,
   Injectable,
@@ -6,6 +7,7 @@ import {
 } from "@nestjs/common";
 import { randomBytes } from "node:crypto";
 import { hash } from "bcryptjs";
+import { assertImageData, productImageError, productImageLimit } from "../common/image-data";
 import { PrismaService } from "../prisma/prisma.service";
 import { productInclude } from "../catalog/product.mapper";
 import { canAdmin, type AdminPermission } from "./permissions";
@@ -235,6 +237,13 @@ export class AdminService {
   private async replaceImages(slug: string, name: string, images: string[]) {
     await this.prisma.productImage.deleteMany({ where: { productSlug: slug } });
     if (!images.length) return;
+    for (const src of images) {
+      try {
+        assertImageData(src, productImageLimit, productImageError);
+      } catch {
+        throw new BadRequestException(productImageError);
+      }
+    }
     await this.prisma.productImage.createMany({
       data: images.map((src, sortOrder) => ({
         productSlug: slug,

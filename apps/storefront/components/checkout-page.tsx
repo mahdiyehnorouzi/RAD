@@ -1,11 +1,11 @@
 "use client";
 
-import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useCart, cartTotal, formatTotal } from "./cart";
 import { useCommerce } from "./commerce";
 import { useLocale } from "./i18n";
+import { ButtonLink } from "./site";
 import { useCatalog } from "./catalog-provider";
 import type { Product } from "@/lib/products";
 
@@ -49,9 +49,9 @@ export function CheckoutPage() {
     return (
       <section className="cart-empty section">
         <h1>{t("emptyBag")}</h1>
-        <Link className="button" href={href("/products")}>
+        <ButtonLink href="/products">
           {t("viewWorks")}
-        </Link>
+        </ButtonLink>
       </section>
     );
   }

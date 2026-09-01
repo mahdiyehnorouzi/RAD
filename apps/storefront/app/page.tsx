@@ -2,15 +2,14 @@
 import { ArtworkVisual, ButtonLink, ProductCard } from "@/components/site";
 import { useLocale } from "@/components/i18n";
 import { useCatalog } from "@/components/catalog-provider";
-import { featuredProductSlugs, artworkVisual } from "@/lib/artwork";
+import { artworkVisual } from "@/lib/artwork";
 
 export default function Home() {
   const { t, locale } = useLocale();
   const { products } = useCatalog();
-  const featured = featuredProductSlugs.flatMap((slug) => {
-    const product = products.find((item) => item.slug === slug);
-    return product ? [product] : [];
-  });
+  const featured = products
+    .filter((product) => product.images?.some((image) => image.src))
+    .slice(0, 6);
   const hero = featured[1] ?? featured[0] ?? products[0];
   const studio = featured[2] ?? products[1] ?? products[0];
   const steps = [
@@ -65,7 +64,7 @@ export default function Home() {
               ? "اثری آماده، شماره‌گذاری‌شده و تنها در یک نسخه."
               : "Choose a finished, numbered work that exists only once."}
           </p>
-          <ButtonLink href="/products" outline arrow>
+          <ButtonLink href="/products" outline>
             {t("viewWorks")}
           </ButtonLink>
         </article>
