@@ -5,10 +5,11 @@ import type { ProductCategory } from "@rad/types";
 import { ArtworkVisual } from "./site";
 import { useLocale } from "./i18n";
 import {
-  getMockCategory,
-  mockCategories,
-  mockStorefront,
-} from "@/lib/mock-data";
+  artworkCategories,
+  artworkCategoryById,
+  designDirections,
+  designPresets,
+} from "@/lib/artwork";
 
 export function CustomDesigner() {
   const { t, locale } = useLocale();
@@ -22,10 +23,9 @@ export function CustomDesigner() {
   const [brief, setBrief] = useState<Record<string, string>>({});
   const [direction, setDirection] = useState(0);
   const abort = useRef<AbortController | null>(null);
-
-  const selectedCategory = category ? getMockCategory(category) : null;
-  const presets = mockStorefront.design.presets[locale];
-  const directions = mockStorefront.design.directions[locale];
+  const selectedCategory = category ? artworkCategoryById(category) : null;
+  const presets = designPresets[locale];
+  const directions = designDirections[locale];
 
   function chooseCategory(next: ProductCategory) {
     setCategory(next);
@@ -90,7 +90,7 @@ export function CustomDesigner() {
               : "What would you like to commission?"}
           </legend>
           <div className="design-category-grid">
-            {mockCategories.map((item) => (
+            {artworkCategories.map((item) => (
               <button
                 type="button"
                 key={item.id}

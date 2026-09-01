@@ -7,7 +7,9 @@ export type ProductCategory =
   | "woodwork"
   | "sculpture"
   | "jewelry"
-  | "print";
+  | "print"
+  | "vases"
+  | "tableware";
 export type ProductVisual =
   | "vessel"
   | "painting"
@@ -17,6 +19,22 @@ export type ProductVisual =
   | "jewelry"
   | "print";
 export type ProductStatus = "draft" | "review" | "available" | "reserved" | "sold";
+
+const categoryVisual: Record<string, ProductVisual> = {
+  ceramics: "vessel",
+  vases: "vessel",
+  tableware: "vessel",
+  painting: "painting",
+  textile: "textile",
+  woodwork: "wood",
+  sculpture: "sculpture",
+  jewelry: "jewelry",
+  print: "print",
+};
+
+export function visualForCategory(category: string): ProductVisual {
+  return categoryVisual[category] ?? "vessel";
+}
 
 export interface Vendor {
   id: string;

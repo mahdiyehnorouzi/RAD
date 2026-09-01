@@ -6,7 +6,7 @@ import { useCart } from "./cart";
 import { useLocale } from "./i18n";
 import { useCommerce } from "./commerce";
 import { useCatalog } from "./catalog-provider";
-import { mockCategories } from "@/lib/mock-data";
+import { artworkCategories } from "@/lib/artwork";
 import { MoveLeft, MoveRight } from "lucide-react";
 
 export function Catalog() {
@@ -14,7 +14,7 @@ export function Catalog() {
   const { products } = useCatalog();
   const filters = [
     { id: "all", label: t("filterAll") },
-    ...mockCategories.map((category) => ({
+    ...artworkCategories.map((category) => ({
       id: category.id,
       label: category.label[locale],
     })),

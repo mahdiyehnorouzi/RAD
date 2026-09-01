@@ -1,23 +1,35 @@
 import type { Product, ProductImage, Vendor, Order, OrderItem, User } from "@prisma/client";
 
 const categoryToStore: Record<string, string> = {
-  گلدان: "vases",
-  ظروف: "tableware",
+  گلدان: "ceramics",
+  ظروف: "ceramics",
   مجسمه: "sculpture",
+  "سفال و سرامیک": "ceramics",
+  نقاشی: "painting",
+  "پارچه و بافت": "textile",
+  "آثار چوبی": "woodwork",
+  "زیورآلات هنری": "jewelry",
+  "چاپ دستی و تصویر": "print",
 };
 
-const storeToCategory: Record<string, "گلدان" | "ظروف" | "مجسمه"> = {
+const storeToCategory: Record<string, string> = {
   vases: "گلدان",
   tableware: "ظروف",
+  ceramics: "سفال و سرامیک",
   sculpture: "مجسمه",
+  painting: "نقاشی",
+  textile: "پارچه و بافت",
+  woodwork: "آثار چوبی",
+  jewelry: "زیورآلات هنری",
+  print: "چاپ دستی و تصویر",
 };
 
 export function toStoreCategory(label: string) {
-  return categoryToStore[label] ?? "vases";
+  return categoryToStore[label] ?? "ceramics";
 }
 
 export function toAdminCategory(value: string) {
-  return storeToCategory[value] ?? "گلدان";
+  return storeToCategory[value] ?? "سفال و سرامیک";
 }
 
 export function artistVendorId(artist: string) {

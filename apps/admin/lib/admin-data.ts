@@ -8,7 +8,7 @@ export interface AdminProduct {
   slug: string;
   name: string;
   description: string;
-  category: "گلدان" | "ظروف" | "مجسمه";
+  category: string;
   price: number;
   status: AdminProductStatus;
   artist: string;

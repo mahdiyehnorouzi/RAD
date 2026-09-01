@@ -27,8 +27,18 @@ export class SaveProductDto {
   @MinLength(1)
   description!: string;
 
-  @IsIn(["گلدان", "ظروف", "مجسمه"])
-  category!: "گلدان" | "ظروف" | "مجسمه";
+  @IsIn([
+    "گلدان",
+    "ظروف",
+    "مجسمه",
+    "سفال و سرامیک",
+    "نقاشی",
+    "پارچه و بافت",
+    "آثار چوبی",
+    "زیورآلات هنری",
+    "چاپ دستی و تصویر",
+  ])
+  category!: string;
 
   @Type(() => Number)
   @IsInt()

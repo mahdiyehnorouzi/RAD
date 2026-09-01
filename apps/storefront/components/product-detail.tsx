@@ -9,7 +9,7 @@ import { FavoriteButton } from "./commerce";
 import { ChevronDown, PackageCheck, Palette, ShieldCheck, Truck } from "lucide-react";
 import { Reviews } from "./reviews";
 import { useCatalog } from "./catalog-provider";
-import { mockCategoryLabel } from "@/lib/mock-data";
+import { categoryLabel } from "@/lib/artwork";
 
 export function ProductDetail({ product }: { product: Product }) {
   const { locale, t } = useLocale();
@@ -22,7 +22,7 @@ export function ProductDetail({ product }: { product: Product }) {
   const copy = productCopy(product, locale);
   const price = productPrice(product, locale);
 
-  const category = mockCategoryLabel(product.category, locale);
+  const category = categoryLabel(product.category, locale);
 
   return (
     <>

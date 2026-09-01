@@ -1,16 +1,18 @@
 "use client";
 import { ArtworkVisual, ButtonLink, ProductCard } from "@/components/site";
-import { products } from "@/lib/products";
-import { mockStorefront } from "@/lib/mock-data";
 import { useLocale } from "@/components/i18n";
+import { useCatalog } from "@/components/catalog-provider";
+import { featuredProductSlugs, artworkVisual } from "@/lib/artwork";
+
 export default function Home() {
   const { t, locale } = useLocale();
-  const featuredProducts = mockStorefront.featuredProductSlugs.flatMap(
-    (slug) => {
-      const product = products.find((item) => item.slug === slug);
-      return product ? [product] : [];
-    },
-  );
+  const { products } = useCatalog();
+  const featured = featuredProductSlugs.flatMap((slug) => {
+    const product = products.find((item) => item.slug === slug);
+    return product ? [product] : [];
+  });
+  const hero = featured[1] ?? featured[0] ?? products[0];
+  const studio = featured[2] ?? products[1] ?? products[0];
   const steps = [
     [locale === "fa" ? "۰۱/۰۴" : "01/04", t("step1Title"), t("step1Body")],
     [locale === "fa" ? "۰۲/۰۴" : "02/04", t("step2Title"), t("step2Body")],
@@ -26,7 +28,7 @@ export default function Home() {
             <br />
             {t("heroTitle2")}
           </h1>
-          <p className="hero-thesis">{locale === "fa" ? "یک اثر. یک ردِ دست. یک بار." : "One work. One maker’s trace. Made once."}</p>
+          <p className="hero-thesis">{locale === "fa" ? "یک اثر. یک ردِ دست. یک بار." : "One work. One maker's trace. Made once."}</p>
         </div>
         <div className="hero-art">
           <div className="hero-identifier" aria-hidden="true">
@@ -37,12 +39,14 @@ export default function Home() {
             <b>{locale === "fa" ? "۱ / ۱" : "1 / 1"}</b>
           </span>
           <span className="sun-disc" />
-          <ArtworkVisual
-            visual={featuredProducts[1]?.visual}
-            color={featuredProducts[1]?.color ?? products[0].color}
-            accent={featuredProducts[1]?.accent ?? products[0].accent}
-            shape={featuredProducts[1]?.shape ?? products[0].shape}
-          />
+          {hero ? (
+            <ArtworkVisual
+              visual={artworkVisual(hero)}
+              color={hero.color}
+              accent={hero.accent}
+              shape={hero.shape}
+            />
+          ) : null}
         </div>
       </section>
       <section className="section evidence-film">
@@ -85,14 +89,14 @@ export default function Home() {
           <div>
             <span className="eyebrow">{locale === "fa" ? "آرشیو رَد" : "RAD ARCHIVE"}</span>
             <h2>{locale === "fa" ? "آثار موجود و فروخته‌شده" : "Available and collected works"}</h2>
-            <p>{locale === "fa" ? "اثر فروخته‌شده از آرشیو حذف نمی‌شود؛ مسیر رَد را کامل می‌کند." : "Collected works remain visible; they complete RAD’s story."}</p>
+            <p>{locale === "fa" ? "اثر فروخته‌شده از آرشیو حذف نمی‌شود؛ مسیر رَد را کامل می‌کند." : "Collected works remain visible; they complete RAD's story."}</p>
           </div>
           <ButtonLink href="/products" outline>
             {t("allWorks")}
           </ButtonLink>
         </header>
         <div className="product-grid home-products">
-          {featuredProducts.map((p, i) => (
+          {featured.map((p, i) => (
             <ProductCard product={p} index={i} key={p.slug} />
           ))}
         </div>
@@ -101,12 +105,14 @@ export default function Home() {
         <div className="studio-visual">
           <span className="orbit o1" />
           <span className="orbit o2" />
-          <ArtworkVisual
-            visual={featuredProducts[2]?.visual}
-            color={featuredProducts[2]?.color ?? products[1].color}
-            accent={featuredProducts[2]?.accent ?? products[1].accent}
-            shape={featuredProducts[2]?.shape ?? products[1].shape}
-          />
+          {studio ? (
+            <ArtworkVisual
+              visual={artworkVisual(studio)}
+              color={studio.color}
+              accent={studio.accent}
+              shape={studio.shape}
+            />
+          ) : null}
         </div>
         <div>
           <span className="eyebrow">{t("studioEyebrow")}</span>
@@ -122,7 +128,7 @@ export default function Home() {
         <div>
           <span className="eyebrow">{t("philosophy")}</span>
           <h2>{locale === "fa" ? "رَد از میل به ساختن اشیایی شروع شد که برای هیچ‌کس دیگری ساخته نشده‌اند." : "RAD began with the desire to make objects created for no one else."}</h2>
-          <p>{locale === "fa" ? "هر اثر در گفت‌وگوی مستقیم میان نگاه هنرمند، ماده و دست شکل می‌گیرد. تفاوت‌ها نقص نیستند؛ امضای فرآیندند." : "Each work takes shape through a direct conversation between the maker’s eye, material, and hand. Variations are the process’s signature."}</p>
+          <p>{locale === "fa" ? "هر اثر در گفت‌وگوی مستقیم میان نگاه هنرمند، ماده و دست شکل می‌گیرد. تفاوت‌ها نقص نیستند؛ امضای فرآیندند." : "Each work takes shape through a direct conversation between the maker's eye, material, and hand. Variations are the process's signature."}</p>
         </div>
       </section>
       <section className="provenance section">
@@ -142,7 +148,7 @@ export default function Home() {
             <p>
               {locale === "fa"
                 ? "هنرمند، متریال و تمام مراحل ساخت هر اثر در شناسنامه آن ثبت می‌شود."
-                : "The maker, material, and every making stage are recorded in the work’s provenance."}
+                : "The maker, material, and every making stage are recorded in the work's provenance."}
             </p>
           </article>
           <article>
@@ -154,7 +160,7 @@ export default function Home() {
             <p>
               {locale === "fa"
                 ? "تفاوت‌های طبیعی هر ماده پنهان نمی‌شوند؛ همان‌ها بخشی از هویت اثرند."
-                : "Natural variations in every material remain visible as part of the work’s identity."}
+                : "Natural variations in every material remain visible as part of the work's identity."}
             </p>
           </article>
           <article>

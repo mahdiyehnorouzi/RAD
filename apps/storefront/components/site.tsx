@@ -5,7 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { Product } from "@/lib/products";
 import { productCopy } from "@/lib/products";
-import { mockCategoryLabel, mockStorefront } from "@/lib/mock-data";
+import { mockStorefront } from "@/lib/mock-data";
 import { productPrice, useCart } from "./cart";
 import { useLocale } from "./i18n";
 import { SiteSearch } from "./search";
@@ -22,6 +22,8 @@ import {
   X,
 } from "lucide-react";
 import { VendorBadge } from "@rad/ui";
+import type { ProductShape, ProductVisual } from "@rad/types";
+import { artworkVisual, categoryLabel } from "@/lib/artwork";
 
 export function Header() {
   const [open, setOpen] = useState(false);
@@ -224,7 +226,6 @@ export function Vessel({
     </div>
   );
 }
-
 export function ArtworkVisual({
   visual = "vessel",
   color,
@@ -232,10 +233,10 @@ export function ArtworkVisual({
   shape = "round",
   className = "",
 }: {
-  visual?: Product["visual"];
+  visual?: ProductVisual;
   color: string;
   accent: string;
-  shape?: Product["shape"];
+  shape?: ProductShape;
   className?: string;
 }) {
   if (visual === "vessel")
@@ -291,7 +292,7 @@ export function ProductMedia({
   }
   return <>
       <ArtworkVisual
-        visual={product.visual}
+        visual={artworkVisual(product)}
         color={media?.color ?? product.color}
         accent={media?.accent ?? product.accent}
         shape={media?.shape ?? product.shape}
@@ -308,7 +309,7 @@ export function ProductCard({
 }) {
   const { locale, t, href, number } = useLocale();
   const copy = productCopy(product, locale);
-  const category = mockCategoryLabel(product.category, locale);
+  const category = categoryLabel(product.category, locale);
   return (
     <article className="product-card">
       <div className="product-media-shell">
