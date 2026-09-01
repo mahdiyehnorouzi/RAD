@@ -1,8 +1,9 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
-import { Archive, ChevronLeft, CircleGauge, ImagePlus, LayoutDashboard, LogOut, Menu, Package, Pencil, Plus, Search, ShieldCheck, ShoppingBag, Trash2, Users, X } from "lucide-react";
+import { Archive, ChevronLeft, CircleGauge, ImagePlus, KeyRound, LayoutDashboard, LogOut, Menu, Package, Pencil, Plus, Search, ShieldCheck, ShoppingBag, Trash2, Users, X } from "lucide-react";
 import { useAdminWorkspace } from "../hooks/use-admin-workspace";
+import { loadRememberedEmail, loadRememberMe, saveLoginPreferences } from "../lib/admin-storage";
 import { orderStatusLabels, productStatusLabels, roleLabels, type AdminMember, type AdminOrder, type AdminProduct, type AdminRole, type AdminSection } from "../lib/admin-data";
 
 const navItems: { id: AdminSection; label: string; icon: typeof Package }[] = [
@@ -10,6 +11,7 @@ const navItems: { id: AdminSection; label: string; icon: typeof Package }[] = [
   { id: "products", label: "آثار و محصولات", icon: Archive },
   { id: "orders", label: "سفارش‌ها", icon: ShoppingBag },
   { id: "members", label: "افراد و دسترسی", icon: Users },
+  { id: "account", label: "حساب کاربری", icon: KeyRound },
 ];
 
 const number = new Intl.NumberFormat("fa-IR");
@@ -33,7 +35,7 @@ export function AdminDashboard() {
   const go = (next: AdminSection) => { setSection(next); setMobileNav(false); };
 
   if (!workspace.ready) return <div className="admin-shell"><main className="admin-main"><p className="admin-loading">در حال اتصال به پایگاه داده…</p></main></div>;
-  if (!workspace.user?.adminRole) return <AdminLogin onLogin={workspace.login} />;
+  if (!workspace.user?.adminRole) return <AdminLogin onLogin={workspace.login} onForgotPassword={workspace.forgotPassword} />;
 
   return <div className="admin-shell">
     <aside className={`admin-sidebar ${mobileNav ? "is-open" : ""}`} aria-label="ناوبری مدیریت">
@@ -52,6 +54,7 @@ export function AdminDashboard() {
       {section === "products" && <Products products={workspace.products} canWrite={workspace.can("product.write")} onCreate={() => setProductEditor("new")} onEdit={setProductEditor} onDelete={setDeleteTarget} />}
       {section === "orders" && <Orders orders={workspace.orders} canWrite={workspace.can("order.write")} onChange={async (order) => { try { await workspace.updateOrder(order); announce("وضعیت سفارش ذخیره شد."); } catch (error) { announce((error as Error).message); } }} />}
       {section === "members" && <Members members={workspace.members} canWrite={workspace.can("member.write")} onInvite={() => setInviteOpen(true)} onChange={async (member) => { try { await workspace.updateMember(member); announce("سطح دسترسی به‌روزرسانی شد."); } catch (error) { announce((error as Error).message); } }} />}
+      {section === "account" && <AccountSettings user={workspace.user} onChangePassword={workspace.changePassword} onDone={(message) => announce(message)} />}
     </main>
 
     {productEditor && <ProductDialog product={productEditor === "new" ? null : productEditor} onClose={() => setProductEditor(null)} onSave={async (product) => { try { await workspace.saveProduct(product); setProductEditor(null); announce(productEditor === "new" ? "محصول جدید در پایگاه داده ذخیره شد." : "تغییرات محصول ذخیره شد."); } catch (error) { announce((error as Error).message); } }} />}
@@ -87,7 +90,7 @@ function Products({ products, canWrite, onCreate, onEdit, onDelete }: { products
   </section>;
 }
 
-function ProductThumb({ product }: { product: AdminProduct }) { return <div className="product-thumb">{product.images[0] ? <img src={product.images[0]} alt="" /> : <Package /> }<span>{number.format(product.images.length)} عکس</span></div>; }
+function ProductThumb({ product }: { product: AdminProduct }) { return <div className="product-thumb">{product.images[0] ? <img src={product.images[0]} alt="" /> : <Package />}<span>{number.format(product.images.length)} عکس</span></div>; }
 
 function Orders({ orders, canWrite, onChange }: { orders: AdminOrder[]; canWrite: boolean; onChange: (order: AdminOrder) => void | Promise<void> }) {
   return <section className="paper-panel data-view"><div className="view-heading"><div><span className="eyebrow">از ثبت تا تحویل</span><h2>سفارش‌ها</h2><p>وضعیت هر قطعه را در مسیر کارگاه ثبت کنید.</p></div></div><div className="table-wrap"><table><thead><tr><th>سفارش</th><th>مشتری</th><th>اثر</th><th>مبلغ</th><th>وضعیت</th></tr></thead><tbody>{orders.map((order) => <tr key={order.id}><td><strong>{order.id}</strong><small>{date(order.createdAt)}</small></td><td>{order.customer}</td><td>{order.productName}</td><td>{money(order.amount)}</td><td><select value={order.status} disabled={!canWrite} onChange={(event) => onChange({ ...order, status: event.target.value as AdminOrder["status"] })} aria-label={`وضعیت سفارش ${order.id}`}>{Object.entries(orderStatusLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></td></tr>)}</tbody></table></div></section>;
@@ -115,29 +118,206 @@ function Field({ label, error, children }: { label: string; error?: string; chil
 function StatusBadge({ label, tone }: { label: string; tone: "green" | "muted" }) { return <span className={`status-badge ${tone}`}>{label}</span>; }
 function EmptyState({ title, description }: { title: string; description: string }) { return <div className="empty-state"><Package /><h3>{title}</h3><p>{description}</p></div>; }
 
-function AdminLogin({ onLogin }: { onLogin: (input: { email: string; password: string }) => Promise<void> }) {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+function AccountSettings({ user, onChangePassword, onDone }: { user: { name: string; email: string }; onChangePassword: (input: { currentPassword: string; newPassword: string }) => Promise<{ ok: boolean }>; onDone: (message: string) => void }) {
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
+
+  return (
+    <section className="paper-panel data-view account-view">
+      <div className="view-heading">
+        <div>
+          <span className="eyebrow">امنیت حساب</span>
+          <h2>حساب کاربری</h2>
+          <p>{user.name} · <span dir="ltr">{user.email}</span></p>
+        </div>
+      </div>
+      <form
+        className="editor-form account-form"
+        noValidate
+        onSubmit={async (event) => {
+          event.preventDefault();
+          if (newPassword.length < 8) {
+            setError("رمز عبور جدید باید حداقل ۸ نویسه باشد.");
+            return;
+          }
+          if (newPassword !== confirmPassword) {
+            setError("تکرار رمز عبور با رمز جدید یکسان نیست.");
+            return;
+          }
+          try {
+            setError("");
+            await onChangePassword({ currentPassword, newPassword });
+            setCurrentPassword("");
+            setNewPassword("");
+            setConfirmPassword("");
+            onDone("رمز عبور با موفقیت تغییر کرد.");
+          } catch (err) {
+            setError((err as Error).message);
+          }
+        }}
+      >
+        {error && <small className="field-error" role="alert">{error}</small>}
+        <Field label="رمز عبور فعلی">
+          <input
+            dir="ltr"
+            type="password"
+            name="current-password"
+            value={currentPassword}
+            onChange={(event) => setCurrentPassword(event.target.value)}
+            autoComplete="current-password"
+            minLength={8}
+            required
+          />
+        </Field>
+        <div className="form-grid">
+          <Field label="رمز عبور جدید">
+            <input
+              dir="ltr"
+              type="password"
+              name="new-password"
+              value={newPassword}
+              onChange={(event) => setNewPassword(event.target.value)}
+              autoComplete="new-password"
+              minLength={8}
+              required
+            />
+          </Field>
+          <Field label="تکرار رمز عبور جدید">
+            <input
+              dir="ltr"
+              type="password"
+              name="confirm-password"
+              value={confirmPassword}
+              onChange={(event) => setConfirmPassword(event.target.value)}
+              autoComplete="new-password"
+              minLength={8}
+              required
+            />
+          </Field>
+        </div>
+        <p className="account-note">مرورگر دسکتاپ می‌تواند رمز جدید را پس از ذخیره، برای ورودهای بعدی پیشنهاد دهد.</p>
+        <div className="dialog-actions account-actions">
+          <button className="primary-action" type="submit">ذخیره رمز عبور</button>
+        </div>
+      </form>
+    </section>
+  );
+}
+
+function AdminLogin({ onLogin, onForgotPassword }: { onLogin: (input: { email: string; password: string; rememberMe?: boolean }) => Promise<void>; onForgotPassword: (email: string) => Promise<{ message: string }> }) {
+  const [mode, setMode] = useState<"login" | "forgot">("login");
+  const [email, setEmail] = useState(() => loadRememberedEmail());
+  const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(() => loadRememberMe());
+  const [error, setError] = useState("");
+  const [forgotMessage, setForgotMessage] = useState("");
+
+  if (mode === "forgot") {
+    return (
+      <div className="admin-login">
+        <section className="paper-panel">
+          <span className="eyebrow">دفتر کوره</span>
+          <h1>فراموشی رمز عبور</h1>
+          <p>ایمیل حساب مدیریتی خود را وارد کنید. یک کد ۶ رقمی به ایمیل شما ارسال می‌شود.</p>
+          <form
+            className="editor-form"
+            noValidate
+            onSubmit={async (event) => {
+              event.preventDefault();
+              try {
+                setError("");
+                const result = await onForgotPassword(email.trim());
+                setForgotMessage(result.message);
+              } catch (err) {
+                setError((err as Error).message);
+              }
+            }}
+          >
+            {error && <small className="field-error" role="alert">{error}</small>}
+            {forgotMessage && (
+              <div className="login-success" role="status">
+                <p>{forgotMessage}</p>
+                <a className="text-link" href={`/reset-password?email=${encodeURIComponent(email.trim())}`}>وارد کردن کد بازیابی</a>
+              </div>
+            )}
+            <Field label="ایمیل">
+              <input
+                dir="ltr"
+                type="email"
+                name="email"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                autoComplete="username"
+                required
+              />
+            </Field>
+            <button className="primary-action" type="submit">ارسال کد بازیابی</button>
+            <button className="text-link-button" type="button" onClick={() => { setMode("login"); setError(""); setForgotMessage(""); }}>بازگشت به ورود</button>
+          </form>
+        </section>
+      </div>
+    );
+  }
+
   return (
     <div className="admin-login">
       <section className="paper-panel">
         <span className="eyebrow">دفتر کوره</span>
         <h1>ورود به مدیریت رَد</h1>
         <p>حساب‌های جدید مشتری از فروشگاه ساخته می‌شوند. محصولات تازه را پس از ورود در همین پنل به پایگاه داده اضافه کنید.</p>
-        <form className="editor-form" noValidate onSubmit={async (event) => {
-          event.preventDefault();
-          try {
-            setError("");
-            await onLogin({ email: email.trim(), password });
-          } catch (err) {
-            setError((err as Error).message);
-          }
-        }}>
+        <form
+          className="editor-form"
+          noValidate
+          onSubmit={async (event) => {
+            event.preventDefault();
+            try {
+              setError("");
+              saveLoginPreferences(email, rememberMe);
+              await onLogin({ email: email.trim(), password, rememberMe });
+            } catch (err) {
+              setError((err as Error).message);
+            }
+          }}
+        >
           {error && <small className="field-error" role="alert">{error}</small>}
-          <Field label="ایمیل"><input dir="ltr" type="email" value={email} onChange={(event) => setEmail(event.target.value)} autoComplete="username" /></Field>
-          <Field label="رمز عبور"><input dir="ltr" type="password" value={password} onChange={(event) => setPassword(event.target.value)} autoComplete="current-password" minLength={8} /></Field>
-          <button className="primary-action" type="submit">ورود</button>
+          <Field label="ایمیل">
+            <input
+              dir="ltr"
+              type="email"
+              name="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              autoComplete="username"
+              required
+            />
+          </Field>
+          <Field label="رمز عبور">
+            <input
+              dir="ltr"
+              type="password"
+              name="password"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              autoComplete="current-password"
+              minLength={8}
+              required
+            />
+          </Field>
+          <label className="remember-field">
+            <input
+              type="checkbox"
+              name="remember"
+              checked={rememberMe}
+              onChange={(event) => setRememberMe(event.target.checked)}
+            />
+            <span>مرا به خاطر بسپار — ایمیل و ورود در این مرورگر نگه داشته شود</span>
+          </label>
+          <div className="login-actions">
+            <button className="primary-action" type="submit">ورود</button>
+            <button className="text-link-button" type="button" onClick={() => { setMode("forgot"); setError(""); }}>رمز عبور را فراموش کرده‌اید؟</button>
+          </div>
         </form>
       </section>
     </div>

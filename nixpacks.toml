@@ -1,0 +1,6 @@
+[phases.setup]
+nixPkgs = []
+
+[build]
+builder = "dockerfile"
+dockerfilePath = "Dockerfile.api"

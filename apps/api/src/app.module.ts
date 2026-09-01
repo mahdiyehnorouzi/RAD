@@ -16,6 +16,7 @@ import { OrdersModule } from "./orders/orders.module";
 import { NoticesModule } from "./notices/notices.module";
 import { DesignModule } from "./design/design.module";
 import { AdminModule } from "./admin/admin.module";
+import { MailModule } from "./mail/mail.module";
 import { HealthController } from "./health/health.controller";
 
 @Module({
@@ -34,6 +35,7 @@ import { HealthController } from "./health/health.controller";
     }),
     PrismaModule,
     CommonModule,
+    MailModule,
     AuthModule,
     CatalogModule,
     CartModule,
