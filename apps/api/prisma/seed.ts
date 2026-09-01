@@ -1,8 +1,17 @@
+import { existsSync, readFileSync } from "node:fs";
+import path from "node:path";
 import { PrismaClient } from "@prisma/client";
 import { hash } from "bcryptjs";
 import { seedProducts, seedVendors } from "./data";
 
 const prisma = new PrismaClient();
+const seedAssetsDir = path.join(__dirname, "seed-assets");
+
+function seedImageSrc(slug: string) {
+  const filePath = path.join(seedAssetsDir, `${slug}.webp`);
+  if (!existsSync(filePath)) return undefined;
+  return `data:image/webp;base64,${readFileSync(filePath).toString("base64")}`;
+}
 
 async function seedStaff() {
   const adminEmail = (process.env.ADMIN_EMAIL ?? "mahdiyeh.norozi77@gmail.com").toLowerCase();
@@ -80,11 +89,13 @@ async function main() {
     });
     await prisma.productImage.deleteMany({ where: { productSlug: product.slug } });
     if (images.length) {
+      const photo = seedImageSrc(product.slug);
       await prisma.productImage.createMany({
         data: images.map((image, sortOrder) => ({
           productSlug: product.slug,
           sortOrder,
           ...image,
+          src: "src" in image && image.src ? image.src : photo,
         })),
       });
     }

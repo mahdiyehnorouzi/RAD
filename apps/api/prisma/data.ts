@@ -1,3 +1,5 @@
+import { photoProducts } from "./photo-products";
+
 export const seedVendors = [
   {
     id: "rad-studio",
@@ -16,6 +18,7 @@ export const seedVendors = [
 ];
 
 export const seedProducts = [
+  ...photoProducts,
   {
     slug: "red-vessel-27",
     name: "کوزه‌ی سرخ شماره ۲۷",
