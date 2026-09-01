@@ -1,0 +1,17 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "account_id": "0a3200bf24b2133ce04ecb49452a036e",
+  "main": "vinext/server/fetch-handler",
+  "name": "rad-admin",
+  "compatibility_date": "2026-08-24",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "directory": "dist/client",
+    "not_found_handling": "none",
+    "binding": "ASSETS"
+  },
+  "cache": { "enabled": true },
+  "vars": {
+    "API_URL": "https://rad-api-web-production.up.railway.app"
+  }
+}

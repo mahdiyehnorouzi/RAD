@@ -22,6 +22,10 @@
     "db:down": "docker compose down",
     "dev:admin": "npm run dev --workspace @rad/admin",
     "build:admin": "npm run build --workspace @rad/admin",
+    "build:admin:cloudflare": "npm run build:vinext --workspace @rad/admin",
+    "deploy:admin": "npm run deploy:vinext --workspace @rad/admin",
+    "deploy:api": "bash scripts/deploy-api-railway.sh",
+    "deploy:api:render": "echo 'Connect render.yaml in the Render dashboard, then set admin API_URL to the Render service URL.'",
     "build:all": "npm run build --workspaces --if-present",
     "typecheck:all": "npm run typecheck --workspaces --if-present"
   },

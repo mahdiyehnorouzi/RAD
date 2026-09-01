@@ -52,7 +52,7 @@ export function useAdminWorkspace() {
     members,
     currentRole,
     can,
-    async login(input: { email: string; password: string }) {
+    async login(input: { email: string; password: string; rememberMe?: boolean }) {
       setError("");
       const payload = await api<{ user: AuthUser }>("/auth/session", {
         method: "POST",
@@ -64,6 +64,24 @@ export function useAdminWorkspace() {
         throw new Error("این حساب به دفتر کوره دسترسی ندارد.");
       }
       await refresh(payload.user);
+    },
+    async forgotPassword(email: string) {
+      return api<{ message: string }>("/auth/password/forgot", {
+        method: "POST",
+        body: JSON.stringify({ email }),
+      });
+    },
+    async resetPassword(input: { email: string; code: string; password: string }) {
+      return api<{ ok: boolean }>("/auth/password/reset", {
+        method: "POST",
+        body: JSON.stringify(input),
+      });
+    },
+    async changePassword(input: { currentPassword: string; newPassword: string }) {
+      return api<{ ok: boolean }>("/auth/password", {
+        method: "PATCH",
+        body: JSON.stringify(input),
+      });
     },
     async logout() {
       await api("/auth/logout", { method: "POST" });

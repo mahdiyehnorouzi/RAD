@@ -1,0 +1,46 @@
+services:
+  - type: web
+    name: rad-api
+    runtime: docker
+    dockerfilePath: ./Dockerfile.api
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 4000
+      - key: RUN_SEED
+        value: "true"
+      - key: ADMIN_ORIGIN
+        value: https://rad-admin.rad-studio-admin.workers.dev
+      - key: STOREFRONT_ORIGIN
+        value: https://rad-studio-ceramic.rad-studio-admin.workers.dev
+      - key: JWT_SECRET
+        generateValue: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: rad-db
+          property: connectionString
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        sync: false
+      - key: SMTP_SECURE
+        sync: false
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+      - key: SMTP_FROM
+        sync: false
+
+databases:
+  - name: rad-db
+    plan: free
+    databaseName: rad
+    user: rad

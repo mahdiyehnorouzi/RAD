@@ -1,5 +1,5 @@
 export type AdminRole = "owner" | "manager" | "editor" | "viewer";
-export type AdminSection = "overview" | "products" | "orders" | "members";
+export type AdminSection = "overview" | "products" | "orders" | "members" | "account";
 export type AdminProductStatus = "draft" | "available" | "reserved" | "sold";
 export type AdminOrderStatus = "received" | "approved" | "forming" | "drying" | "firing" | "glazing" | "quality" | "shipped" | "delivered";
 

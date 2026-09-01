@@ -1,18 +1,29 @@
-import { Injectable, UnauthorizedException } from "@nestjs/common";
+import { Injectable, NotFoundException, UnauthorizedException } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
+import { createHash, randomInt } from "node:crypto";
 import { hash, compare } from "bcryptjs";
 import { PrismaService } from "../prisma/prisma.service";
+import { MailService } from "../mail/mail.service";
 import { toAuthUser, type Actor, type AuthUser } from "../common/identity";
+
+const SESSION_MAX_AGE_MS = 1000 * 60 * 60 * 24 * 7;
+const REMEMBER_MAX_AGE_MS = 1000 * 60 * 60 * 24 * 30;
+const RESET_MAX_AGE_MS = 1000 * 60 * 15;
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwt: JwtService,
+    private readonly mail: MailService,
   ) {}
 
+  sessionMaxAge(rememberMe?: boolean) {
+    return rememberMe ? REMEMBER_MAX_AGE_MS : SESSION_MAX_AGE_MS;
+  }
+
   async signIn(
-    input: { name?: string; email: string; password: string },
+    input: { name?: string; email: string; password: string; rememberMe?: boolean },
     actor: Actor,
   ) {
     const email = input.email.trim().toLowerCase();
@@ -59,11 +70,84 @@ export class AuthService {
       role: user.role,
       adminRole: user.adminRole ?? null,
     });
-    return { user, sessionToken };
+    return { user, sessionToken, maxAgeMs: this.sessionMaxAge(input.rememberMe) };
   }
 
   async me(actor: Actor) {
     return { user: actor.user };
+  }
+
+  async changePassword(actor: Actor, input: { currentPassword: string; newPassword: string }) {
+    if (!actor.user) throw new UnauthorizedException("ابتدا وارد حساب شوید.");
+    const user = await this.prisma.user.findUnique({ where: { id: actor.user.id } });
+    if (!user?.adminRole) throw new UnauthorizedException("این حساب به دفتر کوره دسترسی ندارد.");
+    const matches = await compare(input.currentPassword, user.passwordHash);
+    if (!matches) throw new UnauthorizedException("رمز عبور فعلی نادرست است.");
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: { passwordHash: await hash(input.newPassword, 12) },
+    });
+    return { ok: true };
+  }
+
+  async requestPasswordReset(email: string) {
+    const normalized = email.trim().toLowerCase();
+    const user = await this.prisma.user.findUnique({ where: { email: normalized } });
+    if (!user?.adminRole) {
+      return {
+        message: "اگر ایمیل شما در دفتر کوره ثبت شده باشد، کد بازیابی به آن ارسال می‌شود.",
+      };
+    }
+
+    const code = String(randomInt(100000, 1_000_000));
+    const tokenHash = createHash("sha256").update(code).digest("hex");
+    await this.prisma.passwordResetToken.deleteMany({ where: { userId: user.id } });
+    await this.prisma.passwordResetToken.create({
+      data: {
+        userId: user.id,
+        tokenHash,
+        expiresAt: new Date(Date.now() + RESET_MAX_AGE_MS),
+      },
+    });
+
+    await this.mail.sendPasswordResetCode(user.email, code);
+    return {
+      message: "کد بازیابی به ایمیل شما ارسال شد. صندوق ورودی و پوشهٔ اسپم را بررسی کنید.",
+    };
+  }
+
+  async resetPassword(input: { email: string; code: string; password: string }) {
+    const normalized = input.email.trim().toLowerCase();
+    const code = input.code.trim();
+    const tokenHash = createHash("sha256").update(code).digest("hex");
+    const user = await this.prisma.user.findUnique({ where: { email: normalized } });
+    if (!user?.adminRole) {
+      throw new NotFoundException("کد بازیابی نامعتبر یا منقضی شده است.");
+    }
+
+    const record = await this.prisma.passwordResetToken.findFirst({
+      where: {
+        userId: user.id,
+        tokenHash,
+        expiresAt: { gt: new Date() },
+      },
+    });
+    if (!record) {
+      throw new NotFoundException("کد بازیابی نامعتبر یا منقضی شده است.");
+    }
+
+    await this.prisma.$transaction([
+      this.prisma.user.update({
+        where: { id: user.id },
+        data: {
+          passwordHash: await hash(input.password, 12),
+          status: "active",
+        },
+      }),
+      this.prisma.passwordResetToken.deleteMany({ where: { userId: user.id } }),
+    ]);
+
+    return { ok: true };
   }
 
   private async mergeGuestState(guestId: string, userId: string) {
