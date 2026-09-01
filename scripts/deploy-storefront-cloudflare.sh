@@ -4,7 +4,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT/apps/storefront"
 
-API_URL="${API_URL:-https://rad-api-web-production.up.railway.app}"
+API_URL="${API_URL:-https://rad-api-web-production-9b7c.up.railway.app}"
 export API_URL
 
 if [[ -z "${CLOUDFLARE_API_TOKEN:-}" ]]; then
