@@ -1,7 +1,10 @@
-import { Body, Controller, Get, Post, Req, Res } from "@nestjs/common";
+import { Body, Controller, Get, Patch, Post, Req, Res } from "@nestjs/common";
 import { Throttle } from "@nestjs/throttler";
 import type { Response } from "express";
 import { AuthService } from "./auth.service";
+import { ChangePasswordDto } from "./dto/change-password.dto";
+import { ForgotPasswordDto } from "./dto/forgot-password.dto";
+import { ResetPasswordDto } from "./dto/reset-password.dto";
 import { SessionDto } from "./dto/session.dto";
 import { IdentityService } from "../common/identity.service";
 import type { AuthedRequest } from "../common/session.middleware";
@@ -31,9 +34,31 @@ export class AuthController {
     response.cookie(
       AUTH_COOKIE,
       result.sessionToken,
-      sessionCookieOptions(1000 * 60 * 60 * 24 * 7),
+      sessionCookieOptions(result.maxAgeMs),
     );
     return { user: result.user };
+  }
+
+  @Patch("password")
+  @Throttle({ default: { limit: 8, ttl: 60_000 } })
+  async changePassword(
+    @Body() body: ChangePasswordDto,
+    @Req() request: AuthedRequest,
+  ) {
+    const actor = await this.identity.fromRequest(request);
+    return this.auth.changePassword(actor, body);
+  }
+
+  @Post("password/forgot")
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
+  async forgotPassword(@Body() body: ForgotPasswordDto) {
+    return this.auth.requestPasswordReset(body.email);
+  }
+
+  @Post("password/reset")
+  @Throttle({ default: { limit: 8, ttl: 60_000 } })
+  async resetPassword(@Body() body: ResetPasswordDto) {
+    return this.auth.resetPassword(body);
   }
 
   @Post("logout")

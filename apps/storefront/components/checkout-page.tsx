@@ -77,7 +77,7 @@ export function CheckoutPage() {
           <label htmlFor="checkout-city">{t("cityLabel")}</label>
           <input id="checkout-city" name="city" autoComplete="address-level2" />
           <label htmlFor="checkout-address">{t("addressLabel")}</label>
-          <textarea id="checkout-address" name="address" rows={4} autoComplete="street-address" />
+          <textarea className="resize-none" id="checkout-address" name="address" rows={4} autoComplete="street-address" />
           <button className="button" type="submit">{t("placeDemoOrder")}</button>
         </form>
         <aside className="checkout-summary">

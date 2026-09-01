@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { localFixes } from "./local-fixes";
-import { Header, Footer } from "@/components/site";
+import { mockStorefront } from "@/lib/mock-data";
+import { Header, Footer, PageBackNavigation } from "@/components/site";
 import { CartProvider } from "@/components/cart";
 import { LocaleProvider } from "@/components/i18n";
 import { CommerceProvider } from "@/components/commerce";
@@ -9,8 +10,8 @@ import { CatalogProvider } from "@/components/catalog-provider";
 import { RouteScrollReset } from "@/components/route-scroll-reset";
 import { HomeBanner } from "@/components/home-banner";
 export const metadata: Metadata = {
-  title: "رَد — استودیو سرامیک",
-  description: "آثار یگانه و سرامیک سفارشی، ساخته‌شده در تهران",
+  title: mockStorefront.brand.title.fa,
+  description: mockStorefront.brand.description.fa,
 };
 export default function RootLayout({
   children,
@@ -28,6 +29,7 @@ export default function RootLayout({
                 <RouteScrollReset />
                 <HomeBanner />
                 <Header />
+                <PageBackNavigation />
                 <main>{children}</main>
                 <Footer />
               </CartProvider>

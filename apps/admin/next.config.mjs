@@ -1,12 +1,11 @@
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const appRoot = path.dirname(fileURLToPath(import.meta.url));
+const monorepoRoot = path.resolve(appRoot, "../..");
+
 /** @type {import('next').NextConfig} */
 export default {
   transpilePackages: ["@rad/ui", "@rad/types"],
-  async rewrites() {
-    return [
-      {
-        source: "/backend/:path*",
-        destination: `${process.env.API_URL || "http://localhost:4000"}/:path*`,
-      },
-    ];
-  },
+  turbopack: { root: monorepoRoot },
 };

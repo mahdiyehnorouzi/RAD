@@ -1,8 +1,9 @@
 "use client";
-import { ButtonLink, ProductCard, Artwork } from "@/components/site";
+import { ArtworkVisual, ButtonLink, ProductCard } from "@/components/site";
 import { useLocale } from "@/components/i18n";
 import { useCatalog } from "@/components/catalog-provider";
 import { featuredProductSlugs, artworkVisual } from "@/lib/artwork";
+
 export default function Home() {
   const { t, locale } = useLocale();
   const { products } = useCatalog();
@@ -27,7 +28,7 @@ export default function Home() {
             <br />
             {t("heroTitle2")}
           </h1>
-          <p className="hero-thesis">{locale === "fa" ? "یک اثر. یک ردِ دست. یک بار." : "One work. One maker’s trace. Made once."}</p>
+          <p className="hero-thesis">{locale === "fa" ? "یک اثر. یک ردِ دست. یک بار." : "One work. One maker's trace. Made once."}</p>
         </div>
         <div className="hero-art">
           <div className="hero-identifier" aria-hidden="true">
@@ -39,7 +40,7 @@ export default function Home() {
           </span>
           <span className="sun-disc" />
           {hero ? (
-            <Artwork
+            <ArtworkVisual
               visual={artworkVisual(hero)}
               color={hero.color}
               accent={hero.accent}
@@ -64,7 +65,7 @@ export default function Home() {
               ? "اثری آماده، شماره‌گذاری‌شده و تنها در یک نسخه."
               : "Choose a finished, numbered work that exists only once."}
           </p>
-          <ButtonLink href="/products" outline>
+          <ButtonLink href="/products" outline arrow>
             {t("viewWorks")}
           </ButtonLink>
         </article>
@@ -88,7 +89,7 @@ export default function Home() {
           <div>
             <span className="eyebrow">{locale === "fa" ? "آرشیو رَد" : "RAD ARCHIVE"}</span>
             <h2>{locale === "fa" ? "آثار موجود و فروخته‌شده" : "Available and collected works"}</h2>
-            <p>{locale === "fa" ? "اثر فروخته‌شده از آرشیو حذف نمی‌شود؛ مسیر رَد را کامل می‌کند." : "Collected works remain visible; they complete RAD’s story."}</p>
+            <p>{locale === "fa" ? "اثر فروخته‌شده از آرشیو حذف نمی‌شود؛ مسیر رَد را کامل می‌کند." : "Collected works remain visible; they complete RAD's story."}</p>
           </div>
           <ButtonLink href="/products" outline>
             {t("allWorks")}
@@ -105,7 +106,7 @@ export default function Home() {
           <span className="orbit o1" />
           <span className="orbit o2" />
           {studio ? (
-            <Artwork
+            <ArtworkVisual
               visual={artworkVisual(studio)}
               color={studio.color}
               accent={studio.accent}
@@ -127,7 +128,7 @@ export default function Home() {
         <div>
           <span className="eyebrow">{t("philosophy")}</span>
           <h2>{locale === "fa" ? "رَد از میل به ساختن اشیایی شروع شد که برای هیچ‌کس دیگری ساخته نشده‌اند." : "RAD began with the desire to make objects created for no one else."}</h2>
-          <p>{locale === "fa" ? "هر اثر در گفت‌وگوی مستقیم میان نگاه هنرمند، ماده و دست شکل می‌گیرد. تفاوت‌ها نقص نیستند؛ امضای فرآیندند." : "Each work takes shape through a direct conversation between the maker’s eye, material, and hand. Variations are the process’s signature."}</p>
+          <p>{locale === "fa" ? "هر اثر در گفت‌وگوی مستقیم میان نگاه هنرمند، ماده و دست شکل می‌گیرد. تفاوت‌ها نقص نیستند؛ امضای فرآیندند." : "Each work takes shape through a direct conversation between the maker's eye, material, and hand. Variations are the process's signature."}</p>
         </div>
       </section>
       <section className="provenance section">
@@ -147,7 +148,7 @@ export default function Home() {
             <p>
               {locale === "fa"
                 ? "هنرمند، متریال و تمام مراحل ساخت هر اثر در شناسنامه آن ثبت می‌شود."
-                : "The maker, material, and every making stage are recorded in the work’s provenance."}
+                : "The maker, material, and every making stage are recorded in the work's provenance."}
             </p>
           </article>
           <article>
@@ -159,7 +160,7 @@ export default function Home() {
             <p>
               {locale === "fa"
                 ? "تفاوت‌های طبیعی هر ماده پنهان نمی‌شوند؛ همان‌ها بخشی از هویت اثرند."
-                : "Natural variations in every material remain visible as part of the work’s identity."}
+                : "Natural variations in every material remain visible as part of the work's identity."}
             </p>
           </article>
           <article>

@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useCart, cartTotal, formatTotal, productPrice } from "./cart";
-import { Vessel } from "./site";
+import { ProductMedia } from "./site";
 import { productCopy } from "@/lib/products";
 import { useLocale } from "./i18n";
 import { useCatalog } from "./catalog-provider";
@@ -54,7 +54,7 @@ export function CartPage() {
                     href={href(`/products/${product.slug}`)}
                     className="cart-art"
                   >
-                    <Vessel product={product} />
+                    <ProductMedia product={product} />
                   </Link>
                   <div className="cart-item-copy">
                     <span>{t("uniquePiece")}</span>

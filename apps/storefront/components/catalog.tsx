@@ -7,6 +7,7 @@ import { useLocale } from "./i18n";
 import { useCommerce } from "./commerce";
 import { useCatalog } from "./catalog-provider";
 import { artworkCategories } from "@/lib/artwork";
+import { MoveLeft, MoveRight } from "lucide-react";
 
 export function Catalog() {
   const { t, number, locale } = useLocale();
@@ -29,20 +30,31 @@ export function Catalog() {
       <div className="filterbar">
         <div className="filter-heading">
           <b>{locale === "fa" ? "دسته‌بندی آثار" : "Artwork categories"}</b>
+          <span className="filter-scroll-hint">
+            {locale === "fa" ? "برای دیدن بیشتر بکشید" : "Swipe to see more"}
+            {locale === "fa" ? <MoveLeft aria-hidden="true" /> : <MoveRight aria-hidden="true" />}
+          </span>
         </div>
-        <div className="filter-scroll">
-          {filters.map((x) => (
-            <button
-              key={x.id}
-              className={active === x.id ? "active" : ""}
-              onClick={() => setActive(x.id)}
-              aria-pressed={active === x.id}
-            >
-              {x.label}
-            </button>
-          ))}
+        <div className="filter-scroll-shell">
+          <div
+            className="filter-scroll"
+            tabIndex={0}
+            aria-label={locale === "fa" ? "فیلتر دسته‌بندی آثار" : "Filter artwork categories"}
+          >
+            {filters.map((x) => (
+              <button
+                type="button"
+                key={x.id}
+                className={active === x.id ? "active" : ""}
+                onClick={() => setActive(x.id)}
+                aria-pressed={active === x.id}
+              >
+                {x.label}
+              </button>
+            ))}
+          </div>
         </div>
-        <span>
+        <span className="filter-count">
           {number(visible.length)} {t("availableWorks")}
         </span>
       </div>
@@ -70,8 +82,10 @@ export function AddToBag({ product }: { product: Product }) {
   const { t } = useLocale();
   const { addNotice } = useCommerce();
   const added = has(product.slug);
+  const soldOut = product.status === "sold";
   return (
     <button
+      type="button"
       className="button add"
       onClick={async () => {
         await add(product);
@@ -80,7 +94,7 @@ export function AddToBag({ product }: { product: Product }) {
       disabled={added || product.status === "sold" || product.status === "reserved"}
       aria-live="polite"
     >
-      {added ? t("inBag") : t("addBag")}
+      {soldOut ? t("soldOut") : added ? t("inBag") : t("addBag")}
     </button>
   );
 }

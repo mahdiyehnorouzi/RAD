@@ -1,6 +1,8 @@
 "use client";
+
 import { FormEvent, useRef, useState } from "react";
-import { Artwork } from "./site";
+import type { ProductCategory } from "@rad/types";
+import { ArtworkVisual } from "./site";
 import { useLocale } from "./i18n";
 import {
   artworkCategories,
@@ -11,7 +13,7 @@ import {
 
 export function CustomDesigner() {
   const { t, locale } = useLocale();
-  const [categoryId, setCategoryId] = useState("");
+  const [category, setCategory] = useState<ProductCategory | "">("");
   const [prompt, setPrompt] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "done" | "error">(
     "idle",
@@ -21,21 +23,21 @@ export function CustomDesigner() {
   const [brief, setBrief] = useState<Record<string, string>>({});
   const [direction, setDirection] = useState(0);
   const abort = useRef<AbortController | null>(null);
-  const selected = categoryId ? artworkCategoryById(categoryId) : null;
+  const selectedCategory = category ? artworkCategoryById(category) : null;
   const presets = designPresets[locale];
   const directions = designDirections[locale];
 
-  function chooseCategory(id: string) {
-    setCategoryId(id);
+  function chooseCategory(next: ProductCategory) {
+    setCategory(next);
     setBrief({});
-    setError("");
-    setStatus("idle");
     setImage("");
+    setStatus("idle");
+    setError("");
   }
 
   async function submit(event: FormEvent) {
     event.preventDefault();
-    if (!selected || !prompt.trim() || status === "loading") return;
+    if (!category || !prompt.trim() || status === "loading") return;
     setStatus("loading");
     setError("");
     abort.current = new AbortController();
@@ -45,7 +47,7 @@ export function CustomDesigner() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           prompt: [
-            selected.label[locale],
+            selectedCategory?.label[locale],
             prompt,
             ...Object.values(brief).filter(Boolean),
             directions[direction],
@@ -79,44 +81,48 @@ export function CustomDesigner() {
             ? "رَد شما را به هنرمند و مسیر ساخت مناسب متصل می‌کند."
             : "RAD connects your idea to the right maker and process."}
         </p>
+
         <fieldset className="design-category-fieldset">
           <legend>
             <small>{locale === "fa" ? "مرحله اول" : "STEP ONE"}</small>
-            {locale === "fa" ? "چه نوع اثری می‌خواهید؟" : "What would you like to commission?"}
+            {locale === "fa"
+              ? "چه نوع اثری می‌خواهید؟"
+              : "What would you like to commission?"}
           </legend>
           <div className="design-category-grid">
-            {artworkCategories.map((category) => (
+            {artworkCategories.map((item) => (
               <button
-                key={category.id}
                 type="button"
-                className={categoryId === category.id ? "active" : ""}
-                onClick={() => chooseCategory(category.id)}
-                aria-pressed={categoryId === category.id}
+                key={item.id}
+                className={category === item.id ? "active" : ""}
+                onClick={() => chooseCategory(item.id)}
+                aria-pressed={category === item.id}
               >
                 <span
-                  className={`category-swatch ${category.visual}`}
+                  className={`category-swatch ${item.visual}`}
                   style={
                     {
-                      "--swatch": category.preview.color,
-                      "--swatch-accent": category.preview.accent,
+                      "--swatch": item.preview.color,
+                      "--swatch-accent": item.preview.accent,
                     } as React.CSSProperties
                   }
                   aria-hidden="true"
                 />
-                {category.label[locale]}
+                {item.label[locale]}
               </button>
             ))}
           </div>
         </fieldset>
-        {selected && (
+
+        {selectedCategory && (
           <fieldset className="brief-fields">
             <legend>
               <small>{locale === "fa" ? "مرحله دوم" : "STEP TWO"}</small>
               {locale === "fa"
-                ? `جزئیات ${selected.shortLabel.fa}`
-                : `${selected.shortLabel.en} details`}
+                ? `جزئیات ${selectedCategory.shortLabel.fa}`
+                : `${selectedCategory.shortLabel.en} details`}
             </legend>
-            {selected.fields.map((field) => (
+            {selectedCategory.fields.map((field) => (
               <div className="brief-choice" key={field.key}>
                 <span>{field.label[locale]}</span>
                 <div>
@@ -126,7 +132,10 @@ export function CustomDesigner() {
                       key={option}
                       className={brief[field.key] === option ? "active" : ""}
                       onClick={() =>
-                        setBrief((current) => ({ ...current, [field.key]: option }))
+                        setBrief((current) => ({
+                          ...current,
+                          [field.key]: option,
+                        }))
                       }
                       aria-pressed={brief[field.key] === option}
                     >
@@ -138,37 +147,46 @@ export function CustomDesigner() {
             ))}
           </fieldset>
         )}
+
         <label htmlFor="artwork-prompt">{t("promptLabel")}</label>
         <textarea
           id="artwork-prompt"
           className="resize-none designer-prompt"
           value={prompt}
-          onChange={(e) => setPrompt(e.target.value)}
+          onChange={(event) => setPrompt(event.target.value)}
           placeholder={
-            categoryId
+            category
               ? t("promptPlaceholder")
               : locale === "fa"
                 ? "ابتدا نوع اثر را انتخاب کنید…"
                 : "Choose an artwork category first…"
           }
           aria-describedby="prompt-help"
-          disabled={!categoryId}
+          disabled={!category}
         />
         <small id="prompt-help">{t("promptHelp")}</small>
-        <div className="preset-row" aria-label={locale === "fa" ? "واژه‌های پیشنهادی" : "Suggested words"}>
-          {presets.map((x) => (
+
+        <div
+          className="preset-row"
+          aria-label={locale === "fa" ? "واژه‌های پیشنهادی" : "Suggested words"}
+        >
+          {presets.map((preset) => (
             <button
               type="button"
-              key={x}
-              disabled={!categoryId}
+              key={preset}
+              disabled={!category}
               onClick={() =>
-                setPrompt((p) => `${p}${p ? (locale === "fa" ? "، " : ", ") : ""}${x}`)
+                setPrompt(
+                  (current) =>
+                    `${current}${current ? (locale === "fa" ? "، " : ", ") : ""}${preset}`,
+                )
               }
             >
-              {x}
+              {preset}
             </button>
           ))}
         </div>
+
         <div
           className="concept-directions"
           aria-label={locale === "fa" ? "جهت طراحی" : "Design direction"}
@@ -186,6 +204,7 @@ export function CustomDesigner() {
             </button>
           ))}
         </div>
+
         {error && (
           <p className="form-error" role="alert">
             {error}
@@ -201,22 +220,27 @@ export function CustomDesigner() {
               {t("stopGeneration")}
             </button>
           ) : (
-            <button className="button" disabled={!categoryId || !prompt.trim()}>
+            <button
+              type="submit"
+              className="button"
+              disabled={!category || !prompt.trim()}
+            >
               {locale === "fa" ? "تصورش کن →" : "Imagine it →"}
             </button>
           )}
         </div>
       </form>
+
       <section className={`designer-preview ${status}`} aria-live="polite">
         {image ? (
           <img src={image} alt={t("generatedAlt")} />
-        ) : selected ? (
+        ) : selectedCategory ? (
           <>
             <div className="preview-orbit" />
-            <Artwork
-              visual={selected.visual}
-              color={selected.preview.color}
-              accent={selected.preview.accent}
+            <ArtworkVisual
+              visual={selectedCategory.visual}
+              color={selectedCategory.preview.color}
+              accent={selectedCategory.preview.accent}
               className="designer-artwork"
             />
             <p>{status === "loading" ? t("generating") : t("preview")}</p>
@@ -233,7 +257,11 @@ export function CustomDesigner() {
         )}
         {status === "done" && (
           <div className="preview-actions">
-            <button className="button light" onClick={() => setStatus("idle")}>
+            <button
+              type="button"
+              className="button light"
+              onClick={() => setStatus("idle")}
+            >
               {t("anotherVersion")}
             </button>
             <a

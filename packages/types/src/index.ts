@@ -1,13 +1,5 @@
 export type Locale = "fa" | "en";
 export type ProductShape = "tall" | "round" | "wide";
-export type ProductVisual =
-  | "vessel"
-  | "painting"
-  | "textile"
-  | "wood"
-  | "sculpture"
-  | "jewelry"
-  | "print";
 export type ProductCategory =
   | "ceramics"
   | "painting"
@@ -18,6 +10,14 @@ export type ProductCategory =
   | "print"
   | "vases"
   | "tableware";
+export type ProductVisual =
+  | "vessel"
+  | "painting"
+  | "textile"
+  | "wood"
+  | "sculpture"
+  | "jewelry"
+  | "print";
 export type ProductStatus = "draft" | "review" | "available" | "reserved" | "sold";
 
 const categoryVisual: Record<string, ProductVisual> = {

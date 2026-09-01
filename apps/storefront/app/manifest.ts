@@ -1,9 +1,10 @@
 import type { MetadataRoute } from "next";
+import { mockStorefront } from "@/lib/mock-data";
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "رَد — استودیو سرامیک",
+    name: mockStorefront.brand.title.fa,
     short_name: "رَد",
-    description: "آثار یگانه و سرامیک سفارشی، ساخته‌شده در تهران",
+    description: mockStorefront.brand.description.fa,
     start_url: "/",
     display: "standalone",
     background_color: "#eee7da",

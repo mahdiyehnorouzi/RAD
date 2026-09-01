@@ -4,9 +4,11 @@
   "private": true,
   "type": "commonjs",
   "scripts": {
-    "dev": "nest build && nest start --watch",
+    "dev": "nest start --watch",
+    "predev": "node -e \"require('node:fs').existsSync('dist/main.js')||process.exit(1)\" || npm run build",
     "build": "nest build",
     "start": "node dist/main.js",
+    "start:production": "node scripts/start-production.mjs",
     "typecheck": "tsc --noEmit",
     "setup": "prisma generate && prisma db push && prisma db seed",
     "db:embedded": "node scripts/start-pg.mjs"
@@ -26,8 +28,11 @@
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.2",
     "cookie-parser": "^1.4.7",
+    "nodemailer": "^9.1.0",
+    "prisma": "^6.14.0",
     "reflect-metadata": "^0.2.2",
-    "rxjs": "^7.8.2"
+    "rxjs": "^7.8.2",
+    "tsx": "^4.20.5"
   },
   "devDependencies": {
     "@nestjs/cli": "^11.0.10",
@@ -35,9 +40,8 @@
     "@types/cookie-parser": "^1.4.9",
     "@types/express": "^5.0.3",
     "@types/node": "^22",
-    "prisma": "^6.14.0",
-    "tsx": "^4.20.5",
-    "typescript": "^5.8",
-    "embedded-postgres": "^18.1.0-beta.12"
+    "@types/nodemailer": "^8.0.1",
+    "embedded-postgres": "^18.1.0-beta.12",
+    "typescript": "^5.8"
   }
 }

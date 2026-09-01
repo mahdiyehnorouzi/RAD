@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { usePathname } from "next/navigation";
+import { mockStorefront } from "@/lib/mock-data";
 
 export type Locale = "fa" | "en";
 
@@ -153,11 +154,12 @@ const messages = {
     addBag: "افزودن به کیسه",
     quickAdd: "افزودن سریع",
     inBag: "در کیسه است ✓",
+    soldOut: "فروش رفته",
     shipping: "ارسال رایگان و بیمه‌شده در ایران • آماده‌سازی ۲ تا ۴ روز کاری",
     moreWorks: "آثار دیگر",
     emptyBag: "کیسه‌ی شما خالی است.",
     emptyBagBody:
-      "هر اثر رَد فقط یک نسخه دارد. مجموعه‌ی تازه از کوره را ببینید و قطعه‌ی خودتان را انتخاب کنید.",
+      "هر اثر رَد فقط یک نسخه دارد. مجموعه‌ی تازه را ببینید و اثر خودتان را انتخاب کنید.",
     shoppingBag: "کیسه‌ی خرید",
     clearBag: "خالی‌کردن کیسه",
     uniquePiece: "اثر یگانه • ۱/۱",
@@ -404,11 +406,12 @@ const messages = {
     addBag: "Add to bag",
     quickAdd: "Quick add",
     inBag: "In your bag ✓",
+    soldOut: "Sold",
     shipping: "Free insured shipping in Iran • dispatch in 2–4 business days",
     moreWorks: "More works",
     emptyBag: "Your bag is empty.",
     emptyBagBody:
-      "Every RAD work has only one edition. Explore the latest pieces from the kiln and choose yours.",
+      "Every RAD work has only one edition. Explore the latest collection and choose yours.",
     shoppingBag: "Shopping bag",
     clearBag: "Clear bag",
     uniquePiece: "Unique work • 1/1",
@@ -568,8 +571,8 @@ export function LocaleProvider({ children }: { children: React.ReactNode }) {
     document.title = section
       ? `${section} | ${locale === "fa" ? "رَد" : "RAD"}`
       : locale === "fa"
-        ? "رَد — آثار یکتای هنری"
-        : "RAD — Unique Artworks";
+        ? mockStorefront.brand.title.fa
+        : mockStorefront.brand.title.en;
   }, [locale, pathname]);
   const value = useMemo<LocaleContextValue>(
     () => ({
