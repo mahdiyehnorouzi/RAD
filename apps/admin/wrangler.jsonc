@@ -12,6 +12,6 @@
   },
   "cache": { "enabled": true },
   "vars": {
-    "API_URL": "https://rad-api-web-production.up.railway.app"
+    "API_URL": "https://rad-api-web-production-9b7c.up.railway.app"
   }
 }
