@@ -1,5 +1,10 @@
 import type { Prisma, Product, ProductImage, Vendor } from "@prisma/client";
 
+function imageSrc(image: ProductImage, embedImages: boolean) {
+  if (!image.src) return undefined;
+  return embedImages ? image.src : `/catalog/images/${image.id}`;
+}
+
 function visualForCategory(category: string) {
   if (category === "painting") return "painting";
   if (category === "textile") return "textile";
@@ -60,7 +65,8 @@ function asEnCopy(value: Prisma.JsonValue, fallback: EnCopy): EnCopy {
   return fallback;
 }
 
-export function toProduct(product: ProductRecord) {
+export function toProduct(product: ProductRecord, options?: { embedImages?: boolean }) {
+  const embedImages = options?.embedImages ?? false;
   const details = asStringArray(product.details);
   return {
     slug: product.slug,
@@ -79,7 +85,7 @@ export function toProduct(product: ProductRecord) {
     images: product.images
       .sort((a, b) => a.sortOrder - b.sortOrder)
       .map((image) => ({
-        src: image.src ?? undefined,
+        src: imageSrc(image, embedImages),
         alt: image.alt,
         enAlt: image.enAlt,
         color: image.color ?? undefined,

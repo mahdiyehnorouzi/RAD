@@ -15,7 +15,7 @@ export class CatalogService {
       include: productInclude,
       orderBy: { sortOrder: "asc" },
     });
-    return products.map(toProduct);
+    return products.map((product) => toProduct(product));
   }
 
   async bySlug(slug: string) {
@@ -35,7 +35,7 @@ export class CatalogService {
       include: productInclude,
       orderBy: { sortOrder: "asc" },
     });
-    return products.map(toProduct);
+    return products.map((product) => toProduct(product));
   }
 
   async search(query: string, locale: "fa" | "en" = "fa") {

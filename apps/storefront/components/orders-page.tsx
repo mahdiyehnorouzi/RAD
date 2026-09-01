@@ -6,6 +6,7 @@ import { productCopy } from "@/lib/products";
 import { formatTotal } from "./cart";
 import { useCommerce } from "./commerce";
 import { useLocale } from "./i18n";
+import { ButtonLink } from "./site";
 import { useOrderStages } from "@/hooks/use-order-stage";
 import { useCatalog } from "./catalog-provider";
 
@@ -92,9 +93,9 @@ export function OrdersPage() {
           <PackageCheck aria-hidden="true" />
           <h2>{t("noOrders")}</h2>
           <p>{t("noOrdersBody")}</p>
-          <Link className="button" href={href("/products")}>
+          <ButtonLink href="/products">
             {t("viewWorks")}
-          </Link>
+          </ButtonLink>
         </div>
       )}
     </section>

@@ -5,7 +5,6 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { Product } from "@/lib/products";
 import { productCopy } from "@/lib/products";
-import { mockStorefront } from "@/lib/mock-data";
 import { productPrice, useCart } from "./cart";
 import { useLocale } from "./i18n";
 import { SiteSearch } from "./search";
@@ -54,7 +53,7 @@ export function Header() {
         <span className="logo-mark" aria-hidden="true">
           <Image src="/rad-logo.png" alt="" width={1254} height={1254} priority />
         </span>
-        <span>{mockStorefront.brand.subtitle[locale]}</span>
+        <span>{t("logoSubtitle")}</span>
       </Link>
       <nav className={open ? "nav open" : "nav"} aria-label={t("navAria")}>
         <Link href={href("/products")} onClick={() => setOpen(false)}>
@@ -148,6 +147,15 @@ export function Header() {
   );
 }
 
+function backFallbackPath(pathname: string) {
+  if (pathname.startsWith("/products/")) return "/products";
+  if (pathname.startsWith("/orders")) return "/account";
+  if (pathname === "/checkout") return "/cart";
+  if (pathname === "/cart" || pathname === "/favorites") return "/products";
+  if (pathname === "/account") return "/";
+  return "/";
+}
+
 export function PageBackNavigation() {
   const pathname = usePathname();
   const router = useRouter();
@@ -156,15 +164,24 @@ export function PageBackNavigation() {
   if (pathname === "/") return null;
 
   const BackIcon = locale === "fa" ? ArrowRight : ArrowLeft;
+  const fallbackHref = href(backFallbackPath(pathname));
 
   return (
     <div className="route-back-bar">
       <button
         type="button"
         className="route-back-button"
-        onClick={() =>
-          window.history.length > 1 ? router.back() : router.push(href("/"))
-        }
+        onClick={() => {
+          const referrer = document.referrer;
+          const sameOrigin =
+            referrer.startsWith(window.location.origin) &&
+            !referrer.endsWith(pathname);
+          if (sameOrigin && window.history.length > 1) {
+            router.back();
+            return;
+          }
+          router.push(fallbackHref);
+        }}
       >
         <BackIcon aria-hidden="true" />
         <span>{t("previousPage")}</span>
@@ -280,11 +297,16 @@ export function ProductMedia({
     </>;
   }
   const media = product.images?.[imageIndex] ?? product.images?.[0];
-  if (media?.src) {
+  const photoSrc = media?.src
+    ? media.src.startsWith("/catalog/")
+      ? `/backend${media.src}`
+      : media.src
+    : undefined;
+  if (photoSrc) {
     return <>
       <img
         className="product-photo"
-        src={media.src}
+        src={photoSrc}
         alt={locale === "fa" ? media.alt : media.enAlt}
       />
       {soldBadge}
@@ -345,13 +367,11 @@ export function ButtonLink({
   children,
   light = false,
   outline = false,
-  arrow = false,
 }: {
   href: string;
   children: React.ReactNode;
   light?: boolean;
   outline?: boolean;
-  arrow?: boolean;
 }) {
   const { href: localizedHref, locale } = useLocale();
   const ArrowIcon = locale === "fa" ? ArrowLeft : ArrowRight;
@@ -361,7 +381,7 @@ export function ButtonLink({
       href={localizedHref(href)}
     >
       <span>{children}</span>
-      {arrow ? <ArrowIcon className="button-arrow" aria-hidden="true" /> : null}
+      <ArrowIcon className="button-arrow" aria-hidden="true" />
     </Link>
   );
 }

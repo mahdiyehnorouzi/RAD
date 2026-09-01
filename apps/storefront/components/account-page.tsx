@@ -1,8 +1,8 @@
 "use client";
-import Link from "next/link";
 import { FormEvent, useRef, useState } from "react";
 import { useCommerce } from "./commerce";
 import { useLocale } from "./i18n";
+import { ButtonLink } from "./site";
 import { Heart, PackageSearch } from "lucide-react";
 
 export function AccountPage() {
@@ -126,9 +126,9 @@ export function AccountPage() {
               {number(favorites.length)} {t("savedWorks")}
             </h2>
             <p>{t("favoriteProfileBody")}</p>
-            <Link className="button" href={href("/favorites")}>
+            <ButtonLink href="/favorites">
               {t("viewFavorites")}
-            </Link>
+            </ButtonLink>
           </section>
           <section className="profile-panel profile-feature">
             <PackageSearch aria-hidden="true" />
@@ -137,9 +137,9 @@ export function AccountPage() {
               {number(orders.length)} {t("orders")}
             </h2>
             <p>{t("noOrdersBody")}</p>
-            <Link className="button" href={href("/orders")}>
+            <ButtonLink href="/orders">
               {t("orders")}
-            </Link>
+            </ButtonLink>
           </section>
         </div>
       </section>

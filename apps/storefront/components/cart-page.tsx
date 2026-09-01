@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useCart, cartTotal, formatTotal, productPrice } from "./cart";
-import { ProductMedia } from "./site";
+import { ButtonLink, ProductMedia } from "./site";
 import { productCopy } from "@/lib/products";
 import { useLocale } from "./i18n";
 import { useCatalog } from "./catalog-provider";
@@ -25,9 +25,9 @@ export function CartPage() {
         </span>
         <h1>{t("emptyBag")}</h1>
         <p>{t("emptyBagBody")}</p>
-        <Link href={href("/products")} className="button">
+        <ButtonLink href="/products">
           {t("viewWorks")}
-        </Link>
+        </ButtonLink>
       </section>
     );
 
@@ -87,9 +87,9 @@ export function CartPage() {
             <span>{t("finalTotal")}</span>
             <b>{formatTotal(total, locale)}</b>
           </div>
-          <Link className="button" href={href("/checkout")}>
+          <ButtonLink href="/checkout">
             {t("checkout")}
-          </Link>
+          </ButtonLink>
           <small>{t("checkoutNote")}</small>
         </aside>
       </div>

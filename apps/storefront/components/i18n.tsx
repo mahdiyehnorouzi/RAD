@@ -94,7 +94,7 @@ const messages = {
     heroTitle2: "ساخته نمی‌شود.",
     heroBody:
       "هر اثر رَد یگانه است؛ ساخته‌شده با دست و ردّی که فقط یک‌بار به‌جا می‌ماند.",
-    designMine: "طراحی قطعه‌ی من ←",
+    designMine: "طراحی قطعه‌ی من",
     viewWorks: "دیدن آثار",
     onlyOne: "تنها یک نسخه",
     artworkLabel: "اثر شماره ۲۷ — تهران، ۱۴۰۵",
@@ -105,12 +105,12 @@ const messages = {
     collectionTitle: "آثار یگانه",
     collectionBody:
       "نقاشی، پارچه، چوب، سرامیک و اشیای هنری؛ هرکدام شماره‌گذاری‌شده و غیرقابل تکرار.",
-    allWorks: "همه‌ی آثار ←",
+    allWorks: "همه‌ی آثار",
     studioTitle1: "خیال شما،",
     studioTitle2: "در قالب یک اثر.",
     studioBody:
       "ایده‌ی قطعه‌ی دلخواه‌تان را بنویسید، تصویر اولیه را با هوش مصنوعی بسازید و همراه هنرمند رَد آن را برای ساخت نهایی کنید.",
-    enterStudio: "ورود به استودیوی طراحی ✦",
+    enterStudio: "ورود به استودیوی طراحی",
     philosophy: "فلسفه‌ی رَد",
     philosophyTitle: "ارزش در تکرارناپذیری است.",
     philosophyBody:
@@ -128,7 +128,7 @@ const messages = {
     journalTitle2: "حافظه‌ی دست",
     journalBody:
       "قصه‌ی هنرمندان، مواد، رنگ‌ها و زندگی آرام اشیایی که هر روز کنارمان هستند.",
-    readJournal: "خواندن ژورنال ←",
+    readJournal: "خواندن ژورنال",
     shopTitle: "همه‌ی آثار",
     shopBody:
       "هر اثر فقط یک‌بار ساخته شده است. موجودی این صفحه یک مجموعه‌ی زنده و دائماً در حال تغییر است.",
@@ -146,8 +146,8 @@ const messages = {
     removeFavorite: "حذف از علاقه‌مندی‌ها",
     saveFavorite: "ذخیره اثر",
     savedFavorite: "ذخیره‌شده",
-    backWorks: "→ بازگشت به آثار",
-    previousPage: "→ بازگشت به صفحه قبل",
+    backWorks: "بازگشت به آثار",
+    previousPage: "بازگشت به صفحه قبل",
     previousWorks: "آثار قبلی",
     nextWorks: "آثار بعدی",
     uniqueAvailable: "اثر یگانه / موجود",
@@ -346,7 +346,7 @@ const messages = {
     heroTitle2: "made twice.",
     heroBody:
       "Every RAD piece is singular, shaped by hand and a trace that can only happen once.",
-    designMine: "Design my piece →",
+    designMine: "Design my piece",
     viewWorks: "View works",
     onlyOne: "Only one exists",
     artworkLabel: "Work no. 27 — Tehran, 2026",
@@ -357,12 +357,12 @@ const messages = {
     collectionTitle: "Singular works",
     collectionBody:
       "Painting, textile, wood, ceramic and art objects—each numbered and impossible to repeat.",
-    allWorks: "All works →",
+    allWorks: "All works",
     studioTitle1: "Your imagination,",
     studioTitle2: "made into a work.",
     studioBody:
       "Describe the piece you imagine, generate an initial image with AI, and refine it with the RAD artist for production.",
-    enterStudio: "Enter the design studio ✦",
+    enterStudio: "Enter the design studio",
     philosophy: "RAD PHILOSOPHY",
     philosophyTitle: "Value lives in the unrepeatable.",
     philosophyBody:
@@ -380,7 +380,7 @@ const messages = {
     journalTitle2: "the memory of hands",
     journalBody:
       "Stories of artists, materials, colour, and the quiet lives of objects we keep close every day.",
-    readJournal: "Read the journal →",
+    readJournal: "Read the journal",
     shopTitle: "All works",
     shopBody:
       "Each work is made only once. This is a living collection that is always changing.",
@@ -398,8 +398,8 @@ const messages = {
     removeFavorite: "Remove from favourites",
     saveFavorite: "Save work",
     savedFavorite: "Saved",
-    backWorks: "← Back to works",
-    previousPage: "← Back to previous page",
+    backWorks: "Back to works",
+    previousPage: "Back to previous page",
     previousWorks: "Previous works",
     nextWorks: "Next works",
     uniqueAvailable: "Unique work / available",

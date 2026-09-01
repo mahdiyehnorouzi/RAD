@@ -1,5 +1,12 @@
 export const seedVendors = [
   {
+    id: "rad-studio",
+    displayName: "استودیو رَد",
+    displayNameEn: "RAD Studio",
+    kind: "rad",
+    verified: true,
+  },
+  {
     id: "artist-sahar",
     displayName: "سحر میرزایی",
     displayNameEn: "Sahar Mirzaei",

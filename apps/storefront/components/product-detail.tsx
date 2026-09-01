@@ -7,7 +7,6 @@ import { productCopy, type Product } from "@/lib/products";
 import { productPrice } from "./cart";
 import { FavoriteButton } from "./commerce";
 import { ChevronDown, PackageCheck, Palette, ShieldCheck, Truck } from "lucide-react";
-import { Reviews } from "./reviews";
 import { useCatalog } from "./catalog-provider";
 import { categoryLabel } from "@/lib/artwork";
 
@@ -131,7 +130,6 @@ export function ProductDetail({ product }: { product: Product }) {
             ))}
         </div>
       </section>
-      <Reviews product={product} />
     </>
   );
 }

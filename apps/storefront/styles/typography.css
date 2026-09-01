@@ -26,12 +26,12 @@
   --text-faq: 1.15rem;
   --text-lede: clamp(1rem, 1.3vw, 1.18rem);
   --text-prose: clamp(1rem, 1.25vw, 1.125rem);
-  --text-product-title: clamp(1.4rem, 2vw, 1.75rem);
-  --text-h3: clamp(1.75rem, 2.3vw, 2.25rem);
-  --text-h2: clamp(3rem, 4.4vw, 4rem);
-  --text-designer: clamp(3.2rem, 5vw, 5.5rem);
-  --text-quote: clamp(2rem, 4vw, 3.75rem);
-  --text-hero: clamp(4.5rem, 7vw, 6.75rem);
+  --text-product-title: clamp(1rem, 1.4vw, 1.2rem);
+  --text-h3: clamp(1.15rem, 1.7vw, 1.45rem);
+  --text-h2: clamp(1.85rem, 2.8vw, 2.5rem);
+  --text-designer: clamp(2.65rem, 4.2vw, 4.25rem);
+  --text-quote: clamp(1.65rem, 3.2vw, 2.85rem);
+  --text-hero: clamp(3.25rem, 5.5vw, 5.25rem);
   --text-display: clamp(7rem, 16vw, 15rem);
 }
 
@@ -40,10 +40,11 @@
     --text-body: 16px;
     --leading-body: 1.85;
     --text-prose: 1rem;
-    --text-h3: clamp(1.5rem, 7vw, 1.875rem);
-    --text-h2: clamp(2.15rem, 9vw, 2.65rem);
-    --text-designer: clamp(2.65rem, 12vw, 3.25rem);
-    --text-hero: clamp(2.65rem, 12vw, 3.25rem);
+    --text-product-title: clamp(0.95rem, 4.2vw, 1.05rem);
+    --text-h3: clamp(1rem, 4.8vw, 1.15rem);
+    --text-h2: clamp(1.45rem, 6.5vw, 1.75rem);
+    --text-designer: clamp(2.15rem, 10vw, 2.65rem);
+    --text-hero: clamp(2.15rem, 10vw, 2.65rem);
   }
 }
 
@@ -105,19 +106,19 @@
 
 .type-product-title {
   font-size: var(--text-product-title);
-  font-weight: var(--font-weight-medium);
+  font-weight: var(--font-weight-regular);
   line-height: var(--leading-tight);
 }
 
 .type-h3 {
   font-size: var(--text-h3);
-  font-weight: var(--font-weight-medium);
+  font-weight: var(--font-weight-regular);
   line-height: var(--leading-tight);
 }
 
 .type-h2 {
   font-size: var(--text-h2);
-  font-weight: var(--font-weight-medium);
+  font-weight: var(--font-weight-regular);
   line-height: var(--leading-tight);
 }
 
@@ -135,7 +136,7 @@
 
 .type-hero {
   font-size: var(--text-hero);
-  font-weight: var(--font-weight-medium);
+  font-weight: var(--font-weight-regular);
   line-height: var(--leading-tight);
 }
 
