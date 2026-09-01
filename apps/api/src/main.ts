@@ -12,6 +12,8 @@ function isAllowedOrigin(origin?: string) {
     "http://localhost:3002",
     "http://127.0.0.1:3000",
     "https://rad-studio-ceramic.mahdiyeh-norozi77.chatgpt.site",
+    "https://rad-studio.rad-studio-admin.workers.dev",
+    "https://rad-admin.rad-studio-admin.workers.dev",
   ].filter(Boolean) as string[];
   if (allowed.includes(origin)) return true;
   try {
