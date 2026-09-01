@@ -1,7 +1,11 @@
 import { spawn } from "node:child_process";
 
-function run(command, args) {
-  return new Promise((resolve, reject) => {
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function run(command: string, args: string[]) {
+  return new Promise<void>((resolve, reject) => {
     const child = spawn(command, args, {
       stdio: "inherit",
       env: process.env,
@@ -14,8 +18,24 @@ function run(command, args) {
   });
 }
 
+async function runWithRetry(command: string, args: string[], attempts = 6) {
+  let lastError: unknown;
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    try {
+      await run(command, args);
+      return;
+    } catch (error) {
+      lastError = error;
+      if (attempt === attempts) break;
+      console.warn(`Retrying ${command} ${args.join(" ")} (${attempt}/${attempts})...`);
+      await sleep(attempt * 2000);
+    }
+  }
+  throw lastError;
+}
+
 async function main() {
-  await run("npx", ["prisma", "db", "push"]);
+  await runWithRetry("npx", ["prisma", "db", "push"]);
   if (process.env.RUN_SEED === "true") {
     await run("npx", ["prisma", "db", "seed"]);
   }
