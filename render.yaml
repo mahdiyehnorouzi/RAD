@@ -13,9 +13,9 @@ services:
       - key: RUN_SEED
         value: "true"
       - key: ADMIN_ORIGIN
-        value: https://rad-admin.rad-studio-admin.workers.dev
+        value: https://rad-admin.rad-studio.workers.dev
       - key: STOREFRONT_ORIGIN
-        value: https://rad-studio-ceramic.rad-studio-admin.workers.dev
+        value: https://rad-studio.rad-studio.workers.dev
       - key: JWT_SECRET
         generateValue: true
       - key: DATABASE_URL

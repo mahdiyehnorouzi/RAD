@@ -43,8 +43,8 @@ fi
 railway variables set \
   NODE_ENV=production \
   RUN_SEED=true \
-  ADMIN_ORIGIN="${ADMIN_ORIGIN:-https://rad-admin.rad-studio-admin.workers.dev}" \
-  STOREFRONT_ORIGIN="${STOREFRONT_ORIGIN:-https://rad-studio-ceramic.mahdiyeh-norozi77.chatgpt.site}" \
+  ADMIN_ORIGIN="${ADMIN_ORIGIN:-https://rad-admin.rad-studio.workers.dev}" \
+  STOREFRONT_ORIGIN="${STOREFRONT_ORIGIN:-https://rad-studio.rad-studio.workers.dev}" \
   "DATABASE_URL=\${{${POSTGRES_REF}}}"
 
 if [[ -n "${JWT_SECRET:-}" ]]; then
