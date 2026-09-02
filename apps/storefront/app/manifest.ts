@@ -1,5 +1,5 @@
-import type { MetadataRoute } from "next";
-import { mockStorefront } from "@/lib/mock-data";
+import type {MetadataRoute} from "next";
+import { mockStorefront } from "@/lib/catalog/mock-storefront";
 export default function manifest(): MetadataRoute.Manifest {
   return {
     name: mockStorefront.brand.title.fa,

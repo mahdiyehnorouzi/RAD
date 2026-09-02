@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { useCart } from "@/components/cart/cart-provider";
-import { useCatalog } from "@/components/catalog-provider";
-import type { Product } from "@/lib/products";
+import { useCatalog } from "@/components/catalog/catalog-provider";
+import type {Product} from "@rad/types";
 
 export function useCartProducts() {
   const { slugs } = useCart();

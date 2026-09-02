@@ -2,6 +2,14 @@
 
 All notable product releases are tracked here. Version numbers follow [SemVer](https://semver.org/). Production deploys run from matching git tags (`vX.Y.Z`).
 
+## 1.2.0 - 2026-09-02
+
+### Changed
+
+- Nest storefront UI by feature (parent folders, `type/`, `const/`, `hooks/`, `record/`) so ownership is readable.
+- Split storefront lib into `lib/api/`, `lib/making/`, `lib/catalog/`, and `lib/difference/`.
+- Add a Cursor skill and rule so storefront component structure stays consistent.
+
 ## 1.1.0 - 2026-09-02
 
 ### Added

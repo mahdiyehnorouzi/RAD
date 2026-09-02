@@ -1,6 +1,6 @@
 import { useLocale } from "@/components/i18n";
 import { cartTotal, formatTotal, productPrice } from "@/lib/money";
-import type { Product } from "@/lib/products";
+import type {Product} from "@rad/types";
 
 export function useMoney() {
   const { locale } = useLocale();

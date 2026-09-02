@@ -1,4 +1,5 @@
 "use client";
+
 import {
   createContext,
   useContext,
@@ -7,8 +8,8 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import type { Product } from "@/lib/products";
-import { api } from "@/lib/api";
+import type { Product } from "@rad/types";
+import { addCartItem, clearCart, fetchCart, removeCartItem } from "@/lib/api/cart";
 
 type CartContextValue = {
   slugs: string[];
@@ -26,7 +27,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const load = () =>
-      api<{ slugs: string[] }>("/cart")
+      fetchCart()
         .then((payload) => setSlugs(payload.slugs))
         .catch(() => {});
     load();
@@ -39,22 +40,15 @@ export function CartProvider({ children }: { children: ReactNode }) {
       slugs,
       add: async (product) => {
         if (product.status === "sold" || product.status === "reserved") return;
-        const payload = await api<{ slugs: string[] }>("/cart/items", {
-          method: "POST",
-          body: JSON.stringify({ slug: product.slug }),
-        });
+        const payload = await addCartItem(product.slug);
         setSlugs(payload.slugs);
       },
       remove: async (slug) => {
-        const payload = await api<{ slugs: string[] }>(`/cart/items/${slug}`, {
-          method: "DELETE",
-        });
+        const payload = await removeCartItem(slug);
         setSlugs(payload.slugs);
       },
       clear: async () => {
-        const payload = await api<{ slugs: string[] }>("/cart", {
-          method: "DELETE",
-        });
+        const payload = await clearCart();
         setSlugs(payload.slugs);
       },
       has: (slug) => slugs.includes(slug),

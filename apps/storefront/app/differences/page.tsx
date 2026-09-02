@@ -1,9 +1,9 @@
 "use client";
 
-import { DifferenceTrailStrip } from "@/components/difference-portrait";
+import { DifferenceTrailStrip, surprisePermissions } from "@/components/difference";
 import { useLocale } from "@/components/i18n";
 import { ButtonLink } from "@/components/ui/button-link";
-import { museumPortraits, surprisePermissions } from "@/lib/beautiful-difference";
+import { museumPortraits } from "@/lib/difference";
 
 export default function DifferencesMuseum() {
   const { locale, t } = useLocale();

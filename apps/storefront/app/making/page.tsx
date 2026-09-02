@@ -1,6 +1,6 @@
 "use client";
 
-import { CustomerMakingList } from "@/components/customer-making";
+import { CustomerMakingList } from "@/components/making";
 
 export default function MakingPage() {
   return <CustomerMakingList />;

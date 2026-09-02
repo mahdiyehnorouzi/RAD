@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { CustomDesigner } from "@/components/custom-designer";
+import { CustomDesigner } from "@/components/studio";
 import { PageSection } from "@/components/ui/section";
 import { useLocale } from "@/components/i18n";
 

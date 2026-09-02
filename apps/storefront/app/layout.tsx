@@ -1,17 +1,19 @@
-import type { Metadata } from "next";
+import type {Metadata} from "next";
 import "./globals.css";
 import { localFixes } from "./local-fixes";
-import { mockStorefront } from "@/lib/mock-data";
-import { Header } from "@/components/layout/header";
-import { Footer } from "@/components/layout/footer";
-import { PageBackNavigation } from "@/components/layout/page-back-navigation";
-import { CartProvider } from "@/components/cart/cart-provider";
+import { mockStorefront } from "@/lib/catalog/mock-storefront";
+import {
+  Footer,
+  Header,
+  PageBackNavigation,
+  RouteScrollReset,
+} from "@/components/layout";
+import { CartProvider } from "@/components/cart";
 import { LocaleProvider } from "@/components/i18n";
-import { CommerceProvider } from "@/components/commerce/commerce-provider";
+import { CommerceProvider } from "@/components/commerce";
 import { MakingProvider } from "@/hooks/use-making-workspace";
-import { CatalogProvider } from "@/components/catalog-provider";
-import { RouteScrollReset } from "@/components/route-scroll-reset";
-import { HomeBanner } from "@/components/home-banner";
+import { CatalogProvider } from "@/components/catalog";
+import { HomeBanner } from "@/components/home";
 
 export const metadata: Metadata = {
   title: mockStorefront.brand.title.fa,
