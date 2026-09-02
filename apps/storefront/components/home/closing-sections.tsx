@@ -13,9 +13,14 @@ export function OrdersEntry() {
         <h2 className="m-0 text-h2 font-normal">{t("ordersEntryTitle")}</h2>
         <p className="mt-4 max-w-xl text-prose">{t("ordersEntryBody")}</p>
       </div>
-      <ButtonLink href="/orders" outline>
-        {t("viewOrders")}
-      </ButtonLink>
+      <div className="flex flex-wrap gap-6">
+        <ButtonLink href="/making" outline>
+          {t("makingNav")}
+        </ButtonLink>
+        <ButtonLink href="/orders" outline>
+          {t("viewOrders")}
+        </ButtonLink>
+      </div>
     </PageSection>
   );
 }

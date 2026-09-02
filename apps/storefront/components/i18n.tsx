@@ -57,6 +57,9 @@ export function LocaleProvider({ children }: { children: React.ReactNode }) {
       ["checkout", "titleCheckout"],
       ["products", "titleProducts"],
       ["studio", "titleStudio"],
+      ["making", "titleMaking"],
+      ["workshop", "titleWorkshop"],
+      ["differences", "titleDifferences"],
     ];
     const section = labels.find(([key]) => pathname.includes(key))?.[1];
     document.title = section

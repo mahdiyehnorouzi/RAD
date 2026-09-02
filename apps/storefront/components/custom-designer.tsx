@@ -1,23 +1,39 @@
 "use client";
 
-import { FormEvent, useRef, useState } from "react";
+import { FormEvent, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import type { ProductCategory } from "@rad/types";
 import { ArtworkVisual } from "@/components/product/artwork-visual";
 import "@/components/product/artwork.css";
 import { Button } from "@/components/ui/button-link";
 import { Eyebrow } from "@/components/ui/section";
 import { useLocale } from "@/components/i18n";
+import { DifferencePortraitView } from "@/components/difference-portrait";
+import { useMaking } from "@/hooks/use-making-workspace";
+import { useCommerce } from "@/components/commerce/commerce-provider";
 import {
   artworkCategories,
   artworkCategoryById,
   designDirections,
   designPresets,
 } from "@/lib/artwork";
+import {
+  composeLivePortrait,
+  surprisePermissions,
+  type SurprisePermission,
+} from "@/lib/beautiful-difference";
 
 export function CustomDesigner() {
-  const { t, locale } = useLocale();
+  const { t, locale, href } = useLocale();
+  const router = useRouter();
+  const { submitDesign } = useMaking();
+  const { user } = useCommerce();
   const [category, setCategory] = useState<ProductCategory | "">("");
   const [prompt, setPrompt] = useState("");
+  const [memory, setMemory] = useState("");
+  const [permission, setPermission] =
+    useState<SurprisePermission>("hand");
+  const [intendedUse, setIntendedUse] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "done" | "error">(
     "idle",
   );
@@ -29,6 +45,18 @@ export function CustomDesigner() {
   const selectedCategory = category ? artworkCategoryById(category) : null;
   const presets = designPresets[locale];
   const directions = designDirections[locale];
+  const livePortrait = useMemo(() => {
+    if (status !== "done" || !selectedCategory || !prompt.trim()) return null;
+    const described = [prompt.trim(), memory.trim()].filter(Boolean).join(" — ");
+    return composeLivePortrait({
+      prompt: described,
+      category: selectedCategory.id,
+      visual: selectedCategory.visual,
+      permission,
+      color: selectedCategory.preview.color,
+      accent: selectedCategory.preview.accent,
+    });
+  }, [status, selectedCategory, prompt, memory, permission]);
 
   function chooseCategory(next: ProductCategory) {
     setCategory(next);
@@ -45,6 +73,10 @@ export function CustomDesigner() {
     setError("");
     abort.current = new AbortController();
     try {
+      const permissionLabel =
+        surprisePermissions.find((item) => item.id === permission)?.title[
+          locale
+        ] ?? "";
       const response = await fetch("/backend/design", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -52,9 +84,13 @@ export function CustomDesigner() {
           prompt: [
             selectedCategory?.label[locale],
             prompt,
+            memory,
             ...Object.values(brief).filter(Boolean),
             directions[direction],
-          ].join("، "),
+            permissionLabel,
+          ]
+            .filter(Boolean)
+            .join("، "),
         }),
         signal: abort.current.signal,
       });
@@ -71,30 +107,105 @@ export function CustomDesigner() {
   }
 
   return (
-    <div className="grid items-start gap-[clamp(2.5rem,6vw,7rem)] lg:grid-cols-[minmax(0,1.25fr)_minmax(360px,0.75fr)]">
-      <DesignerForm
-        category={category}
-        prompt={prompt}
-        setPrompt={setPrompt}
-        status={status}
-        error={error}
-        brief={brief}
-        setBrief={setBrief}
-        direction={direction}
-        setDirection={setDirection}
-        chooseCategory={chooseCategory}
-        submit={submit}
-        abort={() => abort.current?.abort()}
-        presets={presets}
-        directions={directions}
-      />
-      <DesignerPreview
-        image={image}
-        status={status}
-        selectedCategory={selectedCategory}
-        onReset={() => setStatus("idle")}
-      />
-    </div>
+    <>
+      <div className="grid items-start gap-[clamp(2.5rem,6vw,7rem)] lg:grid-cols-[minmax(0,1.25fr)_minmax(360px,0.75fr)]">
+        <DesignerForm
+          category={category}
+          prompt={prompt}
+          setPrompt={setPrompt}
+          memory={memory}
+          setMemory={setMemory}
+          permission={permission}
+          setPermission={setPermission}
+          status={status}
+          error={error}
+          brief={brief}
+          setBrief={setBrief}
+          direction={direction}
+          setDirection={setDirection}
+          chooseCategory={chooseCategory}
+          submit={submit}
+          abort={() => abort.current?.abort()}
+          presets={presets}
+          directions={directions}
+        />
+        <DesignerPreview
+          image={image}
+          status={status}
+          selectedCategory={selectedCategory}
+          onReset={() => setStatus("idle")}
+        />
+      </div>
+      {status === "done" && selectedCategory ? (
+        <section className="making-request mt-12">
+          <Eyebrow className="text-rad-sand">{t("makingEyebrow")}</Eyebrow>
+          <h2 className="m-0 text-h3 font-normal">{t("makingSubmit")}</h2>
+          <p className="mt-3 max-w-2xl text-prose">{t("makingBody")}</p>
+          <label className="mt-6 block" htmlFor="intended-use">
+            {t("makingUseLabel")}
+          </label>
+          <textarea
+            id="intended-use"
+            value={intendedUse}
+            onChange={(event) => setIntendedUse(event.target.value)}
+            placeholder={t("makingUsePlaceholder")}
+            aria-describedby="use-help"
+          />
+          <small id="use-help">{t("makingUseHelp")}</small>
+          <div className="making-actions mt-6">
+            <Button
+              type="button"
+              onClick={() => {
+                const permissionLabel =
+                  surprisePermissions.find((item) => item.id === permission)
+                    ?.title[locale] ?? "";
+                const created = submitDesign({
+                  customerName:
+                    user?.name || (locale === "fa" ? "مهمان رَد" : "RAD guest"),
+                  title: {
+                    fa: prompt.trim().slice(0, 48),
+                    en: prompt.trim().slice(0, 48),
+                  },
+                  brief: {
+                    concept: [prompt.trim(), memory.trim()]
+                      .filter(Boolean)
+                      .join(" — "),
+                    dimensions:
+                      brief.size || (locale === "fa" ? "نامشخص" : "Unspecified"),
+                    material: [
+                      selectedCategory.label[locale],
+                      brief.surface,
+                      brief.medium,
+                      brief.item,
+                    ]
+                      .filter(Boolean)
+                      .join(" · "),
+                    intendedUse:
+                      intendedUse.trim() ||
+                      (locale === "fa" ? "نامشخص" : "Unspecified"),
+                    budget:
+                      brief.budget || (locale === "fa" ? "نامشخص" : "Unspecified"),
+                    permission: permissionLabel,
+                    category: selectedCategory.id,
+                    image,
+                  },
+                });
+                router.push(href(`/making/${created.id}`));
+              }}
+            >
+              {t("makingSubmit")}
+            </Button>
+          </div>
+        </section>
+      ) : null}
+      {livePortrait ? (
+        <DifferencePortraitView
+          portrait={livePortrait}
+          image={image}
+          privateReveal
+        />
+      ) : null}
+    </>
   );
 }
 
@@ -102,6 +213,10 @@ function DesignerForm({
   category,
   prompt,
   setPrompt,
+  memory,
+  setMemory,
+  permission,
+  setPermission,
   status,
   error,
   brief,
@@ -117,6 +232,10 @@ function DesignerForm({
   category: ProductCategory | "";
   prompt: string;
   setPrompt: React.Dispatch<React.SetStateAction<string>>;
+  memory: string;
+  setMemory: React.Dispatch<React.SetStateAction<string>>;
+  permission: SurprisePermission;
+  setPermission: (value: SurprisePermission) => void;
   status: string;
   error: string;
   brief: Record<string, string>;
@@ -241,6 +360,43 @@ function DesignerForm({
         {t("promptHelp")}
       </small>
 
+      <label className="mt-8 block" htmlFor="artwork-memory">
+        {t("memoryLabel")}
+      </label>
+      <textarea
+        id="artwork-memory"
+        className={`${fieldClass} min-h-[110px]`}
+        value={memory}
+        onChange={(event) => setMemory(event.target.value)}
+        placeholder={t("memoryPlaceholder")}
+        aria-describedby="memory-help"
+        disabled={!category}
+      />
+      <small id="memory-help" className="mt-2 block text-rad-paper/70">
+        {t("memoryHelp")}
+      </small>
+
+      <fieldset className="surprise-permission">
+        <legend>
+          <small>{t("surpriseLegend")}</small>
+          {t("surpriseLegend")}
+        </legend>
+        <div className="surprise-grid" role="radiogroup" aria-label={t("surpriseLegend")}>
+          {surprisePermissions.map((item) => (
+            <button
+              type="button"
+              key={item.id}
+              className={permission === item.id ? "active" : ""}
+              onClick={() => setPermission(item.id)}
+              aria-pressed={permission === item.id}
+            >
+              <b>{item.title[locale]}</b>
+              <span>{item.body[locale]}</span>
+            </button>
+          ))}
+        </div>
+      </fieldset>
+
       <div
         className="mt-4 flex flex-wrap gap-x-5 gap-y-2"
         aria-label={t("suggestedWords")}
@@ -351,12 +507,6 @@ function DesignerPreview({
           <Button type="button" variant="light" onClick={onReset}>
             {t("anotherVersion")}
           </Button>
-          <a
-            className="inline-flex min-h-[50px] items-center bg-rad-primary px-6 text-white"
-            href="mailto:studio@rad.ir?subject=Custom artwork"
-          >
-            {t("talkArtist")}
-          </a>
         </div>
       )}
     </section>

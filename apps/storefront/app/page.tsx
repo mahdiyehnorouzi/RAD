@@ -2,6 +2,7 @@
 
 import { ArchiveSection } from "@/components/home/archive-section";
 import { OrdersEntry, FinalCta } from "@/components/home/closing-sections";
+import { DifferenceStory } from "@/components/home/difference-story";
 import { EntryPaths } from "@/components/home/entry-paths";
 import { EvidenceFilm } from "@/components/home/evidence-film";
 import { HomeHero } from "@/components/home/home-hero";
@@ -24,6 +25,7 @@ export default function Home() {
   return (
     <>
       <HomeHero product={hero} />
+      <DifferenceStory />
       <EvidenceFilm />
       <EntryPaths />
       <ArchiveSection products={featured} />

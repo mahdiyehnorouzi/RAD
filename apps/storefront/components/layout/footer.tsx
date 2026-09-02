@@ -33,6 +33,9 @@ export function Footer() {
           </b>
           <Link href={href("/products")}>{t("footerUnique")}</Link>
           <Link href={href("/studio")}>{t("footerCustom")}</Link>
+          <Link href={href("/making")}>{t("makingNav")}</Link>
+          <Link href={href("/workshop")}>{t("workshopTitle")}</Link>
+          <Link href={href("/differences")}>{t("museumTitle")}</Link>
         </section>
         <section className="grid gap-2.5">
           <b className="text-sm font-medium text-rad-sand">{t("footerRad")}</b>
