@@ -57,7 +57,13 @@ export const mockProducts: Product[] = [
   },
   {
     slug: "olive-memory",
-    vendor: { id: "artist-sahar", displayName: "سحر میرزایی", displayNameEn: "Sahar Mirzaei", kind: "guest_artist", verified: true },
+    vendor: {
+      id: "artist-sahar",
+      displayName: "سحر میرزایی",
+      displayNameEn: "Sahar Mirzaei",
+      kind: "guest_artist",
+      verified: true,
+    },
     name: "حافظه‌ی زیتونی",
     subtitle: "لعاب مات و خاک نخودی",
     price: "۹٬۶۰۰٬۰۰۰ تومان",
@@ -236,13 +242,25 @@ export const mockProducts: Product[] = [
     shape: "wide",
     category: "painting",
     visual: "painting",
-    story: "سطحی از آبی‌های عمیق و خط‌های گرم که نور یک پنجره‌ی دور را ثبت می‌کند.",
-    details: ["۷۰ × ۵۰ سانتی‌متر", "اکریلیک و پاستل", "بوم کشیده‌شده", "تنها یک نسخه"],
+    story:
+      "سطحی از آبی‌های عمیق و خط‌های گرم که نور یک پنجره‌ی دور را ثبت می‌کند.",
+    details: [
+      "۷۰ × ۵۰ سانتی‌متر",
+      "اکریلیک و پاستل",
+      "بوم کشیده‌شده",
+      "تنها یک نسخه",
+    ],
     en: {
       name: "Blue Window",
       subtitle: "Acrylic and pastel on canvas",
-      story: "Deep blues and warm lines hold the memory of light from a distant window.",
-      details: ["70 × 50 cm", "Acrylic and pastel", "Stretched canvas", "One of one"],
+      story:
+        "Deep blues and warm lines hold the memory of light from a distant window.",
+      details: [
+        "70 × 50 cm",
+        "Acrylic and pastel",
+        "Stretched canvas",
+        "One of one",
+      ],
     },
   },
   {
@@ -256,13 +274,25 @@ export const mockProducts: Product[] = [
     shape: "tall",
     category: "textile",
     visual: "textile",
-    story: "خطوط رنگی و دوخت‌های آزاد، تصویری از باغی خیالی را روی پارچه می‌سازند.",
-    details: ["۶۰ × ۴۰ سانتی‌متر", "کتان طبیعی", "رنگ پارچه و دوخت دستی", "تنها یک نسخه"],
+    story:
+      "خطوط رنگی و دوخت‌های آزاد، تصویری از باغی خیالی را روی پارچه می‌سازند.",
+    details: [
+      "۶۰ × ۴۰ سانتی‌متر",
+      "کتان طبیعی",
+      "رنگ پارچه و دوخت دستی",
+      "تنها یک نسخه",
+    ],
     en: {
       name: "Woven Garden",
       subtitle: "Painting and embroidery on linen",
-      story: "Painted lines and free stitches shape an imagined garden across natural cloth.",
-      details: ["60 × 40 cm", "Natural linen", "Fabric paint and hand stitch", "One of one"],
+      story:
+        "Painted lines and free stitches shape an imagined garden across natural cloth.",
+      details: [
+        "60 × 40 cm",
+        "Natural linen",
+        "Fabric paint and hand stitch",
+        "One of one",
+      ],
     },
   },
   {
@@ -276,13 +306,25 @@ export const mockProducts: Product[] = [
     shape: "round",
     category: "woodwork",
     visual: "wood",
-    story: "کاسه‌ای پیکره‌وار که رگه‌های طبیعی چوب، حرکت نرم لبه‌ی آن را ادامه می‌دهند.",
-    details: ["قطر ۳۴ سانتی‌متر", "چوب گردوی یک‌تکه", "پرداخت روغن طبیعی", "تنها یک نسخه"],
+    story:
+      "کاسه‌ای پیکره‌وار که رگه‌های طبیعی چوب، حرکت نرم لبه‌ی آن را ادامه می‌دهند.",
+    details: [
+      "قطر ۳۴ سانتی‌متر",
+      "چوب گردوی یک‌تکه",
+      "پرداخت روغن طبیعی",
+      "تنها یک نسخه",
+    ],
     en: {
       name: "Walnut Tide",
       subtitle: "Hand-carved walnut",
-      story: "A sculptural bowl whose grain continues the soft movement of its rim.",
-      details: ["34 cm diameter", "Single piece of walnut", "Natural oil finish", "One of one"],
+      story:
+        "A sculptural bowl whose grain continues the soft movement of its rim.",
+      details: [
+        "34 cm diameter",
+        "Single piece of walnut",
+        "Natural oil finish",
+        "One of one",
+      ],
     },
   },
   {
@@ -296,12 +338,14 @@ export const mockProducts: Product[] = [
     shape: "round",
     category: "jewelry",
     visual: "jewelry",
-    story: "حلقه‌ای باز با سنگی کوچک که مانند نقطه‌ای در مدار فلز قرار گرفته است.",
+    story:
+      "حلقه‌ای باز با سنگی کوچک که مانند نقطه‌ای در مدار فلز قرار گرفته است.",
     details: ["نقره ۹۲۵", "عقیق سبز", "ساخته‌شده با دست", "تنها یک نسخه"],
     en: {
       name: "Silver Orbit",
       subtitle: "Handmade silver and green agate",
-      story: "An open circle holds a small stone like a point moving through a metal orbit.",
+      story:
+        "An open circle holds a small stone like a point moving through a metal orbit.",
       details: ["925 silver", "Green agate", "Handmade", "One of one"],
     },
   },
@@ -317,12 +361,14 @@ export const mockProducts: Product[] = [
     shape: "wide",
     category: "print",
     visual: "print",
-    story: "چاپی تک‌نسخه از گیاهان خیالی؛ هر خط با دست روی صفحه بریده و چاپ شده است.",
+    story:
+      "چاپی تک‌نسخه از گیاهان خیالی؛ هر خط با دست روی صفحه بریده و چاپ شده است.",
     details: ["۵۰ × ۳۵ سانتی‌متر", "چاپ لینوکات", "کاغذ پنبه‌ای", "تک‌نسخه"],
     en: {
       name: "Red Garden",
       subtitle: "Linocut on cotton paper",
-      story: "A unique print of imagined plants, carved and printed entirely by hand.",
+      story:
+        "A unique print of imagined plants, carved and printed entirely by hand.",
       details: ["50 × 35 cm", "Linocut", "Cotton paper", "Unique print"],
     },
   },
@@ -337,13 +383,25 @@ export const mockProducts: Product[] = [
     shape: "tall",
     category: "sculpture",
     visual: "sculpture",
-    story: "تعادل یک حجم تیره روی خطی باریک از برنج؛ سکون اثر با نزدیک‌شدن بیننده تغییر می‌کند.",
-    details: ["ارتفاع ۴۲ سانتی‌متر", "سنگ تراش‌خورده و برنج", "پایه دست‌ساز", "تنها یک نسخه"],
+    story:
+      "تعادل یک حجم تیره روی خطی باریک از برنج؛ سکون اثر با نزدیک‌شدن بیننده تغییر می‌کند.",
+    details: [
+      "ارتفاع ۴۲ سانتی‌متر",
+      "سنگ تراش‌خورده و برنج",
+      "پایه دست‌ساز",
+      "تنها یک نسخه",
+    ],
     en: {
       name: "Quiet Weight",
       subtitle: "Stone and brass",
-      story: "A dark volume balances on a narrow brass line, changing as the viewer approaches.",
-      details: ["42 cm high", "Carved stone and brass", "Handmade base", "One of one"],
+      story:
+        "A dark volume balances on a narrow brass line, changing as the viewer approaches.",
+      details: [
+        "42 cm high",
+        "Carved stone and brass",
+        "Handmade base",
+        "One of one",
+      ],
     },
   },
 ];

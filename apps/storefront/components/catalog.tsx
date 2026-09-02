@@ -1,17 +1,25 @@
 "use client";
-import { useState } from "react";
-import { ProductCard } from "./site";
-import type { Product } from "@/lib/products";
-import { useCart } from "./cart";
-import { useLocale } from "./i18n";
-import { useCommerce } from "./commerce";
-import { useCatalog } from "./catalog-provider";
-import { artworkCategories } from "@/lib/artwork";
-import { MoveLeft, MoveRight } from "lucide-react";
 
-export function Catalog() {
+import { useState } from "react";
+import { MoveLeft, MoveRight } from "lucide-react";
+import { ProductCard } from "@/components/product/product-card";
+import { ProductGrid } from "@/components/product/product-grid";
+import { Button } from "@/components/ui/button-link";
+import { EmptyState } from "@/components/ui/section";
+import { useCatalog } from "@/components/catalog-provider";
+import { useLocale } from "@/components/i18n";
+import { artworkCategories } from "@/lib/artwork";
+
+export function CatalogFilters({
+  active,
+  onChange,
+  count,
+}: {
+  active: string;
+  onChange: (id: string) => void;
+  count: number;
+}) {
   const { t, number, locale } = useLocale();
-  const { products } = useCatalog();
   const filters = [
     { id: "all", label: t("filterAll") },
     ...artworkCategories.map((category) => ({
@@ -19,6 +27,55 @@ export function Catalog() {
       label: category.label[locale],
     })),
   ];
+
+  return (
+    <div className="my-4 grid gap-1.5 py-2">
+      <div className="flex w-full items-center justify-between gap-2">
+        <b className="text-[0.82rem] font-medium">
+          {t("artworkCategoriesHeading")}
+        </b>
+        <span className="inline-flex items-center gap-1.5 whitespace-nowrap text-[0.7rem] text-rad-muted">
+          {t("swipeToSeeMore")}
+          {locale === "fa" ? (
+            <MoveLeft aria-hidden="true" />
+          ) : (
+            <MoveRight aria-hidden="true" />
+          )}
+        </span>
+      </div>
+      <div className="relative min-w-0 overflow-hidden after:pointer-events-none after:absolute after:inset-y-0 after:end-0 after:z-[2] after:w-10 after:bg-gradient-to-l after:from-rad-canvas">
+        <div
+          className="flex w-full flex-nowrap items-center gap-2 overflow-x-auto overscroll-x-contain pb-1.5 [scrollbar-width:thin]"
+          tabIndex={0}
+          aria-label={t("filterCategoriesAria")}
+        >
+          {filters.map((filter) => (
+            <button
+              type="button"
+              key={filter.id}
+              className={`min-h-[42px] shrink-0 snap-start whitespace-nowrap rounded-full border px-3.5 py-2 ${
+                active === filter.id
+                  ? "border-rad-clay bg-rad-clay text-rad-paper"
+                  : "border-rad-line bg-rad-paper"
+              }`}
+              onClick={() => onChange(filter.id)}
+              aria-pressed={active === filter.id}
+            >
+              {filter.label}
+            </button>
+          ))}
+        </div>
+      </div>
+      <span className="pt-1 text-start">
+        {number(count)} {t("availableWorks")}
+      </span>
+    </div>
+  );
+}
+
+export function Catalog() {
+  const { t } = useLocale();
+  const { products } = useCatalog();
   const [active, setActive] = useState("all");
   const visible =
     active === "all"
@@ -27,74 +84,22 @@ export function Catalog() {
 
   return (
     <>
-      <div className="filterbar">
-        <div className="filter-heading">
-          <b>{locale === "fa" ? "دسته‌بندی آثار" : "Artwork categories"}</b>
-          <span className="filter-scroll-hint">
-            {locale === "fa" ? "برای دیدن بیشتر بکشید" : "Swipe to see more"}
-            {locale === "fa" ? <MoveLeft aria-hidden="true" /> : <MoveRight aria-hidden="true" />}
-          </span>
-        </div>
-        <div className="filter-scroll-shell">
-          <div
-            className="filter-scroll"
-            tabIndex={0}
-            aria-label={locale === "fa" ? "فیلتر دسته‌بندی آثار" : "Filter artwork categories"}
-          >
-            {filters.map((x) => (
-              <button
-                type="button"
-                key={x.id}
-                className={active === x.id ? "active" : ""}
-                onClick={() => setActive(x.id)}
-                aria-pressed={active === x.id}
-              >
-                {x.label}
-              </button>
-            ))}
-          </div>
-        </div>
-        <span className="filter-count">
-          {number(visible.length)} {t("availableWorks")}
-        </span>
-      </div>
+      <CatalogFilters
+        active={active}
+        onChange={setActive}
+        count={visible.length}
+      />
       {visible.length ? (
-        <div className="product-grid">
-          {visible.map((p, i) => (
-            <ProductCard product={p} index={i} key={p.slug} />
+        <ProductGrid>
+          {visible.map((product, index) => (
+            <ProductCard product={product} index={index} key={product.slug} />
           ))}
-        </div>
+        </ProductGrid>
       ) : (
-        <div className="empty-state">
-          <h2>{t("emptyTitle")}</h2>
-          <p>{t("emptyBody")}</p>
-          <button onClick={() => setActive("all")} className="button">
-            {t("seeAll")}
-          </button>
-        </div>
+        <EmptyState title={t("emptyTitle")} body={t("emptyBody")}>
+          <Button onClick={() => setActive("all")}>{t("seeAll")}</Button>
+        </EmptyState>
       )}
     </>
-  );
-}
-
-export function AddToBag({ product }: { product: Product }) {
-  const { add, has } = useCart();
-  const { t } = useLocale();
-  const { addNotice } = useCommerce();
-  const added = has(product.slug);
-  const soldOut = product.status === "sold";
-  return (
-    <button
-      type="button"
-      className="button add"
-      onClick={async () => {
-        await add(product);
-        await addNotice("cart", product.slug);
-      }}
-      disabled={added || product.status === "sold" || product.status === "reserved"}
-      aria-live="polite"
-    >
-      {soldOut ? t("soldOut") : added ? t("inBag") : t("addBag")}
-    </button>
   );
 }

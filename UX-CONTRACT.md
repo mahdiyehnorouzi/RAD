@@ -14,7 +14,7 @@ RAD is a bilingual hybrid storefront. Persian is the default RTL locale; English
 - Route back navigation: every non-home storefront route renders the shared back control below the header; it uses browser history when available and falls back to Home.
 - Local session, favourites, notification history, orders, and reviews: `components/commerce.tsx`. This prototype stores only profile name/email and never stores passwords.
 - Basket: `components/cart.tsx`; one-of-one products appear only once and persist locally.
-- Product media: `components/site.tsx`; products may expose multiple images and an explicitly empty image list renders the localized default placeholder.
+- Product media: `components/site.tsx`; products may expose multiple images, while missing or explicitly empty image lists render the fantasy fallback owned by the product category.
 - Sold media state: `components/site.tsx`; every `ProductMedia` rendering of a sold work carries the same localized, non-interactive sold badge.
 - Product categories: `lib/products.ts` owns explicit category membership; `components/catalog.tsx` filters only by that field rather than visual shape heuristics.
 - Storefront mock content: `apps/storefront/lib/mock-data.ts` owns the temporary brand descriptor, canonical cross-discipline category list, featured product order, and category-specific custom-design options. Storefront surfaces consume this mock until a backend content contract replaces it.

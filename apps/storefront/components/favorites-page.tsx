@@ -2,10 +2,13 @@
 
 import { useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
-import { useCommerce } from "./commerce";
-import { useLocale } from "./i18n";
-import { ProductCard } from "./site";
-import { useCatalog } from "./catalog-provider";
+import { ProductCard } from "@/components/product/product-card";
+import { ProductGrid } from "@/components/product/product-grid";
+import { Button } from "@/components/ui/button-link";
+import { EmptyState, Eyebrow, PageSection } from "@/components/ui/section";
+import { useCatalog } from "@/components/catalog-provider";
+import { useCommerce } from "@/components/commerce/commerce-provider";
+import { useLocale } from "@/components/i18n";
 
 export function FavoritesPage() {
   const params = useSearchParams();
@@ -19,7 +22,7 @@ export function FavoritesPage() {
 
   const items = useMemo(
     () => slugs.map((slug) => getProduct(slug)).filter(Boolean),
-    [slugs.join(","), getProduct],
+    [slugs, getProduct],
   );
 
   const share = async () => {
@@ -38,40 +41,40 @@ export function FavoritesPage() {
   };
 
   return (
-    <section className="favorites-page section">
-      <header className="favorites-heading">
+    <PageSection>
+      <header className="mb-10 flex items-end justify-between gap-4">
         <div>
-          <span className="eyebrow">
+          <Eyebrow>
             {sharedSlugs?.length
               ? t("sharedListEyebrow")
               : t("favoriteEyebrow")}
-          </span>
-          <h1>{t("favoritesTitle")}</h1>
+          </Eyebrow>
+          <h1 className="m-0 text-h2 font-normal">{t("favoritesTitle")}</h1>
           <p>
             {number(items.length)} {t("savedWorks")}
           </p>
         </div>
         {!sharedSlugs?.length && favorites.length > 0 && (
-          <button type="button" className="button outline" onClick={share}>
+          <Button type="button" variant="outline" onClick={share}>
             {shared ? t("linkCopied") : t("shareList")}
-          </button>
+          </Button>
         )}
       </header>
       {items.length ? (
-        <div className="product-grid">
+        <ProductGrid>
           {items.map(
             (item, index) =>
               item && (
                 <ProductCard key={item.slug} product={item} index={index} />
               ),
           )}
-        </div>
+        </ProductGrid>
       ) : (
-        <div className="empty-state">
-          <h2>{t("emptyFavorites")}</h2>
-          <p>{t("emptyFavoritesBody")}</p>
-        </div>
+        <EmptyState
+          title={t("emptyFavorites")}
+          body={t("emptyFavoritesBody")}
+        />
       )}
-    </section>
+    </PageSection>
   );
 }

@@ -1,4 +1,9 @@
-import type { Locale, Product, ProductCategory, ProductVisual } from "@rad/types";
+import type {
+  Locale,
+  Product,
+  ProductCategory,
+  ProductVisual,
+} from "@rad/types";
 import { visualForCategory } from "@rad/types";
 
 export type ArtworkCategory = {
@@ -39,7 +44,10 @@ export const artworkCategories: ArtworkCategory[] = [
       {
         key: "item",
         label: { fa: "نوع اثر", en: "Object" },
-        options: { fa: ["گلدان", "ظرف", "آبجکت"], en: ["Vase", "Tableware", "Object"] },
+        options: {
+          fa: ["گلدان", "ظرف", "آبجکت"],
+          en: ["Vase", "Tableware", "Object"],
+        },
       },
       {
         key: "surface",
@@ -60,12 +68,18 @@ export const artworkCategories: ArtworkCategory[] = [
       {
         key: "medium",
         label: { fa: "تکنیک", en: "Medium" },
-        options: { fa: ["رنگ‌روغن", "اکریلیک", "آبرنگ"], en: ["Oil", "Acrylic", "Watercolour"] },
+        options: {
+          fa: ["رنگ‌روغن", "اکریلیک", "آبرنگ"],
+          en: ["Oil", "Acrylic", "Watercolour"],
+        },
       },
       {
         key: "format",
         label: { fa: "قاب", en: "Format" },
-        options: { fa: ["عمودی", "افقی", "مربع"], en: ["Portrait", "Landscape", "Square"] },
+        options: {
+          fa: ["عمودی", "افقی", "مربع"],
+          en: ["Portrait", "Landscape", "Square"],
+        },
       },
       sizeField,
       budgetField,
@@ -116,7 +130,10 @@ export const artworkCategories: ArtworkCategory[] = [
       {
         key: "wood",
         label: { fa: "نوع چوب", en: "Wood" },
-        options: { fa: ["گردو", "راش", "زیتون", "ترکیبی"], en: ["Walnut", "Beech", "Olive", "Mixed"] },
+        options: {
+          fa: ["گردو", "راش", "زیتون", "ترکیبی"],
+          en: ["Walnut", "Beech", "Olive", "Mixed"],
+        },
       },
       sizeField,
       budgetField,
@@ -140,7 +157,10 @@ export const artworkCategories: ArtworkCategory[] = [
       {
         key: "placement",
         label: { fa: "محل استفاده", en: "Placement" },
-        options: { fa: ["رومیزی", "دیواری", "فضای باز"], en: ["Tabletop", "Wall", "Outdoor"] },
+        options: {
+          fa: ["رومیزی", "دیواری", "فضای باز"],
+          en: ["Tabletop", "Wall", "Outdoor"],
+        },
       },
       sizeField,
       budgetField,
@@ -164,12 +184,18 @@ export const artworkCategories: ArtworkCategory[] = [
       {
         key: "material",
         label: { fa: "متریال", en: "Material" },
-        options: { fa: ["نقره", "برنج", "مس", "ترکیبی"], en: ["Silver", "Brass", "Copper", "Mixed"] },
+        options: {
+          fa: ["نقره", "برنج", "مس", "ترکیبی"],
+          en: ["Silver", "Brass", "Copper", "Mixed"],
+        },
       },
       {
         key: "style",
         label: { fa: "حس کلی", en: "Mood" },
-        options: { fa: ["مینیمال", "پیکره‌وار", "هندسی"], en: ["Minimal", "Sculptural", "Geometric"] },
+        options: {
+          fa: ["مینیمال", "پیکره‌وار", "هندسی"],
+          en: ["Minimal", "Sculptural", "Geometric"],
+        },
       },
       budgetField,
     ],
@@ -192,7 +218,10 @@ export const artworkCategories: ArtworkCategory[] = [
       {
         key: "edition",
         label: { fa: "نسخه", en: "Edition" },
-        options: { fa: ["تک‌نسخه", "نسخه محدود"], en: ["Unique", "Limited edition"] },
+        options: {
+          fa: ["تک‌نسخه", "نسخه محدود"],
+          en: ["Unique", "Limited edition"],
+        },
       },
       sizeField,
       budgetField,
@@ -230,10 +259,14 @@ export function categoryLabel(category: string, locale: Locale) {
   return extraLabels[category]?.[locale] ?? category;
 }
 
-export function artworkVisual(product: Pick<Product, "category" | "visual">): ProductVisual {
+export function artworkVisual(
+  product: Pick<Product, "category" | "visual">,
+): ProductVisual {
   return product.visual ?? visualForCategory(product.category);
 }
 
 export function artworkCategoryById(id: string) {
-  return artworkCategories.find((item) => item.id === id) ?? artworkCategories[0];
+  return (
+    artworkCategories.find((item) => item.id === id) ?? artworkCategories[0]
+  );
 }
