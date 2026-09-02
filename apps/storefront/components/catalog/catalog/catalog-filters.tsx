@@ -23,17 +23,17 @@ export function CatalogFilters({
   ];
 
   return (
-    <div className="my-4 grid gap-1.5 py-2">
-      <div className="flex w-full items-center justify-between gap-2">
-        <b className="text-[0.82rem] font-medium">{t("artworkCategoriesHeading")}</b>
-        <span className="inline-flex items-center gap-1.5 whitespace-nowrap text-[0.7rem] text-rad-muted">
+    <div className="filterbar">
+      <div className="filter-heading">
+        <b>{t("artworkCategoriesHeading")}</b>
+        <span className="filter-scroll-hint">
           {t("swipeToSeeMore")}
           {locale === "fa" ? <MoveLeft aria-hidden="true" /> : <MoveRight aria-hidden="true" />}
         </span>
       </div>
-      <div className="relative min-w-0 overflow-hidden after:pointer-events-none after:absolute after:inset-y-0 after:end-0 after:z-[2] after:w-10 after:bg-gradient-to-l after:from-rad-canvas">
+      <div className="filter-scroll-shell">
         <div
-          className="flex w-full flex-nowrap items-center gap-2 overflow-x-auto overscroll-x-contain pb-1.5 [scrollbar-width:thin]"
+          className="filter-scroll"
           tabIndex={0}
           aria-label={t("filterCategoriesAria")}
         >
@@ -41,11 +41,7 @@ export function CatalogFilters({
             <button
               type="button"
               key={filter.id}
-              className={`min-h-[42px] shrink-0 snap-start whitespace-nowrap rounded-full border px-3.5 py-2 ${
-                active === filter.id
-                  ? "border-rad-clay bg-rad-clay text-rad-paper"
-                  : "border-rad-line bg-rad-paper"
-              }`}
+              className={active === filter.id ? "active" : ""}
               onClick={() => onChange(filter.id)}
               aria-pressed={active === filter.id}
             >
@@ -54,7 +50,7 @@ export function CatalogFilters({
           ))}
         </div>
       </div>
-      <span className="pt-1 text-start">
+      <span className="filter-count">
         {number(count)} {t("availableWorks")}
       </span>
     </div>

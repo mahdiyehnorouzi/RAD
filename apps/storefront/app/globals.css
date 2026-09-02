@@ -1,4 +1,8 @@
 @import "../styles/typography.css";
+@import "../components/product/artwork-visual/artwork.css";
+@import "../styles/live-home.css";
+@import "../styles/live-products.css";
+@import "../styles/live-chrome.css";
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -12,6 +16,7 @@
   --moss: #263d34;
   --muted: #6f726b;
   --line: #d6cfc3;
+  --film: #1c2420;
   --page: clamp(1.25rem, 5vw, 5rem);
   --section: clamp(5rem, 11vw, 11rem);
   --radius: 4px;
@@ -24,6 +29,7 @@
     box-sizing: border-box;
   }
   html {
+    overflow-x: clip;
     scroll-behavior: smooth;
     scroll-padding-top: 108px;
   }
@@ -32,10 +38,15 @@
   }
   body {
     margin: 0;
+    min-width: 0;
+    overflow-x: clip;
     background: var(--canvas);
     color: var(--ink);
     font-family: var(--font);
     line-height: var(--leading-body);
+  }
+  main {
+    min-width: 0;
   }
   button,
   a {

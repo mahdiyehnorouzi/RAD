@@ -22,9 +22,9 @@ export function HeaderActions({
   const { locale, setLocale, t, href, number } = useLocale();
 
   return (
-    <div className="flex items-center gap-3.5">
+    <div className="header-actions">
       <button
-        className="order-first h-11 min-w-[72px] border-0 border-b border-rad-line bg-transparent text-caption font-medium tracking-wider text-rad-moss hover:border-rad-clay hover:text-rad-clay"
+        className="language-switch"
         onClick={() => {
           openHeaderOverlay("language");
           setLocale(locale === "fa" ? "en" : "fa");
@@ -34,15 +34,19 @@ export function HeaderActions({
         {locale === "fa" ? t("switchToEn") : t("switchToFa")}
       </button>
       <SiteSearch />
-      <UtilityLink href={href("/favorites")} label={t("favoritesTitle")}>
+      <UtilityLink
+        href={href("/favorites")}
+        label={t("favoritesTitle")}
+        className="utility-button header-favorites"
+      >
         <Heart aria-hidden="true" />
       </UtilityLink>
-      <UtilityLink href={href("/cart")} label={t("bagAria")}>
+      <UtilityLink href={href("/cart")} label={t("bagAria")} className="utility-button cart-button">
         <ShoppingBag aria-hidden="true" />
         <CountBadge>{number(count)}</CountBadge>
       </UtilityLink>
       <UtilityButton
-        className="md:hidden"
+        className="menu"
         label={menuOpen ? t("closeMenu") : t("openMenu")}
         aria-expanded={menuOpen}
         onClick={onToggleMenu}

@@ -11,11 +11,9 @@ export function VendorBadge({
 }) {
   if (!vendor || vendor.kind === "rad") return null;
   return (
-    <span className="mb-1 block text-caption text-rad-muted">
+    <span className="vendor-badge">
       <span>{label}</span>
-      <b className="ms-2 font-medium text-rad-ink">
-        {locale === "fa" ? vendor.displayName : vendor.displayNameEn}
-      </b>
+      <b>{locale === "fa" ? vendor.displayName : vendor.displayNameEn}</b>
     </span>
   );
 }

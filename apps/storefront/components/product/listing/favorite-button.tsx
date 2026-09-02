@@ -17,11 +17,7 @@ export function FavoriteButton({
   return (
     <button
       type="button"
-      className={`inline-flex items-center gap-2 border-0 bg-transparent text-rad-ink ${
-        compact
-          ? "absolute end-3 top-3 z-10 h-10 w-10 justify-center"
-          : "min-h-11"
-      } ${active ? "text-rad-clay" : ""}`}
+      className={`favorite-button ${compact ? "compact" : ""} ${active ? "active" : ""}`}
       onClick={() => toggleFavorite(slug)}
       aria-pressed={active}
       aria-label={active ? t("removeFavorite") : t("addFavorite")}

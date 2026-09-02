@@ -32,7 +32,7 @@ export function ProfileView() {
           {t("logout")}
         </Button>
       </header>
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid gap-6 sm:grid-cols-2">
         <section className="border border-rad-line bg-rad-paper p-8">
           <Heart aria-hidden="true" />
           <Eyebrow className="mt-4">{t("favoriteEyebrow")}</Eyebrow>

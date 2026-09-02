@@ -13,7 +13,7 @@ export function CartLine({ product }: { product: Product }) {
   const { remove } = useCart();
   const { productPrice } = useMoney();
   return (
-    <article className="grid grid-cols-[96px_minmax(0,1fr)_auto] items-start gap-4">
+    <article className="grid grid-cols-[96px_minmax(0,1fr)] items-start gap-4 sm:grid-cols-[96px_minmax(0,1fr)_auto]">
       <Link
         href={href(`/products/${product.slug}`)}
         className="relative grid h-24 w-24 place-items-center overflow-hidden bg-rad-sand"
@@ -33,7 +33,7 @@ export function CartLine({ product }: { product: Product }) {
           {t("removeBag")}
         </button>
       </div>
-      <strong className="text-price font-normal">{productPrice(product)}</strong>
+      <strong className="text-price font-normal max-sm:col-start-2">{productPrice(product)}</strong>
     </article>
   );
 }

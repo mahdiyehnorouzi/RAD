@@ -7,7 +7,7 @@ import { useLocale } from "@/components/i18n";
 export function Footer() {
   const { t, href } = useLocale();
   return (
-    <footer className="grid grid-cols-1 gap-12 bg-rad-clay px-page pb-8 pt-12 text-rad-paper md:grid-cols-[minmax(180px,0.8fr)_minmax(300px,1.2fr)] md:gap-x-24">
+    <footer className="grid grid-cols-1 gap-12 bg-rad-clay px-page pb-8 pt-12 text-rad-paper lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] lg:gap-x-24">
       <div className="grid grid-cols-[120px_1fr] items-center gap-6">
         <Link
           href={href("/")}
@@ -33,9 +33,6 @@ export function Footer() {
           </b>
           <Link href={href("/products")}>{t("footerUnique")}</Link>
           <Link href={href("/studio")}>{t("footerCustom")}</Link>
-          <Link href={href("/making")}>{t("makingNav")}</Link>
-          <Link href={href("/workshop")}>{t("workshopTitle")}</Link>
-          <Link href={href("/differences")}>{t("museumTitle")}</Link>
         </section>
         <section className="grid gap-2.5">
           <b className="text-sm font-medium text-rad-sand">{t("footerRad")}</b>

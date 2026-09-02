@@ -37,7 +37,7 @@ export function LoginForm() {
   };
 
   return (
-    <PageSection className="grid gap-10 md:grid-cols-2">
+    <PageSection className="grid min-w-0 gap-10 lg:grid-cols-2">
       <div>
         <Eyebrow>{t("accountEyebrow")}</Eyebrow>
         <h1 className="m-0 text-h2 font-normal">{t("loginTitle")}</h1>

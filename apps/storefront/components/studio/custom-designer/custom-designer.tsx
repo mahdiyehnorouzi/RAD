@@ -10,7 +10,7 @@ export function CustomDesigner() {
   const designer = useDesigner();
   return (
     <>
-      <div className="grid items-start gap-[clamp(2.5rem,6vw,7rem)] lg:grid-cols-[minmax(0,1.25fr)_minmax(360px,0.75fr)]">
+      <div className="grid min-w-0 items-start gap-[clamp(2.5rem,6vw,7rem)] lg:grid-cols-[minmax(0,1.25fr)_minmax(0,0.75fr)]">
         <DesignerForm
           category={designer.category}
           prompt={designer.prompt}

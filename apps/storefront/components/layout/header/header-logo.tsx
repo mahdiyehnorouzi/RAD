@@ -9,12 +9,12 @@ export function HeaderLogo() {
   return (
     <Link
       href={href("/")}
-      className="flex min-w-0 flex-col items-center text-center leading-none"
+      className="logo flex min-w-0 flex-col items-center text-center leading-none"
       aria-label={t("home")}
       onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
     >
       <span
-        className="block h-[54px] w-[54px] overflow-visible"
+        className="logo-mark block h-[54px] w-[54px] overflow-visible"
         aria-hidden="true"
       >
         <Image

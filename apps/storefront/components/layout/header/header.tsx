@@ -19,7 +19,7 @@ export function Header() {
   useHeaderOverlay("menu", close);
 
   return (
-    <header className="sticky top-0 z-50 flex h-[104px] items-center justify-between border-b border-rad-moss/20 bg-rad-paper px-page">
+    <header className="header">
       <HeaderLogo />
       <HeaderNav open={open} onNavigate={close} />
       <HeaderActions

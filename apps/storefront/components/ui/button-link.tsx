@@ -33,7 +33,7 @@ export function ButtonLink({
   const resolved = outline ? "outline" : light ? "light" : variant;
   return (
     <Link
-      className={`inline-flex items-center justify-center gap-2 text-button font-medium transition-colors focus-visible:outline-none focus-visible:shadow-[inset_0_-2px_0_#8a4938] ${variants[resolved]}`}
+      className={`button inline-flex items-center justify-center gap-2 text-button font-medium transition-colors focus-visible:outline-none focus-visible:shadow-[inset_0_-2px_0_#8a4938] ${resolved === "outline" ? "outline" : ""} ${variants[resolved]}`}
       href={localizedHref(href)}
     >
       <span>{children}</span>

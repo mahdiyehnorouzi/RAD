@@ -11,7 +11,7 @@ import type {Product} from "@rad/types";
 export function ProductDetail({ product }: { product: Product }) {
   return (
     <>
-      <PageSection className="grid gap-12 lg:grid-cols-[minmax(0,1.1fr)_minmax(280px,0.9fr)] lg:items-start">
+      <PageSection className="grid min-w-0 gap-12 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:items-start">
         <ProductGallery product={product} />
         <ProductInfo product={product} />
       </PageSection>

@@ -13,7 +13,7 @@ export function DifferenceStory() {
 
   return (
     <PageSection
-      className="difference-story grid items-end gap-[clamp(2rem,5vw,5rem)] bg-rad-paper md:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]"
+      className="difference-story grid min-w-0 items-end gap-[clamp(2rem,5vw,5rem)] bg-rad-paper lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]"
       aria-labelledby="difference-story-title"
     >
       <div>

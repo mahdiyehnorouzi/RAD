@@ -45,7 +45,7 @@ export function CartPage() {
           {t("clearBag")}
         </button>
       </header>
-      <div className="grid gap-12 lg:grid-cols-[minmax(0,1.4fr)_minmax(240px,0.6fr)]">
+      <div className="grid min-w-0 gap-12 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,0.6fr)]">
         <div className="grid gap-8">
           {items.map((product) => (
             <CartLine product={product} key={product.slug} />

@@ -33,6 +33,7 @@ export function SiteSearch() {
   return (
     <div className="relative">
       <UtilityButton
+        className="search-toggle"
         label={open ? t("closeSearch") : t("searchAria")}
         aria-expanded={open}
         aria-controls="site-search-panel"

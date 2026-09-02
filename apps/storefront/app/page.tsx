@@ -2,7 +2,6 @@
 
 import {
   ArchiveSection,
-  DifferenceStory,
   EntryPaths,
   EvidenceFilm,
   FinalCta,
@@ -26,7 +25,6 @@ export default function Home() {
   return (
     <>
       <HomeHero product={hero} />
-      <DifferenceStory />
       <EvidenceFilm />
       <EntryPaths />
       <ArchiveSection products={featured} />

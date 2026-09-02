@@ -42,7 +42,7 @@ export function UtilityButton({
 
 export function CountBadge({ children }: { children: React.ReactNode }) {
   return (
-    <i className="absolute -top-0.5 end-0 not-italic rounded-full bg-rad-clay px-1.5 py-px text-[0.65rem] text-white">
+    <i className="not-italic">
       {children}
     </i>
   );

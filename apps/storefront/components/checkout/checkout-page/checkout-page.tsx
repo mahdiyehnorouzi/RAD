@@ -30,7 +30,7 @@ export function CheckoutPage() {
         <h1 className="m-0 text-h2 font-normal">{t("checkoutTitle")}</h1>
         <p className="mt-3 max-w-xl text-prose">{t("checkoutBody")}</p>
       </header>
-      <div className="grid gap-12 lg:grid-cols-[minmax(0,1.2fr)_minmax(220px,0.8fr)]">
+      <div className="grid min-w-0 gap-12 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
         <CheckoutForm />
         <CheckoutSummary count={items.length} total={total} />
       </div>

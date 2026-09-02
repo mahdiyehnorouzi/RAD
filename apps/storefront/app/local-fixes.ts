@@ -1,4 +1,5 @@
 export const localFixes = String.raw`
+.eyebrow{display:block;margin-bottom:1.25rem;color:var(--clay);font-size:var(--text-eyebrow);font-weight:400;letter-spacing:.12em}
 button,.button,.language-switch,.utility-button,.search-toggle,.menu{box-shadow:none!important;outline:0!important}
 .button{border:0!important}
 .button.outline{min-height:auto!important;padding:.45rem 0!important;border:0!important;border-bottom:1px solid currentColor!important;border-radius:0!important;background:transparent!important}
@@ -17,7 +18,7 @@ html[dir="rtl"] .process .steps article h3,html[dir="rtl"] .process .steps artic
 .shipping-faq .faq-title svg{width:23px!important;height:23px!important;flex:0 0 23px!important;color:#8a4938!important;stroke-width:1.5!important}
 .shipping-faq .faq-chevron{display:block!important;width:19px!important;height:19px!important;flex:0 0 19px!important;transition:transform 240ms ease-out!important}
 .shipping-faq details[open] .faq-chevron{transform:rotate(180deg)!important}
-.plp .product-grid .product-art{aspect-ratio:4/5!important}
+.plp .product-grid .product-media-shell,.plp .product-grid .product-art,.plp .product-grid .product-meta{width:100%!important;max-width:100%!important}
 .evidence-film{align-items:center!important}
 .film-frame{aspect-ratio:16/9!important}
 .studio-film{display:block!important;width:100%!important;height:100%!important;min-height:0!important;aspect-ratio:auto!important;object-fit:cover!important}
@@ -95,7 +96,6 @@ html[dir="rtl"] .filter-count{text-align:right!important}
 .logo-mark{width:54px!important;height:54px!important;overflow:visible!important}
 .logo-mark img{position:static!important;width:100%!important;height:100%!important;max-width:none!important;transform:none!important;object-fit:contain!important}
 .logo>span:last-child{margin-top:.35rem!important}
-.hero-copy h1{max-width:10ch!important;font-size:clamp(2.35rem,4.8vw,4.75rem)!important;line-height:1.22!important;font-weight:400!important}
 .home-products .product-meta,.home-products .product-meta>div{display:flex!important;flex-direction:column!important;align-items:stretch!important;gap:.35rem!important;min-height:0!important;width:100%!important;text-align:right!important}
 .home-products .product-meta>span{align-self:start!important;width:auto!important;margin-top:.15rem!important;text-align:start!important}
 .home-products .product-meta h3,.home-products .product-meta p{min-height:0!important;margin:0!important}
@@ -121,10 +121,6 @@ html[dir="rtl"] .order-card>header>div{direction:rtl!important;justify-content:f
 html[dir="rtl"] .order-card>strong{text-align:start!important}
 html[dir="rtl"] .making-page,html[dir="rtl"] .workshop-page,html[dir="rtl"] .making-heading,html[dir="rtl"] .making-situation,html[dir="rtl"] .making-layout,html[dir="rtl"] .workshop-form,html[dir="rtl"] .making-brief,html[dir="rtl"] .making-quote{direction:rtl!important;text-align:right!important}
 @media(min-width:901px){
-html[dir="rtl"] .hero{direction:ltr!important;grid-template-areas:"media copy"!important;grid-template-columns:minmax(420px,1.08fr) minmax(360px,.92fr)!important;gap:clamp(5rem,8vw,10rem)!important}
-html[dir="rtl"] .hero-copy{grid-area:copy!important;direction:rtl!important;text-align:right!important}
-html[dir="rtl"] .hero-art{grid-area:media!important;width:100%!important;max-width:720px!important;height:auto!important;min-height:0!important;aspect-ratio:4/5!important;justify-self:start!important;transform:none!important}
-.hero-copy h1{max-width:10ch!important;font-size:clamp(2.35rem,4.8vw,4.75rem)!important;line-height:1.22!important;font-weight:400!important}
 html[dir="rtl"] .section-heading,html[dir="rtl"] .plp-head,html[dir="rtl"] .film-copy,html[dir="rtl"] .pdp-info,html[dir="rtl"] .product-meta,html[dir="rtl"] .product-meta>div{direction:rtl!important;text-align:right!important}
 html[dir="rtl"] .archive-section .section-heading,html[dir="rtl"] .process .section-heading{width:100%;direction:rtl!important;text-align:right!important}
 html[dir="rtl"] .archive-section .section-heading>div,html[dir="rtl"] .process .section-heading>div{width:100%;text-align:right!important}
@@ -135,10 +131,6 @@ html[dir="rtl"] .home-products .product-meta>span{align-self:start!important;wid
 @media(max-width:900px){
 html[dir="rtl"] body,html[dir="rtl"] main,html[dir="rtl"] .section{direction:rtl!important;text-align:right!important}
 html[dir="rtl"] .section-heading,html[dir="rtl"] .plp-head,html[dir="rtl"] .orders-heading,html[dir="rtl"] .checkout-page>header,html[dir="rtl"] .favorites-heading,html[dir="rtl"] .profile-hero{direction:rtl!important;text-align:right!important;align-items:start!important}
-html[dir="rtl"] .hero{direction:rtl!important}
-.hero{gap:1rem!important;padding-bottom:0!important}
-.hero-copy{padding-bottom:0!important}
-.hero-art{background:color-mix(in srgb,var(--sand) 74%,var(--paper))!important}
 html[dir="rtl"] .product-meta,html[dir="rtl"] .product-meta>div,html[data-locale="fa"] .product-meta,html[data-locale="fa"] .product-meta>div{width:100%!important;direction:rtl!important;text-align:right!important;align-items:stretch!important}
 html[dir="rtl"] .product-meta .product-category,html[dir="rtl"] .product-meta h3,html[dir="rtl"] .product-meta p,html[data-locale="fa"] .product-meta .product-category,html[data-locale="fa"] .product-meta h3,html[data-locale="fa"] .product-meta p{display:block!important;width:100%!important;align-self:stretch!important;text-align:right!important}
 html[dir="rtl"] .product-meta>span,html[data-locale="fa"] .product-meta>span{width:100%!important;text-align:right!important;align-self:start!important}
@@ -223,8 +215,6 @@ html[dir="rtl"] .process .steps article h3,html[data-locale="fa"] .process .step
 @media(max-width:600px){
 .route-back-bar{padding-top:.55rem}
 .route-back-button{min-height:38px;font-size:.76rem}
-.hero.section{padding-top:1.75rem!important;padding-bottom:0!important}
-.hero.section+.difference-story{margin-top:0}
 .evidence-film{padding-top:0!important}
 .home-products .product-meta{display:flex!important;flex-direction:column!important;gap:.35rem!important;min-height:0!important}
 .process .section-heading{align-items:start!important;text-align:right!important}

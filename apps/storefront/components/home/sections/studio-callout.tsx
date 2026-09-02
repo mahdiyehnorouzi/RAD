@@ -10,8 +10,8 @@ import type {Product} from "@rad/types";
 export function StudioCallout({ product }: { product?: Product }) {
   const { t } = useLocale();
   return (
-    <PageSection className="grid items-center gap-[8vw] bg-rad-moss text-rad-paper md:grid-cols-2">
-      <div className="relative grid h-[600px] place-items-center">
+    <PageSection className="studio-callout">
+      <div className="studio-visual">
         <span className="absolute h-[55%] w-[85%] rounded-full border border-white/30" />
         <span className="absolute h-[85%] w-[55%] rounded-full border border-white/30" />
         {product ? (

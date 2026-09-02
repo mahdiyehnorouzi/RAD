@@ -15,7 +15,7 @@ export function ProductMedia({
   const { locale, t } = useLocale();
   const soldBadge =
     product.status === "sold" ? (
-      <span className="pointer-events-none absolute end-4 top-4 z-[8] inline-flex min-h-[30px] items-center rounded-full border border-rad-paper/70 bg-rad-clay px-3 py-1 text-label font-medium text-rad-paper shadow-[0_4px_18px_rgba(24,35,31,.12)]">
+      <span className="sold-media-badge">
         {t("soldOut")}
       </span>
     ) : null;
@@ -28,7 +28,7 @@ export function ProductMedia({
     return (
       <>
         <img
-          className="product-photo relative z-[2] max-h-full max-w-full object-contain"
+          className="product-photo"
           src={photoSrc}
           alt={locale === "fa" ? media.alt : media.enAlt}
         />
