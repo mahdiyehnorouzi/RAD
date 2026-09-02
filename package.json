@@ -28,7 +28,9 @@
     "deploy:api": "bash scripts/deploy-api-railway.sh",
     "deploy:api:render": "echo 'Connect render.yaml in the Render dashboard, then set admin API_URL to the Render service URL.'",
     "build:all": "npm run build --workspaces --if-present",
-    "typecheck:all": "npm run typecheck --workspaces --if-present"
+    "typecheck:all": "npm run typecheck --workspaces --if-present",
+    "format": "prettier --write \"apps/storefront/**/*.{ts,tsx,css,json,mjs}\"",
+    "format:check": "prettier --check \"apps/storefront/**/*.{ts,tsx,css,json,mjs}\""
   },
   "dependencies": {
     "@vinext/cloudflare": "^1.0.0-beta.6",
@@ -49,6 +51,7 @@
     "@vitejs/plugin-rsc": "^0.5.34",
     "autoprefixer": "^10.5.4",
     "postcss": "^8.5.26",
+    "prettier": "^3.9.6",
     "tailwindcss": "^3.4.19",
     "typescript": "^5.8",
     "vinext": "^1.0.0-beta.8",

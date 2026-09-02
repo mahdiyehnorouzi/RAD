@@ -11,7 +11,10 @@ const HOP_BY_HOP = new Set([
   "upgrade",
 ]);
 
-export async function proxyApiRequest(request: Request, pathSegments: string[]): Promise<Response> {
+export async function proxyApiRequest(
+  request: Request,
+  pathSegments: string[],
+): Promise<Response> {
   const path = pathSegments.map(encodeURIComponent).join("/");
   const target = new URL(`/${path}`, API_BASE);
   const incoming = new URL(request.url);

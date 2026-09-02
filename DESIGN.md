@@ -70,9 +70,9 @@ Header commerce actions are limited to search, favourites, and bag, with counts 
 
 Every non-home route exposes one quiet back control immediately below the global header. Sold works remain visible in the archive and carry the same oxide-coloured sold badge on every product image surface, including cards, PDP media, thumbnails, and bag previews.
 
-Product media is a gallery rather than a single fixed image: PDP thumbnails select the active image, while missing media always resolves to a localized branded placeholder. Lightweight localized toast feedback confirms favourite, basket, and review actions without changing page context.
+Product media is a gallery rather than a single fixed image: PDP thumbnails select the active image, while missing media always resolves to the established fantasy artwork for that product category. Lightweight localized toast feedback confirms favourite, basket, and review actions without changing page context.
 
-Desktop PDP media uses one generous contained stage with a horizontal thumbnail rail; never use a tall sliver thumbnail column. Uploaded imagery is contained rather than cropped, and mock media must visually reflect its category rather than defaulting every work to a ceramic vessel. Missing media sits inside a smaller dashed maker-frame so absence does not become the dominant artwork.
+Desktop PDP media uses one generous contained stage with a horizontal thumbnail rail; never use a tall sliver thumbnail column. Uploaded imagery is contained rather than cropped, and default media must use the matching ceramics, painting, textile, woodwork, sculpture, jewellery, or print fantasy artwork rather than defaulting every work to a ceramic vessel.
 
 English commerce surfaces use curated USD prices with the dollar symbol; Persian commerce keeps toman values and Persian numerals. Order status is shown as a restrained four-step kiln-to-delivery progress line rather than a generic dashboard timeline.
 

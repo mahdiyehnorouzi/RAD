@@ -4,21 +4,21 @@ import { ChangeEvent, FormEvent, useEffect, useRef, useState } from "react";
 import { Camera, Star, X } from "lucide-react";
 import type { Product } from "@/lib/products";
 import type { Review } from "@rad/types";
-import { useCommerce } from "./commerce";
-import { useLocale } from "./i18n";
-import { ButtonLink } from "./site";
+import { useCommerce } from "@/components/commerce/commerce-provider";
+import { Button, ButtonLink } from "@/components/ui/button-link";
+import { Eyebrow, PageSection } from "@/components/ui/section";
+import { useLocale } from "@/components/i18n";
 import { api } from "@/lib/api";
 
 export function Reviews({ product }: { product: Product }) {
   const { user, addReview } = useCommerce();
-  const { locale, t, href, number } = useLocale();
+  const { locale, t, number } = useLocale();
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
   const [image, setImage] = useState<string>();
   const [fileName, setFileName] = useState("");
   const [error, setError] = useState("");
   const [productReviews, setProductReviews] = useState<Review[]>([]);
-
   const commentRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
@@ -81,14 +81,14 @@ export function Reviews({ product }: { product: Product }) {
   };
 
   return (
-    <section className="reviews section">
-      <header className="reviews-heading">
+    <PageSection>
+      <header className="mb-8 flex items-end justify-between gap-4">
         <div>
-          <span className="eyebrow">{t("reviewsEyebrow")}</span>
-          <h2>{t("reviewsTitle")}</h2>
+          <Eyebrow>{t("reviewsEyebrow")}</Eyebrow>
+          <h2 className="m-0 text-h2 font-normal">{t("reviewsTitle")}</h2>
         </div>
         {productReviews.length > 0 && (
-          <div className="review-average">
+          <div className="flex items-center gap-2">
             <Star fill="currentColor" aria-hidden="true" />
             <b>
               {new Intl.NumberFormat(locale === "fa" ? "fa-IR" : "en-US", {
@@ -99,12 +99,15 @@ export function Reviews({ product }: { product: Product }) {
           </div>
         )}
       </header>
-      <div className="reviews-grid">
-        <div className="review-list">
+      <div className="grid gap-10 lg:grid-cols-2">
+        <div className="grid gap-4">
           {productReviews.length ? (
             productReviews.map((review) => (
-              <article key={review.id} className="review-card">
-                <header>
+              <article
+                key={review.id}
+                className="border border-rad-line bg-rad-paper p-5"
+              >
+                <header className="mb-2 flex items-center justify-between">
                   <b>{review.author}</b>
                   <span aria-label={`${review.rating} / 5`}>
                     {Array.from({ length: 5 }, (_, index) => (
@@ -119,9 +122,13 @@ export function Reviews({ product }: { product: Product }) {
                 </header>
                 <p>{review.comment}</p>
                 {review.image && (
-                  <img src={review.image} alt={t("reviewPhotoAlt")} />
+                  <img
+                    src={review.image}
+                    alt={t("reviewPhotoAlt")}
+                    className="mt-3 max-h-48"
+                  />
                 )}
-                <small>
+                <small className="text-rad-muted">
                   {new Intl.DateTimeFormat(
                     locale === "fa" ? "fa-IR" : "en-US",
                     { dateStyle: "medium" },
@@ -130,29 +137,28 @@ export function Reviews({ product }: { product: Product }) {
               </article>
             ))
           ) : (
-            <div className="review-empty">
-              <p>{t("noReviews")}</p>
-            </div>
+            <p className="text-rad-muted">{t("noReviews")}</p>
           )}
         </div>
         {user ? (
-          <form className="review-form" onSubmit={submit} noValidate>
+          <form className="grid gap-3" onSubmit={submit} noValidate>
             {error && (
-              <p className="form-error" role="alert">
+              <p className="text-rad-clay" role="alert">
                 {error}
               </p>
             )}
-            <fieldset>
+            <fieldset className="border-0 p-0">
               <legend>{t("ratingLabel")}</legend>
-              <div className="rating-input">
+              <div className="flex gap-1">
                 {[1, 2, 3, 4, 5].map((value) => (
-                  <label key={value}>
+                  <label key={value} className="cursor-pointer">
                     <input
                       type="radio"
                       name="rating"
                       value={value}
                       checked={rating === value}
                       onChange={() => setRating(value)}
+                      className="sr-only"
                     />
                     <Star
                       fill={value <= rating ? "currentColor" : "none"}
@@ -171,9 +177,13 @@ export function Reviews({ product }: { product: Product }) {
               value={comment}
               onChange={(event) => setComment(event.target.value)}
               placeholder={t("commentPlaceholder")}
+              className="resize-none border-0 border-b border-rad-line bg-transparent outline-none"
             />
-            <div className="review-upload">
-              <label htmlFor="review-photo">
+            <div>
+              <label
+                htmlFor="review-photo"
+                className="inline-flex items-center gap-2"
+              >
                 <Camera aria-hidden="true" />
                 {t("photoLabel")}
               </label>
@@ -182,11 +192,16 @@ export function Reviews({ product }: { product: Product }) {
                 type="file"
                 accept="image/jpeg,image/png,image/webp"
                 onChange={selectImage}
+                className="mt-2 block"
               />
-              <small>{t("photoHelp")}</small>
+              <small className="text-rad-muted">{t("photoHelp")}</small>
               {image && (
-                <div className="review-preview">
-                  <img src={image} alt={fileName} />
+                <div className="mt-3 flex items-center gap-3">
+                  <img
+                    src={image}
+                    alt={fileName}
+                    className="h-16 w-16 object-cover"
+                  />
                   <span>{fileName}</span>
                   <button
                     type="button"
@@ -195,25 +210,22 @@ export function Reviews({ product }: { product: Product }) {
                       setFileName("");
                     }}
                     aria-label={t("photoRemove")}
+                    className="border-0 bg-transparent"
                   >
                     <X aria-hidden="true" />
                   </button>
                 </div>
               )}
             </div>
-            <button className="button" type="submit">
-              {t("submitReview")}
-            </button>
+            <Button type="submit">{t("submitReview")}</Button>
           </form>
         ) : (
-          <div className="review-login">
+          <div>
             <p>{t("loginToReview")}</p>
-            <ButtonLink href="/account">
-              {t("login")}
-            </ButtonLink>
+            <ButtonLink href="/account">{t("login")}</ButtonLink>
           </div>
         )}
       </div>
-    </section>
+    </PageSection>
   );
 }

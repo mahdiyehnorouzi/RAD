@@ -2,25 +2,24 @@
 
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useCart, cartTotal, formatTotal } from "./cart";
-import { useCommerce } from "./commerce";
-import { useLocale } from "./i18n";
-import { ButtonLink } from "./site";
-import { useCatalog } from "./catalog-provider";
-import type { Product } from "@/lib/products";
+import { useCart } from "@/components/cart/cart-provider";
+import { useCommerce } from "@/components/commerce/commerce-provider";
+import { ButtonLink, Button } from "@/components/ui/button-link";
+import { Eyebrow, PageSection } from "@/components/ui/section";
+import { useCartProducts } from "@/hooks/use-cart-products";
+import { useLocale } from "@/components/i18n";
+import { useMoney } from "@/hooks/use-money";
 
 export function CheckoutPage() {
-  const { slugs, clear } = useCart();
+  const { clear } = useCart();
   const { user, placeOrder } = useCommerce();
-  const { locale, t, href, number } = useLocale();
-  const { getProduct } = useCatalog();
+  const { t, href } = useLocale();
+  const items = useCartProducts();
+  const { cartTotal, formatTotal } = useMoney();
   const router = useRouter();
   const [error, setError] = useState("");
-
-  const items = slugs
-    .map((slug) => getProduct(slug))
-    .filter((item): item is Product => Boolean(item));
-  const total = cartTotal(items, locale);
+  const { number } = useLocale();
+  const total = cartTotal(items);
 
   const submitDemoOrder = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -33,8 +32,8 @@ export function CheckoutPage() {
     try {
       setError("");
       await placeOrder({
-        name: name || user?.name || (locale === "fa" ? "کاربر رَد" : "RAD collector"),
-        city: city || (locale === "fa" ? "تهران" : "Tehran"),
+        name: name || user?.name || t("guestCollector"),
+        city: city || t("tehranCity"),
         phone,
         address,
       });
@@ -47,44 +46,71 @@ export function CheckoutPage() {
 
   if (!items.length) {
     return (
-      <section className="cart-empty section">
-        <h1>{t("emptyBag")}</h1>
-        <ButtonLink href="/products">
-          {t("viewWorks")}
-        </ButtonLink>
-      </section>
+      <PageSection>
+        <h1 className="text-h2 font-normal">{t("emptyBag")}</h1>
+        <ButtonLink href="/products">{t("viewWorks")}</ButtonLink>
+      </PageSection>
     );
   }
 
+  const fieldClass =
+    "mb-4 min-h-12 w-full border-0 border-b border-rad-line bg-transparent px-0 py-2 outline-none focus:border-rad-clay";
+
   return (
-    <section className="checkout-page section">
-      <header>
-        <span className="eyebrow">{t("checkoutEyebrow")}</span>
-        <h1>{t("checkoutTitle")}</h1>
-        <p>{t("checkoutBody")}</p>
+    <PageSection>
+      <header className="mb-10">
+        <Eyebrow>{t("checkoutEyebrow")}</Eyebrow>
+        <h1 className="m-0 text-h2 font-normal">{t("checkoutTitle")}</h1>
+        <p className="mt-3 max-w-xl text-prose">{t("checkoutBody")}</p>
       </header>
-      <div className="checkout-grid">
-        <form className="checkout-form" onSubmit={submitDemoOrder} noValidate>
+      <div className="grid gap-12 lg:grid-cols-[minmax(0,1.2fr)_minmax(220px,0.8fr)]">
+        <form className="grid" onSubmit={submitDemoOrder} noValidate>
           {error && (
-            <p className="form-error" role="alert">
+            <p className="text-rad-clay" role="alert">
               {error}
             </p>
           )}
           <label htmlFor="checkout-name">{t("nameLabel")}</label>
-          <input id="checkout-name" name="name" defaultValue={user?.name ?? ""} autoComplete="name" />
+          <input
+            className={fieldClass}
+            id="checkout-name"
+            name="name"
+            defaultValue={user?.name ?? ""}
+            autoComplete="name"
+          />
           <label htmlFor="checkout-phone">{t("phoneLabel")}</label>
-          <input id="checkout-phone" name="phone" type="tel" inputMode="tel" autoComplete="tel" />
+          <input
+            className={fieldClass}
+            id="checkout-phone"
+            name="phone"
+            type="tel"
+            inputMode="tel"
+            autoComplete="tel"
+          />
           <label htmlFor="checkout-city">{t("cityLabel")}</label>
-          <input id="checkout-city" name="city" autoComplete="address-level2" />
+          <input
+            className={fieldClass}
+            id="checkout-city"
+            name="city"
+            autoComplete="address-level2"
+          />
           <label htmlFor="checkout-address">{t("addressLabel")}</label>
-          <textarea className="resize-none" id="checkout-address" name="address" rows={4} autoComplete="street-address" />
-          <button className="button" type="submit">{t("placeDemoOrder")}</button>
+          <textarea
+            className={`${fieldClass} resize-none`}
+            id="checkout-address"
+            name="address"
+            rows={4}
+            autoComplete="street-address"
+          />
+          <Button type="submit">{t("placeDemoOrder")}</Button>
         </form>
-        <aside className="checkout-summary">
-          <span>{number(items.length)} {t("availableWorks")}</span>
-          <b>{formatTotal(total, locale)}</b>
+        <aside className="flex flex-col gap-2 border border-rad-line bg-rad-paper p-6">
+          <span>
+            {number(items.length)} {t("availableWorks")}
+          </span>
+          <b className="text-price font-normal">{formatTotal(total)}</b>
         </aside>
       </div>
-    </section>
+    </PageSection>
   );
 }

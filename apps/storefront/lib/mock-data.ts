@@ -46,7 +46,10 @@ export const mockCategories: MockCategory[] = [
       {
         key: "item",
         label: { fa: "نوع اثر", en: "Object" },
-        options: { fa: ["گلدان", "ظرف", "آبجکت"], en: ["Vase", "Tableware", "Object"] },
+        options: {
+          fa: ["گلدان", "ظرف", "آبجکت"],
+          en: ["Vase", "Tableware", "Object"],
+        },
       },
       {
         key: "surface",
@@ -67,12 +70,18 @@ export const mockCategories: MockCategory[] = [
       {
         key: "medium",
         label: { fa: "تکنیک", en: "Medium" },
-        options: { fa: ["رنگ‌روغن", "اکریلیک", "آبرنگ"], en: ["Oil", "Acrylic", "Watercolour"] },
+        options: {
+          fa: ["رنگ‌روغن", "اکریلیک", "آبرنگ"],
+          en: ["Oil", "Acrylic", "Watercolour"],
+        },
       },
       {
         key: "format",
         label: { fa: "قاب", en: "Format" },
-        options: { fa: ["عمودی", "افقی", "مربع"], en: ["Portrait", "Landscape", "Square"] },
+        options: {
+          fa: ["عمودی", "افقی", "مربع"],
+          en: ["Portrait", "Landscape", "Square"],
+        },
       },
       sizeField,
       budgetField,
@@ -88,12 +97,18 @@ export const mockCategories: MockCategory[] = [
       {
         key: "item",
         label: { fa: "نوع اثر", en: "Piece" },
-        options: { fa: ["دیوارکوب", "روسری", "رومیزی", "پارچه هنری"], en: ["Wall hanging", "Scarf", "Table textile", "Art cloth"] },
+        options: {
+          fa: ["دیوارکوب", "روسری", "رومیزی", "پارچه هنری"],
+          en: ["Wall hanging", "Scarf", "Table textile", "Art cloth"],
+        },
       },
       {
         key: "technique",
         label: { fa: "تکنیک", en: "Technique" },
-        options: { fa: ["نقاشی روی پارچه", "چاپ دستی", "سوزن‌دوزی", "بافت"], en: ["Fabric painting", "Hand print", "Embroidery", "Weaving"] },
+        options: {
+          fa: ["نقاشی روی پارچه", "چاپ دستی", "سوزن‌دوزی", "بافت"],
+          en: ["Fabric painting", "Hand print", "Embroidery", "Weaving"],
+        },
       },
       sizeField,
       budgetField,
@@ -109,12 +124,18 @@ export const mockCategories: MockCategory[] = [
       {
         key: "item",
         label: { fa: "نوع اثر", en: "Object" },
-        options: { fa: ["ظرف چوبی", "مجسمه", "دیوارکوب", "جعبه"], en: ["Wooden vessel", "Sculpture", "Wall piece", "Box"] },
+        options: {
+          fa: ["ظرف چوبی", "مجسمه", "دیوارکوب", "جعبه"],
+          en: ["Wooden vessel", "Sculpture", "Wall piece", "Box"],
+        },
       },
       {
         key: "wood",
         label: { fa: "نوع چوب", en: "Wood" },
-        options: { fa: ["گردو", "راش", "زیتون", "ترکیبی"], en: ["Walnut", "Beech", "Olive", "Mixed"] },
+        options: {
+          fa: ["گردو", "راش", "زیتون", "ترکیبی"],
+          en: ["Walnut", "Beech", "Olive", "Mixed"],
+        },
       },
       sizeField,
       budgetField,
@@ -130,12 +151,18 @@ export const mockCategories: MockCategory[] = [
       {
         key: "material",
         label: { fa: "متریال", en: "Material" },
-        options: { fa: ["فلز", "سنگ", "گچ", "ترکیب مواد"], en: ["Metal", "Stone", "Plaster", "Mixed media"] },
+        options: {
+          fa: ["فلز", "سنگ", "گچ", "ترکیب مواد"],
+          en: ["Metal", "Stone", "Plaster", "Mixed media"],
+        },
       },
       {
         key: "placement",
         label: { fa: "محل استفاده", en: "Placement" },
-        options: { fa: ["رومیزی", "دیواری", "فضای باز"], en: ["Tabletop", "Wall", "Outdoor"] },
+        options: {
+          fa: ["رومیزی", "دیواری", "فضای باز"],
+          en: ["Tabletop", "Wall", "Outdoor"],
+        },
       },
       sizeField,
       budgetField,
@@ -151,17 +178,26 @@ export const mockCategories: MockCategory[] = [
       {
         key: "item",
         label: { fa: "نوع زیور", en: "Piece" },
-        options: { fa: ["گردنبند", "انگشتر", "گوشواره", "دستبند"], en: ["Necklace", "Ring", "Earrings", "Bracelet"] },
+        options: {
+          fa: ["گردنبند", "انگشتر", "گوشواره", "دستبند"],
+          en: ["Necklace", "Ring", "Earrings", "Bracelet"],
+        },
       },
       {
         key: "material",
         label: { fa: "متریال", en: "Material" },
-        options: { fa: ["نقره", "برنج", "مس", "ترکیبی"], en: ["Silver", "Brass", "Copper", "Mixed"] },
+        options: {
+          fa: ["نقره", "برنج", "مس", "ترکیبی"],
+          en: ["Silver", "Brass", "Copper", "Mixed"],
+        },
       },
       {
         key: "style",
         label: { fa: "حس کلی", en: "Mood" },
-        options: { fa: ["مینیمال", "پیکره‌وار", "هندسی"], en: ["Minimal", "Sculptural", "Geometric"] },
+        options: {
+          fa: ["مینیمال", "پیکره‌وار", "هندسی"],
+          en: ["Minimal", "Sculptural", "Geometric"],
+        },
       },
       budgetField,
     ],
@@ -176,12 +212,18 @@ export const mockCategories: MockCategory[] = [
       {
         key: "technique",
         label: { fa: "تکنیک", en: "Technique" },
-        options: { fa: ["لینوکات", "چاپ چوب", "سیلک", "تصویرسازی"], en: ["Linocut", "Woodcut", "Screen print", "Illustration"] },
+        options: {
+          fa: ["لینوکات", "چاپ چوب", "سیلک", "تصویرسازی"],
+          en: ["Linocut", "Woodcut", "Screen print", "Illustration"],
+        },
       },
       {
         key: "edition",
         label: { fa: "نسخه", en: "Edition" },
-        options: { fa: ["تک‌نسخه", "نسخه محدود"], en: ["Unique", "Limited edition"] },
+        options: {
+          fa: ["تک‌نسخه", "نسخه محدود"],
+          en: ["Unique", "Limited edition"],
+        },
       },
       sizeField,
       budgetField,
@@ -220,7 +262,9 @@ export const mockStorefront = {
 } as const;
 
 export function getMockCategory(id: ProductCategory) {
-  return mockCategories.find((category) => category.id === id) ?? mockCategories[0];
+  return (
+    mockCategories.find((category) => category.id === id) ?? mockCategories[0]
+  );
 }
 
 export function mockCategoryLabel(id: ProductCategory, locale: MockLocale) {

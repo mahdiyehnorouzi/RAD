@@ -2,8 +2,11 @@
 
 import { FormEvent, useRef, useState } from "react";
 import type { ProductCategory } from "@rad/types";
-import { ArtworkVisual } from "./site";
-import { useLocale } from "./i18n";
+import { ArtworkVisual } from "@/components/product/artwork-visual";
+import "@/components/product/artwork.css";
+import { Button } from "@/components/ui/button-link";
+import { Eyebrow } from "@/components/ui/section";
+import { useLocale } from "@/components/i18n";
 import {
   artworkCategories,
   artworkCategoryById,
@@ -68,211 +71,294 @@ export function CustomDesigner() {
   }
 
   return (
-    <div className="designer-grid">
-      <form className="designer-form" onSubmit={submit} noValidate>
-        <span className="eyebrow">{t("designerEyebrow")}</span>
-        <h1>
-          {locale === "fa"
-            ? "چیزی را که هنوز وجود ندارد، تصور کن."
-            : "Imagine what does not exist yet."}
-        </h1>
-        <p>
-          {locale === "fa"
-            ? "رَد شما را به هنرمند و مسیر ساخت مناسب متصل می‌کند."
-            : "RAD connects your idea to the right maker and process."}
-        </p>
-
-        <fieldset className="design-category-fieldset">
-          <legend>
-            <small>{locale === "fa" ? "مرحله اول" : "STEP ONE"}</small>
-            {locale === "fa"
-              ? "چه نوع اثری می‌خواهید؟"
-              : "What would you like to commission?"}
-          </legend>
-          <div className="design-category-grid">
-            {artworkCategories.map((item) => (
-              <button
-                type="button"
-                key={item.id}
-                className={category === item.id ? "active" : ""}
-                onClick={() => chooseCategory(item.id)}
-                aria-pressed={category === item.id}
-              >
-                <span
-                  className={`category-swatch ${item.visual}`}
-                  style={
-                    {
-                      "--swatch": item.preview.color,
-                      "--swatch-accent": item.preview.accent,
-                    } as React.CSSProperties
-                  }
-                  aria-hidden="true"
-                />
-                {item.label[locale]}
-              </button>
-            ))}
-          </div>
-        </fieldset>
-
-        {selectedCategory && (
-          <fieldset className="brief-fields">
-            <legend>
-              <small>{locale === "fa" ? "مرحله دوم" : "STEP TWO"}</small>
-              {locale === "fa"
-                ? `جزئیات ${selectedCategory.shortLabel.fa}`
-                : `${selectedCategory.shortLabel.en} details`}
-            </legend>
-            {selectedCategory.fields.map((field) => (
-              <div className="brief-choice" key={field.key}>
-                <span>{field.label[locale]}</span>
-                <div>
-                  {field.options[locale].map((option) => (
-                    <button
-                      type="button"
-                      key={option}
-                      className={brief[field.key] === option ? "active" : ""}
-                      onClick={() =>
-                        setBrief((current) => ({
-                          ...current,
-                          [field.key]: option,
-                        }))
-                      }
-                      aria-pressed={brief[field.key] === option}
-                    >
-                      {option}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </fieldset>
-        )}
-
-        <label htmlFor="artwork-prompt">{t("promptLabel")}</label>
-        <textarea
-          id="artwork-prompt"
-          className="resize-none designer-prompt"
-          value={prompt}
-          onChange={(event) => setPrompt(event.target.value)}
-          placeholder={
-            category
-              ? t("promptPlaceholder")
-              : locale === "fa"
-                ? "ابتدا نوع اثر را انتخاب کنید…"
-                : "Choose an artwork category first…"
-          }
-          aria-describedby="prompt-help"
-          disabled={!category}
-        />
-        <small id="prompt-help">{t("promptHelp")}</small>
-
-        <div
-          className="preset-row"
-          aria-label={locale === "fa" ? "واژه‌های پیشنهادی" : "Suggested words"}
-        >
-          {presets.map((preset) => (
-            <button
-              type="button"
-              key={preset}
-              disabled={!category}
-              onClick={() =>
-                setPrompt(
-                  (current) =>
-                    `${current}${current ? (locale === "fa" ? "، " : ", ") : ""}${preset}`,
-                )
-              }
-            >
-              {preset}
-            </button>
-          ))}
-        </div>
-
-        <div
-          className="concept-directions"
-          aria-label={locale === "fa" ? "جهت طراحی" : "Design direction"}
-        >
-          {directions.map((label, index) => (
-            <button
-              type="button"
-              key={label}
-              className={direction === index ? "active" : ""}
-              onClick={() => setDirection(index)}
-              aria-pressed={direction === index}
-            >
-              <small>0{index + 1}</small>
-              <span>{label}</span>
-            </button>
-          ))}
-        </div>
-
-        {error && (
-          <p className="form-error" role="alert">
-            {error}
-          </p>
-        )}
-        <div className="form-actions">
-          {status === "loading" ? (
-            <button
-              type="button"
-              className="button danger"
-              onClick={() => abort.current?.abort()}
-            >
-              {t("stopGeneration")}
-            </button>
-          ) : (
-            <button
-              type="submit"
-              className="button"
-              disabled={!category || !prompt.trim()}
-            >
-              {locale === "fa" ? "تصورش کن →" : "Imagine it →"}
-            </button>
-          )}
-        </div>
-      </form>
-
-      <section className={`designer-preview ${status}`} aria-live="polite">
-        {image ? (
-          <img src={image} alt={t("generatedAlt")} />
-        ) : selectedCategory ? (
-          <>
-            <div className="preview-orbit" />
-            <ArtworkVisual
-              visual={selectedCategory.visual}
-              color={selectedCategory.preview.color}
-              accent={selectedCategory.preview.accent}
-              className="designer-artwork"
-            />
-            <p>{status === "loading" ? t("generating") : t("preview")}</p>
-          </>
-        ) : (
-          <div className="designer-empty-preview">
-            <span>1 / 1</span>
-            <p>
-              {locale === "fa"
-                ? "برای شروع، نوع اثر را انتخاب کنید."
-                : "Choose an artwork category to begin."}
-            </p>
-          </div>
-        )}
-        {status === "done" && (
-          <div className="preview-actions">
-            <button
-              type="button"
-              className="button light"
-              onClick={() => setStatus("idle")}
-            >
-              {t("anotherVersion")}
-            </button>
-            <a
-              className="button"
-              href="mailto:studio@rad.ir?subject=Custom artwork"
-            >
-              {t("talkArtist")}
-            </a>
-          </div>
-        )}
-      </section>
+    <div className="grid items-start gap-[clamp(2.5rem,6vw,7rem)] lg:grid-cols-[minmax(0,1.25fr)_minmax(360px,0.75fr)]">
+      <DesignerForm
+        category={category}
+        prompt={prompt}
+        setPrompt={setPrompt}
+        status={status}
+        error={error}
+        brief={brief}
+        setBrief={setBrief}
+        direction={direction}
+        setDirection={setDirection}
+        chooseCategory={chooseCategory}
+        submit={submit}
+        abort={() => abort.current?.abort()}
+        presets={presets}
+        directions={directions}
+      />
+      <DesignerPreview
+        image={image}
+        status={status}
+        selectedCategory={selectedCategory}
+        onReset={() => setStatus("idle")}
+      />
     </div>
+  );
+}
+
+function DesignerForm({
+  category,
+  prompt,
+  setPrompt,
+  status,
+  error,
+  brief,
+  setBrief,
+  direction,
+  setDirection,
+  chooseCategory,
+  submit,
+  abort,
+  presets,
+  directions,
+}: {
+  category: ProductCategory | "";
+  prompt: string;
+  setPrompt: React.Dispatch<React.SetStateAction<string>>;
+  status: string;
+  error: string;
+  brief: Record<string, string>;
+  setBrief: React.Dispatch<React.SetStateAction<Record<string, string>>>;
+  direction: number;
+  setDirection: (value: number) => void;
+  chooseCategory: (next: ProductCategory) => void;
+  submit: (event: FormEvent) => void;
+  abort: () => void;
+  presets: string[];
+  directions: string[];
+}) {
+  const { t, locale } = useLocale();
+  const selectedCategory = category ? artworkCategoryById(category) : null;
+  const fieldClass =
+    "mt-2 min-h-[180px] w-full resize-none border-0 border-b border-rad-paper/40 bg-transparent px-0 py-2 text-rad-paper outline-none disabled:cursor-not-allowed disabled:opacity-55";
+
+  return (
+    <form
+      className="bg-rad-moss p-6 text-rad-paper md:p-10"
+      onSubmit={submit}
+      noValidate
+    >
+      <Eyebrow className="text-rad-sand">{t("designerEyebrow")}</Eyebrow>
+      <h1 className="m-0 text-designer font-normal">
+        {t("studioImagineTitle")}
+      </h1>
+      <p className="mt-4 max-w-xl text-prose">{t("designerConnect")}</p>
+
+      <fieldset className="my-9 border-0 p-0">
+        <legend className="mb-4 flex w-full flex-col gap-1">
+          <small className="text-caption tracking-wider text-rad-clay">
+            {t("stepOne")}
+          </small>
+          {t("chooseArtworkType")}
+        </legend>
+        <div className="grid grid-cols-2 gap-px border border-rad-paper/20 bg-rad-paper/20">
+          {artworkCategories.map((item) => (
+            <button
+              type="button"
+              key={item.id}
+              className={`flex min-h-[66px] items-center gap-3 border-0 bg-rad-moss p-3 text-start text-rad-paper ${
+                category === item.id
+                  ? "bg-[color-mix(in_srgb,theme(colors.rad.moss)_78%,theme(colors.rad.sand))]"
+                  : ""
+              }`}
+              onClick={() => chooseCategory(item.id)}
+              aria-pressed={category === item.id}
+            >
+              <span
+                className={`category-swatch ${item.visual}`}
+                style={
+                  {
+                    "--swatch": item.preview.color,
+                    "--swatch-accent": item.preview.accent,
+                  } as React.CSSProperties
+                }
+                aria-hidden="true"
+              />
+              {item.label[locale]}
+            </button>
+          ))}
+        </div>
+      </fieldset>
+
+      {selectedCategory && (
+        <fieldset className="border-0 p-0">
+          <legend className="mb-4 flex w-full flex-col gap-1">
+            <small className="text-caption tracking-wider text-rad-clay">
+              {t("stepTwo")}
+            </small>
+            {t("briefDetails", { name: selectedCategory.shortLabel[locale] })}
+          </legend>
+          {selectedCategory.fields.map((field) => (
+            <div
+              className="grid grid-cols-[minmax(90px,0.38fr)_1fr] gap-4 border-b border-rad-paper/20 py-4"
+              key={field.key}
+            >
+              <span className="text-identifier text-rad-paper/70">
+                {field.label[locale]}
+              </span>
+              <div className="flex flex-wrap gap-2">
+                {field.options[locale].map((option) => (
+                  <button
+                    type="button"
+                    key={option}
+                    className={`rounded-full border px-2.5 py-1 ${
+                      brief[field.key] === option
+                        ? "border-rad-sand bg-rad-sand text-rad-ink"
+                        : "border-rad-paper/30 bg-transparent text-rad-paper"
+                    }`}
+                    onClick={() =>
+                      setBrief((current) => ({
+                        ...current,
+                        [field.key]: option,
+                      }))
+                    }
+                    aria-pressed={brief[field.key] === option}
+                  >
+                    {option}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
+        </fieldset>
+      )}
+
+      <label htmlFor="artwork-prompt">{t("promptLabel")}</label>
+      <textarea
+        id="artwork-prompt"
+        className={fieldClass}
+        value={prompt}
+        onChange={(event) => setPrompt(event.target.value)}
+        placeholder={
+          category ? t("promptPlaceholder") : t("promptChooseCategory")
+        }
+        aria-describedby="prompt-help"
+        disabled={!category}
+      />
+      <small id="prompt-help" className="mt-2 block text-rad-paper/70">
+        {t("promptHelp")}
+      </small>
+
+      <div
+        className="mt-4 flex flex-wrap gap-x-5 gap-y-2"
+        aria-label={t("suggestedWords")}
+      >
+        {presets.map((preset) => (
+          <button
+            type="button"
+            key={preset}
+            disabled={!category}
+            className="border-0 border-b border-rad-paper/30 bg-transparent py-1 text-rad-paper before:text-rad-clay before:content-['+_']"
+            onClick={() =>
+              setPrompt(
+                (current) =>
+                  `${current}${current ? (locale === "fa" ? "، " : ", ") : ""}${preset}`,
+              )
+            }
+          >
+            {preset}
+          </button>
+        ))}
+      </div>
+
+      <div
+        className="mt-6 border-y border-rad-paper/20"
+        aria-label={t("designDirection")}
+      >
+        {directions.map((label, index) => (
+          <button
+            type="button"
+            key={label}
+            className={`grid min-h-16 w-full grid-cols-[42px_1fr] items-center border-0 border-b border-rad-paper/20 bg-transparent text-start text-rad-paper ${
+              direction === index ? "text-rad-sand" : ""
+            }`}
+            onClick={() => setDirection(index)}
+            aria-pressed={direction === index}
+          >
+            <small>0{index + 1}</small>
+            <span>{label}</span>
+          </button>
+        ))}
+      </div>
+
+      {error && (
+        <p className="text-rad-sand" role="alert">
+          {error}
+        </p>
+      )}
+      <div className="mt-6">
+        {status === "loading" ? (
+          <Button type="button" variant="danger" onClick={abort}>
+            {t("stopGeneration")}
+          </Button>
+        ) : (
+          <Button type="submit" disabled={!category || !prompt.trim()}>
+            {t("imagineIt")}
+          </Button>
+        )}
+      </div>
+    </form>
+  );
+}
+
+function DesignerPreview({
+  image,
+  status,
+  selectedCategory,
+  onReset,
+}: {
+  image: string;
+  status: string;
+  selectedCategory: ReturnType<typeof artworkCategoryById> | null | undefined;
+  onReset: () => void;
+}) {
+  const { t } = useLocale();
+  return (
+    <section
+      className="relative min-h-[560px] overflow-hidden bg-rad-ink text-rad-paper lg:min-h-[min(76vh,820px)]"
+      aria-live="polite"
+    >
+      {image ? (
+        <img
+          src={image}
+          alt={t("generatedAlt")}
+          className="h-full w-full object-contain"
+        />
+      ) : selectedCategory ? (
+        <div className="grid h-full place-items-center content-center gap-4 p-8 text-center">
+          <ArtworkVisual
+            visual={selectedCategory.visual}
+            color={selectedCategory.preview.color}
+            accent={selectedCategory.preview.accent}
+            className="designer-artwork"
+          />
+          <p>{status === "loading" ? t("generating") : t("preview")}</p>
+        </div>
+      ) : (
+        <div className="grid h-full place-items-center content-center gap-5 p-8 text-center">
+          <span className="grid aspect-square w-[78px] place-items-center rounded-full border border-current text-caption">
+            1 / 1
+          </span>
+          <p className="max-w-xs text-rad-muted">
+            {t("chooseCategoryToBegin")}
+          </p>
+        </div>
+      )}
+      {status === "done" && (
+        <div className="absolute inset-x-0 bottom-6 flex justify-center gap-4">
+          <Button type="button" variant="light" onClick={onReset}>
+            {t("anotherVersion")}
+          </Button>
+          <a
+            className="inline-flex min-h-[50px] items-center bg-rad-primary px-6 text-white"
+            href="mailto:studio@rad.ir?subject=Custom artwork"
+          >
+            {t("talkArtist")}
+          </a>
+        </div>
+      )}
+    </section>
   );
 }
