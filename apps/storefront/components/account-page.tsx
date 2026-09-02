@@ -138,6 +138,13 @@ function ProfileView() {
         </section>
         <section className="border border-rad-line bg-rad-paper p-8">
           <PackageSearch aria-hidden="true" />
+          <Eyebrow className="mt-4">{t("makingEyebrow")}</Eyebrow>
+          <h2 className="m-0 text-h3 font-normal">{t("makingTitle")}</h2>
+          <p className="my-4 text-prose">{t("makingBody")}</p>
+          <ButtonLink href="/making">{t("makingNav")}</ButtonLink>
+        </section>
+        <section className="border border-rad-line bg-rad-paper p-8">
+          <PackageSearch aria-hidden="true" />
           <Eyebrow className="mt-4">{t("ordersEyebrow")}</Eyebrow>
           <h2 className="m-0 text-h3 font-normal">
             {number(orders.length)} {t("orders")}

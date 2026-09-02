@@ -6,6 +6,7 @@ import { useLocale } from "@/components/i18n";
 const links = [
   { href: "/products", key: "navProducts" as const, mobile: false },
   { href: "/studio", key: "navStudio" as const, mobile: false },
+  { href: "/making", key: "makingNav" as const, mobile: false },
   { href: "/#story", key: "navAbout" as const, mobile: false },
   { href: "/favorites", key: "favoritesTitle" as const, mobile: true },
   { href: "/account", key: "profile" as const, mobile: true },

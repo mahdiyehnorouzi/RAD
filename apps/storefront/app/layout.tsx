@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { localFixes } from "./local-fixes";
 import { mockStorefront } from "@/lib/mock-data";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
@@ -7,6 +8,7 @@ import { PageBackNavigation } from "@/components/layout/page-back-navigation";
 import { CartProvider } from "@/components/cart/cart-provider";
 import { LocaleProvider } from "@/components/i18n";
 import { CommerceProvider } from "@/components/commerce/commerce-provider";
+import { MakingProvider } from "@/hooks/use-making-workspace";
 import { CatalogProvider } from "@/components/catalog-provider";
 import { RouteScrollReset } from "@/components/route-scroll-reset";
 import { HomeBanner } from "@/components/home-banner";
@@ -24,17 +26,20 @@ export default function RootLayout({
   return (
     <html lang="fa" dir="rtl">
       <body>
+        <style dangerouslySetInnerHTML={{ __html: localFixes }} />
         <LocaleProvider>
           <CatalogProvider>
             <CommerceProvider>
-              <CartProvider>
-                <RouteScrollReset />
-                <HomeBanner />
-                <Header />
-                <PageBackNavigation />
-                <main>{children}</main>
-                <Footer />
-              </CartProvider>
+              <MakingProvider>
+                <CartProvider>
+                  <RouteScrollReset />
+                  <HomeBanner />
+                  <Header />
+                  <PageBackNavigation />
+                  <main>{children}</main>
+                  <Footer />
+                </CartProvider>
+              </MakingProvider>
             </CommerceProvider>
           </CatalogProvider>
         </LocaleProvider>
