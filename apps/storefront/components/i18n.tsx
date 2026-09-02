@@ -2,12 +2,12 @@
 
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { usePathname } from "next/navigation";
-import { mockStorefront } from "@/lib/mock-data";
+import type { Locale } from "@rad/types";
+import { mockStorefront } from "@/lib/catalog/mock-storefront";
 import { fa, type MessageKey } from "@/i18n/fa";
 import { en } from "@/i18n/en";
 
-export type Locale = "fa" | "en";
-export type { MessageKey };
+export type { Locale, MessageKey };
 
 const messages = { fa, en } as const;
 

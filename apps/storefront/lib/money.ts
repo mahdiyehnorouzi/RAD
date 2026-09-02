@@ -1,5 +1,5 @@
-import type { Locale } from "@rad/types";
-import type { Product } from "@/lib/products";
+import type {Locale} from "@rad/types";
+import type {Product} from "@rad/types";
 
 export function priceToNumber(price: string) {
   const persian = "۰۱۲۳۴۵۶۷۸۹";

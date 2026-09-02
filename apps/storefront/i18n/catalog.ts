@@ -1,4 +1,4 @@
-import type { MessageKey } from "./fa";
+import type {MessageKey} from "./fa";
 
 export const orderStageKeys = [
   "orderStage1",

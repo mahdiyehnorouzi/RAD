@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { CustomerMakingDetail } from "@/components/customer-making";
+import { CustomerMakingDetail } from "@/components/making";
 
 export default function MakingDetailPage() {
   const params = useParams<{ id: string }>();

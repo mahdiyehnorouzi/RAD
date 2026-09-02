@@ -3,10 +3,10 @@
 import { useCallback, useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { Bell } from "lucide-react";
-import type { Notice } from "@rad/types";
-import { productCopy } from "@/lib/products";
-import { useCatalog } from "@/components/catalog-provider";
-import { useCommerce } from "./commerce-provider";
+import type {Notice} from "@rad/types";
+import { productCopy } from "@/lib/catalog/products";
+import { useCatalog } from "@/components/catalog/catalog-provider";
+import { useCommerce } from "@/components/commerce/commerce-provider";
 import { useLocale } from "@/components/i18n";
 import {
   openHeaderOverlay,

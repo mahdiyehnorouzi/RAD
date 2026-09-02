@@ -1,18 +1,19 @@
 "use client";
 
-import { ArchiveSection } from "@/components/home/archive-section";
-import { OrdersEntry, FinalCta } from "@/components/home/closing-sections";
-import { DifferenceStory } from "@/components/home/difference-story";
-import { EntryPaths } from "@/components/home/entry-paths";
-import { EvidenceFilm } from "@/components/home/evidence-film";
-import { HomeHero } from "@/components/home/home-hero";
 import {
+  ArchiveSection,
+  DifferenceStory,
+  EntryPaths,
+  EvidenceFilm,
+  FinalCta,
+  HomeHero,
+  OrdersEntry,
   ProcessSection,
   ProvenanceSection,
   StorySection,
-} from "@/components/home/story-sections";
-import { StudioCallout } from "@/components/home/studio-callout";
-import { useCatalog } from "@/components/catalog-provider";
+  StudioCallout,
+} from "@/components/home";
+import { useCatalog } from "@/components/catalog";
 
 export default function Home() {
   const { products } = useCatalog();

@@ -1,6 +1,6 @@
 import { useMemo } from "react";
-import { productCopy } from "@/lib/products";
-import { useCatalog } from "@/components/catalog-provider";
+import { productCopy } from "@/lib/catalog/products";
+import { useCatalog } from "@/components/catalog/catalog-provider";
 import { useLocale } from "@/components/i18n";
 
 export function useSearchWorks(query: string) {

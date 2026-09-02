@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { FavoritesPage } from "@/components/favorites-page";
+import { FavoritesPage } from "@/components/favorites";
 export default function Page() {
   return (
     <Suspense>

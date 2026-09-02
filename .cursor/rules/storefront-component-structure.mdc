@@ -1,0 +1,19 @@
+---
+description: RAD storefront component folder structure (nested parents, type/, named files). All storefront UI work must follow this.
+globs: apps/storefront/{components,app}/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# Storefront component structure
+
+When creating or editing files under `apps/storefront/components` or `apps/storefront/app`, follow `.cursor/skills/storefront-component-structure/SKILL.md`.
+
+- Nest children inside the parent folder. Shared pieces used by two parents go in a named folder (`making/record/`), not the feature root.
+- A component with no children is a single file (`catalog/catalog-provider.tsx`). Do not wrap it in `name/name.tsx`.
+- When a folder is needed, the component file must match the folder name (`portrait-view/portrait-view.tsx`). Never use `index.tsx` for a component.
+- `index.ts` is a re-export barrel only. Feature folders expose a public `index.ts`.
+- Types used only by this feature live in `type/`. Constants live in `const/`. Hooks owned by a parent live in that parent’s `hooks/` folder.
+- Shared commerce types stay in `@rad/types`. Making types live in `@/components/making/type`.
+- `app/` imports feature barrels (`@/components/making`), not grandchildren.
+- Inside a parent folder, use relative imports.
+- `components/ui/` stays flat.

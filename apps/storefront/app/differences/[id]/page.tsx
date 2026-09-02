@@ -1,10 +1,10 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { DifferencePortraitView } from "@/components/difference-portrait";
+import { DifferencePortraitView } from "@/components/difference";
 import { useLocale } from "@/components/i18n";
 import { ButtonLink } from "@/components/ui/button-link";
-import { portraitById } from "@/lib/beautiful-difference";
+import { portraitById } from "@/lib/difference";
 
 export default function DifferenceDetail() {
   const params = useParams<{ id: string }>();
