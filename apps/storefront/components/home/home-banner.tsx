@@ -11,5 +11,11 @@ export function HomeBanner() {
   const { locale, href } = useLocale();
   if (pathname !== "/") return null;
   const copy = locale === "fa" ? faCore : enCore;
-  return <RadBanner message={copy.homeBanner} action={copy.homeBannerAction} href={href("/products")} />;
+  return (
+    <RadBanner
+      message={copy.homeBanner}
+      action={copy.homeBannerAction}
+      href={href("/products")}
+    />
+  );
 }
