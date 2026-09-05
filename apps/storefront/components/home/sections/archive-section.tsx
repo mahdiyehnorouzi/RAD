@@ -25,7 +25,7 @@ export function ArchiveSection({ products }: { products: Product[] }) {
       </header>
       <div className="product-grid home-products">
         {products.map((p, i) => (
-          <ProductCard product={p} index={i} key={p.slug} />
+          <ProductCard product={p} index={i} key={p.slug} forceCategoryArtwork />
         ))}
       </div>
     </section>

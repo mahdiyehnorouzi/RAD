@@ -1,5 +1,5 @@
 "use client";
-import { ImageOff } from "lucide-react";
+import { useState } from "react";
 import type { Product } from "@rad/types";
 import { useLocale } from "@/components/i18n";
 import { artworkVisual } from "@/lib/catalog";
@@ -9,38 +9,32 @@ import "./product-media.css";
 export function ProductMedia({
   product,
   imageIndex = 0,
+  forceCategoryArtwork = false,
 }: {
   product: Product;
   imageIndex?: number;
+  forceCategoryArtwork?: boolean;
 }) {
   const { locale, t } = useLocale();
+  const [failedImage, setFailedImage] = useState<string | null>(null);
   const soldBadge =
     product.status === "sold" ? <span className="sold-media-badge">{t("soldOut")}</span> : null;
 
-  if (product.images && product.images.length === 0) {
-    return (
-      <>
-        <div className="product-fallback">
-          <ImageOff aria-hidden="true" />
-          <span>{t("imageUnavailable")}</span>
-        </div>
-        {soldBadge}
-      </>
-    );
-  }
   const media = product.images?.[imageIndex] ?? product.images?.[0];
   const photoSrc = media?.src
     ? media.src.startsWith("/catalog/")
       ? `/backend${media.src}`
       : media.src
-    : undefined;
-  if (photoSrc) {
+    : null;
+
+  if (!forceCategoryArtwork && photoSrc && failedImage !== photoSrc) {
     return (
       <>
         <img
           className="product-photo"
           src={photoSrc}
-          alt={locale === "fa" ? media?.alt : media?.enAlt}
+          alt={locale === "fa" ? (media?.alt ?? "") : (media?.enAlt ?? "")}
+          onError={() => setFailedImage(photoSrc)}
         />
         {soldBadge}
       </>

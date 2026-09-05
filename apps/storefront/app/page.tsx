@@ -17,9 +17,7 @@ import { useCatalog } from "@/components/catalog";
 
 export default function Home() {
   const { products } = useCatalog();
-  const featured = products
-    .filter((product) => product.images?.some((image) => image.src))
-    .slice(0, 6);
+  const featured = products.slice(0, 6);
   const hero = featured[1] ?? featured[0] ?? products[0];
   const studio = featured[2] ?? products[1] ?? products[0];
 

@@ -10,7 +10,15 @@ import { categoryLabel } from "@/lib/catalog";
 import { ProductMedia } from "./product-media";
 import "./product-card.css";
 
-export function ProductCard({ product, index }: { product: Product; index: number }) {
+export function ProductCard({
+  product,
+  index,
+  forceCategoryArtwork = false,
+}: {
+  product: Product;
+  index: number;
+  forceCategoryArtwork?: boolean;
+}) {
   const { locale, t, href, number } = useLocale();
   const copy = productCopy(product, locale);
   const category = categoryLabel(product.category, locale);
@@ -27,7 +35,7 @@ export function ProductCard({ product, index }: { product: Product; index: numbe
           <small className="product-index">
             RĀD / {number(27 + index).padStart(3, locale === "fa" ? "۰" : "0")}
           </small>
-          <ProductMedia product={product} />
+          <ProductMedia product={product} forceCategoryArtwork={forceCategoryArtwork} />
         </Link>
       </div>
       <div className="product-meta">
