@@ -14,11 +14,18 @@ function isAllowedOrigin(origin?: string) {
     "https://rad-studio-ceramic.mahdiyeh-norozi77.chatgpt.site",
     "https://rad-studio.rad-studio.workers.dev",
     "https://rad-admin.rad-studio.workers.dev",
+    "https://rad-object.com",
+    "https://www.rad-object.com",
   ].filter(Boolean) as string[];
   if (allowed.includes(origin)) return true;
   try {
     const { hostname } = new URL(origin);
-    return hostname.endsWith(".workers.dev") || hostname.endsWith(".chatgpt.site");
+    return (
+      hostname === "rad-object.com" ||
+      hostname.endsWith(".rad-object.com") ||
+      hostname.endsWith(".workers.dev") ||
+      hostname.endsWith(".chatgpt.site")
+    );
   } catch {
     return false;
   }
