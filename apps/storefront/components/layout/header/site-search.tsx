@@ -55,16 +55,17 @@ export function SiteSearch() {
       <button
         className="search-toggle"
         type="button"
-        onClick={() =>
-          setOpen((current) => {
-            const next = !current;
-            if (next)
+        onClick={() => {
+          const next = !open;
+          setOpen(next);
+          if (next) {
+            queueMicrotask(() =>
               window.dispatchEvent(
                 new CustomEvent("rad:header-overlay", { detail: "search" }),
-              );
-            return next;
-          })
-        }
+              ),
+            );
+          }
+        }}
         aria-expanded={open}
         aria-controls="site-search-panel"
         aria-label={open ? t("closeSearch") : t("searchAria")}

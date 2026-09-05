@@ -12,9 +12,15 @@ export default function manifest(): MetadataRoute.Manifest {
     orientation: "portrait-primary",
     icons: [
       {
-        src: "/rad-icon.svg",
-        sizes: "any",
-        type: "image/svg+xml",
+        src: "/rad-logo.png",
+        sizes: "1254x1254",
+        type: "image/png",
+        purpose: "any",
+      },
+      {
+        src: "/rad-logo.png",
+        sizes: "1254x1254",
+        type: "image/png",
         purpose: "maskable",
       },
     ],

@@ -76,7 +76,9 @@ export function Header() {
         <button
           className="language-switch"
           onClick={() => {
-            window.dispatchEvent(new CustomEvent("rad:header-overlay", { detail: "language" }));
+            queueMicrotask(() =>
+              window.dispatchEvent(new CustomEvent("rad:header-overlay", { detail: "language" })),
+            );
             setLocale(locale === "fa" ? "en" : "fa");
           }}
           aria-label={locale === "fa" ? "Switch to English" : "تغییر زبان به فارسی"}
@@ -85,13 +87,15 @@ export function Header() {
         </button>
         <button
           className="menu"
-          onClick={() =>
-            setOpen((current) => {
-              const next = !current;
-              if (next) window.dispatchEvent(new CustomEvent("rad:header-overlay", { detail: "menu" }));
-              return next;
-            })
-          }
+          onClick={() => {
+            const next = !open;
+            setOpen(next);
+            if (next) {
+              queueMicrotask(() =>
+                window.dispatchEvent(new CustomEvent("rad:header-overlay", { detail: "menu" })),
+              );
+            }
+          }}
           aria-expanded={open}
           aria-label={open ? t("closeMenu") : t("openMenu")}
         >

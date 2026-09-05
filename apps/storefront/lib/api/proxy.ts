@@ -36,15 +36,22 @@ export async function proxyApiRequest(
     init.duplex = "half";
   }
 
-  const upstream = await fetch(target, init);
-  const responseHeaders = new Headers();
-  upstream.headers.forEach((value, key) => {
-    if (!HOP_BY_HOP.has(key.toLowerCase())) responseHeaders.append(key, value);
-  });
+  try {
+    const upstream = await fetch(target, init);
+    const responseHeaders = new Headers();
+    upstream.headers.forEach((value, key) => {
+      if (!HOP_BY_HOP.has(key.toLowerCase())) responseHeaders.append(key, value);
+    });
 
-  return new Response(upstream.body, {
-    status: upstream.status,
-    statusText: upstream.statusText,
-    headers: responseHeaders,
-  });
+    return new Response(upstream.body, {
+      status: upstream.status,
+      statusText: upstream.statusText,
+      headers: responseHeaders,
+    });
+  } catch {
+    return Response.json(
+      { error: "API unavailable" },
+      { status: 503, headers: { "content-type": "application/json" } },
+    );
+  }
 }

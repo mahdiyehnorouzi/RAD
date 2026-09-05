@@ -30,7 +30,7 @@ export function ProvenanceSection() {
     <section className="provenance section">
       <header>
         <span className="eyebrow">III — {locale === "fa" ? "منشأ اثر" : "PROVENANCE"}</span>
-        <h2>
+        <h2 className="provenance-title">
           {locale === "fa" ? "ارزش یک اثر، در مسیر ساخت آن است." : "A work earns its value through how it is made."}
         </h2>
       </header>

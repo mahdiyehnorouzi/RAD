@@ -144,3 +144,35 @@ html[dir="rtl"] .section-heading {direction:rtl!important;text-align:right!impor
 html[dir="rtl"] .section {direction:rtl!important;text-align:right!important}
 html[dir="rtl"] .section-heading {direction:rtl!important;text-align:right!important;align-items:start!important}
 }
+
+@media (min-width: 901px) {
+.difference-story.section,
+.entry-paths.section,
+.archive-section.section,
+.studio-callout.section,
+.human-story.section,
+.story.section,
+.provenance.section,
+.process.section,
+.orders-entry.section,
+.final-cta.section {
+  padding-block: clamp(3.25rem, 5.5vw, 5rem) !important;
+}
+}
+
+.provenance.section header {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  gap: 0.75rem !important;
+}
+
+.provenance.section h2,
+.provenance.section h2.provenance-title {
+  font-size: 1.15rem !important;
+  font-weight: 400 !important;
+  line-height: 1.7 !important;
+  letter-spacing: 0 !important;
+  max-width: 36rem !important;
+  color: var(--ink) !important;
+}
