@@ -23,6 +23,19 @@
   gap: 1.25rem;
 }
 
+.install-prompt-logo {
+  flex: 0 0 56px;
+  width: 56px;
+  height: 56px;
+  overflow: hidden;
+}
+
+.install-prompt-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
 .install-prompt > div:first-child {
   display: grid;
   gap: 0.15rem;

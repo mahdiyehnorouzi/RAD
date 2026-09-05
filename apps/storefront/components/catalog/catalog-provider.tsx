@@ -3,7 +3,7 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import type { Product } from "@rad/types";
 import { fetchProducts } from "@/lib/api";
-import { mockProducts } from "@/lib/catalog";
+import { hasRealProductImage, photoWorks } from "@/lib/catalog";
 
 type CatalogContextValue = {
   products: Product[];
@@ -15,19 +15,20 @@ type CatalogContextValue = {
 const CatalogContext = createContext<CatalogContextValue | null>(null);
 
 export function CatalogProvider({ children }: { children: React.ReactNode }) {
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<Product[]>(photoWorks);
   const [loading, setLoading] = useState(true);
 
   const refresh = async () => {
-    setProducts(await fetchProducts());
+    try {
+      const remote = await fetchProducts();
+      setProducts(remote.some(hasRealProductImage) ? remote : photoWorks);
+    } catch {
+      setProducts(photoWorks);
+    }
   };
 
   useEffect(() => {
-    refresh()
-      .catch(() =>
-        setProducts(process.env.NODE_ENV === "development" ? mockProducts : []),
-      )
-      .finally(() => setLoading(false));
+    refresh().finally(() => setLoading(false));
   }, []);
 
   const value = useMemo<CatalogContextValue>(

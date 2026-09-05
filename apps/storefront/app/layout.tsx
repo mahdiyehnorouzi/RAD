@@ -7,6 +7,7 @@ import {
   Footer,
   Header,
   PageBackNavigation,
+  PwaRegistrar,
   RouteScrollReset,
 } from "@/components/layout";
 import { CartProvider } from "@/components/cart";
@@ -19,6 +20,10 @@ import { HomeBanner } from "@/components/home";
 export const metadata: Metadata = {
   title: mockStorefront.brand.title.fa,
   description: mockStorefront.brand.description.fa,
+  icons: {
+    icon: "/rad-logo.png",
+    apple: "/rad-logo.png",
+  },
 };
 
 export default function RootLayout({
@@ -37,6 +42,7 @@ export default function RootLayout({
                   <RouteScrollReset />
                   <HomeBanner />
                   <Header />
+                  {/* <PwaRegistrar /> */}
                   <PageBackNavigation />
                   <main>{children}</main>
                   <Footer />

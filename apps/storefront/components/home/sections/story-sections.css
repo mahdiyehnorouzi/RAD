@@ -276,13 +276,13 @@
 }
 
 .provenance h2 {
-  max-width: 13ch;
+  max-width: none;
   margin: 0;
   color: var(--moss);
-  font-size: clamp(3.3rem, 6vw, 6.8rem);
-  line-height: 1.12;
-  font-weight: 500;
-  letter-spacing: -0.05em;
+  font-size: clamp(1.2rem, 1.5vw, 1.45rem);
+  line-height: 1.4;
+  font-weight: 400;
+  letter-spacing: 0;
 }
 
 .provenance-grid {
@@ -331,7 +331,7 @@
 
 @media (max-width: 600px) {
 .provenance h2 {
-    font-size: clamp(2.7rem, 11vw, 3.8rem);
+    font-size: clamp(1.2rem, 5.5vw, 1.4rem);
   }
 }
 
@@ -761,4 +761,107 @@ html[dir="rtl"] .process .section-heading>.button {align-self:start!important}
   letter-spacing: 0 !important;
   max-width: none;
 }
+}
+
+@media (min-width: 901px) {
+.human-story.section, .story.section, .provenance.section, .process.section {
+  padding-block: clamp(3.25rem, 5.5vw, 5rem) !important;
+}
+.human-story, .story {
+  display: grid !important;
+  grid-template-columns: auto minmax(0, 1fr) !important;
+  align-items: center !important;
+  gap: clamp(1.25rem, 3vw, 2.5rem) !important;
+  min-height: 0 !important;
+}
+.human-story .big-number, .story .big-number, .big-number {
+  writing-mode: horizontal-tb !important;
+  font-size: clamp(2.8rem, 5vw, 4.4rem) !important;
+  line-height: 1 !important;
+  align-self: center !important;
+  margin: 0 !important;
+  white-space: nowrap !important;
+}
+.process .steps {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: clamp(1.25rem, 2.5vw, 2.5rem) !important;
+  position: relative !important;
+  padding: 0 !important;
+  border: 0 !important;
+  overflow: visible !important;
+}
+.process .steps::before {
+  content: "" !important;
+  display: block !important;
+  position: absolute !important;
+  top: 24px !important;
+  inset-inline: 24px !important;
+  width: auto !important;
+  height: 0 !important;
+  border: 0 !important;
+  border-top: 1px solid var(--line) !important;
+  background: none !important;
+}
+.process .steps article {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  grid-template-rows: 48px auto auto !important;
+  gap: 0.75rem !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  text-align: start !important;
+}
+.process .steps article::before,
+.process .steps article::after {
+  content: none !important;
+  display: none !important;
+}
+.process .steps article > span,
+[dir="rtl"] .process .steps article > span,
+[data-locale="fa"] .process .steps article > span {
+  position: static !important;
+  inset: auto !important;
+  transform: none !important;
+  width: 48px !important;
+  min-width: 48px !important;
+  height: 48px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border-radius: 50% !important;
+  justify-self: start !important;
+}
+.process .steps article h3,
+.process .steps article p {
+  grid-column: 1 !important;
+  width: auto !important;
+  max-width: 28ch !important;
+}
+.process .steps article h3 {
+  grid-row: 2 !important;
+  margin: 0 !important;
+  font-size: clamp(1rem, 1.4vw, 1.2rem) !important;
+}
+.process .steps article p {
+  grid-row: 3 !important;
+  margin: 0 !important;
+}
+}
+
+section.provenance.section h2,
+section.provenance.section h2.provenance-title {
+  font-size: 1.15rem !important;
+  font-weight: 400 !important;
+  line-height: 1.7 !important;
+  letter-spacing: 0 !important;
+  max-width: 36rem !important;
+}
+
+.provenance.section header {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  gap: 0.75rem !important;
 }

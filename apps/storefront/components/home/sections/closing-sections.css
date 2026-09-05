@@ -17,3 +17,9 @@
 @media(max-width:600px) {
 .orders-entry.section, .final-cta.section {padding-block:2rem!important;padding-inline:1rem!important}
 }
+
+@media (min-width: 901px) {
+.orders-entry.section, .final-cta.section {
+  padding-block: clamp(3.25rem, 5.5vw, 5rem) !important;
+}
+}

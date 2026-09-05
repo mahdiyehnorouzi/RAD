@@ -105,3 +105,12 @@
 .entry-paths {padding-block:0!important}
 .entry-paths article {min-height:0!important;padding:1.35rem 1rem!important}
 }
+
+@media (min-width: 901px) {
+.entry-paths.section { padding-block: clamp(3.25rem, 5.5vw, 5rem) !important; }
+.entry-paths { padding-block: 0 !important; }
+.entry-paths article {
+  min-height: 0 !important;
+  padding: clamp(2.25rem, 4vw, 3.5rem) clamp(1.5rem, 3vw, 3rem) !important;
+}
+}

@@ -6,7 +6,7 @@ import { useLocale } from "@/components/i18n";
 export default function Products() {
   const { t } = useLocale();
   return (
-    <PageSection>
+    <PageSection className="plp">
       <header className="mb-8">
         <Eyebrow>{t("shopEyebrow")}</Eyebrow>
         <h1 className="m-0 text-h2 font-normal">{t("shopTitle")}</h1>

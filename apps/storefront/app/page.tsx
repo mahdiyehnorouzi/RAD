@@ -13,13 +13,14 @@ import {
   StorySection,
   StudioCallout,
 } from "@/components/home";
+import { hasRealProductImage } from "@/lib/catalog";
 import { useCatalog } from "@/components/catalog";
 
 export default function Home() {
   const { products } = useCatalog();
-  const featured = products.slice(0, 6);
-  const hero = featured[1] ?? featured[0] ?? products[0];
-  const studio = featured[2] ?? products[1] ?? products[0];
+  const featured = products.filter(hasRealProductImage).slice(0, 6);
+  const hero = featured[0];
+  const studio = featured[1] ?? featured[0];
 
   return (
     <>

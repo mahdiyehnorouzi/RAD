@@ -144,3 +144,22 @@ html[dir="rtl"] .archive-section .section-heading>.button {align-self:start!impo
 .archive-section .section-heading {align-items:start!important;text-align:start!important}
 .archive-section .section-heading>.button {align-self:start!important}
 }
+
+@media (min-width: 901px) {
+.archive-section.section { padding-block: clamp(3.25rem, 5.5vw, 5rem) !important; }
+.home-products {
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: clamp(1.5rem, 3vw, 2.5rem) !important;
+  align-items: stretch !important;
+}
+.home-products > .product-card:nth-child(n) {
+  grid-column: auto !important;
+  margin-top: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+.home-products .product-art,
+.home-products .product-card:nth-child(n) .product-art {
+  aspect-ratio: 4 / 5 !important;
+}
+}

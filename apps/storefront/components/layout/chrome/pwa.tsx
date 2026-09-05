@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import { useLocale } from "@/components/i18n";
 import "./pwa.css";
 
@@ -49,6 +50,9 @@ export function PwaRegistrar() {
 
   return (
     <aside className="install-prompt" aria-label={t("pwaPromptTitle")}>
+      <span className="install-prompt-logo" aria-hidden="true">
+        <Image src="/rad-logo.png" alt="" width={1254} height={1254} />
+      </span>
       <div>
         <b>{t("pwaPromptTitle")}</b>
         <span>{t("pwaPromptBody")}</span>
@@ -92,8 +96,8 @@ export function PwaPanel() {
       const registration = await navigator.serviceWorker.ready;
       await registration.showNotification(t("notificationReady"), {
         body: t("notificationReadyBody"),
-        icon: "/rad-icon.svg",
-        badge: "/rad-icon.svg",
+        icon: "/rad-logo.png",
+        badge: "/rad-logo.png",
         data: { url: "/orders" },
       });
     }

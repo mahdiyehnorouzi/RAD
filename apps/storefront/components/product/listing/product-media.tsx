@@ -22,7 +22,7 @@ export function ProductMedia({
 
   const media = product.images?.[imageIndex] ?? product.images?.[0];
   const photoSrc = media?.src
-    ? media.src.startsWith("/catalog/")
+    ? media.src.startsWith("/catalog/images/")
       ? `/backend${media.src}`
       : media.src
     : null;

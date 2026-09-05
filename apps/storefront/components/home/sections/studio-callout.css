@@ -157,3 +157,18 @@
 .studio-callout .studio-visual:before {top:.85rem!important;inset-inline-start:.85rem!important}
 .studio-callout .studio-visual .vessel, .studio-callout .studio-visual .mock-artwork {width:48%!important;height:62%!important}
 }
+
+@media (min-width: 901px) {
+.studio-callout.section {
+  min-height: 0 !important;
+  padding-block: clamp(3.25rem, 5.5vw, 5rem) !important;
+  gap: clamp(2rem, 4vw, 4rem) !important;
+}
+.studio-callout h2 { font-size: clamp(1.85rem, 3.4vw, 3.1rem) !important; }
+.studio-visual {
+  height: auto !important;
+  min-height: 0 !important;
+  aspect-ratio: 4 / 5 !important;
+  max-height: 420px !important;
+}
+}
