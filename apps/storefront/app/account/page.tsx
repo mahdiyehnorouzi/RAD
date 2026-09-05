@@ -1,4 +1,4 @@
-import { AccountPage } from "@/components/account-page";
+import { AccountPage } from "@/components/account";
 export default function Page() {
   return <AccountPage />;
 }

@@ -1,5 +1,5 @@
 "use client";
-import { CustomDesigner } from "@/components/custom-designer";
+import { CustomDesigner } from "@/components/studio";
 import { useLocale } from "@/components/i18n";
 export default function Studio() {
   const { t } = useLocale();

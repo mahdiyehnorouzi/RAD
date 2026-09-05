@@ -6,18 +6,25 @@ cd "$ROOT"
 
 API_SERVICE="${RAILWAY_API_SERVICE:-rad-api-web}"
 API_URL="${API_URL:-}"
+RAD_VERSION="${RAD_VERSION:-$(tr -d '[:space:]' < "$ROOT/VERSION")}"
 
 if ! command -v railway >/dev/null 2>&1; then
   echo "Installing Railway CLI..."
   npm install -g @railway/cli
 fi
 
-if ! railway whoami >/dev/null 2>&1; then
+if [[ -z "${RAILWAY_TOKEN:-}" ]] && ! railway whoami >/dev/null 2>&1; then
   echo "Log in to Railway first:"
   railway login
 fi
 
-if [[ ! -f .railway/project.json ]]; then
+if [[ -n "${RAILWAY_PROJECT_ID:-}" ]]; then
+  if [[ -n "${RAILWAY_ENVIRONMENT:-}" ]]; then
+    railway link --project "${RAILWAY_PROJECT_ID}" --environment "${RAILWAY_ENVIRONMENT}" >/dev/null
+  else
+    railway link --project "${RAILWAY_PROJECT_ID}" >/dev/null
+  fi
+elif [[ ! -f .railway/project.json ]]; then
   railway init --name rad-api
 fi
 
@@ -43,6 +50,7 @@ fi
 railway variables set \
   NODE_ENV=production \
   RUN_SEED=true \
+  RAD_VERSION="${RAD_VERSION}" \
   ADMIN_ORIGIN="${ADMIN_ORIGIN:-https://rad-admin.rad-studio.workers.dev}" \
   STOREFRONT_ORIGIN="${STOREFRONT_ORIGIN:-https://rad-studio.rad-studio.workers.dev}" \
   "DATABASE_URL=\${{${POSTGRES_REF}}}"
@@ -65,6 +73,7 @@ for key in SMTP_HOST SMTP_PORT SMTP_SECURE SMTP_USER SMTP_PASS SMTP_FROM; do
   fi
 done
 
+echo "Deploying API ${RAD_VERSION} to Railway service ${API_SERVICE}..."
 railway up --detach -s "${API_SERVICE}"
 
 if [[ -z "${API_URL}" ]]; then

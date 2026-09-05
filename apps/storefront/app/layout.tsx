@@ -1,18 +1,25 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { localFixes } from "./local-fixes";
-import { mockStorefront } from "@/lib/mock-data";
-import { Header, Footer, PageBackNavigation } from "@/components/site";
+import { mockStorefront } from "@/lib/catalog/mock-storefront";
+import {
+  Footer,
+  Header,
+  PageBackNavigation,
+  RouteScrollReset,
+} from "@/components/layout";
 import { CartProvider } from "@/components/cart";
 import { LocaleProvider } from "@/components/i18n";
 import { CommerceProvider } from "@/components/commerce";
-import { CatalogProvider } from "@/components/catalog-provider";
-import { RouteScrollReset } from "@/components/route-scroll-reset";
-import { HomeBanner } from "@/components/home-banner";
+import { MakingProvider } from "@/hooks/use-making-workspace";
+import { CatalogProvider } from "@/components/catalog";
+import { HomeBanner } from "@/components/home";
+
 export const metadata: Metadata = {
   title: mockStorefront.brand.title.fa,
   description: mockStorefront.brand.description.fa,
 };
+
 export default function RootLayout({
   children,
 }: {
@@ -25,14 +32,16 @@ export default function RootLayout({
         <LocaleProvider>
           <CatalogProvider>
             <CommerceProvider>
-              <CartProvider>
-                <RouteScrollReset />
-                <HomeBanner />
-                <Header />
-                <PageBackNavigation />
-                <main>{children}</main>
-                <Footer />
-              </CartProvider>
+              <MakingProvider>
+                <CartProvider>
+                  <RouteScrollReset />
+                  <HomeBanner />
+                  <Header />
+                  <PageBackNavigation />
+                  <main>{children}</main>
+                  <Footer />
+                </CartProvider>
+              </MakingProvider>
             </CommerceProvider>
           </CatalogProvider>
         </LocaleProvider>
