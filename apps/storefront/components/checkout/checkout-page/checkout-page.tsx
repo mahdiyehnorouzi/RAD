@@ -1,4 +1,5 @@
 "use client";
+import "./checkout-page.css";
 
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";

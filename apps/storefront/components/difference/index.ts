@@ -1,3 +1,5 @@
+import "./museum-page.css";
+
 export { DifferencePortraitView } from "./portrait-view";
 export { DifferenceTrailStrip } from "./trail-strip";
 export type {

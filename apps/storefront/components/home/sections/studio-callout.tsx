@@ -4,6 +4,7 @@ import { ArtworkVisual } from "@/components/product";
 import { ButtonLink } from "@/components/ui/button-link";
 import { useLocale } from "@/components/i18n";
 import { artworkVisual } from "@/lib/catalog";
+import "./studio-callout.css";
 
 export function StudioCallout({ product }: { product?: Product }) {
   const { t, locale } = useLocale();

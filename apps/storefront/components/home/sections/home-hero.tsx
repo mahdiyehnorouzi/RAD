@@ -3,6 +3,7 @@ import type { Product } from "@rad/types";
 import { ArtworkVisual } from "@/components/product";
 import { useLocale } from "@/components/i18n";
 import { artworkVisual } from "@/lib/catalog";
+import "./home-hero.css";
 
 export function HomeHero({ product }: { product?: Product }) {
   const { t, locale } = useLocale();

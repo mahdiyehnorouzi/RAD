@@ -4,6 +4,7 @@ import { useCommerce } from "@/components/commerce";
 import { useLocale } from "@/components/i18n";
 import { ButtonLink } from "@/components/ui/button-link";
 import { Heart, PackageSearch } from "lucide-react";
+import "./account-page.css";
 
 export function AccountPage() {
   const { user, login, logout, favorites, orders } = useCommerce();

@@ -1,0 +1,159 @@
+.studio-callout h2 {
+  font-size: clamp(3.3rem, 6.8vw, 7rem);
+  line-height: 1.2;
+  margin: 0;
+  letter-spacing: -0.06em;
+}
+
+.studio-visual .mock-artwork {
+  z-index: 1;
+}
+
+.studio-callout {
+  background: var(--moss);
+  color: var(--paper);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  gap: 8vw;
+}
+
+.studio-callout .eyebrow {
+  color: var(--sand);
+}
+
+.studio-callout p {
+  max-width: 34rem;
+  font-size: 1.08rem;
+  margin: 2rem 0;
+}
+
+.studio-visual {
+  height: 600px;
+  position: relative;
+  display: grid;
+  place-items: center;
+}
+
+.studio-visual .vessel {
+  width: 38%;
+  height: 62%;
+  z-index: 3;
+}
+
+.orbit {
+  position: absolute;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+}
+
+.o1 {
+  width: 85%;
+  height: 55%;
+}
+
+.o2 {
+  width: 55%;
+  height: 85%;
+}
+
+@media (max-width: 900px) {
+.studio-callout {
+    grid-template-columns: 1fr;
+  }
+.studio-visual {
+    height: 450px;
+  }
+}
+
+@media (max-width: 600px) {
+.studio-callout h2 {
+    font-size: 2.65rem;
+    letter-spacing: -0.035em;
+  }
+.studio-callout {
+    padding-block: 5rem;
+  }
+.studio-visual {
+    height: 390px;
+    order: 2;
+  }
+}
+
+.studio-callout {
+  background: var(--moss);
+}
+
+.studio-callout h2 {
+  font-size: clamp(4.4rem, 7.5vw, 7.8rem);
+  line-height: 1.08;
+  font-weight: 500;
+  letter-spacing: -0.055em;
+}
+
+.studio-callout {
+  min-height: 90vh;
+  background: var(--moss);
+}
+
+.studio-visual {
+  height: min(70vh, 680px);
+  background: color-mix(in srgb, var(--paper) 5%, transparent);
+  border: 1px solid color-mix(in srgb, var(--paper) 14%, transparent);
+}
+
+.orbit {
+  display: none;
+}
+
+.studio-visual:before {
+  content: "SKETCH / 01";
+  position: absolute;
+  top: 1.5rem;
+  inset-inline-start: 1.5rem;
+  color: var(--sand);
+  font-size: 0.68rem;
+  letter-spacing: 0.16em;
+}
+
+.studio-callout .button.light {
+  background: transparent;
+  color: var(--paper);
+  border-width: 0 0 1px;
+  border-color: var(--paper);
+  padding-inline: 0;
+}
+
+@media (max-width: 900px) {
+.studio-callout {
+    grid-template-columns: 1fr;
+  }
+.studio-visual {
+    height: 58svh;
+    order: 2;
+  }
+}
+
+@media (max-width: 600px) {
+.studio-callout h2 {
+    font-size: clamp(2.75rem, 12vw, 3.55rem);
+    line-height: 1.18;
+  }
+.studio-callout {
+    min-height: auto;
+  }
+}
+
+.studio-callout {
+  background: var(--moss);
+}
+
+@media(max-width:600px) {
+.studio-callout.section {padding-block:2rem!important;padding-inline:1rem!important}
+.studio-callout.section {min-height:0!important;padding-block:1.5rem!important;gap:1.15rem!important}
+.studio-callout h2 {font-size:clamp(1.45rem,6.5vw,1.85rem)!important;line-height:1.25!important}
+.studio-callout p {margin:.7rem 0 1rem!important;font-size:.95rem!important}
+.studio-callout .studio-visual {width:100%!important;height:auto!important;min-height:0!important;aspect-ratio:4/5!important;justify-self:stretch!important}
+.studio-callout .studio-visual:before {top:.85rem!important;inset-inline-start:.85rem!important}
+.studio-callout .studio-visual .vessel, .studio-callout .studio-visual .mock-artwork {width:48%!important;height:62%!important}
+}

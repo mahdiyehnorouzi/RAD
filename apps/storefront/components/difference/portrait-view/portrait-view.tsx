@@ -1,4 +1,5 @@
 "use client";
+import "./portrait-view.css";
 
 import { useEffect, useId, useState } from "react";
 import { useLocale } from "@/components/i18n";

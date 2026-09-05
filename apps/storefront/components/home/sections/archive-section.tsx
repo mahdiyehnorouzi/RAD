@@ -3,6 +3,7 @@ import type { Product } from "@rad/types";
 import { ProductCard } from "@/components/product";
 import { ButtonLink } from "@/components/ui/button-link";
 import { useLocale } from "@/components/i18n";
+import "./archive-section.css";
 
 export function ArchiveSection({ products }: { products: Product[] }) {
   const { locale, t } = useLocale();

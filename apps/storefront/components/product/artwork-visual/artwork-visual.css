@@ -1,0 +1,219 @@
+.vessel {
+  --vessel: #a13d2e;
+  --accent: #ead9bd;
+  position: relative;
+  width: 46%;
+  height: 72%;
+  background: var(--vessel);
+  border-radius: 38% 38% 27% 27%/18% 18% 45% 45%;
+  filter: drop-shadow(0 22px 17px rgba(32, 27, 23, 0.18));
+}
+
+.vessel:before {
+  content: "";
+  position: absolute;
+  width: 42%;
+  height: 20%;
+  background: var(--vessel);
+  top: -11%;
+  left: 29%;
+  border-radius: 10% 10% 18% 18%;
+}
+
+.vessel-neck {
+  position: absolute;
+  width: 40%;
+  height: 7%;
+  background: var(--ink);
+  border-radius: 50%;
+  top: -12%;
+  left: 30%;
+}
+
+.vessel-line {
+  position: absolute;
+  left: 5%;
+  top: 48%;
+  width: 90%;
+  height: 8%;
+  border-radius: 50%;
+  border-top: 9px solid var(--accent);
+  transform: rotate(-8deg);
+}
+
+.vessel.round {
+  height: 56%;
+  width: 58%;
+  border-radius: 45% 45% 32% 32%/25% 25% 44% 44%;
+}
+
+.vessel.wide {
+  height: 42%;
+  width: 74%;
+  border-radius: 45% 45% 30% 30%/25% 25% 35% 35%;
+}
+
+.mock-artwork {
+  width: 58%;
+  height: 62%;
+  position: relative;
+  background: var(--art-color);
+}
+
+.mock-artwork span, .mock-artwork i {
+  position: absolute;
+  background: var(--art-accent);
+  display: block;
+}
+
+.mock-artwork.painting {
+  width: 62%;
+  height: auto;
+  aspect-ratio: 4 / 5;
+}
+
+.mock-artwork.painting span {
+  inset: 12% 14% 30% 14%;
+  opacity: 0.42;
+}
+
+.mock-artwork.painting i {
+  width: 46%;
+  height: 7px;
+  inset-inline-start: 14%;
+  bottom: 16%;
+}
+
+.mock-artwork.textile {
+  width: 54%;
+  height: 70%;
+}
+
+.mock-artwork.textile span {
+  inset: 10%;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--art-accent),
+    var(--art-accent) 8px,
+    transparent 8px,
+    transparent 16px
+  );
+  opacity: 0.55;
+}
+
+.mock-artwork.textile i {
+  width: 70%;
+  height: 12%;
+  inset-inline-start: 15%;
+  bottom: 18%;
+  opacity: 0.7;
+}
+
+.mock-artwork.wood {
+  width: 56%;
+  height: 48%;
+  border-radius: 50% 50% 42% 42%;
+}
+
+.mock-artwork.wood span {
+  inset: 18% 12% 28% 12%;
+  border-radius: 50%;
+  opacity: 0.35;
+}
+
+.mock-artwork.wood i {
+  width: 64%;
+  height: 10px;
+  inset-inline-start: 18%;
+  bottom: 22%;
+  border-radius: 999px;
+}
+
+.mock-artwork.jewelry {
+  width: 38%;
+  aspect-ratio: 1;
+  height: auto;
+  border-radius: 50%;
+}
+
+.mock-artwork.jewelry span {
+  inset: 22%;
+  border-radius: 50%;
+  background: transparent;
+  border: 6px solid var(--art-accent);
+}
+
+.mock-artwork.jewelry i {
+  width: 14%;
+  aspect-ratio: 1;
+  height: auto;
+  border-radius: 50%;
+  inset-inline-start: 43%;
+  top: 12%;
+}
+
+.mock-artwork.print {
+  width: 60%;
+  height: auto;
+  aspect-ratio: 5 / 4;
+}
+
+.mock-artwork.print span {
+  inset: 14% 16% 22% 16%;
+  opacity: 0.4;
+}
+
+.mock-artwork.print i {
+  width: 8px;
+  height: 46%;
+  inset-inline-start: 22%;
+  top: 18%;
+}
+
+.mock-artwork.sculpture {
+  width: 42%;
+  height: 68%;
+  clip-path: polygon(20% 8%, 80% 0, 100% 78%, 48% 100%, 0 70%);
+}
+
+.mock-artwork.sculpture span {
+  inset: 20% 18% 30% 18%;
+  opacity: 0.35;
+}
+
+.mock-artwork.sculpture i {
+  width: 70%;
+  height: 8px;
+  bottom: 16%;
+  inset-inline-start: 15%;
+}
+
+.mock-artwork {--art-color:#31534a;--art-accent:#d87855;position:relative;z-index:2;width:62%;height:60%;background:var(--art-color);overflow:hidden}
+
+.mock-artwork span, .mock-artwork i {position:absolute;display:block}
+
+.mock-artwork.painting {height:auto;aspect-ratio:4/5;border:10px solid var(--paper);background:linear-gradient(145deg,var(--art-color) 0 58%,var(--art-accent) 59% 73%,#d9c59e 74%)}
+
+.mock-artwork.painting span {width:70%;height:24%;left:-8%;top:18%;background:color-mix(in srgb,var(--art-accent) 68%,transparent);transform:rotate(-9deg)}
+
+.mock-artwork.painting i {width:2px;height:70%;right:24%;top:8%;background:var(--paper);transform:rotate(12deg)}
+
+.mock-artwork.textile {height:auto;aspect-ratio:3/4;border-radius:42% 42% 4px 4px;background:repeating-linear-gradient(90deg,var(--art-color) 0 14px,color-mix(in srgb,var(--art-color) 76%,var(--paper)) 14px 18px)}
+
+.mock-artwork.textile span {inset:12%;border:2px dashed var(--art-accent);border-radius:50% 38% 45% 30%}
+
+.mock-artwork.textile i {width:42%;height:52%;right:10%;bottom:-8%;background:var(--art-accent);border-radius:60% 40% 0 0}
+
+.mock-artwork.wood {height:38%;border-radius:50%;background:radial-gradient(ellipse at center,var(--art-accent) 0 40%,var(--art-color) 42% 63%,#3c2b21 64%);transform:perspective(420px) rotateX(56deg);box-shadow:0 35px 30px rgba(24,35,31,.18)}
+
+.mock-artwork.sculpture {width:52%;height:68%;clip-path:polygon(28% 0,77% 8%,100% 43%,72% 100%,14% 87%,0 38%);background:linear-gradient(135deg,var(--art-accent),var(--art-color) 56%)}
+
+.mock-artwork.sculpture span {width:28%;height:100%;left:35%;background:rgba(247,242,233,.18);transform:skew(-9deg)}
+
+.mock-artwork.jewelry {width:48%;height:auto;aspect-ratio:1;background:transparent;border:15px solid var(--art-color);border-radius:50%;overflow:visible}
+
+.mock-artwork.jewelry i {width:25%;aspect-ratio:1;right:-8%;top:4%;background:var(--art-accent);transform:rotate(45deg);border-radius:3px}
+
+.mock-artwork.print {height:auto;aspect-ratio:3/4;border:10px solid var(--paper);background:repeating-linear-gradient(155deg,var(--art-color) 0 8px,var(--art-accent) 9px 13px,var(--paper) 14px 17px)}
+
+.mock-artwork.print span {inset:14%;border:4px solid var(--art-color);background:color-mix(in srgb,var(--paper) 58%,transparent)}

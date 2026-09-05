@@ -8,6 +8,7 @@ import { useCommerce } from "@/components/commerce";
 import { useCatalog } from "../catalog-provider";
 import { artworkCategories } from "@/lib/catalog";
 import { MoveLeft, MoveRight } from "lucide-react";
+import "./catalog.css";
 
 export function Catalog() {
   const { t, number, locale } = useLocale();

@@ -9,6 +9,7 @@ import { productPrice } from "@/lib/money";
 import { FavoriteButton } from "@/components/commerce";
 import { ChevronDown, PackageCheck, Palette, ShieldCheck, Truck } from "lucide-react";
 import { useCatalog } from "../../catalog/catalog-provider";
+import "./product-detail.css";
 
 export function ProductDetail({ product }: { product: Product }) {
   const { locale, t } = useLocale();

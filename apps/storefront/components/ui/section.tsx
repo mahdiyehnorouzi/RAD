@@ -1,3 +1,5 @@
+import "./section.css";
+
 export function PageSection({
   children,
   className = "",

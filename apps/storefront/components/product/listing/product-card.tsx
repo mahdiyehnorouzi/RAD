@@ -8,6 +8,7 @@ import { FavoriteButton } from "@/components/commerce";
 import { VendorBadge } from "@rad/ui";
 import { categoryLabel } from "@/lib/catalog";
 import { ProductMedia } from "./product-media";
+import "./product-card.css";
 
 export function ProductCard({ product, index }: { product: Product; index: number }) {
   const { locale, t, href, number } = useLocale();

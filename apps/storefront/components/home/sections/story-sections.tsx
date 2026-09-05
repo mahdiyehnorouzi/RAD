@@ -1,5 +1,6 @@
 "use client";
 import { useLocale } from "@/components/i18n";
+import "./story-sections.css";
 
 export function StorySection() {
   const { locale, t } = useLocale();

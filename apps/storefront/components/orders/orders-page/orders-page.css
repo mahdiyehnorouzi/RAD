@@ -1,0 +1,220 @@
+.order-progress { grid-template-columns:repeat(10,minmax(90px,1fr));overflow-x:auto; }
+
+@media (max-width:900px) {
+.order-progress {grid-template-columns:1fr;overflow:visible;padding-inline-start:1.25rem;border-inline-start:1px solid var(--line)}
+.order-progress::before {display:none}
+.order-progress li {display:grid;grid-template-columns:40px 1fr;align-items:center;text-align:start;margin:0 0 1rem -1.25rem}
+}
+
+.orders-page { overflow:visible; }
+
+.orders-list { gap:3rem !important; }
+
+.order-card { padding:clamp(1.5rem,3vw,3rem); }
+
+.order-progress { display:grid !important; grid-template-columns:repeat(2,minmax(0,1fr)) !important; gap:1.25rem 3rem !important; overflow:visible !important; padding:2.5rem 0 !important; }
+
+.order-progress::before { display:none !important; }
+
+.order-progress li { display:grid; grid-template-columns:40px 1fr; align-items:center; gap:.8rem; text-align:start; min-width:0; }
+
+.order-progress i { position:static; }
+
+.order-card dl { margin-top:2rem; padding-top:2rem; border-top:1px solid var(--line); }
+
+@media(max-width:600px) {
+.order-progress { grid-template-columns:1fr !important; gap:1.1rem !important; padding:2rem 0 !important; border:0 !important; }
+.order-progress li { margin:0 !important; }
+}
+
+.orders-page .order-progress { position:relative; display:grid !important; grid-template-columns:1fr !important; gap:0 !important; padding:2rem 0 !important; margin:0 !important; overflow:visible !important; border:0 !important; }
+
+.orders-page .order-progress::before { display:block !important; content:""; position:absolute; top:2rem; bottom:2rem; inset-inline-start:19px; width:1px; border:0; background:var(--line); }
+
+.orders-page .order-progress li { position:relative; display:grid !important; grid-template-columns:40px minmax(0,1fr) !important; gap:1rem !important; align-items:center; min-height:64px; margin:0 !important; padding:0 !important; text-align:start !important; }
+
+.orders-page .order-progress li::before, .orders-page .order-progress li::after { display:none !important; }
+
+.orders-page .order-progress i { width:40px;height:40px;display:grid;place-items:center;position:relative !important;z-index:2;border:1px solid var(--line);border-radius:50%;background:var(--paper);font-style:normal; }
+
+.orders-page .order-progress li.complete i { background:var(--moss);border-color:var(--moss);color:var(--paper); }
+
+.orders-page .order-progress li span { position:static !important; transform:none !important; white-space:normal; }
+
+.orders-page .order-card { display:grid; gap:2rem; }
+
+.orders-page .order-card>header { margin:0; }
+
+@media(max-width:600px) {
+.orders-page .order-card { padding:1.25rem; gap:1.5rem; }
+}
+
+.orders-heading h1 {
+  font-size: clamp(2.7rem, 5vw, 5rem);
+  line-height: 1.15;
+  margin: 0;
+}
+
+.orders-page {
+  min-height: 70vh;
+}
+
+.orders-heading {
+  padding-bottom: 2.5rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.orders-list {
+  display: grid;
+  gap: 1.25rem;
+  padding-top: 2rem;
+}
+
+.order-card {
+  padding: clamp(1.25rem, 3vw, 2rem);
+  border-radius: var(--radius);
+  background: var(--paper);
+}
+
+.order-card > header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 1rem;
+}
+
+.order-card > header div {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.order-status {
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  background: rgba(74, 80, 57, 0.12);
+  color: var(--moss);
+  font-weight: 700;
+}
+
+.order-card dl {
+  display: flex;
+  gap: 3rem;
+  margin: 1rem 0;
+}
+
+.order-card dl div {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.order-card dt {
+  color: #71665b;
+}
+
+.order-card dd {
+  margin: 0;
+  font-weight: 700;
+}
+
+.order-card ul {
+  margin: 1rem 0;
+}
+
+.order-card > strong {
+  display: block;
+  text-align: start;
+  font-size: 1.1rem;
+}
+
+.order-progress {
+  list-style: none;
+  margin: 1.5rem 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.order-progress li {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 0.55rem;
+  color: #71665b;
+  text-align: center;
+  font-size: 0.78rem;
+}
+
+.order-progress li:not(:last-child):after {
+  content: "";
+  position: absolute;
+  top: 17px;
+  inset-inline-start: 50%;
+  width: 100%;
+  height: 1px;
+  background: var(--line);
+  z-index: 0;
+}
+
+.order-progress i {
+  position: relative;
+  z-index: 1;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--canvas);
+  border: 1px solid var(--line);
+  display: grid;
+  place-items: center;
+  font-style: normal;
+}
+
+.order-progress i svg {
+  width: 16px;
+}
+
+.order-progress li.complete {
+  color: var(--moss);
+  font-weight: 700;
+}
+
+.order-progress li.complete i {
+  background: var(--moss);
+  border-color: var(--moss);
+  color: white;
+}
+
+@media (max-width: 600px) {
+.orders-link {
+    display: none;
+  }
+.orders-heading h1 {
+    font-size: 2.45rem;
+  }
+.order-card > header, .order-card dl {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+.order-progress {
+    overflow-x: auto;
+    grid-template-columns: repeat(4, minmax(110px, 1fr));
+    padding-bottom: 0.5rem;
+  }
+}
+
+html[dir="rtl"] .orders-page, html[dir="rtl"] .orders-heading, html[dir="rtl"] .order-card, html[dir="rtl"] .order-card>header, html[dir="rtl"] .order-card dl, html[dir="rtl"] .order-card ul {direction:rtl!important;text-align:right!important}
+
+html[dir="rtl"] .order-card>header, html[dir="rtl"] .order-card dl {align-items:flex-start!important}
+
+html[dir="rtl"] .order-card>header>div {direction:rtl!important;justify-content:flex-start!important}
+
+html[dir="rtl"] .order-card>strong {text-align:start!important}
+
+html[dir="rtl"] .order-progress {direction:rtl!important;text-align:start!important}
+
+@media(max-width:900px) {
+html[dir="rtl"] .orders-heading {direction:rtl!important;text-align:right!important;align-items:start!important}
+}

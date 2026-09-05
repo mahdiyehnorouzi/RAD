@@ -7,6 +7,7 @@ import { useCart } from "@/components/cart";
 import { useLocale } from "@/components/i18n";
 import { SiteSearch } from "./site-search";
 import { Heart, Menu as MenuIcon, ShoppingBag, X } from "lucide-react";
+import "./header.css";
 
 export function Header() {
   const [open, setOpen] = useState(false);

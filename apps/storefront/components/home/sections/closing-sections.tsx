@@ -1,6 +1,7 @@
 "use client";
 import { ButtonLink } from "@/components/ui/button-link";
 import { useLocale } from "@/components/i18n";
+import "./closing-sections.css";
 
 export function OrdersEntry() {
   const { locale } = useLocale();

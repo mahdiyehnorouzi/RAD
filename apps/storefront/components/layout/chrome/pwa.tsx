@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useLocale } from "@/components/i18n";
+import "./pwa.css";
 
 type InstallEvent = Event & {
   prompt: () => Promise<void>;

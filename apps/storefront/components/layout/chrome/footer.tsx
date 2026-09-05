@@ -2,6 +2,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useLocale } from "@/components/i18n";
+import "./footer.css";
 
 export function Footer() {
   const { t, href, locale } = useLocale();

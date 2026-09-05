@@ -1,4 +1,5 @@
 "use client";
+import "./workshop-tabs.css";
 
 import type {MakingCommission} from "@/components/making/type";
 import { useMaking } from "@/hooks/use-making-workspace";

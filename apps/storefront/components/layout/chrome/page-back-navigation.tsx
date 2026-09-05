@@ -3,6 +3,7 @@
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { useLocale } from "@/components/i18n";
 import { useBackNavigation } from "@/hooks/use-back-navigation";
+import "./page-back-navigation.css";
 
 export function PageBackNavigation() {
   const { locale, t } = useLocale();

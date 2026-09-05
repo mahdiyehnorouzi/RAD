@@ -1,0 +1,174 @@
+.favorite-button.compact {
+  inset-inline-end: auto;
+  inset-inline-start: 1rem;
+  border-radius: 50%;
+}
+
+@media (max-width: 600px) {
+.favorite-button.compact {
+    inset-inline-start: 0.75rem;
+    top: 0.75rem;
+  }
+}
+
+/* Commerce application layer */
+.toast {
+  position: fixed;
+  z-index: 100;
+  inset-inline-end: var(--page);
+  bottom: 2rem;
+  width: min(420px, calc(100vw - 2rem));
+  padding: 1rem 1.2rem;
+  border-radius: 1rem;
+  background: var(--ink);
+  color: var(--paper);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  box-shadow: 0 16px 40px rgba(32, 27, 23, 0.25);
+}
+
+.toast button {
+  width: 40px;
+  height: 40px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.toast svg {
+  width: 20px;
+}
+
+.notification-center {
+  position: relative;
+}
+
+.notification-panel {
+  position: absolute;
+  top: calc(100% + 1rem);
+  inset-inline-end: 0;
+  width: min(430px, calc(100vw - 2 * var(--page)));
+  padding: 1.25rem;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: 0 18px 45px rgba(31, 25, 21, 0.14);
+}
+
+.notification-panel header {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 1rem;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 1rem;
+}
+
+.notification-panel .eyebrow {
+  margin-bottom: 0.2rem;
+}
+
+.notification-panel h2 {
+  margin: 0;
+  font-size: 1.45rem;
+}
+
+.notification-panel ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: min(55vh, 430px);
+  overflow: auto;
+}
+
+.notification-panel li {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 1rem;
+  padding: 1rem 1.15rem;
+  border-bottom: 1px solid var(--line);
+  color: #71665b;
+}
+
+.notification-panel li.unread {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.notification-panel li.unread:before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--clay);
+  position: absolute;
+  inset-inline-start: 0.25rem;
+  top: 1.55rem;
+}
+
+.notification-panel small {
+  white-space: nowrap;
+}
+
+.notice-empty {
+  color: #71665b;
+  padding: 2rem 0 1rem;
+}
+
+.favorite-button {
+  min-height: 46px;
+  padding: 0.55rem 1rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: transparent;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  cursor: pointer;
+}
+
+.favorite-button svg {
+  width: 21px;
+  height: 21px;
+}
+
+.favorite-button.active {
+  border-color: var(--clay);
+  color: var(--clay);
+}
+
+.favorite-button.compact {
+  position: absolute;
+  z-index: 5;
+  inset-inline-end: 1rem;
+  top: 1rem;
+  width: 46px;
+  padding: 0;
+  justify-content: center;
+  background: rgba(251, 248, 241, 0.9);
+}
+
+@media (max-width: 600px) {
+.account-link {
+    display: none;
+  }
+.notification-panel {
+    position: fixed;
+    top: 76px;
+    inset-inline: 0;
+    width: auto;
+    border-radius: 0 0 var(--radius) var(--radius);
+  }
+.toast {
+    inset-inline: 1rem;
+    bottom: 1rem;
+    width: auto;
+  }
+}

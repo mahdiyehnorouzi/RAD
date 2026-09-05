@@ -1,4 +1,5 @@
 "use client";
+import "./trail-strip.css";
 
 import { useLocale } from "@/components/i18n";
 import { differenceStages } from "./const";

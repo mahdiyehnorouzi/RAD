@@ -1,4 +1,5 @@
 "use client";
+import "./reviews.css";
 
 import { ChangeEvent, FormEvent, useEffect, useRef, useState } from "react";
 import { Camera, Star, X } from "lucide-react";

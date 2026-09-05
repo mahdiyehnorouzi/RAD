@@ -4,6 +4,7 @@ import type { Product } from "@rad/types";
 import { useLocale } from "@/components/i18n";
 import { artworkVisual } from "@/lib/catalog";
 import { ArtworkVisual } from "../artwork-visual";
+import "./product-media.css";
 
 export function ProductMedia({
   product,

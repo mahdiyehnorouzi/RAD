@@ -4,6 +4,7 @@ import { DifferenceTrailStrip } from "@/components/difference";
 import { ButtonLink } from "@/components/ui/button-link";
 import { useLocale } from "@/components/i18n";
 import { museumPortraits } from "@/lib/difference";
+import "./difference-story.css";
 
 export function DifferenceStory() {
   const { locale, t } = useLocale();

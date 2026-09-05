@@ -1,4 +1,5 @@
 "use client";
+import "./making-request.css";
 
 import { Button } from "@/components/ui/button-link";
 import { useLocale } from "@/components/i18n";

@@ -1,0 +1,5 @@
+.making-rail {display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:.65rem 1rem;margin:0 0 2.5rem;padding:0;list-style:none}
+
+@media(max-width:900px) {
+.making-rail {grid-template-columns:1fr!important}
+}

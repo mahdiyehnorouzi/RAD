@@ -1,4 +1,5 @@
 "use client";
+import "./favorites-page.css";
 
 import { useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";

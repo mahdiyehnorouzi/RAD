@@ -6,6 +6,7 @@ import { productCopy } from "@/lib/catalog";
 import { useLocale } from "@/components/i18n";
 import { Search, X } from "lucide-react";
 import { useCatalog } from "@/components/catalog";
+import "./site-search.css";
 
 export function SiteSearch() {
   const [open, setOpen] = useState(false);

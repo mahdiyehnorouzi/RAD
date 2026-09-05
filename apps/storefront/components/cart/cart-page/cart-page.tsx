@@ -7,6 +7,7 @@ import { ProductMedia } from "@/components/product";
 import { productCopy } from "@/lib/catalog";
 import { useLocale } from "@/components/i18n";
 import { useCatalog } from "@/components/catalog";
+import "./cart-page.css";
 
 export function CartPage() {
   const { locale, t, href, number } = useLocale();

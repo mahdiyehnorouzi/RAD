@@ -1,5 +1,6 @@
 "use client";
 import { useLocale } from "@/components/i18n";
+import "./evidence-film.css";
 
 export function EvidenceFilm() {
   const { locale } = useLocale();

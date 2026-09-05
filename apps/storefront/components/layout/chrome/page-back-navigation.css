@@ -1,0 +1,13 @@
+/* Shared navigation/media-state owners — intentionally override legacy screen-local rules. */
+.route-back-bar {width:100%;max-width:1600px;margin-inline:auto;padding:.85rem var(--page) 0;direction:inherit}
+
+.route-back-button {display:inline-flex;align-items:center;gap:.55rem;min-height:42px;padding:.35rem 0;border:0;border-bottom:1px solid var(--line);background:transparent;color:var(--moss);font:inherit;font-size:.82rem;cursor:pointer}
+
+.route-back-button:hover {border-bottom-color:var(--clay);color:var(--clay)}
+
+.route-back-button svg {width:18px;height:18px;stroke-width:1.6}
+
+@media(max-width:600px) {
+.route-back-bar {padding-top:.55rem}
+.route-back-button {min-height:38px;font-size:.76rem}
+}

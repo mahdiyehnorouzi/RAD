@@ -1,6 +1,7 @@
 "use client";
 import { ButtonLink } from "@/components/ui/button-link";
 import { useLocale } from "@/components/i18n";
+import "./entry-paths.css";
 
 export function EntryPaths() {
   const { locale, t } = useLocale();

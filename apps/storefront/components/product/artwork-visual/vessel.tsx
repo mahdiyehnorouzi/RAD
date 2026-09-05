@@ -1,5 +1,6 @@
 "use client";
 import type { Product } from "@rad/types";
+import "./artwork-visual.css";
 
 export function Vessel({
   product,

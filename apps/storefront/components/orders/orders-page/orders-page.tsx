@@ -1,4 +1,5 @@
 "use client";
+import "./orders-page.css";
 
 import Link from "next/link";
 import { PackageCheck } from "lucide-react";
