@@ -1,4 +1,5 @@
 "use client";
+import "./customer-list.css";
 
 import { useMaking } from "@/hooks/use-making-workspace";
 import { useLocale } from "@/components/i18n";

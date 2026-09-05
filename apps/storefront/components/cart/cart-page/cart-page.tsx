@@ -1,58 +1,101 @@
 "use client";
-
+import Link from "next/link";
+import { useCart } from "../cart-provider";
+import { cartTotal, formatTotal, productPrice } from "@/lib/money";
 import { ButtonLink } from "@/components/ui/button-link";
-import { Eyebrow, PageSection } from "@/components/ui/section";
-import { useCart } from "@/components/cart/cart-provider";
-import { useCartProducts } from "@/hooks/use-cart-products";
+import { ProductMedia } from "@/components/product";
+import { productCopy } from "@/lib/catalog";
 import { useLocale } from "@/components/i18n";
-import { useMoney } from "@/hooks/use-money";
-import { CartLine } from "./cart-line";
-import { CartSummary } from "./cart-summary";
-
-export function CartEmpty() {
-  const { t, number } = useLocale();
-  return (
-    <PageSection>
-      <Eyebrow>
-        {t("bagEyebrow")} / {number(0)}
-      </Eyebrow>
-      <h1 className="text-h2 font-normal">{t("emptyBag")}</h1>
-      <p className="mb-8 max-w-xl text-prose">{t("emptyBagBody")}</p>
-      <ButtonLink href="/products">{t("viewWorks")}</ButtonLink>
-    </PageSection>
-  );
-}
+import { useCatalog } from "@/components/catalog";
+import "./cart-page.css";
 
 export function CartPage() {
-  const { t, number } = useLocale();
-  const { clear } = useCart();
-  const items = useCartProducts();
-  const { cartTotal } = useMoney();
-  const total = cartTotal(items);
+  const { locale, t, href, number } = useLocale();
+  const { slugs, remove, clear } = useCart();
+  const { getProduct } = useCatalog();
 
-  if (!items.length) return <CartEmpty />;
+  const items = slugs.map((slug) => getProduct(slug)).filter(Boolean);
+  const total = cartTotal(
+    items.filter((item): item is NonNullable<typeof item> => Boolean(item)),
+    locale,
+  );
+
+  if (!items.length)
+    return (
+      <section className="cart-empty section">
+        <span className="eyebrow">
+          {t("bagEyebrow")} / {number(0)}
+        </span>
+        <h1>{t("emptyBag")}</h1>
+        <p>{t("emptyBagBody")}</p>
+        <ButtonLink href="/products">
+          {t("viewWorks")}
+        </ButtonLink>
+      </section>
+    );
 
   return (
-    <PageSection>
-      <header className="mb-10 flex items-end justify-between gap-4">
+    <section className="cart-page section">
+      <header className="cart-heading">
         <div>
-          <Eyebrow>
+          <span className="eyebrow">
             {t("bagEyebrow")} / {number(items.length)}
-          </Eyebrow>
-          <h1 className="m-0 text-h2 font-normal">{t("shoppingBag")}</h1>
+          </span>
+          <h1>{t("shoppingBag")}</h1>
         </div>
-        <button className="border-0 border-b border-current bg-transparent" onClick={clear}>
+        <button className="text-button" onClick={clear}>
           {t("clearBag")}
         </button>
       </header>
-      <div className="grid gap-12 lg:grid-cols-[minmax(0,1.4fr)_minmax(240px,0.6fr)]">
-        <div className="grid gap-8">
-          {items.map((product) => (
-            <CartLine product={product} key={product.slug} />
-          ))}
+      <div className="cart-layout">
+        <div className="cart-list">
+          {items.map(
+            (product) =>
+              product && (
+                <article className="cart-item" key={product.slug}>
+                  <Link
+                    href={href(`/products/${product.slug}`)}
+                    className="cart-art"
+                  >
+                    <ProductMedia product={product} />
+                  </Link>
+                  <div className="cart-item-copy">
+                    <span>{t("uniquePiece")}</span>
+                    <h2>
+                      <Link href={href(`/products/${product.slug}`)}>
+                        {productCopy(product, locale).name}
+                      </Link>
+                    </h2>
+                    <p>{productCopy(product, locale).subtitle}</p>
+                    <button onClick={() => remove(product.slug)}>
+                      {t("removeBag")}
+                    </button>
+                  </div>
+                  <strong>{productPrice(product, locale)}</strong>
+                </article>
+              ),
+          )}
         </div>
-        <CartSummary total={total} />
+        <aside className="cart-summary">
+          <span>{t("orderSummary")}</span>
+          <div>
+            <span>{t("worksSubtotal")}</span>
+            <b>{formatTotal(total, locale)}</b>
+          </div>
+          <div>
+            <span>{t("insuredShipping")}</span>
+            <b>{t("free")}</b>
+          </div>
+          <div className="cart-total">
+            <span>{t("finalTotal")}</span>
+            <b>{formatTotal(total, locale)}</b>
+          </div>
+          <ButtonLink href="/checkout">
+            {t("checkout")}
+          </ButtonLink>
+          <small>{t("checkoutNote")}</small>
+        </aside>
       </div>
-    </PageSection>
+    </section>
   );
 }

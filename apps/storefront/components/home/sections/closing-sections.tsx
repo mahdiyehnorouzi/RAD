@@ -1,39 +1,39 @@
 "use client";
-
 import { ButtonLink } from "@/components/ui/button-link";
-import { Eyebrow, PageSection } from "@/components/ui/section";
 import { useLocale } from "@/components/i18n";
+import "./closing-sections.css";
 
 export function OrdersEntry() {
-  const { t } = useLocale();
+  const { locale } = useLocale();
   return (
-    <PageSection className="flex flex-col items-start justify-between gap-8 bg-[color-mix(in_srgb,theme(colors.rad.sand)_18%,theme(colors.rad.paper))] md:flex-row md:items-end">
+    <section className="section orders-entry">
       <div>
-        <Eyebrow>{t("ordersEntryEyebrow")}</Eyebrow>
-        <h2 className="m-0 text-h2 font-normal">{t("ordersEntryTitle")}</h2>
-        <p className="mt-4 max-w-xl text-prose">{t("ordersEntryBody")}</p>
+        <span className="eyebrow">{locale === "fa" ? "سفارش‌های شما" : "YOUR ORDERS"}</span>
+        <h2>{locale === "fa" ? "مسیر ساخت اثرتان را دنبال کنید." : "Follow your work as it is made."}</h2>
+        <p>
+          {locale === "fa"
+            ? "از تأیید طرح و انتخاب هنرمند تا ساخت، امضا و ارسال."
+            : "From concept approval and maker selection to production, signature, and delivery."}
+        </p>
       </div>
-      <div className="flex flex-wrap gap-6">
-        <ButtonLink href="/making" outline>
-          {t("makingNav")}
-        </ButtonLink>
-        <ButtonLink href="/orders" outline>
-          {t("viewOrders")}
-        </ButtonLink>
-      </div>
-    </PageSection>
+      <ButtonLink href="/orders" outline>
+        {locale === "fa" ? "دیدن سفارش‌ها" : "View orders"}
+      </ButtonLink>
+    </section>
   );
 }
 
 export function FinalCta() {
-  const { t } = useLocale();
+  const { locale, t } = useLocale();
   return (
-    <PageSection className="text-center">
-      <Eyebrow>{t("finalCtaEyebrow")}</Eyebrow>
-      <h2 className="mx-auto mb-8 max-w-2xl text-h2 font-normal">
-        {t("finalCtaTitle")}
+    <section className="section final-cta">
+      <span className="eyebrow">{locale === "fa" ? "قطعه شما" : "YOUR OBJECT"}</span>
+      <h2>
+        {locale === "fa"
+          ? "چیزی را شروع کنید که فقط یک بار ساخته می‌شود."
+          : "Start something that will be made only once."}
       </h2>
       <ButtonLink href="/studio">{t("designMine")}</ButtonLink>
-    </PageSection>
+    </section>
   );
 }

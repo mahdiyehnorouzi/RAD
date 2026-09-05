@@ -1,4 +1,5 @@
 "use client";
+import "./quote-card.css";
 
 import type {MakingCommission} from "@/components/making/type";
 import { copy, moneyFor } from "@/lib/making";

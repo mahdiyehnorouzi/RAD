@@ -1,4 +1,5 @@
 "use client";
+import "./progress-photographs.css";
 
 import type { MakingCommission, MakingStageId } from "@/components/making/type";
 import { photoLabel } from "@/components/making/const";

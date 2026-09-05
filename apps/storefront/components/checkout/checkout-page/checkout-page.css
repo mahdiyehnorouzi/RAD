@@ -1,0 +1,136 @@
+.checkout-page > header h1, .checkout-success h1 {
+  font-size: clamp(3rem, 6vw, 6rem);
+  line-height: 1.15;
+  margin: 0;
+}
+
+.checkout-form, .checkout-review {
+  padding: clamp(1.5rem, 4vw, 3rem);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--canvas);
+  display: grid;
+  gap: 0.7rem;
+}
+
+.checkout-form input, .checkout-form textarea {
+  width: 100%;
+  min-height: 50px;
+  border: 1px solid var(--line);
+  border-radius: 0.8rem;
+  background: var(--paper);
+  padding: 0.65rem 0.9rem;
+  font: inherit;
+}
+
+.checkout-form textarea {
+  min-height: 130px;
+  resize: none;
+}
+
+.checkout-form > .button {
+  width: 100%;
+  margin-top: 1rem;
+}
+
+.checkout-page {
+  min-height: 70vh;
+}
+
+.checkout-page > header {
+  max-width: 52rem;
+  margin-bottom: 3rem;
+}
+
+.checkout-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(260px, 0.7fr);
+  gap: clamp(2rem, 6vw, 6rem);
+  align-items: start;
+}
+
+.checkout-summary {
+  position: sticky;
+  top: 120px;
+  padding: 2rem;
+  border-radius: var(--radius);
+  background: var(--paper);
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.checkout-review dl {
+  margin: 0;
+}
+
+.checkout-review dl > div {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  gap: 1rem;
+  padding: 0.8rem 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.checkout-review dt {
+  color: #71665b;
+}
+
+.checkout-review dd {
+  margin: 0;
+}
+
+.checkout-review .profile-actions {
+  margin-top: 2rem;
+}
+
+.checkout-success {
+  min-height: 70vh;
+  background: var(--paper);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.checkout-success p {
+  max-width: 42rem;
+  margin: 1.5rem 0 2rem;
+}
+
+.checkout-form [aria-invalid="true"] {
+  border-color: #8f2e20;
+  background: #fff7f3;
+}
+
+@media (max-width: 900px) {
+.checkout-grid {
+    grid-template-columns: 1fr;
+  }
+.checkout-summary {
+    position: static;
+  }
+}
+
+@media (max-width: 600px) {
+.checkout-page > header h1, .checkout-success h1 {
+    font-size: 2.35rem;
+  }
+.checkout-review dl > div {
+    grid-template-columns: 1fr;
+    gap: 0.2rem;
+  }
+}
+
+html[dir="rtl"] .checkout-page, html[dir="rtl"] .checkout-page>header, html[dir="rtl"] .checkout-grid, html[dir="rtl"] .checkout-form, html[dir="rtl"] .checkout-summary, html[dir="rtl"] .checkout-review {direction:rtl!important;text-align:right!important}
+
+html[dir="rtl"] .checkout-form label, html[dir="rtl"] .checkout-form input, html[dir="rtl"] .checkout-form textarea, html[dir="rtl"] .checkout-summary span, html[dir="rtl"] .checkout-summary b, html[dir="rtl"] .checkout-review dt, html[dir="rtl"] .checkout-review dd {width:100%;text-align:right!important}
+
+@media(max-width:900px) {
+html[dir="rtl"] .checkout-page>header {direction:rtl!important;text-align:right!important;align-items:start!important}
+}
+
+@media(max-width:600px) {
+html[dir="rtl"] .checkout-page>header, html[dir="rtl"] .checkout-form, html[dir="rtl"] .checkout-summary {align-items:stretch!important;text-align:right!important}
+html[dir="rtl"] .checkout-summary {display:grid!important;justify-items:start!important}
+}

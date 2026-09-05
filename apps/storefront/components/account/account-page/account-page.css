@@ -1,0 +1,239 @@
+.auth-form > small {
+  color: var(--muted);
+}
+
+.account-page {
+  min-height: calc(100vh - 92px);
+  background: var(--paper);
+  display: grid;
+  grid-template-columns: 1fr minmax(320px, 0.75fr);
+  gap: clamp(3rem, 9vw, 9rem);
+  align-items: center;
+}
+
+.auth-copy h1, .profile-hero h1 {
+  font-size: clamp(3rem, 6vw, 6rem);
+  line-height: 1.15;
+  margin: 0;
+}
+
+.auth-copy p {
+  max-width: 34rem;
+  font-size: 1.1rem;
+}
+
+.auth-copy > small {
+  display: block;
+  max-width: 34rem;
+  color: #71665b;
+}
+
+.auth-form {
+  padding: clamp(1.5rem, 4vw, 3rem);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--canvas);
+  display: grid;
+  gap: 0.7rem;
+}
+
+.auth-form input {
+  width: 100%;
+  min-height: 50px;
+  border: 1px solid var(--line);
+  border-radius: 0.8rem;
+  background: var(--paper);
+  padding: 0.65rem 0.9rem;
+  font: inherit;
+}
+
+.password-field {
+  display: grid;
+  grid-template-columns: 1fr 48px;
+  border: 1px solid var(--line);
+  border-radius: 0.8rem;
+  background: var(--paper);
+}
+
+.password-field input {
+  border: 0;
+  background: transparent;
+}
+
+.password-field:focus-within {
+  border-color: var(--clay);
+  box-shadow: 0 0 0 1px var(--clay);
+}
+
+.password-field input:focus-visible {
+  outline: 0;
+  box-shadow: none;
+}
+
+.password-field button {
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.auth-form > .button {
+  width: 100%;
+  margin-top: 1rem;
+}
+
+.auth-form > small {
+  color: #71665b;
+}
+
+.profile-page {
+  min-height: 70vh;
+}
+
+.profile-hero {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 2rem;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.profile-hero p {
+  color: #71665b;
+  direction: ltr;
+  text-align: start;
+}
+
+.profile-identity {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.profile-avatar {
+  width: clamp(64px, 7vw, 92px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--clay);
+  color: white;
+  display: grid;
+  place-items: center;
+  font-size: clamp(1.7rem, 3vw, 2.7rem);
+  font-weight: 800;
+}
+
+.profile-hero h1 {
+  font-size: clamp(2.4rem, 4.5vw, 4.4rem);
+}
+
+.profile-hero .eyebrow {
+  margin-bottom: 0.45rem;
+}
+
+.profile-hero p {
+  margin: 0.5rem 0 0;
+}
+
+.profile-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.25rem;
+  padding-top: 2rem;
+}
+
+.profile-panel {
+  min-height: 250px;
+  padding: clamp(1.4rem, 3vw, 2.4rem);
+  border: 1px solid rgba(32, 27, 23, 0.08);
+  border-radius: var(--radius);
+  background: var(--paper);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.profile-panel h2 {
+  margin: 0.2rem 0;
+  font-size: clamp(1.8rem, 3vw, 2.8rem);
+}
+
+.profile-panel p {
+  max-width: 32rem;
+}
+
+.profile-panel .button {
+  margin-top: auto;
+}
+
+.profile-feature > svg {
+  width: 34px;
+  height: 34px;
+  margin-bottom: 1.4rem;
+  color: var(--clay);
+  stroke-width: 1.4;
+}
+
+.profile-grid > .pwa-panel {
+  grid-column: 1/-1;
+  min-height: 220px;
+  background: var(--moss);
+  color: var(--paper);
+}
+
+.profile-grid > .pwa-panel .eyebrow, .profile-grid > .pwa-panel .pwa-steps {
+  color: var(--sand);
+}
+
+.profile-grid > .pwa-panel .button.outline {
+  border-color: var(--paper);
+  color: var(--paper);
+}
+
+.profile-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 900px) {
+.account-page, .profile-grid {
+    grid-template-columns: 1fr;
+  }
+.account-page {
+    align-items: start;
+  }
+}
+
+@media (max-width: 600px) {
+.profile-hero {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+.profile-actions {
+    width: 100%;
+  }
+.profile-actions .button {
+    flex: 1;
+  }
+.auth-copy h1, .profile-hero h1 {
+    font-size: 2.35rem;
+  }
+.profile-identity {
+    align-items: flex-start;
+  }
+.profile-avatar {
+    width: 58px;
+    flex: 0 0 58px;
+  }
+.profile-panel {
+    min-height: 230px;
+  }
+}
+
+@media(max-width:900px) {
+html[dir="rtl"] .profile-hero {direction:rtl!important;text-align:right!important;align-items:start!important}
+}
+
+@media(max-width:600px) {
+.account-page.section {padding-block:2rem!important;padding-inline:1rem!important}
+}

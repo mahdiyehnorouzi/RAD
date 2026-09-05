@@ -1,46 +1,36 @@
 "use client";
-
 import { ButtonLink } from "@/components/ui/button-link";
-import { PageSection } from "@/components/ui/section";
 import { useLocale } from "@/components/i18n";
+import "./entry-paths.css";
 
 export function EntryPaths() {
-  const { t } = useLocale();
+  const { locale, t } = useLocale();
   return (
-    <PageSection
-      className="grid gap-6 md:grid-cols-2"
-      aria-label={t("entryPathsAria")}
-    >
-      {[
-        {
-          index: t("ownPathIndex"),
-          title: t("ownPathTitle"),
-          body: t("ownPathBody"),
-          href: "/products",
-          action: t("viewWorks"),
-        },
-        {
-          index: t("createPathIndex"),
-          title: t("createPathTitle"),
-          body: t("createPathBody"),
-          href: "/studio",
-          action: t("designMine"),
-        },
-      ].map((path) => (
-        <article
-          key={path.href}
-          className="flex min-h-[440px] flex-col justify-end gap-4 bg-rad-paper p-[clamp(2rem,5vw,3rem)] max-md:min-h-[360px]"
-        >
-          <span className="text-caption tracking-[0.12em] text-rad-clay">
-            {path.index}
-          </span>
-          <h2 className="m-0 text-h3 font-normal">{path.title}</h2>
-          <p className="m-0 max-w-md text-prose text-rad-muted">{path.body}</p>
-          <ButtonLink href={path.href} outline>
-            {path.action}
-          </ButtonLink>
-        </article>
-      ))}
-    </PageSection>
+    <section className="entry-paths section" aria-label={locale === "fa" ? "دو مسیر رَد" : "Two ways into RAD"}>
+      <article>
+        <span>I — {locale === "fa" ? "انتخاب" : "OWN"}</span>
+        <h2>{locale === "fa" ? "یک رَد را انتخاب کنید" : "Own a RAD"}</h2>
+        <p>
+          {locale === "fa"
+            ? "اثری آماده، شماره‌گذاری‌شده و تنها در یک نسخه."
+            : "Choose a finished, numbered work that exists only once."}
+        </p>
+        <ButtonLink href="/products" outline>
+          {t("viewWorks")}
+        </ButtonLink>
+      </article>
+      <article>
+        <span>II — {locale === "fa" ? "خلق" : "CREATE"}</span>
+        <h2>{locale === "fa" ? "رَد خودتان را بسازید" : "Create your RAD"}</h2>
+        <p>
+          {locale === "fa"
+            ? "از ایده و تصویر اولیه تا بررسی هنرمند و ساخت یک قطعه شخصی."
+            : "Move from an idea and first visualization to artist review and a personal piece."}
+        </p>
+        <ButtonLink href="/studio" outline>
+          {t("designMine")}
+        </ButtonLink>
+      </article>
+    </section>
   );
 }

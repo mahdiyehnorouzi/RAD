@@ -1,0 +1,214 @@
+.add {
+  width: 100%;
+}
+
+.filterbar>span { font-weight:400!important; }
+
+.filter-scroll {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  overflow-x: auto;
+  max-width: min(70vw, 720px);
+  padding-bottom: 0.2rem;
+}
+
+.plp h1 {
+  font-size: clamp(1.45rem, 4vw, 2.25rem);
+  line-height: 1.2;
+  margin: 0.2rem 0;
+  font-weight: 400;
+}
+
+.plp-head {
+  max-width: 52rem;
+}
+
+.plp-head h1 {
+  font-size: clamp(3.2rem, 7vw, 6.2rem);
+}
+
+.filterbar {
+  border: 0;
+  border-radius: var(--radius);
+  background: rgba(251, 248, 241, 0.62);
+  padding: 0.5rem 1rem;
+  margin: 1rem 0 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.filterbar div {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.filterbar button {
+  border: 0;
+  background: none;
+  cursor: pointer;
+  padding: 0.3rem 0;
+}
+
+.filterbar .active {
+  color: var(--clay);
+  border-bottom: 1px solid;
+}
+
+.plp .product-grid {
+  row-gap: 5rem;
+}
+
+@media (max-width: 600px) {
+.plp .product-grid {
+    gap: 2rem;
+  }
+.plp .product-card {
+    width: min(100%, 350px);
+    margin-inline: auto;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid var(--line);
+  }
+.plp .product-card:last-child {
+    border-bottom: 0;
+  }
+.plp .product-art {
+    aspect-ratio: 4 / 4.75;
+  }
+.filterbar {
+    align-items: start;
+    gap: 1rem;
+  }
+.filterbar div {
+    gap: 0.7rem;
+    flex-wrap: wrap;
+  }
+}
+
+.plp-head {
+  max-width: 62rem;
+  margin-inline-start: 0;
+  text-align: start;
+}
+
+.filterbar {
+  width: 100%;
+  align-items: center !important;
+}
+
+.filterbar > div {
+  flex-wrap: wrap;
+  row-gap: .65rem;
+}
+
+.filterbar > span {
+  flex: 0 0 auto;
+  white-space: nowrap;
+  line-height: 1.4;
+}
+
+[data-locale="fa"] .filterbar > div, [data-locale="fa"] .filterbar > span {
+  text-align: right;
+}
+
+@media (max-width: 900px) {
+.filterbar {
+    align-items: flex-start !important;
+  }
+.filterbar > div {
+    gap: 1rem;
+  }
+}
+
+@media (max-width: 600px) {
+.filterbar {
+    gap: 1rem;
+    padding-block: 1rem;
+  }
+.filterbar > div {
+    width: 100%;
+    justify-content: flex-start;
+  }
+}
+
+.filterbar>span { font-weight:400!important; }
+
+.plp h1 {
+  font-size: clamp(1.45rem, 4vw, 2.25rem);
+  font-weight: 400;
+  line-height: 1.2;
+  letter-spacing: -0.03em;
+}
+
+.filterbar {
+  border-radius: 0;
+  border-block: 1px solid var(--line);
+  background: transparent;
+  padding: 1.5rem 0;
+}
+
+@media (max-width: 600px) {
+.plp h1 {
+    font-size: clamp(2.35rem, 10vw, 3.1rem);
+  }
+}
+
+.plp .product-grid .product-art {aspect-ratio:4/5!important}
+
+.filterbar>div {flex-wrap:wrap}
+
+/* Category rail keeps its scrollbar and adds an explicit swipe cue and clipped-edge affordance. */
+.filterbar {display:grid!important;grid-template-columns:minmax(0,1fr)!important;align-items:stretch!important;gap:.35rem!important;margin:1rem 0 1.5rem!important;padding:.5rem 0!important}
+
+.filter-heading {grid-column:1/-1;display:flex!important;align-items:center!important;justify-content:space-between!important;gap:.5rem!important;width:100%!important;margin:0!important}
+
+.filter-heading>b {font-size:.82rem;font-weight:600}
+
+.filter-scroll-hint {display:inline-flex;align-items:center;gap:.4rem;color:var(--muted);font-size:.7rem;white-space:nowrap}
+
+.filter-scroll-hint svg {width:18px;height:18px;stroke-width:1.5}
+
+.filter-scroll-shell {position:relative;min-width:0;width:100%;overflow:hidden}
+
+.filter-scroll-shell::after {content:"";position:absolute;z-index:2;top:0;bottom:.65rem;inset-inline-end:0;width:42px;background:linear-gradient(to var(--fade-direction,left),transparent,color-mix(in srgb,var(--canvas) 94%,transparent));pointer-events:none}
+
+html[dir="rtl"] .filter-scroll-shell {--fade-direction:left}
+
+html[dir="ltr"] .filter-scroll-shell {--fade-direction:right}
+
+.filter-scroll {display:flex!important;flex-wrap:nowrap!important;align-items:center!important;gap:.55rem!important;width:100%!important;overflow-x:auto!important;overscroll-behavior-inline:contain;scroll-snap-type:x proximity;padding:.1rem 0 .35rem;scrollbar-width:thin;scrollbar-gutter:auto}
+
+.filter-scroll:focus-visible {outline:1px solid var(--clay);outline-offset:4px}
+
+.filter-scroll button {flex:0 0 auto!important;min-height:42px;padding:.5rem .85rem!important;border:1px solid var(--line)!important;border-radius:999px!important;background:var(--paper)!important;scroll-snap-align:start;white-space:nowrap}
+
+.filter-scroll button.active {border-color:var(--clay)!important;background:var(--clay)!important;color:var(--paper)!important}
+
+.filter-count {grid-column:1/-1!important;justify-self:stretch!important;text-align:start!important;white-space:nowrap;margin:0!important;padding-top:.15rem!important}
+
+html[dir="rtl"] .filter-count {text-align:right!important}
+
+@media(min-width:901px) {
+html[dir="rtl"] .plp-head {direction:rtl!important;text-align:right!important}
+}
+
+@media(max-width:900px) {
+html[dir="rtl"] .plp-head {direction:rtl!important;text-align:right!important;align-items:start!important}
+}
+
+@media(max-width:600px) {
+.plp.section {padding-block:2rem!important;padding-inline:1rem!important}
+.plp {overflow-x:clip!important}
+.plp .product-grid {width:100%!important;grid-template-columns:minmax(0,1fr)!important;place-items:center!important}
+.plp .product-grid>.product-card {width:min(100%,390px)!important;max-width:390px!important;margin-inline:auto!important;justify-self:center!important}
+.plp .product-grid .product-media-shell, .plp .product-grid .product-art, .plp .product-grid .product-meta {width:100%!important;max-width:100%!important}
+.filterbar {grid-template-columns:minmax(0,1fr)!important;align-items:stretch!important;padding:1rem .9rem!important;margin:1rem 0 1.25rem!important;gap:.85rem!important}
+.filter-heading {align-items:flex-start!important;flex-direction:row!important;flex-wrap:wrap!important;gap:.35rem!important;margin:0!important}
+.filter-scroll-shell {width:100%!important;max-width:100%!important}
+.filter-scroll {width:100%!important;padding-inline:0 .35rem!important;scrollbar-gutter:auto!important}
+.filter-count {display:block!important;width:100%!important;margin:.35rem 0 0!important;padding-top:.35rem!important;text-align:start!important;justify-self:stretch!important}
+html[dir="rtl"] .filter-count {text-align:right!important}
+}

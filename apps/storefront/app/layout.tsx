@@ -1,6 +1,7 @@
-import type {Metadata} from "next";
+import type { Metadata } from "next";
 import "./globals.css";
-import { localFixes } from "./local-fixes";
+import "@/components/ui/button-link.css";
+import "@/components/ui/section.css";
 import { mockStorefront } from "@/lib/catalog/mock-storefront";
 import {
   Footer,
@@ -28,7 +29,6 @@ export default function RootLayout({
   return (
     <html lang="fa" dir="rtl">
       <body>
-        <style dangerouslySetInnerHTML={{ __html: localFixes }} />
         <LocaleProvider>
           <CatalogProvider>
             <CommerceProvider>

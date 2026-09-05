@@ -1,6 +1,7 @@
-import "./artwork.css";
+"use client";
+import type { ProductShape, ProductVisual } from "@rad/types";
 import { Vessel } from "./vessel";
-import type {ProductShape, ProductVisual} from "@rad/types";
+import "./artwork-visual.css";
 
 export function ArtworkVisual({
   visual = "vessel",
@@ -21,12 +22,7 @@ export function ArtworkVisual({
   return (
     <div
       className={`mock-artwork ${visual} ${className}`}
-      style={
-        {
-          "--art-color": color,
-          "--art-accent": accent,
-        } as React.CSSProperties
-      }
+      style={{ "--art-color": color, "--art-accent": accent } as React.CSSProperties}
       aria-hidden="true"
     >
       <span />

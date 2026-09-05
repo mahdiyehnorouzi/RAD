@@ -1,4 +1,5 @@
 "use client";
+import "./portrait-certificate.css";
 
 import { useLocale } from "@/components/i18n";
 import type { DifferencePortrait } from "../../type";

@@ -1,4 +1,5 @@
 "use client";
+import "./workshop-board.css";
 
 import { useMemo } from "react";
 import { useMaking } from "@/hooks/use-making-workspace";

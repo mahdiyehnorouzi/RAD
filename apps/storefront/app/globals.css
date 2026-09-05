@@ -1,74 +1,229 @@
 @import "../styles/typography.css";
+
 @tailwind base;
+
 @tailwind components;
+
 @tailwind utilities;
 
 :root {
-  --canvas: #eee7dc;
-  --paper: #f7f2e9;
-  --ink: #18231f;
-  --clay: #8a4938;
-  --sand: #cbb892;
-  --moss: #263d34;
-  --muted: #6f726b;
-  --line: #d6cfc3;
+  --canvas: #eee7da;
+  --paper: #fbf8f1;
+  --ink: #201b17;
+  --clay: #a13d2e;
+  --sand: #cfb890;
+  --moss: #4a5039;
+  --line: rgba(32, 27, 23, 0.18);
   --page: clamp(1.25rem, 5vw, 5rem);
-  --section: clamp(5rem, 11vw, 11rem);
-  --radius: 4px;
+  --section: clamp(4rem, 9vw, 8rem);
+  --radius: 1.5rem;
   scrollbar-color: var(--clay) var(--canvas);
   scrollbar-width: thin;
 }
 
-@layer base {
-  * {
-    box-sizing: border-box;
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 108px;
+}
+
+[id] {
+  scroll-margin-top: 108px;
+}
+
+body {
+  margin: 0;
+  background: var(--canvas);
+  color: var(--ink);
+  font-family: var(--font);
+  line-height: var(--leading-body);
+}
+
+button, a {
+  font: inherit;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  color: inherit;
+}
+
+button:focus-visible, a:focus-visible, textarea:focus-visible {
+  outline: 3px solid #d56b58;
+  outline-offset: 4px;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+::selection {
+  background: var(--clay);
+  color: white;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--canvas);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--clay);
+  border: 3px solid var(--canvas);
+  border-radius: 10px;
+}
+
+@keyframes shimmer {
+  from {
+    transform: translateX(-100%);
   }
-  html {
-    scroll-behavior: smooth;
-    scroll-padding-top: 108px;
+  to {
+    transform: translateX(100%);
   }
-  [id] {
-    scroll-margin-top: 108px;
+}
+
+/* RAD calibrated editorial system — Aug 2026 */
+:root { --section: clamp(4.5rem, 7vw, 7rem); }
+
+body { font-size: var(--text-body); font-weight: var(--font-weight-regular); line-height: var(--leading-body); }
+
+h1, h2, h3 { font-weight: var(--font-weight-regular); }
+
+h4, b, strong { font-weight: var(--font-weight-medium); }
+
+h1, h2, h3 { line-height: var(--leading-tight); }
+
+button { font-weight: var(--font-weight-medium); font-size: var(--text-button); }
+
+@keyframes radReveal { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:none; } }
+
+@media (prefers-reduced-motion:reduce) {
+*, *::before, *::after {animation-duration:.01ms!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
+}
+
+@media (max-width:600px) {
+:root {--section:3.75rem}
+body {font-size:var(--text-body);line-height:var(--leading-body)}
+}
+
+/* Local refinement: compact rhythm, unified cards, vertical order story */
+:root { --section: clamp(3.25rem, 5vw, 5rem); }
+
+@media(max-width:600px) {
+:root {--section:2.75rem}
+}
+
+/* RAD logo-led local redesign */
+:root {
+  --canvas: #eee7dc;
+  --paper: #f7f2e9;
+  --ink: #18231f;
+  --clay: #263d34;
+  --sand: #cbb892;
+  --moss: #263d34;
+  --muted: #6f726b;
+  --line: #d6cfc3;
+  --section: clamp(7.5rem, 12vw, 12rem);
+}
+
+button:focus-visible, a:focus-visible, textarea:focus-visible, select:focus-visible {
+  outline-color: #8a4938;
+}
+
+::selection {
+  background: var(--moss);
+}
+
+@media (max-width: 600px) {
+:root {
+    --section: clamp(4.5rem, 20vw, 6rem);
   }
-  body {
-    margin: 0;
-    background: var(--canvas);
-    color: var(--ink);
-    font-family: var(--font);
-    line-height: var(--leading-body);
+}
+
+/* RAD 1/1 editorial system — raw, exact, calm */
+:root {
+  --canvas: #ebe4d8;
+  --paper: #f4f0e8;
+  --ink: #1d1a17;
+  --clay: #8b2e25;
+  --sand: #d3bd95;
+  --moss: #59604b;
+  --muted: #6e685f;
+  --line: #d8d1c6;
+  --section: clamp(5rem, 11vw, 11rem);
+  --radius: 4px;
+}
+
+body {
+  background: var(--canvas);
+  line-height: 1.85;
+}
+
+@media (max-width: 600px) {
+:root {
+    --section: clamp(4.5rem, 20vw, 6rem);
   }
-  button,
-  a {
-    font: inherit;
+}
+
+[data-locale="en"] body {
+  letter-spacing: 0.005em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+*, *:before, *:after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
   }
-  a {
-    color: inherit;
-    text-decoration: none;
+}
+
+input:focus-visible, textarea:focus-visible {
+  outline: 2px solid var(--clay);
+  outline-offset: 1px;
+}
+
+/* Final logo palette and editorial behavior overrides */
+:root {
+  --canvas: #eee7dc;
+  --paper: #f7f2e9;
+  --ink: #18231f;
+  --clay: #263d34;
+  --sand: #cbb892;
+  --moss: #263d34;
+  --muted: #6f726b;
+  --line: #d6cfc3;
+  --section: clamp(7.5rem, 12vw, 12rem);
+}
+
+body {
+  background: var(--canvas);
+  color: var(--ink);
+}
+
+@media (max-width: 600px) {
+:root {
+    --section: clamp(4.5rem, 20vw, 6rem);
   }
-  button:focus-visible,
-  a:focus-visible,
-  textarea:focus-visible,
-  select:focus-visible {
-    outline: 3px solid #8a4938;
-    outline-offset: 4px;
-  }
-  button:disabled {
-    cursor: not-allowed;
-    opacity: 0.45;
-  }
-  ::selection {
-    background: var(--moss);
-    color: white;
-  }
-  ::-webkit-scrollbar {
-    width: 10px;
-  }
-  ::-webkit-scrollbar-track {
-    background: var(--canvas);
-  }
-  ::-webkit-scrollbar-thumb {
-    background: var(--clay);
-    border: 3px solid var(--canvas);
-    border-radius: 10px;
-  }
+}
+
+button {box-shadow:none!important;outline:0!important}
+
+button:focus-visible {outline:0!important;box-shadow:inset 0 -2px 0 #8a4938!important}
+
+.resize-none {resize:none!important}
+
+@media(max-width:900px) {
+html[dir="rtl"] body, html[dir="rtl"] main {direction:rtl!important;text-align:right!important}
+html[dir="rtl"] input, html[dir="rtl"] textarea, html[dir="rtl"] select {text-align:right!important;direction:rtl!important}
 }

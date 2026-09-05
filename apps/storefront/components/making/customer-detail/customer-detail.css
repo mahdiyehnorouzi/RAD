@@ -1,0 +1,7 @@
+html[dir="rtl"] .making-layout, html[dir="rtl"] .making-brief {direction:rtl!important;text-align:right!important}
+
+.making-layout {display:grid;grid-template-columns:minmax(0,1.2fr) minmax(280px,.8fr);gap:clamp(1.5rem,4vw,3rem);align-items:start}
+
+@media(max-width:900px) {
+.making-layout {grid-template-columns:1fr!important}
+}

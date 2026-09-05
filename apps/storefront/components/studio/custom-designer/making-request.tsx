@@ -1,7 +1,7 @@
 "use client";
+import "./making-request.css";
 
 import { Button } from "@/components/ui/button-link";
-import { Eyebrow } from "@/components/ui/section";
 import { useLocale } from "@/components/i18n";
 
 export function MakingRequest({
@@ -15,13 +15,11 @@ export function MakingRequest({
 }) {
   const { t } = useLocale();
   return (
-    <section className="making-request mt-12">
-      <Eyebrow className="text-rad-sand">{t("makingEyebrow")}</Eyebrow>
-      <h2 className="m-0 text-h3 font-normal">{t("makingSubmit")}</h2>
-      <p className="mt-3 max-w-2xl text-prose">{t("makingBody")}</p>
-      <label className="mt-6 block" htmlFor="intended-use">
-        {t("makingUseLabel")}
-      </label>
+    <section className="making-request">
+      <span className="eyebrow">{t("makingEyebrow")}</span>
+      <h2>{t("makingSubmit")}</h2>
+      <p>{t("makingBody")}</p>
+      <label htmlFor="intended-use">{t("makingUseLabel")}</label>
       <textarea
         id="intended-use"
         value={intendedUse}
@@ -30,7 +28,7 @@ export function MakingRequest({
         aria-describedby="use-help"
       />
       <small id="use-help">{t("makingUseHelp")}</small>
-      <div className="making-actions mt-6">
+      <div className="making-actions">
         <Button type="button" onClick={onSubmit}>
           {t("makingSubmit")}
         </Button>

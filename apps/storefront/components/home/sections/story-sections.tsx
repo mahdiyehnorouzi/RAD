@@ -1,79 +1,94 @@
 "use client";
-
-import { Eyebrow, PageSection } from "@/components/ui/section";
 import { useLocale } from "@/components/i18n";
+import "./story-sections.css";
 
 export function StorySection() {
-  const { t } = useLocale();
+  const { locale, t } = useLocale();
   return (
-    <PageSection
-      id="story"
-      className="grid items-center gap-[clamp(2rem,6vw,6rem)] bg-rad-paper md:grid-cols-[minmax(110px,0.35fr)_1.65fr]"
-    >
-      <span className="text-display font-normal leading-none text-rad-clay">
-        {t("editionMark")}
-      </span>
+    <section id="story" className="section story human-story">
+      <span className="big-number">{locale === "fa" ? "۱/۱" : "1/1"}</span>
       <div>
-        <Eyebrow>{t("philosophy")}</Eyebrow>
-        <h2 className="m-0 text-h2 font-normal">{t("storyLead")}</h2>
-        <p className="mt-6 max-w-3xl text-prose">{t("storyBodyLong")}</p>
+        <span className="eyebrow">{t("philosophy")}</span>
+        <h2>
+          {locale === "fa"
+            ? "رَد از میل به ساختن اشیایی شروع شد که برای هیچ‌کس دیگری ساخته نشده‌اند."
+            : "RAD began with the desire to make objects created for no one else."}
+        </h2>
+        <p>
+          {locale === "fa"
+            ? "هر اثر در گفت‌وگوی مستقیم میان نگاه هنرمند، ماده و دست شکل می‌گیرد. تفاوت‌ها نقص نیستند؛ امضای فرآیندند."
+            : "Each work takes shape through a direct conversation between the maker's eye, material, and hand. Variations are the process's signature."}
+        </p>
       </div>
-    </PageSection>
+    </section>
   );
 }
 
 export function ProvenanceSection() {
-  const { t } = useLocale();
-  const items = [
-    [t("provenanceMadeTitle"), t("provenanceMadeBody")],
-    [t("provenanceHandTitle"), t("provenanceHandBody")],
-    [t("provenanceNumberTitle"), t("provenanceNumberBody")],
-  ];
+  const { locale } = useLocale();
   return (
-    <PageSection className="bg-rad-paper">
-      <header className="mb-12">
-        <Eyebrow>{t("provenanceEyebrow")}</Eyebrow>
-        <h2 className="m-0 max-w-xl text-h2 font-normal">
-          {t("provenanceTitle")}
+    <section className="provenance section">
+      <header>
+        <span className="eyebrow">III — {locale === "fa" ? "منشأ اثر" : "PROVENANCE"}</span>
+        <h2>
+          {locale === "fa" ? "ارزش یک اثر، در مسیر ساخت آن است." : "A work earns its value through how it is made."}
         </h2>
       </header>
-      <div className="grid gap-8 md:grid-cols-3">
-        {items.map(([title, body]) => (
-          <article key={title}>
-            <b className="block text-lg font-medium">{title}</b>
-            <p className="mt-3 text-prose text-rad-muted">{body}</p>
-          </article>
-        ))}
+      <div className="provenance-grid">
+        <article>
+          <b>{locale === "fa" ? "ساخت در تهران" : "Made in Tehran"}</b>
+          <p>
+            {locale === "fa"
+              ? "هنرمند، متریال و تمام مراحل ساخت هر اثر در شناسنامه آن ثبت می‌شود."
+              : "The maker, material, and every making stage are recorded in the work's provenance."}
+          </p>
+        </article>
+        <article>
+          <b>{locale === "fa" ? "ردِ دست حفظ می‌شود" : "The hand remains visible"}</b>
+          <p>
+            {locale === "fa"
+              ? "تفاوت‌های طبیعی هر ماده پنهان نمی‌شوند؛ همان‌ها بخشی از هویت اثرند."
+              : "Natural variations in every material remain visible as part of the work's identity."}
+          </p>
+        </article>
+        <article>
+          <b>{locale === "fa" ? "شماره و شناسنامه" : "Numbered provenance"}</b>
+          <p>
+            {locale === "fa"
+              ? "هر اثر با شماره، متریال، سال و نشان ۱/۱ ثبت می‌شود."
+              : "Each work is recorded with its number, material, year, and 1/1 mark."}
+          </p>
+        </article>
       </div>
-    </PageSection>
+    </section>
   );
 }
 
 export function ProcessSection() {
-  const { t } = useLocale();
+  const { locale, t } = useLocale();
   const steps = [
-    [t("processStep1"), t("step1Title"), t("step1Body")],
-    [t("processStep2"), t("step2Title"), t("step2Body")],
-    [t("processStep3"), t("step3Title"), t("step3Body")],
-    [t("processStep4"), t("step4Title"), t("step4Body")],
+    [locale === "fa" ? "۰۱/۰۴" : "01/04", t("step1Title"), t("step1Body")],
+    [locale === "fa" ? "۰۲/۰۴" : "02/04", t("step2Title"), t("step2Body")],
+    [locale === "fa" ? "۰۳/۰۴" : "03/04", t("step3Title"), t("step3Body")],
+    [locale === "fa" ? "۰۴/۰۴" : "04/04", t("step4Title"), t("step4Body")],
   ];
   return (
-    <PageSection className="bg-rad-canvas">
-      <header className="mb-14">
-        <Eyebrow>{t("processEyebrow")}</Eyebrow>
-        <h2 className="m-0 text-h2 font-normal">{t("processTitle")}</h2>
+    <section className="section process">
+      <header className="section-heading">
+        <div>
+          <span className="eyebrow">{t("processEyebrow")}</span>
+          <h2>{t("processTitle")}</h2>
+        </div>
       </header>
-      <div className="grid gap-4 md:grid-cols-4">
-        {steps.map(([index, title, body]) => (
-          <article key={index} className="min-h-[220px] bg-rad-paper p-6">
-            <span className="inline-flex h-10 min-w-16 items-center justify-center rounded-full bg-rad-paper px-3 text-label text-rad-clay [direction:ltr]">
-              {index}
-            </span>
-            <h3 className="mb-2 mt-5 text-h3 font-normal">{title}</h3>
-            <p className="m-0 text-prose text-rad-muted">{body}</p>
+      <div className="steps">
+        {steps.map((x) => (
+          <article key={x[0]}>
+            <span>{x[0]}</span>
+            <h3>{x[1]}</h3>
+            <p>{x[2]}</p>
           </article>
         ))}
       </div>
-    </PageSection>
+    </section>
   );
 }

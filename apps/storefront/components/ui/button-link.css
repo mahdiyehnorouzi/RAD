@@ -1,0 +1,193 @@
+.actions {
+  display: flex;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+}
+
+.button {
+  border: 1px solid var(--ink);
+  background: var(--ink);
+  color: white;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  min-height: 50px;
+  border-radius: 999px;
+  padding: 0.65rem 1.5rem;
+  cursor: pointer;
+  transition:
+    transform 0.2s,
+    background 0.2s,
+    color 0.2s;
+}
+
+.button:hover {
+  transform: translateY(-2px);
+  background: var(--clay);
+  border-color: var(--clay);
+}
+
+.button.outline {
+  background: transparent;
+  color: var(--ink);
+}
+
+.button.outline:hover {
+  background: var(--clay);
+  border-color: var(--clay);
+  color: white;
+}
+
+.button.light {
+  background: var(--paper);
+  color: var(--ink);
+  border-color: var(--paper);
+}
+
+.button.danger {
+  background: var(--clay);
+  border-color: var(--clay);
+}
+
+.text-link {
+  border-bottom: 1px solid;
+  padding-bottom: 0.25rem;
+}
+
+.text-button {
+  border: 0;
+  border-bottom: 1px solid currentColor;
+  background: transparent;
+  padding: 0 0 0.15rem;
+  cursor: pointer;
+}
+
+@media (max-width: 600px) {
+.actions {
+    gap: 0.55rem;
+    flex-wrap: nowrap;
+  }
+.actions .button {
+    min-height: 44px;
+    padding: 0.55rem 0.9rem;
+    font-size: 0.82rem;
+    white-space: nowrap;
+  }
+}
+
+.button { font-weight: var(--font-weight-medium); font-size: var(--text-button); }
+
+.view-work { inset:auto 1rem 1rem auto !important; width:48px !important; height:48px !important; padding:0 !important; border-radius:50% !important; display:grid !important; place-items:center; background:var(--paper) !important; color:var(--moss); font-size:1.25rem; opacity:0; transform:translateY(6px) !important; box-shadow:0 8px 24px rgba(24,35,31,.12); transition:opacity 400ms ease-out,transform 400ms ease-out !important; }
+
+@media(max-width:600px) {
+.view-work { display:none !important; }
+}
+
+.view-work { display:none !important; }
+
+.button {
+  background: var(--moss);
+  border-color: var(--moss);
+  color: var(--paper);
+}
+
+.button.outline {
+  color: var(--moss);
+  background: transparent;
+  border-color: var(--moss);
+}
+
+.view-work {
+  position: absolute;
+  z-index: 7;
+  inset-inline: 1rem;
+  bottom: 1rem;
+  min-height: 46px;
+  padding: 0.65rem 1rem;
+  background: color-mix(in srgb, var(--paper) 94%, transparent);
+  color: var(--moss);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.78rem;
+  transform: translateY(calc(100% + 1.5rem));
+  opacity: 0;
+  transition:
+    transform 0.45s ease-out,
+    opacity 0.3s ease-out;
+}
+
+@media (max-width: 600px) {
+.view-work {
+    opacity: 1;
+    transform: none;
+    min-height: 42px;
+  }
+}
+
+/* Local QA pass: controls, catalog alignment, guest makers, FAQ and process */
+.button, .button:hover, .button:active {
+  box-shadow: none !important;
+}
+
+.button:focus-visible {
+  outline: 0 !important;
+  box-shadow: inset 0 -2px 0 currentColor !important;
+}
+
+.button.outline {
+  border: 1px solid var(--moss) !important;
+  border-radius: 2px !important;
+  padding: .7rem 1.25rem !important;
+  min-height: 48px !important;
+}
+
+.button.outline:hover {
+  border-color: var(--moss) !important;
+}
+
+.button {
+  border-radius: 2px;
+  min-height: 52px;
+  font-weight: 500;
+  padding-inline: 1.75rem;
+  transform: none;
+}
+
+.button:hover {
+  transform: none;
+}
+
+.button.outline {
+  border-width: 0 0 1px;
+  min-height: auto;
+  padding: 0.45rem 0;
+}
+
+.button.outline:hover {
+  background: transparent;
+  color: var(--clay);
+}
+
+.button {
+  background: var(--moss);
+  border-color: var(--moss);
+  color: var(--paper);
+}
+
+.button.outline {
+  color: var(--moss);
+  background: transparent;
+  border-color: var(--moss);
+}
+
+.button {box-shadow:none!important;outline:0!important}
+
+.button {border:0!important}
+
+.button.outline {min-height:auto!important;padding:.45rem 0!important;border:0!important;border-bottom:1px solid currentColor!important;border-radius:0!important;background:transparent!important}
+
+.button:focus-visible {outline:0!important;box-shadow:inset 0 -2px 0 #8a4938!important}
+
+.button-arrow {width:18px;height:18px;flex:0 0 18px;stroke-width:1.6}

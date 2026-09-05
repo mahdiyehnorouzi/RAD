@@ -1,4 +1,4 @@
-import { proxyApiRequest } from "@/lib/api/proxy";
+import { proxyApiRequest } from "@/lib/api";
 
 type RouteContext = { params: Promise<{ path: string[] }> };
 

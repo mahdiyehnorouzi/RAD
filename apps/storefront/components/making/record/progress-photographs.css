@@ -1,0 +1,7 @@
+.making-photos {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1rem;margin:0;padding:0;list-style:none}
+
+.making-swatch {width:100%;aspect-ratio:4/5;border-radius:2px;background:linear-gradient(160deg,#9f4030 0 62%,#ead9bd 63%)}
+
+@media(max-width:900px) {
+.making-photos {grid-template-columns:1fr!important}
+}

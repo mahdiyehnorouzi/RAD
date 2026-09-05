@@ -1,4 +1,5 @@
 "use client";
+import "./biography-rail.css";
 
 import type { MakingCommission, MakingStageId } from "@/components/making/type";
 import { BIOGRAPHY_STAGES, STAGE_LABEL, copy, stageIndex } from "@/lib/making";

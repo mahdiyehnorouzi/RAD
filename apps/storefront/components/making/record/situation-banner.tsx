@@ -1,4 +1,5 @@
 "use client";
+import "./situation-banner.css";
 
 import type {MakingCommission} from "@/components/making/type";
 import { copy, situationFor } from "@/lib/making";

@@ -1,2 +1,2 @@
 export { CustomDesigner } from "./custom-designer";
-export { useDesigner } from "./hooks";
+export { MakingRequest } from "./making-request";

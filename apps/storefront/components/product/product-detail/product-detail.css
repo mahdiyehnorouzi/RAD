@@ -1,0 +1,502 @@
+.shipping {
+  text-align: center;
+  font-size: 0.75rem;
+  color: #71665b;
+}
+
+.related h2 {
+  font-size: clamp(1.45rem, 4vw, 2.25rem);
+  line-height: 1.2;
+  margin: 0.2rem 0;
+  font-weight: 400;
+}
+
+.pdp {
+  background: var(--paper);
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  gap: 7vw;
+  padding-top: 4rem;
+}
+
+.pdp-topbar {
+  grid-column: 1 / -1;
+}
+
+.pdp-topbar .back {
+  border: 0;
+  border-bottom: 1px solid currentColor;
+  background: transparent;
+  padding: 0 0 0.2rem;
+  cursor: pointer;
+  font: inherit;
+}
+
+.pdp-gallery {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  gap: 1rem;
+  direction: ltr;
+}
+
+.pdp-main-art {
+  height: clamp(520px, 58vw, 680px);
+  background: var(--sand);
+  border-radius: 48% 48% 1.5rem 1.5rem/35% 35% 1.5rem 1.5rem;
+  display: grid;
+  place-items: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.pdp-main-art > .product-photo, .pdp-main-art > .product-fallback {
+  place-self: stretch;
+  min-width: 0;
+  min-height: 0;
+}
+
+.pdp-main-art .vessel {
+  width: 43%;
+  height: 65%;
+}
+
+.pdp-detail-art {
+  display: flex;
+  gap: 1rem;
+  overflow-x: auto;
+  padding: 0.1rem 0 0.4rem;
+}
+
+.pdp-detail-art span {
+  border-radius: 1rem;
+}
+
+.pdp-info {
+  padding-top: 2rem;
+}
+
+.related-carousel {
+  display: flex;
+  gap: clamp(1.2rem, 3vw, 3rem);
+  overflow-x: auto;
+  direction: ltr;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  padding-bottom: 1rem;
+  scrollbar-width: thin;
+}
+
+.related-carousel .product-card {
+  flex: 0 0 clamp(280px, 31vw, 430px);
+  scroll-snap-align: start;
+}
+
+[data-locale="fa"] .related-carousel .product-card {
+  direction: rtl;
+}
+
+.carousel-controls {
+  display: flex;
+  gap: 0.65rem;
+  direction: ltr;
+}
+
+.carousel-controls button {
+  width: 46px;
+  height: 46px;
+  border: 1px solid var(--ink);
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+  font-size: 1.15rem;
+}
+
+.carousel-controls button:hover {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.pdp-info h1 {
+  font-size: clamp(2.7rem, 5vw, 5.3rem);
+  line-height: 1.15;
+  margin: 1rem 0;
+}
+
+.subtitle {
+  color: #71665b;
+}
+
+.price {
+  font-size: 1.25rem;
+  margin: 2rem 0;
+}
+
+.pdp-story {
+  font-size: 1.08rem;
+}
+
+.pdp-info ul {
+  list-style: none;
+  padding: 1.5rem 0;
+  margin: 2rem 0;
+  border-block: 1px solid var(--line);
+}
+
+.pdp-info li {
+  display: flex;
+  justify-content: space-between;
+}
+
+.pdp-info li:after {
+  content: "✓";
+  color: var(--clay);
+}
+
+@media (max-width: 900px) {
+.pdp {
+    grid-template-columns: 1fr;
+  }
+.pdp-gallery {
+    grid-template-columns: 1fr;
+  }
+.pdp-detail-art {
+    display: none;
+  }
+.pdp-main-art {
+    height: 600px;
+  }
+}
+
+@media (max-width: 600px) {
+.pdp {
+    padding-top: 1.5rem;
+  }
+.related .section-heading {
+    flex-direction: row;
+    align-items: end;
+  }
+.related .section-heading h2 {
+    font-size: 2.05rem;
+  }
+.related-carousel {
+    gap: 1rem;
+  }
+.related-carousel .product-card {
+    flex-basis: min(72vw, 300px);
+  }
+.related-carousel .product-art {
+    aspect-ratio: 4 / 4.7;
+  }
+.pdp-main-art {
+    height: 410px;
+  }
+.pdp-gallery {
+    gap: 0.65rem;
+  }
+.pdp-detail-art button {
+    flex-basis: 72px;
+    height: 72px;
+    border-radius: 0.75rem;
+  }
+}
+
+.price { font-size: var(--text-price); font-weight: var(--font-weight-regular); }
+
+.shipping-faq { display:grid;grid-template-columns:.7fr 1.3fr;gap:clamp(3rem,8vw,9rem); }
+
+.shipping-faq details { border-top:1px solid var(--line);padding:1.2rem 0; }
+
+.shipping-faq summary { cursor:pointer;font-size:var(--text-faq);font-weight:var(--font-weight-medium); }
+
+.shipping-faq details p { color:var(--muted);max-width:65ch;margin-top:.7rem; }
+
+@media (max-width:600px) {
+.shipping-faq {grid-template-columns:1fr;gap:2rem}
+}
+
+.related-carousel { display:grid !important; grid-auto-flow:column; grid-auto-columns:minmax(300px,calc((100% - 2rem)/3)); gap:1rem !important; align-items:stretch; overflow-x:auto; scroll-snap-type:x mandatory; padding-bottom:1rem; }
+
+.related-carousel .product-card { width:100% !important; display:grid; grid-template-rows:auto 1fr; scroll-snap-align:start; }
+
+.related-carousel .product-art { width:100%; aspect-ratio:4/5 !important; height:auto !important; min-height:0 !important; }
+
+.related-carousel .product-meta { min-height:175px; }
+
+.pdp.section { padding-top:1.5rem !important; }
+
+.pdp-topbar { margin:0 0 2rem !important; min-height:0 !important; }
+
+.pdp-gallery, .pdp-info { margin-top:0 !important; }
+
+@media(max-width:900px) {
+.related-carousel { grid-auto-columns:minmax(260px,72vw); }
+}
+
+@media(max-width:600px) {
+.pdp.section { padding-top:.75rem !important; }
+.pdp-topbar {margin-bottom:1.25rem!important}
+.related-carousel { grid-auto-columns:minmax(240px,82vw); }
+.related-carousel .product-meta { min-height:0; }
+}
+
+.shipping-faq .faq-list details {
+  border-top: 1px solid var(--line) !important;
+  padding: 0 !important;
+}
+
+.shipping-faq .faq-list summary, .shipping-faq .faq-list summary::marker {
+  list-style: none !important;
+}
+
+.shipping-faq .faq-list summary::marker {
+  content: "" !important;
+}
+
+.shipping-faq .faq-list summary::-webkit-details-marker {
+  display: none !important;
+}
+
+.shipping-faq .faq-list summary {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 1rem !important;
+  min-height: 78px !important;
+  padding: 1rem 0 !important;
+  cursor: pointer;
+}
+
+.shipping-faq .faq-title {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: .9rem !important;
+}
+
+.shipping-faq .faq-title svg {
+  width: 23px !important;
+  height: 23px !important;
+  flex: 0 0 23px !important;
+  color: #8a4938 !important;
+  stroke-width: 1.5 !important;
+}
+
+.shipping-faq .faq-chevron {
+  display: block !important;
+  width: 19px !important;
+  height: 19px !important;
+  flex: 0 0 19px !important;
+  transition: transform 240ms ease-out !important;
+}
+
+.shipping-faq details[open] .faq-chevron {
+  transform: rotate(180deg) !important;
+}
+
+.shipping-faq .faq-list details {
+  padding: 0 !important;
+}
+
+.shipping-faq .faq-list summary {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  min-height: 76px;
+  padding: 1rem 0;
+}
+
+.shipping-faq .faq-list summary::-webkit-details-marker {
+  display: none;
+}
+
+.faq-title {
+  display: inline-flex;
+  align-items: center;
+  gap: .85rem;
+}
+
+.faq-title svg {
+  width: 22px;
+  height: 22px;
+  flex: 0 0 22px;
+  stroke-width: 1.5;
+  color: #8a4938;
+}
+
+.faq-chevron {
+  width: 19px;
+  height: 19px;
+  flex: 0 0 19px;
+  stroke-width: 1.5;
+  transition: transform 240ms ease-out;
+}
+
+.shipping-faq details[open] .faq-chevron {
+  transform: rotate(180deg);
+}
+
+.shipping-faq details p {
+  padding: 0 2.25rem 1.2rem 0;
+  margin: 0 !important;
+}
+
+[data-locale="en"] .shipping-faq details p {
+  padding: 0 0 1.2rem 2.25rem;
+}
+
+@media (max-width: 600px) {
+.shipping-faq .faq-list summary {
+    min-height: 68px;
+    font-size: 1rem;
+  }
+.faq-title {
+    gap: .65rem;
+  }
+}
+
+.related h2 {
+  font-size: clamp(1.45rem, 4vw, 2.25rem);
+  font-weight: 400;
+  line-height: 1.2;
+  letter-spacing: -0.03em;
+}
+
+.pdp-main-art, .pdp-detail-art button {
+  border-radius: 4px;
+}
+
+@media (max-width: 600px) {
+.related h2 {
+    font-size: clamp(2.35rem, 10vw, 3.1rem);
+  }
+}
+
+[data-locale="en"] .pdp-info {
+  text-align: left;
+}
+
+.pdp-main-art > .product-photo {
+  object-fit: contain;
+  object-position: center;
+  padding: clamp(1rem, 4vw, 2.5rem);
+}
+
+.pdp-detail-art .product-photo {
+  object-fit: contain;
+  object-position: center;
+  padding: 0.55rem;
+}
+
+.pdp-detail-art {
+  grid-auto-rows: minmax(0, 1fr);
+  align-items: center;
+}
+
+.pdp-detail-art button {
+  flex: 0 0 112px;
+  height: 112px;
+  min-height: 0;
+  border: 1px solid transparent;
+  border-radius: 1rem;
+  overflow: hidden;
+  padding: 0;
+  background: var(--sand);
+  cursor: pointer;
+}
+
+.pdp-detail-art button.active {
+  border-color: var(--clay);
+}
+
+.pdp-detail-art .vessel {
+  width: 38%;
+  height: 55%;
+  margin: 25% auto;
+}
+
+.pdp-detail-art .product-fallback span {
+  display: none;
+}
+
+.pdp-detail-art .product-fallback {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  margin: 0;
+  padding: 0.4rem;
+  background: transparent;
+}
+
+.pdp-detail-art .product-fallback svg {
+  width: 28px;
+  height: 28px;
+}
+
+.pdp-main-art > .product-fallback {
+  width: calc(100% - 3rem);
+  height: calc(100% - 3rem);
+  margin: 1.5rem;
+  border: 1px dashed rgba(32, 27, 23, 0.24);
+  border-radius: 44% 44% 1.2rem 1.2rem/32% 32% 1.2rem 1.2rem;
+  background-color: color-mix(in srgb, var(--sand) 72%, var(--paper));
+}
+
+.pdp-main-art > .product-fallback svg {
+  width: 56px;
+  height: 56px;
+}
+
+.pdp-main-art > .product-fallback span {
+  font-size: 1rem;
+  font-weight: 650;
+}
+
+@media (max-width: 900px) {
+.pdp-detail-art {
+    display: flex;
+    gap: 0.65rem;
+    overflow-x: auto;
+    padding: 0 0 0.35rem;
+  }
+.pdp-detail-art button {
+    flex: 0 0 92px;
+    height: 92px;
+  }
+.pdp-detail-art .vessel {
+    margin: 25% auto;
+  }
+}
+
+.shipping-faq .faq-list details {border-top:1px solid var(--line)!important;padding:0!important}
+
+.shipping-faq .faq-list summary {list-style:none!important;display:flex!important;align-items:center!important;justify-content:space-between!important;gap:1rem!important;min-height:78px!important;padding:1rem 0!important;cursor:pointer}
+
+.shipping-faq .faq-list summary::marker {content:""!important}
+
+.shipping-faq .faq-list summary::-webkit-details-marker {display:none!important}
+
+.shipping-faq .faq-title {display:inline-flex!important;align-items:center!important;gap:.9rem!important}
+
+.shipping-faq .faq-title svg {width:23px!important;height:23px!important;flex:0 0 23px!important;color:#8a4938!important;stroke-width:1.5!important}
+
+.shipping-faq .faq-chevron {display:block!important;width:19px!important;height:19px!important;flex:0 0 19px!important;transition:transform 240ms ease-out!important}
+
+.shipping-faq details[open] .faq-chevron {transform:rotate(180deg)!important}
+
+.pdp-main-art .mock-artwork {transition:transform 650ms ease-out,filter 650ms ease-out}
+
+.pdp-detail-art .mock-artwork {width:58%;height:58%}
+
+.pdp-main-art, .pdp-detail-art button {position:relative}
+
+.pdp-detail-art .sold-media-badge {top:.35rem;inset-inline-end:.35rem;min-height:22px;padding:.22rem .4rem;font-size:.52rem}
+
+@media(min-width:901px) {
+html[dir="rtl"] .pdp-info {direction:rtl!important;text-align:right!important}
+}
+
+@media(max-width:600px) {
+.shipping-faq.section, .related.section {padding-block:2rem!important;padding-inline:1rem!important}
+}

@@ -1,2 +1,7 @@
-export { CommerceProvider, useCommerce } from "./commerce-provider";
-export { NotificationCenter } from "./notification-center";
+export {
+  CommerceProvider,
+  useCommerce,
+  FavoriteButton,
+  NotificationCenter,
+  AccountLink,
+} from "./commerce-provider";

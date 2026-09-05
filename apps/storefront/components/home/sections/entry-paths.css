@@ -1,0 +1,107 @@
+.entry-paths article { min-height:440px!important; }
+
+@media (max-width:600px) {
+.entry-paths article { min-height:360px!important; padding:clamp(2rem,5vw,2.5rem) clamp(1rem,4vw,1.25rem)!important; }
+}
+
+.entry-paths {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+  padding-block: 0;
+  background: var(--line);
+}
+
+.entry-paths article {
+  min-height: 520px;
+  background: var(--canvas);
+  padding: clamp(3rem, 7vw, 7rem) var(--page);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.entry-paths article:nth-child(2) {
+  background: var(--moss);
+  color: var(--paper);
+}
+
+.entry-paths article > span {
+  font-size: 0.68rem;
+  letter-spacing: 0.18em;
+  direction: ltr;
+  color: #8a4938;
+}
+
+.entry-paths article:nth-child(2) > span {
+  color: var(--sand);
+}
+
+.entry-paths h2 {
+  max-width: 10ch;
+  margin: 1rem 0 0.65rem;
+  font-size: clamp(1.45rem, 6.5vw, 2.25rem);
+  font-weight: 400;
+  line-height: 1.25;
+  letter-spacing: -0.045em;
+}
+
+.entry-paths p {
+  max-width: 33rem;
+  color: var(--muted);
+  font-size: 1.05rem;
+}
+
+.entry-paths article:nth-child(2) p {
+  color: color-mix(in srgb, var(--paper) 74%, transparent);
+}
+
+.entry-paths article:nth-child(2) .button.outline {
+  color: var(--paper);
+  border-color: var(--paper);
+}
+
+@media (max-width: 900px) {
+.entry-paths {
+    grid-template-columns: 1fr;
+  }
+.entry-paths article {
+    min-height: 430px;
+    padding: clamp(2.25rem, 5.5vw, 3rem) clamp(1.15rem, 4.5vw, 1.5rem);
+  }
+}
+
+@media (max-width: 600px) {
+.entry-paths article {
+    min-height: 390px;
+    padding: clamp(2rem, 5vw, 2.5rem) clamp(1rem, 4vw, 1.25rem);
+  }
+.entry-paths h2 {
+    font-size: clamp(1.45rem, 6.5vw, 1.85rem);
+  }
+}
+
+.entry-paths article { min-height:440px!important; }
+
+@media (max-width:600px) {
+.entry-paths article { min-height:360px!important; padding:clamp(2rem,5vw,2.5rem) clamp(1rem,4vw,1.25rem)!important; }
+}
+
+.entry-paths h2 {font-size:clamp(1.45rem,6.5vw,1.85rem)!important;font-weight:400!important;line-height:1.25!important}
+
+.entry-paths h2 {margin:1rem 0 .65rem!important;max-width:none!important}
+
+.entry-paths article>span {margin:0!important}
+
+.entry-paths .button.outline {width:fit-content!important}
+
+@media(max-width:600px) {
+.entry-paths article {padding:clamp(2rem,5vw,2.5rem) clamp(1rem,4vw,1.25rem)!important}
+}
+
+@media(max-width:600px) {
+.entry-paths.section {padding-block:2rem!important;padding-inline:1rem!important}
+.entry-paths {padding-block:0!important}
+.entry-paths article {min-height:0!important;padding:1.35rem 1rem!important}
+}

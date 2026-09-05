@@ -1,8 +1,9 @@
 "use client";
 
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
-import type {Product} from "@rad/types";
-import { fetchProducts } from "@/lib/api/catalog";
+import type { Product } from "@rad/types";
+import { fetchProducts } from "@/lib/api";
+import { mockProducts } from "@/lib/catalog";
 
 type CatalogContextValue = {
   products: Product[];
@@ -23,7 +24,9 @@ export function CatalogProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     refresh()
-      .catch(() => setProducts([]))
+      .catch(() =>
+        setProducts(process.env.NODE_ENV === "development" ? mockProducts : []),
+      )
       .finally(() => setLoading(false));
   }, []);
 

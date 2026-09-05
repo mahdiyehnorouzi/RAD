@@ -1,36 +1,40 @@
 "use client";
-
-import { ArtworkVisual } from "../artwork-visual";
+import { useState } from "react";
+import type { Product } from "@rad/types";
 import { useLocale } from "@/components/i18n";
-import { artworkVisual } from "@/lib/catalog/artwork";
-import type {Product} from "@rad/types";
+import { artworkVisual } from "@/lib/catalog";
+import { ArtworkVisual } from "../artwork-visual";
+import "./product-media.css";
 
 export function ProductMedia({
   product,
   imageIndex = 0,
+  forceCategoryArtwork = false,
 }: {
   product: Product;
   imageIndex?: number;
+  forceCategoryArtwork?: boolean;
 }) {
   const { locale, t } = useLocale();
+  const [failedImage, setFailedImage] = useState<string | null>(null);
   const soldBadge =
-    product.status === "sold" ? (
-      <span className="pointer-events-none absolute end-4 top-4 z-[8] inline-flex min-h-[30px] items-center rounded-full border border-rad-paper/70 bg-rad-clay px-3 py-1 text-label font-medium text-rad-paper shadow-[0_4px_18px_rgba(24,35,31,.12)]">
-        {t("soldOut")}
-      </span>
-    ) : null;
+    product.status === "sold" ? <span className="sold-media-badge">{t("soldOut")}</span> : null;
 
   const media = product.images?.[imageIndex] ?? product.images?.[0];
-  if (media?.src) {
-    const photoSrc = media.src.startsWith("/catalog/")
+  const photoSrc = media?.src
+    ? media.src.startsWith("/catalog/")
       ? `/backend${media.src}`
-      : media.src;
+      : media.src
+    : null;
+
+  if (!forceCategoryArtwork && photoSrc && failedImage !== photoSrc) {
     return (
       <>
         <img
-          className="product-photo relative z-[2] max-h-full max-w-full object-contain"
+          className="product-photo"
           src={photoSrc}
-          alt={locale === "fa" ? media.alt : media.enAlt}
+          alt={locale === "fa" ? (media?.alt ?? "") : (media?.enAlt ?? "")}
+          onError={() => setFailedImage(photoSrc)}
         />
         {soldBadge}
       </>

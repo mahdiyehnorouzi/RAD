@@ -1,4 +1,5 @@
 "use client";
+import "./workshop-detail.css";
 
 import { useState } from "react";
 import { copy, deadlineWarning } from "@/lib/making";

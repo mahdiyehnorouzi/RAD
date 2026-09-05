@@ -1,4 +1,5 @@
 "use client";
+import "./customer-detail.css";
 
 import { copy } from "@/lib/making";
 import { formatWhen } from "@/lib/making";

@@ -1,7 +1,6 @@
 "use client";
 
 import { ArtworkVisual } from "@/components/product/artwork-visual";
-import "@/components/product/artwork-visual/artwork.css";
 import type { DifferencePortrait, DifferenceStageId } from "../type";
 
 export function StageVisual({

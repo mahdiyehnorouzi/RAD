@@ -1,19 +1,18 @@
 "use client";
-
-import { ArtworkVisual } from "@/components/product/artwork-visual";
+import type { Product } from "@rad/types";
+import { ArtworkVisual } from "@/components/product";
 import { ButtonLink } from "@/components/ui/button-link";
-import { Eyebrow, PageSection } from "@/components/ui/section";
 import { useLocale } from "@/components/i18n";
-import { artworkVisual } from "@/lib/catalog/artwork";
-import type {Product} from "@rad/types";
+import { artworkVisual } from "@/lib/catalog";
+import "./studio-callout.css";
 
 export function StudioCallout({ product }: { product?: Product }) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   return (
-    <PageSection className="grid items-center gap-[8vw] bg-rad-moss text-rad-paper md:grid-cols-2">
-      <div className="relative grid h-[600px] place-items-center">
-        <span className="absolute h-[55%] w-[85%] rounded-full border border-white/30" />
-        <span className="absolute h-[85%] w-[55%] rounded-full border border-white/30" />
+    <section className="studio-callout section">
+      <div className="studio-visual">
+        <span className="orbit o1" />
+        <span className="orbit o2" />
         {product ? (
           <ArtworkVisual
             visual={artworkVisual(product)}
@@ -24,13 +23,13 @@ export function StudioCallout({ product }: { product?: Product }) {
         ) : null}
       </div>
       <div>
-        <Eyebrow className="text-rad-sand">{t("studioEyebrow")}</Eyebrow>
-        <h2 className="m-0 text-h2 font-normal">{t("studioImagineTitle")}</h2>
-        <p className="my-8 max-w-xl text-lede">{t("studioImagineBody")}</p>
+        <span className="eyebrow">{t("studioEyebrow")}</span>
+        <h2>{locale === "fa" ? "چیزی را که هنوز وجود ندارد، تصور کن." : "Imagine what does not exist yet."}</h2>
+        <p>{locale === "fa" ? "رَد کمک می‌کند آن را ببینی و بسازی." : "RAD helps you see it and make it."}</p>
         <ButtonLink href="/studio" light>
           {t("enterStudio")}
         </ButtonLink>
       </div>
-    </PageSection>
+    </section>
   );
 }
