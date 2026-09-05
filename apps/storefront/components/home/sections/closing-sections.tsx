@@ -24,10 +24,12 @@ export function FinalCta() {
   const { t } = useLocale();
   return (
     <PageSection className="final-cta">
-      <Eyebrow>{t("finalCtaEyebrow")}</Eyebrow>
-      <h2 className="mx-auto mb-8 max-w-2xl text-h2 font-normal">
-        {t("finalCtaTitle")}
-      </h2>
+      <div>
+        <Eyebrow>{t("finalCtaEyebrow")}</Eyebrow>
+        <h2 className="m-0 max-w-2xl text-h2 font-normal">
+          {t("finalCtaTitle")}
+        </h2>
+      </div>
       <ButtonLink href="/studio">{t("designMine")}</ButtonLink>
     </PageSection>
   );

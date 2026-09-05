@@ -23,7 +23,7 @@ export function StudioCallout({ product }: { product?: Product }) {
           />
         ) : null}
       </div>
-      <div>
+      <div className="studio-callout-copy">
         <Eyebrow className="text-rad-sand">{t("studioEyebrow")}</Eyebrow>
         <h2 className="m-0 text-h2 font-normal">{t("studioImagineTitle")}</h2>
         <p className="my-8 max-w-xl text-lede">{t("studioImagineBody")}</p>

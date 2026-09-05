@@ -24,7 +24,7 @@ export function EntryPaths() {
         },
       ].map((path) => (
         <article key={path.href}>
-          <span>{path.index}</span>
+          <span dir="ltr">{path.index}</span>
           <h2>{path.title}</h2>
           <p>{path.body}</p>
           <ButtonLink href={path.href} outline>

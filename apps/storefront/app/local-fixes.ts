@@ -2,7 +2,7 @@ export const localFixes = String.raw`
 .eyebrow{display:block;margin-bottom:1.25rem;color:var(--clay);font-size:var(--text-eyebrow);font-weight:400;letter-spacing:.12em}
 button,.button,.language-switch,.utility-button,.search-toggle,.menu{box-shadow:none!important;outline:0!important}
 .button{border:0!important}
-.button.outline{min-height:auto!important;padding:.45rem 0!important;border:0!important;border-bottom:1px solid currentColor!important;border-radius:0!important;background:transparent!important}
+.button.outline{display:inline-flex!important;align-items:center!important;width:fit-content!important;max-width:100%!important;align-self:flex-start!important;min-height:auto!important;padding:.45rem 0!important;border:0!important;border-bottom:1px solid currentColor!important;border-radius:0!important;background:transparent!important}
 .language-switch{border:0!important;border-bottom:1px solid var(--line)!important;border-radius:0!important}
 button:focus-visible,.button:focus-visible,.language-switch:focus-visible{outline:0!important;box-shadow:inset 0 -2px 0 #8a4938!important}
 .process .steps article > span{width:58px!important;min-width:58px!important;height:58px!important;padding:0!important;border-radius:50%!important;aspect-ratio:1!important;font-size:.68rem!important;direction:ltr!important;place-items:center!important}
@@ -103,16 +103,18 @@ html[dir="rtl"] .filter-count{text-align:right!important}
 .home-products .product-meta p{font-size:.82rem!important}
 .process .section-heading{justify-content:flex-start!important;align-items:start!important;width:100%!important;text-align:right!important;margin-bottom:2rem!important}
 .process .section-heading>div{width:100%!important;text-align:right!important}
-.process .section-heading h2,.archive-section .section-heading h2,.entry-paths h2{font-size:clamp(1.45rem,6.5vw,1.85rem)!important;font-weight:400!important;line-height:1.25!important}
+.process .section-heading h2,.archive-section .section-heading h2,.entry-paths h2,.studio-callout h2,.human-story h2,.provenance h2,.orders-entry h2,.final-cta h2,.film-copy h2{font-size:var(--text-h2)!important;font-weight:400!important;line-height:1.25!important;max-width:none!important}
 .process .steps article h3{font-size:clamp(1rem,4.2vw,1.15rem)!important;font-weight:400!important}
-.entry-paths h2{margin:1rem 0 .65rem!important;max-width:none!important}
-.entry-paths article>span{margin:0!important}
+.entry-paths h2{margin:0 0 .75rem!important}
+.entry-paths p{margin:0 0 1.75rem!important}
+.entry-paths article>span{display:block!important;margin:0 0 1rem!important;unicode-bidi:isolate}
+.entry-paths article:nth-child(2)>span{color:var(--sand)!important}
 .entry-paths .button.outline{width:fit-content!important}
 @media(max-width:600px){
-.entry-paths article{padding:clamp(2rem,5vw,2.5rem) clamp(1rem,4vw,1.25rem)!important}
+.entry-paths article{padding:clamp(2.25rem,6vw,3rem) var(--page)!important}
 }
-html[dir="rtl"] .archive-section .section-heading>.button,html[dir="rtl"] .process .section-heading>.button{align-self:start!important}
-html[dir="rtl"] .archive-section .section-heading,html[dir="rtl"] .process .section-heading{align-items:start!important}
+html[dir="rtl"] .archive-section .section-heading>.button,html[dir="rtl"] .process .section-heading>.button,html[dir="rtl"] .orders-entry .button,html[dir="rtl"] .final-cta .button{align-self:flex-start!important}
+html[dir="rtl"] .archive-section .section-heading,html[dir="rtl"] .process .section-heading,html[dir="rtl"] .orders-entry,html[dir="rtl"] .final-cta{align-items:flex-start!important;text-align:right!important}
 html[dir="rtl"] .checkout-page,html[dir="rtl"] .checkout-page>header,html[dir="rtl"] .checkout-grid,html[dir="rtl"] .checkout-form,html[dir="rtl"] .checkout-summary,html[dir="rtl"] .checkout-review{direction:rtl!important;text-align:right!important}
 html[dir="rtl"] .checkout-form label,html[dir="rtl"] .checkout-form input,html[dir="rtl"] .checkout-form textarea,html[dir="rtl"] .checkout-summary span,html[dir="rtl"] .checkout-summary b,html[dir="rtl"] .checkout-review dt,html[dir="rtl"] .checkout-review dd{width:100%;text-align:right!important}
 html[dir="rtl"] .orders-page,html[dir="rtl"] .orders-heading,html[dir="rtl"] .order-card,html[dir="rtl"] .order-card>header,html[dir="rtl"] .order-card dl,html[dir="rtl"] .order-card ul{direction:rtl!important;text-align:right!important}
@@ -136,8 +138,8 @@ html[dir="rtl"] .product-meta .product-category,html[dir="rtl"] .product-meta h3
 html[dir="rtl"] .product-meta>span,html[data-locale="fa"] .product-meta>span{width:100%!important;text-align:right!important;align-self:start!important}
 html[dir="rtl"] .home-products .product-meta>span,html[data-locale="fa"] .home-products .product-meta>span{width:auto!important;text-align:start!important}
 html[dir="rtl"] input,html[dir="rtl"] textarea,html[dir="rtl"] select{text-align:right!important;direction:rtl!important}
-html[dir="rtl"] .process .steps article,html[data-locale="fa"] .process .steps article{display:block!important;position:relative!important;min-height:150px!important;padding:0 76px 2rem 0!important;text-align:right!important}
-html[dir="rtl"] .process .steps article>span,html[data-locale="fa"] .process .steps article>span{position:absolute!important;top:0!important;right:0!important;left:auto!important;margin:0!important}
+html[dir="rtl"] .process .steps article,html[data-locale="fa"] .process .steps article{display:block!important;position:relative!important;min-height:150px!important;padding:0!important;padding-block:0 2rem!important;padding-inline:76px 0!important;text-align:right!important}
+html[dir="rtl"] .process .steps article>span,html[data-locale="fa"] .process .steps article>span{position:absolute!important;top:0!important;inset-inline-start:0!important;inset-inline-end:auto!important;right:auto!important;left:auto!important;margin:0!important}
 html[dir="rtl"] .process .steps article h3,html[dir="rtl"] .process .steps article p,html[data-locale="fa"] .process .steps article h3,html[data-locale="fa"] .process .steps article p{display:block!important;width:100%!important;margin-right:0!important;margin-left:0!important;text-align:right!important}
 html[dir="rtl"] .process .steps article h3,html[data-locale="fa"] .process .steps article h3{margin-top:0!important;margin-bottom:.5rem!important}
 }
@@ -222,8 +224,8 @@ html[dir="rtl"] .process .steps article h3,html[data-locale="fa"] .process .step
 html[dir="rtl"] .archive-section .section-heading>.button,html[dir="rtl"] .process .section-heading>.button{align-self:start!important}
 .home-products{width:100%!important;grid-template-columns:minmax(0,1fr)!important;place-items:center!important}
 .home-products>.product-card:nth-child(n){grid-column:1!important;width:min(100%,390px)!important;max-width:390px!important;margin-inline:auto!important;justify-self:center!important}
-.archive-section .section-heading,.process .section-heading{align-items:start!important;text-align:start!important}
-.archive-section .section-heading>.button,.process .section-heading>.button{align-self:start!important}
+.archive-section .section-heading,.process .section-heading,.orders-entry,.final-cta{align-items:flex-start!important;text-align:start!important}
+.archive-section .section-heading>.button,.process .section-heading>.button,.orders-entry .button,.final-cta .button{align-self:flex-start!important}
 .plp{overflow-x:clip!important}
 .plp .product-grid{width:100%!important;grid-template-columns:minmax(0,1fr)!important;place-items:center!important}
 .plp .product-grid>.product-card{width:min(100%,390px)!important;max-width:390px!important;margin-inline:auto!important;justify-self:center!important}
@@ -245,6 +247,11 @@ html[dir="rtl"] .checkout-summary{display:grid!important;justify-items:start!imp
 .surprise-grid{grid-template-columns:1fr!important}
 .museum-grid{grid-template-columns:1fr!important}
 .museum-card .button{width:fit-content}
+.header-nav.is-open{top:86px!important}
+.logo-mark{width:44px!important;height:44px!important}
+.footer{padding-bottom:5.5rem!important}
+.footer-brand{grid-template-columns:72px minmax(0,1fr)!important}
+.footer-mark{width:72px!important;height:72px!important}
 }
 .making-page,.workshop-page{background:var(--canvas);color:var(--ink)}
 .making-heading h1,.workshop-page h1{font-size:clamp(1.8rem,4.5vw,3.1rem);font-weight:400;line-height:1.2;margin:.4rem 0 1rem;max-width:18ch}
@@ -311,5 +318,31 @@ html[dir="rtl"] .checkout-summary{display:grid!important;justify-items:start!imp
 .studio-notes a{color:#ead9bd}
 @media(max-width:900px){
 .making-grid,.making-layout,.making-photos,.workshop-columns,.making-situation dl,.making-rail{grid-template-columns:1fr!important}
+.studio-callout{grid-template-columns:1fr!important;grid-template-areas:"copy" "visual"!important;gap:2.5rem!important}
+.studio-callout-copy{grid-area:copy!important}
+.studio-visual{grid-area:visual!important;width:100%!important;height:min(78vw,420px)!important}
+.orders-entry,.final-cta{display:flex!important;flex-direction:column!important;align-items:flex-start!important;text-align:start!important}
+html[dir="rtl"] .orders-entry,html[dir="rtl"] .final-cta{text-align:right!important}
+.provenance article+article{border-top:1px solid var(--line)!important;padding-top:1.75rem!important}
+}
+.footer{display:grid!important;gap:2.5rem 4rem!important;padding:clamp(2.5rem,6vw,4rem) var(--page) 2.75rem!important;background:var(--clay)!important;color:var(--paper)!important}
+.footer-brand{display:grid!important;grid-template-columns:88px minmax(0,1fr)!important;align-items:center!important;gap:1.25rem!important}
+.footer-mark{display:block!important;width:88px!important;height:88px!important}
+.footer-nav{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:1.5rem 2rem!important}
+.footer-nav section{display:grid!important;gap:.55rem!important}
+.footer-nav b{color:var(--sand)!important;font-size:.72rem!important;letter-spacing:.12em!important}
+.footer-bottom{display:flex!important;flex-wrap:wrap!important;align-items:center!important;justify-content:space-between!important;gap:.75rem 1.5rem!important;padding-top:1.25rem!important;border-top:1px solid color-mix(in srgb,var(--paper) 22%,transparent)!important;grid-column:1/-1!important}
+.footer-meta{display:flex!important;flex-wrap:wrap!important;align-items:center!important;gap:.85rem!important;unicode-bidi:isolate}
+@media(min-width:901px){
+.footer{grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr)!important}
+.orders-entry{flex-direction:row!important;align-items:end!important;justify-content:space-between!important}
+}
+@media(max-width:600px){
+.footer{padding-bottom:5.5rem!important}
+.footer-brand{grid-template-columns:72px minmax(0,1fr)!important}
+.footer-mark{width:72px!important;height:72px!important}
+.logo-mark{width:44px!important;height:44px!important}
+.header-nav.is-open{top:86px!important}
+.header{padding-inline:var(--page)!important}
 }
 `;

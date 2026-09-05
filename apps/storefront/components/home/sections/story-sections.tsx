@@ -65,7 +65,7 @@ export function ProcessSection() {
       <div className="steps">
         {steps.map(([index, title, body]) => (
           <article key={index}>
-            <span>{index}</span>
+            <span dir="ltr">{index}</span>
             <h3>{title}</h3>
             <p>{body}</p>
           </article>

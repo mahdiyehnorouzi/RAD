@@ -23,9 +23,9 @@ export function HeaderNav({
   const { t, href } = useLocale();
   return (
     <nav
-      className={`${
+      className={`header-nav ${
         open
-          ? "absolute inset-x-0 top-[104px] z-40 flex flex-col gap-4 border-b border-rad-line bg-rad-paper px-page py-6 lg:static lg:inset-auto lg:flex-row lg:border-0 lg:bg-transparent lg:p-0"
+          ? "is-open absolute inset-x-0 top-[104px] z-40 flex flex-col gap-4 border-b border-rad-line bg-rad-paper px-page py-6 lg:static lg:inset-auto lg:flex-row lg:border-0 lg:bg-transparent lg:p-0"
           : "hidden lg:flex"
       } gap-8`}
       aria-label={t("navAria")}
