@@ -152,6 +152,16 @@ model Notice {
   @@index([ownerKey])
 }
 
+model Commission {
+  id        String   @id
+  ownerKey  String
+  payload   Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([ownerKey])
+}
+
 model PaymentIntent {
   id       String @id @default(cuid())
   orderId  String @unique

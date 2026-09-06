@@ -66,7 +66,7 @@ export function toAdminOrder(
     customer: order.name,
     productName: order.items.map((item) => item.product?.name ?? item.productSlug).join("، "),
     amount: order.total,
-    status: order.status,
+    status: order.status as "received" | "approved" | "forming" | "drying" | "firing" | "glazing" | "quality" | "shipped" | "delivered",
     createdAt: order.createdAt.getTime(),
   };
 }

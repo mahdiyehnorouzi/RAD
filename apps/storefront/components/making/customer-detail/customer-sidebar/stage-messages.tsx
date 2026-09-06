@@ -1,5 +1,6 @@
 "use client";
 
+import "./customer-sidebar.css";
 import type {MakingCommission} from "@/components/making/type";
 import { copy, STAGE_LABEL } from "@/lib/making";
 import { formatWhen } from "@/lib/making";

@@ -1,1 +1,70 @@
-html[dir="rtl"] .making-quote {direction:rtl!important;text-align:right!important}
+html[dir="rtl"] .making-quote {
+  direction: rtl !important;
+  text-align: right !important;
+}
+
+.making-quote {
+  display: grid;
+  gap: 1rem;
+  padding: 1.2rem 1.25rem;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+
+.making-quote header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.making-quote .eyebrow {
+  margin-bottom: 0;
+}
+
+.making-quote time {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.making-quote dl {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.95rem 1.25rem;
+  margin: 0;
+}
+
+.making-quote dl > div {
+  display: grid;
+  gap: 0.28rem;
+}
+
+.making-quote dl > div:first-child {
+  grid-column: 1 / -1;
+  padding-bottom: 1rem;
+  margin-bottom: 0.15rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.making-quote dt {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.making-quote dd {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.7;
+}
+
+.making-quote.snapshot {
+  background: color-mix(in srgb, var(--canvas) 45%, var(--paper));
+}
+
+@media (max-width: 700px) {
+  .making-quote dl {
+    grid-template-columns: 1fr;
+  }
+}

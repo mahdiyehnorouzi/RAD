@@ -17,6 +17,6 @@
   "cache": { "enabled": true },
   "vars": {
     "API_URL": "https://rad-api-web-production-9b7c.up.railway.app",
-    "RAD_VERSION": "1.2.0"
+    "RAD_VERSION": "1.3.0"
   }
 }

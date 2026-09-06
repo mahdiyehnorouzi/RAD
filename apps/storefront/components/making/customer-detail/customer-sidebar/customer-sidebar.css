@@ -1,0 +1,160 @@
+.making-side {
+  display: grid;
+  gap: 1.15rem;
+  min-width: 0;
+}
+
+.making-side-block {
+  display: grid;
+  gap: 0.9rem;
+  padding: 1.15rem 1.2rem 1.25rem;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+
+.making-side h2,
+.making-side-block h2 {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 650;
+  line-height: 1.35;
+}
+
+.making-empty {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.making-payments {
+  display: grid;
+  gap: 0.65rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.making-payments li {
+  display: grid;
+  gap: 0.15rem;
+  padding: 0.75rem 0.85rem;
+  background: color-mix(in srgb, var(--canvas) 72%, var(--paper));
+  border-radius: 8px;
+}
+
+.making-payments b {
+  font-size: 0.82rem;
+  font-weight: 650;
+}
+
+.making-payments span {
+  font-size: 0.98rem;
+  font-weight: 600;
+}
+
+.making-payments small {
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+.making-messages {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.making-messages li {
+  padding: 0.85rem 0.95rem;
+  border: 1px solid color-mix(in srgb, var(--line) 85%, transparent);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--canvas) 55%, var(--paper));
+}
+
+.making-messages li.artist {
+  border-inline-start: 3px solid var(--moss);
+}
+
+.making-messages li.customer {
+  border-inline-start: 3px solid #8a4938;
+}
+
+.making-messages li.internal {
+  border-inline-start: 3px solid var(--sand);
+}
+
+.making-messages header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.25rem 0.7rem;
+  margin-bottom: 0.45rem;
+}
+
+.making-messages header b {
+  font-size: 0.82rem;
+  font-weight: 650;
+}
+
+.making-messages header span,
+.making-messages header time {
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
+.making-messages p {
+  margin: 0;
+  font-size: 0.9rem !important;
+  line-height: 1.65 !important;
+}
+
+.making-compose {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.65rem;
+  width: 100%;
+  min-width: 0;
+}
+
+.making-compose label {
+  display: block;
+  width: 100%;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.making-compose textarea {
+  display: block;
+  width: 100%;
+  min-height: 7.5rem;
+  margin: 0;
+  padding: 0.85rem 0.95rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--paper);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.92rem;
+  line-height: 1.6;
+}
+
+.making-compose .button {
+  width: 100%;
+}
+
+@media (max-width: 600px) {
+  .making-compose {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .making-compose textarea,
+  .making-compose label,
+  .making-compose .button {
+    width: 100% !important;
+    max-width: none !important;
+  }
+}

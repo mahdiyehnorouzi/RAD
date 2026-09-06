@@ -100,6 +100,14 @@ export interface Order {
 }
 export interface Review { id: string; productSlug: string; author: string; rating: number; comment: string; image?: string; createdAt: number; }
 export interface PaymentIntent { id: string; orderId: string; amount: number; currency: "IRR" | "USD"; provider: "sandbox" | "zarinpal"; status: "created" | "redirected" | "verified" | "failed"; }
-export type NoticeKind = "favorite" | "cart" | "welcome" | "order";
+export type NoticeKind =
+  | "favorite"
+  | "cart"
+  | "welcome"
+  | "order"
+  | "commission_approved"
+  | "commission_declined"
+  | "commission_change"
+  | "commission_message";
 export interface Notice { id: string; kind: NoticeKind; productSlug?: string; read: boolean; createdAt: number; }
 export interface CartSnapshot { slugs: string[]; }

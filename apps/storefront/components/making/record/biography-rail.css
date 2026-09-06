@@ -1,6 +1,10 @@
 .making-rail-wrap {
   margin: 0 0 2.5rem;
+  padding: 1rem 0.75rem 0.35rem;
   overflow-x: auto;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 12px;
 }
 
 .making-rail {
@@ -30,8 +34,9 @@
   top: 15px;
   inset-inline-start: calc(50% + 18px);
   inset-inline-end: calc(-50% + 18px);
-  height: 2px;
+  height: 3px;
   background: var(--line);
+  border-radius: 99px;
 }
 
 .making-rail li.done:not(:last-child)::after,

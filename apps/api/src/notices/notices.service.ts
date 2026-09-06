@@ -17,30 +17,64 @@ export class NoticesService {
       take: 20,
     });
     return {
-      notices: notices.map((notice) => ({
-        id: notice.id,
-        kind: notice.kind as "favorite" | "cart" | "welcome" | "order",
-        productSlug: notice.productSlug ?? undefined,
-        read: notice.read,
-        createdAt: notice.createdAt.getTime(),
-      })),
+      notices: notices.map((notice) => this.toNotice(notice)),
       unread: notices.filter((notice) => !notice.read).length,
+    };
+  }
+
+  private toNotice(notice: {
+    id: string;
+    kind: string;
+    productSlug: string | null;
+    read: boolean;
+    createdAt: Date;
+  }) {
+    return {
+      id: notice.id,
+      kind: notice.kind as
+        | "favorite"
+        | "cart"
+        | "welcome"
+        | "order"
+        | "commission_approved"
+        | "commission_declined"
+        | "commission_change"
+        | "commission_message",
+      productSlug: notice.productSlug ?? undefined,
+      read: notice.read,
+      createdAt: notice.createdAt.getTime(),
     };
   }
 
   async create(
     actor: Actor,
-    kind: "favorite" | "cart" | "welcome" | "order",
+    kind: "favorite" | "cart" | "welcome" | "order" | "commission_approved" | "commission_declined" | "commission_change" | "commission_message",
+    productSlug?: string,
+  ) {
+    return this.createForOwner(this.identity.key(actor), kind, productSlug);
+  }
+
+  async createForOwner(
+    ownerKey: string,
+    kind: "favorite" | "cart" | "welcome" | "order" | "commission_approved" | "commission_declined" | "commission_change" | "commission_message",
     productSlug?: string,
   ) {
     await this.prisma.notice.create({
       data: {
-        ownerKey: this.identity.key(actor),
+        ownerKey,
         kind,
         productSlug,
       },
     });
-    return this.list(actor);
+    const notices = await this.prisma.notice.findMany({
+      where: { ownerKey },
+      orderBy: { createdAt: "desc" },
+      take: 20,
+    });
+    return {
+      notices: notices.map((notice) => this.toNotice(notice)),
+      unread: notices.filter((notice) => !notice.read).length,
+    };
   }
 
   async markAllRead(actor: Actor) {

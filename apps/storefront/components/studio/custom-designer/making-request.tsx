@@ -18,7 +18,12 @@ export function MakingRequest({
     <section className="making-request">
       <span className="eyebrow">{t("makingEyebrow")}</span>
       <h2>{t("makingSubmit")}</h2>
+      <p>{t("personalizedWhat")}</p>
       <p>{t("makingBody")}</p>
+      <p>{t("makingAfterSend")}</p>
+      <p>
+        <b>{t("zundTitle")}</b> {t("zundBody")}
+      </p>
       <label htmlFor="intended-use">{t("makingUseLabel")}</label>
       <textarea
         id="intended-use"

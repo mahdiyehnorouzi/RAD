@@ -77,6 +77,20 @@ export function CommerceProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
+    const refreshNotices = () => {
+      api<{ notices: Notice[] }>("/notices")
+        .then((payload) => setNotices(payload.notices))
+        .catch(() => {});
+    };
+    const timer = window.setInterval(refreshNotices, 8000);
+    window.addEventListener("focus", refreshNotices);
+    return () => {
+      window.clearInterval(timer);
+      window.removeEventListener("focus", refreshNotices);
+    };
+  }, []);
+
+  useEffect(() => {
     if (!toast) return;
     const timer = window.setTimeout(() => setToast(null), 3200);
     return () => window.clearTimeout(timer);
@@ -236,7 +250,7 @@ export function NotificationCenter() {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const { notices, unread, markAllRead } = useCommerce();
-  const { locale, t, number } = useLocale();
+  const { locale, t, number, href } = useLocale();
   const { getProduct } = useCatalog();
   useEffect(() => setOpen(false), [pathname]);
   useEffect(() => {
@@ -260,6 +274,10 @@ export function NotificationCenter() {
     if (notice.kind === "favorite") return `${t("noticeFavorite")} ${name}`;
     if (notice.kind === "cart") return `${t("noticeCart")} ${name}`;
     if (notice.kind === "order") return t("noticeOrder");
+    if (notice.kind === "commission_approved") return t("noticeCommissionApproved");
+    if (notice.kind === "commission_declined") return t("noticeCommissionDeclined");
+    if (notice.kind === "commission_change") return t("noticeCommissionChange");
+    if (notice.kind === "commission_message") return t("noticeCommissionMessage");
     return t("noticeWelcome");
   };
   return (
@@ -301,9 +319,20 @@ export function NotificationCenter() {
           </header>
           {notices.length ? (
             <ul>
-              {notices.map((notice) => (
+              {notices.map((notice) => {
+                const makingHref =
+                  notice.kind.startsWith("commission") && notice.productSlug
+                    ? href(`/making/${notice.productSlug}`)
+                    : null;
+                return (
                 <li key={notice.id} className={notice.read ? "" : "unread"}>
-                  <span>{noticeText(notice)}</span>
+                  {makingHref ? (
+                    <Link href={makingHref} onClick={() => setOpen(false)}>
+                      {noticeText(notice)}
+                    </Link>
+                  ) : (
+                    <span>{noticeText(notice)}</span>
+                  )}
                   <small>
                     {new Intl.DateTimeFormat(
                       locale === "fa" ? "fa-IR" : "en-US",
@@ -311,7 +340,8 @@ export function NotificationCenter() {
                     ).format(notice.createdAt)}
                   </small>
                 </li>
-              ))}
+                );
+              })}
             </ul>
           ) : (
             <p className="notice-empty">{t("noNotifications")}</p>

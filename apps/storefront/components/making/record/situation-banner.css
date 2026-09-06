@@ -2,17 +2,20 @@ html[dir="rtl"] .making-situation {direction:rtl!important;text-align:right!impo
 
 .making-situation {
   display: grid;
-  gap: 1rem;
+  gap: 1.15rem;
   padding: clamp(1.5rem, 4vw, 2.5rem);
   background: var(--ink);
   color: var(--paper);
   margin: 2rem 0;
+  border-radius: 14px;
 }
 
 .making-situation h2 {
-  margin: 0.4rem 0 0;
-  font-weight: 400;
-  font-size: clamp(1.2rem, 2.4vw, 1.6rem);
+  margin: 0.2rem 0 0;
+  padding-top: 0.85rem;
+  border-top: 1px solid rgba(247, 242, 233, 0.14);
+  font-weight: 500;
+  font-size: clamp(1.05rem, 2.2vw, 1.35rem);
 }
 
 .making-situation p {
@@ -37,6 +40,34 @@ html[dir="rtl"] .making-situation {direction:rtl!important;text-align:right!impo
 .making-situation dd {
   margin: 0;
   font-weight: 650;
+}
+
+.making-situation .stage-meter-kicker,
+.making-situation .stage-meter-next span {
+  color: #e0c4b4;
+}
+
+.making-situation .stage-meter-now,
+.making-situation .stage-meter-next {
+  color: var(--paper);
+}
+
+.making-situation .stage-meter-count {
+  background: rgba(247, 242, 233, 0.12);
+  color: #d4c7b6;
+}
+
+.making-situation .stage-meter-track i.done {
+  background: #cbb892;
+}
+
+.making-situation .stage-meter-track i.current {
+  background: #f4ead4;
+  box-shadow: 0 0 0 4px rgba(244, 234, 212, 0.22);
+}
+
+.making-situation .stage-meter-track i.upcoming {
+  background: rgba(247, 242, 233, 0.2);
 }
 
 @media (max-width: 700px) {

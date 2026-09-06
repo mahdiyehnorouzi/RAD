@@ -10,20 +10,28 @@ import { productPrice } from "@/lib/money";
 import { FavoriteButton } from "@/components/commerce";
 import { ChevronDown, PackageCheck, Palette, ShieldCheck, Truck } from "lucide-react";
 import { useCatalog } from "../../catalog/catalog-provider";
+import { hasRealProductImage } from "@/lib/catalog/category-defaults";
 import "./product-detail.css";
 
 export function ProductDetail({ product }: { product: Product }) {
   const { locale, t } = useLocale();
   const carouselRef = useRef<HTMLDivElement>(null);
   const [activeImage, setActiveImage] = useState(0);
-  const { products } = useCatalog();
+  const { products, getProduct } = useCatalog();
+  const catalogProduct = getProduct(product.slug);
+  const resolved =
+    catalogProduct && hasRealProductImage(catalogProduct)
+      ? catalogProduct
+      : hasRealProductImage(product)
+        ? product
+        : catalogProduct ?? product;
 
-  const imageCount = product.images?.length ?? 1;
+  const imageCount = resolved.images?.length ?? 1;
 
-  const copy = productCopy(product, locale);
-  const price = productPrice(product, locale);
+  const copy = productCopy(resolved, locale);
+  const price = productPrice(resolved, locale);
 
-  const category = categoryLabel(product.category, locale);
+  const category = categoryLabel(resolved.category, locale);
 
   return (
     <>
@@ -31,7 +39,7 @@ export function ProductDetail({ product }: { product: Product }) {
         <div className="pdp-gallery">
           <div className="pdp-main-art">
             <span className="edition">{locale === "fa" ? "۱/۱" : "1/1"}</span>
-            <ProductMedia product={product} imageIndex={activeImage} />
+            <ProductMedia product={resolved} imageIndex={activeImage} />
           </div>
           <div className="pdp-detail-art">
             {Array.from({ length: Math.max(imageCount, 1) }, (_, index) => (
@@ -42,7 +50,7 @@ export function ProductDetail({ product }: { product: Product }) {
                 onClick={() => setActiveImage(index)}
                 aria-label={`${t("imageNumber")} ${locale === "fa" ? new Intl.NumberFormat("fa-IR").format(index + 1) : index + 1}`}
               >
-                <ProductMedia product={product} imageIndex={index} />
+                <ProductMedia product={resolved} imageIndex={index} />
               </button>
             ))}
           </div>
@@ -55,13 +63,13 @@ export function ProductDetail({ product }: { product: Product }) {
           <p className="subtitle">{copy.subtitle}</p>
           <p className="price">{price}</p>
           <p className="pdp-story">{copy.story}</p>
-          <FavoriteButton slug={product.slug} />
+          <FavoriteButton slug={resolved.slug} />
           <ul>
             {copy.details.map((detail) => (
               <li key={detail}>{detail}</li>
             ))}
           </ul>
-          <AddToBag product={product} />
+          <AddToBag product={resolved} />
           <p className="shipping">{t("shipping")}</p>
         </div>
       </section>
@@ -126,7 +134,7 @@ export function ProductDetail({ product }: { product: Product }) {
         </header>
         <div ref={carouselRef} className="related-carousel">
           {products
-            .filter((item) => item.slug !== product.slug)
+            .filter((item) => item.slug !== resolved.slug)
             .map((item, index) => (
               <ProductCard key={item.slug} product={item} index={index} />
             ))}

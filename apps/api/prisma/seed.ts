@@ -3,6 +3,7 @@ import path from "node:path";
 import { PrismaClient } from "@prisma/client";
 import { hash } from "bcryptjs";
 import { seedProducts, seedVendors } from "./data";
+import { seedCommerce } from "./seed-commerce";
 
 const prisma = new PrismaClient();
 const seedAssetsDir = path.join(__dirname, "seed-assets");
@@ -100,6 +101,8 @@ async function main() {
       });
     }
   }
+
+  await seedCommerce(prisma);
 }
 
 main()

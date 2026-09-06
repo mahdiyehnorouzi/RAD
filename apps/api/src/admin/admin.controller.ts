@@ -12,12 +12,17 @@ import {
 import { AdminGuard } from "../common/guards/admin.guard";
 import { AdminService } from "./admin.service";
 import { InviteMemberDto, SaveProductDto, UpdateMemberDto, UpdateOrderDto } from "./dto";
+import { CommissionsService } from "../commissions/commissions.service";
+import { CommissionDecideDto, CommissionMessageDto, SaveCommissionDto } from "../commissions/dto";
 import type { AuthedRequest } from "../common/session.middleware";
 
 @Controller("admin")
 @UseGuards(AdminGuard)
 export class AdminController {
-  constructor(private readonly admin: AdminService) {}
+  constructor(
+    private readonly admin: AdminService,
+    private readonly commissions: CommissionsService,
+  ) {}
 
   @Get("products")
   listProducts() {
@@ -59,6 +64,46 @@ export class AdminController {
   ) {
     this.admin.assert(request.adminRole, "order.write");
     return this.admin.updateOrder(id, body);
+  }
+
+  @Get("commissions")
+  listCommissions() {
+    return this.commissions.listAll();
+  }
+
+  @Get("commissions/:id")
+  getCommission(@Param("id") id: string) {
+    return this.commissions.getAdmin(id);
+  }
+
+  @Patch("commissions/:id")
+  saveCommission(
+    @Param("id") id: string,
+    @Body() body: SaveCommissionDto,
+    @Req() request: AuthedRequest,
+  ) {
+    this.admin.assert(request.adminRole, "order.write");
+    return this.commissions.saveAdmin(id, body.payload);
+  }
+
+  @Post("commissions/:id/decide")
+  decideCommission(
+    @Param("id") id: string,
+    @Body() body: CommissionDecideDto,
+    @Req() request: AuthedRequest,
+  ) {
+    this.admin.assert(request.adminRole, "order.write");
+    return this.commissions.decide(id, body);
+  }
+
+  @Post("commissions/:id/messages")
+  messageCommission(
+    @Param("id") id: string,
+    @Body() body: CommissionMessageDto,
+    @Req() request: AuthedRequest,
+  ) {
+    this.admin.assert(request.adminRole, "order.write");
+    return this.commissions.addArtistMessage(id, body.body, body.internal);
   }
 
   @Get("members")

@@ -1,15 +1,18 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
-import { Archive, ChevronLeft, CircleGauge, ImagePlus, KeyRound, LayoutDashboard, LogOut, Menu, Package, Pencil, Plus, Search, ShieldCheck, ShoppingBag, Trash2, Users, X } from "lucide-react";
+import { Archive, ChevronLeft, CircleGauge, ImagePlus, KeyRound, LayoutDashboard, LogOut, Menu, Package, Pencil, Plus, ScrollText, Search, ShieldCheck, ShoppingBag, Trash2, Users, X } from "lucide-react";
 import { useAdminWorkspace } from "../hooks/use-admin-workspace";
 import { loadRememberedEmail, loadRememberMe, saveLoginPreferences } from "../lib/admin-storage";
-import { orderStatusLabels, productStatusLabels, roleLabels, type AdminMember, type AdminOrder, type AdminProduct, type AdminRole, type AdminSection } from "../lib/admin-data";
+import { orderStatusLabels, productStatusLabels, roleLabels, stageCountLabel, type AdminMember, type AdminOrder, type AdminProduct, type AdminRole, type AdminSection } from "../lib/admin-data";
+import { AdminCommissions } from "./admin-commissions";
+import { StageMeter } from "@rad/ui";
 
 const navItems: { id: AdminSection; label: string; icon: typeof Package }[] = [
   { id: "overview", label: "مرور استودیو", icon: LayoutDashboard },
   { id: "products", label: "آثار و محصولات", icon: Archive },
-  { id: "orders", label: "سفارش‌ها", icon: ShoppingBag },
+  { id: "orders", label: "سفارش‌های فروشگاه", icon: ShoppingBag },
+  { id: "commissions", label: "سفارش اختصاصی", icon: ScrollText },
   { id: "members", label: "افراد و دسترسی", icon: Users },
   { id: "account", label: "حساب کاربری", icon: KeyRound },
 ];
@@ -53,6 +56,7 @@ export function AdminDashboard() {
       {section === "overview" && <Overview workspace={workspace} onNavigate={go} />}
       {section === "products" && <Products products={workspace.products} canWrite={workspace.can("product.write")} onCreate={() => setProductEditor("new")} onEdit={setProductEditor} onDelete={setDeleteTarget} />}
       {section === "orders" && <Orders orders={workspace.orders} canWrite={workspace.can("order.write")} onChange={async (order) => { try { await workspace.updateOrder(order); announce("وضعیت سفارش ذخیره شد."); } catch (error) { announce((error as Error).message); } }} />}
+      {section === "commissions" && <AdminCommissions commissions={workspace.commissions} canWrite={workspace.can("order.write")} onDecide={async (input) => { try { await workspace.decideCommission(input); announce("تصمیم برای مشتری ارسال شد."); } catch (error) { announce((error as Error).message); } }} onMessage={async (id, body, internal) => { try { await workspace.messageCommission(id, body, internal); announce("پیام برای مشتری ارسال شد."); } catch (error) { announce((error as Error).message); } }} />}
       {section === "members" && <Members members={workspace.members} canWrite={workspace.can("member.write")} onInvite={() => setInviteOpen(true)} onChange={async (member) => { try { await workspace.updateMember(member); announce("سطح دسترسی به‌روزرسانی شد."); } catch (error) { announce((error as Error).message); } }} />}
       {section === "account" && <AccountSettings user={workspace.user} onChangePassword={workspace.changePassword} onDone={(message) => announce(message)} />}
     </main>
@@ -66,14 +70,15 @@ export function AdminDashboard() {
 
 function Overview({ workspace, onNavigate }: { workspace: ReturnType<typeof useAdminWorkspace>; onNavigate: (section: AdminSection) => void }) {
   const pending = workspace.orders.filter((order) => order.status !== "delivered").length;
+  const waiting = workspace.commissions.filter((item) => item.stage === "design_submitted" || item.stage === "feasibility").length;
   return <div className="view-stack">
-    <section className="overview-hero"><div><span className="eyebrow">وضعیت امروز</span><h2>هر اثر، از ثبت تا تحویل زیر یک سقف.</h2><p>محصولات، سفارش‌ها و دسترسی همکاران را بدون جدا شدن از زبان بصری رَد مدیریت کنید.</p></div><div className="kiln-dial"><CircleGauge /><strong>{number.format(workspace.products.length)}</strong><span>اثر ثبت‌شده</span></div></section>
+    <section className="overview-hero"><div><span className="eyebrow">وضعیت امروز</span><h2>هر اثر، از ثبت تا تحویل زیر یک سقف.</h2><p>سفارش اختصاصی را در صندوق بازبینی بپذیرید، با مشتری پیام بگذارید، و سفارش فروشگاه را جداگانه جلو ببرید.</p></div><div className="kiln-dial"><CircleGauge /><strong>{number.format(workspace.products.length)}</strong><span>اثر ثبت‌شده</span></div></section>
     <section className="metric-grid">
       <Metric label="آثار موجود" value={workspace.products.filter((item) => item.status === "available").length} note="آمادهٔ فروش" />
-      <Metric label="سفارش فعال" value={pending} note="در مسیر ساخت یا ارسال" />
-      <Metric label="اعضای تیم" value={workspace.members.length} note="فعال و دعوت‌شده" />
+      <Metric label="سفارش فروشگاه" value={pending} note="در مسیر ساخت یا ارسال" />
+      <Metric label="بازبینی اختصاصی" value={waiting} note="منتظر تصمیم هنرمند" />
     </section>
-    <section className="split-grid"><article className="paper-panel"><div className="panel-heading"><div><span className="eyebrow">سفارش‌های اخیر</span><h3>حرکت در کارگاه</h3></div><button className="text-action" type="button" onClick={() => onNavigate("orders")}>دیدن همه</button></div>{workspace.orders.slice(0, 3).map((order) => <div className="compact-row" key={order.id}><div><strong>{order.productName}</strong><small>{order.id} · {order.customer}</small></div><StatusBadge label={orderStatusLabels[order.status]} tone="green" /></div>)}</article>
+    <section className="split-grid"><article className="paper-panel"><div className="panel-heading"><div><span className="eyebrow">سفارش اختصاصی</span><h3>صندوق بازبینی</h3></div><button className="text-action" type="button" onClick={() => onNavigate("commissions")}>دیدن همه</button></div>{workspace.commissions.slice(0, 3).map((item) => <div className="compact-row" key={item.id}><div><strong>{item.customerName}</strong><small>{item.id} · {item.concept}</small></div></div>)}{!workspace.commissions.length && <p>هنوز طرح اختصاصی‌ای نرسیده است.</p>}</article>
       <article className="dark-panel"><span className="eyebrow">دسترسی تیم</span><ShieldCheck /><h3>نقش‌ها روشن، مسئولیت‌ها دقیق.</h3><p>مالک، مدیر، ویرایشگر و مشاهده‌گر هرکدام سطح دسترسی مشخص دارند.</p><button className="light-action" type="button" onClick={() => onNavigate("members")}>مدیریت افراد</button></article></section>
   </div>;
 }
@@ -93,7 +98,30 @@ function Products({ products, canWrite, onCreate, onEdit, onDelete }: { products
 function ProductThumb({ product }: { product: AdminProduct }) { return <div className="product-thumb">{product.images[0] ? <img src={product.images[0]} alt="" /> : <Package />}<span>{number.format(product.images.length)} عکس</span></div>; }
 
 function Orders({ orders, canWrite, onChange }: { orders: AdminOrder[]; canWrite: boolean; onChange: (order: AdminOrder) => void | Promise<void> }) {
-  return <section className="paper-panel data-view"><div className="view-heading"><div><span className="eyebrow">از ثبت تا تحویل</span><h2>سفارش‌ها</h2><p>وضعیت هر قطعه را در مسیر کارگاه ثبت کنید.</p></div></div><div className="table-wrap"><table><thead><tr><th>سفارش</th><th>مشتری</th><th>اثر</th><th>مبلغ</th><th>وضعیت</th></tr></thead><tbody>{orders.map((order) => <tr key={order.id}><td><strong>{order.id}</strong><small>{date(order.createdAt)}</small></td><td>{order.customer}</td><td>{order.productName}</td><td>{money(order.amount)}</td><td><select value={order.status} disabled={!canWrite} onChange={(event) => onChange({ ...order, status: event.target.value as AdminOrder["status"] })} aria-label={`وضعیت سفارش ${order.id}`}>{Object.entries(orderStatusLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></td></tr>)}</tbody></table></div></section>;
+  const stages = Object.entries(orderStatusLabels);
+  return <section className="paper-panel data-view"><div className="view-heading"><div><span className="eyebrow">از ثبت تا تحویل</span><h2>سفارش‌ها</h2><p>این فهرست از پایگاه داده خوانده می‌شود. وضعیت هر قطعه مسیر کارگاه است.</p></div></div>
+    {orders.length ? <div className="order-process-list">{orders.map((order) => {
+      const current = Math.max(0, stages.findIndex(([value]) => value === order.status));
+      const next = stages[current + 1]?.[1];
+      return <article className="order-process-card" key={order.id}>
+        <header>
+          <div><strong>{order.id}</strong><small>{date(order.createdAt)} · {order.customer}</small></div>
+          <div className="order-process-meta"><b>{order.productName}</b><span>{money(order.amount)}</span></div>
+          <select value={order.status} disabled={!canWrite} onChange={(event) => onChange({ ...order, status: event.target.value as AdminOrder["status"] })} aria-label={`وضعیت سفارش ${order.id}`}>{stages.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select>
+        </header>
+        <StageMeter
+          index={current}
+          total={stages.length}
+          label={orderStatusLabels[order.status]}
+          countLabel={stageCountLabel(current, stages.length)}
+          kicker="مرحله فعلی"
+          nextKicker="مرحله بعد"
+          nextLabel={next}
+          compact
+        />
+      </article>;
+    })}</div> : <EmptyState title="سفارشی در پایگاه داده نیست" description="پس از ثبت سفارش فروشگاه، مسیر کارگاه اینجا دیده می‌شود." />}
+  </section>;
 }
 
 function Members({ members, canWrite, onInvite, onChange }: { members: AdminMember[]; canWrite: boolean; onInvite: () => void; onChange: (member: AdminMember) => void | Promise<void> }) {
