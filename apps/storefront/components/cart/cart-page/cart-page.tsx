@@ -4,7 +4,7 @@ import { useCart } from "../cart-provider";
 import { cartTotal, formatTotal, productPrice } from "@/lib/money";
 import { ButtonLink } from "@/components/ui/button-link";
 import { ProductMedia } from "@/components/product";
-import { productCopy } from "@/lib/catalog";
+import { productCopy } from "@/lib/catalog/products";
 import { useLocale } from "@/components/i18n";
 import { useCatalog } from "@/components/catalog";
 import "./cart-page.css";

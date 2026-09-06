@@ -1,5 +1,107 @@
-.making-rail {display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:.65rem 1rem;margin:0 0 2.5rem;padding:0;list-style:none}
+.making-rail-wrap {
+  margin: 0 0 2.5rem;
+  overflow-x: auto;
+}
 
-@media(max-width:900px) {
-.making-rail {grid-template-columns:1fr!important}
+.making-rail {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(7.5rem, 1fr);
+  gap: 0;
+  margin: 0;
+  padding: 0.25rem 0 0.75rem;
+  list-style: none;
+  min-width: min(100%, 52rem);
+}
+
+.making-rail li {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 0.55rem;
+  text-align: center;
+  color: #8a8378;
+  font-size: 0.78rem;
+}
+
+.making-rail li:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  top: 15px;
+  inset-inline-start: calc(50% + 18px);
+  inset-inline-end: calc(-50% + 18px);
+  height: 2px;
+  background: var(--line);
+}
+
+.making-rail li.done:not(:last-child)::after,
+.making-rail li.active:not(:last-child)::after {
+  background: var(--moss);
+}
+
+.making-rail i {
+  position: relative;
+  z-index: 1;
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  background: var(--paper);
+  font-style: normal;
+}
+
+.making-rail li.done i {
+  background: var(--moss);
+  border-color: var(--moss);
+  color: var(--paper);
+}
+
+.making-rail li.active {
+  color: var(--ink);
+  font-weight: 650;
+}
+
+.making-rail li.active i {
+  background: var(--clay);
+  border-color: var(--clay);
+  color: var(--paper);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--clay) 22%, transparent);
+}
+
+.making-rail li span {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.making-rail li b {
+  font-weight: 650;
+  color: var(--clay);
+  font-size: 0.68rem;
+}
+
+@media (max-width: 900px) {
+  .making-rail {
+    grid-auto-flow: row;
+    grid-auto-columns: minmax(0, 1fr);
+    min-width: 0;
+    padding-inline-start: 0.5rem;
+  }
+
+  .making-rail li {
+    grid-template-columns: 32px minmax(0, 1fr);
+    justify-items: start;
+    text-align: start;
+    min-height: 52px;
+    align-items: center;
+  }
+
+  .making-rail li:not(:last-child)::after {
+    inset: 32px auto auto 15px;
+    width: 2px;
+    height: calc(100% - 20px);
+    inset-inline-start: 15px;
+    inset-inline-end: auto;
+  }
 }

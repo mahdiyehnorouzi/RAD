@@ -29,7 +29,7 @@ export function MakingRequest({
       />
       <small id="use-help">{t("makingUseHelp")}</small>
       <div className="making-actions">
-        <Button type="button" onClick={onSubmit}>
+        <Button type="button" onClick={onSubmit} disabled={!intendedUse.trim()}>
           {t("makingSubmit")}
         </Button>
       </div>

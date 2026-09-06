@@ -3,7 +3,7 @@ import type { Product } from "@rad/types";
 import { ArtworkVisual } from "@/components/product";
 import { ButtonLink } from "@/components/ui/button-link";
 import { useLocale } from "@/components/i18n";
-import { artworkVisual } from "@/lib/catalog";
+import { artworkVisual } from "@/lib/catalog/artwork";
 import "./studio-callout.css";
 
 export function StudioCallout({ product }: { product?: Product }) {

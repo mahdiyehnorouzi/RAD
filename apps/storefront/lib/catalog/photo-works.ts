@@ -14,19 +14,7 @@ export function catalogPhotoSrc(slug: string) {
   return `/catalog/photos/${slug}.webp`;
 }
 
-export function hasRealProductImage(product: Product) {
-  return Boolean(
-    product.images?.some(
-      (image) =>
-        image.src &&
-        !image.src.includes("rad-icon") &&
-        (image.src.startsWith("/catalog/") ||
-          image.src.startsWith("/backend/") ||
-          image.src.startsWith("http") ||
-          image.src.startsWith("data:")),
-    ),
-  );
-}
+export const catalogPhotoSlugs = new Set(photoProducts.map((product) => product.slug));
 
 export const photoWorks: Product[] = photoProducts.map((product) => {
   const image = product.images[0];

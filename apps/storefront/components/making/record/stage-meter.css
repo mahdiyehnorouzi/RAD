@@ -1,0 +1,63 @@
+.stage-meter {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.stage-meter-kicker {
+  margin: 0;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  color: #8a4938;
+}
+
+.stage-meter-now {
+  margin: 0;
+  font-size: clamp(1.35rem, 3vw, 2rem);
+  font-weight: 500;
+  line-height: 1.25;
+}
+
+.stage-meter-count {
+  margin: 0;
+  color: #5c574f;
+}
+
+.stage-meter-bar {
+  height: 4px;
+  margin: 0.55rem 0 0.15rem;
+  background: var(--line);
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.stage-meter-bar i {
+  display: block;
+  height: 100%;
+  background: var(--moss);
+}
+
+.stage-meter.compact .stage-meter-now {
+  font-size: 1.15rem;
+}
+
+.stage-meter.compact small {
+  color: #5c574f;
+}
+
+.making-situation .stage-meter-kicker,
+.making-situation .stage-meter-count,
+.making-situation .stage-meter small {
+  color: #d4c7b6;
+}
+
+.making-situation .stage-meter-now {
+  color: var(--paper);
+}
+
+.making-situation .stage-meter-bar {
+  background: rgba(247, 242, 233, 0.22);
+}
+
+.making-situation .stage-meter-bar i {
+  background: #cbb892;
+}

@@ -49,6 +49,12 @@ export const museumPortraits: DifferencePortrait[] = [
       artist: { color: "#87382c", accent: "#d8c4a0" },
       material: { color: "#4b513c", accent: "#dbc7a5" },
     },
+    stageImages: {
+      described: "/difference/homesickness-bowl/described.jpg",
+      imagined: "/difference/homesickness-bowl/imagined.jpg",
+      artist: "/difference/homesickness-bowl/artist.jpg",
+      material: "/difference/homesickness-bowl/material.jpg",
+    },
   },
   {
     id: "tehran-alley-vase",

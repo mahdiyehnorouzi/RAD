@@ -1,10 +1,16 @@
 "use client";
 
 import { useLocale } from "@/components/i18n";
-import type {MakingCommission} from "@/components/making/type";
+import type { MakingCommission } from "@/components/making/type";
 
 export function CustomerBrief({ commission }: { commission: MakingCommission }) {
   const { locale, t } = useLocale();
+  const images = [
+    ...(commission.brief.images ?? []),
+    ...(commission.brief.image && !(commission.brief.images ?? []).includes(commission.brief.image)
+      ? [commission.brief.image]
+      : []),
+  ];
   return (
     <>
       <h2>{locale === "fa" ? "مشخصات ارسال‌شده" : "Submitted specification"}</h2>
@@ -34,8 +40,14 @@ export function CustomerBrief({ commission }: { commission: MakingCommission }) 
           <dd>{commission.brief.permission}</dd>
         </div>
       </dl>
-      {commission.brief.image ? (
-        <img className="making-concept-image" src={commission.brief.image} alt={t("generatedAlt")} />
+      {images.length ? (
+        <ul className="making-brief-images">
+          {images.map((src, index) => (
+            <li key={`${src.slice(0, 24)}-${index}`}>
+              <img src={src} alt={t("generatedAlt")} />
+            </li>
+          ))}
+        </ul>
       ) : null}
     </>
   );

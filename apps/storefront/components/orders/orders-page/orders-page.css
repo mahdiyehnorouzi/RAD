@@ -55,6 +55,34 @@
   margin: 0;
 }
 
+.orders-heading p {
+  max-width: 40rem;
+  margin: 0.85rem 0 1.25rem;
+  color: #5c574f;
+}
+
+.order-stage-now {
+  margin: 0;
+  font-weight: 650;
+}
+
+.orders-page .order-progress li.current i {
+  background: var(--clay);
+  border-color: var(--clay);
+  color: var(--paper);
+}
+
+.orders-page .order-progress li.current span {
+  color: var(--ink);
+  font-weight: 650;
+}
+
+.orders-page .order-progress li b {
+  display: block;
+  font-size: 0.7rem;
+  color: var(--clay);
+}
+
 .orders-page {
   min-height: 70vh;
 }

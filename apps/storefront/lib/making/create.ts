@@ -39,18 +39,22 @@ export function createSubmittedCommission(input: {
     kilnLocked: false,
     messages: [],
     changeRequests: [],
-    updates: input.brief.image
-      ? [
-          {
-            id: newEntityId("u"),
-            stageId: "design_submitted",
-            note: loc("تصویر تولیدشده همراه طرح ثبت شد.", "The generated image was filed with the design."),
-            photoKind: "concept",
-            requiresApproval: false,
-            createdAt,
-          },
-        ]
-      : [],
+    updates:
+      input.brief.image || input.brief.images?.length
+        ? [
+            {
+              id: newEntityId("u"),
+              stageId: "design_submitted",
+              note: loc(
+                "تصویرهای مرجع همراه طرح ثبت شد.",
+                "Reference images were filed with the design.",
+              ),
+              photoKind: "concept",
+              requiresApproval: false,
+              createdAt,
+            },
+          ]
+        : [],
     payments: [],
     audit: [
       {

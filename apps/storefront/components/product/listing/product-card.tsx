@@ -1,12 +1,12 @@
 "use client";
 import Link from "next/link";
 import type { Product } from "@rad/types";
-import { productCopy } from "@/lib/catalog";
+import { productCopy } from "@/lib/catalog/products";
 import { productPrice } from "@/lib/money";
 import { useLocale } from "@/components/i18n";
 import { FavoriteButton } from "@/components/commerce";
 import { VendorBadge } from "@rad/ui";
-import { categoryLabel } from "@/lib/catalog";
+import { categoryLabel } from "@/lib/catalog/artwork";
 import { ProductMedia } from "./product-media";
 import "./product-card.css";
 

@@ -28,4 +28,5 @@ export type DifferencePortrait = {
     artist: { color: string; accent: string };
     material: { color: string; accent: string };
   };
+  stageImages?: Partial<Record<DifferenceStageId, string>>;
 };

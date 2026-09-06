@@ -6,7 +6,7 @@ import { useCart } from "@/components/cart";
 import { useLocale } from "@/components/i18n";
 import { useCommerce } from "@/components/commerce";
 import { useCatalog } from "../catalog-provider";
-import { artworkCategories } from "@/lib/catalog";
+import { artworkCategories } from "@/lib/catalog/artwork";
 import { MoveLeft, MoveRight } from "lucide-react";
 import "./catalog.css";
 

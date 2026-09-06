@@ -25,4 +25,5 @@ npm run deploy:cloudflare
 
 echo ""
 echo "Storefront deployed."
+echo "Storefront: https://rad-object.com"
 echo "Worker: https://rad-studio.rad-studio.workers.dev"
