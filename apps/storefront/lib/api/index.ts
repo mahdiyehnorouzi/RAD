@@ -13,6 +13,7 @@ export {
 export { api, ApiError, API_BASE } from "./client";
 export { createDesign } from "./design";
 export { fetchFavorites, toggleFavorite } from "./favorites";
+export { createCommission, fetchMyCommissions, saveCommission } from "./commissions";
 export { createNotice, fetchNotices, markNoticesRead } from "./notices";
 export { createOrder, fetchOrders } from "./orders";
 export { proxyApiRequest } from "./proxy";

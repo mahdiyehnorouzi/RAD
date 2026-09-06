@@ -15,6 +15,7 @@ import { ReviewsModule } from "./reviews/reviews.module";
 import { OrdersModule } from "./orders/orders.module";
 import { NoticesModule } from "./notices/notices.module";
 import { DesignModule } from "./design/design.module";
+import { CommissionsModule } from "./commissions/commissions.module";
 import { AdminModule } from "./admin/admin.module";
 import { MailModule } from "./mail/mail.module";
 import { HealthController } from "./health/health.controller";
@@ -44,6 +45,7 @@ import { HealthController } from "./health/health.controller";
     NoticesModule,
     OrdersModule,
     DesignModule,
+    CommissionsModule,
     AdminModule,
   ],
   controllers: [HealthController],

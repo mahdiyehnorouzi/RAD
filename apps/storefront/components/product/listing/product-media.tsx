@@ -35,11 +35,16 @@ export function ProductMedia({
   const media = product.images?.[imageIndex] ?? product.images?.[0];
   const categorySrc = categoryDefaultImage(product.category);
   const ownSrc = forceCategoryArtwork ? null : ownPhotoSrc(product, media?.src);
-  const overlaySrc = ownSrc && ownSrc !== categorySrc && failedSrc !== ownSrc ? ownSrc : null;
+  const src =
+    ownSrc && failedSrc !== ownSrc
+      ? ownSrc
+      : failedSrc === categorySrc
+        ? null
+        : categorySrc;
 
   const label = locale === "fa" ? (media?.alt || product.name) : (media?.enAlt || product.en.name);
 
-  if (failedSrc === categorySrc) {
+  if (!src) {
     return (
       <>
         <ArtworkVisual
@@ -56,19 +61,11 @@ export function ProductMedia({
   return (
     <>
       <img
-        className="product-photo product-photo-default"
-        src={categorySrc}
-        alt={overlaySrc ? "" : label}
-        onError={() => setFailedSrc(categorySrc)}
+        className="product-photo"
+        src={src}
+        alt={label}
+        onError={() => setFailedSrc(src)}
       />
-      {overlaySrc ? (
-        <img
-          className="product-photo"
-          src={overlaySrc}
-          alt={label}
-          onError={() => setFailedSrc(overlaySrc)}
-        />
-      ) : null}
       {soldBadge}
     </>
   );

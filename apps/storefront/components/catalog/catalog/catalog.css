@@ -202,8 +202,8 @@ html[dir="rtl"] .plp-head {direction:rtl!important;text-align:right!important;al
 @media(max-width:600px) {
 .plp.section {padding-block:2rem!important;padding-inline:1rem!important}
 .plp {overflow-x:clip!important}
-.plp .product-grid {width:100%!important;grid-template-columns:minmax(0,1fr)!important;place-items:center!important}
-.plp .product-grid>.product-card {width:min(100%,390px)!important;max-width:390px!important;margin-inline:auto!important;justify-self:center!important}
+.plp .product-grid {width:100%!important;grid-template-columns:minmax(0,1fr)!important;place-items:stretch!important}
+.plp .product-grid>.product-card {width:100%!important;max-width:none!important;margin-inline:0!important;justify-self:stretch!important}
 .plp .product-grid .product-media-shell, .plp .product-grid .product-art, .plp .product-grid .product-meta {width:100%!important;max-width:100%!important}
 .filterbar {grid-template-columns:minmax(0,1fr)!important;align-items:stretch!important;padding:1rem .9rem!important;margin:1rem 0 1.25rem!important;gap:.85rem!important}
 .filter-heading {align-items:flex-start!important;flex-direction:row!important;flex-wrap:wrap!important;gap:.35rem!important;margin:0!important}

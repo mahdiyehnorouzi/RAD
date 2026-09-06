@@ -11,6 +11,7 @@ import { MakingRequest } from "./making-request";
 import { DesignerNav } from "./designer-nav";
 import { DesignerImages } from "./designer-images";
 import { useDesigner } from "./hooks";
+import { useBackNavigation } from "@/hooks/use-back-navigation";
 import {
   artworkCategories,
   designDirections,
@@ -20,6 +21,7 @@ import {
 export function CustomDesigner() {
   const { t, locale, number } = useLocale();
   const router = useRouter();
+  const { goBack: leaveStudio } = useBackNavigation();
   const { user } = useCommerce();
   const { submitDesign } = useMaking();
   const designer = useDesigner();
@@ -87,21 +89,23 @@ export function CustomDesigner() {
 
   function submitCommission() {
     if (!canAdvance) return;
-    const commission = submitDesign({
-      customerName: user?.name ?? (locale === "fa" ? "مهمان" : "Guest"),
-      brief: {
-        concept: prompt.trim() || (locale === "fa" ? "طرح استودیو" : "Studio concept"),
-        dimensions: brief.size ?? "",
-        material: selectedCategory?.label[locale] ?? "",
-        intendedUse,
-        budget: brief.budget ?? "",
-        permission: "material",
-        category: category || "ceramics",
-        image: image || uploads[0],
-        images: uploads,
-      },
-    });
-    router.push(`/making/${commission.id}`);
+    void (async () => {
+      const commission = await submitDesign({
+        customerName: user?.name ?? (locale === "fa" ? "مهمان" : "Guest"),
+        brief: {
+          concept: prompt.trim() || (locale === "fa" ? "طرح استودیو" : "Studio concept"),
+          dimensions: brief.size ?? "",
+          material: selectedCategory?.label[locale] ?? "",
+          intendedUse,
+          budget: brief.budget ?? "",
+          permission: "material",
+          category: category || "ceramics",
+          image: image || uploads[0],
+          images: uploads,
+        },
+      });
+      router.push(`/making/${commission.id}`);
+    })();
   }
 
   return (
@@ -279,13 +283,13 @@ export function CustomDesigner() {
 
           {step !== "send" ? (
             <div className="designer-step-actions">
-              {step !== "type" ? (
-                <button type="button" className="button outline" onClick={goBack}>
-                  {t("designerBack")}
-                </button>
-              ) : (
-                <span />
-              )}
+              <button
+                type="button"
+                className="button outline designer-back"
+                onClick={step === "type" ? leaveStudio : goBack}
+              >
+                {t("designerBack")}
+              </button>
               <button
                 type="button"
                 className="button"
@@ -299,7 +303,7 @@ export function CustomDesigner() {
             </div>
           ) : (
             <div className="designer-step-actions">
-              <button type="button" className="button outline" onClick={goBack}>
+              <button type="button" className="button outline designer-back" onClick={goBack}>
                 {t("designerBack")}
               </button>
             </div>

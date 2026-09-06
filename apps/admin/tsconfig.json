@@ -21,7 +21,12 @@
     "allowJs": true,
     "skipLibCheck": true,
     "incremental": true,
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "paths": {
+      "@rad/ui": [
+        "../../packages/ui/src/index.ts"
+      ]
+    }
   },
   "include": [
     "next-env.d.ts",

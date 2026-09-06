@@ -12,12 +12,12 @@ export function OrdersEntry() {
         <h2>{locale === "fa" ? "مسیر ساخت اثرتان را دنبال کنید." : "Follow your work as it is made."}</h2>
         <p>
           {locale === "fa"
-            ? "از تأیید طرح و انتخاب هنرمند تا ساخت، امضا و ارسال."
-            : "From concept approval and maker selection to production, signature, and delivery."}
+            ? "سفارش اختصاصی شش بخش دارد: توصیف، تصویر نیت، بازبینی هنرمند، پیشنهاد و بیعانه، ساخت و زونْد، رونمایی و ارسال. پاسخ هنرمند در مسیر ساخت و اعلان‌ها می‌آید."
+            : "A custom order has six parts: describe, intention image, artist review, quote and deposit, making and Zünd, reveal and delivery. The artist’s reply appears on the making path and in notifications."}
         </p>
       </div>
-      <ButtonLink href="/orders" outline>
-        {locale === "fa" ? "دیدن سفارش‌ها" : "View orders"}
+      <ButtonLink href="/making" outline>
+        {locale === "fa" ? "مسیر ساخت" : "Making path"}
       </ButtonLink>
     </section>
   );

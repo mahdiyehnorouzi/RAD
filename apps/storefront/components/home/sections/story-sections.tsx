@@ -65,12 +65,14 @@ export function ProvenanceSection() {
 }
 
 export function ProcessSection() {
-  const { locale, t } = useLocale();
+  const { t } = useLocale();
   const steps = [
-    [locale === "fa" ? "۰۱/۰۴" : "01/04", t("step1Title"), t("step1Body")],
-    [locale === "fa" ? "۰۲/۰۴" : "02/04", t("step2Title"), t("step2Body")],
-    [locale === "fa" ? "۰۳/۰۴" : "03/04", t("step3Title"), t("step3Body")],
-    [locale === "fa" ? "۰۴/۰۴" : "04/04", t("step4Title"), t("step4Body")],
+    [t("processStep1"), t("step1Title"), t("step1Body")],
+    [t("processStep2"), t("step2Title"), t("step2Body")],
+    [t("processStep3"), t("step3Title"), t("step3Body")],
+    [t("processStep4"), t("step4Title"), t("step4Body")],
+    [t("processStep5"), t("step5Title"), t("step5Body")],
+    [t("processStep6"), t("step6Title"), t("step6Body")],
   ];
   return (
     <section className="section process">
@@ -78,9 +80,11 @@ export function ProcessSection() {
         <div>
           <span className="eyebrow">{t("processEyebrow")}</span>
           <h2>{t("processTitle")}</h2>
+          <p className="process-definition">{t("personalizedWhat")}</p>
+          <p className="process-lead">{t("processLead")}</p>
         </div>
       </header>
-      <div className="steps">
+      <div className="steps process-steps">
         {steps.map((x) => (
           <article key={x[0]}>
             <span>{x[0]}</span>
@@ -89,6 +93,10 @@ export function ProcessSection() {
           </article>
         ))}
       </div>
+      <aside className="zund-note">
+        <h3>{t("zundTitle")}</h3>
+        <p>{t("zundBody")}</p>
+      </aside>
     </section>
   );
 }

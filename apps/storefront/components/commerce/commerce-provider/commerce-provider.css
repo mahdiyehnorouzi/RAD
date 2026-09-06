@@ -97,6 +97,12 @@
   color: #71665b;
 }
 
+.notification-panel a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 .notification-panel li.unread {
   color: var(--ink);
   font-weight: 600;

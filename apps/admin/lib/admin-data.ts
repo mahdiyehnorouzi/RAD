@@ -1,5 +1,5 @@
 export type AdminRole = "owner" | "manager" | "editor" | "viewer";
-export type AdminSection = "overview" | "products" | "orders" | "members" | "account";
+export type AdminSection = "overview" | "products" | "orders" | "commissions" | "members" | "account";
 export type AdminProductStatus = "draft" | "available" | "reserved" | "sold";
 export type AdminOrderStatus = "received" | "approved" | "forming" | "drying" | "firing" | "glazing" | "quality" | "shipped" | "delivered";
 
@@ -33,6 +33,72 @@ export interface AdminMember {
   status: "active" | "invited";
 }
 
+export type AdminCommissionStage =
+  | "design_submitted"
+  | "feasibility"
+  | "quote"
+  | "approval_deposit"
+  | "making"
+  | "pre_kiln"
+  | "firing"
+  | "reveal"
+  | "shipping"
+  | "complete"
+  | "declined";
+
+export interface AdminCommissionMessage {
+  id: string;
+  author: "customer" | "artist" | "system";
+  body: { fa: string; en: string };
+  createdAt: number;
+  internal?: boolean;
+  stageId: string;
+}
+
+export interface AdminCommission {
+  id: string;
+  ownerKey: string;
+  customerName: string;
+  artistName: string;
+  stage: AdminCommissionStage;
+  nextActor: "customer" | "artist" | "none";
+  concept: string;
+  intendedUse: string;
+  material: string;
+  image?: string;
+  messages: AdminCommissionMessage[];
+  createdAt: number;
+  updatedAt: number;
+  payload: unknown;
+}
+
+export const commissionStageOrder: AdminCommissionStage[] = [
+  "design_submitted",
+  "feasibility",
+  "quote",
+  "approval_deposit",
+  "making",
+  "pre_kiln",
+  "firing",
+  "reveal",
+  "shipping",
+  "complete",
+];
+
+export const commissionStageLabels: Record<AdminCommissionStage, string> = {
+  design_submitted: "طرح ارسال شد",
+  feasibility: "بازبینی امکان‌پذیری",
+  quote: "پیشنهاد قیمت",
+  approval_deposit: "تأیید و بیعانه",
+  making: "ساخت",
+  pre_kiln: "پیش از کوره",
+  firing: "پخت",
+  reveal: "رونمایی",
+  shipping: "ارسال",
+  complete: "تمام",
+  declined: "رد شده",
+};
+
 export const roleLabels: Record<AdminRole, string> = {
   owner: "مالک",
   manager: "مدیر",
@@ -51,6 +117,12 @@ export const orderStatusLabels: Record<AdminOrderStatus, string> = {
   shipped: "ارسال شده",
   delivered: "تحویل شده",
 };
+
+const faNumber = new Intl.NumberFormat("fa-IR");
+
+export function stageCountLabel(index: number, total: number) {
+  return `مرحله ${faNumber.format(index + 1)} از ${faNumber.format(total)}`;
+}
 
 export const productStatusLabels: Record<AdminProductStatus, string> = {
   draft: "پیش‌نویس",

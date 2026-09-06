@@ -507,22 +507,30 @@ html[dir="rtl"] .product-meta>span, html[data-locale="fa"] .product-meta>span {w
   overflow: hidden !important;
 }
 
+.product-art:before,
+.product-art:has(.product-photo)::before {
+  display: none !important;
+}
+
 .product-art > .product-photo,
 .product-art .product-photo {
   position: absolute !important;
-  top: 11% !important;
-  bottom: 11% !important;
-  left: 11% !important;
-  right: 11% !important;
+  inset: 0 !important;
+  top: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  left: 0 !important;
   z-index: 1 !important;
-  width: calc(100% - 22%) !important;
-  height: calc(100% - 22%) !important;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
   min-width: 0 !important;
   min-height: 0 !important;
   object-fit: contain !important;
   object-position: center !important;
-  padding: 0 !important;
-  margin: 0 auto !important;
+  padding: clamp(0.85rem, 6%, 1.5rem) !important;
+  margin: 0 !important;
 }
 
 .product-art .product-photo-default {
@@ -562,8 +570,23 @@ html[dir="rtl"] .product-meta>span, html[data-locale="fa"] .product-meta>span {w
   display: inline-flex !important;
   width: fit-content !important;
   max-width: 100% !important;
+  align-items: center !important;
   align-self: start !important;
-  margin-bottom: 0.35rem !important;
+  gap: 0 !important;
+  margin: 0 0 0.35rem !important;
+  padding: 0.3rem 0.55rem !important;
+  box-sizing: border-box !important;
+}
+
+.vendor-badge span:empty {
+  display: none !important;
+}
+
+[dir="rtl"] .vendor-badge,
+[data-locale="fa"] .vendor-badge {
+  margin-inline: 0 !important;
+  padding-inline: 0.55rem !important;
+  text-align: start !important;
 }
 
 .product-media-shell {
@@ -584,4 +607,12 @@ html[dir="rtl"] .product-meta>span, html[data-locale="fa"] .product-meta>span {w
   position: relative;
   z-index: 1;
   margin-top: 1.25rem !important;
+}
+
+@media (max-width: 600px) {
+  .product-grid > .product-card {
+    width: 100% !important;
+    max-width: none !important;
+    margin-inline: 0 !important;
+  }
 }

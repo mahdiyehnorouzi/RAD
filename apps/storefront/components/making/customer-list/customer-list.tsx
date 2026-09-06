@@ -21,8 +21,12 @@ export function CustomerMakingList() {
       <header className="making-heading">
         <span className="eyebrow">{t("makingEyebrow")}</span>
         <h1>{t("makingTitle")}</h1>
-        <p>{t("makingCustomNote")}</p>
-        <p>{t("makingBody")}</p>
+        <div className="making-heading-copy">
+          <p>{t("makingCustomNote")}</p>
+          <p>{t("personalizedWhat")}</p>
+          <p>{t("makingBody")}</p>
+          <p>{t("makingAfterSend")}</p>
+        </div>
       </header>
       {commissions.length ? (
         <div className="making-grid">

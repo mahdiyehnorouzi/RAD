@@ -543,6 +543,15 @@
 
 .studio-page .form-actions {position:sticky;bottom:0;z-index:5;margin-top:1.25rem;padding:1rem 0 1.25rem;background:linear-gradient(transparent,var(--ink) 28%)}
 
+.studio-page .designer-back,
+.studio-page .designer-step-actions .button.outline {
+  color: var(--paper) !important;
+  border-bottom-color: rgba(247, 242, 233, 0.72) !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+  cursor: pointer !important;
+}
+
 .surprise-permission {border:0;padding:0;margin:2.25rem 0 0}
 
 .surprise-permission legend {display:flex;flex-direction:column;gap:.35rem;width:100%;margin-bottom:1rem;color:var(--paper)}
