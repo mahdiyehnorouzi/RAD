@@ -58,6 +58,7 @@ export function LocaleProvider({ children }: { children: React.ReactNode }) {
       ["products", "titleProducts"],
       ["studio", "titleStudio"],
       ["making", "titleMaking"],
+      ["orders", "titleOrders"],
       ["workshop", "titleWorkshop"],
       ["differences", "titleDifferences"],
     ];

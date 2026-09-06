@@ -5,7 +5,7 @@ import { api } from "@/lib/api";
 
 type CartContextValue = {
   slugs: string[];
-  add: (product: Product) => Promise<void>;
+  add: (product: Product) => Promise<boolean>;
   remove: (slug: string) => Promise<void>;
   clear: () => Promise<void>;
   has: (slug: string) => boolean;
@@ -31,12 +31,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
     () => ({
       slugs,
       add: async (product) => {
-        if (product.status === "sold" || product.status === "reserved") return;
+        if (product.status === "sold" || product.status === "reserved") return false;
         const payload = await api<{ slugs: string[] }>("/cart/items", {
           method: "POST",
           body: JSON.stringify({ slug: product.slug }),
         });
         setSlugs(payload.slugs);
+        return true;
       },
       remove: async (slug) => {
         const payload = await api<{ slugs: string[] }>(`/cart/items/${slug}`, {

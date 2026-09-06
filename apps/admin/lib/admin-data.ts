@@ -1,7 +1,14 @@
 export type AdminRole = "owner" | "manager" | "editor" | "viewer";
 export type AdminSection = "overview" | "products" | "orders" | "commissions" | "members" | "account";
 export type AdminProductStatus = "draft" | "available" | "reserved" | "sold";
-export type AdminOrderStatus = "received" | "approved" | "forming" | "drying" | "firing" | "glazing" | "quality" | "shipped" | "delivered";
+export type AdminOrderStatus =
+  | "payment_pending"
+  | "confirmed"
+  | "packing"
+  | "shipped"
+  | "delivered"
+  | "cancelled"
+  | "returned";
 
 export interface AdminProduct {
   id: string;
@@ -22,6 +29,7 @@ export interface AdminOrder {
   productName: string;
   amount: number;
   status: AdminOrderStatus;
+  trackingCode?: string;
   createdAt: number;
 }
 
@@ -107,15 +115,13 @@ export const roleLabels: Record<AdminRole, string> = {
 };
 
 export const orderStatusLabels: Record<AdminOrderStatus, string> = {
-  received: "دریافت شده",
-  approved: "تأیید طرح",
-  forming: "فرم‌دهی",
-  drying: "خشک شدن",
-  firing: "پخت اول",
-  glazing: "لعاب‌کاری",
-  quality: "کنترل کیفیت",
-  shipped: "ارسال شده",
-  delivered: "تحویل شده",
+  payment_pending: "در انتظار پرداخت",
+  confirmed: "سفارش ثبت شد",
+  packing: "در حال بسته‌بندی",
+  shipped: "تحویل به پست",
+  delivered: "تحویل داده شد",
+  cancelled: "لغوشده",
+  returned: "مرجوع‌شده",
 };
 
 const faNumber = new Intl.NumberFormat("fa-IR");
@@ -145,8 +151,8 @@ export const seedProducts: AdminProduct[] = [
 ];
 
 export const seedOrders: AdminOrder[] = [
-  { id: "RAD-408189", customer: "مهدیه نوروزی", productName: "کوزه‌ی سرخ شماره ۲۷", amount: 12800000, status: "forming", createdAt: Date.now() - 86400000 },
-  { id: "RAD-385651", customer: "رها احمدی", productName: "حافظه‌ی زیتونی", amount: 9600000, status: "shipped", createdAt: Date.now() - 259200000 },
+  { id: "RAD-408189", customer: "مهدیه نوروزی", productName: "کوزه‌ی سرخ شماره ۲۷", amount: 12800000, status: "packing", createdAt: Date.now() - 86400000 },
+  { id: "RAD-385651", customer: "رها احمدی", productName: "حافظه‌ی زیتونی", amount: 9600000, status: "shipped", trackingCode: "RAD-POST-3856", createdAt: Date.now() - 259200000 },
 ];
 
 export const seedMembers: AdminMember[] = [

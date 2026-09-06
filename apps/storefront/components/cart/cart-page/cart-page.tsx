@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { useCart } from "../cart-provider";
 import { cartTotal, formatTotal, productPrice } from "@/lib/money";
-import { ButtonLink } from "@/components/ui/button-link";
+import { Button, ButtonLink } from "@/components/ui/button-link";
 import { ProductMedia } from "@/components/product";
 import { productCopy } from "@/lib/catalog/products";
 import { useLocale } from "@/components/i18n";
@@ -15,6 +15,9 @@ export function CartPage() {
   const { getProduct } = useCatalog();
 
   const items = slugs.map((slug) => getProduct(slug)).filter(Boolean);
+  const unavailable = items.some(
+    (item) => item && (item.status === "sold" || item.status === "reserved"),
+  );
   const total = cartTotal(
     items.filter((item): item is NonNullable<typeof item> => Boolean(item)),
     locale,
@@ -47,6 +50,11 @@ export function CartPage() {
           {t("clearBag")}
         </button>
       </header>
+      {unavailable ? (
+        <p className="cart-alert" role="alert">
+          {t("workNoLongerAvailable")}
+        </p>
+      ) : null}
       <div className="cart-layout">
         <div className="cart-list">
           {items.map(
@@ -57,7 +65,9 @@ export function CartPage() {
                     href={href(`/products/${product.slug}`)}
                     className="cart-art"
                   >
-                    <ProductMedia product={product} />
+                    <span className="cart-media">
+                      <ProductMedia product={product} />
+                    </span>
                   </Link>
                   <div className="cart-item-copy">
                     <span>{t("uniquePiece")}</span>
@@ -90,9 +100,11 @@ export function CartPage() {
             <span>{t("finalTotal")}</span>
             <b>{formatTotal(total, locale)}</b>
           </div>
-          <ButtonLink href="/checkout">
-            {t("checkout")}
-          </ButtonLink>
+          {unavailable ? (
+            <Button disabled>{t("checkout")}</Button>
+          ) : (
+            <ButtonLink href="/checkout">{t("checkout")}</ButtonLink>
+          )}
           <small>{t("checkoutNote")}</small>
         </aside>
       </div>

@@ -35,6 +35,22 @@
   cursor: pointer;
 }
 
+.cart-unavailable {
+  margin: 0.4rem 0 0;
+  color: #8f2e20;
+  font-weight: 650;
+}
+
+.cart-alert {
+  margin: 1.25rem 0 0;
+  padding: 0.9rem 1rem;
+  border: 1px solid #8f2e20;
+  border-radius: 0.8rem;
+  background: #fff7f3;
+  color: #8f2e20;
+  font-weight: 650;
+}
+
 .cart-layout {
   display: grid;
   grid-template-columns: minmax(0, 1.5fr) minmax(300px, 0.5fr);
@@ -56,12 +72,27 @@
 }
 
 .cart-art {
+  position: relative;
+  width: 140px;
   height: 150px;
   border-radius: 45% 45% 1rem 1rem;
   background: var(--sand);
-  display: grid;
-  place-items: center;
+  display: block;
   overflow: hidden;
+}
+
+.cart-media {
+  position: absolute;
+  inset: 0;
+  display: block;
+}
+
+.cart-media .product-photo,
+.cart-art .product-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
 }
 
 .cart-art .vessel {
@@ -123,6 +154,12 @@
 .cart-summary .button {
   width: 100%;
   margin-top: 1.5rem;
+}
+
+.cart-summary .button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
 }
 
 .cart-summary small {
@@ -193,8 +230,8 @@
 
 @media(max-width:600px) {
 .cart-empty.section, .cart-page.section {padding-block:2rem!important;padding-inline:1rem!important}
-.cart-item {grid-template-columns:138px minmax(0,1fr)!important;gap:.9rem!important;padding:.85rem 0!important;align-items:center!important}
-.cart-art {width:138px!important;height:176px!important;overflow:hidden!important}
+.cart-item {grid-template-columns:96px minmax(0,1fr)!important;gap:.9rem!important;padding:.85rem 0!important;align-items:start!important}
+.cart-art {width:96px!important;height:120px!important;overflow:hidden!important}
 .cart-art .product-fallback {min-height:0!important;height:100%!important;width:100%!important;margin:0!important;padding:.45rem .4rem!important;gap:.3rem!important;overflow:hidden!important}
 .cart-art .product-fallback svg {width:22px!important;height:22px!important;flex:0 0 22px!important}
 .cart-art .product-fallback span {max-width:100%!important;font-size:.58rem!important;line-height:1.3!important;overflow-wrap:anywhere!important}

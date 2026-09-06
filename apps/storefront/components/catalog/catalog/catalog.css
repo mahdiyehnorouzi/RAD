@@ -2,6 +2,17 @@
   width: 100%;
 }
 
+.add-to-bag {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.add-to-bag .form-error {
+  margin: 0;
+  color: #8f2e20;
+  font-weight: 650;
+}
+
 .filterbar>span { font-weight:400!important; }
 
 .filter-scroll {

@@ -18,6 +18,7 @@ RUN npm ci --workspace @rad/api --omit=dev
 COPY --from=build /app/apps/api/dist ./apps/api/dist
 COPY --from=build /app/apps/api/prisma ./apps/api/prisma
 COPY --from=build /app/apps/api/scripts ./apps/api/scripts
+COPY --from=build /app/apps/api/src/commissions ./apps/api/src/commissions
 COPY --from=build /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=build /app/node_modules/@prisma ./node_modules/@prisma
 WORKDIR /app/apps/api

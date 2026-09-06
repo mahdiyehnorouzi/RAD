@@ -4,21 +4,22 @@ import { useLocale } from "@/components/i18n";
 import "./closing-sections.css";
 
 export function OrdersEntry() {
-  const { locale } = useLocale();
+  const { t } = useLocale();
   return (
     <section className="section orders-entry">
       <div>
-        <span className="eyebrow">{locale === "fa" ? "سفارش‌های شما" : "YOUR ORDERS"}</span>
-        <h2>{locale === "fa" ? "مسیر ساخت اثرتان را دنبال کنید." : "Follow your work as it is made."}</h2>
-        <p>
-          {locale === "fa"
-            ? "سفارش اختصاصی شش بخش دارد: توصیف، تصویر نیت، بازبینی هنرمند، پیشنهاد و بیعانه، ساخت و زونْد، رونمایی و ارسال. پاسخ هنرمند در مسیر ساخت و اعلان‌ها می‌آید."
-            : "A custom order has six parts: describe, intention image, artist review, quote and deposit, making and Zünd, reveal and delivery. The artist’s reply appears on the making path and in notifications."}
-        </p>
+        <span className="eyebrow">{t("ordersEntryEyebrow")}</span>
+        <h2>{t("ordersEntryTitle")}</h2>
+        <p>{t("ordersEntryBody")}</p>
       </div>
-      <ButtonLink href="/making" outline>
-        {locale === "fa" ? "مسیر ساخت" : "Making path"}
-      </ButtonLink>
+      <div className="orders-entry-actions">
+        <ButtonLink href="/orders" outline>
+          {t("ordersEntryShop")}
+        </ButtonLink>
+        <ButtonLink href="/making" outline>
+          {t("makingNav")}
+        </ButtonLink>
+      </div>
     </section>
   );
 }

@@ -28,6 +28,21 @@
   resize: none;
 }
 
+.checkout-form .form-error {
+  margin: 0;
+  padding: 0.85rem 1rem;
+  border: 1px solid #8f2e20;
+  border-radius: 0.8rem;
+  background: #fff7f3;
+  color: #8f2e20;
+  font-weight: 650;
+}
+
+.checkout-form .form-error:focus {
+  outline: 3px solid #d56b58;
+  outline-offset: 4px;
+}
+
 .checkout-form > .button {
   width: 100%;
   margin-top: 1rem;

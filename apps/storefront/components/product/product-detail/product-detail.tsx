@@ -10,7 +10,10 @@ import { productPrice } from "@/lib/money";
 import { FavoriteButton } from "@/components/commerce";
 import { ChevronDown, PackageCheck, Palette, ShieldCheck, Truck } from "lucide-react";
 import { useCatalog } from "../../catalog/catalog-provider";
-import { hasRealProductImage } from "@/lib/catalog/category-defaults";
+import {
+  hasRealProductImage,
+  overlayLiveProduct,
+} from "@/lib/catalog/category-defaults";
 import "./product-detail.css";
 
 export function ProductDetail({ product }: { product: Product }) {
@@ -19,12 +22,16 @@ export function ProductDetail({ product }: { product: Product }) {
   const [activeImage, setActiveImage] = useState(0);
   const { products, getProduct } = useCatalog();
   const catalogProduct = getProduct(product.slug);
-  const resolved =
+  const visual =
     catalogProduct && hasRealProductImage(catalogProduct)
       ? catalogProduct
       : hasRealProductImage(product)
         ? product
         : catalogProduct ?? product;
+  const resolved = overlayLiveProduct(
+    overlayLiveProduct(visual, product),
+    catalogProduct,
+  );
 
   const imageCount = resolved.images?.length ?? 1;
 
@@ -57,7 +64,12 @@ export function ProductDetail({ product }: { product: Product }) {
         </div>
         <div className="pdp-info">
           <span className="eyebrow">
-            {category} · {t("uniqueAvailable")}
+            {category} ·{" "}
+            {resolved.status === "reserved"
+              ? t("reserved")
+              : resolved.status === "sold"
+                ? t("soldOut")
+                : t("uniqueAvailable")}
           </span>
           <h1>{copy.name}</h1>
           <p className="subtitle">{copy.subtitle}</p>

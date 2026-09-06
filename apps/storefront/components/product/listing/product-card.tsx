@@ -22,10 +22,15 @@ export function ProductCard({
   const { locale, t, href, number } = useLocale();
   const copy = productCopy(product, locale);
   const category = categoryLabel(product.category, locale);
+  const unavailable = product.status === "sold" || product.status === "reserved";
+  const statusLabel = product.status === "reserved" ? t("reserved") : t("soldOut");
   return (
-    <article className="product-card">
+    <article className={`product-card${unavailable ? " is-unavailable" : ""}`}>
       <div className="product-media-shell">
         <FavoriteButton slug={product.slug} compact />
+        {unavailable ? (
+          <span className="product-status-badge">{statusLabel}</span>
+        ) : null}
         <Link
           href={href(`/products/${product.slug}`)}
           className="product-art"
@@ -35,7 +40,11 @@ export function ProductCard({
           <small className="product-index">
             RĀD / {number(27 + index).padStart(3, locale === "fa" ? "۰" : "0")}
           </small>
-          <ProductMedia product={product} forceCategoryArtwork={forceCategoryArtwork} />
+          <ProductMedia
+            product={product}
+            forceCategoryArtwork={forceCategoryArtwork}
+            showStatusBadge={false}
+          />
         </Link>
       </div>
       <div className="product-meta">

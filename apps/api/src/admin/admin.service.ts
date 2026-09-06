@@ -129,10 +129,40 @@ export class AdminService {
       include: { items: { include: { product: true } } },
     });
     if (!order) throw new NotFoundException("سفارش پیدا نشد.");
-    const updated = await this.prisma.order.update({
-      where: { id },
-      data: { status: input.status },
-      include: { items: { include: { product: true } } },
+    const slugs = order.items.map((item) => item.productSlug);
+    const nextStatus = input.status;
+    const fulfillment = shopOrderFulfillment(order);
+    const trackingCode =
+      input.trackingCode?.trim() ||
+      (nextStatus === "shipped"
+        ? fulfillment.trackingCode || `RAD-POST-${id.slice(-4)}`
+        : fulfillment.trackingCode);
+
+    const updated = await this.prisma.$transaction(async (tx) => {
+      if (nextStatus === "cancelled" || nextStatus === "returned") {
+        await tx.product.updateMany({
+          where: { slug: { in: slugs }, status: { in: ["reserved", "sold"] } },
+          data: { status: "available" },
+        });
+      } else if (nextStatus === "confirmed" || nextStatus === "packing" || nextStatus === "shipped" || nextStatus === "delivered") {
+        await tx.product.updateMany({
+          where: { slug: { in: slugs } },
+          data: { status: nextStatus === "confirmed" || nextStatus === "packing" ? "reserved" : "sold" },
+        });
+      }
+
+      return tx.order.update({
+        where: { id },
+        data: {
+          status: nextStatus,
+          trackingCode: trackingCode || null,
+          estimatedDeliveryAt:
+            nextStatus === "shipped" || nextStatus === "confirmed" || nextStatus === "packing"
+              ? fulfillment.estimatedDeliveryAt ?? new Date(Date.now() + 6 * 24 * 60 * 60 * 1000)
+              : fulfillment.estimatedDeliveryAt,
+        },
+        include: { items: { include: { product: true } } },
+      });
     });
     return toAdminOrder(updated);
   }
@@ -254,4 +284,15 @@ export class AdminService {
       })),
     });
   }
+}
+
+function shopOrderFulfillment(order: unknown) {
+  const row = order as {
+    trackingCode?: string | null;
+    estimatedDeliveryAt?: Date | null;
+  };
+  return {
+    trackingCode: row.trackingCode ?? null,
+    estimatedDeliveryAt: row.estimatedDeliveryAt ?? null,
+  };
 }
