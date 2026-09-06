@@ -1,21 +1,30 @@
 "use client";
 
+import Link from "next/link";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { useLocale } from "@/components/i18n";
 import { useBackNavigation } from "@/hooks/use-back-navigation";
 import "./page-back-navigation.css";
 
 export function PageBackNavigation() {
-  const { locale, t } = useLocale();
-  const { isHome, goBack } = useBackNavigation();
+  const { locale, t, href } = useLocale();
+  const { isHome, goBack, pathname } = useBackNavigation();
   if (isHome) return null;
   const BackIcon = locale === "fa" ? ArrowRight : ArrowLeft;
+  const isOrderDetail = /^\/orders\/.+/.test(pathname);
   return (
     <div className="route-back-bar">
-      <button type="button" className="route-back-button" onClick={goBack}>
-        <BackIcon aria-hidden="true" />
-        <span>{t("previousPage")}</span>
-      </button>
+      {isOrderDetail ? (
+        <Link href={href("/orders")} className="route-back-button">
+          <BackIcon aria-hidden="true" />
+          <span>{t("backToOrders")}</span>
+        </Link>
+      ) : (
+        <button type="button" className="route-back-button" onClick={goBack}>
+          <BackIcon aria-hidden="true" />
+          <span>{t("previousPage")}</span>
+        </button>
+      )}
     </div>
   );
 }

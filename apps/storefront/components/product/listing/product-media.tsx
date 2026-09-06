@@ -22,15 +22,21 @@ export function ProductMedia({
   product,
   imageIndex = 0,
   forceCategoryArtwork = false,
+  showStatusBadge = true,
 }: {
   product: Product;
   imageIndex?: number;
   forceCategoryArtwork?: boolean;
+  showStatusBadge?: boolean;
 }) {
   const { locale, t } = useLocale();
   const [failedSrc, setFailedSrc] = useState<string | null>(null);
   const soldBadge =
-    product.status === "sold" ? <span className="sold-media-badge">{t("soldOut")}</span> : null;
+    showStatusBadge && (product.status === "sold" || product.status === "reserved") ? (
+      <span className="sold-media-badge">
+        {product.status === "reserved" ? t("reserved") : t("soldOut")}
+      </span>
+    ) : null;
 
   const media = product.images?.[imageIndex] ?? product.images?.[0];
   const categorySrc = categoryDefaultImage(product.category);

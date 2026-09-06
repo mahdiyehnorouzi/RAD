@@ -1,2 +1,1 @@
-export { OrdersPage } from "./orders-page";
 export { OrderDetail } from "./order-detail";

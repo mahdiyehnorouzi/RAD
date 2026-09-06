@@ -35,6 +35,8 @@ type CommerceContextValue = {
     phone?: string;
     address?: string;
   }) => Promise<Order>;
+  confirmDemoPayment: (id: string) => Promise<Order>;
+  cancelOrder: (id: string) => Promise<Order>;
   reviews: Review[];
   addReview: (review: Omit<Review, "id" | "createdAt">) => Promise<void>;
 };
@@ -168,6 +170,18 @@ export function CommerceProvider({ children }: { children: React.ReactNode }) {
         await refresh();
         window.dispatchEvent(new Event("rad:session"));
         return created;
+      },
+      confirmDemoPayment: async (id) => {
+        const updated = await api<Order>(`/orders/${id}/demo-pay`, { method: "POST" });
+        setOrders((current) => current.map((item) => (item.id === id ? updated : item)));
+        await refresh();
+        return updated;
+      },
+      cancelOrder: async (id) => {
+        const updated = await api<Order>(`/orders/${id}/cancel`, { method: "POST" });
+        setOrders((current) => current.map((item) => (item.id === id ? updated : item)));
+        await refresh();
+        return updated;
       },
       reviews,
       addReview: async (review) => {
@@ -324,10 +338,15 @@ export function NotificationCenter() {
                   notice.kind.startsWith("commission") && notice.productSlug
                     ? href(`/making/${notice.productSlug}`)
                     : null;
+                const orderHref = notice.kind === "order" ? href("/orders") : null;
                 return (
                 <li key={notice.id} className={notice.read ? "" : "unread"}>
                   {makingHref ? (
                     <Link href={makingHref} onClick={() => setOpen(false)}>
+                      {noticeText(notice)}
+                    </Link>
+                  ) : orderHref ? (
+                    <Link href={orderHref} onClick={() => setOpen(false)}>
                       {noticeText(notice)}
                     </Link>
                   ) : (

@@ -7,6 +7,7 @@ import { useLocale } from "@/components/i18n";
 import { useCommerce } from "@/components/commerce";
 import { useCatalog } from "../catalog-provider";
 import { artworkCategories } from "@/lib/catalog/artwork";
+import { ApiError, errorMessage } from "@/lib/api";
 import { MoveLeft, MoveRight } from "lucide-react";
 import "./catalog.css";
 
@@ -82,20 +83,43 @@ export function AddToBag({ product }: { product: Product }) {
   const { add, has } = useCart();
   const { t } = useLocale();
   const { addNotice } = useCommerce();
-  const added = has(product.slug);
-  const soldOut = product.status === "sold";
+  const { refresh, getProduct } = useCatalog();
+  const [error, setError] = useState("");
+  const [blocked, setBlocked] = useState(false);
+  const live = getProduct(product.slug) ?? product;
+  const added = has(live.slug);
+  const unavailable =
+    blocked || live.status === "sold" || live.status === "reserved";
+  const unavailableLabel = live.status === "reserved" ? t("reserved") : t("soldOut");
   return (
-    <button
-      type="button"
-      className="button add"
-      onClick={async () => {
-        await add(product);
-        await addNotice("cart", product.slug);
-      }}
-      disabled={added || product.status === "sold" || product.status === "reserved"}
-      aria-live="polite"
-    >
-      {soldOut ? t("soldOut") : added ? t("inBag") : t("addBag")}
-    </button>
+    <div className="add-to-bag">
+      <button
+        type="button"
+        className="button add"
+        onClick={async () => {
+          try {
+            setError("");
+            const addedToBag = await add(live);
+            if (addedToBag) await addNotice("cart", live.slug);
+          } catch (err) {
+            if (err instanceof ApiError && err.status === 409) {
+              setBlocked(true);
+              await refresh();
+              return;
+            }
+            setError(errorMessage(err, t("requestFailed")));
+          }
+        }}
+        disabled={added || unavailable}
+        aria-live="polite"
+      >
+        {unavailable ? unavailableLabel : added ? t("inBag") : t("addBag")}
+      </button>
+      {error ? (
+        <p className="form-error" role="alert">
+          {error}
+        </p>
+      ) : null}
+    </div>
   );
 }

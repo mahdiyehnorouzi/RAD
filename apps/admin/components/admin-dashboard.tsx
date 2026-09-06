@@ -99,7 +99,7 @@ function ProductThumb({ product }: { product: AdminProduct }) { return <div clas
 
 function Orders({ orders, canWrite, onChange }: { orders: AdminOrder[]; canWrite: boolean; onChange: (order: AdminOrder) => void | Promise<void> }) {
   const stages = Object.entries(orderStatusLabels);
-  return <section className="paper-panel data-view"><div className="view-heading"><div><span className="eyebrow">از ثبت تا تحویل</span><h2>سفارش‌ها</h2><p>این فهرست از پایگاه داده خوانده می‌شود. وضعیت هر قطعه مسیر کارگاه است.</p></div></div>
+  return <section className="paper-panel data-view"><div className="view-heading"><div><span className="eyebrow">از ثبت تا تحویل</span><h2>سفارش‌های فروشگاه</h2><p>این فهرست خرید آثار آماده است: پرداخت، بسته‌بندی و ارسال. ساخت سفارشی در بخش سفارش اختصاصی است.</p></div></div>
     {orders.length ? <div className="order-process-list">{orders.map((order) => {
       const current = Math.max(0, stages.findIndex(([value]) => value === order.status));
       const next = stages[current + 1]?.[1];
@@ -114,7 +114,7 @@ function Orders({ orders, canWrite, onChange }: { orders: AdminOrder[]; canWrite
           total={stages.length}
           label={orderStatusLabels[order.status]}
           countLabel={stageCountLabel(current, stages.length)}
-          kicker="مرحله فعلی"
+          kicker="وضعیت فعلی"
           nextKicker="مرحله بعد"
           nextLabel={next}
           compact

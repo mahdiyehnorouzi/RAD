@@ -2,11 +2,15 @@ import {
   BadRequestException,
   ConflictException,
   Injectable,
+  NotFoundException,
 } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { IdentityService } from "../common/identity.service";
 import { NoticesService } from "../notices/notices.service";
 import type { Actor } from "../common/identity";
+import {
+  normalizeStoreOrderStatus,
+} from "./store-order-status";
 
 @Injectable()
 export class OrdersService {
@@ -25,6 +29,10 @@ export class OrdersService {
     return orders.map((order) => this.toOrder(order));
   }
 
+  async get(actor: Actor, id: string) {
+    return this.toOrder(await this.ownedOrder(actor, id));
+  }
+
   async checkout(
     actor: Actor,
     input: { name?: string; city?: string; phone?: string; address?: string },
@@ -38,7 +46,6 @@ export class OrdersService {
 
     const name = input.name?.trim() || actor.user?.name || "کاربر رَد";
     const city = input.city?.trim() || "تهران";
-
     const slugs = cart.map((item) => item.productSlug);
 
     const order = await this.prisma.$transaction(async (tx) => {
@@ -70,7 +77,7 @@ export class OrdersService {
           userId: actor.user?.id,
           total,
           usdTotal,
-          status: "received",
+          status: "payment_pending",
           name,
           city,
           phone: input.phone?.trim() ?? "",
@@ -81,23 +88,89 @@ export class OrdersService {
               amount: total,
               currency: "IRR",
               provider: "sandbox",
-              status: "verified",
+              status: "created",
             },
           },
         },
         include: { items: true },
       });
 
-      await tx.product.updateMany({
-        where: { slug: { in: slugs } },
-        data: { status: "sold" },
-      });
       await tx.cartItem.deleteMany({ where: { ownerKey } });
       return created;
     });
 
-    await this.notices.create(actor, "order");
+    await this.notices.create(actor, "order", slugs[0]);
     return this.toOrder(order);
+  }
+
+  async confirmDemoPayment(actor: Actor, id: string) {
+    const order = await this.ownedOrder(actor, id);
+    const status = normalizeStoreOrderStatus(order.status);
+    if (status !== "payment_pending") {
+      throw new BadRequestException("این سفارش دیگر در انتظار پرداخت نیست.");
+    }
+
+    const slugs = order.items.map((item) => item.productSlug);
+    const updated = await this.prisma.$transaction(async (tx) => {
+      await tx.product.updateMany({
+        where: { slug: { in: slugs } },
+        data: { status: "sold" },
+      });
+      await tx.paymentIntent.updateMany({
+        where: { orderId: order.id },
+        data: { status: "verified" },
+      });
+      return tx.order.update({
+        where: { id: order.id },
+        data: {
+          status: "confirmed",
+          estimatedDeliveryAt: this.estimateDelivery(order.city),
+        },
+        include: { items: true },
+      });
+    });
+    return this.toOrder(updated);
+  }
+
+  async cancel(actor: Actor, id: string) {
+    const order = await this.ownedOrder(actor, id);
+    const status = normalizeStoreOrderStatus(order.status);
+    if (status !== "payment_pending") {
+      throw new BadRequestException("فقط سفارش در انتظار پرداخت را می‌توان لغو کرد.");
+    }
+
+    const slugs = order.items.map((item) => item.productSlug);
+    const updated = await this.prisma.$transaction(async (tx) => {
+      await tx.product.updateMany({
+        where: { slug: { in: slugs }, status: "reserved" },
+        data: { status: "available" },
+      });
+      await tx.paymentIntent.updateMany({
+        where: { orderId: order.id },
+        data: { status: "failed" },
+      });
+      return tx.order.update({
+        where: { id: order.id },
+        data: { status: "cancelled" },
+        include: { items: true },
+      });
+    });
+    return this.toOrder(updated);
+  }
+
+  private async ownedOrder(actor: Actor, id: string) {
+    const order = await this.prisma.order.findFirst({
+      where: { id, ownerKey: this.identity.key(actor) },
+      include: { items: true },
+    });
+    if (!order) throw new NotFoundException("سفارش پیدا نشد.");
+    return order;
+  }
+
+  private estimateDelivery(city: string) {
+    const tehran = city.includes("تهران") || /tehran/i.test(city);
+    const days = tehran ? 4 : 8;
+    return new Date(Date.now() + days * 24 * 60 * 60 * 1000);
   }
 
   private toOrder(order: {
@@ -108,6 +181,10 @@ export class OrdersService {
     status: string;
     name: string;
     city: string;
+    phone: string;
+    address: string;
+    trackingCode?: string | null;
+    estimatedDeliveryAt?: Date | null;
     items: Array<{ productSlug: string }>;
   }) {
     return {
@@ -116,8 +193,16 @@ export class OrdersService {
       total: order.total,
       usdTotal: order.usdTotal,
       createdAt: order.createdAt.getTime(),
-      status: order.status,
-      delivery: { name: order.name, city: order.city },
+      status: normalizeStoreOrderStatus(order.status),
+      delivery: {
+        name: order.name,
+        city: order.city,
+        phone: order.phone,
+        address: order.address,
+      },
+      trackingCode: order.trackingCode || undefined,
+      estimatedDeliveryAt: order.estimatedDeliveryAt?.getTime() ?? undefined,
     };
   }
 }
+

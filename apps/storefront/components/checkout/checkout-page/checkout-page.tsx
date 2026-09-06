@@ -1,7 +1,7 @@
 "use client";
 import "./checkout-page.css";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/components/cart";
 import { cartTotal, formatTotal } from "@/lib/money";
@@ -9,6 +9,7 @@ import { useCommerce } from "@/components/commerce";
 import { useLocale } from "@/components/i18n";
 import { ButtonLink } from "@/components/ui/button-link";
 import { useCatalog } from "@/components/catalog";
+import { errorMessage } from "@/lib/api";
 import type { Product } from "@rad/types";
 
 export function CheckoutPage() {
@@ -18,14 +19,26 @@ export function CheckoutPage() {
   const { getProduct } = useCatalog();
   const router = useRouter();
   const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const errorRef = useRef<HTMLParagraphElement>(null);
 
   const items = slugs
     .map((slug) => getProduct(slug))
     .filter((item): item is Product => Boolean(item));
   const total = cartTotal(items, locale);
+  const unavailable = items.filter(
+    (item) => item.status === "sold" || item.status === "reserved",
+  );
+
+  useEffect(() => {
+    if (!error) return;
+    errorRef.current?.focus();
+    errorRef.current?.scrollIntoView({ block: "center", behavior: "smooth" });
+  }, [error]);
 
   const submitDemoOrder = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (submitting) return;
     const data = new FormData(event.currentTarget);
     const name = String(data.get("name") ?? "").trim();
     const city = String(data.get("city") ?? "").trim();
@@ -34,16 +47,19 @@ export function CheckoutPage() {
 
     try {
       setError("");
-      await placeOrder({
+      setSubmitting(true);
+      const created = await placeOrder({
         name: name || user?.name || (locale === "fa" ? "کاربر رَد" : "RAD collector"),
         city: city || (locale === "fa" ? "تهران" : "Tehran"),
         phone,
         address,
       });
       await clear();
-      router.push(href("/orders"));
+      router.push(href(`/orders/${created.id}`));
     } catch (err) {
-      setError((err as Error).message);
+      setError(errorMessage(err, t("requestFailed")));
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -67,11 +83,21 @@ export function CheckoutPage() {
       </header>
       <div className="checkout-grid">
         <form className="checkout-form" onSubmit={submitDemoOrder} noValidate>
-          {error && (
-            <p className="form-error" role="alert">
+          {error ? (
+            <p
+              ref={errorRef}
+              className="form-error"
+              role="alert"
+              tabIndex={-1}
+            >
               {error}
             </p>
-          )}
+          ) : null}
+          {unavailable.length ? (
+            <p className="form-error" role="status">
+              {t("workNoLongerAvailable")}
+            </p>
+          ) : null}
           <label htmlFor="checkout-name">{t("nameLabel")}</label>
           <input id="checkout-name" name="name" defaultValue={user?.name ?? ""} autoComplete="name" />
           <label htmlFor="checkout-phone">{t("phoneLabel")}</label>
@@ -80,7 +106,9 @@ export function CheckoutPage() {
           <input id="checkout-city" name="city" autoComplete="address-level2" />
           <label htmlFor="checkout-address">{t("addressLabel")}</label>
           <textarea className="resize-none" id="checkout-address" name="address" rows={4} autoComplete="street-address" />
-          <button className="button" type="submit">{t("placeDemoOrder")}</button>
+          <button className="button" type="submit" disabled={submitting}>
+            {submitting ? t("placingOrder") : t("placeDemoOrder")}
+          </button>
         </form>
         <aside className="checkout-summary">
           <span>{number(items.length)} {t("availableWorks")}</span>

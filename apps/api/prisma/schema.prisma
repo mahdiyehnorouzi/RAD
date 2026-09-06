@@ -116,19 +116,21 @@ model Review {
 }
 
 model Order {
-  id        String         @id
-  ownerKey  String
-  userId    String?
-  total     Int
-  usdTotal  Int
-  status    String         @default("received")
-  name      String
-  city      String
-  phone     String         @default("")
-  address   String         @default("")
-  createdAt DateTime       @default(now())
-  items     OrderItem[]
-  payment   PaymentIntent?
+  id                   String         @id
+  ownerKey             String
+  userId               String?
+  total                Int
+  usdTotal             Int
+  status               String         @default("payment_pending")
+  name                 String
+  city                 String
+  phone                String         @default("")
+  address              String         @default("")
+  trackingCode         String?
+  estimatedDeliveryAt  DateTime?
+  createdAt            DateTime       @default(now())
+  items                OrderItem[]
+  payment              PaymentIntent?
 
   @@index([ownerKey])
 }

@@ -15,11 +15,13 @@ const shopOrders: Array<{
   address: string;
   slug: string;
   productStatus: "reserved" | "sold" | "available";
+  trackingCode?: string;
+  etaDays?: number;
 }> = [
   {
     id: "RAD-S-1405-01",
     daysAgo: 1,
-    status: "received",
+    status: "payment_pending",
     name: "نیلوفر نادری",
     city: "تهران",
     phone: "09121234501",
@@ -30,79 +32,85 @@ const shopOrders: Array<{
   {
     id: "RAD-S-1405-02",
     daysAgo: 3,
-    status: "approved",
+    status: "confirmed",
     name: "آرمان کریمی",
     city: "اصفهان",
     phone: "09131234502",
     address: "چهارباغ عباسی، پلاک ۴۸",
     slug: "blue-pink-jar",
     productStatus: "reserved",
+    etaDays: 8,
   },
   {
     id: "RAD-S-1405-03",
     daysAgo: 6,
-    status: "forming",
+    status: "packing",
     name: "رها احمدی",
     city: "شیراز",
     phone: "09171234503",
     address: "بلوار چمران، کوچهٔ نارنج",
     slug: "cat-cup",
     productStatus: "reserved",
+    etaDays: 5,
   },
   {
     id: "RAD-S-1405-04",
     daysAgo: 9,
-    status: "drying",
+    status: "packing",
     name: "کیانوش مرادی",
     city: "تبریز",
     phone: "09141234504",
     address: "خیابان ارتش، پلاک ۲۲",
     slug: "contour-jar",
     productStatus: "reserved",
+    etaDays: 4,
   },
   {
     id: "RAD-S-1405-05",
     daysAgo: 12,
-    status: "firing",
+    status: "shipped",
     name: "سارا موسوی",
     city: "مشهد",
     phone: "09151234505",
     address: "بلوار سجاد، پلاک ۹۰",
     slug: "dachshund-sculpture",
-    productStatus: "reserved",
+    productStatus: "sold",
+    trackingCode: "RAD-POST-1405",
+    etaDays: 3,
   },
   {
     id: "RAD-S-1405-06",
     daysAgo: 16,
-    status: "glazing",
+    status: "delivered",
     name: "بهراد سلطانی",
     city: "رشت",
     phone: "09111234506",
     address: "گیلان، خیابان معلم",
     slug: "olive-loop-vessel",
-    productStatus: "reserved",
+    productStatus: "sold",
+    trackingCode: "RAD-POST-1406",
   },
   {
     id: "RAD-S-1405-07",
     daysAgo: 20,
-    status: "quality",
+    status: "cancelled",
     name: "مهسا فرهادی",
     city: "یزد",
     phone: "09133501207",
     address: "محلهٔ فهادان، پلاک ۷",
     slug: "mint-angular-cup",
-    productStatus: "reserved",
+    productStatus: "available",
   },
   {
     id: "RAD-S-1405-08",
     daysAgo: 24,
-    status: "shipped",
+    status: "returned",
     name: "پویا نعمتی",
     city: "کرج",
     phone: "09122601208",
     address: "گوهردشت، فاز ۳",
     slug: "speckled-cup",
-    productStatus: "sold",
+    productStatus: "available",
   },
   {
     id: "RAD-S-1405-09",
@@ -114,6 +122,7 @@ const shopOrders: Array<{
     address: "نیاوران، خیابان پریبرز",
     slug: "yellow-graphic-pitcher",
     productStatus: "sold",
+    trackingCode: "RAD-POST-1409",
   },
 ];
 
@@ -206,6 +215,8 @@ export async function seedCommerce(prisma: PrismaClient) {
     const product = bySlug.get(item.slug);
     if (!product) continue;
     const createdAt = new Date(Date.now() - item.daysAgo * day);
+    const estimatedDeliveryAt =
+      item.etaDays != null ? new Date(Date.now() + item.etaDays * day) : undefined;
     await prisma.order.upsert({
       where: { id: item.id },
       update: {
@@ -214,6 +225,8 @@ export async function seedCommerce(prisma: PrismaClient) {
         city: item.city,
         phone: item.phone,
         address: item.address,
+        trackingCode: item.trackingCode ?? null,
+        estimatedDeliveryAt: estimatedDeliveryAt ?? null,
         total: product.tomanPrice,
         usdTotal: product.usdPrice,
       },
@@ -227,6 +240,8 @@ export async function seedCommerce(prisma: PrismaClient) {
         city: item.city,
         phone: item.phone,
         address: item.address,
+        trackingCode: item.trackingCode,
+        estimatedDeliveryAt,
         createdAt,
         items: { create: [{ productSlug: item.slug }] },
         payment: {
@@ -234,7 +249,7 @@ export async function seedCommerce(prisma: PrismaClient) {
             amount: product.tomanPrice,
             currency: "IRR",
             provider: "sandbox",
-            status: "verified",
+            status: item.status === "payment_pending" ? "created" : "verified",
           },
         },
       },
@@ -396,8 +411,24 @@ export async function seedCommerce(prisma: PrismaClient) {
     }),
   ];
 
+  const commissionsDb = prisma as unknown as {
+    commission: {
+      upsert: (args: {
+        where: { id: string };
+        update: { payload: Prisma.InputJsonValue };
+        create: {
+          id: string;
+          ownerKey: string;
+          payload: Prisma.InputJsonValue;
+          createdAt: Date;
+          updatedAt: Date;
+        };
+      }) => Promise<unknown>;
+    };
+  };
+
   for (const item of commissions) {
-    await prisma.commission.upsert({
+    await commissionsDb.commission.upsert({
       where: { id: item.id },
       update: {
         payload: item as unknown as Prisma.InputJsonValue,

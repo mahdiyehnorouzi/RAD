@@ -1,4 +1,4 @@
-import type { Product, ProductCategory } from "@rad/types";
+import type { Product, ProductCategory, ProductStatus } from "@rad/types";
 
 const CATEGORY_DEFAULT_IMAGE: Record<ProductCategory, string> = {
   ceramics: "/catalog/defaults/ceramics.webp",
@@ -26,6 +26,7 @@ export function isFileProductImage(src?: string) {
     src.startsWith("data:image/") ||
     src.startsWith("/catalog/photos/") ||
     src.startsWith("/catalog/defaults/") ||
+    src.startsWith("/catalog/images/") ||
     src.startsWith("http://") ||
     src.startsWith("https://")
   );
@@ -42,4 +43,34 @@ export function productPhotoSrc(src?: string) {
 
 export function hasRealProductImage(product: Product) {
   return Boolean(product.images?.some((image) => isFileProductImage(image.src)));
+}
+
+function availabilityRank(status: ProductStatus) {
+  if (status === "sold") return 2;
+  if (status === "reserved") return 1;
+  return 0;
+}
+
+export function overlayLiveProduct(display: Product, live?: Product): Product {
+  if (!live) return display;
+  return {
+    ...display,
+    status:
+      availabilityRank(display.status) >= availabilityRank(live.status)
+        ? display.status
+        : live.status,
+  };
+}
+
+export function overlayLiveCatalog(display: Product[], live: Product[]): Product[] {
+  const bySlug = new Map(live.map((product) => [product.slug, product]));
+  const seen = new Set<string>();
+  const merged = display.map((product) => {
+    seen.add(product.slug);
+    return overlayLiveProduct(product, bySlug.get(product.slug));
+  });
+  for (const product of live) {
+    if (!seen.has(product.slug) && hasRealProductImage(product)) merged.push(product);
+  }
+  return merged;
 }

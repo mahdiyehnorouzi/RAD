@@ -1,4 +1,5 @@
 import type { Product, ProductImage, Vendor, Order, OrderItem, User } from "@prisma/client";
+import { normalizeStoreOrderStatus } from "../orders/store-order-status";
 
 const categoryToStore: Record<string, string> = {
   گلدان: "ceramics",
@@ -59,14 +60,18 @@ export function toAdminProduct(
 }
 
 export function toAdminOrder(
-  order: Order & { items: Array<OrderItem & { product?: { name: string } | null }> },
+  order: Order & {
+    trackingCode?: string | null;
+    items: Array<OrderItem & { product?: { name: string } | null }>;
+  },
 ) {
   return {
     id: order.id,
     customer: order.name,
     productName: order.items.map((item) => item.product?.name ?? item.productSlug).join("، "),
     amount: order.total,
-    status: order.status as "received" | "approved" | "forming" | "drying" | "firing" | "glazing" | "quality" | "shipped" | "delivered",
+    status: normalizeStoreOrderStatus(order.status),
+    trackingCode: order.trackingCode ?? undefined,
     createdAt: order.createdAt.getTime(),
   };
 }

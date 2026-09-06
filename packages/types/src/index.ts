@@ -69,6 +69,7 @@ export interface Product {
   details: string[];
   images?: ProductImage[];
   vendor?: Vendor;
+  artworkNumber?: string;
   en: { name: string; subtitle: string; story: string; details: string[] };
 }
 
@@ -79,24 +80,71 @@ export interface AuthUser {
   role: "customer" | "artist" | "admin";
   adminRole?: "owner" | "manager" | "editor" | "viewer" | null;
 }
-export type OrderStatus =
-  | "received"
-  | "approved"
-  | "forming"
-  | "drying"
-  | "firing"
-  | "glazing"
-  | "quality"
+export type StoreOrderStatus =
+  | "payment_pending"
+  | "confirmed"
+  | "packing"
   | "shipped"
-  | "delivered";
+  | "delivered"
+  | "cancelled"
+  | "returned";
+export type OrderStatus = StoreOrderStatus;
+
+export const STORE_ORDER_STATUSES: StoreOrderStatus[] = [
+  "payment_pending",
+  "confirmed",
+  "packing",
+  "shipped",
+  "delivered",
+  "cancelled",
+  "returned",
+];
+
+export const STORE_ORDER_PROGRESS: StoreOrderStatus[] = [
+  "payment_pending",
+  "confirmed",
+  "packing",
+  "shipped",
+  "delivered",
+];
+
+export const storeOrderStatusLabels = {
+  payment_pending: "در انتظار پرداخت",
+  confirmed: "سفارش ثبت شد",
+  packing: "در حال بسته‌بندی",
+  shipped: "تحویل به پست",
+  delivered: "تحویل داده شد",
+  cancelled: "لغوشده",
+  returned: "مرجوع‌شده",
+} as const satisfies Record<StoreOrderStatus, string>;
+
+const legacyStoreOrderStatus: Record<string, StoreOrderStatus> = {
+  received: "payment_pending",
+  approved: "confirmed",
+  forming: "packing",
+  drying: "packing",
+  firing: "packing",
+  glazing: "packing",
+  quality: "packing",
+};
+
+export function normalizeStoreOrderStatus(status: string): StoreOrderStatus {
+  if ((STORE_ORDER_STATUSES as string[]).includes(status)) {
+    return status as StoreOrderStatus;
+  }
+  return legacyStoreOrderStatus[status] ?? "confirmed";
+}
+
 export interface Order {
   id: string;
   slugs: string[];
   total: number;
   usdTotal?: number;
   createdAt: number;
-  status: OrderStatus;
-  delivery: { name: string; city: string };
+  status: StoreOrderStatus;
+  delivery: { name: string; city: string; phone?: string; address?: string };
+  trackingCode?: string | null;
+  estimatedDeliveryAt?: number | null;
 }
 export interface Review { id: string; productSlug: string; author: string; rating: number; comment: string; image?: string; createdAt: number; }
 export interface PaymentIntent { id: string; orderId: string; amount: number; currency: "IRR" | "USD"; provider: "sandbox" | "zarinpal"; status: "created" | "redirected" | "verified" | "failed"; }

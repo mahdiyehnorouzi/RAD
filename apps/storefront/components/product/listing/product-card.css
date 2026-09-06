@@ -593,6 +593,34 @@ html[dir="rtl"] .product-meta>span, html[data-locale="fa"] .product-meta>span {w
   overflow: hidden !important;
 }
 
+.product-status-badge {
+  position: absolute;
+  z-index: 12;
+  top: 0.85rem;
+  inset-inline-end: 0.85rem;
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 0.32rem 0.75rem;
+  border-radius: 999px;
+  background: var(--clay);
+  color: var(--paper);
+  font-size: 0.68rem;
+  font-weight: 700;
+  line-height: 1;
+  pointer-events: none;
+  box-shadow: 0 4px 18px rgba(24, 35, 31, 0.12);
+}
+
+.product-card.is-unavailable .product-art {
+  filter: grayscale(0.18);
+}
+
+.product-card.is-unavailable .product-meta > span {
+  text-decoration: line-through;
+  color: #71665b;
+}
+
 .product-media-shell .product-art {
   overflow: hidden !important;
 }

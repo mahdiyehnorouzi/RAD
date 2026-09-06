@@ -6,6 +6,7 @@ function backFallbackPath(pathname: string) {
   if (pathname.startsWith("/differences/")) return "/differences";
   if (pathname.startsWith("/making/")) return "/making";
   if (pathname.startsWith("/workshop/")) return "/workshop";
+  if (pathname.startsWith("/orders/")) return "/orders";
   if (pathname.startsWith("/orders")) return "/account";
   if (pathname === "/making" || pathname === "/workshop") return "/studio";
   if (pathname === "/checkout") return "/cart";

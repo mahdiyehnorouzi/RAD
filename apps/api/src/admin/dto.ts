@@ -59,17 +59,19 @@ export class SaveProductDto {
 
 export class UpdateOrderDto {
   @IsIn([
-    "received",
-    "approved",
-    "forming",
-    "drying",
-    "firing",
-    "glazing",
-    "quality",
+    "payment_pending",
+    "confirmed",
+    "packing",
     "shipped",
     "delivered",
+    "cancelled",
+    "returned",
   ])
   status!: string;
+
+  @IsOptional()
+  @IsString()
+  trackingCode?: string;
 }
 
 export class InviteMemberDto {

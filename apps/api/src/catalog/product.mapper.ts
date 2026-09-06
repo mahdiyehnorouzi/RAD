@@ -92,6 +92,7 @@ export function toProduct(product: ProductRecord, options?: { embedImages?: bool
         accent: image.accent ?? undefined,
         shape: image.shape ?? undefined,
       })),
+    artworkNumber: `RAD-${String(product.sortOrder + 27).padStart(3, "0")}`,
     vendor: product.vendor
       ? {
           id: product.vendor.id,
