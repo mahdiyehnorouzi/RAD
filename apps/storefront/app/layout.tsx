@@ -7,15 +7,14 @@ import {
   Footer,
   Header,
   PageBackNavigation,
-  PwaRegistrar,
   RouteScrollReset,
 } from "@/components/layout";
 import { CartProvider } from "@/components/cart";
 import { LocaleProvider } from "@/components/i18n";
 import { CommerceProvider } from "@/components/commerce";
 import { MakingProvider } from "@/hooks/use-making-workspace";
-import { CatalogProvider } from "@/components/catalog";
-import { HomeBanner } from "@/components/home";
+import { CatalogProvider } from "@/components/catalog/catalog-provider";
+import { HomeBanner } from "@/components/home/home-banner";
 
 export const metadata: Metadata = {
   title: mockStorefront.brand.title.fa,
@@ -23,6 +22,7 @@ export const metadata: Metadata = {
   icons: {
     icon: "/rad-logo.png",
     apple: "/rad-logo.png",
+    shortcut: "/rad-logo.png",
   },
 };
 

@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { ProductDetail } from "@/components/product";
 import { fetchProduct } from "@/lib/api";
-import { getProduct } from "@/lib/catalog";
+import { getProduct } from "@/lib/catalog/products";
 
 export default async function PDP({
   params,

@@ -17,19 +17,28 @@ export function DifferenceTrailStrip({
     <ol className="difference-strip" aria-labelledby={labelledBy}>
       {differenceStages.map((item) => {
         const palette = portrait.palette[item.id];
+        const photo = portrait.stageImages?.[item.id];
         return (
           <li key={item.id}>
             <span>{item.index[locale]}</span>
-            <div
-              className={`difference-strip-swatch stage-${item.id}`}
-              style={
-                {
-                  "--swatch": palette.color,
-                  "--swatch-accent": palette.accent,
-                } as React.CSSProperties
-              }
-              aria-hidden="true"
-            />
+            {photo ? (
+              <img
+                className="difference-strip-swatch"
+                src={photo}
+                alt=""
+              />
+            ) : (
+              <div
+                className={`difference-strip-swatch stage-${item.id}`}
+                style={
+                  {
+                    "--swatch": palette.color,
+                    "--swatch-accent": palette.accent,
+                  } as React.CSSProperties
+                }
+                aria-hidden="true"
+              />
+            )}
             <b>{item.title[locale]}</b>
           </li>
         );

@@ -25,4 +25,5 @@ npm run deploy:vinext
 
 echo ""
 echo "Admin deployed."
+echo "Admin: https://admin.rad-object.com"
 echo "Worker: https://rad-admin.rad-studio.workers.dev"

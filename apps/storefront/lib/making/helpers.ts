@@ -41,6 +41,27 @@ export function stageIndex(stage: MakingStageId) {
   return index < 0 ? -1 : index;
 }
 
+export function stagesFor(commission: MakingCommission): MakingStageId[] {
+  if (commission.stage === "declined") {
+    return ["design_submitted", "feasibility", "declined"];
+  }
+  return BIOGRAPHY_STAGES;
+}
+
+export function stageProgress(commission: MakingCommission) {
+  const stages = stagesFor(commission);
+  const index = Math.max(0, stages.indexOf(commission.stage));
+  const next = stages[index + 1];
+  return {
+    stages,
+    index,
+    total: stages.length,
+    current: commission.stage,
+    next,
+    isLast: index >= stages.length - 1,
+  };
+}
+
 export function moneyFor(commission: MakingCommission, locale: "fa" | "en", toman: number, usd: number) {
   if (locale === "fa") {
     return `${new Intl.NumberFormat("fa-IR").format(toman)} تومان`;

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { productCopy } from "@/lib/catalog";
+import { productCopy } from "@/lib/catalog/products";
 import { useLocale } from "@/components/i18n";
 import { Search, X } from "lucide-react";
 import { useCatalog } from "@/components/catalog";

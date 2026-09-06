@@ -1,36 +1,35 @@
 "use client";
 import "./biography-rail.css";
 
-import type { MakingCommission, MakingStageId } from "@/components/making/type";
-import { BIOGRAPHY_STAGES, STAGE_LABEL, copy, stageIndex } from "@/lib/making";
+import type { MakingCommission } from "@/components/making/type";
+import { STAGE_LABEL, copy, stageProgress } from "@/lib/making";
 import { useLocale } from "@/components/i18n";
 
 export function BiographyRail({ commission }: { commission: MakingCommission }) {
-  const { locale, number } = useLocale();
-  const current = stageIndex(commission.stage);
-  const stages =
-    commission.stage === "declined"
-      ? (["design_submitted", "feasibility", "declined"] as MakingStageId[])
-      : BIOGRAPHY_STAGES;
+  const { locale, t, number } = useLocale();
+  const progress = stageProgress(commission);
+
   return (
-    <ol className="making-rail" aria-label={locale === "fa" ? "زندگی‌نامه ساخت" : "Making biography"}>
-      {stages.map((stage, index) => {
-        const done =
-          commission.stage === "declined"
-            ? stage !== "declined"
-            : current > index || commission.stage === "complete";
-        const active = commission.stage === stage;
-        return (
-          <li
-            key={stage}
-            className={active ? "active" : done ? "done" : ""}
-            aria-current={active ? "step" : undefined}
-          >
-            <i>{number(index + 1)}</i>
-            <span>{copy(STAGE_LABEL[stage], locale)}</span>
-          </li>
-        );
-      })}
-    </ol>
+    <nav className="making-rail-wrap" aria-label={t("currentStage")}>
+      <ol className="making-rail">
+        {progress.stages.map((stage, index) => {
+          const done = index < progress.index || commission.stage === "complete";
+          const active = commission.stage === stage;
+          return (
+            <li
+              key={stage}
+              className={active ? "active" : done ? "done" : "upcoming"}
+              aria-current={active ? "step" : undefined}
+            >
+              <i>{number(index + 1)}</i>
+              <span>
+                {copy(STAGE_LABEL[stage], locale)}
+                {active ? <b>{t("youAreHere")}</b> : null}
+              </span>
+            </li>
+          );
+        })}
+      </ol>
+    </nav>
   );
 }

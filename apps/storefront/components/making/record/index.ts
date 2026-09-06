@@ -5,3 +5,4 @@ export { PreKilnCard } from "./pre-kiln-card";
 export { ProgressPhotographs } from "./progress-photographs";
 export { QuoteCard } from "./quote-card";
 export { SituationBanner } from "./situation-banner";
+export { StageMeter } from "./stage-meter";

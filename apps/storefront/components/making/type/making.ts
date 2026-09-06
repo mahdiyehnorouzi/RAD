@@ -43,6 +43,7 @@ export interface MakingBrief {
   permission: string;
   category: string;
   image?: string;
+  images?: string[];
 }
 
 export interface StageMessage {

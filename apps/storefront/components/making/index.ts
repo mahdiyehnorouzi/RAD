@@ -6,6 +6,7 @@ export {
   ProgressPhotographs,
   QuoteCard,
   SituationBanner,
+  StageMeter,
 } from "./record";
 export { CommissionCard } from "./customer-list/commission-card";
 export { CustomerMakingDetail } from "./customer-detail";

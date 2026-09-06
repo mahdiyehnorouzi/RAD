@@ -40,7 +40,7 @@ export function AdminDashboard() {
   return <div className="admin-shell">
     <aside className={`admin-sidebar ${mobileNav ? "is-open" : ""}`} aria-label="ناوبری مدیریت">
       <button className="nav-close" type="button" onClick={() => setMobileNav(false)} aria-label="بستن منو"><X /></button>
-      <div className="brand-lockup"><span className="brand-mark">رَد</span><div><strong>دفتر کوره</strong><small>پنل مدیریت استودیو</small></div></div>
+      <div className="brand-lockup"><span className="brand-mark"><img src="/rad-logo.png" alt="رَد" width={52} height={52} /></span><div><strong>دفتر کوره</strong><small>پنل مدیریت استودیو</small></div></div>
       <nav className="admin-nav">{navItems.map(({ id, label, icon: Icon }) => <button key={id} type="button" className={section === id ? "active" : ""} onClick={() => go(id)}><Icon /><span>{label}</span><ChevronLeft /></button>)}</nav>
       <div className="sidebar-foot"><div className="avatar">{workspace.user.name.trim().charAt(0)}</div><div><strong>{workspace.user.name}</strong><small>{roleLabels[workspace.currentRole]}</small></div><button type="button" aria-label="خروج از حساب" onClick={() => { void workspace.logout(); }}><LogOut /></button></div>
     </aside>
@@ -233,6 +233,7 @@ function AdminLogin({ onLogin, onForgotPassword }: { onLogin: (input: { email: s
     return (
       <div className="admin-login">
         <section className="paper-panel">
+          <div className="brand-mark login-brand"><img src="/rad-logo.png" alt="رَد" width={72} height={72} /></div>
           <span className="eyebrow">دفتر کوره</span>
           <h1>فراموشی رمز عبور</h1>
           <p>ایمیل حساب مدیریتی خود را وارد کنید. یک کد ۶ رقمی به ایمیل شما ارسال می‌شود.</p>
@@ -279,6 +280,7 @@ function AdminLogin({ onLogin, onForgotPassword }: { onLogin: (input: { email: s
   return (
     <div className="admin-login">
       <section className="paper-panel">
+        <div className="brand-mark login-brand"><img src="/rad-logo.png" alt="رَد" width={72} height={72} /></div>
         <span className="eyebrow">دفتر کوره</span>
         <h1>ورود به مدیریت رَد</h1>
         <p>حساب‌های جدید مشتری از فروشگاه ساخته می‌شوند. محصولات تازه را پس از ورود در همین پنل به پایگاه داده اضافه کنید.</p>

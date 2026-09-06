@@ -51,8 +51,8 @@ railway variables set \
   NODE_ENV=production \
   RUN_SEED=true \
   RAD_VERSION="${RAD_VERSION}" \
-  ADMIN_ORIGIN="${ADMIN_ORIGIN:-https://rad-admin.rad-studio.workers.dev}" \
-  STOREFRONT_ORIGIN="${STOREFRONT_ORIGIN:-https://rad-studio.rad-studio.workers.dev}" \
+  ADMIN_ORIGIN="${ADMIN_ORIGIN:-https://admin.rad-object.com}" \
+  STOREFRONT_ORIGIN="${STOREFRONT_ORIGIN:-https://rad-object.com}" \
   "DATABASE_URL=\${{${POSTGRES_REF}}}"
 
 if [[ -n "${JWT_SECRET:-}" ]]; then

@@ -17,6 +17,7 @@ export function ResetPasswordPage({ email: initialEmail }: { email: string }) {
   return (
     <div className="admin-login">
       <section className="paper-panel">
+        <div className="brand-mark login-brand"><img src="/rad-logo.png" alt="رَد" width={72} height={72} /></div>
         <span className="eyebrow">دفتر کوره</span>
         <h1>رمز عبور جدید</h1>
         <p>کد ۶ رقمی که به ایمیل شما ارسال شده را وارد کنید و رمز عبور جدید انتخاب کنید.</p>

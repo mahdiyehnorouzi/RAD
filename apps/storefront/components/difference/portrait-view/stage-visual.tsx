@@ -16,13 +16,16 @@ export function StageVisual({
 }) {
   const palette = portrait.palette[stage];
   const treatment = `difference-stage-art stage-${stage} permission-${portrait.permission}`;
-  if (image && stage !== "described") {
+  const photo = portrait.stageImages?.[stage] ?? (stage === "described" ? undefined : image);
+
+  if (photo) {
     return (
       <div className={treatment}>
-        <img src={image} alt="" />
+        <img src={photo} alt="" />
       </div>
     );
   }
+
   return (
     <div className={treatment}>
       {stage === "described" ? (

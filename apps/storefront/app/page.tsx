@@ -12,13 +12,12 @@ import {
   ProvenanceSection,
   StorySection,
   StudioCallout,
-} from "@/components/home";
-import { hasRealProductImage } from "@/lib/catalog";
-import { useCatalog } from "@/components/catalog";
+} from "@/components/home/sections";
+import { useCatalog } from "@/components/catalog/catalog-provider";
 
 export default function Home() {
   const { products } = useCatalog();
-  const featured = products.filter(hasRealProductImage).slice(0, 6);
+  const featured = products.slice(0, 6);
   const hero = featured[0];
   const studio = featured[1] ?? featured[0];
 

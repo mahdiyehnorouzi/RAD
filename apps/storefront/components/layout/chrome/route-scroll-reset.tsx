@@ -11,5 +11,15 @@ export function RouteScrollReset() {
       window.scrollTo({ top: 0, left: 0, behavior: "instant" });
     previous.current = pathname;
   }, [pathname]);
+  useEffect(() => {
+    if (!("serviceWorker" in navigator)) return;
+    void navigator.serviceWorker.getRegistrations().then((registrations) => {
+      for (const registration of registrations) void registration.unregister();
+    });
+    if (typeof caches === "undefined") return;
+    void caches.keys().then((keys) =>
+      Promise.all(keys.map((key) => caches.delete(key))),
+    );
+  }, []);
   return null;
 }

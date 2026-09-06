@@ -35,18 +35,21 @@ export function Button({
   onClick,
   light = false,
   outline = false,
+  disabled = false,
 }: {
   children: React.ReactNode;
   type?: "button" | "submit";
   onClick?: () => void;
   light?: boolean;
   outline?: boolean;
+  disabled?: boolean;
 }) {
   return (
     <button
       type={type}
       className={`button ${light ? "light" : ""} ${outline ? "outline" : ""}`}
       onClick={onClick}
+      disabled={disabled}
     >
       {children}
     </button>

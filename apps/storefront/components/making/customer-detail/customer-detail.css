@@ -2,6 +2,16 @@ html[dir="rtl"] .making-layout, html[dir="rtl"] .making-brief {direction:rtl!imp
 
 .making-layout {display:grid;grid-template-columns:minmax(0,1.2fr) minmax(280px,.8fr);gap:clamp(1.5rem,4vw,3rem);align-items:start}
 
+.making-brief {display:grid;gap:1rem;margin:0 0 1.5rem}
+.making-brief div {display:grid;gap:.25rem}
+.making-brief dt {color:#71665b;font-size:.8rem}
+.making-brief dd {margin:0}
+
+.making-brief-images {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.75rem;margin:0 0 1.5rem;padding:0;list-style:none}
+.making-brief-images img {width:100%;aspect-ratio:4/5;object-fit:cover;border-radius:2px}
+.making-concept-image {width:min(100%,22rem);aspect-ratio:4/5;object-fit:cover;margin:0 0 1.5rem}
+
 @media(max-width:900px) {
 .making-layout {grid-template-columns:1fr!important}
+.making-brief-images {grid-template-columns:1fr 1fr}
 }

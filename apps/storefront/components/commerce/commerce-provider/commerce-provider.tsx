@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import type { AuthUser, Notice, NoticeKind, Order, Review } from "@rad/types";
-import { productCopy } from "@/lib/catalog";
+import { productCopy } from "@/lib/catalog/products";
 import { api } from "@/lib/api";
 import { useCatalog } from "../../catalog/catalog-provider";
 import { useLocale } from "@/components/i18n";

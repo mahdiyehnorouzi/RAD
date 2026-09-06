@@ -546,3 +546,46 @@
 .surprise-permission {border:0;padding:0;margin:2.25rem 0 0}
 
 .surprise-permission legend {display:flex;flex-direction:column;gap:.35rem;width:100%;margin-bottom:1rem;color:var(--paper)}
+
+.designer-shell {display:grid;gap:1.75rem}
+
+.designer-nav p {margin:0;color:#cbb892;font-size:.85rem}
+
+.designer-steps {display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:.4rem;margin:0;padding:0;list-style:none}
+
+.designer-steps button {width:100%;display:grid;justify-items:center;gap:.4rem;padding:.6rem .25rem;background:transparent;border:0;color:rgba(247,242,233,.45);cursor:pointer}
+
+.designer-steps button:disabled {cursor:not-allowed;opacity:.4}
+
+.designer-steps i {width:30px;height:30px;display:grid;place-items:center;border-radius:50%;border:1px solid rgba(247,242,233,.28);font-style:normal}
+
+.designer-steps .done button,.designer-steps .current button {color:var(--paper)}
+
+.designer-steps .done i {background:var(--moss);border-color:var(--moss)}
+
+.designer-steps .current i {background:var(--clay);border-color:var(--clay);box-shadow:0 0 0 4px rgba(161,61,46,.28)}
+
+.designer-step-actions {display:flex;justify-content:space-between;gap:1rem;margin-top:1.75rem}
+
+.designer-images {border:0;padding:0;margin:1.75rem 0 0}
+
+.designer-images legend {display:flex;flex-direction:column;gap:.35rem;margin-bottom:.75rem}
+
+.designer-images legend small {color:#c77963;font-size:.65rem;letter-spacing:.08em}
+
+.designer-images p {color:#d4c7b6;margin:0 0 1rem}
+
+.designer-upload-grid {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.75rem;margin:1rem 0 0;padding:0;list-style:none}
+
+.designer-upload-grid li {position:relative}
+
+.designer-upload-grid img {width:100%;aspect-ratio:1;object-fit:cover;border-radius:2px}
+
+.designer-upload-grid button {position:absolute;inset-inline-end:.4rem;bottom:.4rem;padding:.25rem .55rem;border:0;background:var(--ink);color:var(--paper);cursor:pointer}
+
+@media(max-width:700px) {
+.designer-steps {grid-template-columns:repeat(5,minmax(0,1fr))}
+.designer-steps span {font-size:.65rem}
+.designer-step-actions {flex-direction:column}
+.designer-step-actions .button {width:100%}
+}
