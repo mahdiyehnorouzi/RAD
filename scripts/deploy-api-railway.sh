@@ -13,9 +13,49 @@ if ! command -v railway >/dev/null 2>&1; then
   npm install -g @railway/cli
 fi
 
-if [[ -z "${RAILWAY_TOKEN:-}" ]] && ! railway whoami >/dev/null 2>&1; then
+# GitHub Actions injects empty strings for missing secrets. Railway treats those as invalid tokens.
+if [[ -z "${RAILWAY_TOKEN:-}" ]]; then
+  unset RAILWAY_TOKEN
+fi
+if [[ -z "${RAILWAY_API_TOKEN:-}" ]]; then
+  unset RAILWAY_API_TOKEN
+fi
+
+in_ci() { [[ -n "${CI:-}${GITHUB_ACTIONS:-}" ]]; }
+
+# Project tokens (RAILWAY_TOKEN) shadow account tokens and cannot whoami/link/login.
+# Keep only the account token when both are present.
+if [[ -n "${RAILWAY_TOKEN:-}" && -n "${RAILWAY_API_TOKEN:-}" ]]; then
+  echo "Unsetting RAILWAY_TOKEN so the account/workspace RAILWAY_API_TOKEN can be used."
+  unset RAILWAY_TOKEN
+fi
+
+if in_ci; then
+  if [[ -z "${RAILWAY_TOKEN:-}" && -z "${RAILWAY_API_TOKEN:-}" ]]; then
+    echo "Railway auth is missing."
+    echo "Add a GitHub Actions secret, then re-run Release:"
+    echo "  RAILWAY_TOKEN     — project token (Project → Settings → Tokens). Deploys with railway up only."
+    echo "  RAILWAY_API_TOKEN — account/workspace token (https://railway.com/account/tokens). Needed for link and variables."
+    echo "Do not put an account token in RAILWAY_TOKEN; the CLI rejects it."
+    exit 1
+  fi
+elif [[ -z "${RAILWAY_TOKEN:-}" && -z "${RAILWAY_API_TOKEN:-}" ]] && ! railway whoami >/dev/null 2>&1; then
   echo "Log in to Railway first:"
   railway login
+fi
+
+# Project tokens are bound to one project/environment and only support deploy commands.
+if [[ -n "${RAILWAY_TOKEN:-}" && -z "${RAILWAY_API_TOKEN:-}" ]]; then
+  echo "Deploying API ${RAD_VERSION} to Railway with project token (railway up)..."
+  railway up --detach -s "${API_SERVICE}"
+  if [[ -n "${API_URL}" ]]; then
+    echo ""
+    echo "API deploy started at: ${API_URL}"
+  else
+    echo ""
+    echo "API deploy started. Project tokens cannot list domains; API_URL stays as configured."
+  fi
+  exit 0
 fi
 
 if [[ -n "${RAILWAY_PROJECT_ID:-}" ]]; then
@@ -25,6 +65,11 @@ if [[ -n "${RAILWAY_PROJECT_ID:-}" ]]; then
     railway link --project "${RAILWAY_PROJECT_ID}" >/dev/null
   fi
 elif [[ ! -f .railway/project.json ]]; then
+  if in_ci; then
+    echo "Set GitHub secret RAILWAY_PROJECT_ID to this Railway project's ID, then re-run."
+    echo "Railway dashboard → project → Settings → General → Project ID."
+    exit 1
+  fi
   railway init --name rad-api
 fi
 

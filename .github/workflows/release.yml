@@ -4,6 +4,7 @@ on:
   push:
     tags:
       - "v*.*.*"
+  workflow_dispatch:
 
 jobs:
   deploy:
@@ -21,20 +22,37 @@ jobs:
 
       - name: Verify tag matches VERSION
         run: |
-          TAG="${GITHUB_REF_NAME#v}"
           FILE="$(tr -d '[:space:]' < VERSION)"
-          if [[ "$TAG" != "$FILE" ]]; then
-            echo "Tag v${TAG} does not match VERSION file ${FILE}"
-            exit 1
+          if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
+            TAG="${GITHUB_REF_NAME#v}"
+            if [[ "$TAG" != "$FILE" ]]; then
+              echo "Tag v${TAG} does not match VERSION file ${FILE}"
+              exit 1
+            fi
           fi
           echo "RAD_VERSION=${FILE}" >> "$GITHUB_ENV"
 
       - run: npm ci
 
+      - name: Check deploy secrets
+        env:
+          HAS_RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN != '' || vars.RAILWAY_TOKEN != '' }}
+          HAS_RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_API_TOKEN != '' }}
+          HAS_CLOUDFLARE: ${{ secrets.CLOUDFLARE_API_TOKEN != '' }}
+        run: |
+          echo "RAILWAY_TOKEN present: ${HAS_RAILWAY_TOKEN}"
+          echo "RAILWAY_API_TOKEN present: ${HAS_RAILWAY_API_TOKEN}"
+          echo "CLOUDFLARE_API_TOKEN present: ${HAS_CLOUDFLARE}"
+          if [[ "${HAS_RAILWAY_TOKEN}" != "true" && "${HAS_RAILWAY_API_TOKEN}" != "true" ]]; then
+            echo "::error::No Railway credential reached this job. This workflow reads RAILWAY_API_TOKEN or RAILWAY_TOKEN from Repository secrets. Re-running the old v1.3.0 tag will not use this workflow file."
+            exit 1
+          fi
+
       - name: Deploy API
         env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-          RAILWAY_PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN || vars.RAILWAY_TOKEN }}
+          RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_API_TOKEN }}
+          RAILWAY_PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID || vars.RAILWAY_PROJECT_ID }}
           RAILWAY_API_SERVICE: ${{ vars.RAILWAY_API_SERVICE || 'rad-api-web' }}
         run: bash scripts/deploy-api-railway.sh
 
