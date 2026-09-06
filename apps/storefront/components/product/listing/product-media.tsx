@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { Product } from "@rad/types";
 import { useLocale } from "@/components/i18n";
 import { artworkVisual } from "@/lib/catalog/artwork";
@@ -30,7 +30,9 @@ export function ProductMedia({
   const { locale, t } = useLocale();
   const [failedSrc, setFailedSrc] = useState<string | null>(null);
   const soldBadge =
-    product.status === "sold" ? <span className="sold-media-badge">{t("soldOut")}</span> : null;
+    product.status === "sold" || product.status === "reserved" ? (
+      <span className="sold-media-badge">{t("soldOut")}</span>
+    ) : null;
 
   const media = product.images?.[imageIndex] ?? product.images?.[0];
   const categorySrc = categoryDefaultImage(product.category);
@@ -41,6 +43,21 @@ export function ProductMedia({
       : failedSrc === categorySrc
         ? null
         : categorySrc;
+
+  useEffect(() => {
+    if (!src) return;
+    let cancelled = false;
+    const probe = new Image();
+    probe.onerror = () => {
+      if (!cancelled) setFailedSrc(src);
+    };
+    probe.src = src;
+    return () => {
+      cancelled = true;
+      probe.onload = null;
+      probe.onerror = null;
+    };
+  }, [src]);
 
   const label = locale === "fa" ? (media?.alt || product.name) : (media?.enAlt || product.en.name);
 
@@ -60,12 +77,7 @@ export function ProductMedia({
 
   return (
     <>
-      <img
-        className="product-photo"
-        src={src}
-        alt={label}
-        onError={() => setFailedSrc(src)}
-      />
+      <img className="product-photo" src={src} alt={label} />
       {soldBadge}
     </>
   );

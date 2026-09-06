@@ -82,20 +82,26 @@ export function AddToBag({ product }: { product: Product }) {
   const { add, has } = useCart();
   const { t } = useLocale();
   const { addNotice } = useCommerce();
+  const { refresh } = useCatalog();
   const added = has(product.slug);
-  const soldOut = product.status === "sold";
+  const unavailable =
+    product.status === "sold" || product.status === "reserved";
   return (
     <button
       type="button"
       className="button add"
       onClick={async () => {
-        await add(product);
-        await addNotice("cart", product.slug);
+        const addedToBag = await add(product);
+        if (addedToBag) {
+          await addNotice("cart", product.slug);
+          return;
+        }
+        await refresh();
       }}
-      disabled={added || product.status === "sold" || product.status === "reserved"}
+      disabled={added || unavailable}
       aria-live="polite"
     >
-      {soldOut ? t("soldOut") : added ? t("inBag") : t("addBag")}
+      {unavailable ? t("soldOut") : added ? t("inBag") : t("addBag")}
     </button>
   );
 }

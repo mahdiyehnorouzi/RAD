@@ -3,7 +3,7 @@ import { ProductDetail } from "@/components/product";
 import { fetchProduct } from "@/lib/api";
 import { getProduct } from "@/lib/catalog/products";
 import { photoWorks } from "@/lib/catalog/photo-works";
-import { hasRealProductImage } from "@/lib/catalog/category-defaults";
+import { overlayRemoteProduct } from "@/lib/catalog/resolve-product";
 
 export default async function PDP({
   params,
@@ -14,8 +14,7 @@ export default async function PDP({
   const remote = await fetchProduct(slug).catch(() => null);
   const local =
     photoWorks.find((item) => item.slug === slug) ?? getProduct(slug);
-  const product =
-    remote && hasRealProductImage(remote) ? remote : local ?? remote;
+  const product = overlayRemoteProduct(local, remote);
   if (!product) notFound();
   return <ProductDetail product={product} />;
 }

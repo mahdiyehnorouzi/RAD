@@ -10,7 +10,7 @@ import { productPrice } from "@/lib/money";
 import { FavoriteButton } from "@/components/commerce";
 import { ChevronDown, PackageCheck, Palette, ShieldCheck, Truck } from "lucide-react";
 import { useCatalog } from "../../catalog/catalog-provider";
-import { hasRealProductImage } from "@/lib/catalog/category-defaults";
+import { overlayRemoteProduct } from "@/lib/catalog/resolve-product";
 import "./product-detail.css";
 
 export function ProductDetail({ product }: { product: Product }) {
@@ -19,12 +19,7 @@ export function ProductDetail({ product }: { product: Product }) {
   const [activeImage, setActiveImage] = useState(0);
   const { products, getProduct } = useCatalog();
   const catalogProduct = getProduct(product.slug);
-  const resolved =
-    catalogProduct && hasRealProductImage(catalogProduct)
-      ? catalogProduct
-      : hasRealProductImage(product)
-        ? product
-        : catalogProduct ?? product;
+  const resolved = overlayRemoteProduct(product, catalogProduct) ?? product;
 
   const imageCount = resolved.images?.length ?? 1;
 

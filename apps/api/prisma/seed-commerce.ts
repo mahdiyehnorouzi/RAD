@@ -245,10 +245,6 @@ export async function seedCommerce(prisma: PrismaClient) {
     if (!existingItem) {
       await prisma.orderItem.create({ data: { orderId: item.id, productSlug: item.slug } });
     }
-    await prisma.product.update({
-      where: { slug: item.slug },
-      data: { status: item.productStatus },
-    });
   }
 
   const commissions: MakingCommission[] = [

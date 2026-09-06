@@ -22,33 +22,34 @@ export function ProductCard({
   const { locale, t, href, number } = useLocale();
   const copy = productCopy(product, locale);
   const category = categoryLabel(product.category, locale);
+  const productHref = href(`/products/${product.slug}`);
   return (
     <article className="product-card">
-      <div className="product-media-shell">
-        <FavoriteButton slug={product.slug} compact />
-        <Link
-          href={href(`/products/${product.slug}`)}
-          className="product-art"
-          aria-label={`${t("viewProduct")} ${copy.name}`}
-        >
-          <span className="edition">{locale === "fa" ? "۱/۱" : "1/1"}</span>
-          <small className="product-index">
-            RĀD / {number(27 + index).padStart(3, locale === "fa" ? "۰" : "0")}
-          </small>
-          <ProductMedia product={product} forceCategoryArtwork={forceCategoryArtwork} />
-        </Link>
-      </div>
-      <div className="product-meta">
-        <div>
-          <VendorBadge vendor={product.vendor} locale={locale} />
-          <small className="product-category">{category}</small>
-          <h3>
-            <Link href={href(`/products/${product.slug}`)}>{copy.name}</Link>
-          </h3>
-          <p>{copy.subtitle}</p>
+      <FavoriteButton slug={product.slug} compact />
+      <Link
+        href={productHref}
+        className="product-card-link"
+        aria-label={`${t("viewProduct")} ${copy.name}`}
+      >
+        <div className="product-media-shell">
+          <div className="product-art">
+            <span className="edition">{locale === "fa" ? "۱/۱" : "1/1"}</span>
+            <small className="product-index">
+              RĀD / {number(27 + index).padStart(3, locale === "fa" ? "۰" : "0")}
+            </small>
+            <ProductMedia product={product} forceCategoryArtwork={forceCategoryArtwork} />
+          </div>
         </div>
-        <span>{productPrice(product, locale)}</span>
-      </div>
+        <div className="product-meta">
+          <div>
+            <VendorBadge vendor={product.vendor} locale={locale} />
+            <small className="product-category">{category}</small>
+            <h3>{copy.name}</h3>
+            <p>{copy.subtitle}</p>
+          </div>
+          <span>{productPrice(product, locale)}</span>
+        </div>
+      </Link>
     </article>
   );
 }
