@@ -23,11 +23,11 @@ fi
 
 in_ci() { [[ -n "${CI:-}${GITHUB_ACTIONS:-}" ]]; }
 
-# Project tokens (RAILWAY_TOKEN) shadow account tokens and cannot whoami/link/login.
-# Keep only the account token when both are present.
+# Project tokens (RAILWAY_TOKEN) are enough for railway up. If both are set, keep the project token
+# so a leftover unauthorized account token cannot take over the job.
 if [[ -n "${RAILWAY_TOKEN:-}" && -n "${RAILWAY_API_TOKEN:-}" ]]; then
-  echo "Unsetting RAILWAY_TOKEN so the account/workspace RAILWAY_API_TOKEN can be used."
-  unset RAILWAY_TOKEN
+  echo "Using RAILWAY_TOKEN (project token) and ignoring RAILWAY_API_TOKEN."
+  unset RAILWAY_API_TOKEN
 fi
 
 if in_ci; then

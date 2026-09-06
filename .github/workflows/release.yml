@@ -44,7 +44,7 @@ jobs:
           echo "RAILWAY_API_TOKEN present: ${HAS_RAILWAY_API_TOKEN}"
           echo "CLOUDFLARE_API_TOKEN present: ${HAS_CLOUDFLARE}"
           if [[ "${HAS_RAILWAY_TOKEN}" != "true" && "${HAS_RAILWAY_API_TOKEN}" != "true" ]]; then
-            echo "::error::No Railway credential reached this job. This workflow reads RAILWAY_API_TOKEN or RAILWAY_TOKEN from Repository secrets. Re-running the old v1.3.0 tag will not use this workflow file."
+            echo "::error::No Railway credential reached this job. Need RAILWAY_TOKEN (project token) or RAILWAY_API_TOKEN (account token) as a Repository secret."
             exit 1
           fi
 
