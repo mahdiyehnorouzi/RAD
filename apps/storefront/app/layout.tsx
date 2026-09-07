@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import "@/components/ui/button-link.css";
 import "@/components/ui/section.css";
+import "@/components/ui/skeleton.css";
 import { mockStorefront } from "@/lib/catalog/mock-storefront";
 import {
   Footer,

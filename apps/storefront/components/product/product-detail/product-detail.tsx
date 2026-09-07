@@ -1,6 +1,6 @@
 "use client";
 import { useRef, useState } from "react";
-import { ProductCard, ProductMedia } from "../listing";
+import { ProductCard, ProductGridSkeleton, ProductMedia } from "../listing";
 import { AddToBag } from "../../catalog/catalog/catalog";
 import { useLocale } from "@/components/i18n";
 import type { Product } from "@rad/types";
@@ -20,7 +20,7 @@ export function ProductDetail({ product }: { product: Product }) {
   const { locale, t } = useLocale();
   const carouselRef = useRef<HTMLDivElement>(null);
   const [activeImage, setActiveImage] = useState(0);
-  const { products, getProduct } = useCatalog();
+  const { products, getProduct, loading } = useCatalog();
   const catalogProduct = getProduct(product.slug);
   const visual =
     catalogProduct && hasRealProductImage(catalogProduct)
@@ -145,11 +145,15 @@ export function ProductDetail({ product }: { product: Product }) {
           </div>
         </header>
         <div ref={carouselRef} className="related-carousel">
-          {products
-            .filter((item) => item.slug !== resolved.slug)
-            .map((item, index) => (
-              <ProductCard key={item.slug} product={item} index={index} />
-            ))}
+          {loading ? (
+            <ProductGridSkeleton count={3} className="related-carousel" />
+          ) : (
+            products
+              .filter((item) => item.slug !== resolved.slug)
+              .map((item, index) => (
+                <ProductCard key={item.slug} product={item} index={index} />
+              ))
+          )}
         </div>
       </section>
     </>

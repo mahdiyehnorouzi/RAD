@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, UnauthorizedException } from "@nestjs/common";
+import { Injectable, ConflictException, NotFoundException, UnauthorizedException } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import { createHash, randomInt } from "node:crypto";
 import { hash, compare } from "bcryptjs";
@@ -23,54 +23,59 @@ export class AuthService {
   }
 
   async signIn(
-    input: { name?: string; email: string; password: string; rememberMe?: boolean },
+    input: { email: string; password: string; rememberMe?: boolean },
     actor: Actor,
   ) {
     const email = input.email.trim().toLowerCase();
-    const name = input.name?.trim() ?? "";
     const existing = await this.prisma.user.findUnique({ where: { email } });
-    if (!existing && !name) {
-      throw new UnauthorizedException("نام، ایمیل معتبر و رمز عبور حداقل ۸ نویسه‌ای را وارد کنید.");
-    }
-
-    let user: AuthUser;
-
-    if (existing) {
-      if (existing.status === "invited") {
-        throw new UnauthorizedException("این حساب هنوز فعال نشده است.");
-      }
-      const matches = await compare(input.password, existing.passwordHash);
-      if (!matches) throw new UnauthorizedException("ایمیل یا رمز عبور نادرست است.");
-      if (name && existing.name !== name) {
-        await this.prisma.user.update({
-          where: { id: existing.id },
-          data: { name },
-        });
-      }
-      user = toAuthUser({ ...existing, name: name || existing.name });
-    } else {
-      const created = await this.prisma.user.create({
-        data: {
-          name,
-          email,
-          passwordHash: await hash(input.password, 12),
-          role: "customer",
-          status: "active",
-        },
+    if (!existing) {
+      throw new UnauthorizedException({
+        message: "حسابی با این ایمیل وجود ندارد.",
+        code: "account_missing",
       });
-      user = toAuthUser(created);
     }
+    if (existing.status === "invited") {
+      throw new UnauthorizedException({
+        message: "این حساب هنوز فعال نشده است.",
+        code: "account_inactive",
+      });
+    }
+    const matches = await compare(input.password, existing.passwordHash);
+    if (!matches) {
+      throw new UnauthorizedException({
+        message: "ایمیل یا رمز عبور نادرست است.",
+        code: "bad_credentials",
+      });
+    }
+    return this.openSession(toAuthUser(existing), actor, input.rememberMe);
+  }
 
-    await this.mergeGuestState(actor.guestId, user.id);
+  async register(
+    input: { name: string; email: string; password: string },
+    actor: Actor,
+  ) {
+    const email = input.email.trim().toLowerCase();
+    const name = input.name.trim();
+    const existing = await this.prisma.user.findUnique({ where: { email } });
+    if (existing) {
+      throw new ConflictException({
+        message: "این ایمیل قبلاً ثبت شده است. وارد شوید.",
+        code: "account_exists",
+      });
+    }
+    const created = await this.prisma.user.create({
+      data: {
+        name,
+        email,
+        passwordHash: await hash(input.password, 12),
+        role: "customer",
+        status: "active",
+      },
+    });
     await this.prisma.notice.create({
-      data: { ownerKey: `user:${user.id}`, kind: "welcome" },
+      data: { ownerKey: `user:${created.id}`, kind: "welcome" },
     });
-    const sessionToken = await this.jwt.signAsync({
-      sub: user.id,
-      role: user.role,
-      adminRole: user.adminRole ?? null,
-    });
-    return { user, sessionToken, maxAgeMs: this.sessionMaxAge(input.rememberMe) };
+    return this.openSession(toAuthUser(created), actor);
   }
 
   async me(actor: Actor) {
@@ -148,6 +153,16 @@ export class AuthService {
     ]);
 
     return { ok: true };
+  }
+
+  private async openSession(user: AuthUser, actor: Actor, rememberMe?: boolean) {
+    await this.mergeGuestState(actor.guestId, user.id);
+    const sessionToken = await this.jwt.signAsync({
+      sub: user.id,
+      role: user.role,
+      adminRole: user.adminRole ?? null,
+    });
+    return { user, sessionToken, maxAgeMs: this.sessionMaxAge(rememberMe) };
   }
 
   private async mergeGuestState(guestId: string, userId: string) {

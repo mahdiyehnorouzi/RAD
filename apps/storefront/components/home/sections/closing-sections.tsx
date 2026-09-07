@@ -13,11 +13,11 @@ export function OrdersEntry() {
         <p>{t("ordersEntryBody")}</p>
       </div>
       <div className="orders-entry-actions">
-        <ButtonLink href="/orders" outline>
-          {t("ordersEntryShop")}
+        <ButtonLink href="/products" outline>
+          {t("viewAvailableWorks")}
         </ButtonLink>
         <ButtonLink href="/making" outline>
-          {t("customOrdersNav")}
+          {t("makingProcessTitle")}
         </ButtonLink>
       </div>
     </section>

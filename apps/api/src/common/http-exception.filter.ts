@@ -22,6 +22,14 @@ export class ApiExceptionFilter implements ExceptionFilter {
         ? payload
         : ((payload as { message?: string | string[] }).message ?? "خطای داخلی سرور");
     const message = Array.isArray(raw) ? raw[0] : raw;
-    response.status(status).json({ error: message, statusCode: status });
+    const code =
+      typeof payload === "object" && payload && "code" in payload
+        ? String((payload as { code?: unknown }).code ?? "")
+        : "";
+    response.status(status).json({
+      error: message,
+      statusCode: status,
+      ...(code ? { code } : {}),
+    });
   }
 }

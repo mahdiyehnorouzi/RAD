@@ -12,12 +12,18 @@ export function PageBackNavigation() {
   if (isHome) return null;
   const BackIcon = locale === "fa" ? ArrowRight : ArrowLeft;
   const isOrderDetail = /^\/orders\/.+/.test(pathname);
+  const isMakingDetail = /^\/making\/.+/.test(pathname);
   return (
     <div className="route-back-bar">
       {isOrderDetail ? (
         <Link href={href("/orders")} className="route-back-button">
           <BackIcon aria-hidden="true" />
           <span>{t("backToOrders")}</span>
+        </Link>
+      ) : isMakingDetail ? (
+        <Link href={href("/account/making")} className="route-back-button">
+          <BackIcon aria-hidden="true" />
+          <span>{t("makingBack")}</span>
         </Link>
       ) : (
         <button type="button" className="route-back-button" onClick={goBack}>

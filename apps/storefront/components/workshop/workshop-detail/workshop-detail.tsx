@@ -8,12 +8,21 @@ import { useLocale } from "@/components/i18n";
 import { ButtonLink } from "@/components/ui/button-link";
 import { BiographyRail, SituationBanner } from "@/components/making";
 import { WorkshopAuditTab, WorkshopWorkTab } from "./workshop-tabs";
+import { CardListSkeleton } from "@/components/ui/skeleton";
 
 export function ArtistWorkshopDetail({ id }: { id: string }) {
   const making = useMaking();
   const { locale, t } = useLocale();
   const commission = making.get(id);
   const [tab, setTab] = useState<"work" | "audit">("work");
+
+  if (!making.ready) {
+    return (
+      <section className="workshop-page section">
+        <CardListSkeleton count={2} />
+      </section>
+    );
+  }
 
   if (!commission) {
     return (

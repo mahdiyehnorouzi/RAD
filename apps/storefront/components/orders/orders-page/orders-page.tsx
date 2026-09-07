@@ -19,7 +19,7 @@ export function OrdersPage() {
   const { products, getProduct } = useCatalog();
 
   return (
-    <AccountShell>
+    <AccountShell requireAuth>
       <section className="orders-page section">
         <header className="orders-heading">
           <span className="eyebrow">{t("ordersEyebrow")}</span>
@@ -85,7 +85,7 @@ export function OrdersPage() {
                     {formatTotal(locale === "fa" ? order.total : usdTotal, locale)}
                   </strong>
                   <ButtonLink href={`/orders/${order.id}`}>
-                    {t("viewOrder")}
+                    {t("trackOrder")}
                   </ButtonLink>
                 </article>
               );
@@ -93,10 +93,8 @@ export function OrdersPage() {
           </div>
         ) : (
           <div className="empty-state">
-            <PackageCheck aria-hidden="true" />
             <h2>{t("noOrders")}</h2>
-            <p>{t("noOrdersBody")}</p>
-            <ButtonLink href="/products">{t("viewWorks")}</ButtonLink>
+            <ButtonLink href="/products">{t("viewAvailableWorks")}</ButtonLink>
           </div>
         )}
       </section>

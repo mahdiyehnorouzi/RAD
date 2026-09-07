@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { ProductCard } from "@/components/product/listing";
+import { ProductCard, ProductGridSkeleton } from "@/components/product/listing";
 import type { Product } from "@rad/types";
 import { useCart } from "@/components/cart";
 import { useLocale } from "@/components/i18n";
@@ -13,7 +13,7 @@ import "./catalog.css";
 
 export function Catalog() {
   const { t, number, locale } = useLocale();
-  const { products } = useCatalog();
+  const { products, loading } = useCatalog();
   const filters = [
     { id: "all", label: t("filterAll") },
     ...artworkCategories.map((category) => ({
@@ -60,7 +60,9 @@ export function Catalog() {
           {number(visible.length)} {t("availableWorks")}
         </span>
       </div>
-      {visible.length ? (
+      {loading ? (
+        <ProductGridSkeleton />
+      ) : visible.length ? (
         <div className="product-grid">
           {visible.map((p, i) => (
             <ProductCard product={p} index={i} key={p.slug} />
@@ -86,6 +88,7 @@ export function AddToBag({ product }: { product: Product }) {
   const { refresh, getProduct } = useCatalog();
   const [error, setError] = useState("");
   const [blocked, setBlocked] = useState(false);
+  const [busy, setBusy] = useState(false);
   const live = getProduct(product.slug) ?? product;
   const added = has(live.slug);
   const unavailable =
@@ -97,7 +100,9 @@ export function AddToBag({ product }: { product: Product }) {
         type="button"
         className="button add"
         onClick={async () => {
+          if (busy) return;
           try {
+            setBusy(true);
             setError("");
             const addedToBag = await add(live);
             if (addedToBag) await addNotice("cart", live.slug);
@@ -108,12 +113,14 @@ export function AddToBag({ product }: { product: Product }) {
               return;
             }
             setError(errorMessage(err, t("requestFailed")));
+          } finally {
+            setBusy(false);
           }
         }}
-        disabled={added || unavailable}
+        disabled={added || unavailable || busy}
         aria-live="polite"
       >
-        {unavailable ? unavailableLabel : added ? t("inBag") : t("addBag")}
+        {unavailable ? unavailableLabel : added ? t("inBag") : busy ? t("submitting") : t("addBag")}
       </button>
       {error ? (
         <p className="form-error" role="alert">

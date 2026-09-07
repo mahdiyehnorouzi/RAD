@@ -4,11 +4,12 @@ import { useLocale } from "@/components/i18n";
 function backFallbackPath(pathname: string) {
   if (pathname.startsWith("/products/")) return "/products";
   if (pathname.startsWith("/differences/")) return "/differences";
-  if (pathname.startsWith("/making/")) return "/making";
+  if (pathname.startsWith("/making/")) return "/account/making";
   if (pathname.startsWith("/workshop/")) return "/workshop";
   if (pathname.startsWith("/orders/")) return "/orders";
   if (pathname.startsWith("/orders")) return "/account";
-  if (pathname === "/making") return "/account";
+  if (pathname === "/making") return "/";
+  if (pathname === "/account/making") return "/account";
   if (pathname === "/workshop") return "/studio";
   if (pathname === "/checkout") return "/cart";
   if (pathname === "/cart") return "/products";

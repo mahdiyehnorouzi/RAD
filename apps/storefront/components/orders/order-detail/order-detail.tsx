@@ -10,6 +10,8 @@ import { useCommerce } from "@/components/commerce";
 import { useLocale } from "@/components/i18n";
 import { ProductMedia } from "@/components/product";
 import { useCatalog } from "@/components/catalog";
+import { AccountShell } from "../../account/account-shell";
+import { CardListSkeleton } from "@/components/ui/skeleton";
 import {
   STORE_ORDER_PROGRESS,
   STORE_ORDER_STATUS_KEY,
@@ -59,17 +61,21 @@ export function OrderDetail({ id }: { id: string }) {
 
   if (!ready && !order) {
     return (
-      <section className="order-detail section">
-        <p>{locale === "fa" ? "در حال خواندن سفارش…" : "Reading order…"}</p>
-      </section>
+      <AccountShell>
+        <section className="order-detail section">
+          <CardListSkeleton count={1} />
+        </section>
+      </AccountShell>
     );
   }
 
   if (!order) {
     return (
-      <section className="order-detail section">
-        <h1>{t("orderMissing")}</h1>
-      </section>
+      <AccountShell>
+        <section className="order-detail section">
+          <h1>{t("orderMissing")}</h1>
+        </section>
+      </AccountShell>
     );
   }
 
@@ -94,10 +100,11 @@ export function OrderDetail({ id }: { id: string }) {
   };
 
   return (
+    <AccountShell>
     <section className="order-detail section">
       <header className="order-detail-heading">
         <span className="eyebrow">{t("ordersEyebrow")}</span>
-        <h1>{t("viewOrder")}</h1>
+        <h1>{t("trackOrder")}</h1>
         <p>{t("ordersShopNote")}</p>
       </header>
       <article className="order-card order-detail-card">
@@ -171,5 +178,6 @@ export function OrderDetail({ id }: { id: string }) {
         />
       </article>
     </section>
+    </AccountShell>
   );
 }

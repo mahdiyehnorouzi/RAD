@@ -4,6 +4,7 @@ import { useCart } from "../cart-provider";
 import { cartTotal, formatTotal, productPrice } from "@/lib/money";
 import { Button, ButtonLink } from "@/components/ui/button-link";
 import { ProductMedia } from "@/components/product";
+import { CardListSkeleton, Skeleton, SkeletonScreen } from "@/components/ui/skeleton";
 import { productCopy } from "@/lib/catalog/products";
 import { useLocale } from "@/components/i18n";
 import { useCatalog } from "@/components/catalog";
@@ -11,8 +12,8 @@ import "./cart-page.css";
 
 export function CartPage() {
   const { locale, t, href, number } = useLocale();
-  const { slugs, remove, clear } = useCart();
-  const { getProduct } = useCatalog();
+  const { slugs, remove, clear, ready } = useCart();
+  const { getProduct, loading: catalogLoading } = useCatalog();
 
   const items = slugs.map((slug) => getProduct(slug)).filter(Boolean);
   const unavailable = items.some(
@@ -22,6 +23,18 @@ export function CartPage() {
     items.filter((item): item is NonNullable<typeof item> => Boolean(item)),
     locale,
   );
+
+  if (!ready || (slugs.length > 0 && catalogLoading && !items.length)) {
+    return (
+      <section className="cart-page section">
+        <SkeletonScreen>
+          <Skeleton className="skeleton-line short" />
+          <Skeleton className="skeleton-line" style={{ width: "12rem", height: "2.4rem" }} />
+          <CardListSkeleton count={2} />
+        </SkeletonScreen>
+      </section>
+    );
+  }
 
   if (!items.length)
     return (

@@ -7,6 +7,7 @@ import { useLocale } from "@/components/i18n";
 import { groupWorkshopCommissions } from "./group-commissions";
 import { WorkshopCard } from "./workshop-card";
 import type {MakingCommission} from "@/components/making/type";
+import { CardListSkeleton } from "@/components/ui/skeleton";
 
 function WorkshopColumn({
   title,
@@ -31,13 +32,13 @@ function WorkshopColumn({
 
 export function ArtistWorkshopBoard() {
   const { commissions, ready } = useMaking();
-  const { locale, t } = useLocale();
+  const { t } = useLocale();
   const grouped = useMemo(() => groupWorkshopCommissions(commissions), [commissions]);
 
   if (!ready) {
     return (
       <section className="workshop-page section">
-        <p>{locale === "fa" ? "کارگاه در حال باز شدن است…" : "Opening the workshop…"}</p>
+        <CardListSkeleton count={3} className="workshop-columns" />
       </section>
     );
   }

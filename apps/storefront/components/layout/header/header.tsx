@@ -46,7 +46,7 @@ export function Header() {
           {t("navStudio")}
         </Link>
         <Link href={href("/making")} onClick={() => setOpen(false)}>
-          {t("customOrdersNav")}
+          {t("makingNav")}
         </Link>
         <Link href={href("/#story")} onClick={() => setOpen(false)}>
           {t("navAbout")}
@@ -59,9 +59,6 @@ export function Header() {
         </Link>
         <Link className="mobile-nav-link" href={href("/cart")} onClick={() => setOpen(false)}>
           {t("shoppingBag")}
-        </Link>
-        <Link className="mobile-nav-link" href={href("/orders")} onClick={() => setOpen(false)}>
-          {t("orders")}
         </Link>
       </nav>
       <div className="header-actions">

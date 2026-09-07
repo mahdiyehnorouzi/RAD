@@ -26,7 +26,7 @@ export function Footer() {
           <b>{t("footerStudio")}</b>
           <Link href={href("/products")}>{t("footerUnique")}</Link>
           <Link href={href("/studio")}>{t("footerCustom")}</Link>
-          <Link href={href("/making")}>{t("customOrdersNav")}</Link>
+          <Link href={href("/making")}>{t("makingNav")}</Link>
         </section>
         <section>
           <b>{t("footerRad")}</b>

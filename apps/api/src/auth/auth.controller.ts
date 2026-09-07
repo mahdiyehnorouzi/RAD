@@ -5,6 +5,7 @@ import { AuthService } from "./auth.service";
 import { ChangePasswordDto } from "./dto/change-password.dto";
 import { ForgotPasswordDto } from "./dto/forgot-password.dto";
 import { ResetPasswordDto } from "./dto/reset-password.dto";
+import { RegisterDto } from "./dto/register.dto";
 import { SessionDto } from "./dto/session.dto";
 import { IdentityService } from "../common/identity.service";
 import type { AuthedRequest } from "../common/session.middleware";
@@ -31,6 +32,23 @@ export class AuthController {
   ) {
     const actor = await this.identity.fromRequest(request);
     const result = await this.auth.signIn(body, actor);
+    response.cookie(
+      AUTH_COOKIE,
+      result.sessionToken,
+      sessionCookieOptions(result.maxAgeMs),
+    );
+    return { user: result.user };
+  }
+
+  @Post("register")
+  @Throttle({ default: { limit: 8, ttl: 60_000 } })
+  async register(
+    @Body() body: RegisterDto,
+    @Req() request: AuthedRequest,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    const actor = await this.identity.fromRequest(request);
+    const result = await this.auth.register(body, actor);
     response.cookie(
       AUTH_COOKIE,
       result.sessionToken,

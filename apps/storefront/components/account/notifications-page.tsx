@@ -7,6 +7,7 @@ import { useCatalog } from "@/components/catalog";
 import { useCommerce } from "@/components/commerce";
 import { useLocale } from "@/components/i18n";
 import { AccountShell } from "./account-shell";
+import { CardListSkeleton } from "@/components/ui/skeleton";
 import "./notifications-page.css";
 
 function noticeHref(notice: Notice) {
@@ -18,7 +19,7 @@ function noticeHref(notice: Notice) {
 }
 
 export function NotificationsPage() {
-  const { notices, unread, markAllRead } = useCommerce();
+  const { notices, unread, markAllRead, ready } = useCommerce();
   const { locale, t, href } = useLocale();
   const { getProduct } = useCatalog();
 
@@ -49,7 +50,9 @@ export function NotificationsPage() {
             </button>
           )}
         </header>
-        {notices.length ? (
+        {!ready ? (
+          <CardListSkeleton count={4} />
+        ) : notices.length ? (
           <ul className="notifications-list">
             {notices.map((notice) => {
               const target = noticeHref(notice);

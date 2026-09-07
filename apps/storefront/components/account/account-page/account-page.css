@@ -2,6 +2,22 @@
   color: var(--muted);
 }
 
+.auth-form .form-error {
+  margin: 0;
+  padding: 0.85rem 1rem;
+  border: 1px solid #8f2e20;
+  border-inline-start-width: 4px;
+  border-radius: 0.8rem;
+  background: #fff7f3;
+  color: #8f2e20;
+  font-weight: 650;
+}
+
+.auth-switch:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
 .account-page {
   min-height: calc(100vh - 92px);
   background: var(--paper);

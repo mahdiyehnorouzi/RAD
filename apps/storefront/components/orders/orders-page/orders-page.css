@@ -61,6 +61,10 @@
   color: #5c574f;
 }
 
+.orders-page .empty-state .button {
+  margin-top: 2rem;
+}
+
 .order-stage-now {
   margin: 0;
   font-weight: 650;

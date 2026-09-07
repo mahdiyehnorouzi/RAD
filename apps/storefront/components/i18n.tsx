@@ -53,6 +53,7 @@ export function LocaleProvider({ children }: { children: React.ReactNode }) {
     const labels: Array<[string, MessageKey]> = [
       ["account/notifications", "titleNotifications"],
       ["account/info", "titleAccountInfo"],
+      ["account/making", "titleCustomOrders"],
       ["account", "titleAccount"],
       ["favorites", "titleFavorites"],
       ["cart", "titleCart"],
@@ -63,11 +64,13 @@ export function LocaleProvider({ children }: { children: React.ReactNode }) {
       ["orders", "titleOrders"],
       ["differences", "titleDifferences"],
     ];
-    const section: MessageKey | undefined = /^\/making\/.+/.test(pathname)
-      ? "titleMaking"
-      : pathname.includes("making")
-        ? "titleCustomOrders"
-        : labels.find(([key]) => pathname.includes(key))?.[1];
+    const section: MessageKey | undefined = pathname === "/making"
+      ? "makingProcessTitle"
+      : /^\/making\/.+/.test(pathname)
+        ? "titleMaking"
+        : pathname.includes("account/making")
+          ? "titleCustomOrders"
+          : labels.find(([key]) => pathname.includes(key))?.[1];
     document.title = section
       ? `${catalog[section]} | ${catalog.brandName}`
       : locale === "fa"
