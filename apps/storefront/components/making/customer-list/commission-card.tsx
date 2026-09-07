@@ -20,6 +20,7 @@ export function CommissionCard({
       <header>
         <span className="eyebrow">{commission.id}</span>
         <h2>{copy(commission.title, locale)}</h2>
+        <p className="order-type-label">{t("customOrderType")}</p>
       </header>
       <StageMeter commission={commission} compact />
       <p>{copy(situation.actorLabel, locale)}</p>

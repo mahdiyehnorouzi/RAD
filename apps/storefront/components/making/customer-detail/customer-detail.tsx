@@ -49,7 +49,7 @@ export function CustomerMakingDetail({ id }: { id: string }) {
   return (
     <section className="making-page making-detail section">
       <header className="making-heading">
-        <span className="eyebrow">{commission.id}</span>
+        <span className="eyebrow">{t("makingPathTitle")}</span>
         <h1>{copy(commission.title, locale)}</h1>
         <p>
           {commission.artistName} · {locale === "fa" ? "تخمین تکمیل" : "Est. completion"}{" "}

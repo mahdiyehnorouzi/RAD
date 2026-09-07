@@ -17,7 +17,7 @@ export function OrdersEntry() {
           {t("ordersEntryShop")}
         </ButtonLink>
         <ButtonLink href="/making" outline>
-          {t("makingNav")}
+          {t("customOrdersNav")}
         </ButtonLink>
       </div>
     </section>

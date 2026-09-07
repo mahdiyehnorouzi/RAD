@@ -8,9 +8,14 @@ function backFallbackPath(pathname: string) {
   if (pathname.startsWith("/workshop/")) return "/workshop";
   if (pathname.startsWith("/orders/")) return "/orders";
   if (pathname.startsWith("/orders")) return "/account";
-  if (pathname === "/making" || pathname === "/workshop") return "/studio";
+  if (pathname === "/making") return "/account";
+  if (pathname === "/workshop") return "/studio";
   if (pathname === "/checkout") return "/cart";
-  if (pathname === "/cart" || pathname === "/favorites") return "/products";
+  if (pathname === "/cart") return "/products";
+  if (pathname === "/favorites") return "/account";
+  if (pathname === "/account/notifications" || pathname === "/account/info") {
+    return "/account";
+  }
   if (pathname === "/account") return "/";
   return "/";
 }

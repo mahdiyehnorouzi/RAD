@@ -7,6 +7,7 @@ import { useCommerce } from "@/components/commerce";
 import { useLocale } from "@/components/i18n";
 import { ProductCard } from "@/components/product";
 import { useCatalog } from "@/components/catalog";
+import { AccountShell } from "../account/account-shell";
 
 export function FavoritesPage() {
   const params = useSearchParams();
@@ -38,7 +39,7 @@ export function FavoritesPage() {
     } catch {}
   };
 
-  return (
+  const content = (
     <section className="favorites-page section">
       <header className="favorites-heading">
         <div>
@@ -75,4 +76,7 @@ export function FavoritesPage() {
       )}
     </section>
   );
+
+  if (sharedSlugs?.length) return content;
+  return <AccountShell>{content}</AccountShell>;
 }
