@@ -1,3 +1,42 @@
+.auth-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.4rem;
+  margin-bottom: 0.4rem;
+}
+
+.auth-tabs button {
+  min-height: 44px;
+  border: 1px solid var(--line);
+  border-radius: 0.8rem;
+  background: var(--paper);
+  cursor: pointer;
+}
+
+.auth-tabs button.active {
+  background: var(--moss);
+  border-color: var(--moss);
+  color: var(--paper);
+}
+
+.auth-form .form-notice {
+  margin: 0;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--moss);
+  border-radius: 0.8rem;
+  background: color-mix(in srgb, var(--moss) 10%, var(--paper));
+}
+
+.auth-switch {
+  justify-self: start;
+  border: 0;
+  background: none;
+  padding: 0;
+  color: var(--clay);
+  cursor: pointer;
+  text-align: start;
+}
+
 .auth-form > small {
   color: var(--muted);
 }
@@ -23,13 +62,14 @@
   background: var(--paper);
   display: grid;
   grid-template-columns: 1fr minmax(320px, 0.75fr);
-  gap: clamp(3rem, 9vw, 9rem);
-  align-items: center;
+  gap: clamp(2rem, 6vw, 5rem);
+  align-items: start;
+  padding-top: clamp(2rem, 4vw, 3.25rem);
 }
 
 .auth-copy h1, .profile-hero h1 {
-  font-size: clamp(3rem, 6vw, 6rem);
-  line-height: 1.15;
+  font-size: clamp(1.8rem, 4vw, 3rem);
+  line-height: 1.2;
   margin: 0;
 }
 

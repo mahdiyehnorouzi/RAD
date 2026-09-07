@@ -16,6 +16,11 @@ export class CommissionsController {
     return this.commissions.listMine(await this.identity.fromRequest(request));
   }
 
+  @Get(":id")
+  async get(@Param("id") id: string, @Req() request: AuthedRequest) {
+    return this.commissions.getMine(await this.identity.fromRequest(request), id);
+  }
+
   @Post()
   async create(@Body() body: CreateCommissionDto, @Req() request: AuthedRequest) {
     return this.commissions.create(await this.identity.fromRequest(request), body);

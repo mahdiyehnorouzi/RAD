@@ -1,8 +1,10 @@
 import type { Product } from "@rad/types";
+import { guestArtists } from "./vendors";
 
 export const mockProducts: Product[] = [
   {
     slug: "red-vessel-27",
+    vendor: guestArtists.sahar,
     name: "کوزه‌ی سرخ شماره ۲۷",
     subtitle: "لعاب خاکستر و اکسید آهن",
     price: "۴٬۵۰۰٬۰۰۰ تومان",
@@ -57,13 +59,7 @@ export const mockProducts: Product[] = [
   },
   {
     slug: "olive-memory",
-    vendor: {
-      id: "artist-sahar",
-      displayName: "سحر میرزایی",
-      displayNameEn: "Sahar Mirzaei",
-      kind: "guest_artist",
-      verified: true,
-    },
+    vendor: guestArtists.sahar,
     name: "حافظه‌ی زیتونی",
     subtitle: "لعاب مات و خاک نخودی",
     price: "۴٬۰۰۰٬۰۰۰ تومان",
@@ -111,6 +107,7 @@ export const mockProducts: Product[] = [
   },
   {
     slug: "lut-line",
+    vendor: guestArtists.sahar,
     name: "خطِ لوت",
     subtitle: "پرسلان و لعاب شنی",
     price: "۴٬۰۰۰٬۰۰۰ تومان",
@@ -143,6 +140,7 @@ export const mockProducts: Product[] = [
   },
   {
     slug: "night-clay",
+    vendor: guestArtists.sahar,
     status: "sold",
     name: "خاکِ شب",
     subtitle: "لعاب مشکی نیمه‌براق",
@@ -175,6 +173,7 @@ export const mockProducts: Product[] = [
   },
   {
     slug: "pomegranate-bowl",
+    vendor: guestArtists.sahar,
     name: "کاسه‌ی انار",
     subtitle: "لعاب قرمز مسی",
     price: "۴٬۰۰۰٬۰۰۰ تومان",
@@ -201,6 +200,7 @@ export const mockProducts: Product[] = [
   },
   {
     slug: "white-silence",
+    vendor: guestArtists.arman,
     status: "sold",
     name: "سکوتِ سفید",
     subtitle: "پرسلان بدون لعاب",
@@ -233,6 +233,7 @@ export const mockProducts: Product[] = [
   },
   {
     slug: "blue-window",
+    vendor: guestArtists.niloofar,
     name: "پنجره‌ی آبی",
     subtitle: "اکریلیک و پاستل روی بوم",
     price: "۶٬۰۰۰٬۰۰۰ تومان",
@@ -242,6 +243,13 @@ export const mockProducts: Product[] = [
     shape: "wide",
     category: "painting",
     visual: "painting",
+    images: [
+      {
+        src: "/catalog/photos/blue-window.png",
+        alt: "نقاشی انتزاعی پنجره آبی در نور استودیو",
+        enAlt: "Blue Window abstract painting in studio light",
+      },
+    ],
     story:
       "سطحی از آبی‌های عمیق و خط‌های گرم که نور یک پنجره‌ی دور را ثبت می‌کند.",
     details: [
@@ -265,6 +273,7 @@ export const mockProducts: Product[] = [
   },
   {
     slug: "woven-garden",
+    vendor: guestArtists.kimia,
     name: "باغِ بافته",
     subtitle: "نقاشی و سوزن‌دوزی روی کتان",
     price: "۴٬۰۰۰٬۰۰۰ تومان",
@@ -274,6 +283,13 @@ export const mockProducts: Product[] = [
     shape: "tall",
     category: "textile",
     visual: "textile",
+    images: [
+      {
+        src: "/catalog/photos/woven-garden.png",
+        alt: "دیوارکوب کتانی باغ بافته با دوخت دست",
+        enAlt: "Woven Garden hand-embroidered linen wall hanging",
+      },
+    ],
     story:
       "خطوط رنگی و دوخت‌های آزاد، تصویری از باغی خیالی را روی پارچه می‌سازند.",
     details: [
@@ -297,6 +313,7 @@ export const mockProducts: Product[] = [
   },
   {
     slug: "walnut-tide",
+    vendor: guestArtists.arman,
     name: "موجِ گردو",
     subtitle: "تراش دستی چوب گردو",
     price: "۴٬۰۰۰٬۰۰۰ تومان",
@@ -306,6 +323,13 @@ export const mockProducts: Product[] = [
     shape: "round",
     category: "woodwork",
     visual: "wood",
+    images: [
+      {
+        src: "/catalog/photos/walnut-tide.png",
+        alt: "کاسه گردوی دست‌تراش موج گردو",
+        enAlt: "Walnut Tide hand-carved walnut bowl",
+      },
+    ],
     story:
       "کاسه‌ای پیکره‌وار که رگه‌های طبیعی چوب، حرکت نرم لبه‌ی آن را ادامه می‌دهند.",
     details: [
@@ -329,6 +353,7 @@ export const mockProducts: Product[] = [
   },
   {
     slug: "silver-orbit",
+    vendor: guestArtists.leila,
     name: "مدار نقره‌ای",
     subtitle: "نقره دست‌ساز و عقیق سبز",
     price: "۳٬۰۰۰٬۰۰۰ تومان",
@@ -338,6 +363,13 @@ export const mockProducts: Product[] = [
     shape: "round",
     category: "jewelry",
     visual: "jewelry",
+    images: [
+      {
+        src: "/catalog/photos/silver-orbit.png",
+        alt: "انگشتر نقره دست‌ساز مدار نقره‌ای با عقیق سبز",
+        enAlt: "Silver Orbit handmade silver ring with green agate",
+      },
+    ],
     story:
       "حلقه‌ای باز با سنگی کوچک که مانند نقطه‌ای در مدار فلز قرار گرفته است.",
     details: ["نقره ۹۲۵", "عقیق سبز", "ساخته‌شده با دست", "تنها یک نسخه"],
@@ -351,6 +383,7 @@ export const mockProducts: Product[] = [
   },
   {
     slug: "red-garden-print",
+    vendor: guestArtists.niloofar,
     status: "sold",
     name: "باغ سرخ",
     subtitle: "لینوکات روی کاغذ پنبه‌ای",
@@ -361,6 +394,13 @@ export const mockProducts: Product[] = [
     shape: "wide",
     category: "print",
     visual: "print",
+    images: [
+      {
+        src: "/catalog/photos/red-garden-print.png",
+        alt: "چاپ دستی لینوکات باغ سرخ روی کاغذ پنبه‌ای",
+        enAlt: "Red Garden hand-pulled linocut on cotton paper",
+      },
+    ],
     story:
       "چاپی تک‌نسخه از گیاهان خیالی؛ هر خط با دست روی صفحه بریده و چاپ شده است.",
     details: ["۵۰ × ۳۵ سانتی‌متر", "چاپ لینوکات", "کاغذ پنبه‌ای", "تک‌نسخه"],
@@ -374,6 +414,7 @@ export const mockProducts: Product[] = [
   },
   {
     slug: "quiet-weight",
+    vendor: guestArtists.arman,
     name: "وزنِ آرام",
     subtitle: "سنگ و برنج",
     price: "۵٬۰۰۰٬۰۰۰ تومان",

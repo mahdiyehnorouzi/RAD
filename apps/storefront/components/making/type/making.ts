@@ -90,6 +90,8 @@ export interface ProgressUpdate {
   stageId: MakingStageId;
   note: LocaleCopy;
   photoKind: PhotoKind;
+  image?: string;
+  imageAlt?: LocaleCopy;
   requiresApproval: boolean;
   createdAt: number;
 }

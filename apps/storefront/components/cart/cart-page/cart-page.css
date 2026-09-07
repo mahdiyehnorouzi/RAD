@@ -23,7 +23,7 @@
   align-items: flex-end;
   justify-content: space-between;
   gap: 2rem;
-  padding-bottom: 1.5rem;
+  padding-bottom: 0.75rem;
   border-bottom: 1px solid var(--line);
 }
 
@@ -54,8 +54,8 @@
 .cart-layout {
   display: grid;
   grid-template-columns: minmax(0, 1.5fr) minmax(300px, 0.5fr);
-  gap: clamp(2rem, 5vw, 5rem);
-  padding-top: 1.5rem;
+  gap: clamp(1.25rem, 3vw, 2.5rem);
+  padding-top: 0.75rem;
 }
 
 .cart-list {

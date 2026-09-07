@@ -8,7 +8,9 @@ import { cartTotal, formatTotal } from "@/lib/money";
 import { useCommerce } from "@/components/commerce";
 import { useLocale } from "@/components/i18n";
 import { ButtonLink } from "@/components/ui/button-link";
+import { formatArtworkNumber, ProductMedia } from "@/components/product";
 import { useCatalog } from "@/components/catalog";
+import { productCopy } from "@/lib/catalog/products";
 import { errorMessage } from "@/lib/api";
 import type { Product } from "@rad/types";
 
@@ -44,6 +46,7 @@ export function CheckoutPage() {
     const city = String(data.get("city") ?? "").trim();
     const phone = String(data.get("phone") ?? "").trim();
     const address = String(data.get("address") ?? "").trim();
+    const postalCode = String(data.get("postalCode") ?? "").trim();
 
     try {
       setError("");
@@ -52,7 +55,9 @@ export function CheckoutPage() {
         name: name || user?.name || (locale === "fa" ? "کاربر رَد" : "RAD collector"),
         city: city || (locale === "fa" ? "تهران" : "Tehran"),
         phone,
-        address,
+        address: [address, postalCode && `${t("postalCodeLabel")} ${postalCode}`]
+          .filter(Boolean)
+          .join("، "),
       });
       await clear();
       router.push(href(`/orders/${created.id}`));
@@ -99,20 +104,65 @@ export function CheckoutPage() {
             </p>
           ) : null}
           <label htmlFor="checkout-name">{t("nameLabel")}</label>
-          <input id="checkout-name" name="name" defaultValue={user?.name ?? ""} autoComplete="name" />
+          <input
+            id="checkout-name"
+            name="name"
+            type="text"
+            defaultValue={user?.name ?? ""}
+            autoComplete="name"
+          />
           <label htmlFor="checkout-phone">{t("phoneLabel")}</label>
           <input id="checkout-phone" name="phone" type="tel" inputMode="tel" autoComplete="tel" />
           <label htmlFor="checkout-city">{t("cityLabel")}</label>
-          <input id="checkout-city" name="city" autoComplete="address-level2" />
+          <input id="checkout-city" name="city" type="text" autoComplete="address-level2" />
           <label htmlFor="checkout-address">{t("addressLabel")}</label>
-          <textarea className="resize-none" id="checkout-address" name="address" rows={4} autoComplete="street-address" />
+          <textarea
+            className="resize-none"
+            id="checkout-address"
+            name="address"
+            rows={4}
+            autoComplete="street-address"
+          />
+          <label htmlFor="checkout-postal">{t("postalCodeLabel")}</label>
+          <input
+            id="checkout-postal"
+            name="postalCode"
+            type="text"
+            inputMode="numeric"
+            autoComplete="postal-code"
+          />
           <button className="button" type="submit" disabled={submitting}>
             {submitting ? t("placingOrder") : t("placeDemoOrder")}
           </button>
         </form>
         <aside className="checkout-summary">
-          <span>{number(items.length)} {t("availableWorks")}</span>
-          <b>{formatTotal(total, locale)}</b>
+          <span className="checkout-summary-title">{t("orderSummary")}</span>
+          {items.map((product) => (
+            <article className="checkout-summary-item" key={product.slug}>
+              <span className="checkout-summary-art">
+                <ProductMedia product={product} showStatusBadge={false} />
+              </span>
+              <div>
+                <small>{formatArtworkNumber(product, number, locale)}</small>
+                <h2>{productCopy(product, locale).name}</h2>
+                <p>
+                  {t("quantityLabel")}: {number(1)}
+                </p>
+              </div>
+            </article>
+          ))}
+          <div className="checkout-summary-row">
+            <span>{t("worksSubtotal")}</span>
+            <b>{formatTotal(total, locale)}</b>
+          </div>
+          <div className="checkout-summary-row">
+            <span>{t("deliveryCost")}</span>
+            <b>{t("free")}</b>
+          </div>
+          <div className="checkout-summary-total">
+            <span>{t("finalTotal")}</span>
+            <b>{formatTotal(total, locale)}</b>
+          </div>
         </aside>
       </div>
     </section>

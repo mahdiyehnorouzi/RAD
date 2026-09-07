@@ -1,6 +1,7 @@
 "use client";
 import "./customer-list.css";
 
+import { isDemoCommission, seedCommissions } from "@/lib/making";
 import { useMaking } from "@/hooks/use-making-workspace";
 import { useLocale } from "@/components/i18n";
 import { ButtonLink } from "@/components/ui/button-link";
@@ -11,6 +12,7 @@ import { CardListSkeleton } from "@/components/ui/skeleton";
 export function CustomerMakingList() {
   const { commissions, ready } = useMaking();
   const { t } = useLocale();
+  const mine = commissions.filter((item) => !isDemoCommission(item.id));
   if (!ready) {
     return (
       <AccountShell requireAuth>
@@ -31,9 +33,9 @@ export function CustomerMakingList() {
           <p>{t("customOrdersBody")}</p>
         </div>
       </header>
-      {commissions.length ? (
+      {mine.length ? (
         <div className="making-grid">
-          {commissions.map((item) => (
+          {mine.map((item) => (
             <CommissionCard key={item.id} commission={item} hrefBase="/making" />
           ))}
         </div>
@@ -44,6 +46,17 @@ export function CustomerMakingList() {
           <ButtonLink href="/studio">{t("startCustomOrder")}</ButtonLink>
         </div>
       )}
+      <section className="making-sample">
+        <header className="making-heading">
+          <h2>{t("customOrdersSampleTitle")}</h2>
+          <p>{t("customOrdersSampleBody")}</p>
+        </header>
+        <div className="making-grid">
+          {seedCommissions.map((item) => (
+            <CommissionCard key={item.id} commission={item} hrefBase="/making" />
+          ))}
+        </div>
+      </section>
     </section>
     </AccountShell>
   );

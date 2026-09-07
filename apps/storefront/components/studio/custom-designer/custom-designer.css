@@ -1,4 +1,4 @@
-.designer-grid { grid-template-columns:minmax(0,1.25fr) minmax(360px,.75fr)!important; grid-template-areas:"canvas prompt"; align-items:start!important; gap:clamp(2.5rem,6vw,7rem)!important; }
+.designer-grid { grid-template-columns:minmax(0,.92fr) minmax(280px,.88fr)!important; grid-template-areas:"canvas prompt"; align-items:start!important; gap:clamp(1.5rem,4vw,3.5rem)!important; }
 
 [dir="rtl"] .designer-grid { grid-template-areas:"prompt canvas"; }
 
@@ -6,7 +6,7 @@
 
 .designer-preview { grid-area:canvas; height:min(76vh,820px)!important; border-radius:2px!important; }
 
-.designer-form h1 { font-size:clamp(3.2rem,5vw,5.5rem)!important; font-weight:400; }
+.designer-form h1 { font-size:clamp(2.1rem,4vw,3.4rem)!important; font-weight:400; }
 
 .designer-form label { font-weight:400!important; }
 
@@ -385,7 +385,7 @@
   }
 }
 
-.designer-grid { grid-template-columns:minmax(0,1.25fr) minmax(360px,.75fr)!important; grid-template-areas:"canvas prompt"; align-items:start!important; gap:clamp(2.5rem,6vw,7rem)!important; }
+.designer-grid { grid-template-columns:minmax(0,.92fr) minmax(280px,.88fr)!important; grid-template-areas:"canvas prompt"; align-items:start!important; gap:clamp(1.5rem,4vw,3.5rem)!important; }
 
 [dir="rtl"] .designer-grid { grid-template-areas:"prompt canvas"; }
 
@@ -393,7 +393,7 @@
 
 .designer-preview { grid-area:canvas; height:min(76vh,820px)!important; border-radius:2px!important; }
 
-.designer-form h1 { font-size:clamp(3.2rem,5vw,5.5rem)!important; font-weight:400; }
+.designer-form h1 { font-size:clamp(2.1rem,4vw,3.4rem)!important; font-weight:400; }
 
 .designer-form label { font-weight:400!important; }
 
@@ -574,7 +574,17 @@
 
 .designer-steps .current i {background:var(--clay);border-color:var(--clay);box-shadow:0 0 0 4px rgba(161,61,46,.28)}
 
-.designer-step-actions {display:flex;justify-content:space-between;gap:1rem;margin-top:1.75rem}
+.designer-step-actions {
+  position: sticky;
+  bottom: 0;
+  z-index: 6;
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 1.25rem;
+  padding: 1rem 0 0.35rem;
+  background: linear-gradient(transparent, var(--ink) 36%);
+}
 
 .designer-images {border:0;padding:0;margin:1.75rem 0 0}
 
@@ -597,4 +607,11 @@
 .designer-steps span {font-size:.65rem}
 .designer-step-actions {flex-direction:column}
 .designer-step-actions .button {width:100%}
+}
+
+.designer-free-note {
+  max-width: 36rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid rgba(247, 242, 233, 0.28);
+  background: rgba(247, 242, 233, 0.08);
 }

@@ -1,4 +1,11 @@
-export { createSession, fetchSession, logoutSession, registerAccount } from "./auth";
+export {
+  createSession,
+  fetchSession,
+  logoutSession,
+  registerAccount,
+  requestPasswordReset,
+  resetAccountPassword,
+} from "./auth";
 export {
   addCartItem,
   clearCart,
@@ -13,7 +20,13 @@ export {
 export { api, ApiError, API_BASE, errorMessage } from "./client";
 export { createDesign } from "./design";
 export { fetchFavorites, toggleFavorite } from "./favorites";
-export { createCommission, fetchMyCommissions, saveCommission } from "./commissions";
+export {
+  createCommission,
+  fetchCommission,
+  fetchMyCommissions,
+  saveCommission,
+  sendCommissionMessage,
+} from "./commissions";
 export { createNotice, fetchNotices, markNoticesRead } from "./notices";
 export { cancelOrder, confirmDemoPayment, createOrder, fetchOrder, fetchOrders } from "./orders";
 export { proxyApiRequest } from "./proxy";

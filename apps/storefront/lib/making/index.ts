@@ -17,4 +17,4 @@ export {
   stagesFor,
   workshopBucket,
 } from "./helpers";
-export { seedCommissions } from "./seed";
+export { isDemoCommission, seedCommissions } from "./seed";

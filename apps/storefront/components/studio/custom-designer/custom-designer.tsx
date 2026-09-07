@@ -133,6 +133,7 @@ export function CustomDesigner() {
               ? "رَد شما را به هنرمند و مسیر ساخت مناسب متصل می‌کند."
               : "RAD connects your idea to the right maker and process."}
           </p>
+          {step === "type" ? <p className="designer-free-note">{t("designerFreeIdea")}</p> : null}
 
           {step === "type" ? (
             <fieldset className="design-category-fieldset">

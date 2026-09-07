@@ -5,18 +5,17 @@ import { productCopy } from "@/lib/catalog/products";
 import { productPrice } from "@/lib/money";
 import { useLocale } from "@/components/i18n";
 import { FavoriteButton } from "@/components/commerce";
-import { VendorBadge } from "@rad/ui";
 import { categoryLabel } from "@/lib/catalog/artwork";
 import { ProductMedia } from "./product-media";
+import { formatArtworkNumber } from "./const";
 import "./product-card.css";
 
 export function ProductCard({
   product,
-  index,
   forceCategoryArtwork = false,
 }: {
   product: Product;
-  index: number;
+  index?: number;
   forceCategoryArtwork?: boolean;
 }) {
   const { locale, t, href, number } = useLocale();
@@ -24,6 +23,14 @@ export function ProductCard({
   const category = categoryLabel(product.category, locale);
   const unavailable = product.status === "sold" || product.status === "reserved";
   const statusLabel = product.status === "reserved" ? t("reserved") : t("soldOut");
+  const artworkNumber = formatArtworkNumber(product, number, locale);
+  const artistName = product.vendor
+    ? locale === "fa"
+      ? product.vendor.displayName
+      : product.vendor.displayNameEn
+    : locale === "fa"
+      ? "استودیو رَد"
+      : "RAD Studio";
   return (
     <article className={`product-card${unavailable ? " is-unavailable" : ""}`}>
       <div className="product-media-shell">
@@ -37,26 +44,28 @@ export function ProductCard({
           aria-label={`${t("viewProduct")} ${copy.name}`}
         >
           <span className="edition">{locale === "fa" ? "۱/۱" : "1/1"}</span>
-          <small className="product-index">
-            RĀD / {number(27 + index).padStart(3, locale === "fa" ? "۰" : "0")}
-          </small>
-          <ProductMedia
-            product={product}
-            forceCategoryArtwork={forceCategoryArtwork}
-            showStatusBadge={false}
-          />
+          <span className="product-artwork">
+            <ProductMedia
+              product={product}
+              forceCategoryArtwork={forceCategoryArtwork}
+              showStatusBadge={false}
+            />
+          </span>
+          {artworkNumber ? <small className="product-index">{artworkNumber}</small> : null}
         </Link>
       </div>
       <div className="product-meta">
-        <div>
-          <VendorBadge vendor={product.vendor} locale={locale} />
+        <p className="product-artist">
+          <span>{locale === "fa" ? "اثری از" : "A work by"}</span>
+          <strong>{artistName}</strong>
+        </p>
+        <h3>
+          <Link href={href(`/products/${product.slug}`)}>{copy.name}</Link>
+        </h3>
+        <div className="product-facts">
           <small className="product-category">{category}</small>
-          <h3>
-            <Link href={href(`/products/${product.slug}`)}>{copy.name}</Link>
-          </h3>
-          <p>{copy.subtitle}</p>
+          <span className="product-price">{productPrice(product, locale)}</span>
         </div>
-        <span>{productPrice(product, locale)}</span>
       </div>
     </article>
   );

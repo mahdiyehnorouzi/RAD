@@ -98,9 +98,9 @@ export class AuthService {
   async requestPasswordReset(email: string) {
     const normalized = email.trim().toLowerCase();
     const user = await this.prisma.user.findUnique({ where: { email: normalized } });
-    if (!user?.adminRole) {
+    if (!user || user.status === "invited") {
       return {
-        message: "اگر ایمیل شما در دفتر کوره ثبت شده باشد، کد بازیابی به آن ارسال می‌شود.",
+        message: "اگر این ایمیل ثبت شده باشد، کد بازیابی به آن ارسال می‌شود.",
       };
     }
 
@@ -126,7 +126,7 @@ export class AuthService {
     const code = input.code.trim();
     const tokenHash = createHash("sha256").update(code).digest("hex");
     const user = await this.prisma.user.findUnique({ where: { email: normalized } });
-    if (!user?.adminRole) {
+    if (!user) {
       throw new NotFoundException("کد بازیابی نامعتبر یا منقضی شده است.");
     }
 
@@ -179,6 +179,18 @@ export class AuthService {
     await this.prisma.order.updateMany({
       where: { ownerKey: from },
       data: { ownerKey: to, userId },
+    });
+    const commissions = this.prisma as unknown as {
+      commission: {
+        updateMany: (args: {
+          where: { ownerKey: string };
+          data: { ownerKey: string };
+        }) => Promise<unknown>;
+      };
+    };
+    await commissions.commission.updateMany({
+      where: { ownerKey: from },
+      data: { ownerKey: to },
     });
   }
 

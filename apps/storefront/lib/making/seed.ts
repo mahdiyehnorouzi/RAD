@@ -30,7 +30,7 @@ export const seedCommissions: MakingCommission[] = [
   {
     id: "RAD-M-1405-17",
     title: loc("کاسه خانه‌تنگی", "Homesickness bowl"),
-    customerName: "مهدیه نوروزی",
+    customerName: "آوا صالحی",
     artistName: "سحر میرزایی",
     brief: {
       concept: "کاسه‌ای که حس خانه‌تنگی حیاط مادربزرگ را نگه دارد؛ لبه آرام، خاکی، نه تزئینی.",
@@ -100,6 +100,11 @@ export const seedCommissions: MakingCommission[] = [
         stageId: "making",
         note: loc("فرم روی چرخ گرفته شد؛ لبه کمی به داخل برگشت.", "Thrown on the wheel; the rim turns slightly inward."),
         photoKind: "forming",
+        image: "/making/RAD-M-1405-17/forming.png",
+        imageAlt: loc(
+          "دست‌های هنرمند هنگام شکل‌دادن کاسه خانه‌تنگی روی چرخ",
+          "The artist forming the Homesickness Bowl on the wheel",
+        ),
         requiresApproval: false,
         createdAt: now - 8 * day,
       },
@@ -108,6 +113,11 @@ export const seedCommissions: MakingCommission[] = [
         stageId: "pre_kiln",
         note: loc("فرم خشک و پاک شده؛ آماده پیشنهاد لعاب.", "Form dried and cleaned; ready for the glaze proposal."),
         photoKind: "cleaned",
+        image: "/making/RAD-M-1405-17/cleaned.png",
+        imageAlt: loc(
+          "کاسه خانه‌تنگی در مرحله خشک و پاک‌شده پیش از لعاب",
+          "The dried and cleaned Homesickness Bowl before glazing",
+        ),
         requiresApproval: true,
         createdAt: now - 1 * day,
       },
@@ -116,6 +126,11 @@ export const seedCommissions: MakingCommission[] = [
         stageId: "pre_kiln",
         note: loc("کاشی آزمایشی G-17 از پخت پیشین.", "G-17 test tile from a previous firing."),
         photoKind: "tile",
+        image: "/making/RAD-M-1405-17/glaze-tile.png",
+        imageAlt: loc(
+          "کاشی آزمایشی لعاب زیتونی G-17 روی سنگ‌رس",
+          "G-17 olive ash glaze test tile on stoneware",
+        ),
         requiresApproval: false,
         createdAt: now - 1 * day,
       },
@@ -420,3 +435,7 @@ export const seedCommissions: MakingCommission[] = [
     internalNotes: [],
   },
 ];
+
+export function isDemoCommission(id: string) {
+  return seedCommissions.some((item) => item.id === id);
+}

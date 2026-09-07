@@ -3,8 +3,15 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import type { Product } from "@rad/types";
 import { fetchProducts } from "@/lib/api";
-import { overlayLiveCatalog } from "@/lib/catalog/category-defaults";
+import {
+  hasRealProductImage,
+  overlayLiveCatalog,
+} from "@/lib/catalog/category-defaults";
 import { photoWorks } from "@/lib/catalog/photo-works";
+import { mockProducts } from "@/lib/catalog/products";
+
+const categorySampleWorks = mockProducts.filter(hasRealProductImage);
+const displayWorks = [...photoWorks, ...categorySampleWorks];
 
 type CatalogContextValue = {
   products: Product[];
@@ -16,16 +23,16 @@ type CatalogContextValue = {
 const CatalogContext = createContext<CatalogContextValue | null>(null);
 
 export function CatalogProvider({ children }: { children: React.ReactNode }) {
-  const [products, setProducts] = useState<Product[]>(photoWorks);
+  const [products, setProducts] = useState<Product[]>(displayWorks);
   const [loading, setLoading] = useState(true);
 
   const refresh = async () => {
     try {
       const remote = await fetchProducts();
       const list = Array.isArray(remote) ? remote : [];
-      setProducts(list.length ? overlayLiveCatalog(list, list) : photoWorks);
+      setProducts(list.length ? overlayLiveCatalog(displayWorks, list) : displayWorks);
     } catch {
-      setProducts(photoWorks);
+      setProducts(displayWorks);
     }
   };
 

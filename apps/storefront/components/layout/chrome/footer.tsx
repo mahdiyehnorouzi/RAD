@@ -51,6 +51,12 @@ export function Footer() {
             height={136}
             style={{ cursor: "pointer" }}
             {...{ code: ENAMAD_CODE }}
+            onLoad={(event) => {
+              const image = event.currentTarget;
+              if (image.naturalWidth > 0 || image.dataset.fallback === "1") return;
+              image.dataset.fallback = "1";
+              image.src = "/enamad.png";
+            }}
             onError={(event) => {
               const image = event.currentTarget;
               if (image.dataset.fallback === "1") return;

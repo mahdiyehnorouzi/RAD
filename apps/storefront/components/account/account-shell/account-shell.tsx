@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { usePathname } from "next/navigation";
 import { useCommerce } from "@/components/commerce";
 import { AccountLogin } from "../account-page/account-login";
 import { AccountNav } from "./account-nav";
@@ -14,6 +15,7 @@ export function AccountShell({
   children: ReactNode;
   requireAuth?: boolean;
 }) {
+  const pathname = usePathname();
   const { user, ready } = useCommerce();
   if (!ready) {
     return (
@@ -32,7 +34,7 @@ export function AccountShell({
     );
   }
   if (!user) {
-    if (requireAuth) return <AccountLogin />;
+    if (requireAuth) return <AccountLogin returnTo={pathname} />;
     return children;
   }
   return (
