@@ -70,7 +70,9 @@
 
 .film-frame {aspect-ratio:16/9!important}
 
-.studio-film {display:block!important;width:100%!important;height:100%!important;min-height:0!important;aspect-ratio:auto!important;object-fit:cover!important}
+.studio-film {display:block!important;width:100%!important;height:100%!important;min-height:0!important;aspect-ratio:auto!important;object-fit:cover!important;object-position:center!important;transform:none}
+
+.film-frame:before {content:"";position:absolute;inset-inline:0;bottom:0;height:42%;background:linear-gradient(transparent,rgba(25,26,23,.78));z-index:1;pointer-events:none}
 
 @media(min-width:901px) {
 html[dir="rtl"] .film-copy {direction:rtl!important;text-align:right!important}
@@ -79,6 +81,6 @@ html[dir="rtl"] .film-copy {direction:rtl!important;text-align:right!important}
 @media(max-width:600px) {
 .evidence-film {padding-top:0!important;padding-block:0 2.5rem!important}
 .evidence-film .film-frame {aspect-ratio:16/9!important}
-.evidence-film .studio-film {min-height:0!important;height:100%!important;object-fit:contain!important;object-position:center!important}
-.evidence-film .film-frame figcaption {position:static!important;inset:auto!important;margin:.85rem 0 0!important;padding:0!important;letter-spacing:.08em!important;white-space:normal!important;max-width:none!important}
+.evidence-film .studio-film {min-height:0!important;height:100%!important;object-fit:cover!important;object-position:center!important}
+.evidence-film .film-frame figcaption {position:absolute!important;inset-inline:1.25rem!important;bottom:1.15rem!important;margin:0!important;letter-spacing:.12em!important}
 }

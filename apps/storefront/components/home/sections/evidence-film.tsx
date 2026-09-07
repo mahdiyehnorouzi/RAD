@@ -16,11 +16,26 @@ export function EvidenceFilm() {
         </p>
       </div>
       <figure className="film-frame">
-        <img
+        {/* 4s landscape wheel-throwing loop — Pexels 9736665 */}
+        <video
           className="studio-film"
-          src="/studio-process.svg"
-          alt={locale === "fa" ? "ویدیوی کوتاه یکی از مسیرهای ساخت اثر" : "Short loop showing one artwork making process"}
-        />
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="auto"
+          disablePictureInPicture
+          onCanPlay={(event) => {
+            void event.currentTarget.play();
+          }}
+          aria-label={
+            locale === "fa"
+              ? "ویدیوی کوتاه یکی از مسیرهای ساخت اثر"
+              : "Short loop showing one artwork making process"
+          }
+        >
+          <source src="/studio-process.mp4" type="video/mp4" />
+        </video>
         <figcaption>
           {locale === "fa" ? "تهران / ماده، فرم، پرداخت، امضا" : "TEHRAN / MATERIAL, FORM, FINISH, SIGNATURE"}
         </figcaption>
