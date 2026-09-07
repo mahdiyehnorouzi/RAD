@@ -4,6 +4,7 @@ import "./customer-list.css";
 import { useMaking } from "@/hooks/use-making-workspace";
 import { useLocale } from "@/components/i18n";
 import { ButtonLink } from "@/components/ui/button-link";
+import { AccountShell } from "../../account/account-shell";
 import { CommissionCard } from "./commission-card";
 
 export function CustomerMakingList() {
@@ -11,21 +12,22 @@ export function CustomerMakingList() {
   const { locale, t } = useLocale();
   if (!ready) {
     return (
-      <section className="making-page section">
-        <p>{locale === "fa" ? "در حال خواندن مسیرها…" : "Reading making paths…"}</p>
-      </section>
+      <AccountShell>
+        <section className="making-page section">
+          <p>{locale === "fa" ? "در حال خواندن مسیرها…" : "Reading making paths…"}</p>
+        </section>
+      </AccountShell>
     );
   }
   return (
+    <AccountShell>
     <section className="making-page section">
       <header className="making-heading">
-        <span className="eyebrow">{t("makingEyebrow")}</span>
-        <h1>{t("makingTitle")}</h1>
+        <span className="eyebrow">{t("customOrdersEyebrow")}</span>
+        <h1>{t("customOrdersTitle")}</h1>
         <div className="making-heading-copy">
           <p>{t("makingCustomNote")}</p>
-          <p>{t("personalizedWhat")}</p>
-          <p>{t("makingBody")}</p>
-          <p>{t("makingAfterSend")}</p>
+          <p>{t("customOrdersBody")}</p>
         </div>
       </header>
       {commissions.length ? (
@@ -42,5 +44,6 @@ export function CustomerMakingList() {
         </div>
       )}
     </section>
+    </AccountShell>
   );
 }

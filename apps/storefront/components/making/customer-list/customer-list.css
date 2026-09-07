@@ -22,6 +22,8 @@ html[dir="rtl"] .making-page, html[dir="rtl"] .making-heading {direction:rtl!imp
 
 .making-card h2 {font-weight:650;font-size:1.15rem;margin:0;line-height:1.4}
 
+.making-card .order-type-label {margin:0;color:var(--clay);font-size:.92rem;font-weight:700}
+
 .making-card > p {margin:0;padding:.7rem .85rem;background:color-mix(in srgb, var(--canvas) 75%, var(--paper));border-radius:8px;font-size:.88rem;line-height:1.55;color:var(--ink)}
 
 @media(max-width:900px) {

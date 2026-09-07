@@ -151,6 +151,13 @@
   font-weight: 700;
 }
 
+.order-type-label {
+  margin: 0;
+  color: var(--clay);
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
 .order-card dl {
   display: flex;
   gap: 3rem;

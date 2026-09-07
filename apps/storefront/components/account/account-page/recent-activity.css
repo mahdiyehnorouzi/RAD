@@ -1,0 +1,55 @@
+.recent-activity {
+  padding-top: 2rem;
+}
+
+.recent-activity h2 {
+  margin: 0 0 1.25rem;
+  font-size: clamp(1.8rem, 3vw, 2.6rem);
+}
+
+.activity-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.activity-card {
+  display: grid;
+  gap: 0.35rem;
+  min-height: 8.5rem;
+  padding: 1.2rem 1.3rem;
+  border: 1px solid rgba(32, 27, 23, 0.08);
+  border-radius: var(--radius);
+  background: var(--paper);
+  color: inherit;
+  text-decoration: none;
+}
+
+.activity-card h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  line-height: 1.35;
+}
+
+.activity-type {
+  color: var(--clay);
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+.activity-status {
+  color: #5c574f;
+}
+
+.activity-empty {
+  color: #71665b;
+}
+
+@media (max-width: 900px) {
+  .activity-list {
+    grid-template-columns: 1fr;
+  }
+}

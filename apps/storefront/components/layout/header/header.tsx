@@ -46,7 +46,7 @@ export function Header() {
           {t("navStudio")}
         </Link>
         <Link href={href("/making")} onClick={() => setOpen(false)}>
-          {t("makingNav")}
+          {t("customOrdersNav")}
         </Link>
         <Link href={href("/#story")} onClick={() => setOpen(false)}>
           {t("navAbout")}
