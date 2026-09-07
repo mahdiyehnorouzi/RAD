@@ -64,8 +64,9 @@ export function ProvenanceSection() {
   );
 }
 
-export function ProcessSection() {
+export function ProcessSection({ asPage = false }: { asPage?: boolean }) {
   const { t } = useLocale();
+  const Title = asPage ? "h1" : "h2";
   const steps = [
     [t("processStep1"), t("step1Title"), t("step1Body")],
     [t("processStep2"), t("step2Title"), t("step2Body")],
@@ -78,8 +79,8 @@ export function ProcessSection() {
     <section className="section process">
       <header className="section-heading">
         <div>
-          <span className="eyebrow">{t("processEyebrow")}</span>
-          <h2>{t("processTitle")}</h2>
+          <span className="eyebrow">{t(asPage ? "makingNav" : "processEyebrow")}</span>
+          <Title>{t(asPage ? "makingProcessTitle" : "processTitle")}</Title>
           <p className="process-definition">{t("personalizedWhat")}</p>
           <p className="process-lead">{t("processLead")}</p>
         </div>

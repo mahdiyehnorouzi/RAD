@@ -5,15 +5,15 @@ import { useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
 import { useCommerce } from "@/components/commerce";
 import { useLocale } from "@/components/i18n";
-import { ProductCard } from "@/components/product";
+import { ProductCard, ProductGridSkeleton } from "@/components/product";
 import { useCatalog } from "@/components/catalog";
 import { AccountShell } from "../account/account-shell";
 
 export function FavoritesPage() {
   const params = useSearchParams();
-  const { favorites } = useCommerce();
+  const { favorites, ready } = useCommerce();
   const { t, number } = useLocale();
-  const { getProduct } = useCatalog();
+  const { getProduct, loading } = useCatalog();
   const [shared, setShared] = useState(false);
 
   const sharedSlugs = params.get("items")?.split(",").filter(Boolean);
@@ -39,6 +39,10 @@ export function FavoritesPage() {
     } catch {}
   };
 
+  const waiting =
+    (!sharedSlugs?.length && !ready) ||
+    (loading && slugs.length > 0 && items.length === 0);
+
   const content = (
     <section className="favorites-page section">
       <header className="favorites-heading">
@@ -59,7 +63,9 @@ export function FavoritesPage() {
           </button>
         )}
       </header>
-      {items.length ? (
+      {waiting ? (
+        <ProductGridSkeleton count={4} />
+      ) : items.length ? (
         <div className="product-grid">
           {items.map(
             (item, index) =>

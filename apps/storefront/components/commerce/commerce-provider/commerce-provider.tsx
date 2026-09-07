@@ -10,6 +10,7 @@ import { api } from "@/lib/api";
 import { useCatalog } from "../../catalog/catalog-provider";
 import { useLocale } from "@/components/i18n";
 import { Bell, Heart, UserRound, X } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type Toast = {
   id: number;
@@ -19,7 +20,9 @@ type Toast = {
 
 type CommerceContextValue = {
   user: AuthUser | null;
-  login: (input: { name: string; email: string; password: string }) => Promise<void>;
+  ready: boolean;
+  login: (input: { email: string; password: string }) => Promise<void>;
+  register: (input: { name: string; email: string; password: string }) => Promise<void>;
   logout: () => Promise<void>;
   favorites: string[];
   toggleFavorite: (slug: string) => Promise<void>;
@@ -49,6 +52,7 @@ export function CommerceProvider({ children }: { children: React.ReactNode }) {
   const [notices, setNotices] = useState<Notice[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
+  const [ready, setReady] = useState(false);
   const [toast, setToast] = useState<Toast | null>(null);
   const { getProduct, refresh } = useCatalog();
   const { locale, t } = useLocale();
@@ -72,7 +76,10 @@ export function CommerceProvider({ children }: { children: React.ReactNode }) {
         setNotices(noticePayload.notices);
         setOrders(orderPayload);
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => {
+        if (!cancelled) setReady(true);
+      });
     return () => {
       cancelled = true;
     };
@@ -107,24 +114,36 @@ export function CommerceProvider({ children }: { children: React.ReactNode }) {
     if (kind === "cart") setToast({ id: Date.now(), kind: "cartAdded", productSlug });
   };
 
+  const applySignedIn = async (user: AuthUser) => {
+    setUser(user);
+    const [favoritePayload, noticePayload, orderPayload] = await Promise.all([
+      api<{ slugs: string[] }>("/favorites"),
+      api<{ notices: Notice[] }>("/notices"),
+      api<Order[]>("/orders"),
+    ]);
+    setFavorites(favoritePayload.slugs);
+    setNotices(noticePayload.notices);
+    setOrders(orderPayload);
+    window.dispatchEvent(new Event("rad:session"));
+  };
+
   const value = useMemo<CommerceContextValue>(
     () => ({
       user,
+      ready,
       login: async (input) => {
         const payload = await api<{ user: AuthUser }>("/auth/session", {
           method: "POST",
           body: JSON.stringify(input),
         });
-        setUser(payload.user);
-        const [favoritePayload, noticePayload, orderPayload] = await Promise.all([
-          api<{ slugs: string[] }>("/favorites"),
-          api<{ notices: Notice[] }>("/notices"),
-          api<Order[]>("/orders"),
-        ]);
-        setFavorites(favoritePayload.slugs);
-        setNotices(noticePayload.notices);
-        setOrders(orderPayload);
-        window.dispatchEvent(new Event("rad:session"));
+        await applySignedIn(payload.user);
+      },
+      register: async (input) => {
+        const payload = await api<{ user: AuthUser }>("/auth/register", {
+          method: "POST",
+          body: JSON.stringify(input),
+        });
+        await applySignedIn(payload.user);
       },
       logout: async () => {
         await api("/auth/logout", { method: "POST" });
@@ -197,7 +216,7 @@ export function CommerceProvider({ children }: { children: React.ReactNode }) {
         setToast({ id: Date.now(), kind: "reviewAdded", productSlug: review.productSlug });
       },
     }),
-    [user, favorites, notices, orders, reviews, refresh],
+    [user, ready, favorites, notices, orders, reviews, refresh],
   );
 
   const toastProduct = getProduct(toast?.productSlug ?? "");
@@ -263,7 +282,7 @@ export function FavoriteButton({
 export function NotificationCenter() {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
-  const { notices, unread, markAllRead } = useCommerce();
+  const { notices, unread, markAllRead, ready } = useCommerce();
   const { locale, t, number, href } = useLocale();
   const { getProduct } = useCatalog();
   useEffect(() => setOpen(false), [pathname]);
@@ -331,7 +350,13 @@ export function NotificationCenter() {
               </button>
             )}
           </header>
-          {notices.length ? (
+          {!ready ? (
+            <div className="skeleton-screen">
+              <Skeleton className="skeleton-line" />
+              <Skeleton className="skeleton-line short" />
+              <Skeleton className="skeleton-line" />
+            </div>
+          ) : notices.length ? (
             <ul>
               {notices.map((notice) => {
                 const makingHref =

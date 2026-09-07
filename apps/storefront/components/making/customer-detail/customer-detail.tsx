@@ -6,6 +6,8 @@ import { formatWhen } from "@/lib/making";
 import { useMaking } from "@/hooks/use-making-workspace";
 import { useLocale } from "@/components/i18n";
 import { ButtonLink } from "@/components/ui/button-link";
+import { AccountShell } from "../../account/account-shell";
+import { CardListSkeleton } from "@/components/ui/skeleton";
 import {
   BiographyRail,
   ChangeCards,
@@ -26,17 +28,28 @@ import {
 } from "./customer-actions";
 
 export function CustomerMakingDetail({ id }: { id: string }) {
-  const { get } = useMaking();
+  const { get, ready } = useMaking();
   const { locale, t } = useLocale();
   const commission = get(id);
+  if (!ready) {
+    return (
+      <AccountShell requireAuth>
+        <section className="making-page section">
+          <CardListSkeleton count={2} />
+        </section>
+      </AccountShell>
+    );
+  }
   if (!commission) {
     return (
-      <section className="making-page section">
-        <h1>{t("makingMissing")}</h1>
-        <ButtonLink href="/making" outline>
-          {t("makingBack")}
-        </ButtonLink>
-      </section>
+      <AccountShell requireAuth>
+        <section className="making-page section">
+          <h1>{t("makingMissing")}</h1>
+          <ButtonLink href="/account/making" outline>
+            {t("makingBack")}
+          </ButtonLink>
+        </section>
+      </AccountShell>
     );
   }
   const showProgress = commission.stage !== "complete" && commission.stage !== "shipping";
@@ -47,6 +60,7 @@ export function CustomerMakingDetail({ id }: { id: string }) {
     commission.stage !== "shipping";
 
   return (
+    <AccountShell requireAuth>
     <section className="making-page making-detail section">
       <header className="making-heading">
         <span className="eyebrow">{t("makingPathTitle")}</span>
@@ -82,5 +96,6 @@ export function CustomerMakingDetail({ id }: { id: string }) {
         <CustomerMakingSidebar commission={commission} />
       </div>
     </section>
+    </AccountShell>
   );
 }

@@ -3,10 +3,7 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import type { Product } from "@rad/types";
 import { fetchProducts } from "@/lib/api";
-import {
-  hasRealProductImage,
-  overlayLiveCatalog,
-} from "@/lib/catalog/category-defaults";
+import { overlayLiveCatalog } from "@/lib/catalog/category-defaults";
 import { photoWorks } from "@/lib/catalog/photo-works";
 
 type CatalogContextValue = {
@@ -26,8 +23,7 @@ export function CatalogProvider({ children }: { children: React.ReactNode }) {
     try {
       const remote = await fetchProducts();
       const list = Array.isArray(remote) ? remote : [];
-      const display = list.some(hasRealProductImage) ? list : photoWorks;
-      setProducts(overlayLiveCatalog(display, list));
+      setProducts(list.length ? overlayLiveCatalog(list, list) : photoWorks);
     } catch {
       setProducts(photoWorks);
     }

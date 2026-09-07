@@ -1,11 +1,17 @@
 "use client";
 import type { Product } from "@rad/types";
-import { ProductCard } from "@/components/product";
+import { ProductCard, ProductGridSkeleton } from "@/components/product";
 import { ButtonLink } from "@/components/ui/button-link";
 import { useLocale } from "@/components/i18n";
 import "./archive-section.css";
 
-export function ArchiveSection({ products }: { products: Product[] }) {
+export function ArchiveSection({
+  products,
+  loading = false,
+}: {
+  products: Product[];
+  loading?: boolean;
+}) {
   const { locale, t } = useLocale();
   return (
     <section className="section collection archive-section">
@@ -23,11 +29,15 @@ export function ArchiveSection({ products }: { products: Product[] }) {
           {t("allWorks")}
         </ButtonLink>
       </header>
-      <div className="product-grid home-products">
-        {products.map((p, i) => (
-          <ProductCard product={p} index={i} key={p.slug} />
-        ))}
-      </div>
+      {loading ? (
+        <ProductGridSkeleton />
+      ) : (
+        <div className="product-grid home-products">
+          {products.map((p, i) => (
+            <ProductCard product={p} index={i} key={p.slug} />
+          ))}
+        </div>
+      )}
     </section>
   );
 }

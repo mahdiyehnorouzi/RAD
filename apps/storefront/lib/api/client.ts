@@ -3,15 +3,17 @@ export const API_BASE =
     ? process.env.API_URL || "http://localhost:4000"
     : "/backend";
 
-type ApiErrorBody = { error?: unknown; message?: unknown };
+type ApiErrorBody = { error?: unknown; message?: unknown; code?: unknown };
 
 export class ApiError extends Error {
   status: number;
+  code?: string;
 
-  constructor(message: string, status: number) {
+  constructor(message: string, status: number, code?: string) {
     super(message);
     this.name = "ApiError";
     this.status = status;
+    this.code = code;
   }
 }
 
@@ -45,6 +47,7 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
     throw new ApiError(
       firstString(data.error) || firstString(data.message) || "Request failed",
       response.status,
+      firstString(data.code),
     );
   }
   return data;

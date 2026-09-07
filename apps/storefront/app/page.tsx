@@ -16,7 +16,7 @@ import {
 import { useCatalog } from "@/components/catalog/catalog-provider";
 
 export default function Home() {
-  const { products } = useCatalog();
+  const { products, loading } = useCatalog();
   const featured = products.slice(0, 6);
   const hero = featured[0];
   const studio = featured[1] ?? featured[0];
@@ -27,7 +27,7 @@ export default function Home() {
       <DifferenceStory />
       <EvidenceFilm />
       <EntryPaths />
-      <ArchiveSection products={featured} />
+      <ArchiveSection products={featured} loading={loading} />
       <StudioCallout product={studio} />
       <StorySection />
       <ProvenanceSection />

@@ -1,0 +1,77 @@
+.skeleton {
+  display: block;
+  background: color-mix(in srgb, var(--line) 70%, var(--paper));
+  border-radius: 8px;
+  animation: skeleton-pulse 1.15s ease-in-out infinite;
+}
+
+.skeleton-line {
+  height: 0.85rem;
+  width: 100%;
+  margin-block: 0.45rem;
+}
+
+.skeleton-line.short {
+  width: 58%;
+}
+
+.skeleton-line.tight {
+  margin-block: 0.3rem;
+}
+
+.skeleton-media {
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  border-radius: var(--radius, 12px);
+}
+
+.skeleton-hero {
+  width: 100%;
+  min-height: 18rem;
+  border-radius: var(--radius, 12px);
+}
+
+.skeleton-identity {
+  display: flex;
+  gap: 1.25rem;
+  align-items: center;
+}
+
+.skeleton-identity > div {
+  flex: 1;
+}
+
+.skeleton-card {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1.25rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius, 12px);
+  background: var(--paper);
+}
+
+.skeleton-screen {
+  display: grid;
+  gap: 1rem;
+}
+
+.product-grid-skeleton .skeleton-product {
+  display: grid;
+  gap: 0.85rem;
+}
+
+@keyframes skeleton-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation: none;
+  }
+}

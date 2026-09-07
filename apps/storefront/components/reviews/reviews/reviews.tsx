@@ -9,6 +9,7 @@ import { useCommerce } from "@/components/commerce";
 import { useLocale } from "@/components/i18n";
 import { ButtonLink } from "@/components/ui/button-link";
 import { api } from "@/lib/api";
+import { CardListSkeleton } from "@/components/ui/skeleton";
 
 export function Reviews({ product }: { product: Product }) {
   const { user, addReview } = useCommerce();
@@ -19,13 +20,27 @@ export function Reviews({ product }: { product: Product }) {
   const [fileName, setFileName] = useState("");
   const [error, setError] = useState("");
   const [productReviews, setProductReviews] = useState<Review[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState(false);
 
   const commentRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
     api<Review[]>(`/products/${product.slug}/reviews`)
-      .then(setProductReviews)
-      .catch(() => setProductReviews([]));
+      .then((payload) => {
+        if (!cancelled) setProductReviews(payload);
+      })
+      .catch(() => {
+        if (!cancelled) setProductReviews([]);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [product.slug]);
 
   const average = productReviews.length
@@ -64,21 +79,26 @@ export function Reviews({ product }: { product: Product }) {
       commentRef.current?.focus();
       return;
     }
-    await addReview({
-      productSlug: product.slug,
-      author: user!.name,
-      rating,
-      comment: comment.trim(),
-      image,
-    });
-    setProductReviews(
-      await api<Review[]>(`/products/${product.slug}/reviews`).catch(() => []),
-    );
-    setRating(0);
-    setComment("");
-    setImage(undefined);
-    setFileName("");
-    setError("");
+    try {
+      setBusy(true);
+      await addReview({
+        productSlug: product.slug,
+        author: user!.name,
+        rating,
+        comment: comment.trim(),
+        image,
+      });
+      setProductReviews(
+        await api<Review[]>(`/products/${product.slug}/reviews`).catch(() => []),
+      );
+      setRating(0);
+      setComment("");
+      setImage(undefined);
+      setFileName("");
+      setError("");
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
@@ -102,7 +122,9 @@ export function Reviews({ product }: { product: Product }) {
       </header>
       <div className="reviews-grid">
         <div className="review-list">
-          {productReviews.length ? (
+          {loading ? (
+            <CardListSkeleton count={2} />
+          ) : productReviews.length ? (
             productReviews.map((review) => (
               <article key={review.id} className="review-card">
                 <header>
@@ -202,8 +224,8 @@ export function Reviews({ product }: { product: Product }) {
                 </div>
               )}
             </div>
-            <button className="button" type="submit">
-              {t("submitReview")}
+            <button className="button" type="submit" disabled={busy}>
+              {busy ? t("submitting") : t("submitReview")}
             </button>
           </form>
         ) : (

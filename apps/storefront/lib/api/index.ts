@@ -1,4 +1,4 @@
-export { createSession, fetchSession, logoutSession } from "./auth";
+export { createSession, fetchSession, logoutSession, registerAccount } from "./auth";
 export {
   addCartItem,
   clearCart,

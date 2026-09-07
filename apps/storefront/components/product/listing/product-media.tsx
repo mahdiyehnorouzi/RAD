@@ -2,20 +2,17 @@
 import { useState } from "react";
 import type { Product } from "@rad/types";
 import { useLocale } from "@/components/i18n";
-import { artworkVisual } from "@/lib/catalog/artwork";
-import {
-  categoryDefaultImage,
-  isFileProductImage,
-  productPhotoSrc,
-} from "@/lib/catalog/category-defaults";
+import { artworkVisual, artworkCategoryById } from "@/lib/catalog/artwork";
+import { isFileProductImage, productPhotoSrc } from "@/lib/catalog/category-defaults";
 import { catalogPhotoSlugs, catalogPhotoSrc } from "@/lib/catalog/photo-works";
 import { ArtworkVisual } from "../artwork-visual";
 import "./product-media.css";
 
 function ownPhotoSrc(product: Product, src?: string) {
   if (isFileProductImage(src)) return productPhotoSrc(src);
+  if (src) return null;
   if (catalogPhotoSlugs.has(product.slug)) return catalogPhotoSrc(product.slug);
-  return productPhotoSrc(src);
+  return null;
 }
 
 export function ProductMedia({
@@ -39,25 +36,20 @@ export function ProductMedia({
     ) : null;
 
   const media = product.images?.[imageIndex] ?? product.images?.[0];
-  const categorySrc = categoryDefaultImage(product.category);
   const ownSrc = forceCategoryArtwork ? null : ownPhotoSrc(product, media?.src);
-  const src =
-    ownSrc && failedSrc !== ownSrc
-      ? ownSrc
-      : failedSrc === categorySrc
-        ? null
-        : categorySrc;
-
+  const src = ownSrc && failedSrc !== ownSrc ? ownSrc : null;
   const label = locale === "fa" ? (media?.alt || product.name) : (media?.enAlt || product.en.name);
+  const preview = artworkCategoryById(product.category).preview;
 
   if (!src) {
     return (
       <>
         <ArtworkVisual
+          className="product-photo-default"
           visual={artworkVisual(product)}
-          color={media?.color ?? product.color}
-          accent={media?.accent ?? product.accent}
-          shape={media?.shape ?? product.shape}
+          color={media?.color ?? product.color ?? preview.color}
+          accent={media?.accent ?? product.accent ?? preview.accent}
+          shape={media?.shape ?? product.shape ?? "round"}
         />
         {soldBadge}
       </>

@@ -6,21 +6,22 @@ import { useLocale } from "@/components/i18n";
 import { ButtonLink } from "@/components/ui/button-link";
 import { AccountShell } from "../../account/account-shell";
 import { CommissionCard } from "./commission-card";
+import { CardListSkeleton } from "@/components/ui/skeleton";
 
 export function CustomerMakingList() {
   const { commissions, ready } = useMaking();
-  const { locale, t } = useLocale();
+  const { t } = useLocale();
   if (!ready) {
     return (
-      <AccountShell>
+      <AccountShell requireAuth>
         <section className="making-page section">
-          <p>{locale === "fa" ? "در حال خواندن مسیرها…" : "Reading making paths…"}</p>
+          <CardListSkeleton count={4} className="making-grid" />
         </section>
       </AccountShell>
     );
   }
   return (
-    <AccountShell>
+    <AccountShell requireAuth>
     <section className="making-page section">
       <header className="making-heading">
         <span className="eyebrow">{t("customOrdersEyebrow")}</span>
@@ -40,7 +41,7 @@ export function CustomerMakingList() {
         <div className="empty-state">
           <h2>{t("makingEmpty")}</h2>
           <p>{t("makingEmptyBody")}</p>
-          <ButtonLink href="/studio">{t("designMine")}</ButtonLink>
+          <ButtonLink href="/studio">{t("startCustomOrder")}</ButtonLink>
         </div>
       )}
     </section>

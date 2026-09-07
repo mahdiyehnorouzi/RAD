@@ -3,11 +3,14 @@
 import Link from "next/link";
 import { useLocale } from "@/components/i18n";
 import { useAccountActivity } from "../hooks";
+import { useMaking } from "@/hooks/use-making-workspace";
+import { CardListSkeleton } from "@/components/ui/skeleton";
 import "./recent-activity.css";
 
 export function RecentActivity() {
   const { t, href } = useLocale();
   const items = useAccountActivity();
+  const { ready } = useMaking();
 
   return (
     <section className="recent-activity">
@@ -15,7 +18,9 @@ export function RecentActivity() {
         <span className="eyebrow">{t("profileEyebrow")}</span>
         <h2>{t("recentActivity")}</h2>
       </header>
-      {items.length ? (
+      {!ready ? (
+        <CardListSkeleton count={3} />
+      ) : items.length ? (
         <ul className="activity-list">
           {items.map((item) => (
             <li key={item.id}>

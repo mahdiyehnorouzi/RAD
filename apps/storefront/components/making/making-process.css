@@ -1,0 +1,13 @@
+.making-process-cta {
+  display: flex;
+  justify-content: flex-start;
+  padding: 0 var(--page) var(--section);
+  margin-top: -1.5rem;
+}
+
+@media (max-width: 600px) {
+  .making-process-cta {
+    padding-inline: 1rem;
+    padding-bottom: 2rem;
+  }
+}
