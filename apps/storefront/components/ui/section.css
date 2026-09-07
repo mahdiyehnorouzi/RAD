@@ -145,6 +145,15 @@ html[dir="rtl"] .section {direction:rtl!important;text-align:right!important}
 html[dir="rtl"] .section-heading {direction:rtl!important;text-align:right!important;align-items:start!important}
 }
 
+.plp.section,
+.cart-page.section,
+.orders-page.section,
+.making-page.section,
+.account-page.section,
+.profile-page.section {
+  padding-block: clamp(2rem, 4vw, 3.25rem);
+}
+
 @media (min-width: 901px) {
 .difference-story.section,
 .entry-paths.section,

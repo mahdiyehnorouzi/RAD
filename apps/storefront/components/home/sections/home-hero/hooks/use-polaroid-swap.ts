@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { POLAROID_INTERVAL_MS, POLAROID_LEAVE_MS } from "@/components/home/const";
 
 function usePrefersReducedMotion() {
@@ -22,6 +22,8 @@ export function usePolaroidSwap(count: number, paused = false) {
   const [pageVisible, setPageVisible] = useState(true);
   const [front, setFront] = useState(0);
   const [leaving, setLeaving] = useState<number | null>(null);
+  const leavingRef = useRef<number | null>(null);
+  leavingRef.current = leaving;
 
   useEffect(() => {
     const sync = () => setPageVisible(document.visibilityState === "visible");
@@ -30,18 +32,46 @@ export function usePolaroidSwap(count: number, paused = false) {
     return () => document.removeEventListener("visibilitychange", sync);
   }, []);
 
+  const goBy = useCallback(
+    (step: number, animated = true) => {
+      if (count < 2) return;
+      setFront((current) => {
+        const next = (current + step + count) % count;
+        if (next === current) return current;
+        if (!animated || reduced || leavingRef.current !== null) {
+          setLeaving(null);
+          return next;
+        }
+        setLeaving(current);
+        return next;
+      });
+    },
+    [count, reduced],
+  );
+
+  const goTo = useCallback(
+    (index: number, animated = true) => {
+      if (count < 2) return;
+      const target = ((index % count) + count) % count;
+      setFront((current) => {
+        if (target === current) return current;
+        if (!animated || reduced || leavingRef.current !== null) {
+          setLeaving(null);
+          return target;
+        }
+        setLeaving(current);
+        return target;
+      });
+    },
+    [count, reduced],
+  );
+
   useEffect(() => {
     if (count < 2 || paused || !pageVisible || leaving !== null) return undefined;
 
-    const id = window.setTimeout(() => {
-      setFront((current) => {
-        if (!reduced) setLeaving(current);
-        return (current + 1) % count;
-      });
-    }, POLAROID_INTERVAL_MS);
-
+    const id = window.setTimeout(() => goBy(1), POLAROID_INTERVAL_MS);
     return () => window.clearTimeout(id);
-  }, [count, leaving, pageVisible, paused, reduced]);
+  }, [count, goBy, leaving, pageVisible, paused]);
 
   useEffect(() => {
     if (leaving === null) return undefined;
@@ -54,5 +84,11 @@ export function usePolaroidSwap(count: number, paused = false) {
     setLeaving(null);
   }, [count]);
 
-  return { front, leaving };
+  return {
+    front,
+    leaving,
+    goNext: () => goBy(1),
+    goPrev: () => goBy(-1),
+    goTo,
+  };
 }

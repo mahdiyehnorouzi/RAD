@@ -12,6 +12,9 @@ export function MakingProcess() {
       <ProcessSection asPage />
       <div className="making-process-cta">
         <ButtonLink href="/studio">{t("startCustomOrder")}</ButtonLink>
+        <ButtonLink href="/making/RAD-M-1405-17" outline>
+          {t("viewSamplePath")}
+        </ButtonLink>
       </div>
     </>
   );

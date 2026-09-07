@@ -150,9 +150,14 @@ export const en = {
   shopBody:
     "Each work is made only once. This is a living collection that is always changing.",
   filterAll: "All",
+  filterAvailable: "Available",
+  filterReserved: "Reserved",
+  filterSold: "Sold",
   filterVases: "Vases",
   filterTableware: "Tableware",
   filterSculpture: "Sculpture",
+  availabilityFilterAria: "Filter artwork availability",
+  availabilityHeading: "Availability",
   availableWorks: "works in the collection",
   emptyTitle: "There are no works in this group yet.",
   emptyBody:
@@ -187,14 +192,24 @@ export const en = {
   insuredShipping: "Insured shipping",
   free: "Free",
   finalTotal: "Total",
-  checkout: "Continue to checkout",
+  checkout: "Continue purchase",
   checkoutNote: "Online payment will be enabled in the next store release.",
   accountEyebrow: "RAD ACCOUNT",
   loginTitle: "Sign in to your space",
   loginBody:
     "Keep favourites, notifications, and your order journey in one place.",
-  localAccountNote:
-    "Your password is stored on the server and the session is kept in a secure cookie.",
+  localAccountNote: "Your account information is kept securely.",
+  forgotPassword: "Forgot your password?",
+  forgotPasswordTitle: "Reset your password",
+  forgotPasswordBody:
+    "Enter the email for your account. If it exists, a reset code will be sent.",
+  sendResetCode: "Send reset code",
+  resetCodeLabel: "Reset code",
+  resetPasswordTitle: "New password",
+  resetPasswordBody: "Enter the code you received and your new password.",
+  resetPassword: "Save new password",
+  resetSent: "If this email is registered, a reset code has been sent.",
+  backToLogin: "Back to sign in",
   nameLabel: "Full name",
   emailLabel: "Email",
   passwordLabel: "Password",
@@ -230,8 +245,13 @@ export const en = {
   commissionArtistReview: "In artist review",
   customOrdersEyebrow: "CUSTOM ORDERS",
   customOrdersTitle: "Your custom orders",
+  customOrdersSampleTitle: "Sample custom-order path",
+  customOrdersSampleBody:
+    "These records are fictional and for demonstration only. They are not your orders, and no changes can be saved.",
   customOrdersBody:
     "Artwork projects you have submitted. Open the making path of each order separately.",
+  viewSamplePath: "View sample path",
+  makingDemoBanner: "Sample custom-order path — details are read-only and actions are disabled.",
   makingPathTitle: "Making path of my work",
   accountInfoEyebrow: "YOUR ACCOUNT",
   accountInfoBody: "Your name, email, and session on this device.",
@@ -271,6 +291,9 @@ export const en = {
   phoneLabel: "Phone number",
   cityLabel: "City",
   addressLabel: "Address",
+  postalCodeLabel: "Postal code",
+  quantityLabel: "Quantity",
+  deliveryCost: "Delivery",
   checkoutError: "Complete all delivery details.",
   placingOrder: "Placing order…",
   requestFailed: "The order could not be placed. Please try again.",
@@ -291,6 +314,8 @@ export const en = {
   designerTitle2: "exist yet.",
   designerBody:
     "Choose an artwork category, then describe its form, colour, material, and mood. AI will create a first image for your conversation with a maker.",
+  designerFreeIdea:
+    "Submitting an idea is free. After the artist reviews it, making time and cost are sent to you.",
   promptLabel: "Describe your piece",
   promptPlaceholder:
     "For example: a textile wall piece with free lines, earth tones, and natural texture…",

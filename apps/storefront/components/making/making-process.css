@@ -1,5 +1,7 @@
 .making-process-cta {
   display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
   justify-content: flex-start;
   padding: 0 var(--page) var(--section);
   margin-top: -1.5rem;

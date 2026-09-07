@@ -1,12 +1,72 @@
+.polaroid-swap-shell {
+  display: grid;
+  justify-items: center;
+  gap: 0.85rem;
+  width: min(100%, 20rem);
+  margin-inline: auto;
+}
+
 .polaroid-swap {
   position: relative;
-  width: min(100%, 20rem);
+  width: 100%;
   min-height: 24rem;
   aspect-ratio: 4 / 5.1;
-  margin-inline: auto;
   isolation: isolate;
   perspective: 70rem;
   perspective-origin: 50% 35%;
+  touch-action: pan-y;
+  user-select: none;
+  cursor: grab;
+}
+
+.polaroid-swap:active {
+  cursor: grabbing;
+}
+
+.polaroid-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+.polaroid-control {
+  display: grid;
+  place-items: center;
+  width: 2.4rem;
+  height: 2.4rem;
+  border: 1px solid color-mix(in srgb, var(--moss) 22%, transparent);
+  border-radius: 50%;
+  background: var(--paper);
+  color: var(--moss);
+  cursor: pointer;
+}
+
+.polaroid-control svg {
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
+.polaroid-dots {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.polaroid-dots button {
+  width: 0.48rem;
+  height: 0.48rem;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--moss) 28%, transparent);
+  cursor: pointer;
+}
+
+.polaroid-dots button.active {
+  width: 0.85rem;
+  border-radius: 999px;
+  background: var(--moss);
 }
 
 .polaroid {
@@ -282,23 +342,23 @@
 }
 
 .polaroid--leave {
-  animation: polaroid-leave 4.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: polaroid-leave 1.8s cubic-bezier(0.16, 1, 0.3, 1) both;
   will-change: transform, filter, box-shadow;
   pointer-events: none;
 }
 
 .polaroid--leave .polaroid-sheet {
-  animation: polaroid-turn 4.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: polaroid-turn 1.8s cubic-bezier(0.16, 1, 0.3, 1) both;
   will-change: transform;
 }
 
 @keyframes polaroid-turn {
   0%,
-  22% {
+  12% {
     transform: rotateY(0deg);
   }
-  35%,
-  79% {
+  22%,
+  78% {
     transform: rotateY(180deg);
   }
   100% {
@@ -348,8 +408,11 @@
 }
 
 @media (max-width: 900px) {
-  .polaroid-swap {
+  .polaroid-swap-shell {
     width: min(100%, 16.5rem);
+  }
+
+  .polaroid-swap {
     min-height: 20rem;
   }
 }

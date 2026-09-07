@@ -25,3 +25,21 @@ export async function registerAccount(input: RegisterInput) {
 export async function logoutSession() {
   await api("/auth/logout", { method: "POST" });
 }
+
+export async function requestPasswordReset(email: string) {
+  return api<{ message: string }>("/auth/password/forgot", {
+    method: "POST",
+    body: JSON.stringify({ email }),
+  });
+}
+
+export async function resetAccountPassword(input: {
+  email: string;
+  code: string;
+  password: string;
+}) {
+  return api<{ ok: boolean }>("/auth/password/reset", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}

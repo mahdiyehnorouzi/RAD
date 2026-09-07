@@ -1,4 +1,4 @@
-import { ForbiddenException, Injectable, NotFoundException } from "@nestjs/common";
+import { ForbiddenException, Injectable, NotFoundException, UnauthorizedException } from "@nestjs/common";
 import { Prisma } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { IdentityService } from "../common/identity.service";
@@ -49,11 +49,17 @@ export class CommissionsService {
   }
 
   async listMine(actor: Actor) {
+    if (!actor.user) return [];
     const rows = await this.prisma.commission.findMany({
       where: { ownerKey: this.identity.key(actor) },
       orderBy: { updatedAt: "desc" },
     });
     return rows.map((row) => this.toCommission(row.payload));
+  }
+
+  async getMine(actor: Actor, id: string) {
+    this.requireSignedIn(actor);
+    return this.toCommission((await this.requireOwned(actor, id)).payload);
   }
 
   async create(actor: Actor, input: CreateCommissionDto) {
@@ -73,6 +79,7 @@ export class CommissionsService {
   }
 
   async saveMine(actor: Actor, id: string, payload: MakingCommission) {
+    this.requireSignedIn(actor);
     const row = await this.requireOwned(actor, id);
     const next = { ...payload, id: row.id, updatedAt: Date.now() };
     await this.prisma.commission.update({
@@ -83,6 +90,7 @@ export class CommissionsService {
   }
 
   async addMineMessage(actor: Actor, id: string, body: LocaleCopy) {
+    this.requireSignedIn(actor);
     const current = this.toCommission((await this.requireOwned(actor, id)).payload);
     const next = addCommissionMessage(current, { author: "customer", body });
     await this.prisma.commission.update({
@@ -152,10 +160,18 @@ export class CommissionsService {
     return this.toAdmin({ ...row, payload: next as unknown as Prisma.JsonValue });
   }
 
+  private requireSignedIn(actor: Actor) {
+    if (!actor.user) {
+      throw new UnauthorizedException("برای مشاهده این سفارش وارد حساب شوید.");
+    }
+  }
+
   private async requireOwned(actor: Actor, id: string) {
     const row = await this.prisma.commission.findUnique({ where: { id } });
     if (!row) throw new NotFoundException("سفارش اختصاصی پیدا نشد.");
-    if (row.ownerKey !== this.identity.key(actor)) {
+    const ownerKey = this.identity.key(actor);
+    const userKey = actor.user ? `user:${actor.user.id}` : "";
+    if (row.ownerKey !== ownerKey && row.ownerKey !== userKey) {
       throw new ForbiddenException("این سفارش متعلق به شما نیست.");
     }
     return row;

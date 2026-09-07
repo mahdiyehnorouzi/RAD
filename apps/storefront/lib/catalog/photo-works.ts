@@ -1,23 +1,16 @@
 import type { Product, ProductCategory, ProductShape, ProductStatus } from "@rad/types";
 import { formatToman } from "@/lib/money";
 import { photoProducts } from "./photo-products-data";
+import { radStudio } from "./vendors";
 
-const guestArtist = {
-  id: "artist-sahar",
-  displayName: "سحر میرزایی",
-  displayNameEn: "Sahar Mirzaei",
-  kind: "guest_artist" as const,
-  verified: true,
-};
-
-export function catalogPhotoSrc(slug: string) {
-  return `/catalog/photos/${slug}.webp`;
+export function catalogPhotoSrc(slug: string, imageIndex = 0) {
+  const suffix = imageIndex === 0 ? "" : `-${imageIndex + 1}`;
+  return `/catalog/photos/${slug}${suffix}.webp`;
 }
 
 export const catalogPhotoSlugs = new Set(photoProducts.map((product) => product.slug));
 
-export const photoWorks: Product[] = photoProducts.map((product) => {
-  const image = product.images[0];
+export const photoWorks: Product[] = photoProducts.map((product, index) => {
   return {
     slug: product.slug,
     name: product.name,
@@ -31,17 +24,16 @@ export const photoWorks: Product[] = photoProducts.map((product) => {
     status: product.status as ProductStatus,
     story: product.story,
     details: product.details,
-    vendor: guestArtist,
-    images: [
-      {
-        src: catalogPhotoSrc(product.slug),
+    artworkNumber: `RAD-${String(index + 27).padStart(3, "0")}`,
+    vendor: radStudio,
+    images: product.images.map((image, imageIndex) => ({
+        src: catalogPhotoSrc(product.slug, imageIndex),
         alt: image.alt,
         enAlt: image.enAlt,
         color: product.color,
         accent: product.accent,
         shape: product.shape as ProductShape,
-      },
-    ],
+      })),
     en: product.en,
   };
 });

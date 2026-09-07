@@ -6,6 +6,17 @@ export async function fetchMyCommissions() {
   return api<MakingCommission[]>("/commissions");
 }
 
+export async function fetchCommission(id: string) {
+  return api<MakingCommission>(`/commissions/${id}`);
+}
+
+export async function sendCommissionMessage(id: string, body: LocaleCopy) {
+  return api<MakingCommission>(`/commissions/${id}/messages`, {
+    method: "POST",
+    body: JSON.stringify({ body }),
+  });
+}
+
 export async function createCommission(input: {
   customerName: string;
   brief: MakingBrief;

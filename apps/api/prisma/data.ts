@@ -15,12 +15,41 @@ export const seedVendors = [
     kind: "guest_artist",
     verified: true,
   },
+  {
+    id: "artist-niloofar",
+    displayName: "نیلوفر احمدی",
+    displayNameEn: "Niloofar Ahmadi",
+    kind: "guest_artist",
+    verified: true,
+  },
+  {
+    id: "artist-kimia",
+    displayName: "کیمیا رضایی",
+    displayNameEn: "Kimia Rezaei",
+    kind: "guest_artist",
+    verified: true,
+  },
+  {
+    id: "artist-arman",
+    displayName: "آرمان کاظمی",
+    displayNameEn: "Arman Kazemi",
+    kind: "guest_artist",
+    verified: true,
+  },
+  {
+    id: "artist-leila",
+    displayName: "لیلا موسوی",
+    displayNameEn: "Leila Mousavi",
+    kind: "guest_artist",
+    verified: true,
+  },
 ];
 
 export const seedProducts = [
   ...photoProducts,
   {
     slug: "red-vessel-27",
+    vendorId: "artist-sahar",
     name: "کوزه‌ی سرخ شماره ۲۷",
     subtitle: "لعاب خاکستر و اکسید آهن",
     tomanPrice: 4_500_000,
@@ -125,6 +154,7 @@ export const seedProducts = [
   },
   {
     slug: "lut-line",
+    vendorId: "artist-sahar",
     name: "خطِ لوت",
     subtitle: "پرسلان و لعاب شنی",
     tomanPrice: 4_000_000,
@@ -158,6 +188,7 @@ export const seedProducts = [
   },
   {
     slug: "night-clay",
+    vendorId: "artist-sahar",
     name: "خاکِ شب",
     subtitle: "لعاب مشکی نیمه‌براق",
     tomanPrice: 4_000_000,
@@ -191,6 +222,7 @@ export const seedProducts = [
   },
   {
     slug: "pomegranate-bowl",
+    vendorId: "artist-sahar",
     name: "کاسه‌ی انار",
     subtitle: "لعاب قرمز مسی",
     tomanPrice: 4_000_000,
@@ -219,6 +251,7 @@ export const seedProducts = [
   },
   {
     slug: "white-silence",
+    vendorId: "artist-arman",
     name: "سکوتِ سفید",
     subtitle: "پرسلان بدون لعاب",
     tomanPrice: 4_500_000,
@@ -252,6 +285,7 @@ export const seedProducts = [
   },
   {
     slug: "blue-window",
+    vendorId: "artist-niloofar",
     name: "پنجره‌ی آبی",
     subtitle: "اکریلیک و پاستل روی بوم",
     tomanPrice: 6_000_000,
@@ -285,6 +319,7 @@ export const seedProducts = [
   },
   {
     slug: "woven-garden",
+    vendorId: "artist-kimia",
     name: "باغِ بافته",
     subtitle: "نقاشی و سوزن‌دوزی روی کتان",
     tomanPrice: 4_000_000,
@@ -318,6 +353,7 @@ export const seedProducts = [
   },
   {
     slug: "walnut-tide",
+    vendorId: "artist-arman",
     name: "موجِ گردو",
     subtitle: "تراش دستی چوب گردو",
     tomanPrice: 4_000_000,
@@ -351,6 +387,7 @@ export const seedProducts = [
   },
   {
     slug: "silver-orbit",
+    vendorId: "artist-leila",
     name: "مدار نقره‌ای",
     subtitle: "نقره دست‌ساز و عقیق سبز",
     tomanPrice: 3_000_000,
@@ -374,6 +411,7 @@ export const seedProducts = [
   },
   {
     slug: "red-garden-print",
+    vendorId: "artist-niloofar",
     name: "باغ سرخ",
     subtitle: "لینوکات روی کاغذ پنبه‌ای",
     tomanPrice: 2_500_000,
@@ -397,6 +435,7 @@ export const seedProducts = [
   },
   {
     slug: "quiet-weight",
+    vendorId: "artist-arman",
     name: "وزنِ آرام",
     subtitle: "سنگ و برنج",
     tomanPrice: 5_000_000,

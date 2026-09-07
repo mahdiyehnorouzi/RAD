@@ -8,11 +8,17 @@ import { PaymentHistory } from "./payment-history";
 import { StageMessages } from "./stage-messages";
 import "./customer-sidebar.css";
 
-export function CustomerMakingSidebar({ commission }: { commission: MakingCommission }) {
+export function CustomerMakingSidebar({
+  commission,
+  readOnly = false,
+}: {
+  commission: MakingCommission;
+  readOnly?: boolean;
+}) {
   const { addMessage } = useMaking();
   const { locale } = useLocale();
   const showMessages = commission.stage !== "complete" && commission.stage !== "shipping";
-  const canCompose = commission.stage !== "complete" && commission.stage !== "declined";
+  const canCompose = !readOnly && commission.stage !== "complete" && commission.stage !== "declined";
 
   return (
     <aside className="making-side">

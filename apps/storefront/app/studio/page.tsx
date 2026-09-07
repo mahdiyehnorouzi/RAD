@@ -9,7 +9,6 @@ export default function Studio() {
       <div className="studio-notes">
         <span>{t("note1")}</span>
         <span>{t("note2")}</span>
-        <span>{t("note3")}</span>
       </div>
     </section>
   );

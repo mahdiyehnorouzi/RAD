@@ -10,7 +10,7 @@ import {
   type ReactNode,
 } from "react";
 import type { MakingCommission } from "@/components/making/type";
-import { createSubmittedCommission, seedCommissions } from "@/lib/making";
+import { createSubmittedCommission, isDemoCommission, seedCommissions } from "@/lib/making";
 import { createCommission, fetchMyCommissions, saveCommission } from "@/lib/api";
 import { createMakingActions, type MakingActions } from "@/hooks/making-actions";
 
@@ -49,10 +49,9 @@ export function MakingProvider({ children }: { children: ReactNode }) {
       const remote = await fetchMyCommissions().catch(() => [] as MakingCommission[]);
       if (cancelled) return;
       const seedIds = new Set(seedCommissions.map((item) => item.id));
-      if (remote.length) {
-        setCommissions(mergeCommissions(local.filter((item) => !seedIds.has(item.id)), remote));
-      } else if (local.length) setCommissions(local);
-      else setCommissions(seedCommissions);
+      const owned = local.filter((item) => !seedIds.has(item.id));
+      if (remote.length) setCommissions(mergeCommissions(owned, remote));
+      else setCommissions(owned);
       setReady(true);
     })();
     return () => {
@@ -72,9 +71,11 @@ export function MakingProvider({ children }: { children: ReactNode }) {
       void loadRemote();
     };
     window.addEventListener("focus", onFocus);
+    window.addEventListener("rad:session", onFocus);
     const timer = window.setInterval(() => void loadRemote(), 8000);
     return () => {
       window.removeEventListener("focus", onFocus);
+      window.removeEventListener("rad:session", onFocus);
       window.clearInterval(timer);
     };
   }, [loadRemote]);
@@ -83,7 +84,7 @@ export function MakingProvider({ children }: { children: ReactNode }) {
     setCommissions((current) => {
       const next = current.map((item) => (item.id === id ? map(item) : item));
       const changed = next.find((item) => item.id === id);
-      if (changed) void saveCommission(id, changed).catch(() => {});
+      if (changed && !isDemoCommission(id)) void saveCommission(id, changed).catch(() => {});
       return next;
     });
   }, []);
@@ -106,7 +107,9 @@ export function MakingProvider({ children }: { children: ReactNode }) {
     () => ({
       ready,
       commissions,
-      get: (id) => commissions.find((item) => item.id === id),
+      get: (id) =>
+        commissions.find((item) => item.id === id) ??
+        seedCommissions.find((item) => item.id === id),
       ...actions,
       submitDesign,
     }),

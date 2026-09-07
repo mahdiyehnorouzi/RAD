@@ -7,7 +7,7 @@ export default function Products() {
   const { t } = useLocale();
   return (
     <PageSection className="plp">
-      <header className="mb-8">
+      <header className="mb-4">
         <Eyebrow>{t("shopEyebrow")}</Eyebrow>
         <h1 className="m-0 text-h2 font-normal">{t("shopTitle")}</h1>
         <p className="mt-3 max-w-2xl text-prose">{t("shopBody")}</p>

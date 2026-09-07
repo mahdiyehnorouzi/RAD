@@ -8,8 +8,9 @@ import { seedCommerce } from "./seed-commerce";
 const prisma = new PrismaClient();
 const seedAssetsDir = path.join(__dirname, "seed-assets");
 
-function seedImageSrc(slug: string) {
-  const filePath = path.join(seedAssetsDir, `${slug}.webp`);
+function seedImageSrc(slug: string, imageIndex: number) {
+  const suffix = imageIndex === 0 ? "" : `-${imageIndex + 1}`;
+  const filePath = path.join(seedAssetsDir, `${slug}${suffix}.webp`);
   if (!existsSync(filePath)) return undefined;
   return `data:image/webp;base64,${readFileSync(filePath).toString("base64")}`;
 }
@@ -90,13 +91,15 @@ async function main() {
     });
     await prisma.productImage.deleteMany({ where: { productSlug: product.slug } });
     if (images.length) {
-      const photo = seedImageSrc(product.slug);
       await prisma.productImage.createMany({
         data: images.map((image, sortOrder) => ({
           productSlug: product.slug,
           sortOrder,
           ...image,
-          src: "src" in image && image.src ? image.src : photo,
+          src:
+            "src" in image && image.src
+              ? image.src
+              : seedImageSrc(product.slug, sortOrder),
         })),
       });
     }

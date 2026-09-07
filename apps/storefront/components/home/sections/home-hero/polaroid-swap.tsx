@@ -6,7 +6,8 @@ import type { Locale } from "@rad/types";
 import { POLAROID_TILTS } from "@/components/home/const";
 import type { PolaroidFrame } from "@/components/home/type";
 import { useLocale } from "@/components/i18n";
-import { usePolaroidSwap } from "./hooks";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { usePolaroidSwap, usePolaroidSwipe } from "./hooks";
 import "./polaroid-swap.css";
 
 const code39Patterns: Readonly<Record<string, string>> = {
@@ -83,7 +84,11 @@ export function PolaroidSwap() {
   const stackRef = useRef<HTMLDivElement>(null);
   const [paused, setPaused] = useState(false);
   const [inView, setInView] = useState(true);
-  const { front, leaving } = usePolaroidSwap(frames.length, paused || !inView);
+  const { front, leaving, goNext, goPrev, goTo } = usePolaroidSwap(
+    frames.length,
+    paused || !inView,
+  );
+  const swipe = usePolaroidSwipe(goNext, goPrev);
 
   useEffect(() => {
     const stack = stackRef.current;
@@ -99,11 +104,18 @@ export function PolaroidSwap() {
 
   if (!frames.length) return null;
 
+  const nextLabel = locale === "fa" ? "پولاروید بعدی" : "Next polaroid";
+  const prevLabel = locale === "fa" ? "پولاروید قبلی" : "Previous polaroid";
+
   return (
     <div
       ref={stackRef}
-      className="polaroid-swap"
+      className="polaroid-swap-shell"
       dir={locale === "fa" ? "rtl" : "ltr"}
+      role="region"
+      aria-roledescription="carousel"
+      aria-label={locale === "fa" ? "گالری پولاروید. برای عوض‌کردن بکشید." : "Polaroid gallery. Swipe to change."}
+      tabIndex={0}
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
       onFocusCapture={() => setPaused(true)}
@@ -112,6 +124,22 @@ export function PolaroidSwap() {
           setPaused(false);
         }
       }}
+      onKeyDown={(event) => {
+        if (event.key === "ArrowLeft") {
+          event.preventDefault();
+          locale === "fa" ? goPrev() : goNext();
+        }
+        if (event.key === "ArrowRight") {
+          event.preventDefault();
+          locale === "fa" ? goNext() : goPrev();
+        }
+      }}
+    >
+    <div
+      className="polaroid-swap"
+      onPointerDown={swipe.onPointerDown}
+      onPointerUp={swipe.onPointerUp}
+      onPointerCancel={swipe.clearSwipe}
     >
       {frames.map((frame, index) => {
         const depth = (index - front + frames.length) % frames.length;
@@ -135,12 +163,24 @@ export function PolaroidSwap() {
             }}
             aria-current={isFront ? "true" : undefined}
             aria-label={frame.caption}
+            draggable={false}
+            onClick={(event) => {
+              if (swipe.didSwipe()) {
+                event.preventDefault();
+                swipe.clearSwipe();
+                return;
+              }
+              if (!isFront) {
+                event.preventDefault();
+                goTo(index);
+              }
+            }}
           >
             <span className="polaroid-sheet">
               <span className="polaroid-face polaroid-face--front">
                 <span className="polaroid-pin" aria-hidden="true" />
                 <span className="polaroid-window">
-                  <img src={frame.src} alt={frame.alt} />
+                  <img src={frame.src} alt={frame.alt} draggable={false} />
                   <span className="hero-identifier" aria-hidden="true">
                     <span>RĀD / {frame.archiveNumber}</span>
                     <span>{t("tehranSlashYear")}</span>
@@ -174,6 +214,28 @@ export function PolaroidSwap() {
           </Link>
         );
       })}
+    </div>
+      <div className="polaroid-controls">
+        <button type="button" className="polaroid-control" onClick={goPrev} aria-label={prevLabel}>
+          {locale === "fa" ? <ChevronRight aria-hidden="true" /> : <ChevronLeft aria-hidden="true" />}
+        </button>
+        <div className="polaroid-dots" role="tablist" aria-label={locale === "fa" ? "انتخاب پولاروید" : "Choose polaroid"}>
+          {frames.map((frame, index) => (
+            <button
+              type="button"
+              key={frame.src}
+              role="tab"
+              aria-selected={index === front}
+              aria-label={frame.caption}
+              className={index === front ? "active" : ""}
+              onClick={() => goTo(index)}
+            />
+          ))}
+        </div>
+        <button type="button" className="polaroid-control" onClick={goNext} aria-label={nextLabel}>
+          {locale === "fa" ? <ChevronLeft aria-hidden="true" /> : <ChevronRight aria-hidden="true" />}
+        </button>
+      </div>
     </div>
   );
 }

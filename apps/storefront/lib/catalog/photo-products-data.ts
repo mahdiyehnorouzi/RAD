@@ -3,7 +3,7 @@ const imageMeta = (alt: string, enAlt: string) => ({ alt, enAlt });
 export const photoProducts = [
   {
     slug: "blue-pedestal-tray",
-    vendorId: "artist-sahar",
+    vendorId: "rad-studio",
     name: "سینی پایه‌دار آبی",
     subtitle: "لعاب آسمانی با خال‌خال",
     tomanPrice: 3_500_000,
@@ -32,7 +32,7 @@ export const photoProducts = [
   },
   {
     slug: "blue-pink-jar",
-    vendorId: "artist-sahar",
+    vendorId: "rad-studio",
     name: "قوطی آبی و صورتی",
     subtitle: "الگوی موجی دست‌نقاش",
     tomanPrice: 3_000_000,
@@ -61,7 +61,7 @@ export const photoProducts = [
   },
   {
     slug: "cat-cup",
-    vendorId: "artist-sahar",
+    vendorId: "rad-studio",
     name: "فنجان گربه",
     subtitle: "دسته دم‌گونه",
     tomanPrice: 2_000_000,
@@ -90,7 +90,7 @@ export const photoProducts = [
   },
   {
     slug: "contour-jar",
-    vendorId: "artist-sahar",
+    vendorId: "rad-studio",
     name: "قوطی خط‌کُنتور",
     subtitle: "الگوی عقیق سبز",
     tomanPrice: 3_200_000,
@@ -119,7 +119,7 @@ export const photoProducts = [
   },
   {
     slug: "dachshund-sculpture",
-    vendorId: "artist-sahar",
+    vendorId: "rad-studio",
     name: "مجسمه داشهوند",
     subtitle: "سفال سیاه و سفید",
     tomanPrice: 3_500_000,
@@ -153,7 +153,7 @@ export const photoProducts = [
   },
   {
     slug: "olive-loop-vessel",
-    vendorId: "artist-sahar",
+    vendorId: "rad-studio",
     name: "ظرف حلقه‌ای زیتونی",
     subtitle: "لعاب خزه‌ای با خال",
     tomanPrice: 4_000_000,
@@ -182,7 +182,7 @@ export const photoProducts = [
   },
   {
     slug: "blue-flower-portrait",
-    vendorId: "artist-sahar",
+    vendorId: "rad-studio",
     name: "گلدان پرتره گل‌دار",
     subtitle: "آبی روشن و طلایی",
     tomanPrice: 4_500_000,
@@ -216,7 +216,7 @@ export const photoProducts = [
   },
   {
     slug: "mint-angular-cup",
-    vendorId: "artist-sahar",
+    vendorId: "rad-studio",
     name: "فنجان مرمری نعنایی",
     subtitle: "فرم ارگانیک",
     tomanPrice: 2_000_000,
@@ -250,7 +250,7 @@ export const photoProducts = [
   },
   {
     slug: "orange-boat-sculpture",
-    vendorId: "artist-sahar",
+    vendorId: "rad-studio",
     name: "مجسمه قایق نارنجی",
     subtitle: "سبک folk art",
     tomanPrice: 4_500_000,
@@ -276,7 +276,7 @@ export const photoProducts = [
   },
   {
     slug: "spotted-loop-teapot",
-    vendorId: "artist-sahar",
+    vendorId: "rad-studio",
     name: "قوری حلقه‌ای خال‌دار",
     subtitle: "پاستلی و مجسمه‌وار",
     tomanPrice: 4_000_000,
@@ -305,7 +305,7 @@ export const photoProducts = [
   },
   {
     slug: "mint-loop-vessel",
-    vendorId: "artist-sahar",
+    vendorId: "rad-studio",
     name: "ظرف حلقه‌ای نعنایی",
     subtitle: "لعاب خال‌دار سبز",
     tomanPrice: 3_800_000,
@@ -334,7 +334,7 @@ export const photoProducts = [
   },
   {
     slug: "speckled-cup",
-    vendorId: "artist-sahar",
+    vendorId: "rad-studio",
     name: "لیوان خال‌دار آبی",
     subtitle: "بدون دسته، مینیمال",
     tomanPrice: 2_000_000,
@@ -368,7 +368,7 @@ export const photoProducts = [
   },
   {
     slug: "speckled-sculpted-mug",
-    vendorId: "artist-sahar",
+    vendorId: "rad-studio",
     name: "ماگ کدو خال‌دار",
     subtitle: "بافت شیاردار",
     tomanPrice: 2_000_000,
@@ -402,7 +402,7 @@ export const photoProducts = [
   },
   {
     slug: "yellow-graphic-pitcher",
-    vendorId: "artist-sahar",
+    vendorId: "rad-studio",
     name: "پارچ زرد هندسی",
     subtitle: "الگوی chevron",
     tomanPrice: 3_500_000,
@@ -422,6 +422,153 @@ export const photoProducts = [
       story:
         "A pitcher in bright yellow glaze with a bold black chevron pattern and a large handle—slightly asymmetric form.",
       details: ["1 litre capacity", "Glazed ceramic", "Handmade", "One of one"],
+    },
+  },
+  {
+    slug: "cobalt-ripple-tray",
+    vendorId: "rad-studio",
+    name: "سینی موج کبالت",
+    subtitle: "لعاب کبالت ترک‌ریز و دسته‌های حلقه‌ای",
+    tomanPrice: 4_800_000,
+    usdPrice: 56,
+    color: "#142e88",
+    accent: "#e7e0d2",
+    shape: "wide",
+    category: "ceramics",
+    status: "available",
+    story:
+      "سینی کم‌عمقی با لبه موج‌دار و دو دسته حلقه‌ای؛ لعاب کبالت در کف اثر با شبکه‌ای از ترک‌های ریز روشن می‌شود.",
+    details: [
+      "قطر تقریبی ۳۲ سانتی‌متر",
+      "استون‌ور لعاب‌دار",
+      "دو دسته دست‌ساخت",
+      "تنها یک نسخه",
+    ],
+    images: [
+      imageMeta("نمای روبه‌روی سینی موج کبالت", "Front view of the Cobalt Ripple Tray"),
+      imageMeta("نمای بالا از سینی موج کبالت", "Top view of the Cobalt Ripple Tray"),
+    ],
+    en: {
+      name: "Cobalt Ripple Tray",
+      subtitle: "Crazed cobalt glaze and loop handles",
+      story:
+        "A shallow tray with a rippled rim and two loop handles; fine pale crazing animates the deep cobalt glazed centre.",
+      details: [
+        "Approximately 32 cm wide",
+        "Glazed stoneware",
+        "Hand-built loop handles",
+        "One of one",
+      ],
+    },
+  },
+  {
+    slug: "pink-petal-cup",
+    vendorId: "rad-studio",
+    name: "فنجان گلبرگ صورتی",
+    subtitle: "فرم گلبرگی و دسته زیتونی",
+    tomanPrice: 2_400_000,
+    usdPrice: 28,
+    color: "#eab9b6",
+    accent: "#68723c",
+    shape: "round",
+    category: "ceramics",
+    status: "available",
+    story:
+      "فنجانی دست‌ساخت با دیواره‌هایی شبیه گلبرگ و دسته حلقه‌ای زیتونی؛ تفاوت‌های ظریف سطح، رد انگشت و قلم را نگه داشته‌اند.",
+    details: [
+      "ظرفیت تقریبی ۲۵۰ میلی‌لیتر",
+      "سرامیک لعاب‌دار",
+      "فرم دست‌ساخت",
+      "تنها یک نسخه",
+    ],
+    images: [
+      imageMeta("فنجان گلبرگ صورتی با دسته زیتونی", "Pink Petal Cup with olive loop handle"),
+    ],
+    en: {
+      name: "Pink Petal Cup",
+      subtitle: "Petal form with an olive handle",
+      story:
+        "A hand-built cup with petal-like walls and an olive loop handle; subtle surface variations preserve the touch of hand and brush.",
+      details: [
+        "Approximately 250 ml",
+        "Glazed ceramic",
+        "Hand-built form",
+        "One of one",
+      ],
+    },
+  },
+  {
+    slug: "cobalt-fold-bowl",
+    vendorId: "rad-studio",
+    name: "کاسه چین کبالت",
+    subtitle: "لبه آزاد و لعاب آبی عمیق",
+    tomanPrice: 4_200_000,
+    usdPrice: 49,
+    color: "#102a8a",
+    accent: "#eee6d9",
+    shape: "wide",
+    category: "ceramics",
+    status: "available",
+    story:
+      "کاسه‌ای پیکره‌وار با لبه آزاد و چین‌خورده؛ بیرون شیری و درون با لعاب کبالت عمیق پوشیده شده است.",
+    details: [
+      "قطر تقریبی ۳۰ سانتی‌متر",
+      "استون‌ور لعاب‌دار",
+      "لبه شکل‌داده‌شده با دست",
+      "تنها یک نسخه",
+    ],
+    images: [
+      imageMeta("نمای روبه‌روی کاسه چین کبالت", "Front view of the Cobalt Fold Bowl"),
+      imageMeta("نمای بالا از کاسه چین کبالت", "Top view of the Cobalt Fold Bowl"),
+    ],
+    en: {
+      name: "Cobalt Fold Bowl",
+      subtitle: "Free-folded rim and deep blue glaze",
+      story:
+        "A sculptural bowl with a freely folded rim, creamy exterior, and a deep cobalt glazed interior.",
+      details: [
+        "Approximately 30 cm wide",
+        "Glazed stoneware",
+        "Hand-shaped rim",
+        "One of one",
+      ],
+    },
+  },
+  {
+    slug: "croissant-handle-mug",
+    vendorId: "rad-studio",
+    name: "ماگ دسته کروسان",
+    subtitle: "لعاب شکلاتی و دسته پیکره‌وار",
+    tomanPrice: 2_800_000,
+    usdPrice: 33,
+    color: "#eee3cf",
+    accent: "#9d5d2d",
+    shape: "round",
+    category: "ceramics",
+    status: "available",
+    story:
+      "ماگی شیری با لعاب شکلاتی روان و دسته‌ای پیکره‌وار شبیه کروسان؛ شیئی شوخ که کاربرد روزمره را به آبجکت تبدیل می‌کند.",
+    details: [
+      "ظرفیت تقریبی ۳۰۰ میلی‌لیتر",
+      "سرامیک لعاب‌دار",
+      "دسته پیکره‌وار دست‌ساخت",
+      "تنها یک نسخه",
+    ],
+    images: [
+      imageMeta("نمای بدون نوشته ماگ دسته کروسان", "Plain view of the Croissant Handle Mug"),
+      imageMeta("نمای نوشته‌دار ماگ دسته کروسان", "Lettered view of the Croissant Handle Mug"),
+    ],
+    en: {
+      name: "Croissant Handle Mug",
+      subtitle: "Chocolate drip glaze and sculptural handle",
+      story:
+        "A cream mug with flowing chocolate glaze and a sculptural croissant-shaped handle, turning an everyday vessel into a playful object.",
+      details: [
+        "Approximately 300 ml",
+        "Glazed ceramic",
+        "Hand-built sculptural handle",
+        "One of one",
+      ],
     },
   },
 ];

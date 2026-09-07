@@ -20,7 +20,15 @@ export function ProgressPhotographs({
     <ul className="making-photos">
       {photos.map((item) => (
         <li key={item.id}>
-          <div className={`making-swatch kind-${item.photoKind}`} aria-hidden="true" />
+          {item.image ? (
+            <img
+              className="making-photo"
+              src={item.image}
+              alt={copy(item.imageAlt ?? item.note, locale)}
+            />
+          ) : (
+            <div className={`making-swatch kind-${item.photoKind}`} aria-hidden="true" />
+          )}
           <small>{copy(photoLabel[item.photoKind], locale)}</small>
           <p>{copy(item.note, locale)}</p>
           <time dateTime={new Date(item.createdAt).toISOString()}>

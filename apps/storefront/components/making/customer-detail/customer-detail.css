@@ -19,6 +19,15 @@ html[dir="rtl"] .making-brief {
   line-height: 1.7;
 }
 
+.making-demo-banner {
+  margin: 0.85rem 0 0;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--clay);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--sand) 35%, var(--paper));
+  color: var(--ink);
+}
+
 .making-layout {
   display: grid;
   grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
