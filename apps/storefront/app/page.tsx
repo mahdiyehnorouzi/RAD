@@ -18,12 +18,11 @@ import { useCatalog } from "@/components/catalog/catalog-provider";
 export default function Home() {
   const { products } = useCatalog();
   const featured = products.slice(0, 6);
-  const hero = featured[0];
   const studio = featured[1] ?? featured[0];
 
   return (
     <>
-      <HomeHero product={hero} />
+      <HomeHero />
       <DifferenceStory />
       <EvidenceFilm />
       <EntryPaths />
