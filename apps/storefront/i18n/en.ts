@@ -93,7 +93,11 @@ export const en = {
   enamad: "eNAMAD trust seal",
   heroEyebrow: "ONE-OF-ONE ARTWORKS • TEHRAN",
   heroTitle1: "Nothing is ever",
+  heroTitleLead: "Nothing is ever",
+  heroStamp: "twice",
   heroTitle2: "made twice.",
+  heroTitleRest: "made",
+  heroViewWorks: "View works",
   heroBody:
     "Every RAD piece is singular, shaped by hand and a trace that can only happen once.",
   designMine: "Design my piece",

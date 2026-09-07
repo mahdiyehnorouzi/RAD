@@ -91,7 +91,11 @@ export const fa = {
   enamad: "نماد اعتماد الکترونیکی",
   heroEyebrow: "آثار یکتای هنری • تهران",
   heroTitle1: "هیچ‌چیز دوبار",
+  heroTitleLead: "هیچ‌چیز",
+  heroStamp: "دوبار",
   heroTitle2: "ساخته نمی‌شود.",
+  heroTitleRest: "ساخته نمی‌شود.",
+  heroViewWorks: "مشاهده آثار",
   heroBody:
     "هر اثر رَد یگانه است؛ ساخته‌شده با دست و ردّی که فقط یک‌بار به‌جا می‌ماند.",
   designMine: "طراحی قطعه‌ی من",
