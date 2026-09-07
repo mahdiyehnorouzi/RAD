@@ -11,7 +11,9 @@
     "start:production": "node scripts/start-production.mjs",
     "typecheck": "tsc --noEmit",
     "setup": "prisma generate && prisma db push && prisma db seed",
-    "db:embedded": "node scripts/start-pg.mjs"
+    "db:embedded": "node scripts/start-pg.mjs",
+    "pricing:crawl": "tsx src/pricing/cli.ts",
+    "test:pricing": "tsx --test src/pricing/*.spec.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
@@ -25,6 +27,7 @@
     "@nestjs/throttler": "^6.4.0",
     "@prisma/client": "^6.14.0",
     "bcryptjs": "^3.0.2",
+    "cheerio": "^1.2.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.2",
     "cookie-parser": "^1.4.7",

@@ -12,3 +12,5 @@ work/
 *.db
 *.db-journal
 apps/api/data/
+pricing.config.json
+pricing-report.json

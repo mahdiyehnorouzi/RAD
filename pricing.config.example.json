@@ -1,0 +1,27 @@
+{
+  "userAgent": "RADPriceResearchBot/1.0 (+https://rad-object.com)",
+  "delayMs": 1500,
+  "maxPagesPerSource": 30,
+  "minimumComparables": 3,
+  "minimumConfidence": 0.42,
+  "priceMultiplier": 1,
+  "roundToToman": 100000,
+  "maximumChangePercent": 35,
+  "sources": [
+    {
+      "name": "Iranian marketplace name",
+      "startUrls": ["https://example.ir/category/handmade-ceramics"],
+      "allowedHosts": ["example.ir"],
+      "currency": "IRT",
+      "selectors": {
+        "card": ".product-card",
+        "link": "a",
+        "name": ".product-title",
+        "price": ".price",
+        "category": ".category",
+        "features": ".feature",
+        "next": "a[rel=next]"
+      }
+    }
+  ]
+}
