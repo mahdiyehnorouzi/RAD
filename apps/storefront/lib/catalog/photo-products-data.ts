@@ -6,7 +6,7 @@ export const photoProducts = [
     vendorId: "artist-sahar",
     name: "سینی پایه‌دار آبی",
     subtitle: "لعاب آسمانی با خال‌خال",
-    tomanPrice: 8_400_000,
+    tomanPrice: 3_500_000,
     usdPrice: 97,
     color: "#6ba3c4",
     accent: "#c4956a",
@@ -15,7 +15,12 @@ export const photoProducts = [
     status: "available",
     story:
       "ظرفی دوطبقه با لعاب آبی آسمانی و خال‌های قهوه‌ای؛ مناسب برای میوه خشک، جواهرات یا به‌عنوان آبجکت تزئینی.",
-    details: ["ارتفاع ۲۴ سانتی‌متر", "استون‌ور لعاب‌دار", "دست‌ساز", "تنها یک نسخه"],
+    details: [
+      "ارتفاع ۲۴ سانتی‌متر",
+      "استون‌ور لعاب‌دار",
+      "دست‌ساز",
+      "تنها یک نسخه",
+    ],
     images: [imageMeta("سینی پایه‌دار آبی", "Blue speckled pedestal tray")],
     en: {
       name: "Blue Pedestal Tray",
@@ -30,7 +35,7 @@ export const photoProducts = [
     vendorId: "artist-sahar",
     name: "قوطی آبی و صورتی",
     subtitle: "الگوی موجی دست‌نقاش",
-    tomanPrice: 9_200_000,
+    tomanPrice: 3_000_000,
     usdPrice: 106,
     color: "#f0e8dc",
     accent: "#2c4a8a",
@@ -39,7 +44,12 @@ export const photoProducts = [
     status: "available",
     story:
       "قوطی سفالی با درپوش آبی و بدنه‌ای تزئین‌شده با اشکال موجی آبی و صورتی؛ ترکیبی از ظرافت و جسارت رنگ.",
-    details: ["ارتفاع ۱۸ سانتی‌متر", "سرامیک لعاب‌دار", "دست‌نقاش", "تنها یک نسخه"],
+    details: [
+      "ارتفاع ۱۸ سانتی‌متر",
+      "سرامیک لعاب‌دار",
+      "دست‌نقاش",
+      "تنها یک نسخه",
+    ],
     images: [imageMeta("قوطی آبی و صورتی", "Blue and pink abstract jar")],
     en: {
       name: "Blue Pink Jar",
@@ -54,7 +64,7 @@ export const photoProducts = [
     vendorId: "artist-sahar",
     name: "فنجان گربه",
     subtitle: "دسته دم‌گونه",
-    tomanPrice: 5_600_000,
+    tomanPrice: 2_000_000,
     usdPrice: 65,
     color: "#d4b896",
     accent: "#1a1a1a",
@@ -63,7 +73,12 @@ export const photoProducts = [
     status: "available",
     story:
       "فنجانی سرامیکی با نقاشی گربه سیاه و دسته‌ای به‌شکل دم؛ اثری شوخ‌طبع و یکتا برای صبحانه یا میز کار.",
-    details: ["ظرفیت ۲۵۰ میلی‌لیتر", "سرامیک لعاب‌دار", "ایمن برای مواد غذایی", "تنها یک نسخه"],
+    details: [
+      "ظرفیت ۲۵۰ میلی‌لیتر",
+      "سرامیک لعاب‌دار",
+      "ایمن برای مواد غذایی",
+      "تنها یک نسخه",
+    ],
     images: [imageMeta("فنجان گربه", "Cat mug with tail handle")],
     en: {
       name: "Cat Cup",
@@ -78,7 +93,7 @@ export const photoProducts = [
     vendorId: "artist-sahar",
     name: "قوطی خط‌کُنتور",
     subtitle: "الگوی عقیق سبز",
-    tomanPrice: 10_800_000,
+    tomanPrice: 3_200_000,
     usdPrice: 125,
     color: "#8a9a7b",
     accent: "#f0ece0",
@@ -87,7 +102,12 @@ export const photoProducts = [
     status: "available",
     story:
       "قوطی با بدنه‌ی موج‌دار و الگوی عقیق در طیف سبز و کرم؛ درپوشی سبز مریم‌گلی و سطحی براق و لمسی.",
-    details: ["ارتفاع ۲۰ سانتی‌متر", "سرامیک لعاب‌دار", "بافت موج‌دار", "تنها یک نسخه"],
+    details: [
+      "ارتفاع ۲۰ سانتی‌متر",
+      "سرامیک لعاب‌دار",
+      "بافت موج‌دار",
+      "تنها یک نسخه",
+    ],
     images: [imageMeta("قوطی خط‌کُنتور", "Sage green contour jar")],
     en: {
       name: "Contour Jar",
@@ -102,7 +122,7 @@ export const photoProducts = [
     vendorId: "artist-sahar",
     name: "مجسمه داشهوند",
     subtitle: "سفال سیاه و سفید",
-    tomanPrice: 7_200_000,
+    tomanPrice: 3_500_000,
     usdPrice: 83,
     color: "#f5f0e8",
     accent: "#1a1a1a",
@@ -111,14 +131,24 @@ export const photoProducts = [
     status: "available",
     story:
       "مجسمه‌ای مینیمال از سگ داشهوند با بدنه سفید، گوش‌های سیاه و خال‌های نامنظم؛ شوخ‌طبع و آرام‌کننده.",
-    details: ["طول ۲۲ سانتی‌متر", "سرامیک لعاب‌دار", "قطعه تزئینی", "تنها یک نسخه"],
+    details: [
+      "طول ۲۲ سانتی‌متر",
+      "سرامیک لعاب‌دار",
+      "قطعه تزئینی",
+      "تنها یک نسخه",
+    ],
     images: [imageMeta("مجسمه داشهوند", "Ceramic dachshund figurine")],
     en: {
       name: "Dachshund Sculpture",
       subtitle: "Black and white ceramic",
       story:
         "A minimalist dachshund figurine with a white body, black ears, and irregular spots—playful and calming.",
-      details: ["22 cm long", "Glazed ceramic", "Decorative piece", "One of one"],
+      details: [
+        "22 cm long",
+        "Glazed ceramic",
+        "Decorative piece",
+        "One of one",
+      ],
     },
   },
   {
@@ -126,7 +156,7 @@ export const photoProducts = [
     vendorId: "artist-sahar",
     name: "ظرف حلقه‌ای زیتونی",
     subtitle: "لعاب خزه‌ای با خال",
-    tomanPrice: 11_600_000,
+    tomanPrice: 4_000_000,
     usdPrice: 134,
     color: "#6b7354",
     accent: "#8b5a3c",
@@ -135,7 +165,12 @@ export const photoProducts = [
     status: "available",
     story:
       "ظرفی استوانه‌ای با دو حلقه‌ی دایره‌ای در بالا و لعاب زیتونی خزه‌ای؛ ترکیبی از مینیمالیسم و بافت دست‌ساز.",
-    details: ["ارتفاع ۲۸ سانتی‌متر", "استون‌ور لعاب‌دار", "دست‌ساز", "تنها یک نسخه"],
+    details: [
+      "ارتفاع ۲۸ سانتی‌متر",
+      "استون‌ور لعاب‌دار",
+      "دست‌ساز",
+      "تنها یک نسخه",
+    ],
     images: [imageMeta("ظرف حلقه‌ای زیتونی", "Olive green ring-handle vessel")],
     en: {
       name: "Olive Loop Vessel",
@@ -150,7 +185,7 @@ export const photoProducts = [
     vendorId: "artist-sahar",
     name: "گلدان پرتره گل‌دار",
     subtitle: "آبی روشن و طلایی",
-    tomanPrice: 14_800_000,
+    tomanPrice: 4_500_000,
     usdPrice: 171,
     color: "#a8c8d8",
     accent: "#c9a227",
@@ -159,14 +194,24 @@ export const photoProducts = [
     status: "available",
     story:
       "گلدانی مجسمه‌وار به‌شکل پرتره با تاجی از گل‌های سرامیکی و یک شکوفه طلایی؛ اثری هنری و کاربردی.",
-    details: ["ارتفاع ۳۲ سانتی‌متر", "سرامیک لعاب‌دار", "قطعه statement", "تنها یک نسخه"],
+    details: [
+      "ارتفاع ۳۲ سانتی‌متر",
+      "سرامیک لعاب‌دار",
+      "قطعه statement",
+      "تنها یک نسخه",
+    ],
     images: [imageMeta("گلدان پرتره گل‌دار", "Floral crown head vase")],
     en: {
       name: "Blue Flower Portrait",
       subtitle: "Light blue and gold",
       story:
         "A sculptural portrait vase crowned with ceramic flowers and a single gold bloom—art object and functional vessel.",
-      details: ["32 cm high", "Glazed ceramic", "Statement piece", "One of one"],
+      details: [
+        "32 cm high",
+        "Glazed ceramic",
+        "Statement piece",
+        "One of one",
+      ],
     },
   },
   {
@@ -174,7 +219,7 @@ export const photoProducts = [
     vendorId: "artist-sahar",
     name: "فنجان مرمری نعنایی",
     subtitle: "فرم ارگانیک",
-    tomanPrice: 5_800_000,
+    tomanPrice: 2_000_000,
     usdPrice: 67,
     color: "#b8d4c8",
     accent: "#8ec4d4",
@@ -183,14 +228,24 @@ export const photoProducts = [
     status: "available",
     story:
       "فنجانی با فرم نامتقارن و لعاب مرمری سبز نعنایی و آبی آسمانی؛ دسته یکپارچه و طراحی ارگانیک.",
-    details: ["ظرفیت ۲۸۰ میلی‌لیتر", "سرامیک لعاب‌دار", "فرم دست‌ساز", "تنها یک نسخه"],
+    details: [
+      "ظرفیت ۲۸۰ میلی‌لیتر",
+      "سرامیک لعاب‌دار",
+      "فرم دست‌ساز",
+      "تنها یک نسخه",
+    ],
     images: [imageMeta("فنجان مرمری نعنایی", "Organic marbled mint cup")],
     en: {
       name: "Mint Angular Cup",
       subtitle: "Organic marbled form",
       story:
         "An asymmetric cup in marbled mint and sky-blue glaze with an integrated handle—organic and one of one.",
-      details: ["280 ml capacity", "Glazed ceramic", "Hand-built form", "One of one"],
+      details: [
+        "280 ml capacity",
+        "Glazed ceramic",
+        "Hand-built form",
+        "One of one",
+      ],
     },
   },
   {
@@ -198,7 +253,7 @@ export const photoProducts = [
     vendorId: "artist-sahar",
     name: "مجسمه قایق نارنجی",
     subtitle: "سبک folk art",
-    tomanPrice: 12_400_000,
+    tomanPrice: 4_500_000,
     usdPrice: 143,
     color: "#e87830",
     accent: "#f0e8dc",
@@ -208,7 +263,9 @@ export const photoProducts = [
     story:
       "قایق سرامیکی با شخصیت، پرندگان و دودکش نارنجی؛ می‌تواند گلدان کوچک یا آبجکت تزئینی باشد.",
     details: ["طول ۲۶ سانتی‌متر", "سرامیک لعاب‌دار", "دست‌ساز", "تنها یک نسخه"],
-    images: [imageMeta("مجسمه قایق نارنجی", "Orange ceramic tugboat sculpture")],
+    images: [
+      imageMeta("مجسمه قایق نارنجی", "Orange ceramic tugboat sculpture"),
+    ],
     en: {
       name: "Orange Boat Sculpture",
       subtitle: "Folk-art style",
@@ -222,7 +279,7 @@ export const photoProducts = [
     vendorId: "artist-sahar",
     name: "قوری حلقه‌ای خال‌دار",
     subtitle: "پاستلی و مجسمه‌وار",
-    tomanPrice: 13_200_000,
+    tomanPrice: 4_000_000,
     usdPrice: 153,
     color: "#f0ece8",
     accent: "#b8d4c8",
@@ -231,7 +288,12 @@ export const photoProducts = [
     status: "available",
     story:
       "قوری با دسته‌ی دایره‌ای بزرگ خال‌دار، دهانه صورتی و بدنه سفید-آبی؛ هم کاربردی و هم آبجکت هنری.",
-    details: ["ظرفیت ۸۰۰ میلی‌لیتر", "سرامیک لعاب‌دار", "دست‌ساز", "تنها یک نسخه"],
+    details: [
+      "ظرفیت ۸۰۰ میلی‌لیتر",
+      "سرامیک لعاب‌دار",
+      "دست‌ساز",
+      "تنها یک نسخه",
+    ],
     images: [imageMeta("قوری حلقه‌ای خال‌دار", "Pastel spotted loop teapot")],
     en: {
       name: "Spotted Loop Teapot",
@@ -246,7 +308,7 @@ export const photoProducts = [
     vendorId: "artist-sahar",
     name: "ظرف حلقه‌ای نعنایی",
     subtitle: "لعاب خال‌دار سبز",
-    tomanPrice: 10_200_000,
+    tomanPrice: 3_800_000,
     usdPrice: 118,
     color: "#9ab89a",
     accent: "#8b5a3c",
@@ -255,7 +317,12 @@ export const photoProducts = [
     status: "available",
     story:
       "ظرفی با حلقه‌ی دایره‌ای در بالا و لعاب سبز نعنایی خال‌دار؛ لبه‌ای با بافت کهنه و دست‌ساز.",
-    details: ["ارتفاع ۲۶ سانتی‌متر", "استون‌ور لعاب‌دار", "دست‌ساز", "تنها یک نسخه"],
+    details: [
+      "ارتفاع ۲۶ سانتی‌متر",
+      "استون‌ور لعاب‌دار",
+      "دست‌ساز",
+      "تنها یک نسخه",
+    ],
     images: [imageMeta("ظرف حلقه‌ای نعنایی", "Speckled sage loop vessel")],
     en: {
       name: "Mint Loop Vessel",
@@ -270,7 +337,7 @@ export const photoProducts = [
     vendorId: "artist-sahar",
     name: "لیوان خال‌دار آبی",
     subtitle: "بدون دسته، مینیمال",
-    tomanPrice: 4_800_000,
+    tomanPrice: 2_000_000,
     usdPrice: 56,
     color: "#9ec4d8",
     accent: "#2a2a2a",
@@ -279,14 +346,24 @@ export const photoProducts = [
     status: "available",
     story:
       "لیوانی استوانه‌ای آبی آسمانی با خال‌های ریز سیاه؛ ساده، مدرن و مناسب نوشیدنی روزانه.",
-    details: ["ظرفیت ۳۰۰ میلی‌لیتر", "سرامیک لعاب‌دار", "بدون دسته", "تنها یک نسخه"],
+    details: [
+      "ظرفیت ۳۰۰ میلی‌لیتر",
+      "سرامیک لعاب‌دار",
+      "بدون دسته",
+      "تنها یک نسخه",
+    ],
     images: [imageMeta("لیوان خال‌دار آبی", "Speckled blue tumbler")],
     en: {
       name: "Speckled Cup",
       subtitle: "Handleless minimal form",
       story:
         "A sky-blue tumbler with fine black speckles—simple, modern, and suited to everyday drinks.",
-      details: ["300 ml capacity", "Glazed ceramic", "Handleless", "One of one"],
+      details: [
+        "300 ml capacity",
+        "Glazed ceramic",
+        "Handleless",
+        "One of one",
+      ],
     },
   },
   {
@@ -294,7 +371,7 @@ export const photoProducts = [
     vendorId: "artist-sahar",
     name: "ماگ کدو خال‌دار",
     subtitle: "بافت شیاردار",
-    tomanPrice: 5_400_000,
+    tomanPrice: 2_000_000,
     usdPrice: 62,
     color: "#e8dcc8",
     accent: "#2a2a2a",
@@ -303,14 +380,24 @@ export const photoProducts = [
     status: "available",
     story:
       "ماگی با فرم کدو و شیارهای عمودی، رنگ کرم با خال‌های سیاه و لبه‌ای کمی نامنظم؛ حس wabi-sabi.",
-    details: ["ظرفیت ۳۵۰ میلی‌لیتر", "سرامیک لعاب‌دار", "دسته C شکل", "تنها یک نسخه"],
+    details: [
+      "ظرفیت ۳۵۰ میلی‌لیتر",
+      "سرامیک لعاب‌دار",
+      "دسته C شکل",
+      "تنها یک نسخه",
+    ],
     images: [imageMeta("ماگ کدو خال‌دار", "Speckled pumpkin mug")],
     en: {
       name: "Speckled Sculpted Mug",
       subtitle: "Fluted pumpkin form",
       story:
         "A pumpkin-shaped mug with vertical ridges, cream speckled glaze, and a slightly irregular rim—wabi-sabi character.",
-      details: ["350 ml capacity", "Glazed ceramic", "C-shaped handle", "One of one"],
+      details: [
+        "350 ml capacity",
+        "Glazed ceramic",
+        "C-shaped handle",
+        "One of one",
+      ],
     },
   },
   {
@@ -318,7 +405,7 @@ export const photoProducts = [
     vendorId: "artist-sahar",
     name: "پارچ زرد هندسی",
     subtitle: "الگوی chevron",
-    tomanPrice: 9_800_000,
+    tomanPrice: 3_500_000,
     usdPrice: 113,
     color: "#e8c830",
     accent: "#1a1a1a",

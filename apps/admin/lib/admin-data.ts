@@ -1,5 +1,6 @@
 export type AdminRole = "owner" | "manager" | "editor" | "viewer";
-export type AdminSection = "overview" | "products" | "orders" | "commissions" | "members" | "account";
+export type AdminSection =
+  "overview" | "products" | "orders" | "commissions" | "members" | "account";
 export type AdminProductStatus = "draft" | "available" | "reserved" | "sold";
 export type AdminOrderStatus =
   | "payment_pending"
@@ -145,17 +146,80 @@ export const permissions = {
 } as const;
 
 export const seedProducts: AdminProduct[] = [
-  { id: "rad-027", slug: "red-vessel-27", name: "کوزه‌ی سرخ شماره ۲۷", description: "کوزه‌ای یکتا با لعاب خاکستر و اکسید آهن؛ ساخته‌شده و امضاشده در استودیوی رَد.", category: "گلدان", price: 12800000, status: "available", artist: "استودیو رَد", images: ["/rad-icon.svg"], updatedAt: Date.now() },
-  { id: "rad-028", slug: "olive-memory", name: "حافظه‌ی زیتونی", description: "فرمی آرام و متراکم با سطح مات برای نگه‌داشتن نور و شاخه‌های کوتاه.", category: "گلدان", price: 9600000, status: "reserved", artist: "سحر میرزایی", images: ["/rad-icon.svg", "/rad-logo.png"], updatedAt: Date.now() - 86400000 },
-  { id: "rad-029", slug: "lut-line", name: "خط لوت", description: "پرسلان شنی با لبه‌ی نامتقارن؛ قطعه‌ای میان ظرف روزمره و مجسمه.", category: "ظروف", price: 15400000, status: "draft", artist: "استودیو رَد", images: [], updatedAt: Date.now() - 172800000 },
+  {
+    id: "rad-027",
+    slug: "red-vessel-27",
+    name: "کوزه‌ی سرخ شماره ۲۷",
+    description:
+      "کوزه‌ای یکتا با لعاب خاکستر و اکسید آهن؛ ساخته‌شده و امضاشده در استودیوی رَد.",
+    category: "گلدان",
+    price: 4500000,
+    status: "available",
+    artist: "استودیو رَد",
+    images: ["/rad-icon.svg"],
+    updatedAt: Date.now(),
+  },
+  {
+    id: "rad-028",
+    slug: "olive-memory",
+    name: "حافظه‌ی زیتونی",
+    description:
+      "فرمی آرام و متراکم با سطح مات برای نگه‌داشتن نور و شاخه‌های کوتاه.",
+    category: "گلدان",
+    price: 4000000,
+    status: "reserved",
+    artist: "سحر میرزایی",
+    images: ["/rad-icon.svg", "/rad-logo.png"],
+    updatedAt: Date.now() - 86400000,
+  },
+  {
+    id: "rad-029",
+    slug: "lut-line",
+    name: "خط لوت",
+    description:
+      "پرسلان شنی با لبه‌ی نامتقارن؛ قطعه‌ای میان ظرف روزمره و مجسمه.",
+    category: "ظروف",
+    price: 4000000,
+    status: "draft",
+    artist: "استودیو رَد",
+    images: [],
+    updatedAt: Date.now() - 172800000,
+  },
 ];
 
 export const seedOrders: AdminOrder[] = [
-  { id: "RAD-408189", customer: "مهدیه نوروزی", productName: "کوزه‌ی سرخ شماره ۲۷", amount: 12800000, status: "packing", createdAt: Date.now() - 86400000 },
-  { id: "RAD-385651", customer: "رها احمدی", productName: "حافظه‌ی زیتونی", amount: 9600000, status: "shipped", trackingCode: "RAD-POST-3856", createdAt: Date.now() - 259200000 },
+  {
+    id: "RAD-408189",
+    customer: "مهدیه نوروزی",
+    productName: "کوزه‌ی سرخ شماره ۲۷",
+    amount: 12800000,
+    status: "packing",
+    createdAt: Date.now() - 86400000,
+  },
+  {
+    id: "RAD-385651",
+    customer: "رها احمدی",
+    productName: "حافظه‌ی زیتونی",
+    amount: 9600000,
+    status: "shipped",
+    trackingCode: "RAD-POST-3856",
+    createdAt: Date.now() - 259200000,
+  },
 ];
 
 export const seedMembers: AdminMember[] = [
-  { id: "member-owner", name: "مهدیه نوروزی", email: "mahdiyeh.norozi77@gmail.com", role: "owner", status: "active" },
-  { id: "member-editor", name: "سحر میرزایی", email: "sahar@rad.studio", role: "editor", status: "active" },
+  {
+    id: "member-owner",
+    name: "مهدیه نوروزی",
+    email: "mahdiyeh.norozi77@gmail.com",
+    role: "owner",
+    status: "active",
+  },
+  {
+    id: "member-editor",
+    name: "سحر میرزایی",
+    email: "sahar@rad.studio",
+    role: "editor",
+    status: "active",
+  },
 ];

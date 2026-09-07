@@ -13,7 +13,8 @@
     "setup": "prisma generate && prisma db push && prisma db seed",
     "db:embedded": "node scripts/start-pg.mjs",
     "pricing:crawl": "tsx src/pricing/cli.ts",
-    "test:pricing": "tsx --test src/pricing/*.spec.ts"
+    "test:pricing": "tsx --test src/pricing/*.spec.ts",
+    "pricing:baseline": "tsx scripts/apply-baseline-prices.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
