@@ -16,6 +16,9 @@ export function EvidenceFilm() {
         </p>
       </div>
       <figure className="film-frame">
+        <span className="film-badge" aria-hidden="true">
+          <i /> {locale === "fa" ? "ویدیو · ۰۰:۰۴" : "FILM · 00:04"}
+        </span>
         {/* 4s landscape wheel-throwing loop — Pexels 9736665 */}
         <video
           className="studio-film"
@@ -24,6 +27,7 @@ export function EvidenceFilm() {
           loop
           playsInline
           preload="auto"
+          poster="/studio-process.jpg"
           disablePictureInPicture
           onCanPlay={(event) => {
             void event.currentTarget.play();

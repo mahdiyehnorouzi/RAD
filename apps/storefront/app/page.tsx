@@ -2,37 +2,29 @@
 
 import {
   ArchiveSection,
+  CertificateSection,
   DifferenceStory,
   EntryPaths,
   EvidenceFilm,
-  FinalCta,
   HomeHero,
-  OrdersEntry,
-  ProcessSection,
-  ProvenanceSection,
-  StorySection,
-  StudioCallout,
-} from "@/components/home/sections";
+  HomeProcessSection,
+  featuredHomeWorks,
+} from "@/components/home";
 import { useCatalog } from "@/components/catalog/catalog-provider";
 
 export default function Home() {
   const { products, loading } = useCatalog();
-  const featured = products.slice(0, 6);
-  const studio = featured[1] ?? featured[0];
+  const featured = featuredHomeWorks(products);
 
   return (
     <>
       <HomeHero />
-      <DifferenceStory />
-      <EvidenceFilm />
       <EntryPaths />
       <ArchiveSection products={featured} loading={loading} />
-      <StudioCallout product={studio} />
-      <StorySection />
-      <ProvenanceSection />
-      <ProcessSection />
-      <OrdersEntry />
-      <FinalCta />
+      <DifferenceStory />
+      <EvidenceFilm />
+      <HomeProcessSection />
+      <CertificateSection />
     </>
   );
 }

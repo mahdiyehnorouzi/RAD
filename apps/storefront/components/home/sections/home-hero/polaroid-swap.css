@@ -11,9 +11,12 @@
   width: 100%;
   min-height: 24rem;
   aspect-ratio: 4 / 5.1;
-  isolation: isolate;
+  overflow: visible;
   perspective: 70rem;
+  -webkit-perspective: 70rem;
   perspective-origin: 50% 35%;
+  transform-style: preserve-3d;
+  -webkit-transform-style: preserve-3d;
   touch-action: pan-y;
   user-select: none;
   cursor: grab;
@@ -23,33 +26,10 @@
   cursor: grabbing;
 }
 
-.polaroid-controls {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.75rem;
-}
-
-.polaroid-control {
-  display: grid;
-  place-items: center;
-  width: 2.4rem;
-  height: 2.4rem;
-  border: 1px solid color-mix(in srgb, var(--moss) 22%, transparent);
-  border-radius: 50%;
-  background: var(--paper);
-  color: var(--moss);
-  cursor: pointer;
-}
-
-.polaroid-control svg {
-  width: 1.1rem;
-  height: 1.1rem;
-}
-
 .polaroid-dots {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 0.4rem;
 }
 
@@ -78,26 +58,29 @@
   --card-accent: var(--sand);
   position: absolute;
   inset: 3% 9% 1%;
+  touch-action: pan-y;
   color: var(--moss);
   box-shadow:
     0.55rem 1rem 2rem rgba(24, 35, 31, 0.16),
     0 1px 0 color-mix(in srgb, white 72%, transparent) inset;
   transform: translate3d(var(--polaroid-x), var(--polaroid-y), 0)
-    rotate(var(--polaroid-tilt)) scale(var(--polaroid-scale));
+    rotateZ(var(--polaroid-tilt)) scale(var(--polaroid-scale));
   transform-origin: 78% 6%;
+  transform-style: preserve-3d;
+  -webkit-transform-style: preserve-3d;
   transition:
     transform 0.72s cubic-bezier(0.16, 1, 0.3, 1),
-    box-shadow 0.35s ease-out,
-    filter 0.35s ease-out;
+    box-shadow 0.35s ease-out;
   cursor: pointer;
-  will-change: auto;
 }
 
 .polaroid-sheet {
   position: absolute;
   inset: 0;
   display: block;
+  transform: rotateY(0deg);
   transform-style: preserve-3d;
+  -webkit-transform-style: preserve-3d;
 }
 
 .polaroid-face {
@@ -115,6 +98,7 @@
   display: grid;
   grid-template-rows: minmax(0, 1fr) auto;
   padding: 0.68rem 0.68rem 0;
+  transform: rotateY(0deg) translateZ(1px);
 }
 
 .polaroid-face--back {
@@ -122,7 +106,7 @@
   grid-template-rows: auto minmax(0, 1fr) auto;
   gap: 0.65rem;
   padding: 1.15rem 1.2rem 1.1rem;
-  transform: rotateY(180deg);
+  transform: rotateY(180deg) translateZ(1px);
   color: color-mix(in srgb, var(--moss) 82%, var(--paper));
   box-shadow:
     inset 0 0 2.5rem color-mix(in srgb, var(--sand) 14%, transparent),
@@ -219,15 +203,15 @@
 
 @media (hover: hover) {
   .polaroid[data-front="true"]:hover {
-    transform: translate3d(var(--polaroid-x), calc(var(--polaroid-y) - 4px), 12px)
-      rotate(calc(var(--polaroid-tilt) * 0.72)) scale(1.012);
+    transform: translate3d(var(--polaroid-x), calc(var(--polaroid-y) - 4px), 0)
+      rotateZ(calc(var(--polaroid-tilt) * 0.72)) scale(1.012);
     box-shadow: 0.8rem 1.3rem 2.5rem rgba(24, 35, 31, 0.2);
   }
 }
 
-.polaroid[data-front="true"]:active {
-  transform: translate3d(var(--polaroid-x), var(--polaroid-y), 4px)
-    rotate(calc(var(--polaroid-tilt) * 0.82)) scale(0.992);
+.polaroid[data-front="true"]:active:not(.polaroid--leave) {
+  transform: translate3d(var(--polaroid-x), var(--polaroid-y), 0)
+    rotateZ(calc(var(--polaroid-tilt) * 0.82)) scale(0.992);
 }
 
 .polaroid:focus-visible {
@@ -342,14 +326,14 @@
 }
 
 .polaroid--leave {
+  z-index: 8;
   animation: polaroid-leave 1.8s cubic-bezier(0.16, 1, 0.3, 1) both;
-  will-change: transform, filter, box-shadow;
+  transition: none;
   pointer-events: none;
 }
 
 .polaroid--leave .polaroid-sheet {
   animation: polaroid-turn 1.8s cubic-bezier(0.16, 1, 0.3, 1) both;
-  will-change: transform;
 }
 
 @keyframes polaroid-turn {
@@ -368,41 +352,28 @@
 
 @keyframes polaroid-leave {
   0% {
-    z-index: 8;
-    transform: translate3d(0, 0, 0) rotate(var(--polaroid-tilt)) scale(1);
-    filter: brightness(1);
+    transform: translate3d(0, 0, 0) rotateZ(var(--polaroid-tilt)) scale(1);
     box-shadow: 0.55rem 1rem 2rem rgba(24, 35, 31, 0.16);
   }
   14% {
-    z-index: 8;
-    transform: translate3d(0, -3%, 3rem)
-      rotate(calc(var(--polaroid-tilt) + 1.5deg)) rotateX(1deg) scale(1.012);
-    filter: brightness(1.035);
+    transform: translate3d(0, -2%, 0)
+      rotateZ(calc(var(--polaroid-tilt) + 1.5deg)) scale(1.012);
     box-shadow: 1.5rem 2.2rem 3.5rem rgba(24, 35, 31, 0.24);
   }
   30%,
-  79% {
-    z-index: 8;
-    transform: translate3d(0, -2%, 2rem)
-      rotate(calc(var(--polaroid-tilt) + 1deg)) scale(1);
-    filter: brightness(0.98);
+  78% {
+    transform: translate3d(0, -1.5%, 0)
+      rotateZ(calc(var(--polaroid-tilt) + 1deg)) scale(1);
     box-shadow: 1rem 1.6rem 2.8rem rgba(24, 35, 31, 0.18);
   }
-  80% {
-    z-index: 0;
-  }
   90% {
-    z-index: 0;
-    transform: translate3d(calc(var(--polaroid-x) - 2%), calc(var(--polaroid-y) + 2%), -1rem)
-      rotate(calc(var(--polaroid-tilt) - 1deg)) scale(0.965);
-    filter: brightness(0.955);
+    transform: translate3d(calc(var(--polaroid-x) - 2%), calc(var(--polaroid-y) + 2%), 0)
+      rotateZ(calc(var(--polaroid-tilt) - 1deg)) scale(0.965);
     box-shadow: 0.25rem 0.5rem 1rem rgba(24, 35, 31, 0.1);
   }
   100% {
-    z-index: 0;
     transform: translate3d(var(--polaroid-x), var(--polaroid-y), 0)
-      rotate(var(--polaroid-tilt)) scale(var(--polaroid-scale));
-    filter: brightness(1);
+      rotateZ(var(--polaroid-tilt)) scale(var(--polaroid-scale));
     box-shadow: 0.55rem 1rem 2rem rgba(24, 35, 31, 0.16);
   }
 }
@@ -420,7 +391,7 @@
 @media (prefers-reduced-motion: reduce) {
   .polaroid {
     animation: none;
-    transition: opacity 0.2s ease-out, filter 0.2s ease-out;
+    transition: opacity 0.2s ease-out;
   }
 
   .polaroid-sheet,
@@ -431,6 +402,5 @@
 
   .polaroid--leave {
     opacity: 0.82;
-    filter: brightness(0.97);
   }
 }

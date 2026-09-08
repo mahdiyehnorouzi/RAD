@@ -38,31 +38,16 @@ export function Footer() {
       <div className="footer-bottom">
         <a
           className="footer-enamad"
-          href={ENAMAD_HREF}
-          target="_blank"
-          rel="noopener"
           referrerPolicy="origin"
+          target="_blank"
+          href={ENAMAD_HREF}
         >
           <img
             referrerPolicy="origin"
             src={ENAMAD_SRC}
-            alt={t("enamad")}
-            width={125}
-            height={136}
+            alt=""
             style={{ cursor: "pointer" }}
             {...{ code: ENAMAD_CODE }}
-            onLoad={(event) => {
-              const image = event.currentTarget;
-              if (image.naturalWidth > 0 || image.dataset.fallback === "1") return;
-              image.dataset.fallback = "1";
-              image.src = "/enamad.png";
-            }}
-            onError={(event) => {
-              const image = event.currentTarget;
-              if (image.dataset.fallback === "1") return;
-              image.dataset.fallback = "1";
-              image.src = "/enamad.png";
-            }}
           />
         </a>
         <small>{t("footerCopyright")}</small>

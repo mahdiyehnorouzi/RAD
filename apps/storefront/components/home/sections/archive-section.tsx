@@ -12,29 +12,25 @@ export function ArchiveSection({
   products: Product[];
   loading?: boolean;
 }) {
-  const { locale, t } = useLocale();
+  const { t } = useLocale();
   return (
     <section className="section collection archive-section">
       <header className="section-heading">
         <div>
-          <span className="eyebrow">{locale === "fa" ? "آرشیو رَد" : "RAD ARCHIVE"}</span>
-          <h2>{locale === "fa" ? "آثار موجود و فروخته‌شده" : "Available and collected works"}</h2>
-          <p>
-            {locale === "fa"
-              ? "اثر فروخته‌شده از آرشیو حذف نمی‌شود؛ مسیر رَد را کامل می‌کند."
-              : "Collected works remain visible; they complete RAD's story."}
-          </p>
+          <span className="eyebrow">{t("archiveEyebrow")}</span>
+          <h2>{t("archiveTitle")}</h2>
+          <p>{t("archiveBody")}</p>
         </div>
         <ButtonLink href="/products" outline>
-          {t("allWorks")}
+          {t("homeArchiveLink")}
         </ButtonLink>
       </header>
       {loading ? (
         <ProductGridSkeleton />
       ) : (
         <div className="product-grid home-products">
-          {products.map((p, i) => (
-            <ProductCard product={p} index={i} key={p.slug} />
+          {products.map((product, index) => (
+            <ProductCard product={product} index={index} key={product.slug} />
           ))}
         </div>
       )}

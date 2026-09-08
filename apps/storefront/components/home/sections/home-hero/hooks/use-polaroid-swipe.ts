@@ -7,25 +7,34 @@ export function usePolaroidSwipe(onNext: () => void, onPrev: () => void) {
   const origin = useRef<{ x: number; y: number } | null>(null);
   const swiped = useRef(false);
 
+  function settle(clientX: number, clientY: number) {
+    if (!origin.current || swiped.current) return;
+    const dx = clientX - origin.current.x;
+    const dy = clientY - origin.current.y;
+    if (Math.abs(dx) < POLAROID_SWIPE_PX || Math.abs(dx) <= Math.abs(dy)) return;
+    swiped.current = true;
+    origin.current = null;
+    if (dx < 0) onNext();
+    else onPrev();
+  }
+
   return {
     didSwipe: () => swiped.current,
     clearSwipe: () => {
       swiped.current = false;
+      origin.current = null;
     },
     onPointerDown: (event: PointerEvent<HTMLElement>) => {
       origin.current = { x: event.clientX, y: event.clientY };
       swiped.current = false;
       event.currentTarget.setPointerCapture(event.pointerId);
     },
+    onPointerMove: (event: PointerEvent<HTMLElement>) => {
+      settle(event.clientX, event.clientY);
+    },
     onPointerUp: (event: PointerEvent<HTMLElement>) => {
-      if (!origin.current) return;
-      const dx = event.clientX - origin.current.x;
-      const dy = event.clientY - origin.current.y;
+      settle(event.clientX, event.clientY);
       origin.current = null;
-      if (Math.abs(dx) < POLAROID_SWIPE_PX || Math.abs(dx) <= Math.abs(dy)) return;
-      swiped.current = true;
-      if (dx < 0) onNext();
-      else onPrev();
     },
   };
 }
