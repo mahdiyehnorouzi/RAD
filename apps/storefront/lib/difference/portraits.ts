@@ -50,10 +50,10 @@ export const museumPortraits: DifferencePortrait[] = [
       material: { color: "#4b513c", accent: "#dbc7a5" },
     },
     stageImages: {
-      described: "/difference/homesickness-bowl/described.jpg",
-      imagined: "/difference/homesickness-bowl/imagined.jpg",
-      artist: "/difference/homesickness-bowl/artist.jpg",
-      material: "/difference/homesickness-bowl/material.jpg",
+      described: "/difference/homesickness-bowl/described-v2.png",
+      imagined: "/difference/homesickness-bowl/imagined-v2.png",
+      artist: "/difference/homesickness-bowl/artist-v2.png",
+      material: "/difference/homesickness-bowl/material-v2.png",
     },
   },
   {
@@ -104,6 +104,12 @@ export const museumPortraits: DifferencePortrait[] = [
       artist: { color: "#243e35", accent: "#cbb892" },
       material: { color: "#18231f", accent: "#8a4938" },
     },
+    stageImages: {
+      described: "/difference/tehran-alley-vase/described.png",
+      imagined: "/difference/tehran-alley-vase/imagined.png",
+      artist: "/difference/tehran-alley-vase/artist.png",
+      material: "/difference/tehran-alley-vase/material.png",
+    },
   },
   {
     id: "quiet-cloth",
@@ -144,6 +150,12 @@ export const museumPortraits: DifferencePortrait[] = [
       imagined: { color: "#b86449", accent: "#e9d7b9" },
       artist: { color: "#8a4938", accent: "#cbb892" },
       material: { color: "#76523b", accent: "#ead9bd" },
+    },
+    stageImages: {
+      described: "/difference/quiet-cloth/described.png",
+      imagined: "/difference/quiet-cloth/imagined.png",
+      artist: "/difference/quiet-cloth/artist.png",
+      material: "/difference/quiet-cloth/material.png",
     },
   },
 ];
