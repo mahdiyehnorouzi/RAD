@@ -45,7 +45,7 @@ export function hasRealProductImage(product: Product) {
   return Boolean(product.images?.some((image) => isFileProductImage(image.src)));
 }
 
-function availabilityRank(status: ProductStatus) {
+function availabilityRank(status?: ProductStatus) {
   if (status === "sold") return 2;
   if (status === "reserved") return 1;
   return 0;
