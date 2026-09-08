@@ -34,7 +34,7 @@ components:
 
 ## Overview
 
-رَد is a hybrid editorial storefront and product tool for Iranian collectors of one-of-one art and design, including ceramics, painting, textile, woodwork, sculpture, jewellery, and hand printing. Its North Star is a quiet living archive: raw, exact, and calm. The signature is the maker identifier—`RĀD / 027` plus `1 / 1`—used consistently beside material-specific silhouettes. No competing serial-number notation is permitted.
+رَد is a hybrid editorial storefront and product tool for Iranian collectors of one-of-one art and design, including ceramics, painting, textile, woodwork, sculpture, jewellery, and hand printing. Its North Star is a quiet living archive: raw, exact, and calm. The signature is the maker identifier—`RĀD / NNN` plus `1 / 1`—with one permanent three-digit archive number per work. The same number anchors the work's reverse-side barcode record; no competing serial-number notation is permitted.
 
 ## Colors
 

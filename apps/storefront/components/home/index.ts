@@ -1,14 +1,14 @@
 export {
   ArchiveSection,
+  CertificateSection,
   DifferenceStory,
   EntryPaths,
   EvidenceFilm,
-  FinalCta,
   HomeHero,
-  OrdersEntry,
+  HomeProcessSection,
   ProcessSection,
-  ProvenanceSection,
   StorySection,
   StudioCallout,
 } from "./sections";
+export { featuredHomeWorks } from "./const";
 export { HomeBanner } from "./home-banner";

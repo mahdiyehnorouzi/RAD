@@ -6,7 +6,6 @@ import type { Locale } from "@rad/types";
 import { POLAROID_TILTS } from "@/components/home/const";
 import type { PolaroidFrame } from "@/components/home/type";
 import { useLocale } from "@/components/i18n";
-import { ChevronLeft, ChevronRight } from "lucide-react";
 import { usePolaroidSwap, usePolaroidSwipe } from "./hooks";
 import "./polaroid-swap.css";
 
@@ -104,9 +103,6 @@ export function PolaroidSwap() {
 
   if (!frames.length) return null;
 
-  const nextLabel = locale === "fa" ? "پولاروید بعدی" : "Next polaroid";
-  const prevLabel = locale === "fa" ? "پولاروید قبلی" : "Previous polaroid";
-
   return (
     <div
       ref={stackRef}
@@ -138,6 +134,7 @@ export function PolaroidSwap() {
     <div
       className="polaroid-swap"
       onPointerDown={swipe.onPointerDown}
+      onPointerMove={swipe.onPointerMove}
       onPointerUp={swipe.onPointerUp}
       onPointerCancel={swipe.clearSwipe}
     >
@@ -215,26 +212,18 @@ export function PolaroidSwap() {
         );
       })}
     </div>
-      <div className="polaroid-controls">
-        <button type="button" className="polaroid-control" onClick={goPrev} aria-label={prevLabel}>
-          {locale === "fa" ? <ChevronRight aria-hidden="true" /> : <ChevronLeft aria-hidden="true" />}
-        </button>
-        <div className="polaroid-dots" role="tablist" aria-label={locale === "fa" ? "انتخاب پولاروید" : "Choose polaroid"}>
-          {frames.map((frame, index) => (
-            <button
-              type="button"
-              key={frame.src}
-              role="tab"
-              aria-selected={index === front}
-              aria-label={frame.caption}
-              className={index === front ? "active" : ""}
-              onClick={() => goTo(index)}
-            />
-          ))}
-        </div>
-        <button type="button" className="polaroid-control" onClick={goNext} aria-label={nextLabel}>
-          {locale === "fa" ? <ChevronLeft aria-hidden="true" /> : <ChevronRight aria-hidden="true" />}
-        </button>
+      <div className="polaroid-dots" role="tablist" aria-label={locale === "fa" ? "انتخاب پولاروید" : "Choose polaroid"}>
+        {frames.map((frame, index) => (
+          <button
+            type="button"
+            key={frame.src}
+            role="tab"
+            aria-selected={index === front}
+            aria-label={frame.caption}
+            className={index === front ? "active" : ""}
+            onClick={() => goTo(index)}
+          />
+        ))}
       </div>
     </div>
   );
