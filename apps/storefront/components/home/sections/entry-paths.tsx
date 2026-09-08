@@ -1,16 +1,30 @@
 "use client";
+import Image from "next/image";
 import { ButtonLink } from "@/components/ui/button-link";
 import { useLocale } from "@/components/i18n";
 import { homeMedia } from "../const";
+import { useInView } from "../hooks";
+import "../motion/reveal.css";
 import "./entry-paths.css";
 
 export function EntryPaths() {
   const { t } = useLocale();
+  const { ref, inView } = useInView<HTMLElement>({ threshold: 0.16 });
 
   return (
-    <section className="entry-paths" aria-label={t("entryPathsAria")}>
-      <article className="entry-path">
-        <img src={homeMedia.entryReady} alt="" fetchPriority="high" />
+    <section
+      ref={ref}
+      className={`entry-paths home-reveal${inView ? " is-visible" : ""}`}
+      aria-label={t("entryPathsAria")}
+    >
+      <article className="entry-path entry-path-ready reveal-item" data-reveal="media">
+        <Image
+          src={homeMedia.entryReady}
+          alt=""
+          fill
+          sizes="(max-width: 900px) 100vw, 62vw"
+          priority
+        />
         <div>
           <h2>{t("ownPathTitle")}</h2>
           <ButtonLink href="/products" outline>
@@ -18,8 +32,13 @@ export function EntryPaths() {
           </ButtonLink>
         </div>
       </article>
-      <article className="entry-path">
-        <img src={homeMedia.entryCustom} alt={t("makingPathPhotoAlt")} />
+      <article className="entry-path entry-path-custom reveal-item" data-reveal="cta">
+        <Image
+          src={homeMedia.entryCustom}
+          alt={t("makingPathPhotoAlt")}
+          fill
+          sizes="(max-width: 900px) 100vw, 38vw"
+        />
         <div>
           <h2>{t("createPathTitle")}</h2>
           <ButtonLink href="/studio" outline>

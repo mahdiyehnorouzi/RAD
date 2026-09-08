@@ -1,6 +1,8 @@
 "use client";
 import { ButtonLink } from "@/components/ui/button-link";
 import { useLocale } from "@/components/i18n";
+import { useInView } from "../hooks";
+import "../motion/reveal.css";
 import "./closing-sections.css";
 
 export function OrdersEntry() {
@@ -25,16 +27,25 @@ export function OrdersEntry() {
 }
 
 export function FinalCta() {
-  const { locale, t } = useLocale();
+  const { t } = useLocale();
+  const { ref, inView } = useInView<HTMLElement>({ threshold: 0.18 });
   return (
-    <section className="section final-cta">
-      <span className="eyebrow">{locale === "fa" ? "قطعه شما" : "YOUR OBJECT"}</span>
-      <h2>
-        {locale === "fa"
-          ? "چیزی را شروع کنید که فقط یک بار ساخته می‌شود."
-          : "Start something that will be made only once."}
+    <section
+      ref={ref}
+      className={`section final-cta home-reveal${inView ? " is-visible" : ""}`}
+    >
+      <span className="eyebrow reveal-item" data-reveal="eyebrow">
+        {t("finalCtaEyebrow")}
+      </span>
+      <h2 className="reveal-item" data-reveal="heading">
+        {t("finalCtaTitle")}
       </h2>
-      <ButtonLink href="/studio">{t("designMine")}</ButtonLink>
+      <p className="reveal-item" data-reveal="body">
+        {t("finalCtaLead")}
+      </p>
+      <div className="reveal-item" data-reveal="cta">
+        <ButtonLink href="/studio">{t("startCustomDesign")}</ButtonLink>
+      </div>
     </section>
   );
 }

@@ -6,3 +6,4 @@ export {
 } from "./polaroid";
 export { featuredHomeWorks, featuredWorkPhoto } from "./featured-works";
 export { homeMedia } from "./home-media";
+export { homeProcessSteps } from "./process-steps";

@@ -3,6 +3,8 @@ import type { Product } from "@rad/types";
 import { ProductCard, ProductGridSkeleton } from "@/components/product";
 import { ButtonLink } from "@/components/ui/button-link";
 import { useLocale } from "@/components/i18n";
+import { useInView } from "../hooks";
+import "../motion/reveal.css";
 import "./archive-section.css";
 
 export function ArchiveSection({
@@ -13,17 +15,29 @@ export function ArchiveSection({
   loading?: boolean;
 }) {
   const { t } = useLocale();
+  const { ref, inView } = useInView<HTMLElement>({ threshold: 0.16 });
   return (
-    <section className="section collection archive-section">
+    <section
+      ref={ref}
+      className={`section collection archive-section home-reveal${inView ? " is-visible" : ""}`}
+    >
       <header className="section-heading">
         <div>
-          <span className="eyebrow">{t("archiveEyebrow")}</span>
-          <h2>{t("archiveTitle")}</h2>
-          <p>{t("archiveBody")}</p>
+          <span className="eyebrow reveal-item" data-reveal="eyebrow">
+            {t("archiveEyebrow")}
+          </span>
+          <h2 className="reveal-item" data-reveal="heading">
+            {t("archiveTitle")}
+          </h2>
+          <p className="reveal-item" data-reveal="body">
+            {t("archiveBody")}
+          </p>
         </div>
-        <ButtonLink href="/products" outline>
-          {t("homeArchiveLink")}
-        </ButtonLink>
+        <div className="reveal-item" data-reveal="cta">
+          <ButtonLink href="/products" outline>
+            {t("homeArchiveLink")}
+          </ButtonLink>
+        </div>
       </header>
       {loading ? (
         <ProductGridSkeleton />

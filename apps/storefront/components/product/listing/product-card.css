@@ -10,7 +10,6 @@
   min-width: 0;
   container-type: inline-size;
 }
-
 .product-media-shell {
   position: relative;
   width: 100%;
@@ -18,56 +17,93 @@
 
 .product-art {
   position: relative;
-  display: grid;
+  display: block;
   width: 100%;
   aspect-ratio: 4 / 5;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--ink) 10%, transparent);
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--sand) 40%, var(--paper));
+  isolation: isolate;
+}
+
+.product-art-backdrop,
+.product-specimen-frame,
+.product-artwork {
+  position: absolute;
+  display: grid;
   place-items: center;
   overflow: hidden;
-  border: 1px solid color-mix(in srgb, var(--ink) 12%, transparent);
-  border-radius: 3px;
-  background: color-mix(in srgb, var(--sand) 62%, var(--paper));
-  transition: border-color 350ms ease;
+}
+
+.product-art-backdrop {
+  inset: 0;
+  opacity: 0.46;
+  filter: grayscale(1) contrast(0.88) brightness(1.04);
+}
+
+.product-art-backdrop > *,
+.product-artwork > * {
+  width: 100%;
+  height: 100%;
+}
+.product-art-backdrop > .product-photo {
+  object-fit: cover;
+  transform: scale(1.11);
+}
+.product-art-backdrop > .product-photo-default,
+.product-art-backdrop > .vessel,
+.product-art-backdrop > .mock-artwork {
+  transform: scale(1.11);
+}
+
+.product-specimen-frame {
+  inset: 7% 8% 8%;
+  place-items: stretch;
+  border: 6px solid var(--paper);
+  background: var(--paper);
+  grid-template-rows: minmax(0, 1fr) 42px;
+  transition: transform 650ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .product-artwork {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  overflow: hidden;
+  position: relative;
 }
-
 .product-artwork > .product-photo {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  padding: 0;
-  object-fit: contain;
+  object-fit: cover;
   object-position: center;
-  transform: scale(1.002);
-  transition:
-    transform 700ms cubic-bezier(0.22, 1, 0.36, 1),
-    filter 500ms ease;
 }
 
+.product-artwork > .product-photo,
 .product-artwork > .product-photo-default,
 .product-artwork > .vessel,
-.product-artwork > .mock-artwork {
+.product-artwork > .mock-artwork,
+.product-art-backdrop > * {
   transition:
-    transform 700ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 750ms cubic-bezier(0.22, 1, 0.36, 1),
     filter 500ms ease;
+}
+
+.product-specimen-caption {
+  position: relative;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  min-width: 0;
+  padding-inline: clamp(0.55rem, 3cqi, 0.8rem);
+  background: var(--paper);
+  color: var(--ink);
 }
 
 .edition,
 .product-index {
-  position: absolute;
-  z-index: 5;
   display: inline-flex;
   align-items: center;
-  min-height: 28px;
-  padding: 0.28rem 0.55rem;
-  background: color-mix(in srgb, var(--paper) 92%, transparent);
+  min-width: 0;
+  padding: 0;
+  background: none;
   color: var(--ink);
   font-size: clamp(0.58rem, 2.4cqi, 0.68rem);
   font-weight: var(--font-weight-regular);
@@ -75,15 +111,12 @@
 }
 
 .edition {
-  top: clamp(0.65rem, 3.5cqi, 0.9rem);
-  inset-inline-start: clamp(0.65rem, 3.5cqi, 0.9rem);
-  border-radius: 999px;
+  flex: 0 0 auto;
 }
-
 .product-index {
-  inset-inline-start: clamp(0.65rem, 3.5cqi, 0.9rem);
-  bottom: clamp(0.65rem, 3.5cqi, 0.9rem);
+  overflow: hidden;
   letter-spacing: var(--tracking-index);
+  text-overflow: ellipsis;
   white-space: nowrap;
   direction: ltr;
 }
@@ -91,17 +124,16 @@
 .product-media-shell .favorite-button.compact {
   position: absolute;
   z-index: 8;
-  top: clamp(0.65rem, 3.5cqi, 0.9rem);
-  inset-inline-start: auto;
-  inset-inline-end: clamp(0.65rem, 3.5cqi, 0.9rem);
+  top: clamp(0.7rem, 3.5cqi, 0.95rem);
+  inset-inline-end: clamp(0.7rem, 3.5cqi, 0.95rem);
   display: grid;
   width: 42px;
   min-height: 42px;
   padding: 0;
   place-items: center;
-  border: 0;
+  border: 1px solid color-mix(in srgb, var(--ink) 12%, transparent);
   border-radius: 50%;
-  background: color-mix(in srgb, var(--paper) 92%, transparent);
+  background: color-mix(in srgb, var(--paper) 94%, transparent);
   color: var(--ink);
   transition:
     background-color 250ms ease,
@@ -118,8 +150,8 @@
 .product-status-badge {
   position: absolute;
   z-index: 8;
-  top: clamp(3.75rem, 15cqi, 4.4rem);
-  inset-inline-end: clamp(0.65rem, 3.5cqi, 0.9rem);
+  top: clamp(3.65rem, 15cqi, 4.35rem);
+  inset-inline-end: clamp(0.7rem, 3.5cqi, 0.95rem);
   display: inline-flex;
   min-height: 28px;
   align-items: center;
@@ -137,9 +169,9 @@
   display: flex;
   min-width: 0;
   flex-direction: column;
-  align-items: stretch;
   gap: 0.18rem;
-  margin-top: 1rem;
+  width: 84%;
+  margin: 0.9rem auto 0;
   text-align: start;
 }
 
@@ -195,28 +227,38 @@
   font-weight: var(--font-weight-regular);
   line-height: 1.4;
 }
-
 .product-category {
   color: var(--muted);
 }
-
 .product-price {
   flex: 0 0 auto;
   color: var(--ink);
   white-space: nowrap;
 }
-
 .product-card.is-unavailable .product-artwork {
-  filter: grayscale(0.2) saturate(0.8);
+  filter: grayscale(0.22) saturate(0.8);
 }
-
 .product-card.is-unavailable .product-price {
   color: var(--muted);
   text-decoration: line-through;
   text-decoration-thickness: 1px;
 }
 
-/* Keep the minimal facts row intact inside the home archive's older rules. */
+.skeleton-product .skeleton-media {
+  width: 100%;
+  aspect-ratio: 4 / 5;
+}
+.skeleton-product .skeleton-line {
+  width: 84%;
+  height: 1rem;
+  margin: 1rem auto 0;
+}
+.skeleton-product .skeleton-line.short {
+  width: 55%;
+  margin-top: 0.55rem;
+}
+
+/* The home archive has older high-specificity composition rules; preserve the shared card contract there. */
 .home-products .product-meta > .product-facts {
   flex-direction: row !important;
   align-items: baseline !important;
@@ -233,23 +275,18 @@
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .product-card:hover .product-art,
-  .product-card:focus-within .product-art {
-    border-color: color-mix(in srgb, var(--ink) 28%, transparent);
+  .product-card:hover .product-specimen-frame,
+  .product-card:focus-within .product-specimen-frame {
+    transform: translateY(-0.45rem);
   }
-
-  .product-card:hover .product-photo,
-  .product-card:focus-within .product-photo,
-  .product-card:hover .product-photo-default,
-  .product-card:focus-within .product-photo-default,
-  .product-card:hover .vessel,
-  .product-card:focus-within .vessel,
-  .product-card:hover .mock-artwork,
-  .product-card:focus-within .mock-artwork {
-    filter: saturate(1.025);
-    transform: scale(1.018);
+  .product-card:hover .product-art-backdrop,
+  .product-card:focus-within .product-art-backdrop {
+    filter: grayscale(0.72) contrast(0.92) brightness(1.02);
   }
-
+  .product-card:hover .product-artwork > *,
+  .product-card:focus-within .product-artwork > * {
+    transform: scale(1.025);
+  }
   .product-card:hover .product-meta h3 a,
   .product-card:focus-within .product-meta h3 a {
     text-decoration-color: #8a4938;
@@ -267,24 +304,20 @@
     grid-template-columns: minmax(0, 1fr);
     gap: 3.5rem;
   }
-
   .product-grid > .product-card {
     width: 100%;
     max-width: none;
     margin-inline: 0;
   }
-
   .product-meta h3 {
     font-size: 1.2rem;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .product-art,
-  .product-photo,
-  .product-photo-default,
-  .vessel,
-  .mock-artwork,
+  .product-specimen-frame,
+  .product-artwork > *,
+  .product-art-backdrop > *,
   .product-meta h3 a,
   .product-media-shell .favorite-button.compact {
     transition: none;

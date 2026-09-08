@@ -22,7 +22,9 @@ export function usePolaroidSwap(count: number, paused = false) {
   const [pageVisible, setPageVisible] = useState(true);
   const [front, setFront] = useState(0);
   const [leaving, setLeaving] = useState<number | null>(null);
+  const frontRef = useRef(0);
   const leavingRef = useRef<number | null>(null);
+  frontRef.current = front;
   leavingRef.current = leaving;
 
   useEffect(() => {
@@ -34,34 +36,34 @@ export function usePolaroidSwap(count: number, paused = false) {
 
   const goBy = useCallback(
     (step: number, animated = true) => {
-      if (count < 2) return;
-      setFront((current) => {
-        const next = (current + step + count) % count;
-        if (next === current) return current;
-        if (!animated || reduced || leavingRef.current !== null) {
-          setLeaving(null);
-          return next;
-        }
+      if (count < 2 || leavingRef.current !== null) return;
+      const current = frontRef.current;
+      const next = (current + step + count) % count;
+      if (next === current) return;
+
+      if (animated && !reduced) {
+        leavingRef.current = current;
         setLeaving(current);
-        return next;
-      });
+      }
+      frontRef.current = next;
+      setFront(next);
     },
     [count, reduced],
   );
 
   const goTo = useCallback(
     (index: number, animated = true) => {
-      if (count < 2) return;
+      if (count < 2 || leavingRef.current !== null) return;
       const target = ((index % count) + count) % count;
-      setFront((current) => {
-        if (target === current) return current;
-        if (!animated || reduced || leavingRef.current !== null) {
-          setLeaving(null);
-          return target;
-        }
+      const current = frontRef.current;
+      if (target === current) return;
+
+      if (animated && !reduced) {
+        leavingRef.current = current;
         setLeaving(current);
-        return target;
-      });
+      }
+      frontRef.current = target;
+      setFront(target);
     },
     [count, reduced],
   );
@@ -75,11 +77,16 @@ export function usePolaroidSwap(count: number, paused = false) {
 
   useEffect(() => {
     if (leaving === null) return undefined;
-    const id = window.setTimeout(() => setLeaving(null), POLAROID_LEAVE_MS);
+    const id = window.setTimeout(() => {
+      leavingRef.current = null;
+      setLeaving(null);
+    }, POLAROID_LEAVE_MS);
     return () => window.clearTimeout(id);
   }, [leaving]);
 
   useEffect(() => {
+    frontRef.current = 0;
+    leavingRef.current = null;
     setFront(0);
     setLeaving(null);
   }, [count]);

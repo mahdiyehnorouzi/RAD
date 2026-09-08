@@ -6,11 +6,13 @@ import { useEffect, useState } from "react";
 import { useCart } from "@/components/cart";
 import { useLocale } from "@/components/i18n";
 import { SiteSearch } from "./site-search";
+import { useHeaderMotion } from "./hooks";
 import { Heart, Menu as MenuIcon, ShoppingBag, X } from "lucide-react";
 import "./header.css";
 
 export function Header() {
   const [open, setOpen] = useState(false);
+  const { compact } = useHeaderMotion(open);
   const pathname = usePathname();
   const { count } = useCart();
   const { locale, setLocale, t, href, number } = useLocale();
@@ -26,7 +28,9 @@ export function Header() {
   }, []);
 
   return (
-    <header className="header">
+    <header
+      className={`header${compact ? " is-compact" : ""}`}
+    >
       <Link
         href={href("/")}
         className="logo"

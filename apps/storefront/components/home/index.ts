@@ -4,6 +4,7 @@ export {
   DifferenceStory,
   EntryPaths,
   EvidenceFilm,
+  FinalCta,
   HomeHero,
   HomeProcessSection,
   ProcessSection,

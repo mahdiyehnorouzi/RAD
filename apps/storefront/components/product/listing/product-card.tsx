@@ -21,8 +21,10 @@ export function ProductCard({
   const { locale, t, href, number } = useLocale();
   const copy = productCopy(product, locale);
   const category = categoryLabel(product.category, locale);
-  const unavailable = product.status === "sold" || product.status === "reserved";
-  const statusLabel = product.status === "reserved" ? t("reserved") : t("soldOut");
+  const unavailable =
+    product.status === "sold" || product.status === "reserved";
+  const statusLabel =
+    product.status === "reserved" ? t("reserved") : t("soldOut");
   const artworkNumber = formatArtworkNumber(product, number, locale);
   const artistName = product.vendor
     ? locale === "fa"
@@ -43,15 +45,28 @@ export function ProductCard({
           className="product-art"
           aria-label={`${t("viewProduct")} ${copy.name}`}
         >
-          <span className="edition">{locale === "fa" ? "۱/۱" : "1/1"}</span>
-          <span className="product-artwork">
+          <span className="product-art-backdrop" aria-hidden="true">
             <ProductMedia
               product={product}
               forceCategoryArtwork={forceCategoryArtwork}
               showStatusBadge={false}
             />
           </span>
-          {artworkNumber ? <small className="product-index">{artworkNumber}</small> : null}
+          <span className="product-specimen-frame">
+            <span className="product-artwork">
+              <ProductMedia
+                product={product}
+                forceCategoryArtwork={forceCategoryArtwork}
+                showStatusBadge={false}
+              />
+            </span>
+            <span className="product-specimen-caption">
+              <span className="edition">{locale === "fa" ? "۱/۱" : "1/1"}</span>
+              {artworkNumber ? (
+                <small className="product-index">{artworkNumber}</small>
+              ) : null}
+            </span>
+          </span>
         </Link>
       </div>
       <div className="product-meta">

@@ -9,6 +9,23 @@
   position: sticky;
   top: 0;
   z-index: 50;
+  transition:
+    background 360ms ease,
+    border-color 360ms ease,
+    backdrop-filter 360ms ease;
+}
+
+.header.is-compact {
+  background: color-mix(in srgb, var(--paper) 72%, transparent);
+  border-bottom-color: color-mix(in srgb, var(--line) 55%, transparent);
+  -webkit-backdrop-filter: blur(18px);
+  backdrop-filter: blur(18px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .header {
+    transition: none;
+  }
 }
 
 .logo {

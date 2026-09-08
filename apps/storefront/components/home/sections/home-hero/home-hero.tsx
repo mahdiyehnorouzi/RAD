@@ -9,20 +9,24 @@ export function HomeHero() {
   const { locale, t } = useLocale();
 
   return (
-    <section className="hero section">
+    <section className="hero section" id="home-hero">
       <div className="hero-copy">
         <h1>
           <span className="hero-line">
-            {t("heroTitleLead")}{" "}
-            {locale === "fa" ? <mark className="hero-stamp">{t("heroStamp")}</mark> : null}
+            <span>
+              {t("heroTitleLead")}{" "}
+              {locale === "fa" ? <mark className="hero-stamp">{t("heroStamp")}</mark> : null}
+            </span>
           </span>
           <span className="hero-line">
-            {t("heroTitleRest")}
-            {locale === "en" ? (
-              <>
-                <mark className="hero-stamp">{t("heroStamp")}</mark>.
-              </>
-            ) : null}
+            <span>
+              {t("heroTitleRest")}
+              {locale === "en" ? (
+                <>
+                  <mark className="hero-stamp">{t("heroStamp")}</mark>.
+                </>
+              ) : null}
+            </span>
           </span>
         </h1>
         <p className="hero-thesis">{t("heroThesis")}</p>

@@ -50,10 +50,10 @@ export const museumPortraits: DifferencePortrait[] = [
       material: { color: "#4b513c", accent: "#dbc7a5" },
     },
     stageImages: {
-      described: "/difference/homesickness-bowl/described-v2.png",
-      imagined: "/difference/homesickness-bowl/imagined-v2.png",
-      artist: "/difference/homesickness-bowl/artist-v2.png",
-      material: "/difference/homesickness-bowl/material-v2.png",
+      described: "/difference/homesickness-bowl/described-v3.jpg",
+      imagined: "/difference/homesickness-bowl/imagined-v3.jpg",
+      artist: "/difference/homesickness-bowl/artist-v3.jpg",
+      material: "/difference/homesickness-bowl/material-v3.jpg",
     },
   },
   {

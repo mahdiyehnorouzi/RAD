@@ -1,0 +1,48 @@
+.home-reveal .reveal-item {
+  opacity: 0;
+  transform: translateY(28px);
+}
+
+.home-reveal.is-visible .reveal-item {
+  animation: rad-home-reveal 650ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.home-reveal.is-visible .reveal-item[data-reveal="eyebrow"] {
+  animation-delay: 0ms;
+}
+
+.home-reveal.is-visible .reveal-item[data-reveal="heading"] {
+  animation-delay: 100ms;
+}
+
+.home-reveal.is-visible .reveal-item[data-reveal="body"] {
+  animation-delay: 180ms;
+}
+
+.home-reveal.is-visible .reveal-item[data-reveal="media"] {
+  animation-delay: 260ms;
+}
+
+.home-reveal.is-visible .reveal-item[data-reveal="cta"] {
+  animation-delay: 340ms;
+}
+
+@keyframes rad-home-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(28px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-reveal .reveal-item,
+  .home-reveal.is-visible .reveal-item {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+}

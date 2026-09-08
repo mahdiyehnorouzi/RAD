@@ -143,6 +143,7 @@ export function PolaroidSwap() {
         const tilt = POLAROID_TILTS[index % POLAROID_TILTS.length];
         const isFront = depth === 0;
         const isLeaving = leaving === index;
+        const stackDir = locale === "fa" ? 1 : -1;
 
         return (
           <Link
@@ -153,10 +154,10 @@ export function PolaroidSwap() {
             data-front={isFront ? "true" : "false"}
             style={{
               zIndex: isLeaving ? frames.length + 2 : frames.length - depth,
-              ["--polaroid-tilt" as string]: `${tilt}deg`,
-              ["--polaroid-x" as string]: `${depth * -5}px`,
-              ["--polaroid-y" as string]: `${depth * 11}px`,
-              ["--polaroid-scale" as string]: 1 - depth * 0.018,
+              ["--polaroid-tilt" as string]: `${tilt + depth * (stackDir * 2.8)}deg`,
+              ["--polaroid-x" as string]: `${depth * 36 * stackDir}px`,
+              ["--polaroid-y" as string]: `${depth * 18}px`,
+              ["--polaroid-scale" as string]: 1 - depth * 0.055,
             }}
             aria-current={isFront ? "true" : undefined}
             aria-label={frame.caption}
