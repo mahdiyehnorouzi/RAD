@@ -2,15 +2,16 @@
 
 import { useEffect, useRef, useState } from "react";
 
-export function useStickyPin<T extends HTMLElement = HTMLElement>(
-  topCssVar = "--header-height",
-) {
-  const ref = useRef<T>(null);
+export function useStickyPin(topCssVar = "--header-height") {
+  const containerRef = useRef<HTMLElement>(null);
+  const headingRef = useRef<HTMLElement>(null);
   const [pinned, setPinned] = useState(false);
+  const [barHeight, setBarHeight] = useState(0);
 
   useEffect(() => {
-    const node = ref.current;
-    if (!node) return undefined;
+    const container = containerRef.current;
+    const heading = headingRef.current;
+    if (!container || !heading) return undefined;
 
     let frame = 0;
     const topOffset = () => {
@@ -21,8 +22,14 @@ export function useStickyPin<T extends HTMLElement = HTMLElement>(
     };
 
     const update = () => {
-      const next = node.getBoundingClientRect().bottom <= topOffset() + 1;
+      const top = topOffset();
+      const headingBox = heading.getBoundingClientRect();
+      const containerBox = container.getBoundingClientRect();
+      const stillInSection = containerBox.bottom > top + headingBox.height - 1;
+      const reachedPin = headingBox.top <= top + 1;
+      const next = reachedPin && stillInSection;
       setPinned((current) => (current === next ? current : next));
+      setBarHeight(headingBox.height);
     };
 
     const onScroll = () => {
@@ -40,5 +47,5 @@ export function useStickyPin<T extends HTMLElement = HTMLElement>(
     };
   }, [topCssVar]);
 
-  return { ref, pinned };
+  return { containerRef, headingRef, pinned, barHeight };
 }

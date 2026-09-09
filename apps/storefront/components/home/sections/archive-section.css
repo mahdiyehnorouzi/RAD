@@ -371,20 +371,10 @@ html[dir="rtl"] .archive-section .section-heading {
   overflow: visible;
 }
 
-.archive-section .archive-heading-sentinel {
-  height: 1px;
-  margin-bottom: -1px;
-  pointer-events: none;
-}
-
-.archive-pin-scope {
-  isolation: isolate;
-}
-
 .archive-section .section-heading {
   position: sticky;
   top: var(--header-height, 104px);
-  z-index: 1;
+  z-index: 41;
   flex-direction: column;
   align-items: start;
   width: 100%;
@@ -392,15 +382,17 @@ html[dir="rtl"] .archive-section .section-heading {
 }
 
 .archive-section .archive-heading-pin {
+  position: relative;
+  z-index: 1;
   width: 100%;
 }
 
-.archive-section .section-heading.is-pinned::before {
-  content: "";
-  position: absolute;
-  z-index: -1;
-  inset-block: 0;
-  inset-inline: calc(-1 * var(--archive-gutter));
+.archive-heading-blur {
+  position: fixed;
+  top: var(--header-height, 104px);
+  right: 0;
+  left: 0;
+  z-index: 40;
   background: color-mix(in srgb, var(--paper) 62%, transparent);
   -webkit-backdrop-filter: blur(18px);
   backdrop-filter: blur(18px);
