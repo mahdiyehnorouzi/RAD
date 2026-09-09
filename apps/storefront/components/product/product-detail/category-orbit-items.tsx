@@ -18,7 +18,11 @@ import {
   TreePine,
   Waves,
 } from "lucide-react";
-import { categoryArtifacts, type CategoryArtifactName } from "./const";
+import {
+  categoryArtifacts,
+  categoryOrbitImages,
+  type CategoryArtifactName,
+} from "./const";
 
 const artifactIcons: Record<CategoryArtifactName, LucideIcon> = {
   box: Box,
@@ -37,24 +41,18 @@ const artifactIcons: Record<CategoryArtifactName, LucideIcon> = {
   waves: Waves,
 };
 
-const ceramicOrbitImages = [
-  "/catalog/graphic/orbit-grid-bowl-v2.png",
-  "/catalog/graphic/orbit-blue-vase.png",
-  "/catalog/graphic/orbit-sage-vessel.png",
-] as const;
-
 export function CategoryOrbitItems({
   category,
 }: {
   category: ProductCategory;
 }) {
+  const images = categoryOrbitImages[category];
+
   return (
     <div className="pdp-category-orbit is-text-orbit" aria-hidden="true">
       {categoryArtifacts[category].map((artifact, index) => {
         const Icon = artifactIcons[artifact];
-        const image = ["ceramics", "vases", "tableware"].includes(category)
-          ? ceramicOrbitImages[index]
-          : null;
+        const image = images?.[index] ?? null;
         return (
           <span
             key={`${artifact}-${index}`}
@@ -70,7 +68,7 @@ export function CategoryOrbitItems({
                   src={image}
                   alt=""
                   fill
-                  sizes="96px"
+                  sizes="220px"
                   className="pdp-category-artifact-image"
                 />
               ) : (

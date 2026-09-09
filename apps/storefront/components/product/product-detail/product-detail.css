@@ -335,7 +335,7 @@
   aspect-ratio: 4 / 5;
 }
 .related-carousel .product-meta {
-  min-height: 175px;
+  min-height: 0;
 }
 
 .carousel-controls {
@@ -1163,23 +1163,32 @@
   left: 8%;
   width: 78%;
   height: 72%;
+  background: color-mix(
+    in srgb,
+    color-mix(in srgb, var(--pdp-scene-color) 82%, var(--ink)) 78%,
+    var(--paper)
+  );
 }
 
 .pdp-static-stage .pdp-giant-name {
-  z-index: 6;
+  z-index: 4;
   top: 13%;
   left: 8%;
   width: 48%;
+  color: var(--paper);
   font-size: clamp(2.6rem, 4.7vw, 5.4rem);
+  text-shadow:
+    0 1px 0 color-mix(in srgb, var(--ink) 38%, transparent),
+    0 10px 28px color-mix(in srgb, var(--ink) 24%, transparent);
 }
 
 .pdp-static-art {
   position: absolute;
-  z-index: 3;
-  top: 40%;
-  left: 46%;
-  width: 48%;
-  height: 43%;
+  z-index: 9;
+  top: 29%;
+  left: 35%;
+  width: 66%;
+  height: 66%;
   filter: drop-shadow(0 24px 28px rgba(24, 35, 31, 0.18));
 }
 
@@ -1197,11 +1206,19 @@
 }
 
 .pdp-static-art.is-graphic {
-  top: 42%;
-  left: 34%;
-  width: 68%;
-  height: 60%;
+  top: 31%;
+  left: 25%;
+  width: 78%;
+  height: 68%;
   filter: drop-shadow(0 26px 20px rgba(52, 40, 34, 0.2));
+}
+
+.pdp-static-art .sold-media-badge {
+  top: 50%;
+  right: auto;
+  bottom: auto;
+  left: -4%;
+  transform: translateY(-50%);
 }
 
 .pdp-graphic-product {
@@ -1345,24 +1362,39 @@
   }
 }
 
-/* The reference film revolves the small objects around the display name. */
+/* Cut-out objects circle the title, above both the title and product image. */
 .pdp-static-stage .pdp-category-orbit.is-text-orbit {
-  --orbit-x: clamp(112px, 12vw, 156px);
-  --orbit-y: clamp(88px, 9vw, 118px);
-  --orbit-x-diagonal: clamp(79px, 8.5vw, 110px);
-  --orbit-y-diagonal: clamp(62px, 6.4vw, 83px);
-  inset: auto;
-  top: 7%;
-  left: 1%;
-  width: 70%;
-  height: 43%;
+  --orbit-center-x: 50%;
+  --orbit-center-y: 43%;
+  --orbit-x: clamp(170px, 18vw, 260px);
+  --orbit-y: clamp(140px, 15vw, 220px);
+  --orbit-x-diagonal: clamp(120px, 12.7vw, 184px);
+  --orbit-y-diagonal: clamp(99px, 10.6vw, 156px);
+  z-index: 11;
+  inset: 0;
   overflow: visible;
+}
+
+.pdp-static-stage .pdp-giant-name {
+  top: 43%;
+  left: 50%;
+  width: min(64%, 26rem);
+  color: var(--paper);
+  font-size: clamp(2rem, 3.6vw, 4rem);
+  line-height: 0.98;
+  text-align: center;
+  transform: translate(-50%, -50%);
+  animation: pdp-stage-title-fade 9.6s linear infinite;
+}
+
+[data-locale="fa"] .pdp-static-stage .pdp-giant-name {
+  text-align: center;
 }
 
 .pdp-category-orbit-track {
   position: absolute;
-  top: 50%;
-  left: 50%;
+  top: var(--orbit-center-y);
+  left: var(--orbit-center-x);
   width: 1px;
   height: 1px;
   animation: pdp-text-orbit-track 9.6s linear infinite;
@@ -1377,33 +1409,60 @@
   animation-delay: -6.4s;
 }
 
+[data-locale="fa"] .pdp-category-orbit-track {
+  animation-direction: reverse;
+}
+
 .pdp-category-orbit.is-text-orbit .pdp-category-artifact {
   top: 0;
   right: auto;
   bottom: auto;
   left: 0;
-  width: clamp(64px, 6.5vw, 88px);
-  height: clamp(64px, 6.5vw, 88px);
+  width: clamp(84px, 8vw, 124px);
+  height: clamp(84px, 8vw, 124px);
   animation: none;
   transform: translate(-50%, -50%);
 }
 
 .pdp-category-orbit.is-text-orbit .pdp-category-artifact.artifact-2 {
-  width: clamp(60px, 6vw, 82px);
-  height: clamp(60px, 6vw, 82px);
+  width: clamp(80px, 7.5vw, 116px);
+  height: clamp(80px, 7.5vw, 116px);
 }
 
 .pdp-category-orbit.is-text-orbit .pdp-category-artifact.artifact-3 {
-  width: clamp(58px, 5.6vw, 76px);
-  height: clamp(58px, 5.6vw, 76px);
+  width: clamp(76px, 7vw, 108px);
+  height: clamp(76px, 7vw, 108px);
+}
+
+.pdp-category-orbit.is-text-orbit .pdp-category-artifact-image {
+  animation: pdp-orbit-object-tilt 4.8s ease-in-out infinite;
+}
+
+.pdp-category-orbit-track.track-2 .pdp-category-artifact-image {
+  animation-delay: -1.6s;
+}
+
+.pdp-category-orbit-track.track-3 .pdp-category-artifact-image {
+  animation-delay: -3.2s;
+}
+
+@keyframes pdp-orbit-object-tilt {
+  0%,
+  100% {
+    transform: rotate(-8deg) scale(1);
+  }
+  50% {
+    transform: rotate(10deg) scale(1.08);
+  }
 }
 
 @keyframes pdp-text-orbit-track {
-  0%,
-  100% {
+  0% {
+    opacity: 0;
     transform: translate3d(var(--orbit-x), 0, 0);
   }
   12.5% {
+    opacity: 1;
     transform: translate3d(var(--orbit-x-diagonal), var(--orbit-y-diagonal), 0);
   }
   25% {
@@ -1430,24 +1489,72 @@
     transform: translate3d(0, calc(-1 * var(--orbit-y)), 0);
   }
   87.5% {
+    opacity: 1;
     transform: translate3d(
       var(--orbit-x-diagonal),
       calc(-1 * var(--orbit-y-diagonal)),
       0
     );
   }
+  100% {
+    opacity: 0;
+    transform: translate3d(var(--orbit-x), 0, 0);
+  }
+}
+
+@keyframes pdp-stage-title-fade {
+  0% {
+    opacity: 0;
+  }
+  12.5% {
+    opacity: 1;
+  }
+  75% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
 }
 
 @media (max-width: 600px) {
   .pdp-static-stage .pdp-category-orbit.is-text-orbit {
-    --orbit-x: 108px;
-    --orbit-y: 86px;
-    --orbit-x-diagonal: 76px;
-    --orbit-y-diagonal: 61px;
-    top: 7%;
+    --orbit-center-x: 50%;
+    --orbit-center-y: 43%;
+    --orbit-x: clamp(120px, 35vw, 160px);
+    --orbit-y: clamp(100px, 30vw, 140px);
+    --orbit-x-diagonal: clamp(85px, 24.7vw, 113px);
+    --orbit-y-diagonal: clamp(71px, 21.2vw, 99px);
+    inset: 0;
+  }
+
+  .pdp-static-stage .pdp-giant-name {
+    top: 43%;
+    left: 50%;
+    width: 68%;
+    font-size: clamp(1.8rem, 9vw, 2.8rem);
+  }
+
+  .pdp-static-art {
+    top: 31%;
+    left: 29%;
+    width: 73%;
+    height: 65%;
+  }
+
+  .pdp-static-art .sold-media-badge {
     left: 0;
-    width: 76%;
-    height: 45%;
+  }
+
+  .pdp-category-orbit.is-text-orbit .pdp-category-artifact {
+    width: clamp(70px, 21vw, 84px);
+    height: clamp(70px, 21vw, 84px);
+  }
+
+  .pdp-category-orbit.is-text-orbit .pdp-category-artifact.artifact-2,
+  .pdp-category-orbit.is-text-orbit .pdp-category-artifact.artifact-3 {
+    width: clamp(66px, 19vw, 78px);
+    height: clamp(66px, 19vw, 78px);
   }
 }
 
@@ -1468,7 +1575,9 @@
     transform: translate3d(calc(-1 * var(--orbit-x)), 0, 0);
   }
 
-  .pdp-category-artifact {
+  .pdp-category-artifact,
+  .pdp-category-orbit.is-text-orbit .pdp-category-artifact-image,
+  .pdp-static-stage .pdp-giant-name {
     animation: none !important;
   }
 }

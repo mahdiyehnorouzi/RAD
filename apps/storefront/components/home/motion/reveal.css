@@ -9,6 +9,7 @@
 
 .home-reveal.is-visible .reveal-item[data-reveal="eyebrow"] {
   animation-delay: 0ms;
+  margin-bottom: 0.5rem;
 }
 
 .home-reveal.is-visible .reveal-item[data-reveal="heading"] {
@@ -25,6 +26,9 @@
 
 .home-reveal.is-visible .reveal-item[data-reveal="cta"] {
   animation-delay: 340ms;
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
 }
 
 @keyframes rad-home-reveal {

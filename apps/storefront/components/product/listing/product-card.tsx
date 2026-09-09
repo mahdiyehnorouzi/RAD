@@ -2,11 +2,11 @@
 import Link from "next/link";
 import type { Product } from "@rad/types";
 import { productCopy } from "@/lib/catalog/products";
-import { productPrice } from "@/lib/money";
+import { productCardPriceParts } from "@/lib/money";
 import { useLocale } from "@/components/i18n";
 import { FavoriteButton } from "@/components/commerce";
 import { categoryLabel } from "@/lib/catalog/artwork";
-import { ProductMedia } from "./product-media";
+import { ProductCardArtwork } from "./product-card-artwork";
 import { formatArtworkNumber } from "./const";
 import "./product-card.css";
 
@@ -33,6 +33,7 @@ export function ProductCard({
     : locale === "fa"
       ? "استودیو رَد"
       : "RAD Studio";
+  const price = productCardPriceParts(product, locale);
   return (
     <article className={`product-card${unavailable ? " is-unavailable" : ""}`}>
       <div className="product-media-shell">
@@ -45,41 +46,32 @@ export function ProductCard({
           className="product-art"
           aria-label={`${t("viewProduct")} ${copy.name}`}
         >
-          <span className="product-art-backdrop" aria-hidden="true">
-            <ProductMedia
-              product={product}
-              forceCategoryArtwork={forceCategoryArtwork}
-              showStatusBadge={false}
-            />
-          </span>
-          <span className="product-specimen-frame">
-            <span className="product-artwork">
-              <ProductMedia
-                product={product}
-                forceCategoryArtwork={forceCategoryArtwork}
-                showStatusBadge={false}
-              />
-            </span>
-            <span className="product-specimen-caption">
-              <span className="edition">{locale === "fa" ? "۱/۱" : "1/1"}</span>
-              {artworkNumber ? (
-                <small className="product-index">{artworkNumber}</small>
-              ) : null}
-            </span>
-          </span>
+          <ProductCardArtwork
+            product={product}
+            artworkNumber={artworkNumber}
+            edition={locale === "fa" ? "۱/۱" : "1/1"}
+            forceCategoryArtwork={forceCategoryArtwork}
+          />
         </Link>
       </div>
-      <div className="product-meta">
-        <p className="product-artist">
-          <span>{locale === "fa" ? "اثری از" : "A work by"}</span>
-          <strong>{artistName}</strong>
-        </p>
-        <h3>
-          <Link href={href(`/products/${product.slug}`)}>{copy.name}</Link>
-        </h3>
-        <div className="product-facts">
-          <small className="product-category">{category}</small>
-          <span className="product-price">{productPrice(product, locale)}</span>
+      <div className="flex justify-between w-full h-[3.2rem] align-end">
+        <div>
+          <p className="product-artist">
+            <span>{locale === "fa" ? "اثری از" : "A work by"}</span>
+            <strong>{artistName}</strong>
+          </p>
+          <div className="flex flex-col">
+            <h3 className="!mt-2">
+              <Link href={href(`/products/${product.slug}`)}>{copy.name}</Link>
+            </h3>
+            <small className="product-category mt-1">{category}</small>
+          </div>
+        </div>
+        <div className="product-price">
+          <span className="product-price-amount">{price.amount}</span>
+          {price.unit ? (
+            <span className="product-price-unit">{price.unit}</span>
+          ) : null}
         </div>
       </div>
     </article>

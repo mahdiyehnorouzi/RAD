@@ -245,7 +245,7 @@ export const mockProducts: Product[] = [
     visual: "painting",
     images: [
       {
-        src: "/catalog/photos/blue-window.png",
+        src: "/catalog/photos/transparent/blue-window.png",
         alt: "نقاشی انتزاعی پنجره آبی در نور استودیو",
         enAlt: "Blue Window abstract painting in studio light",
       },
@@ -285,7 +285,7 @@ export const mockProducts: Product[] = [
     visual: "textile",
     images: [
       {
-        src: "/catalog/photos/woven-garden.png",
+        src: "/catalog/photos/transparent/woven-garden.png",
         alt: "دیوارکوب کتانی باغ بافته با دوخت دست",
         enAlt: "Woven Garden hand-embroidered linen wall hanging",
       },
@@ -325,7 +325,7 @@ export const mockProducts: Product[] = [
     visual: "wood",
     images: [
       {
-        src: "/catalog/photos/walnut-tide.png",
+        src: "/catalog/photos/transparent/walnut-tide.png",
         alt: "کاسه گردوی دست‌تراش موج گردو",
         enAlt: "Walnut Tide hand-carved walnut bowl",
       },
@@ -365,7 +365,7 @@ export const mockProducts: Product[] = [
     visual: "jewelry",
     images: [
       {
-        src: "/catalog/photos/silver-orbit.png",
+        src: "/catalog/photos/transparent/silver-orbit.png",
         alt: "انگشتر نقره دست‌ساز مدار نقره‌ای با عقیق سبز",
         enAlt: "Silver Orbit handmade silver ring with green agate",
       },
@@ -396,7 +396,7 @@ export const mockProducts: Product[] = [
     visual: "print",
     images: [
       {
-        src: "/catalog/photos/red-garden-print.png",
+        src: "/catalog/photos/transparent/red-garden-print.png",
         alt: "چاپ دستی لینوکات باغ سرخ روی کاغذ پنبه‌ای",
         enAlt: "Red Garden hand-pulled linocut on cotton paper",
       },

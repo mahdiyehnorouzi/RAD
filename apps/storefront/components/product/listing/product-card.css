@@ -8,8 +8,14 @@
 .product-card {
   position: relative;
   min-width: 0;
+  padding: 0.4rem 0.4rem 0;
+  border: 1px solid color-mix(in srgb, var(--ink) 10%, transparent);
+  border-radius: var(--radius);
+  background: var(--paper);
+  box-shadow: 0 18px 28px color-mix(in srgb, var(--ink) 8%, transparent);
   container-type: inline-size;
 }
+
 .product-media-shell {
   position: relative;
   width: 100%;
@@ -21,80 +27,144 @@
   width: 100%;
   aspect-ratio: 4 / 5;
   overflow: hidden;
-  border: 1px solid color-mix(in srgb, var(--ink) 10%, transparent);
-  border-radius: var(--radius);
-  background: color-mix(in srgb, var(--sand) 40%, var(--paper));
+  background: color-mix(in srgb, var(--sand) 28%, var(--paper));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink) 8%, transparent);
   isolation: isolate;
 }
 
-.product-art-backdrop,
-.product-specimen-frame,
-.product-artwork {
+.product-card-artwork {
+  --card-cutout-scale: 1.16;
+  --card-cutout-hover-scale: 1.2;
+  --card-cutout-y: -2%;
   position: absolute;
-  display: grid;
-  place-items: center;
-  overflow: hidden;
+  inset: 0;
+  display: block;
+}
+
+.product-card-artwork--tall {
+  --card-cutout-scale: 1.18;
+  --card-cutout-hover-scale: 1.22;
+  --card-cutout-y: -2%;
+}
+
+.product-card-artwork--round {
+  --card-cutout-scale: 1.22;
+  --card-cutout-hover-scale: 1.26;
+  --card-cutout-y: -1%;
+}
+
+.product-card-artwork--wide {
+  --card-cutout-scale: 0.96;
+  --card-cutout-hover-scale: 1;
+  --card-cutout-y: 0%;
 }
 
 .product-art-backdrop {
+  position: absolute;
   inset: 0;
-  opacity: 0.46;
-  filter: grayscale(1) contrast(0.88) brightness(1.04);
+  overflow: hidden;
+  background-color: color-mix(in srgb, var(--card-art-color) 52%, var(--sand));
+  background-image:
+    radial-gradient(
+      120% 80% at 50% 0%,
+      color-mix(in srgb, var(--paper) 36%, transparent),
+      transparent 58%
+    ),
+    radial-gradient(
+      92% 46% at 50% 112%,
+      color-mix(in srgb, var(--ink) 24%, var(--sand)),
+      transparent 62%
+    ),
+    linear-gradient(
+      168deg,
+      color-mix(in srgb, var(--card-art-color) 70%, var(--paper)) 0%,
+      color-mix(in srgb, var(--card-art-accent) 38%, var(--sand)) 100%
+    );
 }
 
-.product-art-backdrop > *,
-.product-artwork > * {
-  width: 100%;
-  height: 100%;
+.product-art-backdrop::before,
+.product-art-backdrop::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
 }
-.product-art-backdrop > .product-photo {
-  object-fit: cover;
-  transform: scale(1.11);
+
+.product-art-backdrop::before {
+  z-index: 1;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E");
+  mix-blend-mode: multiply;
+  opacity: 0.22;
 }
+
+.product-art-backdrop::after {
+  z-index: 2;
+  background: linear-gradient(
+    to top,
+    color-mix(in srgb, var(--ink) 18%, transparent) 0%,
+    transparent 34%
+  );
+}
+
+.product-art-backdrop > .product-photo,
 .product-art-backdrop > .product-photo-default,
 .product-art-backdrop > .vessel,
 .product-art-backdrop > .mock-artwork {
-  transform: scale(1.11);
-}
-
-.product-specimen-frame {
-  inset: 7% 8% 8%;
-  place-items: stretch;
-  border: 6px solid var(--paper);
-  background: var(--paper);
-  grid-template-rows: minmax(0, 1fr) 42px;
-  transition: transform 650ms cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.product-artwork {
-  position: relative;
-}
-.product-artwork > .product-photo {
+  position: absolute;
+  inset: -48%;
+  width: 196%;
+  height: 196%;
+  max-width: none;
   object-fit: cover;
+  object-position: center 40%;
+  filter: blur(42px) saturate(1.45) contrast(1.12);
+  opacity: 0.9;
+  mix-blend-mode: multiply;
+}
+
+.product-artwork-cutout {
+  position: absolute;
+  z-index: 3;
+  inset: 1% 3% 8%;
+  display: grid;
+  place-items: center;
+  overflow: visible;
+  transform-origin: center bottom;
+  transition: transform 750ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.product-artwork-cutout.has-photo {
+  transform: translateY(var(--card-cutout-y)) scale(var(--card-cutout-scale));
+}
+
+.product-artwork-cutout > .product-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
   object-position: center;
+  filter: drop-shadow(
+    0 14px 12px color-mix(in srgb, var(--ink) 18%, transparent)
+  );
 }
 
-.product-artwork > .product-photo,
-.product-artwork > .product-photo-default,
-.product-artwork > .vessel,
-.product-artwork > .mock-artwork,
-.product-art-backdrop > * {
-  transition:
-    transform 750ms cubic-bezier(0.22, 1, 0.36, 1),
-    filter 500ms ease;
+.product-artwork-cutout > .product-photo-default,
+.product-artwork-cutout > .vessel,
+.product-artwork-cutout > .mock-artwork {
+  width: 100%;
+  height: 100%;
 }
 
-.product-specimen-caption {
-  position: relative;
-  z-index: 4;
+.product-polaroid-marks {
+  position: absolute;
+  z-index: 5;
+  right: 0.55rem;
+  bottom: 0.55rem;
+  left: 0.55rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.75rem;
-  min-width: 0;
-  padding-inline: clamp(0.55rem, 3cqi, 0.8rem);
-  background: var(--paper);
-  color: var(--ink);
+  gap: 0.5rem;
+  pointer-events: none;
 }
 
 .edition,
@@ -102,8 +172,10 @@
   display: inline-flex;
   align-items: center;
   min-width: 0;
-  padding: 0;
-  background: none;
+  min-height: 1.55rem;
+  padding: 0.22rem 0.48rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--paper) 92%, transparent);
   color: var(--ink);
   font-size: clamp(0.58rem, 2.4cqi, 0.68rem);
   font-weight: var(--font-weight-regular);
@@ -168,19 +240,30 @@
 .product-meta {
   display: flex;
   min-width: 0;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.85rem;
+  width: 100%;
+  margin: 0;
+  padding: 0.85rem 0.45rem 1.05rem;
+  text-align: start;
+}
+
+.product-polaroid-copy {
+  display: flex;
+  min-width: 0;
+  flex: 1;
   flex-direction: column;
   gap: 0.18rem;
-  width: 84%;
-  margin: 0.9rem auto 0;
-  text-align: start;
 }
 
 .product-artist {
   display: flex;
   min-width: 0;
   align-items: baseline;
-  gap: 0.35rem;
-  margin: 0 0 0.18rem;
+  gap: 0.5rem;
+  margin: 0;
   color: var(--muted);
   font-size: var(--text-caption);
   line-height: 1.5;
@@ -194,12 +277,20 @@
   white-space: nowrap;
 }
 
+.product-polaroid-lead {
+  display: flex;
+  min-width: 0;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.85rem;
+}
+
 .product-meta h3 {
-  width: 100%;
+  min-width: 0;
   margin: 0;
-  font-size: clamp(1.18rem, 1.85vw, 1.55rem);
+  font-size: clamp(0.92rem, 3.1cqi, 1.08rem);
   font-weight: var(--font-weight-regular);
-  line-height: 1.42;
+  line-height: 1.35;
   overflow-wrap: anywhere;
 }
 
@@ -211,31 +302,70 @@
   transition: text-decoration-color 250ms ease;
 }
 
-.product-facts {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-top: 0.38rem;
-  padding-top: 0.58rem;
-  border-top: 1px solid var(--line);
-}
-
-.product-category,
-.product-price {
+.product-category {
+  flex: 0 0 auto;
+  color: var(--muted);
   font-size: var(--text-eyebrow);
   font-weight: var(--font-weight-regular);
   line-height: 1.4;
 }
-.product-category {
-  color: var(--muted);
+
+.product-card > .flex {
+  display: flex;
+  min-width: 0;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 0.85rem;
+  width: 100%;
+  height: auto !important;
+  min-height: 0;
+  padding: 0.85rem 0.45rem 1.05rem;
 }
-.product-price {
+
+.product-card h3 {
+  min-width: 0;
+  margin: 0;
+  font-size: clamp(0.92rem, 3.1cqi, 1.08rem);
+  font-weight: var(--font-weight-regular);
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.product-card h3 a {
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.22em;
+  transition: text-decoration-color 250ms ease;
+}
+
+.product-card .product-price {
+  display: flex;
+  width: max-content !important;
+  max-width: none !important;
   flex: 0 0 auto;
+  flex-direction: column;
+  align-items: end;
   color: var(--ink);
+  font-size: clamp(1.45rem, 6cqi, 1.95rem);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.1;
+  text-align: end;
   white-space: nowrap;
 }
-.product-card.is-unavailable .product-artwork {
+
+.product-price-amount,
+.product-price-unit {
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: inherit;
+}
+
+.product-price-unit {
+  margin-top: 0.08rem;
+}
+
+.product-card.is-unavailable .product-artwork-cutout {
   filter: grayscale(0.22) saturate(0.8);
 }
 .product-card.is-unavailable .product-price {
@@ -258,33 +388,57 @@
   margin-top: 0.55rem;
 }
 
-/* The home archive has older high-specificity composition rules; preserve the shared card contract there. */
-.home-products .product-meta > .product-facts {
-  flex-direction: row !important;
-  align-items: baseline !important;
-  justify-content: space-between !important;
-  gap: 1rem !important;
-  text-align: start !important;
-}
-
-.home-products .product-meta > .product-artist {
+.home-products .product-card .product-meta > .product-polaroid-lead,
+.home-products .product-card .product-meta > .product-artist {
   flex-direction: row !important;
   align-items: baseline !important;
   gap: 0.35rem !important;
+  width: 100% !important;
   text-align: start !important;
+  justify-content: flex-start !important;
+}
+
+.home-products .product-card .product-meta > .product-polaroid-lead {
+  gap: 0.85rem !important;
+}
+
+.home-products .product-card .product-meta h3 {
+  font-size: clamp(0.92rem, 3.1cqi, 1.08rem) !important;
+  font-weight: var(--font-weight-regular) !important;
+}
+
+.home-products .product-card .product-meta .product-price {
+  font-size: clamp(1.45rem, 6cqi, 1.95rem) !important;
+  font-weight: var(--font-weight-medium) !important;
+}
+
+@container (max-width: 280px) {
+  .product-polaroid-lead,
+  .home-products .product-card .product-meta > .product-polaroid-lead {
+    flex-direction: column !important;
+    align-items: start !important;
+    gap: 0.2rem !important;
+  }
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .product-card:hover .product-specimen-frame,
-  .product-card:focus-within .product-specimen-frame {
-    transform: translateY(-0.45rem);
+  .product-card:hover,
+  .product-card:focus-within {
+    transform: translateY(-0.28rem);
   }
-  .product-card:hover .product-art-backdrop,
-  .product-card:focus-within .product-art-backdrop {
-    filter: grayscale(0.72) contrast(0.92) brightness(1.02);
+  .product-card:hover .product-art-backdrop > .product-photo,
+  .product-card:focus-within .product-art-backdrop > .product-photo,
+  .product-card:hover .product-art-backdrop > .product-photo-default,
+  .product-card:focus-within .product-art-backdrop > .product-photo-default {
+    opacity: 0.78;
   }
-  .product-card:hover .product-artwork > *,
-  .product-card:focus-within .product-artwork > * {
+  .product-card:hover .product-artwork-cutout.has-photo,
+  .product-card:focus-within .product-artwork-cutout.has-photo {
+    transform: translateY(calc(var(--card-cutout-y) - 1%))
+      scale(var(--card-cutout-hover-scale));
+  }
+  .product-card:hover .product-artwork-cutout:not(.has-photo),
+  .product-card:focus-within .product-artwork-cutout:not(.has-photo) {
     transform: scale(1.025);
   }
   .product-card:hover .product-meta h3 a,
@@ -309,17 +463,15 @@
     max-width: none;
     margin-inline: 0;
   }
-  .product-meta h3 {
-    font-size: 1.2rem;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .product-specimen-frame,
-  .product-artwork > *,
+  .product-card,
   .product-art-backdrop > *,
+  .product-artwork-cutout,
   .product-meta h3 a,
   .product-media-shell .favorite-button.compact {
     transition: none;
+    transform: none;
   }
 }
