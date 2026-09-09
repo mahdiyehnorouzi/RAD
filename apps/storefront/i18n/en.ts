@@ -360,7 +360,7 @@ export const en = {
   createPathIndex: "II — CREATE",
   createPathTitle: "Custom order",
   createPathBody: "Describe an idea and develop it with the artist.",
-  makingPathPhotoAlt: "Artist's hands shaping clay on the wheel",
+  makingPathPhotoAlt: "Customer and artist discussing the sketch for a ceramic bowl",
   archiveEyebrow: "RAD ARCHIVE",
   archiveTitle: "New works",
   archiveBody: "A short selection from the living collection; the full archive lives on the works page.",

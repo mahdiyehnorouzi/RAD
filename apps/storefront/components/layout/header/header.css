@@ -160,7 +160,7 @@
 }
 
 .header {
-  height: 104px;
+  height: var(--header-height);
   border-bottom-color: color-mix(in srgb, var(--moss) 18%, transparent);
 }
 
@@ -384,7 +384,7 @@
 }
 
 .header {
-  height: 104px;
+  height: var(--header-height);
   border-bottom-color: color-mix(in srgb, var(--moss) 18%, transparent);
 }
 

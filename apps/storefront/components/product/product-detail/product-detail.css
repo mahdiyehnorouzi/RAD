@@ -592,6 +592,29 @@
   stroke-width: 1.65;
 }
 
+.pdp-category-artifact.is-graphic {
+  width: clamp(92px, 8.5vw, 124px);
+  height: clamp(92px, 8.5vw, 124px);
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.pdp-category-artifact.is-graphic.artifact-2 {
+  width: clamp(80px, 7.4vw, 106px);
+  height: clamp(80px, 7.4vw, 106px);
+}
+
+.pdp-category-artifact.is-graphic.artifact-3 {
+  width: clamp(78px, 7vw, 100px);
+  height: clamp(78px, 7vw, 100px);
+}
+
+.pdp-category-artifact-image {
+  object-fit: contain;
+}
+
 .pdp-category-artifact[data-artifact="flame"],
 .pdp-category-artifact[data-artifact="paintbrush"],
 .pdp-category-artifact[data-artifact="hammer"],
@@ -618,6 +641,11 @@
 .pdp-category-artifact[data-artifact="box"] {
   background: color-mix(in srgb, var(--moss) 72%, var(--paper));
   color: var(--paper);
+}
+
+.pdp-category-artifact.is-graphic {
+  border-radius: 0;
+  background: transparent;
 }
 
 .pdp-category-artifact.artifact-1 {
@@ -1109,5 +1137,338 @@
   .pdp-scene-dots span {
     animation: none !important;
     transition: none !important;
+  }
+}
+
+/* Sketch correction: the product stays still; only its category artifacts orbit. */
+.pdp-showcase {
+  min-height: min(64vw, 720px);
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  direction: ltr;
+}
+
+.pdp-showcase .pdp-gallery {
+  grid-column: 1;
+}
+
+.pdp-static-stage {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.pdp-static-stage .pdp-color-field {
+  top: 11%;
+  left: 8%;
+  width: 78%;
+  height: 72%;
+}
+
+.pdp-static-stage .pdp-giant-name {
+  z-index: 6;
+  top: 13%;
+  left: 8%;
+  width: 48%;
+  font-size: clamp(2.6rem, 4.7vw, 5.4rem);
+}
+
+.pdp-static-art {
+  position: absolute;
+  z-index: 3;
+  top: 40%;
+  left: 46%;
+  width: 48%;
+  height: 43%;
+  filter: drop-shadow(0 24px 28px rgba(24, 35, 31, 0.18));
+}
+
+.pdp-static-art > .product-photo,
+.pdp-static-art > .product-photo-default,
+.pdp-static-art > .product-fallback {
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+}
+
+.pdp-static-art > .product-photo {
+  object-fit: contain;
+}
+
+.pdp-static-art.is-graphic {
+  top: 42%;
+  left: 34%;
+  width: 68%;
+  height: 60%;
+  filter: drop-shadow(0 26px 20px rgba(52, 40, 34, 0.2));
+}
+
+.pdp-graphic-product {
+  object-fit: contain;
+}
+
+.pdp-static-art .vessel {
+  width: 58%;
+  height: 72%;
+}
+
+.pdp-static-stage .pdp-category-orbit {
+  z-index: 5;
+  inset: 42% 5% 7% 32%;
+}
+
+.pdp-static-stage .pdp-category-artifact.artifact-1 {
+  top: 4%;
+  left: 8%;
+  animation-name: pdp-static-orbit-a;
+}
+
+.pdp-static-stage .pdp-category-artifact.artifact-2 {
+  top: 43%;
+  right: 1%;
+  animation-name: pdp-static-orbit-b;
+}
+
+.pdp-static-stage .pdp-category-artifact.artifact-3 {
+  bottom: 7%;
+  left: 31%;
+  animation-name: pdp-static-orbit-c;
+}
+
+[data-locale="fa"] .pdp-static-stage .pdp-giant-name {
+  direction: rtl;
+  text-align: right;
+}
+
+.pdp-showcase .pdp-info {
+  grid-column: 2;
+  direction: ltr;
+}
+
+[data-locale="fa"] .pdp-showcase .pdp-info {
+  direction: rtl;
+}
+
+.pdp-spec-motion .pdp-specs.is-static li {
+  animation: none;
+}
+
+.pdp-showcase .pdp-detail-art {
+  padding-inline: 0.65rem;
+}
+
+@media (max-width: 900px) {
+  .pdp-showcase {
+    min-height: auto;
+    grid-template-columns: 1fr;
+  }
+
+  .pdp-showcase .pdp-gallery,
+  .pdp-showcase .pdp-info {
+    grid-column: 1;
+  }
+}
+
+@media (max-width: 600px) {
+  .pdp-static-stage .pdp-color-field {
+    top: 9%;
+    left: 6%;
+    width: 82%;
+    height: 73%;
+  }
+
+  .pdp-static-stage .pdp-giant-name {
+    top: 11%;
+    left: 7%;
+    width: 50%;
+    font-size: clamp(2.35rem, 12vw, 3.6rem);
+  }
+
+  .pdp-static-art {
+    top: 42%;
+    left: 45%;
+    width: 49%;
+    height: 43%;
+  }
+
+  .pdp-static-stage .pdp-category-orbit {
+    inset: 44% 5% 7% 30%;
+  }
+}
+
+@keyframes pdp-static-orbit-a {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) rotate(-8deg);
+  }
+  25% {
+    transform: translate3d(180%, 10%, 0) rotate(14deg);
+  }
+  50% {
+    transform: translate3d(210%, 130%, 0) rotate(34deg);
+  }
+  75% {
+    transform: translate3d(30%, 160%, 0) rotate(8deg);
+  }
+}
+
+@keyframes pdp-static-orbit-b {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) rotate(7deg);
+  }
+  25% {
+    transform: translate3d(-110%, 120%, 0) rotate(-18deg);
+  }
+  50% {
+    transform: translate3d(-220%, 10%, 0) rotate(-36deg);
+  }
+  75% {
+    transform: translate3d(-140%, -70%, 0) rotate(-12deg);
+  }
+}
+
+@keyframes pdp-static-orbit-c {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) rotate(-12deg);
+  }
+  25% {
+    transform: translate3d(-70%, -70%, 0) rotate(15deg);
+  }
+  50% {
+    transform: translate3d(80%, -150%, 0) rotate(38deg);
+  }
+  75% {
+    transform: translate3d(180%, -60%, 0) rotate(12deg);
+  }
+}
+
+/* The reference film revolves the small objects around the display name. */
+.pdp-static-stage .pdp-category-orbit.is-text-orbit {
+  --orbit-x: clamp(112px, 12vw, 156px);
+  --orbit-y: clamp(88px, 9vw, 118px);
+  --orbit-x-diagonal: clamp(79px, 8.5vw, 110px);
+  --orbit-y-diagonal: clamp(62px, 6.4vw, 83px);
+  inset: auto;
+  top: 7%;
+  left: 1%;
+  width: 70%;
+  height: 43%;
+  overflow: visible;
+}
+
+.pdp-category-orbit-track {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 1px;
+  height: 1px;
+  animation: pdp-text-orbit-track 9.6s linear infinite;
+  will-change: transform;
+}
+
+.pdp-category-orbit-track.track-2 {
+  animation-delay: -3.2s;
+}
+
+.pdp-category-orbit-track.track-3 {
+  animation-delay: -6.4s;
+}
+
+.pdp-category-orbit.is-text-orbit .pdp-category-artifact {
+  top: 0;
+  right: auto;
+  bottom: auto;
+  left: 0;
+  width: clamp(64px, 6.5vw, 88px);
+  height: clamp(64px, 6.5vw, 88px);
+  animation: none;
+  transform: translate(-50%, -50%);
+}
+
+.pdp-category-orbit.is-text-orbit .pdp-category-artifact.artifact-2 {
+  width: clamp(60px, 6vw, 82px);
+  height: clamp(60px, 6vw, 82px);
+}
+
+.pdp-category-orbit.is-text-orbit .pdp-category-artifact.artifact-3 {
+  width: clamp(58px, 5.6vw, 76px);
+  height: clamp(58px, 5.6vw, 76px);
+}
+
+@keyframes pdp-text-orbit-track {
+  0%,
+  100% {
+    transform: translate3d(var(--orbit-x), 0, 0);
+  }
+  12.5% {
+    transform: translate3d(var(--orbit-x-diagonal), var(--orbit-y-diagonal), 0);
+  }
+  25% {
+    transform: translate3d(0, var(--orbit-y), 0);
+  }
+  37.5% {
+    transform: translate3d(
+      calc(-1 * var(--orbit-x-diagonal)),
+      var(--orbit-y-diagonal),
+      0
+    );
+  }
+  50% {
+    transform: translate3d(calc(-1 * var(--orbit-x)), 0, 0);
+  }
+  62.5% {
+    transform: translate3d(
+      calc(-1 * var(--orbit-x-diagonal)),
+      calc(-1 * var(--orbit-y-diagonal)),
+      0
+    );
+  }
+  75% {
+    transform: translate3d(0, calc(-1 * var(--orbit-y)), 0);
+  }
+  87.5% {
+    transform: translate3d(
+      var(--orbit-x-diagonal),
+      calc(-1 * var(--orbit-y-diagonal)),
+      0
+    );
+  }
+}
+
+@media (max-width: 600px) {
+  .pdp-static-stage .pdp-category-orbit.is-text-orbit {
+    --orbit-x: 108px;
+    --orbit-y: 86px;
+    --orbit-x-diagonal: 76px;
+    --orbit-y-diagonal: 61px;
+    top: 7%;
+    left: 0;
+    width: 76%;
+    height: 45%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pdp-category-orbit-track {
+    animation: none !important;
+  }
+
+  .pdp-category-orbit-track.track-1 {
+    transform: translate3d(var(--orbit-x), 0, 0);
+  }
+
+  .pdp-category-orbit-track.track-2 {
+    transform: translate3d(0, var(--orbit-y), 0);
+  }
+
+  .pdp-category-orbit-track.track-3 {
+    transform: translate3d(calc(-1 * var(--orbit-x)), 0, 0);
+  }
+
+  .pdp-category-artifact {
+    animation: none !important;
   }
 }

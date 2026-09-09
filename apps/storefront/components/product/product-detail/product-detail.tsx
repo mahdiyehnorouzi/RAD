@@ -1,6 +1,7 @@
 "use client";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import type { CSSProperties } from "react";
+import Image from "next/image";
 import {
   formatArtworkNumber,
   ProductCard,
@@ -32,12 +33,7 @@ import "./product-detail.css";
 export function ProductDetail({ product }: { product: Product }) {
   const { locale, t, number } = useLocale();
   const carouselRef = useRef<HTMLDivElement>(null);
-  const transitionTimeoutRef = useRef<number | null>(null);
-  const [motion, setMotion] = useState({
-    current: 0,
-    previous: null as number | null,
-    sequence: 0,
-  });
+  const [activeImage, setActiveImage] = useState(0);
   const { products, getProduct, loading } = useCatalog();
   const catalogProduct = getProduct(product.slug);
   const visual =
@@ -55,76 +51,13 @@ export function ProductDetail({ product }: { product: Product }) {
 
   const copy = productCopy(resolved, locale);
   const price = productPrice(resolved, locale);
-  const sceneCount = Math.max(
-    imageCount,
-    Math.min(Math.max(copy.details.length, 1), 3),
-  );
-
   const category = categoryLabel(resolved.category, locale);
   const artworkNumber = formatArtworkNumber(resolved, number, locale);
   const recordNumber =
     artworkNumber || (locale === "fa" ? "در انتظار شماره" : "NUMBER PENDING");
 
-  const transitionTo = useCallback(
-    (target?: number) => {
-      if (transitionTimeoutRef.current !== null) {
-        window.clearTimeout(transitionTimeoutRef.current);
-      }
-
-      const reducedMotion = window.matchMedia(
-        "(prefers-reduced-motion: reduce)",
-      ).matches;
-
-      setMotion((state) => {
-        const next =
-          target === undefined
-            ? (state.current + 1) % sceneCount
-            : ((target % sceneCount) + sceneCount) % sceneCount;
-
-        if (next === state.current) return state;
-
-        return {
-          current: next,
-          previous: reducedMotion ? null : state.current,
-          sequence: state.sequence + 1,
-        };
-      });
-
-      if (!reducedMotion) {
-        transitionTimeoutRef.current = window.setTimeout(() => {
-          setMotion((state) => ({ ...state, previous: null }));
-          transitionTimeoutRef.current = null;
-        }, 1050);
-      }
-    },
-    [sceneCount],
-  );
-
-  useEffect(() => {
-    const preference = window.matchMedia("(prefers-reduced-motion: reduce)");
-    let interval: number | null = null;
-
-    const updateAutoplay = () => {
-      if (interval !== null) window.clearInterval(interval);
-      interval = preference.matches
-        ? null
-        : window.setInterval(() => transitionTo(), 3300);
-    };
-
-    updateAutoplay();
-    preference.addEventListener("change", updateAutoplay);
-
-    return () => {
-      if (interval !== null) window.clearInterval(interval);
-      if (transitionTimeoutRef.current !== null) {
-        window.clearTimeout(transitionTimeoutRef.current);
-      }
-      preference.removeEventListener("change", updateAutoplay);
-    };
-  }, [transitionTo]);
-
-  const sceneStyle = (sceneIndex: number) => {
-    const media = resolved.images?.[sceneIndex % imageCount];
+  const sceneStyle = () => {
+    const media = resolved.images?.[activeImage];
     return {
       "--pdp-scene-color": media?.color ?? resolved.color ?? "var(--sand)",
       "--pdp-scene-accent": media?.accent ?? resolved.accent ?? "var(--clay)",
@@ -142,38 +75,8 @@ export function ProductDetail({ product }: { product: Product }) {
     );
   };
 
-  const renderArtScene = (
-    sceneIndex: number,
-    phase: "entering" | "leaving",
-  ) => (
-    <div
-      key={`${phase}-${sceneIndex}-${motion.sequence}`}
-      className={`pdp-motion-scene is-${phase} scene-${sceneIndex % 3}`}
-      style={sceneStyle(sceneIndex)}
-      aria-hidden={phase === "leaving" ? "true" : undefined}
-    >
-      <div className="pdp-color-field" />
-      <strong className="pdp-giant-name">{copy.name}</strong>
-      <CategoryOrbitItems category={resolved.category} />
-      <div className="pdp-moving-art">
-        <ProductMedia
-          product={resolved}
-          imageIndex={sceneIndex % imageCount}
-          showStatusBadge={phase === "entering"}
-        />
-      </div>
-    </div>
-  );
-
-  const renderDetailScene = (
-    sceneIndex: number,
-    phase: "entering" | "leaving",
-  ) => (
-    <ul
-      key={`details-${phase}-${sceneIndex}-${motion.sequence}`}
-      className={`pdp-specs is-${phase}`}
-      aria-hidden={phase === "leaving" ? "true" : undefined}
-    >
+  const renderDetails = () => (
+    <ul className="pdp-specs is-static">
       {sceneDetails().map((detail, index) => (
         <li
           key={`${detail}-${index}`}
@@ -192,47 +95,46 @@ export function ProductDetail({ product }: { product: Product }) {
       <section className="pdp section">
         <div className="pdp-showcase">
           <div className="pdp-gallery" aria-live="off">
-            <div className="pdp-main-art">
-              {motion.previous !== null
-                ? renderArtScene(motion.previous, "leaving")
-                : null}
-              {renderArtScene(motion.current, "entering")}
+            <div className="pdp-static-stage" style={sceneStyle()}>
+              <div className="pdp-color-field" />
+              <strong className="pdp-giant-name">{copy.name}</strong>
+              <CategoryOrbitItems category={resolved.category} />
+              <div
+                className={`pdp-static-art${resolved.slug === "red-vessel-27" ? " is-graphic" : ""}`}
+              >
+                {resolved.slug === "red-vessel-27" ? (
+                  <Image
+                    src="/catalog/graphic/red-vessel-27.png"
+                    alt={copy.name}
+                    fill
+                    priority
+                    sizes="(max-width: 900px) 62vw, 34vw"
+                    className="pdp-graphic-product"
+                  />
+                ) : (
+                  <ProductMedia product={resolved} imageIndex={activeImage} />
+                )}
+              </div>
             </div>
             <div
               className="pdp-detail-art"
               role="group"
               aria-label={t("imageNumber")}
             >
-              <button
-                type="button"
-                className="pdp-scene-arrow"
-                onClick={() => transitionTo(motion.current - 1)}
-                aria-label={t("previousWorks")}
-              >
-                ←
-              </button>
               <div className="pdp-scene-dots">
-                {Array.from({ length: sceneCount }, (_, index) => (
+                {Array.from({ length: imageCount }, (_, index) => (
                   <button
                     key={index}
                     type="button"
-                    className={motion.current === index ? "active" : ""}
-                    onClick={() => transitionTo(index)}
-                    aria-pressed={motion.current === index}
+                    className={activeImage === index ? "active" : ""}
+                    onClick={() => setActiveImage(index)}
+                    aria-pressed={activeImage === index}
                     aria-label={`${t("imageNumber")} ${locale === "fa" ? new Intl.NumberFormat("fa-IR").format(index + 1) : index + 1}`}
                   >
                     <span />
                   </button>
                 ))}
               </div>
-              <button
-                type="button"
-                className="pdp-scene-arrow"
-                onClick={() => transitionTo()}
-                aria-label={t("nextWorks")}
-              >
-                →
-              </button>
             </div>
           </div>
           <div className="pdp-info">
@@ -258,12 +160,7 @@ export function ProductDetail({ product }: { product: Product }) {
               </span>
               <small>{category}</small>
             </div>
-            <div className="pdp-spec-motion">
-              {motion.previous !== null
-                ? renderDetailScene(motion.previous, "leaving")
-                : null}
-              {renderDetailScene(motion.current, "entering")}
-            </div>
+            <div className="pdp-spec-motion">{renderDetails()}</div>
             <p className="pdp-story">{copy.story}</p>
             <div className="pdp-actions">
               <AddToBag product={resolved} />

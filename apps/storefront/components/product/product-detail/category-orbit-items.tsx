@@ -1,4 +1,5 @@
 import type { CSSProperties } from "react";
+import Image from "next/image";
 import type { ProductCategory } from "@rad/types";
 import type { LucideIcon } from "lucide-react";
 import {
@@ -36,23 +37,46 @@ const artifactIcons: Record<CategoryArtifactName, LucideIcon> = {
   waves: Waves,
 };
 
+const ceramicOrbitImages = [
+  "/catalog/graphic/orbit-grid-bowl-v2.png",
+  "/catalog/graphic/orbit-blue-vase.png",
+  "/catalog/graphic/orbit-sage-vessel.png",
+] as const;
+
 export function CategoryOrbitItems({
   category,
 }: {
   category: ProductCategory;
 }) {
   return (
-    <div className="pdp-category-orbit" aria-hidden="true">
+    <div className="pdp-category-orbit is-text-orbit" aria-hidden="true">
       {categoryArtifacts[category].map((artifact, index) => {
         const Icon = artifactIcons[artifact];
+        const image = ["ceramics", "vases", "tableware"].includes(category)
+          ? ceramicOrbitImages[index]
+          : null;
         return (
           <span
             key={`${artifact}-${index}`}
-            className={`pdp-category-artifact artifact-${index + 1}`}
-            data-artifact={artifact}
-            style={{ "--artifact-index": index } as CSSProperties}
+            className={`pdp-category-orbit-track track-${index + 1}`}
+            style={{ "--orbit-index": index } as CSSProperties}
           >
-            <Icon />
+            <span
+              className={`pdp-category-artifact artifact-${index + 1}${image ? " is-graphic" : ""}`}
+              data-artifact={artifact}
+            >
+              {image ? (
+                <Image
+                  src={image}
+                  alt=""
+                  fill
+                  sizes="96px"
+                  className="pdp-category-artifact-image"
+                />
+              ) : (
+                <Icon />
+              )}
+            </span>
           </span>
         );
       })}

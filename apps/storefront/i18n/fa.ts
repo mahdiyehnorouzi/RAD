@@ -357,7 +357,7 @@ export const fa = {
   createPathIndex: "II — خلق",
   createPathTitle: "سفارش اختصاصی",
   createPathBody: "ایده را توصیف کنید و ساخت را با هنرمند جلو ببرید.",
-  makingPathPhotoAlt: "دست هنرمند در حال شکل‌دادن گل روی چرخ",
+  makingPathPhotoAlt: "گفت‌وگوی مشتری و هنرمند درباره طرح یک کاسه سفالی",
   archiveEyebrow: "آرشیو رَد",
   archiveTitle: "آثار تازه",
   archiveBody: "چند اثر منتخب از مجموعهٔ زنده؛ آرشیو کامل در صفحهٔ آثار است.",

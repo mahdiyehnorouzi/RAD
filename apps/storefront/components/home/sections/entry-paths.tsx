@@ -18,14 +18,17 @@ export function EntryPaths() {
       aria-label={t("entryPathsAria")}
     >
       <article className="entry-path entry-path-ready reveal-item" data-reveal="media">
-        <Image
-          src={homeMedia.entryReady}
-          alt=""
-          fill
-          sizes="(max-width: 900px) 100vw, 62vw"
-          priority
-        />
-        <div>
+        <figure className="entry-path-media">
+          <Image
+            className="entry-path-photo"
+            src={homeMedia.entryReady}
+            alt=""
+            fill
+            sizes="(max-width: 900px) 100vw, 62vw"
+            priority
+          />
+        </figure>
+        <div className="entry-path-copy">
           <h2>{t("ownPathTitle")}</h2>
           <ButtonLink href="/products" outline>
             {t("viewWorks")}
@@ -33,13 +36,16 @@ export function EntryPaths() {
         </div>
       </article>
       <article className="entry-path entry-path-custom reveal-item" data-reveal="cta">
-        <Image
-          src={homeMedia.entryCustom}
-          alt={t("makingPathPhotoAlt")}
-          fill
-          sizes="(max-width: 900px) 100vw, 38vw"
-        />
-        <div>
+        <figure className="entry-path-media">
+          <Image
+            className="entry-path-photo"
+            src={homeMedia.entryCustom}
+            alt={t("makingPathPhotoAlt")}
+            fill
+            sizes="(max-width: 900px) 100vw, 38vw"
+          />
+        </figure>
+        <div className="entry-path-copy">
           <h2>{t("createPathTitle")}</h2>
           <ButtonLink href="/studio" outline>
             {t("startDesign")}

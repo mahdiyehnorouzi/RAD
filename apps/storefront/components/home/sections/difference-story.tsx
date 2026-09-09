@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { differenceStages } from "@/components/difference/const";
 import type { DifferenceStageId } from "@/components/difference/type";
 import { ButtonLink } from "@/components/ui/button-link";
@@ -20,19 +21,39 @@ function stageCopy(
   return portrait.materialNotes[0]?.[locale];
 }
 
-function closeness(mix: number, index: number) {
-  return Math.max(0, 1 - Math.abs(mix - index));
+function stageTransition(progress: number, count: number) {
+  const last = Math.max(count - 1, 0);
+  const position = progress * last;
+  const from = Math.min(last, Math.floor(position));
+  const local = position - from;
+  const blend = Math.min(1, Math.max(0, (local - 0.72) / 0.28));
+  const to = Math.min(last, from + 1);
+  const active = blend >= 0.5 ? to : from;
+
+  return {
+    active,
+    opacity(index: number) {
+      if (from === to) return index === from ? 1 : 0;
+      if (index === from) return 1 - blend;
+      if (index === to) return blend;
+      return 0;
+    },
+  };
 }
 
 export function DifferenceStory() {
   const { locale, t } = useLocale();
-  const { ref: revealRef, inView } = useInView<HTMLElement>({ threshold: 0.06 });
-  const { ref: scrollerRef, progress } = useScrollStage(differenceStages.length);
+  const { ref: revealRef, inView } = useInView<HTMLElement>({
+    threshold: 0.06,
+  });
+  const { ref: scrollerRef, progress } = useScrollStage(
+    differenceStages.length,
+  );
   const storyPortrait = museumPortraits[0];
   if (!storyPortrait) return null;
 
-  const mix = progress * Math.max(differenceStages.length - 1, 1);
-  const stage = Math.min(differenceStages.length - 1, Math.round(mix));
+  const transition = stageTransition(progress, differenceStages.length);
+  const stage = transition.active;
   const active = differenceStages[stage] ?? differenceStages[0];
   const copy = stageCopy(storyPortrait, active.id, locale);
 
@@ -47,7 +68,11 @@ export function DifferenceStory() {
         <span className="eyebrow reveal-item" data-reveal="eyebrow">
           {t("differenceEyebrow")}
         </span>
-        <h2 id="difference-story-title" className="reveal-item" data-reveal="heading">
+        <h2
+          id="difference-story-title"
+          className="reveal-item"
+          data-reveal="heading"
+        >
           {t("homeDifferenceTitle")}
         </h2>
         <p className="difference-story-maker reveal-item" data-reveal="body">
@@ -63,7 +88,7 @@ export function DifferenceStory() {
           <div className="difference-scroll-frame">
             {differenceStages.map((item, index) => {
               const photo = storyPortrait.stageImages?.[item.id];
-              const amount = closeness(mix, index);
+              const amount = transition.opacity(index);
               return (
                 <figure
                   key={item.id}
@@ -75,9 +100,13 @@ export function DifferenceStory() {
                   }}
                 >
                   {photo ? (
-                    <img
+                    <Image
+                      className="difference-scroll-photo"
                       src={photo}
                       alt=""
+                      fill
+                      sizes="(max-width: 900px) 100vw, 52vw"
+                      priority={index === 0}
                       style={{ transform: `scale(${1.08 - 0.08 * amount})` }}
                     />
                   ) : (
@@ -90,20 +119,24 @@ export function DifferenceStory() {
               );
             })}
           </div>
-          <ol className="difference-scroll-progress" aria-hidden="true">
-            {differenceStages.map((item, index) => (
-              <li
-                key={item.id}
-                className={index === stage ? "is-active" : index < stage ? "is-done" : ""}
-              >
-                {item.index[locale]}
-              </li>
-            ))}
-          </ol>
-          <div className="difference-scroll-copy" aria-live="polite">
-            <div key={active.id} className="difference-scroll-copy-inner">
-              <h3>{active.title[locale]}</h3>
-              <p>{copy}</p>
+          <div className="difference-scroll-panel">
+            <ol className="difference-scroll-progress" aria-hidden="true">
+              {differenceStages.map((item, index) => (
+                <li
+                  key={item.id}
+                  className={
+                    index === stage ? "is-active" : index < stage ? "is-done" : ""
+                  }
+                >
+                  {item.index[locale]}
+                </li>
+              ))}
+            </ol>
+            <div className="difference-scroll-copy" aria-live="polite">
+              <div key={active.id} className="difference-scroll-copy-inner">
+                <h3>{active.title[locale]}</h3>
+                <p>{copy}</p>
+              </div>
             </div>
           </div>
         </div>
@@ -114,7 +147,11 @@ export function DifferenceStory() {
           return (
             <article key={item.id}>
               <figure>
-                {photo ? <img src={photo} alt="" /> : <div className={`stage-${item.id}`} />}
+                {photo ? (
+                  <img src={photo} alt="" />
+                ) : (
+                  <div className={`stage-${item.id}`} />
+                )}
               </figure>
               <div className="difference-scroll-copy">
                 <span>{item.index[locale]}</span>
