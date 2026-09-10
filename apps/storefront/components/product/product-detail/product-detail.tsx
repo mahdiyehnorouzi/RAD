@@ -52,6 +52,13 @@ export function ProductDetail({ product }: { product: Product }) {
   const copy = productCopy(resolved, locale);
   const price = productPrice(resolved, locale);
   const category = categoryLabel(resolved.category, locale);
+  const maker = resolved.vendor
+    ? locale === "fa"
+      ? resolved.vendor.displayName
+      : resolved.vendor.displayNameEn
+    : locale === "fa"
+      ? "استودیوی رَد"
+      : "RAD Studio";
   const artworkNumber = formatArtworkNumber(resolved, number, locale);
   const recordNumber =
     artworkNumber || (locale === "fa" ? "در انتظار شماره" : "NUMBER PENDING");
@@ -97,6 +104,17 @@ export function ProductDetail({ product }: { product: Product }) {
           <div className="pdp-gallery" aria-live="off">
             <div className="pdp-static-stage" style={sceneStyle()}>
               <div className="pdp-color-field" />
+              <div className="pdp-stage-index" aria-hidden="true">
+                <span>{recordNumber}</span>
+                <i>{locale === "fa" ? "اثر یگانه" : "ONE OF ONE"}</i>
+              </div>
+              <div className="pdp-stage-context">
+                <span>
+                  {locale === "fa" ? "دسته‌بندی اثر" : "WORK CATEGORY"}
+                </span>
+                <strong>{category}</strong>
+                <i>{maker}</i>
+              </div>
               <strong className="pdp-giant-name">{copy.name}</strong>
               <CategoryOrbitItems category={resolved.category} />
               <div
@@ -121,7 +139,10 @@ export function ProductDetail({ product }: { product: Product }) {
               role="group"
               aria-label={t("imageNumber")}
             >
-              <div className="pdp-scene-dots">
+              <span className="pdp-gallery-label">
+                {locale === "fa" ? "نماهای اثر" : "WORK VIEWS"}
+              </span>
+              <div className="pdp-thumbnail-rail">
                 {Array.from({ length: imageCount }, (_, index) => (
                   <button
                     key={index}
@@ -131,7 +152,18 @@ export function ProductDetail({ product }: { product: Product }) {
                     aria-pressed={activeImage === index}
                     aria-label={`${t("imageNumber")} ${locale === "fa" ? new Intl.NumberFormat("fa-IR").format(index + 1) : index + 1}`}
                   >
-                    <span />
+                    <span className="pdp-thumbnail-image" aria-hidden="true">
+                      <ProductMedia
+                        product={resolved}
+                        imageIndex={index}
+                        showStatusBadge={false}
+                      />
+                    </span>
+                    <small>
+                      {locale === "fa"
+                        ? number(index + 1)
+                        : String(index + 1).padStart(2, "0")}
+                    </small>
                   </button>
                 ))}
               </div>
@@ -153,7 +185,10 @@ export function ProductDetail({ product }: { product: Product }) {
             </span>
             <h1>{copy.name}</h1>
             <p className="subtitle">{copy.subtitle}</p>
-            <p className="price">{price}</p>
+            <div className="pdp-price-row">
+              <span>{locale === "fa" ? "قیمت اثر" : "ACQUISITION"}</span>
+              <p className="price">{price}</p>
+            </div>
             <div className="pdp-material-heading">
               <span>
                 {locale === "fa" ? "مواد و جزئیات ساخت" : "MATERIALS & MAKING"}
@@ -161,7 +196,6 @@ export function ProductDetail({ product }: { product: Product }) {
               <small>{category}</small>
             </div>
             <div className="pdp-spec-motion">{renderDetails()}</div>
-            <p className="pdp-story">{copy.story}</p>
             <div className="pdp-actions">
               <AddToBag product={resolved} />
               <FavoriteButton slug={resolved.slug} />
@@ -169,6 +203,10 @@ export function ProductDetail({ product }: { product: Product }) {
             <p className="shipping">{t("shipping")}</p>
           </div>
         </div>
+        <aside className="pdp-note">
+          <span>{locale === "fa" ? "یادداشت اثر" : "WORK NOTE"}</span>
+          <p>{copy.story}</p>
+        </aside>
       </section>
       <section className="section shipping-faq">
         <header>
