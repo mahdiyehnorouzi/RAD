@@ -1,6 +1,6 @@
 .entry-paths {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1.55fr) minmax(19rem, 0.95fr);
   gap: 1px;
   background: var(--line);
   padding: 0;
@@ -8,47 +8,69 @@
 
 .entry-path {
   position: relative;
-  display: grid;
+  display: block;
+  isolation: isolate;
   min-height: min(58vh, 560px);
   overflow: hidden;
   color: var(--paper);
 }
 
-.entry-path img {
+.entry-path-media {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  margin: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.entry-path-photo,
+.entry-path-media img {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
+  object-position: center;
+  transform: scale(1.04);
+  transition: transform 900ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.entry-paths.is-visible .entry-path-photo,
+.entry-paths.is-visible .entry-path-media img {
+  transform: scale(1);
 }
 
 .entry-path::after {
   content: "";
   position: absolute;
   inset: 0;
+  z-index: 1;
   background: linear-gradient(
     to top,
     color-mix(in srgb, var(--ink) 72%, transparent) 0%,
     color-mix(in srgb, var(--ink) 18%, transparent) 55%,
     transparent 100%
   );
+  pointer-events: none;
 }
 
-.entry-path > div {
+.entry-path-copy {
   position: relative;
-  z-index: 1;
+  z-index: 2;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   justify-content: flex-end;
   gap: 1rem;
+  min-height: min(58vh, 560px);
   padding: clamp(1.5rem, 4vw, 2.75rem);
 }
 
 .entry-path h2 {
   margin: 0;
-  max-width: 10ch;
-  font-size: clamp(1.55rem, 3.4vw, 2.2rem);
+  color: var(--paper);
+  font-size: clamp(2rem, 3.4vw, 2.2rem);
   font-weight: 400;
   line-height: 1.2;
   letter-spacing: -0.04em;
@@ -59,12 +81,26 @@
   border-color: color-mix(in srgb, var(--paper) 78%, transparent);
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .entry-path-photo,
+  .entry-path-media img,
+  .entry-paths.is-visible .entry-path-photo,
+  .entry-paths.is-visible .entry-path-media img {
+    transform: none;
+    transition: none;
+  }
+}
+
 @media (max-width: 900px) {
   .entry-paths {
     grid-template-columns: 1fr;
   }
 
-  .entry-path {
-    min-height: 42vh;
+  .entry-path,
+  .entry-path-copy {
+    min-height: 52vh;
+  }
+  .entry-path .button.outline {
+    margin-bottom: 1rem;
   }
 }

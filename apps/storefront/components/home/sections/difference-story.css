@@ -1,17 +1,395 @@
-@media(max-width:600px) {
-.difference-story.section {padding-block:2rem!important;padding-inline:1rem!important}
+.difference-story {
+  overflow: visible;
+  background: color-mix(in srgb, var(--paper) 88%, white);
+  padding: clamp(2.75rem, 5vw, 4.5rem) 0 0;
 }
 
-.difference-story {display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:clamp(2rem,5vw,5rem);align-items:end;background:var(--paper)}
+.difference-story-heading {
+  max-width: 38rem;
+  margin-bottom: clamp(1.25rem, 2.5vw, 2rem);
+  padding-inline: var(--page);
+}
 
-.difference-story-maker {color:#5c574f;font-size:.82rem}
+.difference-story-heading h2 {
+  margin: 0.7rem 0 0.85rem;
+  max-width: 14ch;
+}
 
-.difference-story-actions {display:flex;flex-wrap:wrap;gap:1.25rem;margin-top:1.5rem}
+.difference-story-maker {
+  margin: 0;
+  color: #5c574f;
+  font-size: 0.82rem;
+}
 
-@media(max-width:900px) {
-.difference-story {grid-template-columns:1fr!important}
+.difference-scroll {
+  --story-progress: 0;
+  height: 520vh;
+}
+
+.difference-scroll-sticky {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  box-sizing: border-box;
+  height: 100dvh;
+  min-height: 100dvh;
+  max-height: 100dvh;
+  padding-top: var(--header-height, 104px);
+  overflow: hidden;
+  background: #161513;
+}
+
+.difference-scroll-frame {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  isolation: isolate;
+  contain: paint;
+}
+
+.difference-scroll-frame figure {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  overflow: hidden;
+  opacity: 0;
+}
+
+.difference-scroll-frame img,
+.difference-scroll-photo,
+.difference-scroll-frame div {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+.difference-scroll-sticky::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to top,
+    rgba(17, 16, 14, 0.18) 0%,
+    rgba(17, 16, 14, 0.08) 42%,
+    rgba(17, 16, 14, 0.22) 100%
+  );
+  pointer-events: none;
+}
+
+.difference-scroll-panel {
+  position: absolute;
+  z-index: 4;
+  inset: 0;
+  padding-top: calc(var(--header-height, 104px) + 1rem);
+  pointer-events: none;
+}
+
+.difference-scroll-progress {
+  position: relative;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  width: min(22rem, calc(100% - (var(--page) * 2)));
+  margin: 0 auto 0;
+  margin-inline: var(--page);
+  padding: 0 0 0.75rem;
+  list-style: none;
+  pointer-events: auto;
+}
+
+.difference-scroll-copy {
+  position: absolute;
+  z-index: 5;
+  inset-inline: 0;
+  bottom: 0;
+  display: grid;
+  align-content: end;
+  height: 13.75rem;
+  padding: 1.35rem var(--page) max(1.25rem, env(safe-area-inset-bottom));
+  pointer-events: auto;
+  background: linear-gradient(
+    to top,
+    rgba(17, 16, 14, 0.94) 0%,
+    rgba(17, 16, 14, 0.72) 62%,
+    rgba(17, 16, 14, 0) 100%
+  );
+}
+
+.difference-scroll-progress::before,
+.difference-scroll-progress::after {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  height: 1px;
+}
+
+.difference-scroll-progress::after {
+  background: color-mix(in srgb, var(--paper) 22%, transparent);
+}
+
+.difference-scroll-progress::before {
+  z-index: 1;
+  background: #ead9bd;
+  transform: scaleX(var(--story-progress));
+  transform-origin: right center;
+}
+
+html[dir="ltr"] .difference-scroll-progress::before {
+  transform-origin: left center;
+}
+
+.difference-scroll-progress li {
+  color: color-mix(in srgb, var(--paper) 38%, transparent);
+  font-size: 0.68rem;
+  letter-spacing: 0.14em;
+  transition: color 420ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.difference-scroll-progress li.is-done,
+.difference-scroll-progress li.is-active {
+  color: var(--paper);
+}
+
+.difference-scroll-progress li.is-active {
+  color: #ead9bd;
+}
+
+.difference-scroll-copy-inner {
+  display: grid;
+  grid-template-rows: 2.6em 3.7em;
+  gap: 0.45rem;
+  max-width: 36rem;
+  animation: difference-copy 640ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.difference-scroll-copy-inner h3 {
+  display: -webkit-box;
+  margin: 0;
+  overflow: hidden;
+  color: var(--paper);
+  font-size: clamp(1.7rem, 3.4vw, 2.6rem);
+  font-weight: 400;
+  line-height: 1.2;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.difference-scroll-copy-inner p {
+  display: -webkit-box;
+  margin: 0;
+  overflow: hidden;
+  color: color-mix(in srgb, var(--paper) 82%, transparent);
+  font-size: clamp(0.92rem, 1.2vw, 1.05rem);
+  line-height: 1.75;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+@keyframes difference-copy {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.difference-scroll-static {
+  display: none;
+}
+
+.difference-story-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+  margin-top: 0;
+  padding: clamp(1.5rem, 3vw, 2.25rem) var(--page) clamp(2.75rem, 5vw, 4.5rem);
 }
 
 @media (min-width: 901px) {
-.difference-story.section { padding-block: clamp(3.25rem, 5.5vw, 5rem) !important; }
+  .difference-scroll-sticky {
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) minmax(22rem, 0.9fr);
+    grid-template-areas: "photo copy";
+    align-items: stretch;
+    gap: clamp(1.5rem, 3vw, 2.75rem);
+    padding: calc(var(--header-height, 104px) + 0.85rem) var(--page) 1.75rem;
+    overflow: hidden;
+    background: var(--ink);
+  }
+
+  html[dir="rtl"] .difference-scroll-sticky {
+    grid-template-columns: minmax(22rem, 0.9fr) minmax(0, 1.1fr);
+    grid-template-areas: "copy photo";
+  }
+
+  .difference-scroll-sticky::after {
+    content: none;
+  }
+
+  .difference-scroll-frame {
+    position: relative;
+    z-index: 0;
+    inset: auto;
+    grid-area: photo;
+    width: auto;
+    min-width: 0;
+    max-width: 100%;
+    height: auto;
+    overflow: hidden;
+    isolation: isolate;
+    contain: paint;
+    background: color-mix(in srgb, var(--moss) 72%, black);
+  }
+
+  .difference-scroll-frame figure {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+  }
+
+  .difference-scroll-photo {
+    object-fit: cover;
+    transform-origin: center;
+  }
+
+  .difference-scroll-panel {
+    position: relative;
+    z-index: 4;
+    inset: auto;
+    grid-area: copy;
+    display: grid;
+    align-content: start;
+    align-self: stretch;
+    gap: 1.35rem;
+    min-width: 0;
+    padding-top: 0.85rem;
+    overflow: visible;
+    isolation: isolate;
+    pointer-events: auto;
+  }
+
+  .difference-scroll-progress {
+    position: relative;
+    width: 100%;
+    margin-inline: 0;
+  }
+
+  .difference-scroll-copy {
+    position: relative;
+    inset: auto;
+    bottom: auto;
+    width: 100%;
+    height: auto;
+    min-height: 8.5rem;
+    padding: 0;
+    background: none;
+  }
+
+  .difference-scroll-copy-inner {
+    grid-template-rows: auto auto;
+  }
+}
+
+@media (max-width: 900px) {
+  .difference-story {
+    padding-block: 2rem 0;
+  }
+
+  .difference-story-heading {
+    margin-bottom: 1rem;
+  }
+
+  .difference-scroll {
+    height: 480vh;
+  }
+
+  .difference-scroll-progress {
+    width: calc(100% - (var(--page) * 2));
+  }
+
+  .difference-scroll-copy {
+    height: 13.25rem;
+  }
+
+  .difference-scroll-copy-inner {
+    max-width: none;
+    grid-template-rows: 2.5em 3.6em;
+  }
+
+  .difference-scroll-copy-inner h3 {
+    font-size: clamp(1.45rem, 6.4vw, 1.85rem);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .difference-scroll {
+    display: none;
+  }
+
+  .difference-scroll-static {
+    display: grid;
+    gap: 2rem;
+    padding-inline: var(--page);
+  }
+
+  .difference-scroll-static article {
+    display: grid;
+    gap: 0.85rem;
+  }
+
+  .difference-scroll-static figure {
+    margin: 0;
+    overflow: hidden;
+    aspect-ratio: 4 / 5;
+    max-height: 52vh;
+    background: color-mix(in srgb, var(--sand) 40%, var(--paper));
+  }
+
+  .difference-scroll-static img,
+  .difference-scroll-static div {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .difference-scroll-static .difference-scroll-copy {
+    position: static;
+    inset: auto;
+    width: auto;
+    height: auto;
+    max-width: none;
+    background: none;
+    padding: 0;
+  }
+
+  .difference-scroll-static .difference-scroll-copy span {
+    display: block;
+    color: #8a4938;
+    font-size: 0.78rem;
+    letter-spacing: 0.14em;
+  }
+
+  .difference-scroll-static .difference-scroll-copy h3 {
+    margin: 0.35rem 0 0.45rem;
+    color: var(--ink);
+    font-size: clamp(1.35rem, 4vw, 2rem);
+  }
+
+  .difference-scroll-static .difference-scroll-copy p {
+    margin: 0;
+    color: color-mix(in srgb, var(--ink) 74%, transparent);
+    line-height: 1.75;
+  }
+
+  .difference-scroll-copy-inner {
+    animation: none;
+  }
 }

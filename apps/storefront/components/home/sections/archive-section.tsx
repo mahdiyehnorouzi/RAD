@@ -3,6 +3,8 @@ import type { Product } from "@rad/types";
 import { ProductCard, ProductGridSkeleton } from "@/components/product";
 import { ButtonLink } from "@/components/ui/button-link";
 import { useLocale } from "@/components/i18n";
+import { useInView, useStickyPin } from "../hooks";
+import "../motion/reveal.css";
 import "./archive-section.css";
 
 export function ArchiveSection({
@@ -13,17 +15,36 @@ export function ArchiveSection({
   loading?: boolean;
 }) {
   const { t } = useLocale();
+  const { ref: inViewRef, inView } = useInView<HTMLElement>({ threshold: 0.16 });
+  const { containerRef, headingRef, pinned, barHeight } = useStickyPin();
+
+  const setSectionRef = (node: HTMLElement | null) => {
+    inViewRef.current = node;
+    containerRef.current = node;
+  };
+
   return (
-    <section className="section collection archive-section">
-      <header className="section-heading">
-        <div>
-          <span className="eyebrow">{t("archiveEyebrow")}</span>
-          <h2>{t("archiveTitle")}</h2>
-          <p>{t("archiveBody")}</p>
+    <section
+      ref={setSectionRef}
+      className={`section collection archive-section home-reveal${inView ? " is-visible" : ""}`}
+    >
+      <header
+        className={`section-heading${pinned ? " is-pinned" : ""}`}
+        ref={headingRef}
+      >
+        <div className="archive-heading-pin">
+          <span className="eyebrow reveal-item" data-reveal="eyebrow">
+            {t("archiveEyebrow")}
+          </span>
+          <div className="reveal-item" data-reveal="cta">
+            <h2 className="reveal-item" data-reveal="heading">
+              {t("archiveTitle")}
+            </h2>
+            <ButtonLink href="/products" outline>
+              {t("homeArchiveLink")}
+            </ButtonLink>
+          </div>
         </div>
-        <ButtonLink href="/products" outline>
-          {t("homeArchiveLink")}
-        </ButtonLink>
       </header>
       {loading ? (
         <ProductGridSkeleton />
@@ -34,6 +55,13 @@ export function ArchiveSection({
           ))}
         </div>
       )}
+      {pinned ? (
+        <div
+          aria-hidden="true"
+          className="archive-heading-blur"
+          style={{ height: barHeight }}
+        />
+      ) : null}
     </section>
   );
 }

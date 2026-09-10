@@ -1,49 +1,59 @@
 "use client";
+
+import { useEffect, useRef } from "react";
 import { useLocale } from "@/components/i18n";
+import { useInView } from "../hooks";
 import "./evidence-film.css";
 
 export function EvidenceFilm() {
-  const { locale } = useLocale();
+  const { t } = useLocale();
+  const { ref, inView } = useInView<HTMLElement>({ once: true, threshold: 0.22 });
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    const section = ref.current;
+    if (!video || !section) return undefined;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          void video.play().catch(() => undefined);
+        } else {
+          video.pause();
+        }
+      },
+      { threshold: 0.2 },
+    );
+    observer.observe(section);
+    return () => observer.disconnect();
+  }, [ref]);
+
   return (
-    <section className="section evidence-film">
-      <div className="film-copy">
-        <span className="eyebrow">{locale === "fa" ? "مدرک ساخت" : "EVIDENCE OF MAKING"}</span>
-        <h2>{locale === "fa" ? "دست، ماده، اثر." : "Hand, material, work."}</h2>
-        <p>
-          {locale === "fa"
-            ? "چند ثانیه از یکی از مسیرهای واقعی ساخت؛ هر ماده ریتم و ردّ مخصوص خودش را دارد."
-            : "A few seconds from one real making process—every material keeps its own rhythm and trace."}
-        </p>
+    <section
+      ref={ref}
+      className={`evidence-film${inView ? " is-active" : ""}`}
+      aria-labelledby="evidence-title"
+    >
+      <video
+        ref={videoRef}
+        className="studio-film"
+        autoPlay
+        muted
+        loop
+        playsInline
+        preload="metadata"
+        poster="/studio-process.jpg"
+        disablePictureInPicture
+        aria-label={t("evidenceFilmAlt")}
+      >
+        <source src="/studio-process.mp4" type="video/mp4" />
+      </video>
+      <div className="evidence-overlay">
+        <h2 id="evidence-title">{t("evidenceTitle")}</h2>
+        <p>{t("evidenceBody")}</p>
+        <small>{t("evidenceMeta")}</small>
       </div>
-      <figure className="film-frame">
-        <span className="film-badge" aria-hidden="true">
-          <i /> {locale === "fa" ? "ویدیو · ۰۰:۰۴" : "FILM · 00:04"}
-        </span>
-        {/* 4s landscape wheel-throwing loop — Pexels 9736665 */}
-        <video
-          className="studio-film"
-          autoPlay
-          muted
-          loop
-          playsInline
-          preload="auto"
-          poster="/studio-process.jpg"
-          disablePictureInPicture
-          onCanPlay={(event) => {
-            void event.currentTarget.play();
-          }}
-          aria-label={
-            locale === "fa"
-              ? "ویدیوی کوتاه یکی از مسیرهای ساخت اثر"
-              : "Short loop showing one artwork making process"
-          }
-        >
-          <source src="/studio-process.mp4" type="video/mp4" />
-        </video>
-        <figcaption>
-          {locale === "fa" ? "تهران / ماده، فرم، پرداخت، امضا" : "TEHRAN / MATERIAL, FORM, FINISH, SIGNATURE"}
-        </figcaption>
-      </figure>
     </section>
   );
 }

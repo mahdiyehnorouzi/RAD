@@ -5,7 +5,7 @@ import { radStudio } from "./vendors";
 
 export function catalogPhotoSrc(slug: string, imageIndex = 0) {
   const suffix = imageIndex === 0 ? "" : `-${imageIndex + 1}`;
-  return `/catalog/photos/${slug}${suffix}.webp`;
+  return `/catalog/photos/transparent/${slug}${suffix}.png`;
 }
 
 export const catalogPhotoSlugs = new Set(photoProducts.map((product) => product.slug));

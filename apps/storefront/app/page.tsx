@@ -6,6 +6,7 @@ import {
   DifferenceStory,
   EntryPaths,
   EvidenceFilm,
+  FinalCta,
   HomeHero,
   HomeProcessSection,
   featuredHomeWorks,
@@ -25,6 +26,7 @@ export default function Home() {
       <EvidenceFilm />
       <HomeProcessSection />
       <CertificateSection />
+      <FinalCta />
     </>
   );
 }

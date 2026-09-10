@@ -2,8 +2,8 @@
   "findings": [
     {
       "category": "unresolved",
-      "file": "apps/admin/components/admin-dashboard.tsx",
-      "line": 90,
+      "file": "apps/admin/components/admin-commissions.tsx",
+      "line": 211,
       "message": "Native select is used without an explicit ownership decision.",
       "remediation": "Record Select/Listbox as native or reuse the authored canonical owner.",
       "ruleId": "ownership.native-select-undecided",
@@ -11,20 +11,29 @@
     },
     {
       "category": "unresolved",
-      "file": "apps/storefront/components/custom-designer.tsx",
-      "line": 99,
+      "file": "apps/admin/components/admin-dashboard.tsx",
+      "line": 110,
       "message": "Native select is used without an explicit ownership decision.",
       "remediation": "Record Select/Listbox as native or reuse the authored canonical owner.",
       "ruleId": "ownership.native-select-undecided",
       "severity": "error"
     },
     {
-      "category": "violation",
-      "file": "apps/admin/components/admin-dashboard.tsx",
-      "line": 40,
-      "message": "Enabled literal button has no detectable action or submit behavior.",
-      "remediation": "Connect the button to a real action, make it a submit button, or disable/remove it.",
-      "ruleId": "affordance.actionless-button",
+      "category": "unresolved",
+      "file": "apps/storefront/components/workshop/workshop-detail/feasibility-panel.tsx",
+      "line": 55,
+      "message": "Native select is used without an explicit ownership decision.",
+      "remediation": "Record Select/Listbox as native or reuse the authored canonical owner.",
+      "ruleId": "ownership.native-select-undecided",
+      "severity": "error"
+    },
+    {
+      "category": "unresolved",
+      "file": "apps/storefront/components/workshop/workshop-detail/making-panel.tsx",
+      "line": 32,
+      "message": "Native select is used without an explicit ownership decision.",
+      "remediation": "Record Select/Listbox as native or reuse the authored canonical owner.",
+      "ruleId": "ownership.native-select-undecided",
       "severity": "error"
     },
     {
@@ -38,8 +47,71 @@
     },
     {
       "category": "violation",
+      "file": "apps/admin/components/admin-commissions.tsx",
+      "line": 172,
+      "message": "Application-owned form does not declare its validation owner.",
+      "remediation": "Add noValidate/novalidate and implement the canonical validation contract.",
+      "ruleId": "form.novalidate-missing",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "apps/admin/components/admin-commissions.tsx",
+      "line": 187,
+      "message": "Application-owned form does not declare its validation owner.",
+      "remediation": "Add noValidate/novalidate and implement the canonical validation contract.",
+      "ruleId": "form.novalidate-missing",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "apps/admin/components/admin-commissions.tsx",
+      "line": 181,
+      "message": "Literal product textarea does not show evidence of the canonical resize-none rule.",
+      "remediation": "Use the shared Textarea owner or apply resize-none/resize: none with adequate height or auto-grow behavior.",
+      "ruleId": "form.textarea-resize-missing",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "apps/admin/components/admin-commissions.tsx",
+      "line": 220,
+      "message": "Literal product textarea does not show evidence of the canonical resize-none rule.",
+      "remediation": "Use the shared Textarea owner or apply resize-none/resize: none with adequate height or auto-grow behavior.",
+      "ruleId": "form.textarea-resize-missing",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "apps/admin/components/admin-commissions.tsx",
+      "line": 222,
+      "message": "Literal product textarea does not show evidence of the canonical resize-none rule.",
+      "remediation": "Use the shared Textarea owner or apply resize-none/resize: none with adequate height or auto-grow behavior.",
+      "ruleId": "form.textarea-resize-missing",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "apps/admin/components/admin-commissions.tsx",
+      "line": 232,
+      "message": "Literal product textarea does not show evidence of the canonical resize-none rule.",
+      "remediation": "Use the shared Textarea owner or apply resize-none/resize: none with adequate height or auto-grow behavior.",
+      "ruleId": "form.textarea-resize-missing",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "apps/admin/components/admin-commissions.tsx",
+      "line": 238,
+      "message": "Literal product textarea does not show evidence of the canonical resize-none rule.",
+      "remediation": "Use the shared Textarea owner or apply resize-none/resize: none with adequate height or auto-grow behavior.",
+      "ruleId": "form.textarea-resize-missing",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
       "file": "apps/admin/components/admin-dashboard.tsx",
-      "line": 103,
+      "line": 152,
       "message": "Literal product textarea does not show evidence of the canonical resize-none rule.",
       "remediation": "Use the shared Textarea owner or apply resize-none/resize: none with adequate height or auto-grow behavior.",
       "ruleId": "form.textarea-resize-missing",
@@ -47,8 +119,8 @@
     },
     {
       "category": "violation",
-      "file": "apps/storefront/components/checkout-page.tsx",
-      "line": 71,
+      "file": "apps/storefront/components/reviews/reviews/reviews.tsx",
+      "line": 190,
       "message": "Literal product textarea does not show evidence of the canonical resize-none rule.",
       "remediation": "Use the shared Textarea owner or apply resize-none/resize: none with adequate height or auto-grow behavior.",
       "ruleId": "form.textarea-resize-missing",
@@ -56,17 +128,8 @@
     },
     {
       "category": "violation",
-      "file": "apps/storefront/components/custom-designer.tsx",
-      "line": 119,
-      "message": "Literal product textarea does not show evidence of the canonical resize-none rule.",
-      "remediation": "Use the shared Textarea owner or apply resize-none/resize: none with adequate height or auto-grow behavior.",
-      "ruleId": "form.textarea-resize-missing",
-      "severity": "error"
-    },
-    {
-      "category": "violation",
-      "file": "apps/storefront/components/reviews.tsx",
-      "line": 159,
+      "file": "apps/storefront/components/studio/custom-designer/making-request.tsx",
+      "line": 28,
       "message": "Literal product textarea does not show evidence of the canonical resize-none rule.",
       "remediation": "Use the shared Textarea owner or apply resize-none/resize: none with adequate height or auto-grow behavior.",
       "ruleId": "form.textarea-resize-missing",
@@ -77,10 +140,10 @@
   "projectRoot": "/Users/mahdiyeh/Desktop/projects/RAD",
   "schemaVersion": 1,
   "summary": {
-    "errors": 8,
-    "total": 8,
-    "unresolved": 2,
-    "violations": 6,
+    "errors": 15,
+    "total": 15,
+    "unresolved": 4,
+    "violations": 11,
     "warnings": 0
   }
 }
