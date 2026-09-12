@@ -130,7 +130,11 @@ export function ProductDetail({ product }: { product: Product }) {
                     className="pdp-graphic-product"
                   />
                 ) : (
-                  <ProductMedia product={resolved} imageIndex={activeImage} />
+                  <ProductMedia
+                    product={resolved}
+                    imageIndex={activeImage}
+                    preserveTransparentBackground
+                  />
                 )}
               </div>
             </div>
@@ -157,6 +161,7 @@ export function ProductDetail({ product }: { product: Product }) {
                         product={resolved}
                         imageIndex={index}
                         showStatusBadge={false}
+                        preserveTransparentBackground
                       />
                     </span>
                     <small>

@@ -17,7 +17,7 @@ export function ProductCardArtwork({
   edition: string;
   forceCategoryArtwork?: boolean;
 }) {
-  const hasPhotoCutout = !forceCategoryArtwork && hasRealProductImage(product);
+  const hasPhoto = !forceCategoryArtwork && hasRealProductImage(product);
   const shape = product.shape ?? "round";
   const style = cardMediaStyle(product.slug, {
     "--card-art-color": product.color ?? "var(--sand)",
@@ -29,16 +29,16 @@ export function ProductCardArtwork({
       className={`product-card-artwork product-card-artwork--${shape}`}
       style={style}
     >
-      <span className="product-art-backdrop" aria-hidden="true">
-        <ProductMedia
-          product={product}
-          forceCategoryArtwork={forceCategoryArtwork}
-          showStatusBadge={false}
-        />
-      </span>
-      <span
-        className={`product-artwork-cutout${hasPhotoCutout ? " has-photo" : ""}`}
-      >
+      {!hasPhoto ? (
+        <span className="product-art-backdrop" aria-hidden="true">
+          <ProductMedia
+            product={product}
+            forceCategoryArtwork={forceCategoryArtwork}
+            showStatusBadge={false}
+          />
+        </span>
+      ) : null}
+      <span className={`product-artwork-cutout${hasPhoto ? " has-photo" : ""}`}>
         <ProductMedia
           product={product}
           forceCategoryArtwork={forceCategoryArtwork}
