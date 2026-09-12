@@ -6,6 +6,7 @@ import "@/components/ui/skeleton.css";
 import { mockStorefront } from "@/lib/catalog/mock-storefront";
 import {
   Footer,
+  GoogleAnalytics,
   Header,
   PageBackNavigation,
   RouteScrollReset,
@@ -84,6 +85,11 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const gaMeasurementId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
+  const gaEnabled = Boolean(
+    gaMeasurementId && /^G-[A-Z0-9]+$/i.test(gaMeasurementId),
+  );
+
   return (
     <html lang="fa" dir="rtl">
       <body>
@@ -120,6 +126,9 @@ export default function RootLayout({
             <CommerceProvider>
               <MakingProvider>
                 <CartProvider>
+                  {gaEnabled && gaMeasurementId ? (
+                    <GoogleAnalytics measurementId={gaMeasurementId} />
+                  ) : null}
                   <RouteScrollReset />
                   <HomeBanner />
                   <Header />
