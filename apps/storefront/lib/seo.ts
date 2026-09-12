@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import type { Product } from "@rad/types";
 
 const FALLBACK_SITE_URL = "https://rad-studio.rad-studio.workers.dev";
 
@@ -49,4 +50,19 @@ export const privatePageMetadata: Metadata = {
 
 export function safeJsonLd(value: unknown) {
   return JSON.stringify(value).replace(/</g, "\\u003c");
+}
+
+export function productListJsonLd(products: Product[], path: string) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    url: absoluteUrl(path),
+    numberOfItems: products.length,
+    itemListElement: products.map((product, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      url: absoluteUrl(`/products/${product.slug}`),
+      name: product.name,
+    })),
+  };
 }

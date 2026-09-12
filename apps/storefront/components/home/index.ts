@@ -1,12 +1,7 @@
 export {
   ArchiveSection,
-  CertificateSection,
   DifferenceStory,
-  EntryPaths,
-  EvidenceFilm,
-  FinalCta,
   HomeHero,
-  HomeProcessSection,
   ProcessSection,
   StorySection,
   StudioCallout,

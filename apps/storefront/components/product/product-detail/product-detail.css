@@ -565,6 +565,11 @@
   grid-row: 5;
 }
 
+.shipping-faq.section,
+.related.section {
+  padding-block: clamp(1.75rem, 3.5vw, 3rem);
+}
+
 .shipping-faq {
   display: grid;
   grid-template-columns: minmax(15rem, 0.72fr) minmax(0, 1.28fr);

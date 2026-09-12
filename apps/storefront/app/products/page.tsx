@@ -1,18 +1,19 @@
-"use client";
-import { Catalog } from "@/components/catalog";
-import { Eyebrow, PageSection } from "@/components/ui/section";
-import { useLocale } from "@/components/i18n";
+import { CatalogPage } from "@/components/catalog";
+import { getCatalogWorks } from "@/lib/catalog/get-catalog-works";
+import { productListJsonLd, safeJsonLd } from "@/lib/seo";
 
-export default function Products() {
-  const { t } = useLocale();
+export default async function Products() {
+  const products = await getCatalogWorks();
+
   return (
-    <PageSection className="plp">
-      <header className="mb-4">
-        <Eyebrow>{t("shopEyebrow")}</Eyebrow>
-        <h1 className="m-0 text-h2 font-normal">{t("shopTitle")}</h1>
-        <p className="mt-3 max-w-2xl text-prose">{t("shopBody")}</p>
-      </header>
-      <Catalog />
-    </PageSection>
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: safeJsonLd(productListJsonLd(products, "/products")),
+        }}
+      />
+      <CatalogPage products={products} />
+    </>
   );
 }

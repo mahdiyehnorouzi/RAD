@@ -2,7 +2,10 @@
 
 import { useEffect, useRef, useState } from "react";
 
-export function useStickyPin(topCssVar = "--header-height") {
+export function useStickyPin(
+  topCssVar = "--header-height",
+  maxWidth = 900,
+) {
   const containerRef = useRef<HTMLElement>(null);
   const headingRef = useRef<HTMLElement>(null);
   const [pinned, setPinned] = useState(false);
@@ -14,6 +17,7 @@ export function useStickyPin(topCssVar = "--header-height") {
     if (!container || !heading) return undefined;
 
     let frame = 0;
+    const query = window.matchMedia(`(max-width: ${maxWidth}px)`);
     const topOffset = () => {
       const raw = getComputedStyle(document.documentElement).getPropertyValue(
         topCssVar,
@@ -22,6 +26,11 @@ export function useStickyPin(topCssVar = "--header-height") {
     };
 
     const update = () => {
+      if (!query.matches) {
+        setPinned(false);
+        setBarHeight(0);
+        return;
+      }
       const top = topOffset();
       const headingBox = heading.getBoundingClientRect();
       const containerBox = container.getBoundingClientRect();
@@ -38,14 +47,16 @@ export function useStickyPin(topCssVar = "--header-height") {
     };
 
     update();
+    query.addEventListener("change", onScroll);
     window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", onScroll);
     return () => {
       cancelAnimationFrame(frame);
+      query.removeEventListener("change", onScroll);
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onScroll);
     };
-  }, [topCssVar]);
+  }, [maxWidth, topCssVar]);
 
   return { containerRef, headingRef, pinned, barHeight };
 }

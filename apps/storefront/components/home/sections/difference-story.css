@@ -1,24 +1,36 @@
 .difference-story {
   overflow: visible;
   background: color-mix(in srgb, var(--paper) 88%, white);
-  padding: clamp(2.75rem, 5vw, 4.5rem) 0 0;
+  padding: 0;
 }
 
 .difference-story-heading {
-  max-width: 38rem;
-  margin-bottom: clamp(1.25rem, 2.5vw, 2rem);
-  padding-inline: var(--page);
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1.1rem;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 0;
 }
 
 .difference-story-heading h2 {
-  margin: 0.7rem 0 0.85rem;
-  max-width: 14ch;
+  margin: 0;
+  max-width: none;
+  color: var(--paper);
+  font-size: clamp(1.25rem, 3vw, 1.95rem);
+  font-weight: 400;
+  line-height: 1.2;
+  white-space: nowrap;
 }
 
 .difference-story-maker {
   margin: 0;
-  color: #5c574f;
-  font-size: 0.82rem;
+  color: color-mix(in srgb, var(--paper) 58%, transparent);
+  font-size: 0.78rem;
+  white-space: nowrap;
 }
 
 .difference-scroll {
@@ -82,33 +94,55 @@
   position: absolute;
   z-index: 4;
   inset: 0;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
   padding-top: calc(var(--header-height, 104px) + 1rem);
+  pointer-events: none;
+}
+
+.difference-scroll-panel::before {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  height: 46%;
+  background: linear-gradient(
+    to bottom,
+    rgba(17, 16, 14, 0.62) 0%,
+    rgba(17, 16, 14, 0) 100%
+  );
   pointer-events: none;
 }
 
 .difference-scroll-progress {
   position: relative;
   z-index: 5;
-  display: flex;
-  align-items: center;
-  gap: 0.7rem;
-  width: min(22rem, calc(100% - (var(--page) * 2)));
-  margin: 0 auto 0;
+  display: grid;
+  gap: 0.85rem;
+  width: calc(100% - (var(--page) * 2));
   margin-inline: var(--page);
-  padding: 0 0 0.75rem;
-  list-style: none;
   pointer-events: auto;
 }
 
+.difference-scroll-progress ol {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.7rem;
+  width: 100%;
+  margin: 0;
+  padding: 0 0 0.75rem;
+  list-style: none;
+}
+
 .difference-scroll-copy {
-  position: absolute;
+  position: relative;
   z-index: 5;
-  inset-inline: 0;
-  bottom: 0;
+  align-self: end;
   display: grid;
   align-content: end;
-  height: 13.75rem;
-  padding: 1.35rem var(--page) max(1.25rem, env(safe-area-inset-bottom));
+  padding: 1.35rem var(--page) 0.85rem;
   pointer-events: auto;
   background: linear-gradient(
     to top,
@@ -118,8 +152,8 @@
   );
 }
 
-.difference-scroll-progress::before,
-.difference-scroll-progress::after {
+.difference-scroll-progress ol::before,
+.difference-scroll-progress ol::after {
   content: "";
   position: absolute;
   inset-inline: 0;
@@ -127,18 +161,18 @@
   height: 1px;
 }
 
-.difference-scroll-progress::after {
+.difference-scroll-progress ol::after {
   background: color-mix(in srgb, var(--paper) 22%, transparent);
 }
 
-.difference-scroll-progress::before {
+.difference-scroll-progress ol::before {
   z-index: 1;
   background: #ead9bd;
   transform: scaleX(var(--story-progress));
   transform-origin: right center;
 }
 
-html[dir="ltr"] .difference-scroll-progress::before {
+html[dir="ltr"] .difference-scroll-progress ol::before {
   transform-origin: left center;
 }
 
@@ -205,11 +239,23 @@ html[dir="ltr"] .difference-scroll-progress::before {
 }
 
 .difference-story-actions {
+  position: relative;
+  z-index: 5;
   display: flex;
   flex-wrap: wrap;
   gap: 1.25rem;
-  margin-top: 0;
-  padding: clamp(1.5rem, 3vw, 2.25rem) var(--page) clamp(2.75rem, 5vw, 4.5rem);
+  margin: 0;
+  padding: 0.35rem var(--page) max(1.25rem, env(safe-area-inset-bottom));
+  pointer-events: auto;
+  background: rgba(17, 16, 14, 0.94);
+}
+
+.difference-story-actions .button.outline {
+  color: var(--paper) !important;
+}
+
+.difference-story-actions .button.outline:hover {
+  color: #ead9bd !important;
 }
 
 @media (min-width: 901px) {
@@ -265,7 +311,8 @@ html[dir="ltr"] .difference-scroll-progress::before {
     inset: auto;
     grid-area: copy;
     display: grid;
-    align-content: start;
+    grid-template-rows: auto 1fr auto;
+    align-content: stretch;
     align-self: stretch;
     gap: 1.35rem;
     min-width: 0;
@@ -275,10 +322,23 @@ html[dir="ltr"] .difference-scroll-progress::before {
     pointer-events: auto;
   }
 
+  .difference-scroll-panel::before {
+    content: none;
+  }
+
   .difference-scroll-progress {
     position: relative;
     width: 100%;
     margin-inline: 0;
+  }
+
+  .difference-story-heading h2 {
+    font-size: clamp(1.35rem, 1.8vw, 1.85rem);
+  }
+
+  .difference-story-actions {
+    padding: 0;
+    background: none;
   }
 
   .difference-scroll-copy {
@@ -299,11 +359,7 @@ html[dir="ltr"] .difference-scroll-progress::before {
 
 @media (max-width: 900px) {
   .difference-story {
-    padding-block: 2rem 0;
-  }
-
-  .difference-story-heading {
-    margin-bottom: 1rem;
+    padding-block: 0;
   }
 
   .difference-scroll {
@@ -314,8 +370,12 @@ html[dir="ltr"] .difference-scroll-progress::before {
     width: calc(100% - (var(--page) * 2));
   }
 
+  .difference-story-heading h2 {
+    font-size: clamp(1.05rem, 4.6vw, 1.35rem);
+  }
+
   .difference-scroll-copy {
-    height: 13.25rem;
+    height: auto;
   }
 
   .difference-scroll-copy-inner {
@@ -336,7 +396,28 @@ html[dir="ltr"] .difference-scroll-progress::before {
   .difference-scroll-static {
     display: grid;
     gap: 2rem;
-    padding-inline: var(--page);
+    padding: clamp(2.75rem, 5vw, 4.5rem) var(--page);
+  }
+
+  .difference-scroll-static .difference-story-heading {
+    max-width: none;
+  }
+
+  .difference-scroll-static .difference-story-heading h2 {
+    color: var(--ink);
+    font-size: clamp(1.35rem, 3.2vw, 1.85rem);
+  }
+
+  .difference-scroll-static .difference-story-maker {
+    color: #5c574f;
+  }
+
+  .difference-scroll-static .difference-story-actions {
+    padding: 0;
+  }
+
+  .difference-scroll-static .difference-story-actions .button.outline {
+    color: var(--moss) !important;
   }
 
   .difference-scroll-static article {

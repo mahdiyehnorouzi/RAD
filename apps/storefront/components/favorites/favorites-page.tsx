@@ -3,17 +3,19 @@ import "./favorites-page.css";
 
 import { useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
+import { Heart } from "lucide-react";
 import { useCommerce } from "@/components/commerce";
 import { useLocale } from "@/components/i18n";
-import { ProductCard, ProductGridSkeleton } from "@/components/product";
+import { ProductCard } from "@/components/product";
 import { useCatalog } from "@/components/catalog";
+import { ButtonLink } from "@/components/ui/button-link";
 import { AccountShell } from "../account/account-shell";
 
 export function FavoritesPage() {
   const params = useSearchParams();
   const { favorites, ready } = useCommerce();
   const { t, number } = useLocale();
-  const { getProduct, loading } = useCatalog();
+  const { getProduct } = useCatalog();
   const [shared, setShared] = useState(false);
 
   const sharedSlugs = params.get("items")?.split(",").filter(Boolean);
@@ -39,32 +41,31 @@ export function FavoritesPage() {
     } catch {}
   };
 
-  const waiting =
-    (!sharedSlugs?.length && !ready) ||
-    (loading && slugs.length > 0 && items.length === 0);
+  const waiting = !sharedSlugs?.length && !ready;
 
   const content = (
     <section className="favorites-page section">
       <header className="favorites-heading">
         <div>
-          <span className="eyebrow">
-            {sharedSlugs?.length
-              ? t("sharedListEyebrow")
-              : t("favoriteEyebrow")}
-          </span>
           <h1>{t("favoritesTitle")}</h1>
           <p>
-            {number(items.length)} {t("savedWorks")}
+            {waiting
+              ? t("favoritesWaitingCount")
+              : `${number(items.length)} ${t("savedWorks")}`}
           </p>
         </div>
-        {!sharedSlugs?.length && favorites.length > 0 && (
+        {!waiting && !sharedSlugs?.length && favorites.length > 0 ? (
           <button type="button" className="button outline" onClick={share}>
             {shared ? t("linkCopied") : t("shareList")}
           </button>
-        )}
+        ) : null}
       </header>
       {waiting ? (
-        <ProductGridSkeleton count={4} />
+        <div className="favorites-state is-waiting" role="status" aria-live="polite">
+          <Heart aria-hidden="true" strokeWidth={1.6} />
+          <h2>{t("favoritesWaitingTitle")}</h2>
+          <p>{t("favoritesWaitingBody")}</p>
+        </div>
       ) : items.length ? (
         <div className="product-grid">
           {items.map(
@@ -75,9 +76,13 @@ export function FavoritesPage() {
           )}
         </div>
       ) : (
-        <div className="empty-state">
+        <div className="favorites-state">
+          <Heart aria-hidden="true" strokeWidth={1.6} />
           <h2>{t("emptyFavorites")}</h2>
           <p>{t("emptyFavoritesBody")}</p>
+          <ButtonLink href="/products" outline>
+            {t("emptyFavoritesAction")}
+          </ButtonLink>
         </div>
       )}
     </section>

@@ -1,32 +1,27 @@
-"use client";
-
 import {
   ArchiveSection,
-  CertificateSection,
   DifferenceStory,
-  EntryPaths,
-  EvidenceFilm,
-  FinalCta,
   HomeHero,
-  HomeProcessSection,
   featuredHomeWorks,
 } from "@/components/home";
-import { useCatalog } from "@/components/catalog/catalog-provider";
+import { getCatalogWorks } from "@/lib/catalog/get-catalog-works";
+import { productListJsonLd, safeJsonLd } from "@/lib/seo";
 
-export default function Home() {
-  const { products, loading } = useCatalog();
+export default async function Home() {
+  const products = await getCatalogWorks();
   const featured = featuredHomeWorks(products);
 
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: safeJsonLd(productListJsonLd(featured, "/")),
+        }}
+      />
       <HomeHero />
-      <EntryPaths />
-      <ArchiveSection products={featured} loading={loading} />
+      <ArchiveSection products={featured} />
       <DifferenceStory />
-      <EvidenceFilm />
-      <HomeProcessSection />
-      <CertificateSection />
-      <FinalCta />
     </>
   );
 }

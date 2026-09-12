@@ -371,6 +371,10 @@ html[dir="rtl"] .archive-section .section-heading {
   overflow: visible;
 }
 
+.archive-section > .eyebrow {
+  margin-bottom: 0.75rem;
+}
+
 .archive-section .section-heading {
   position: sticky;
   top: var(--header-height, 104px);
@@ -397,4 +401,16 @@ html[dir="rtl"] .archive-section .section-heading {
   -webkit-backdrop-filter: blur(18px);
   backdrop-filter: blur(18px);
   pointer-events: none;
+}
+
+@media (min-width: 901px) {
+  .archive-section .section-heading {
+    position: static;
+    top: auto;
+    z-index: auto;
+  }
+
+  .archive-heading-blur {
+    display: none;
+  }
 }
