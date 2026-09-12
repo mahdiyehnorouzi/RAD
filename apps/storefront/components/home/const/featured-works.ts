@@ -1,6 +1,12 @@
 import type { Product } from "@rad/types";
-import { isFileProductImage, productPhotoSrc } from "@/lib/catalog/category-defaults";
-import { catalogPhotoSlugs, catalogPhotoSrc } from "@/lib/catalog/photo-works";
+import {
+  isFileProductImage,
+  productPhotoSrc,
+} from "@/lib/catalog/category-defaults";
+import {
+  catalogLifestylePhotoSrc,
+  catalogLifestylePhotoSlugs,
+} from "@/lib/catalog/photo-works";
 
 const FEATURED_LIMIT = 4;
 
@@ -16,11 +22,13 @@ export function featuredHomeWorks(products: Product[]): Product[] {
 }
 
 export function featuredWorkPhoto(product?: Product) {
+  if (product && catalogLifestylePhotoSlugs.has(product.slug)) {
+    return catalogLifestylePhotoSrc(product.slug);
+  }
   const src = product?.images?.[0]?.src;
   if (isFileProductImage(src)) {
     const photo = productPhotoSrc(src);
     if (photo) return photo;
   }
-  if (product && catalogPhotoSlugs.has(product.slug)) return catalogPhotoSrc(product.slug);
   return "/home/polaroid/alabaster-walnut-lamp.png";
 }

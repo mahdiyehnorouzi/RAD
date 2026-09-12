@@ -1,4 +1,9 @@
-import type { Product, ProductCategory, ProductShape, ProductStatus } from "@rad/types";
+import type {
+  Product,
+  ProductCategory,
+  ProductShape,
+  ProductStatus,
+} from "@rad/types";
 import { formatToman } from "@/lib/money";
 import { photoProducts } from "./photo-products-data";
 import { radStudio } from "./vendors";
@@ -8,7 +13,28 @@ export function catalogPhotoSrc(slug: string, imageIndex = 0) {
   return `/catalog/photos/transparent/${slug}${suffix}.png`;
 }
 
-export const catalogPhotoSlugs = new Set(photoProducts.map((product) => product.slug));
+const PNG_LIFESTYLE_PHOTOS = new Set([
+  "blue-window",
+  "red-garden-print",
+  "silver-orbit",
+  "walnut-tide",
+  "woven-garden",
+]);
+
+export function catalogLifestylePhotoSrc(slug: string, imageIndex = 0) {
+  const suffix = imageIndex === 0 ? "" : `-${imageIndex + 1}`;
+  const extension = PNG_LIFESTYLE_PHOTOS.has(slug) ? "png" : "webp";
+  return `/catalog/photos/${slug}${suffix}.${extension}`;
+}
+
+export const catalogPhotoSlugs = new Set(
+  photoProducts.map((product) => product.slug),
+);
+
+export const catalogLifestylePhotoSlugs = new Set([
+  ...catalogPhotoSlugs,
+  ...PNG_LIFESTYLE_PHOTOS,
+]);
 
 export const photoWorks: Product[] = photoProducts.map((product, index) => {
   return {
@@ -27,13 +53,13 @@ export const photoWorks: Product[] = photoProducts.map((product, index) => {
     artworkNumber: `RAD-${String(index + 27).padStart(3, "0")}`,
     vendor: radStudio,
     images: product.images.map((image, imageIndex) => ({
-        src: catalogPhotoSrc(product.slug, imageIndex),
-        alt: image.alt,
-        enAlt: image.enAlt,
-        color: product.color,
-        accent: product.accent,
-        shape: product.shape as ProductShape,
-      })),
+      src: catalogPhotoSrc(product.slug, imageIndex),
+      alt: image.alt,
+      enAlt: image.enAlt,
+      color: product.color,
+      accent: product.accent,
+      shape: product.shape as ProductShape,
+    })),
     en: product.en,
   };
 });
