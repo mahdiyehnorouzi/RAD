@@ -1,0 +1,52 @@
+.now-index {
+  padding-block: clamp(2.5rem, 6vw, 5rem) clamp(5rem, 10vw, 9rem);
+}
+
+.now-index header {
+  max-width: 38rem;
+  margin-bottom: clamp(2.5rem, 6vw, 4rem);
+}
+
+.now-index h1 {
+  font-size: clamp(2.4rem, 6vw, 4.4rem);
+  font-weight: 500;
+  line-height: 1.15;
+  margin: 0.4rem 0 1rem;
+}
+
+.now-index header p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.8;
+}
+
+.now-index ol {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.now-index a {
+  display: grid;
+  grid-template-columns: 5.5rem 1fr auto;
+  gap: 1rem;
+  align-items: baseline;
+  padding: 1.15rem 0;
+  border-top: 1px solid var(--line);
+}
+
+.now-index a small {
+  color: var(--clay);
+}
+
+.now-index a span {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+@media (max-width: 800px) {
+  .now-index a {
+    grid-template-columns: 1fr;
+  }
+}

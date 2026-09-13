@@ -1,0 +1,72 @@
+.idea-card {
+  width: min(100%, 28rem);
+  padding: 1.6rem 1.5rem 1.4rem;
+  background: var(--paper);
+  color: var(--ink);
+  border-radius: 2px;
+  z-index: 2;
+}
+
+.idea-card > span {
+  display: block;
+  margin-bottom: 1.1rem;
+  color: var(--clay);
+  letter-spacing: 0.08em;
+  font-size: 0.78rem;
+}
+
+.idea-card dl {
+  display: grid;
+  gap: 0.85rem;
+  margin: 0;
+}
+
+.idea-card dl div {
+  display: grid;
+  grid-template-columns: 7.5rem 1fr;
+  gap: 0.8rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.idea-card dt {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.idea-card dd {
+  margin: 0;
+}
+
+.idea-card-swatches {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.idea-card-swatches i {
+  width: 1.1rem;
+  height: 1.1rem;
+  border: 1px solid var(--line);
+}
+
+.idea-card figure {
+  margin: 1.1rem 0 0;
+}
+
+.idea-card img {
+  width: 100%;
+  height: 140px;
+  object-fit: cover;
+}
+
+.idea-card figcaption {
+  margin-top: 0.4rem;
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+.idea-card-note {
+  margin: 1.2rem 0 0;
+  max-width: 22rem;
+  line-height: 1.7;
+}

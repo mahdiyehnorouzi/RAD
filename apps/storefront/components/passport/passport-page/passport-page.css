@@ -1,0 +1,329 @@
+.passport-page {
+  padding-block: clamp(2.5rem, 6vw, 5rem) clamp(5rem, 10vw, 9rem);
+}
+
+.passport-hero {
+  max-width: 42rem;
+}
+
+.passport-hero h1 {
+  font-size: clamp(2.4rem, 6vw, 4.6rem);
+  font-weight: 500;
+  line-height: 1.15;
+  margin: 0.4rem 0 1.1rem;
+}
+
+.passport-edition {
+  margin: 0.6rem 0 0;
+  color: var(--clay);
+  font-size: 0.95rem;
+  letter-spacing: 0.08em;
+}
+
+.passport-once {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0;
+  font-size: clamp(1.15rem, 2vw, 1.4rem);
+  line-height: 1.75;
+}
+
+.passport-once span {
+  color: var(--muted);
+  font-size: 1rem;
+}
+
+.passport-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(220px, 0.7fr);
+  gap: clamp(2rem, 5vw, 4.5rem);
+  margin-top: clamp(2.5rem, 6vw, 4.5rem);
+  align-items: start;
+}
+
+.passport-ledger h2,
+.passport-where h2,
+.passport-life h2,
+.passport-care h2 {
+  font-size: clamp(1.4rem, 3vw, 2rem);
+  font-weight: 500;
+  margin: 0 0 1.25rem;
+}
+
+.passport-ledger dl {
+  display: grid;
+  gap: 1.15rem 0;
+  margin: 0;
+}
+
+.passport-ledger dl div {
+  display: grid;
+  grid-template-columns: minmax(7rem, 0.34fr) 1fr;
+  gap: 1rem;
+  padding-bottom: 1.1rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.passport-ledger dt {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.passport-ledger dd {
+  margin: 0;
+  line-height: 1.75;
+}
+
+.passport-mark {
+  display: grid;
+  gap: 0.85rem;
+  justify-items: start;
+  padding: 1.4rem 0 0;
+}
+
+.passport-mark-stamp {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 4px;
+  width: 108px;
+  padding: 10px;
+  border: 1px solid var(--ink);
+  background: var(--paper);
+}
+
+.passport-mark-stamp i {
+  aspect-ratio: 1;
+  background: transparent;
+}
+
+.passport-mark-stamp i.is-on {
+  background: var(--ink);
+}
+
+.passport-mark p {
+  margin: 0;
+  max-width: 18rem;
+  line-height: 1.75;
+}
+
+.passport-mark b {
+  font-weight: 500;
+}
+
+.passport-mark small {
+  color: var(--muted);
+}
+
+.passport-where,
+.passport-life,
+.passport-care {
+  margin-top: clamp(3.5rem, 8vw, 6.5rem);
+}
+
+.passport-where-now {
+  margin: 0 0 1.5rem;
+  font-size: clamp(1.4rem, 3vw, 2.1rem);
+  line-height: 1.4;
+}
+
+.passport-where ol {
+  display: grid;
+  gap: 0.9rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.passport-where li {
+  display: grid;
+  gap: 0.2rem;
+  padding-block: 0.7rem;
+  border-top: 1px solid var(--line);
+}
+
+.passport-where li span {
+  color: var(--muted);
+}
+
+.passport-life {
+  display: grid;
+  gap: clamp(2rem, 5vw, 3.5rem);
+}
+
+.passport-life figure,
+.passport-life-grid li {
+  margin: 0;
+}
+
+.passport-life img {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: 2px;
+  background: var(--sand);
+}
+
+.passport-life figcaption,
+.passport-life-grid h2 {
+  margin-bottom: 0.8rem;
+}
+
+.passport-life-grid ul {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.passport-life p {
+  margin: 0.7rem 0 0;
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+.passport-life blockquote {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.passport-life blockquote span {
+  display: block;
+  margin-bottom: 0.6rem;
+  color: var(--clay);
+  font-size: 0.8rem;
+}
+
+.passport-life blockquote p {
+  margin: 0;
+  color: var(--ink);
+  font-size: clamp(1.2rem, 2.4vw, 1.65rem);
+  line-height: 1.7;
+}
+
+.passport-care p {
+  max-width: 36rem;
+  margin: 0;
+  line-height: 1.8;
+}
+
+.passport-sold,
+.passport-transfer {
+  margin: 1rem 0 0;
+  line-height: 1.7;
+}
+
+.passport-sold {
+  color: var(--clay);
+}
+
+.passport-transfer {
+  color: var(--muted);
+}
+
+.passport-family,
+.passport-same-feeling {
+  margin-top: clamp(3.5rem, 8vw, 6.5rem);
+}
+
+.passport-family h2,
+.passport-same-feeling h2 {
+  font-size: clamp(1.4rem, 3vw, 2rem);
+  font-weight: 500;
+  margin: 0.4rem 0 0.7rem;
+}
+
+.passport-family p,
+.passport-same-feeling p {
+  max-width: 34rem;
+  margin: 0 0 1.2rem;
+  color: var(--muted);
+}
+
+.passport-family ol,
+.passport-same-feeling ul {
+  margin: 0 0 1.5rem;
+  padding: 0;
+  list-style: none;
+}
+
+.passport-family li,
+.passport-same-feeling li {
+  padding: 0.85rem 0;
+  border-top: 1px solid var(--line);
+}
+
+.passport-family small {
+  display: block;
+  margin-bottom: 0.35rem;
+  color: var(--clay);
+}
+
+.passport-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+  margin-top: clamp(3rem, 6vw, 4.5rem);
+}
+
+.passport-index {
+  padding-block: clamp(2.5rem, 6vw, 5rem) clamp(5rem, 10vw, 9rem);
+}
+
+.passport-index header {
+  max-width: 38rem;
+  margin-bottom: clamp(2.5rem, 6vw, 4rem);
+}
+
+.passport-index h1 {
+  font-size: clamp(2.4rem, 6vw, 4.4rem);
+  font-weight: 500;
+  line-height: 1.15;
+  margin: 0.4rem 0 1rem;
+}
+
+.passport-index header p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.8;
+}
+
+.passport-index ol {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.passport-index a {
+  display: grid;
+  grid-template-columns: 5.5rem 1fr auto;
+  gap: 1rem;
+  align-items: baseline;
+  padding: 1.15rem 0;
+  border-top: 1px solid var(--line);
+}
+
+.passport-index a small {
+  color: var(--clay);
+}
+
+.passport-index a span {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+@media (max-width: 800px) {
+  .passport-layout,
+  .passport-index a {
+    grid-template-columns: 1fr;
+  }
+
+  .passport-ledger dl div {
+    grid-template-columns: 1fr;
+    gap: 0.35rem;
+  }
+}

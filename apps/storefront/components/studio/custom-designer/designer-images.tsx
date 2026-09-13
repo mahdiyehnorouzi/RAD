@@ -30,7 +30,7 @@ export function DesignerImages({
   onAdd: (files: string[]) => void;
   onRemove: (index: number) => void;
 }) {
-  const { t, number } = useLocale();
+  const { t } = useLocale();
   const input = useRef<HTMLInputElement>(null);
 
   async function pick(event: ChangeEvent<HTMLInputElement>) {
@@ -52,10 +52,7 @@ export function DesignerImages({
 
   return (
     <fieldset className="designer-images">
-      <legend>
-        <small>{t("stageOf", { current: number(4), total: number(5) })}</small>
-        {t("designerAddImages")}
-      </legend>
+      <legend>{t("designerAddImages")}</legend>
       <p>{t("designerImagesHelp")}</p>
       <input
         ref={input}

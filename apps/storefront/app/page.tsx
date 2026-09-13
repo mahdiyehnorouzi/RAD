@@ -5,6 +5,7 @@ import {
   HomeHero,
   featuredHomeWorks,
   CertificateSection,
+  TodayInWorkshop,
 } from "@/components/home";
 import { EntryPaths } from "@/components/home/sections";
 import { getCatalogWorks } from "@/lib/catalog/get-catalog-works";
@@ -24,6 +25,7 @@ export default async function Home() {
       />
       <HomeHero />
       <EntryPaths />
+      <TodayInWorkshop />
       <AboutRadPreview />
       <ArchiveSection products={featured} />
       <DifferenceStory />

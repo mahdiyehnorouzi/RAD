@@ -2,6 +2,7 @@
 import { useRef, useState } from "react";
 import type { CSSProperties } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import {
   formatArtworkNumber,
   ProductCard,
@@ -27,11 +28,14 @@ import {
   hasRealProductImage,
   overlayLiveProduct,
 } from "@/lib/catalog/category-defaults";
+import { formatPassportName, passportForProduct, relatedByFeeling } from "@/lib/passport";
+import { WorkMarks } from "@/components/passport";
+import { ButtonLink } from "@/components/ui/button-link";
 import { CategoryDetailIcon, CategoryOrbitItems } from "./category-orbit-items";
 import "./product-detail.css";
 
 export function ProductDetail({ product }: { product: Product }) {
-  const { locale, t, number } = useLocale();
+  const { locale, t, number, href } = useLocale();
   const carouselRef = useRef<HTMLDivElement>(null);
   const [activeImage, setActiveImage] = useState(0);
   const { products, getProduct, loading } = useCatalog();
@@ -62,6 +66,9 @@ export function ProductDetail({ product }: { product: Product }) {
   const artworkNumber = formatArtworkNumber(resolved, number, locale);
   const recordNumber =
     artworkNumber || (locale === "fa" ? "در انتظار شماره" : "NUMBER PENDING");
+  const passport = passportForProduct(resolved);
+  const sold = resolved.status === "sold" || Boolean(passport?.sold);
+  const related = passport ? relatedByFeeling(passport.code) : [];
 
   const sceneStyle = () => {
     const media = resolved.images?.[activeImage];
@@ -178,13 +185,18 @@ export function ProductDetail({ product }: { product: Product }) {
             <div className="pdp-record">
               <span>{locale === "fa" ? "ثبت آرشیو" : "ARCHIVE RECORD"}</span>
               <strong>{recordNumber}</strong>
-              <i>{locale === "fa" ? "۱ / ۱" : "1 / 1"}</i>
+              <i>{sold ? t("archiveSoldMark") : locale === "fa" ? "۱ / ۱" : "1 / 1"}</i>
+              {passport ? (
+                <Link className="pdp-passport-link" href={href(`/passport/${passport.code}`)}>
+                  {t("pdpPassportLink")}
+                </Link>
+              ) : null}
             </div>
             <span className="eyebrow">
               {category} ·{" "}
               {resolved.status === "reserved"
                 ? t("reserved")
-                : resolved.status === "sold"
+                : sold
                   ? t("soldOut")
                   : t("uniqueAvailable")}
             </span>
@@ -201,17 +213,43 @@ export function ProductDetail({ product }: { product: Product }) {
               <small>{category}</small>
             </div>
             <div className="pdp-spec-motion">{renderDetails()}</div>
-            <div className="pdp-actions">
-              <AddToBag product={resolved} />
-              <FavoriteButton slug={resolved.slug} />
-            </div>
-            <p className="shipping">{t("shipping")}</p>
+            {sold ? (
+              <div className="pdp-sold-archive">
+                <p>{t("archiveNeverAgain")}</p>
+                <p>{t("sameFeeling")}</p>
+                {related.length ? (
+                  <ul>
+                    {related.map((item) => (
+                      <li key={item.code}>
+                        <Link href={href(`/passport/${item.code}`)}>
+                          {formatPassportName(item, locale, number)}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+                <ButtonLink href="/shape" outline>
+                  {t("shapeTitle")}
+                </ButtonLink>
+              </div>
+            ) : (
+              <>
+                <div className="pdp-actions">
+                  <AddToBag product={resolved} />
+                  <FavoriteButton slug={resolved.slug} />
+                </div>
+                <p className="shipping">{t("shipping")}</p>
+              </>
+            )}
           </div>
         </div>
         <aside className="pdp-note">
           <span>{locale === "fa" ? "یادداشت اثر" : "WORK NOTE"}</span>
           <p>{copy.story}</p>
         </aside>
+        {passport?.marks?.length && passport.finalPhotos[0] ? (
+          <WorkMarks src={passport.finalPhotos[0].src} marks={passport.marks} />
+        ) : null}
       </section>
       <section className="section shipping-faq">
         <header>

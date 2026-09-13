@@ -26,6 +26,25 @@
 
 .difference-annotations {display:grid;align-content:start;gap:1rem}
 
+.difference-portrait .before-rad header h2,
+.difference-portrait .before-rad-caption,
+.difference-portrait .before-rad-slider .is-active button {
+  color: var(--paper);
+}
+
+.difference-portrait .before-rad header p,
+.difference-portrait .before-rad-slider button {
+  color: #cbb892;
+}
+
+.difference-portrait .before-rad-slider button {
+  border-bottom-color: rgba(247, 242, 233, 0.22);
+}
+
+.difference-portrait .before-rad-slider .is-active button {
+  border-bottom-color: #c77963;
+}
+
 @media(max-width:900px) {
 .difference-stage-panel {grid-template-columns:1fr!important}
 .difference-stage-tabs {grid-template-columns:1fr 1fr!important}

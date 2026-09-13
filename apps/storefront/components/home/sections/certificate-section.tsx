@@ -1,6 +1,7 @@
 "use client";
 
 import { useLocale } from "@/components/i18n";
+import { ButtonLink } from "@/components/ui/button-link";
 import { homeMedia } from "../const";
 import { useInView } from "../hooks";
 import "../motion/reveal.css";
@@ -40,6 +41,7 @@ export function CertificateSection() {
             <li key={fact}>{fact}</li>
           ))}
         </ul>
+        <ButtonLink href="/passport/007">{t("pdpPassportLink")}</ButtonLink>
       </aside>
     </section>
   );

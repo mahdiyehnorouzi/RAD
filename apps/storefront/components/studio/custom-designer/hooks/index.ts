@@ -1,1 +1,1 @@
-export { useDesigner } from "./use-designer";
+export { freedomToPermission, useDesigner } from "./use-designer";

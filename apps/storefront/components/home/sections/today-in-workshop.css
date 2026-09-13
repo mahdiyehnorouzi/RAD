@@ -1,0 +1,43 @@
+.today-workshop {
+  padding-inline: var(--page);
+  padding-block: clamp(3rem, 7vw, 6rem);
+}
+
+.today-workshop-card {
+  display: grid;
+  grid-template-columns: minmax(160px, 0.42fr) 1fr;
+  gap: clamp(1.25rem, 3vw, 2.5rem);
+  align-items: center;
+  max-width: 46rem;
+}
+
+.today-workshop-card img {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: 2px;
+  background: var(--sand);
+}
+
+.today-workshop-card h2 {
+  font-size: clamp(2rem, 4vw, 3.2rem);
+  font-weight: 500;
+  margin: 0.35rem 0 0.6rem;
+}
+
+.today-workshop-card p {
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+.today-workshop-card small {
+  display: block;
+  margin-top: 0.45rem;
+  color: var(--muted);
+}
+
+@media (max-width: 700px) {
+  .today-workshop-card {
+    grid-template-columns: 1fr;
+  }
+}

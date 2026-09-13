@@ -26,11 +26,14 @@ export function Footer() {
           <b>{t("footerStudio")}</b>
           <Link href={href("/products")}>{t("footerUnique")}</Link>
           <Link href={href("/studio")}>{t("footerCustom")}</Link>
-          <Link href={href("/making")}>{t("makingNav")}</Link>
+          <Link href={href("/archive")}>{t("footerArchive")}</Link>
+          <Link href={href("/shape")}>{t("footerShape")}</Link>
         </section>
         <section>
           <b>{t("footerRad")}</b>
           <Link href={href("/about")}>{t("footerStory")}</Link>
+          <Link href={href("/now")}>{t("footerNow")}</Link>
+          <Link href={href("/passport")}>{t("footerPassport")}</Link>
           <Link href={href("/differences")}>{t("museumTitle")}</Link>
           <Link href={href("/account")}>{t("profile")}</Link>
         </section>

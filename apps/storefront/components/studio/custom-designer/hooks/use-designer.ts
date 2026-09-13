@@ -1,40 +1,49 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { ProductCategory } from "@rad/types";
 import { artworkCategoryById } from "@/lib/catalog/artwork";
-import { DESIGNER_STEPS, type DesignerStep } from "../const";
+import { DESIGNER_STEPS, MAX_DESIGNER_COLORS, type DesignerStep } from "../const";
 
 const maxImages = 4;
 
+export function freedomToPermission(value: number) {
+  if (value <= 33) return "faithful";
+  if (value <= 66) return "hand";
+  return "material";
+}
+
 export function useDesigner() {
-  const [step, setStep] = useState<DesignerStep>("type");
-  const [reached, setReached] = useState<DesignerStep>("type");
+  const [step, setStep] = useState<DesignerStep>("spark");
+  const [reached, setReached] = useState<DesignerStep>("spark");
   const [category, setCategory] = useState<ProductCategory | "">("");
   const [prompt, setPrompt] = useState("");
   const [intendedUse, setIntendedUse] = useState("");
-  const [status, setStatus] = useState<"idle" | "loading" | "done" | "error">(
-    "idle",
-  );
   const [image, setImage] = useState("");
   const [uploads, setUploads] = useState<string[]>([]);
+  const [sketch, setSketch] = useState("");
+  const [hasVoice, setHasVoice] = useState(false);
+  const [colors, setColors] = useState<string[]>([]);
+  const [feeling, setFeeling] = useState("");
+  const [freedom, setFreedom] = useState(70);
   const [error, setError] = useState("");
   const [brief, setBrief] = useState<Record<string, string>>({});
-  const [direction, setDirection] = useState(0);
+  const [ideaNumber, setIdeaNumber] = useState(24);
+  useEffect(() => {
+    setIdeaNumber(18 + Math.floor(Math.random() * 40));
+  }, []);
   const abort = useRef<AbortController | null>(null);
   const selectedCategory = category ? artworkCategoryById(category) : null;
   const stepIndex = DESIGNER_STEPS.indexOf(step);
   const reachedIndex = DESIGNER_STEPS.indexOf(reached);
+  const hasSpark = Boolean(
+    prompt.trim() || uploads.length || sketch || hasVoice || colors.length || feeling,
+  );
 
   const canAdvance = useMemo(() => {
+    if (step === "spark") return hasSpark;
     if (step === "type") return Boolean(category);
-    if (step === "details") {
-      return Boolean(
-        selectedCategory?.fields.every((field) => brief[field.key]),
-      );
-    }
-    if (step === "idea") return Boolean(prompt.trim());
-    if (step === "images") return true;
+    if (step === "freedom") return true;
     return Boolean(intendedUse.trim());
-  }, [brief, category, intendedUse, prompt, selectedCategory, step]);
+  }, [category, hasSpark, intendedUse, step]);
 
   function goTo(next: DesignerStep) {
     const nextIndex = DESIGNER_STEPS.indexOf(next);
@@ -58,10 +67,14 @@ export function useDesigner() {
     setCategory(next);
     setBrief({});
     setImage("");
-    setUploads([]);
-    setStatus("idle");
-    setError("");
-    setReached("type");
+  }
+
+  function toggleColor(value: string) {
+    setColors((current) => {
+      if (current.includes(value)) return current.filter((item) => item !== value);
+      if (current.length >= MAX_DESIGNER_COLORS) return current;
+      return [...current, value];
+    });
   }
 
   function addUploads(files: string[]) {
@@ -79,11 +92,16 @@ export function useDesigner() {
     canAdvance,
     category,
     chooseCategory,
-    direction,
+    colors,
     error,
+    feeling,
+    freedom,
     goBack,
     goNext,
     goTo,
+    hasSpark,
+    hasVoice,
+    ideaNumber,
     image,
     intendedUse,
     maxImages,
@@ -93,15 +111,18 @@ export function useDesigner() {
     removeUpload,
     selectedCategory,
     setBrief,
-    setDirection,
     setError,
+    setFeeling,
+    setFreedom,
+    setHasVoice,
     setImage,
     setIntendedUse,
     setPrompt,
-    setStatus,
-    status,
+    setSketch,
+    sketch,
     step,
     stepIndex,
+    toggleColor,
     uploads,
   };
 }

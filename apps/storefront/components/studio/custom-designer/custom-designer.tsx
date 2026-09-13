@@ -1,21 +1,20 @@
 "use client";
 import "./custom-designer.css";
 
-import { FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { ArtworkVisual } from "@/components/product";
+import type { CSSProperties } from "react";
 import { useLocale } from "@/components/i18n";
 import { useCommerce } from "@/components/commerce";
 import { useMaking } from "@/hooks/use-making-workspace";
 import { MakingRequest } from "./making-request";
 import { DesignerNav } from "./designer-nav";
-import { DesignerImages } from "./designer-images";
-import { useDesigner } from "./hooks";
+import { SparkInput } from "./spark-input";
+import { FreedomSlider } from "./freedom-slider";
+import { IdeaCard } from "./idea-card";
+import { freedomToPermission, useDesigner } from "./hooks";
 import { useBackNavigation } from "@/hooks/use-back-navigation";
-import {
-  artworkCategories,
-  designPresets,
-} from "@/lib/catalog/artwork";
+import { artworkCategories } from "@/lib/catalog/artwork";
+import { DESIGNER_FEELINGS } from "./const";
 
 export function CustomDesigner() {
   const { t, locale, number } = useLocale();
@@ -25,78 +24,62 @@ export function CustomDesigner() {
   const { submitDesign } = useMaking();
   const designer = useDesigner();
   const {
-    abort,
-    brief,
     canAdvance,
     category,
     chooseCategory,
+    colors,
     error,
+    feeling,
+    freedom,
     goBack,
     goNext,
     goTo,
-    image,
+    hasVoice,
+    ideaNumber,
     intendedUse,
     prompt,
     reachedIndex,
     selectedCategory,
-    setBrief,
     setError,
-    setImage,
+    setFeeling,
+    setFreedom,
+    setHasVoice,
     setIntendedUse,
     setPrompt,
-    setStatus,
-    status,
+    setSketch,
+    sketch,
     step,
     uploads,
   } = designer;
-  const presets = designPresets[locale];
-
-  async function generate(event: FormEvent) {
-    event.preventDefault();
-    if (!category || !prompt.trim() || status === "loading") return;
-    setStatus("loading");
-    setError("");
-    abort.current = new AbortController();
-    try {
-      const response = await fetch("/backend/design", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          prompt: [
-            selectedCategory?.label[locale],
-            prompt,
-            ...Object.values(brief).filter(Boolean),
-          ].join("، "),
-        }),
-        signal: abort.current.signal,
-      });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || t("designError"));
-      setImage(data.image);
-      setStatus("done");
-    } catch (err) {
-      if ((err as Error).name !== "AbortError") {
-        setError((err as Error).message);
-        setStatus("error");
-      } else setStatus("idle");
-    }
-  }
+  const feelingLabel = DESIGNER_FEELINGS.find((item) => item.id === feeling)?.label[locale];
 
   function submitCommission() {
     if (!canAdvance) return;
     void (async () => {
+      const references = [
+        prompt.trim(),
+        feelingLabel ? `${locale === "fa" ? "حس" : "Mood"}: ${feelingLabel}` : "",
+        colors.length ? `${locale === "fa" ? "رنگ" : "Colours"}: ${colors.join(" / ")}` : "",
+        `${locale === "fa" ? "آزادی سازنده" : "Maker freedom"}: ${freedom}%`,
+        hasVoice ? (locale === "fa" ? "یادداشت صوتی همراه است." : "A voice note is attached.") : "",
+      ].filter(Boolean);
       const commission = await submitDesign({
         customerName: user?.name ?? (locale === "fa" ? "مهمان" : "Guest"),
         brief: {
-          concept: prompt.trim() || (locale === "fa" ? "طرح استودیو" : "Studio concept"),
-          dimensions: brief.size ?? "",
+          concept: references.join("\n") || (locale === "fa" ? "ایده استودیو" : "Studio idea"),
+          dimensions: "",
           material: selectedCategory?.label[locale] ?? "",
           intendedUse,
-          budget: brief.budget ?? "",
-          permission: "material",
+          budget: "",
+          permission: freedomToPermission(freedom),
           category: category || "ceramics",
-          image: image || uploads[0],
-          images: uploads,
+          image: sketch || uploads[0],
+          images: [sketch, ...uploads].filter(Boolean),
+          colors,
+          feeling,
+          freedom,
+          sketch: sketch || undefined,
+          hasVoice,
         },
       });
       router.push(`/making/${commission.id}`);
@@ -112,18 +95,35 @@ export function CustomDesigner() {
         onSelect={goTo}
       />
       <div className="designer-grid">
-        <form
-          className="designer-form"
-          onSubmit={step === "images" ? generate : (event) => event.preventDefault()}
-          noValidate
-        >
-          <h1>{t("designerFreeTitle")}</h1>
+        <form className="designer-form" onSubmit={(event) => event.preventDefault()} noValidate>
+          <h1>{t("designerSparkTitle")}</h1>
           <p className="designer-promise">{t("designerFreeIdea")}</p>
+
+          {step === "spark" ? (
+            <SparkInput
+              prompt={prompt}
+              setPrompt={setPrompt}
+              uploads={uploads}
+              maxImages={designer.maxImages}
+              error={error}
+              onError={setError}
+              onAdd={designer.addUploads}
+              onRemove={designer.removeUpload}
+              sketch={sketch}
+              onSketch={setSketch}
+              hasVoice={hasVoice}
+              onVoice={setHasVoice}
+              colors={colors}
+              onToggleColor={designer.toggleColor}
+              feeling={feeling}
+              onFeeling={setFeeling}
+            />
+          ) : null}
 
           {step === "type" ? (
             <fieldset className="design-category-fieldset">
               <legend>
-                <small>{t("stepOne")}</small>
+                <small>{t("stepTwo")}</small>
                 {t("chooseArtworkType")}
               </legend>
               <div className="design-category-grid">
@@ -141,7 +141,7 @@ export function CustomDesigner() {
                         {
                           "--swatch": item.preview.color,
                           "--swatch-accent": item.preview.accent,
-                        } as React.CSSProperties
+                        } as CSSProperties
                       }
                       aria-hidden="true"
                     />
@@ -152,97 +152,8 @@ export function CustomDesigner() {
             </fieldset>
           ) : null}
 
-          {step === "details" && selectedCategory ? (
-            <fieldset className="brief-fields">
-              <legend>
-                <small>{t("stepTwo")}</small>
-                {locale === "fa"
-                  ? `جزئیات ${selectedCategory.shortLabel.fa}`
-                  : `${selectedCategory.shortLabel.en} details`}
-              </legend>
-              {selectedCategory.fields.map((field) => (
-                <div className="brief-choice" key={field.key}>
-                  <span>{field.label[locale]}</span>
-                  <div>
-                    {field.options[locale].map((option) => (
-                      <button
-                        type="button"
-                        key={option}
-                        className={brief[field.key] === option ? "active" : ""}
-                        onClick={() =>
-                          setBrief((current) => ({
-                            ...current,
-                            [field.key]: option,
-                          }))
-                        }
-                        aria-pressed={brief[field.key] === option}
-                      >
-                        {option}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </fieldset>
-          ) : null}
-
-          {step === "idea" ? (
-            <>
-              <label htmlFor="artwork-prompt">{t("promptLabel")}</label>
-              <textarea
-                id="artwork-prompt"
-                className="resize-none designer-prompt"
-                value={prompt}
-                onChange={(event) => setPrompt(event.target.value)}
-                placeholder={t("promptPlaceholder")}
-                aria-describedby="prompt-help"
-              />
-              <small id="prompt-help">{t("promptHelp")}</small>
-              <div className="preset-row" aria-label={t("suggestedWords")}>
-                {presets.map((preset) => (
-                  <button
-                    type="button"
-                    key={preset}
-                    onClick={() =>
-                      setPrompt(
-                        (current) =>
-                          `${current}${current ? (locale === "fa" ? "، " : ", ") : ""}${preset}`,
-                      )
-                    }
-                  >
-                    {preset}
-                  </button>
-                ))}
-              </div>
-            </>
-          ) : null}
-
-          {step === "images" ? (
-            <>
-              <DesignerImages
-                uploads={uploads}
-                maxImages={designer.maxImages}
-                error={error}
-                onError={setError}
-                onAdd={designer.addUploads}
-                onRemove={designer.removeUpload}
-              />
-              <div className="form-actions">
-                {status === "loading" ? (
-                  <button
-                    type="button"
-                    className="button danger"
-                    onClick={() => abort.current?.abort()}
-                  >
-                    {t("stopGeneration")}
-                  </button>
-                ) : (
-                  <button type="submit" className="button" disabled={!prompt.trim()}>
-                    {locale === "fa" ? t("imagineIt") : t("imagineIt")}
-                  </button>
-                )}
-              </div>
-            </>
+          {step === "freedom" ? (
+            <FreedomSlider value={freedom} onChange={setFreedom} />
           ) : null}
 
           {step === "send" ? (
@@ -258,7 +169,7 @@ export function CustomDesigner() {
               <button
                 type="button"
                 className="button outline designer-back"
-                onClick={step === "type" ? leaveStudio : goBack}
+                onClick={step === "spark" ? leaveStudio : goBack}
               >
                 {t("designerBack")}
               </button>
@@ -268,9 +179,7 @@ export function CustomDesigner() {
                 disabled={!canAdvance}
                 onClick={goNext}
               >
-                {step === "images" && !uploads.length && !image
-                  ? t("designerSkipImages")
-                  : t("designerNext")}
+                {t("designerNext")}
               </button>
             </div>
           ) : (
@@ -282,39 +191,18 @@ export function CustomDesigner() {
           )}
         </form>
 
-        <section className={`designer-preview ${status}`} aria-live="polite">
-          {image ? (
-            <img src={image} alt={t("generatedAlt")} />
-          ) : uploads[0] ? (
-            <img src={uploads[0]} alt={t("designerYourImages")} />
-          ) : selectedCategory ? (
-            <>
-              <div className="preview-orbit" />
-              <ArtworkVisual
-                visual={selectedCategory.visual}
-                color={selectedCategory.preview.color}
-                accent={selectedCategory.preview.accent}
-                className="designer-artwork"
-              />
-              <p>{status === "loading" ? t("generating") : t("preview")}</p>
-            </>
-          ) : (
-            <div className="designer-empty-preview">
-              <span>1 / 1</span>
-              <p>{t("chooseCategoryToBegin")}</p>
-            </div>
-          )}
-          {status === "done" && (
-            <div className="preview-actions">
-              <button
-                type="button"
-                className="button light"
-                onClick={() => setStatus("idle")}
-              >
-                {t("anotherVersion")}
-              </button>
-            </div>
-          )}
+        <section className="designer-preview idea-preview" aria-live="polite">
+          <IdeaCard
+            ideaNumber={ideaNumber}
+            prompt={prompt}
+            feeling={feeling}
+            categoryLabel={selectedCategory?.shortLabel[locale] ?? ""}
+            colors={colors}
+            uploads={uploads}
+            sketch={sketch}
+            hasVoice={hasVoice}
+            freedom={freedom}
+          />
         </section>
       </div>
     </div>

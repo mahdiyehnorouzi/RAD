@@ -4,6 +4,7 @@ import { useCommerce } from "@/components/commerce";
 import { useLocale } from "@/components/i18n";
 import { AccountShell } from "../account-shell";
 import { AccountLogin } from "./account-login";
+import { Collection } from "../collection";
 import { RecentActivity } from "./recent-activity";
 import "./account-page.css";
 
@@ -32,6 +33,7 @@ export function AccountPage() {
             </div>
           </div>
         </header>
+        <Collection />
         <RecentActivity />
       </section>
     </AccountShell>

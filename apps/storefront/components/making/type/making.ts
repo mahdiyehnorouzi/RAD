@@ -44,6 +44,11 @@ export interface MakingBrief {
   category: string;
   image?: string;
   images?: string[];
+  colors?: string[];
+  feeling?: string;
+  freedom?: number;
+  sketch?: string;
+  hasVoice?: boolean;
 }
 
 export interface StageMessage {

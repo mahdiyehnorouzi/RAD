@@ -1,0 +1,128 @@
+.before-rad {
+  display: grid;
+  gap: 1.25rem;
+  margin-top: clamp(3.5rem, 8vw, 6.5rem);
+}
+
+.before-rad header h2 {
+  font-size: clamp(2rem, 4.4vw, 3.4rem);
+  font-weight: 500;
+  line-height: 1.2;
+  margin: 0.35rem 0 0.75rem;
+}
+
+.before-rad header p {
+  max-width: 36rem;
+  margin: 0;
+  color: var(--muted);
+  font-size: 1.05rem;
+  line-height: 1.8;
+}
+
+.before-rad-surface {
+  position: relative;
+  min-height: min(72vw, 520px);
+  overflow: hidden;
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--sand) 55%, var(--paper));
+  cursor: ew-resize;
+  touch-action: none;
+  user-select: none;
+}
+
+.before-rad-surface figure {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  pointer-events: none;
+}
+
+.before-rad-surface img,
+.before-rad-field {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.before-rad-field {
+  background:
+    radial-gradient(circle at 70% 30%, var(--before-accent), transparent 42%),
+    var(--before-color);
+}
+
+.before-rad-hint {
+  position: absolute;
+  inset-inline-start: 1rem;
+  bottom: 1rem;
+  z-index: 2;
+  color: var(--paper);
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  mix-blend-mode: difference;
+}
+
+.before-rad-slider input {
+  width: 100%;
+  margin: 0.4rem 0 0.9rem;
+  accent-color: var(--clay);
+  cursor: pointer;
+}
+
+.before-rad-slider ol {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.before-rad-slider button {
+  width: 100%;
+  padding: 0.45rem 0.2rem;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.before-rad-slider .is-active button {
+  color: var(--ink);
+  border-bottom-color: var(--clay);
+}
+
+.before-rad-caption {
+  max-width: 34rem;
+  margin: 0;
+  font-size: 1.05rem;
+  line-height: 1.8;
+}
+
+.before-rad .visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .before-rad-surface figure {
+    transition: none;
+  }
+}
+
+@media (max-width: 700px) {
+  .before-rad-surface {
+    min-height: 72vw;
+  }
+
+  .before-rad-slider button {
+    font-size: 0.78rem;
+  }
+}

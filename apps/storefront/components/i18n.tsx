@@ -63,6 +63,10 @@ export function LocaleProvider({ children }: { children: React.ReactNode }) {
       ["workshop", "titleWorkshop"],
       ["orders", "titleOrders"],
       ["differences", "titleDifferences"],
+      ["passport", "titlePassport"],
+      ["archive", "titleArchive"],
+      ["shape", "titleShape"],
+      ["now", "titleNow"],
       ["about", "navAbout"],
     ];
     const section: MessageKey | undefined =
