@@ -14,7 +14,6 @@ import { useDesigner } from "./hooks";
 import { useBackNavigation } from "@/hooks/use-back-navigation";
 import {
   artworkCategories,
-  designDirections,
   designPresets,
 } from "@/lib/catalog/artwork";
 
@@ -31,7 +30,6 @@ export function CustomDesigner() {
     canAdvance,
     category,
     chooseCategory,
-    direction,
     error,
     goBack,
     goNext,
@@ -42,7 +40,6 @@ export function CustomDesigner() {
     reachedIndex,
     selectedCategory,
     setBrief,
-    setDirection,
     setError,
     setImage,
     setIntendedUse,
@@ -53,7 +50,6 @@ export function CustomDesigner() {
     uploads,
   } = designer;
   const presets = designPresets[locale];
-  const directions = designDirections[locale];
 
   async function generate(event: FormEvent) {
     event.preventDefault();
@@ -70,7 +66,6 @@ export function CustomDesigner() {
             selectedCategory?.label[locale],
             prompt,
             ...Object.values(brief).filter(Boolean),
-            directions[direction],
           ].join("، "),
         }),
         signal: abort.current.signal,
@@ -122,18 +117,8 @@ export function CustomDesigner() {
           onSubmit={step === "images" ? generate : (event) => event.preventDefault()}
           noValidate
         >
-          <span className="eyebrow">{t("designerEyebrow")}</span>
-          <h1>
-            {locale === "fa"
-              ? "چیزی را که هنوز وجود ندارد، تصور کن."
-              : "Imagine what does not exist yet."}
-          </h1>
-          <p>
-            {locale === "fa"
-              ? "رَد شما را به هنرمند و مسیر ساخت مناسب متصل می‌کند."
-              : "RAD connects your idea to the right maker and process."}
-          </p>
-          {step === "type" ? <p className="designer-free-note">{t("designerFreeIdea")}</p> : null}
+          <h1>{t("designerFreeTitle")}</h1>
+          <p className="designer-promise">{t("designerFreeIdea")}</p>
 
           {step === "type" ? (
             <fieldset className="design-category-fieldset">
@@ -226,20 +211,6 @@ export function CustomDesigner() {
                     }
                   >
                     {preset}
-                  </button>
-                ))}
-              </div>
-              <div className="concept-directions" aria-label={t("designDirection")}>
-                {directions.map((label, index) => (
-                  <button
-                    type="button"
-                    key={label}
-                    className={direction === index ? "active" : ""}
-                    onClick={() => setDirection(index)}
-                    aria-pressed={direction === index}
-                  >
-                    <small>0{index + 1}</small>
-                    <span>{label}</span>
                   </button>
                 ))}
               </div>

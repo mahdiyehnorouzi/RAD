@@ -64,21 +64,6 @@ export function DifferenceStory() {
       className={`difference-story home-reveal${inView ? " is-visible" : ""}`}
       aria-labelledby="difference-story-title"
     >
-      <header className="difference-story-heading">
-        <span className="eyebrow reveal-item" data-reveal="eyebrow">
-          {t("differenceEyebrow")}
-        </span>
-        <h2
-          id="difference-story-title"
-          className="reveal-item"
-          data-reveal="heading"
-        >
-          {t("homeDifferenceTitle")}
-        </h2>
-        <p className="difference-story-maker reveal-item" data-reveal="body">
-          {storyPortrait.maker[locale]} · {storyPortrait.code}
-        </p>
-      </header>
       <div
         ref={scrollerRef}
         className="difference-scroll"
@@ -120,28 +105,60 @@ export function DifferenceStory() {
             })}
           </div>
           <div className="difference-scroll-panel">
-            <ol className="difference-scroll-progress" aria-hidden="true">
-              {differenceStages.map((item, index) => (
-                <li
-                  key={item.id}
-                  className={
-                    index === stage ? "is-active" : index < stage ? "is-done" : ""
-                  }
+            <div className="difference-scroll-progress">
+              <header className="difference-story-heading">
+                <h2
+                  id="difference-story-title"
+                  className="reveal-item"
+                  data-reveal="heading"
                 >
-                  {item.index[locale]}
-                </li>
-              ))}
-            </ol>
+                  {t("homeDifferenceTitle")}
+                </h2>
+                <p className="difference-story-maker reveal-item" data-reveal="body">
+                  {storyPortrait.maker[locale]} · {storyPortrait.code}
+                </p>
+              </header>
+              <ol aria-hidden="true">
+                {differenceStages.map((item, index) => (
+                  <li
+                    key={item.id}
+                    className={
+                      index === stage
+                        ? "is-active"
+                        : index < stage
+                          ? "is-done"
+                          : ""
+                    }
+                  >
+                    {item.index[locale]}
+                  </li>
+                ))}
+              </ol>
+            </div>
             <div className="difference-scroll-copy" aria-live="polite">
               <div key={active.id} className="difference-scroll-copy-inner">
                 <h3>{active.title[locale]}</h3>
                 <p>{copy}</p>
               </div>
             </div>
+            <div className="difference-story-actions reveal-item" data-reveal="cta">
+              <ButtonLink href={`/differences/${storyPortrait.id}`} outline>
+                {t("differenceOpen")}
+              </ButtonLink>
+              <ButtonLink href="/differences" outline>
+                {t("museumTitle")}
+              </ButtonLink>
+            </div>
           </div>
         </div>
       </div>
       <div className="difference-scroll-static">
+        <header className="difference-story-heading">
+          <h2>{t("homeDifferenceTitle")}</h2>
+          <p className="difference-story-maker">
+            {storyPortrait.maker[locale]} · {storyPortrait.code}
+          </p>
+        </header>
         {differenceStages.map((item) => {
           const photo = storyPortrait.stageImages?.[item.id];
           return (
@@ -161,14 +178,14 @@ export function DifferenceStory() {
             </article>
           );
         })}
-      </div>
-      <div className="difference-story-actions reveal-item" data-reveal="cta">
-        <ButtonLink href={`/differences/${storyPortrait.id}`} outline>
-          {t("differenceOpen")}
-        </ButtonLink>
-        <ButtonLink href="/differences" outline>
-          {t("museumTitle")}
-        </ButtonLink>
+        <div className="difference-story-actions">
+          <ButtonLink href={`/differences/${storyPortrait.id}`} outline>
+            {t("differenceOpen")}
+          </ButtonLink>
+          <ButtonLink href="/differences" outline>
+            {t("museumTitle")}
+          </ButtonLink>
+        </div>
       </div>
     </section>
   );

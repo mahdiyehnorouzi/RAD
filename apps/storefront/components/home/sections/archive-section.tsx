@@ -28,14 +28,14 @@ export function ArchiveSection({
       ref={setSectionRef}
       className={`section collection archive-section home-reveal${inView ? " is-visible" : ""}`}
     >
+      <span className="eyebrow reveal-item" data-reveal="eyebrow">
+        {t("archiveEyebrow")}
+      </span>
       <header
         className={`section-heading${pinned ? " is-pinned" : ""}`}
         ref={headingRef}
       >
         <div className="archive-heading-pin">
-          <span className="eyebrow reveal-item" data-reveal="eyebrow">
-            {t("archiveEyebrow")}
-          </span>
           <div className="reveal-item" data-reveal="cta">
             <h2 className="reveal-item" data-reveal="heading">
               {t("archiveTitle")}
@@ -46,7 +46,7 @@ export function ArchiveSection({
           </div>
         </div>
       </header>
-      {loading ? (
+      {loading && products.length === 0 ? (
         <ProductGridSkeleton />
       ) : (
         <div className="product-grid home-products">

@@ -267,8 +267,13 @@ export const en = {
   shareList: "Share this list",
   linkCopied: "Link ready ✓",
   shareFavoritesText: "See these one-of-one works from RAD Studio.",
-  emptyFavorites: "You have not saved a work yet.",
-  emptyFavoritesBody: "Select the heart on any work to add it to this list.",
+  emptyFavorites: "You have not set a work aside yet.",
+  emptyFavoritesBody:
+    "An artwork is rarely an instant decision. The heart on each work keeps it here to look at again.",
+  emptyFavoritesAction: "View works",
+  favoritesWaitingTitle: "Your list is being laid out.",
+  favoritesWaitingBody: "We are bringing the works you saved.",
+  favoritesWaitingCount: "Reading the list",
   pwaEyebrow: "RAD APP",
   pwaTitle: "RAD on your device",
   pwaInstallHelp:
@@ -317,7 +322,8 @@ export const en = {
   designerBody:
     "Choose an artwork category, then describe its form, colour, material, and mood. AI will create a first image for your conversation with a maker.",
   designerFreeIdea:
-    "Submitting an idea is free. After the artist reviews it, making time and cost are sent to you.",
+    "After the artist reviews it, making time and cost are sent to you.",
+  designerFreeTitle: "Submitting an idea is free.",
   promptLabel: "Describe your piece",
   promptPlaceholder:
     "For example: a textile wall piece with free lines, earth tones, and natural texture…",
@@ -408,9 +414,6 @@ export const en = {
     "A finished work only has payment, packing, and delivery. A custom piece has artist review and its own making path.",
   ordersEntryShop: "Track a shop order",
   viewOrders: "View orders",
-  finalCtaEyebrow: "YOUR OBJECT",
-  finalCtaLead: "Do you have an idea for an object?",
-  finalCtaTitle: "Start its making path in a few minutes.",
   artworkCategoriesHeading: "Artwork categories",
   swipeToSeeMore: "Swipe to see more",
   filterCategoriesAria: "Filter artwork categories",
@@ -433,7 +436,7 @@ export const en = {
   designerConnect: "RAD connects your idea to the right maker and process.",
   stepOne: "STEP ONE",
   stepTwo: "STEP TWO",
-  chooseArtworkType: "What would you like to commission?",
+  chooseArtworkType: "What kind of work?",
   promptChooseCategory: "Choose an artwork category first…",
   suggestedWords: "Suggested words",
   designDirection: "Design direction",

@@ -310,7 +310,7 @@ export function ProductDetail({ product }: { product: Product }) {
           </div>
         </header>
         <div ref={carouselRef} className="related-carousel">
-          {loading ? (
+          {loading && products.length === 0 ? (
             <ProductGridSkeleton count={3} className="related-carousel" />
           ) : (
             products

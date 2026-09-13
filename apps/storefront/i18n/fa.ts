@@ -264,8 +264,13 @@ export const fa = {
   shareList: "اشتراک‌گذاری فهرست",
   linkCopied: "لینک آماده شد ✓",
   shareFavoritesText: "این آثار یگانه از استودیو رَد را ببینید.",
-  emptyFavorites: "هنوز اثری ذخیره نکرده‌اید.",
-  emptyFavoritesBody: "روی نشان قلب هر اثر بزنید تا به این فهرست اضافه شود.",
+  emptyFavorites: "هنوز اثری کنار نگذاشته‌اید.",
+  emptyFavoritesBody:
+    "خرید اثر هنری تصمیم یک‌لحظه‌ای نیست. قلب روی هر اثر، آن را برای دیدن دوباره نگه می‌دارد.",
+  emptyFavoritesAction: "دیدن آثار",
+  favoritesWaitingTitle: "فهرست در حال چیده‌شدن است.",
+  favoritesWaitingBody: "آثار ذخیره‌شده‌تان را می‌آوریم.",
+  favoritesWaitingCount: "در حال خواندن فهرست",
   pwaEyebrow: "برنامه رَد",
   pwaTitle: "رَد روی دستگاه شما",
   pwaInstallHelp:
@@ -313,7 +318,8 @@ export const fa = {
   designerBody:
     "ابتدا نوع اثر را انتخاب کنید، سپس فرم، رنگ، متریال و حس آن را بنویسید؛ هوش مصنوعی یک تصویر اولیه برای گفت‌وگو با هنرمند می‌سازد.",
   designerFreeIdea:
-    "ثبت ایده رایگان است. پس از بررسی هنرمند، زمان و هزینه ساخت برای شما ارسال می‌شود.",
+    "پس از بررسی هنرمند، زمان و هزینه ساخت برای شما ارسال می‌شود.",
+  designerFreeTitle: "ثبت ایده رایگان است.",
   promptLabel: "توصیف قطعه‌ی شما",
   promptPlaceholder:
     "مثلاً یک دیوارکوب پارچه‌ای با خطوط آزاد، رنگ‌های خاکی و بافت طبیعی…",
@@ -402,9 +408,6 @@ export const fa = {
     "اثر آماده فقط پرداخت، بسته‌بندی و ارسال دارد. طرح اختصاصی بازبینی هنرمند و مسیر ساخت خودش را دارد.",
   ordersEntryShop: "پیگیری خرید آماده",
   viewOrders: "دیدن سفارش‌ها",
-  finalCtaEyebrow: "قطعه شما",
-  finalCtaLead: "ایده‌ای برای یک شیء دارید؟",
-  finalCtaTitle: "در چند دقیقه مسیر ساخت آن را شروع کنید.",
   artworkCategoriesHeading: "دسته‌بندی آثار",
   swipeToSeeMore: "برای دیدن بیشتر بکشید",
   filterCategoriesAria: "فیلتر دسته‌بندی آثار",

@@ -1,34 +1,33 @@
-"use client";
-
 import {
   ArchiveSection,
-  AboutRadPreview,
-  CertificateSection,
   DifferenceStory,
-  EntryPaths,
-  EvidenceFilm,
-  FinalCta,
+  AboutRadPreview,
   HomeHero,
-  HomeProcessSection,
   featuredHomeWorks,
+  CertificateSection,
 } from "@/components/home";
-import { useCatalog } from "@/components/catalog/catalog-provider";
+import { EntryPaths } from "@/components/home/sections";
+import { getCatalogWorks } from "@/lib/catalog/get-catalog-works";
+import { productListJsonLd, safeJsonLd } from "@/lib/seo";
 
-export default function Home() {
-  const { products, loading } = useCatalog();
+export default async function Home() {
+  const products = await getCatalogWorks();
   const featured = featuredHomeWorks(products);
 
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: safeJsonLd(productListJsonLd(featured, "/")),
+        }}
+      />
       <HomeHero />
       <EntryPaths />
-      <ArchiveSection products={featured} loading={loading} />
       <AboutRadPreview />
+      <ArchiveSection products={featured} />
       <DifferenceStory />
-      <EvidenceFilm />
-      <HomeProcessSection />
       <CertificateSection />
-      <FinalCta />
     </>
   );
 }
