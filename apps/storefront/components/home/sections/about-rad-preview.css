@@ -1,0 +1,77 @@
+.about-rad-preview {
+  display: grid;
+  grid-template-columns: minmax(0, 7fr) minmax(18rem, 4fr);
+  gap: clamp(2.5rem, 8vw, 9rem);
+  align-items: center;
+  background: var(--paper);
+}
+
+.about-rad-preview-visual {
+  position: relative;
+  min-height: clamp(30rem, 62vw, 48rem);
+  margin: 0;
+  overflow: hidden;
+}
+
+.about-rad-preview-visual img {
+  object-fit: cover;
+  object-position: 54% center;
+  transition: transform 900ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.about-rad-preview-visual figcaption {
+  position: absolute;
+  inset-inline-start: 1rem;
+  bottom: 1rem;
+  padding: 0.22rem 0.5rem;
+  background: var(--paper);
+  color: var(--moss);
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+}
+
+.about-rad-preview-copy {
+  max-width: 33rem;
+}
+
+.about-rad-preview-copy h2 {
+  margin: 0 0 clamp(2rem, 5vw, 4rem);
+  font-size: clamp(2.8rem, 5.5vw, 6rem);
+  font-weight: 400;
+  line-height: 1.08;
+}
+
+.about-rad-preview-copy p {
+  margin: 0 0 1.2rem;
+  color: color-mix(in srgb, var(--ink) 82%, transparent);
+  line-height: 2;
+}
+
+.about-rad-preview-copy .button {
+  margin-top: 1.75rem;
+}
+
+.about-rad-preview-copy .button svg {
+  width: 1.05rem;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .about-rad-preview:hover .about-rad-preview-visual img {
+    transform: scale(1.018);
+  }
+}
+
+@media (max-width: 760px) {
+  .about-rad-preview {
+    grid-template-columns: 1fr;
+    gap: 3rem;
+  }
+
+  .about-rad-preview-visual {
+    min-height: 31rem;
+  }
+
+  .about-rad-preview-copy {
+    max-width: none;
+  }
+}

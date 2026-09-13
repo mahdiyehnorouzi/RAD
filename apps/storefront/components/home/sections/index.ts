@@ -3,6 +3,7 @@ export { DifferenceStory } from "./difference-story";
 export { EvidenceFilm } from "./evidence-film";
 export { EntryPaths } from "./entry-paths";
 export { ArchiveSection } from "./archive-section";
+export { AboutRadPreview } from "./about-rad-preview";
 export { StudioCallout } from "./studio-callout";
 export { StorySection, ProcessSection } from "./story-sections";
 export { HomeProcessSection } from "./process-section";

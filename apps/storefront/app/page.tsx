@@ -2,6 +2,7 @@
 
 import {
   ArchiveSection,
+  AboutRadPreview,
   CertificateSection,
   DifferenceStory,
   EntryPaths,
@@ -22,6 +23,7 @@ export default function Home() {
       <HomeHero />
       <EntryPaths />
       <ArchiveSection products={featured} loading={loading} />
+      <AboutRadPreview />
       <DifferenceStory />
       <EvidenceFilm />
       <HomeProcessSection />
