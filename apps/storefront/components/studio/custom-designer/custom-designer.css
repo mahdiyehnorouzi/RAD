@@ -615,3 +615,11 @@
   border: 1px solid rgba(247, 242, 233, 0.28);
   background: rgba(247, 242, 233, 0.08);
 }
+
+.designer-promise {
+  max-width: 22rem;
+  margin: 0.75rem 0 0;
+  color: color-mix(in srgb, var(--paper) 78%, #ead9bd);
+  font-size: clamp(1.02rem, 1.6vw, 1.15rem);
+  line-height: 1.75;
+}

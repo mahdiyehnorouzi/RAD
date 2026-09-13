@@ -7,4 +7,3 @@ export { StudioCallout } from "./studio-callout";
 export { StorySection, ProcessSection } from "./story-sections";
 export { HomeProcessSection } from "./process-section";
 export { CertificateSection } from "./certificate-section";
-export { FinalCta } from "./closing-sections";

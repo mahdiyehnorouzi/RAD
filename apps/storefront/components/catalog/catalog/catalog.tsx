@@ -20,9 +20,11 @@ function matchesAvailability(product: Product, availability: AvailabilityFilter)
   return status === availability;
 }
 
-export function Catalog() {
+export function Catalog({ products: seeded = [] }: { products?: Product[] }) {
   const { t, number, locale } = useLocale();
-  const { products, loading } = useCatalog();
+  const { products: liveProducts, loading } = useCatalog();
+  const products = liveProducts.length ? liveProducts : seeded;
+  const pending = loading && products.length === 0;
   const filters = [
     { id: "all", label: t("filterAll") },
     ...artworkCategories.map((category) => ({
@@ -117,7 +119,7 @@ export function Catalog() {
           </div>
         </section>
       </div>
-      {loading ? (
+      {pending ? (
         <ProductGridSkeleton />
       ) : visible.length ? (
         <div className="product-grid">

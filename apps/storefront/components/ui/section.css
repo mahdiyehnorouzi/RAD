@@ -163,8 +163,7 @@ html[dir="rtl"] .section-heading {direction:rtl!important;text-align:right!impor
 .story.section,
 .provenance.section,
 .process.section,
-.orders-entry.section,
-.final-cta.section {
+.orders-entry.section {
   padding-block: clamp(3.25rem, 5.5vw, 5rem) !important;
 }
 }

@@ -62,7 +62,12 @@ export function ProductCard({
           </p>
           <div className="flex flex-col">
             <h3 className="!mt-2">
-              <Link href={href(`/products/${product.slug}`)}>{copy.name}</Link>
+              <Link
+                href={href(`/products/${product.slug}`)}
+                className="product-card-name"
+              >
+                {copy.name}
+              </Link>
             </h3>
             <small className="product-category mt-1">{category}</small>
           </div>
