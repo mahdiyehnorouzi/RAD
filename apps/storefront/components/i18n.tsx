@@ -63,14 +63,16 @@ export function LocaleProvider({ children }: { children: React.ReactNode }) {
       ["workshop", "titleWorkshop"],
       ["orders", "titleOrders"],
       ["differences", "titleDifferences"],
+      ["about", "navAbout"],
     ];
-    const section: MessageKey | undefined = pathname === "/making"
-      ? "makingProcessTitle"
-      : /^\/making\/.+/.test(pathname)
-        ? "titleMaking"
-        : pathname.includes("account/making")
-          ? "titleCustomOrders"
-          : labels.find(([key]) => pathname.includes(key))?.[1];
+    const section: MessageKey | undefined =
+      pathname === "/making"
+        ? "makingProcessTitle"
+        : /^\/making\/.+/.test(pathname)
+          ? "titleMaking"
+          : pathname.includes("account/making")
+            ? "titleCustomOrders"
+            : labels.find(([key]) => pathname.includes(key))?.[1];
     document.title = section
       ? `${catalog[section]} | ${catalog.brandName}`
       : locale === "fa"

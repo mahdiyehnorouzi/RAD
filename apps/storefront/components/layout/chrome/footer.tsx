@@ -30,7 +30,7 @@ export function Footer() {
         </section>
         <section>
           <b>{t("footerRad")}</b>
-          <Link href={href("/#story")}>{t("footerStory")}</Link>
+          <Link href={href("/about")}>{t("footerStory")}</Link>
           <Link href={href("/differences")}>{t("museumTitle")}</Link>
           <Link href={href("/account")}>{t("profile")}</Link>
         </section>

@@ -28,9 +28,7 @@ export function Header() {
   }, []);
 
   return (
-    <header
-      className={`header${compact ? " is-compact" : ""}`}
-    >
+    <header className={`header${compact ? " is-compact" : ""}`}>
       <Link
         href={href("/")}
         className="logo"
@@ -38,7 +36,13 @@ export function Header() {
         onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
       >
         <span className="logo-mark" aria-hidden="true">
-          <Image src="/rad-logo.png" alt="" width={1254} height={1254} priority />
+          <Image
+            src="/rad-logo.png"
+            alt=""
+            width={1254}
+            height={1254}
+            priority
+          />
         </span>
         <span>{t("logoSubtitle")}</span>
       </Link>
@@ -52,25 +56,45 @@ export function Header() {
         <Link href={href("/making")} onClick={() => setOpen(false)}>
           {t("makingNav")}
         </Link>
-        <Link href={href("/#story")} onClick={() => setOpen(false)}>
+        <Link href={href("/about")} onClick={() => setOpen(false)}>
           {t("navAbout")}
         </Link>
-        <Link className="mobile-nav-link" href={href("/favorites")} onClick={() => setOpen(false)}>
+        <Link
+          className="mobile-nav-link"
+          href={href("/favorites")}
+          onClick={() => setOpen(false)}
+        >
           {t("favoritesTitle")}
         </Link>
-        <Link className="mobile-nav-link" href={href("/account")} onClick={() => setOpen(false)}>
+        <Link
+          className="mobile-nav-link"
+          href={href("/account")}
+          onClick={() => setOpen(false)}
+        >
           {t("profile")}
         </Link>
-        <Link className="mobile-nav-link" href={href("/cart")} onClick={() => setOpen(false)}>
+        <Link
+          className="mobile-nav-link"
+          href={href("/cart")}
+          onClick={() => setOpen(false)}
+        >
           {t("shoppingBag")}
         </Link>
       </nav>
       <div className="header-actions">
         <SiteSearch />
-        <Link href={href("/favorites")} className="utility-button header-favorites" aria-label={t("favoritesTitle")}>
+        <Link
+          href={href("/favorites")}
+          className="utility-button header-favorites"
+          aria-label={t("favoritesTitle")}
+        >
           <Heart aria-hidden="true" />
         </Link>
-        <Link href={href("/cart")} className="utility-button cart-button" aria-label={t("bagAria")}>
+        <Link
+          href={href("/cart")}
+          className="utility-button cart-button"
+          aria-label={t("bagAria")}
+        >
           <ShoppingBag aria-hidden="true" />
           <i>{number(count)}</i>
         </Link>
@@ -78,11 +102,15 @@ export function Header() {
           className="language-switch"
           onClick={() => {
             queueMicrotask(() =>
-              window.dispatchEvent(new CustomEvent("rad:header-overlay", { detail: "language" })),
+              window.dispatchEvent(
+                new CustomEvent("rad:header-overlay", { detail: "language" }),
+              ),
             );
             setLocale(locale === "fa" ? "en" : "fa");
           }}
-          aria-label={locale === "fa" ? "Switch to English" : "تغییر زبان به فارسی"}
+          aria-label={
+            locale === "fa" ? "Switch to English" : "تغییر زبان به فارسی"
+          }
         >
           {locale === "fa" ? "انگلیسی" : "فارسی"}
         </button>
@@ -93,7 +121,9 @@ export function Header() {
             setOpen(next);
             if (next) {
               queueMicrotask(() =>
-                window.dispatchEvent(new CustomEvent("rad:header-overlay", { detail: "menu" })),
+                window.dispatchEvent(
+                  new CustomEvent("rad:header-overlay", { detail: "menu" }),
+                ),
               );
             }
           }}

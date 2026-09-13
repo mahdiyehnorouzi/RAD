@@ -1,5 +1,7 @@
 export {
   ArchiveSection,
+  AboutRadPreview,
+  CertificateSection,
   DifferenceStory,
   HomeHero,
   ProcessSection,

@@ -13,9 +13,14 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
   return [
     { url: absoluteUrl(), changeFrequency: "weekly", priority: 1 },
+    { url: absoluteUrl("/about"), changeFrequency: "yearly", priority: 0.7 },
     { url: absoluteUrl("/products"), changeFrequency: "daily", priority: 0.9 },
     { url: absoluteUrl("/studio"), changeFrequency: "monthly", priority: 0.7 },
-    { url: absoluteUrl("/differences"), changeFrequency: "monthly", priority: 0.7 },
+    {
+      url: absoluteUrl("/differences"),
+      changeFrequency: "monthly",
+      priority: 0.7,
+    },
     ...products.map((product) => ({
       url: absoluteUrl(`/products/${product.slug}`),
       changeFrequency: "weekly" as const,

@@ -1,9 +1,12 @@
 import {
   ArchiveSection,
   DifferenceStory,
+  AboutRadPreview,
   HomeHero,
   featuredHomeWorks,
+  CertificateSection,
 } from "@/components/home";
+import { EntryPaths } from "@/components/home/sections";
 import { getCatalogWorks } from "@/lib/catalog/get-catalog-works";
 import { productListJsonLd, safeJsonLd } from "@/lib/seo";
 
@@ -20,8 +23,11 @@ export default async function Home() {
         }}
       />
       <HomeHero />
+      <EntryPaths />
+      <AboutRadPreview />
       <ArchiveSection products={featured} />
       <DifferenceStory />
+      <CertificateSection />
     </>
   );
 }
