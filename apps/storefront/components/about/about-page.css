@@ -33,7 +33,7 @@
 
 .about-opening-visual img {
   object-fit: cover;
-  object-position: center 48%;
+  object-position: 62% center;
 }
 
 .about-opening-visual figcaption {
@@ -104,8 +104,12 @@
   overflow: hidden;
 }
 
-.about-founder img {
+.about-founder video {
+  display: block;
+  width: 100%;
+  height: 100%;
   object-fit: cover;
+  object-position: center;
 }
 
 .about-founder h2 {
@@ -309,6 +313,10 @@
     height: 74vh;
   }
 
+  .about-opening-visual img {
+    object-position: 69% center;
+  }
+
   .about-why,
   .about-founder,
   .about-name,
@@ -377,5 +385,15 @@
       transform: scale(1);
       filter: blur(0);
     }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .about-founder figure {
+    background: url("/about/about-workbench.webp") 62% center / cover no-repeat;
+  }
+
+  .about-founder video {
+    visibility: hidden;
   }
 }

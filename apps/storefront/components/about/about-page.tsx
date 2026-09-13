@@ -8,7 +8,7 @@ import "./about-page.css";
 const copy = {
   fa: {
     title: "همه‌چیز لازم نیست شبیه نسخه‌ی قبل باشد.",
-    openingAlt: "یک اثر دست‌ساز رَد در نور طبیعی کارگاه",
+    openingAlt: "میز کار رَد با ابزار و یک فرم دست‌ساز در نور طبیعی",
     whyTitle: "چرا رَد به‌وجود آمد؟",
     why: [
       "رَد از این فکر شروع شد که چیزهایی که دوستشان داریم، لازم نیست همیشه از قبل طراحی‌شده، دقیق و قابل تکرار باشند.",
@@ -20,7 +20,7 @@ const copy = {
     founderLead: "من مهدیه‌ام.",
     founderBody:
       "رَد از جایی شروع شد که دلم می‌خواست چیزهایی را که توی ذهنم می‌بینم، واقعاً بسازم. این مسیر از سفال شروع شده، اما قرار نیست به سفال محدود بماند؛ هر ماده می‌تواند ردِ متفاوتی از یک ایده نگه دارد.",
-    founderAlt: "دست‌های هنرمند هنگام کار با گل روی چرخ سفالگری",
+    founderVideoLabel: "ویدیوی واقعی از آماده‌کردن گل در یک کارگاه سفال",
     nameTitle: "رَد",
     nameLine: "چیزی که از عبور باقی می‌ماند.",
     nameBody: "اثر دست، ماده، اتفاق و آدمی که آن را ساخته.",
@@ -44,7 +44,7 @@ const copy = {
   },
   en: {
     title: "Not everything has to resemble the version before it.",
-    openingAlt: "A handmade RAD work in natural workshop light",
+    openingAlt: "RAD's workbench, tools, and a handmade form in natural light",
     whyTitle: "Why does RAD exist?",
     why: [
       "RAD began with the thought that the things we love do not always have to be predetermined, exact, and repeatable.",
@@ -56,7 +56,8 @@ const copy = {
     founderLead: "I’m Mahdiyeh.",
     founderBody:
       "RAD began because I wanted to make the things I could see in my mind real. The path started with clay, but it is not meant to remain only ceramics; every material can hold a different trace of an idea.",
-    founderAlt: "The artist's hands shaping clay on a pottery wheel",
+    founderVideoLabel:
+      "Live-action footage of hands preparing clay in a pottery workshop",
     nameTitle: "RAD",
     nameLine: "What remains after something passes.",
     nameBody:
@@ -95,7 +96,7 @@ export function AboutPage() {
         <h1>{c.title}</h1>
         <figure className="about-opening-visual">
           <Image
-            src="/home/entry-ready-v2.jpg"
+            src="/about/about-workbench.webp"
             alt={c.openingAlt}
             fill
             priority
@@ -116,12 +117,18 @@ export function AboutPage() {
 
       <section className="about-founder section">
         <figure>
-          <Image
-            src="/studio-process.jpg"
-            alt={c.founderAlt}
-            fill
-            sizes="(max-width: 760px) 100vw, 56vw"
-          />
+          <video
+            autoPlay
+            disablePictureInPicture
+            loop
+            muted
+            playsInline
+            poster="/about/about-workbench.webp"
+            preload="metadata"
+            aria-label={c.founderVideoLabel}
+          >
+            <source src="/about/about-process-live.mp4" type="video/mp4" />
+          </video>
         </figure>
         <div>
           <h2>{c.founderTitle}</h2>
