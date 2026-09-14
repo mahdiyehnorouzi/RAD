@@ -1,6 +1,7 @@
 import { Body, Controller, Get, Param, Post, Req } from "@nestjs/common";
 import { OrdersService } from "./orders.service";
 import { CheckoutDto } from "./dto/checkout.dto";
+import { ConfirmPaymentDto } from "./dto/confirm-payment.dto";
 import { IdentityService } from "../common/identity.service";
 import type { AuthedRequest } from "../common/session.middleware";
 
@@ -27,8 +28,30 @@ export class OrdersController {
   }
 
   @Post(":id/demo-pay")
-  async demoPay(@Param("id") id: string, @Req() request: AuthedRequest) {
-    return this.orders.confirmDemoPayment(await this.identity.fromRequest(request), id);
+  async demoPay(
+    @Param("id") id: string,
+    @Body() body: ConfirmPaymentDto,
+    @Req() request: AuthedRequest,
+  ) {
+    return this.orders.confirmPayment(
+      await this.identity.fromRequest(request),
+      id,
+      body,
+    );
+  }
+
+  /** Customer submits transfer receipt; admin later confirms the order. */
+  @Post(":id/confirm-payment")
+  async confirmPayment(
+    @Param("id") id: string,
+    @Body() body: ConfirmPaymentDto,
+    @Req() request: AuthedRequest,
+  ) {
+    return this.orders.confirmPayment(
+      await this.identity.fromRequest(request),
+      id,
+      body,
+    );
   }
 
   @Post(":id/cancel")

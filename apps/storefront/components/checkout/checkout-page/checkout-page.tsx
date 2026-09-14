@@ -60,6 +60,10 @@ export function CheckoutPage() {
           .join("، "),
       });
       await clear();
+      if (created.payment?.redirectUrl) {
+        window.location.assign(created.payment.redirectUrl);
+        return;
+      }
       router.push(href(`/orders/${created.id}`));
     } catch (err) {
       setError(errorMessage(err, t("requestFailed")));

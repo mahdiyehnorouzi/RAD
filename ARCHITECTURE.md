@@ -7,6 +7,7 @@ RAD is an npm-workspaces monorepo with two independently runnable Next.js applic
 - Passwords are never persisted in browser storage. Production authentication must use a server-side identity provider, password hashing, secure HTTP-only sessions, rate limiting, and recovery flows.
 - Payment UI must call a server-side gateway adapter. Merchant credentials and callback verification never run in the browser.
 - One-of-one inventory must be reserved atomically by the backend before payment redirection.
+- Until the bank gateway is live, `PAYMENT_MODE=manual_card` starts the same payment session but returns card-transfer instructions instead of a redirect. Flip to `gateway` and implement `PaymentGateway` in `services/payment/contracts.ts` when credentials are ready.
 - Guest-artist products require admin review and expose a verified vendor badge in the storefront.
 
 ## Applications

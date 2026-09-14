@@ -173,7 +173,9 @@ export function OrderDetail({ id }: { id: string }) {
         <OrderNextAction
           order={order}
           busy={busy}
-          onConfirmPayment={() => run(() => confirmDemoPayment(order.id))}
+          onConfirmPayment={(receiptImage) =>
+            run(() => confirmDemoPayment(order.id, receiptImage))
+          }
           onCancel={() => run(() => cancelOrder(order.id))}
         />
       </article>

@@ -19,9 +19,10 @@ export async function createOrder(order: PlaceOrderInput) {
   });
 }
 
-export async function confirmDemoPayment(id: string) {
-  return api<Order>(`/orders/${encodeURIComponent(id)}/demo-pay`, {
+export async function confirmDemoPayment(id: string, receiptImage: string) {
+  return api<Order>(`/orders/${encodeURIComponent(id)}/confirm-payment`, {
     method: "POST",
+    body: JSON.stringify({ receiptImage }),
   });
 }
 

@@ -248,7 +248,7 @@ export async function seedCommerce(prisma: PrismaClient) {
           create: {
             amount: product.tomanPrice,
             currency: "IRR",
-            provider: "sandbox",
+            provider: "manual_card",
             status: item.status === "payment_pending" ? "created" : "verified",
           },
         },

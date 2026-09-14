@@ -165,11 +165,13 @@ model Commission {
 }
 
 model PaymentIntent {
-  id       String @id @default(cuid())
-  orderId  String @unique
-  order    Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  amount   Int
-  currency String
-  provider String @default("sandbox")
-  status   String @default("verified")
+  id           String   @id @default(cuid())
+  orderId      String   @unique
+  order        Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  amount       Int
+  currency     String
+  provider     String   @default("sandbox")
+  status       String   @default("created")
+  receiptImage String?
+  submittedAt  DateTime?
 }

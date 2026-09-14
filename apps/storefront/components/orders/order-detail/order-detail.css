@@ -81,6 +81,63 @@
   gap: 0.75rem;
 }
 
+.order-pay-card {
+  display: grid;
+  gap: 0.35rem;
+  justify-items: start;
+  padding: 1rem 1.1rem;
+  border: 1px solid color-mix(in srgb, var(--line) 88%, transparent);
+  background: color-mix(in srgb, var(--paper) 88%, var(--sand));
+}
+
+.order-pay-card-label {
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--ink) 58%, transparent);
+}
+
+.order-pay-card-number {
+  font-size: clamp(1.15rem, 2.4vw, 1.45rem);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--ink);
+}
+
+.order-pay-card-meta,
+.order-pay-card-amount {
+  color: color-mix(in srgb, var(--ink) 72%, transparent);
+}
+
+.order-pay-note {
+  margin: 0;
+  color: color-mix(in srgb, var(--ink) 70%, transparent);
+}
+
+.order-receipt-upload {
+  display: grid;
+  gap: 0.55rem;
+  justify-items: start;
+}
+
+.order-receipt-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.order-receipt-preview {
+  margin: 0;
+  width: min(100%, 14rem);
+  border: 1px solid color-mix(in srgb, var(--line) 88%, transparent);
+  background: #fff;
+}
+
+.order-receipt-preview img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
 .order-timeline {
   list-style: none;
   margin: 0;

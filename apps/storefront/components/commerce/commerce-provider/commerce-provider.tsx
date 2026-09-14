@@ -38,7 +38,7 @@ type CommerceContextValue = {
     phone?: string;
     address?: string;
   }) => Promise<Order>;
-  confirmDemoPayment: (id: string) => Promise<Order>;
+  confirmDemoPayment: (id: string, receiptImage: string) => Promise<Order>;
   cancelOrder: (id: string) => Promise<Order>;
   reviews: Review[];
   addReview: (review: Omit<Review, "id" | "createdAt">) => Promise<void>;
@@ -190,8 +190,11 @@ export function CommerceProvider({ children }: { children: React.ReactNode }) {
         window.dispatchEvent(new Event("rad:session"));
         return created;
       },
-      confirmDemoPayment: async (id) => {
-        const updated = await api<Order>(`/orders/${id}/demo-pay`, { method: "POST" });
+      confirmDemoPayment: async (id, receiptImage) => {
+        const updated = await api<Order>(`/orders/${id}/confirm-payment`, {
+          method: "POST",
+          body: JSON.stringify({ receiptImage }),
+        });
         setOrders((current) => current.map((item) => (item.id === id ? updated : item)));
         await refresh();
         return updated;
