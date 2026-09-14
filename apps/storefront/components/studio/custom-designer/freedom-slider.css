@@ -1,0 +1,48 @@
+.freedom-slider {
+  border: 0;
+  padding: 0;
+  margin: 1.5rem 0 0;
+}
+
+.freedom-slider legend {
+  display: grid;
+  gap: 0.35rem;
+  margin-bottom: 1rem;
+  color: var(--paper);
+}
+
+.freedom-slider legend small {
+  color: #c77963;
+  font-size: 0.65rem;
+  letter-spacing: 0.08em;
+}
+
+.freedom-share {
+  margin: 0 0 1.25rem;
+  font-size: clamp(1.8rem, 4vw, 2.8rem);
+  line-height: 1.2;
+  color: var(--sand);
+}
+
+.freedom-slider input {
+  width: 100%;
+  accent-color: var(--clay);
+  cursor: pointer;
+}
+
+.freedom-ends {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 0.7rem;
+  color: #d4c7b6;
+  font-size: 0.9rem;
+}
+
+.freedom-slider .visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+}

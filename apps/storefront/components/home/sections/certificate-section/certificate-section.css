@@ -88,6 +88,10 @@
   line-height: 1.2;
 }
 
+.certificate-card .button {
+  margin-top: 1.1rem;
+}
+
 .certificate-card ul {
   display: grid;
   gap: 0.7rem;

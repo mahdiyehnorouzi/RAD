@@ -545,7 +545,7 @@ export const photoProducts = [
     accent: "#9d5d2d",
     shape: "round",
     category: "ceramics",
-    status: "available",
+    status: "sold",
     story:
       "ماگی شیری با لعاب شکلاتی روان و دسته‌ای پیکره‌وار شبیه کروسان؛ شیئی شوخ که کاربرد روزمره را به آبجکت تبدیل می‌کند.",
     details: [

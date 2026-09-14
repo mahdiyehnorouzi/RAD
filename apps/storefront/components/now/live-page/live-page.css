@@ -1,0 +1,105 @@
+.live-page {
+  padding-block: clamp(2.5rem, 6vw, 5rem) clamp(5rem, 10vw, 9rem);
+}
+
+.live-page header h1 {
+  font-size: clamp(2.2rem, 5.5vw, 4rem);
+  font-weight: 500;
+  line-height: 1.2;
+  margin: 0.4rem 0 0.8rem;
+}
+
+.live-now {
+  display: grid;
+  gap: 0.35rem;
+  margin: 1.4rem 0 0;
+  font-size: clamp(1.25rem, 2.4vw, 1.7rem);
+  line-height: 1.5;
+}
+
+.live-now span {
+  color: var(--muted);
+  font-size: 1rem;
+}
+
+.live-rail {
+  display: grid;
+  gap: 0;
+  margin: clamp(2.5rem, 6vw, 4rem) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.live-rail li {
+  display: grid;
+  grid-template-columns: 4.5rem 1fr;
+  gap: 0.4rem 1rem;
+  padding: 1.1rem 0;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+}
+
+.live-rail .is-done,
+.live-rail .is-current {
+  color: var(--ink);
+}
+
+.live-rail .is-current strong {
+  color: var(--clay);
+}
+
+.live-rail p {
+  grid-column: 2;
+  margin: 0.35rem 0 0;
+  line-height: 1.75;
+}
+
+.live-rail img {
+  grid-column: 2;
+  width: min(100%, 22rem);
+  margin-top: 0.7rem;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: 2px;
+}
+
+.live-notes {
+  margin-top: clamp(3rem, 7vw, 5.5rem);
+}
+
+.live-notes h2 {
+  font-size: clamp(1.4rem, 3vw, 2rem);
+  font-weight: 500;
+  margin: 0 0 1.2rem;
+}
+
+.live-notes ul {
+  display: grid;
+  gap: 1.5rem;
+  margin: 0 0 2.5rem;
+  padding: 0;
+  list-style: none;
+}
+
+.live-notes li {
+  max-width: 36rem;
+}
+
+.live-notes p {
+  margin: 0.35rem 0 0;
+  font-size: 1.15rem;
+  line-height: 1.8;
+}
+
+.live-notes img {
+  width: min(100%, 22rem);
+  margin-top: 0.8rem;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+}
+
+@media (max-width: 700px) {
+  .live-rail li {
+    grid-template-columns: 3.2rem 1fr;
+  }
+}

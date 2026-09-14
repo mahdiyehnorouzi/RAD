@@ -7,7 +7,7 @@ export type AccountNavItem = {
 };
 
 export const ACCOUNT_NAV: AccountNavItem[] = [
-  { href: "/account", label: "accountOverview", exact: true },
+  { href: "/account", label: "myCollectionTitle", exact: true },
   { href: "/orders", label: "orders" },
   { href: "/account/making", label: "customOrdersNav" },
   { href: "/favorites", label: "favoritesNav" },

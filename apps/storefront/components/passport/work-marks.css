@@ -1,0 +1,62 @@
+.work-marks {
+  margin-top: clamp(2.5rem, 6vw, 4.5rem);
+}
+
+.work-marks h2 {
+  font-size: clamp(1.4rem, 3vw, 2rem);
+  font-weight: 500;
+  margin: 0 0 0.5rem;
+}
+
+.work-marks > p {
+  max-width: 34rem;
+  margin: 0 0 1.2rem;
+  color: var(--muted);
+}
+
+.work-marks-stage {
+  position: relative;
+  max-width: 36rem;
+}
+
+.work-marks-stage img {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: contain;
+  background: color-mix(in srgb, var(--sand) 40%, var(--paper));
+}
+
+.work-marks-stage button {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  transform: translate(-50%, -50%);
+  border: 1px solid var(--ink);
+  border-radius: 50%;
+  background: var(--paper);
+  cursor: pointer;
+  padding: 0;
+}
+
+.work-marks-stage button span {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+}
+
+.work-marks-stage .is-open {
+  background: var(--clay);
+  border-color: var(--clay);
+}
+
+.work-marks aside {
+  max-width: 32rem;
+  margin-top: 1rem;
+}
+
+.work-marks aside p {
+  margin: 0.4rem 0 0;
+  line-height: 1.75;
+}

@@ -3,12 +3,16 @@
 import { useLocale } from "@/components/i18n";
 import { homeMedia } from "../../const";
 import { useInView } from "../../hooks";
+import { ButtonLink } from "@/components/ui/button-link";
 import "../../motion/reveal.css";
 import "./certificate-section.css";
 
 export function CertificateSection() {
   const { t } = useLocale();
-  const { ref, inView } = useInView<HTMLElement>({ threshold: 0.08, rootMargin: "80px 0px" });
+  const { ref, inView } = useInView<HTMLElement>({
+    threshold: 0.08,
+    rootMargin: "80px 0px",
+  });
   const facts = [
     t("certificateArtist"),
     t("certificateMaterial"),
@@ -40,6 +44,7 @@ export function CertificateSection() {
             <li key={fact}>{fact}</li>
           ))}
         </ul>
+        <ButtonLink href="/passport/007">{t("pdpPassportLink")}</ButtonLink>
       </aside>
     </section>
   );

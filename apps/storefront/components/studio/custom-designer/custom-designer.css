@@ -560,7 +560,7 @@
 
 .designer-nav p {margin:0;color:#cbb892;font-size:.85rem}
 
-.designer-steps {display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:.4rem;margin:0;padding:0;list-style:none}
+.designer-steps {display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.4rem;margin:0;padding:0;list-style:none}
 
 .designer-steps button {width:100%;display:grid;justify-items:center;gap:.4rem;padding:.6rem .25rem;background:transparent;border:0;color:rgba(247,242,233,.45);cursor:pointer}
 
@@ -602,8 +602,15 @@
 
 .designer-upload-grid button {position:absolute;inset-inline-end:.4rem;bottom:.4rem;padding:.25rem .55rem;border:0;background:var(--ink);color:var(--paper);cursor:pointer}
 
+.designer-preview.idea-preview {
+  display: grid;
+  place-items: center;
+  padding: clamp(1.25rem, 3vw, 2rem);
+  background: color-mix(in srgb, var(--sand) 42%, var(--moss));
+}
+
 @media(max-width:700px) {
-.designer-steps {grid-template-columns:repeat(5,minmax(0,1fr))}
+.designer-steps {grid-template-columns:repeat(4,minmax(0,1fr))}
 .designer-steps span {font-size:.65rem}
 .designer-step-actions {flex-direction:column}
 .designer-step-actions .button {width:100%}

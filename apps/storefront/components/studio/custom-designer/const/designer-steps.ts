@@ -1,19 +1,12 @@
 import type { MessageKey } from "@/i18n/fa";
 
-export const DESIGNER_STEPS = [
-  "type",
-  "details",
-  "idea",
-  "images",
-  "send",
-] as const;
+export const DESIGNER_STEPS = ["spark", "type", "freedom", "send"] as const;
 
 export type DesignerStep = (typeof DESIGNER_STEPS)[number];
 
 export const DESIGNER_STEP_KEY: Record<DesignerStep, MessageKey> = {
+  spark: "designerStepSpark",
   type: "designerStepType",
-  details: "designerStepDetails",
-  idea: "designerStepIdea",
-  images: "designerStepImages",
+  freedom: "designerStepFreedom",
   send: "designerStepSend",
 };

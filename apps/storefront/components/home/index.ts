@@ -4,6 +4,7 @@ export {
   CertificateSection,
   DifferenceStory,
   HomeHero,
+  TodayInWorkshop,
   ProcessSection,
   StorySection,
   StudioCallout,

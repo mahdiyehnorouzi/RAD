@@ -1,13 +1,60 @@
 "use client";
 import "./portrait-view.css";
 
-import { useEffect, useId, useState } from "react";
+import { useState } from "react";
+import Link from "next/link";
 import { useLocale } from "@/components/i18n";
-import { differenceStages, surprisePermissions } from "../const";
-import type { DifferencePortrait, DifferenceStageId } from "../type";
+import {
+  BeforeRad,
+  stageFromProgress,
+  type BeforeRadFrame,
+  type BeforeRadStageId,
+} from "@/components/passport";
+import { surprisePermissions } from "../const";
+import type { DifferencePortrait } from "../type";
+import { findPassport } from "@/lib/passport";
 import { PortraitCertificate } from "./portrait-certificate";
-import { PortraitTabs } from "./portrait-tabs";
-import { StageVisual } from "./stage-visual";
+
+const stageNotes: Record<BeforeRadStageId, (portrait: DifferencePortrait) => DifferencePortrait["described"][]> = {
+  idea: (portrait) => [portrait.described],
+  hand: (portrait) => portrait.artistNotes,
+  material: (portrait) => [portrait.imaginedNote],
+  rad: (portrait) => portrait.materialNotes,
+};
+
+function framesFromPortrait(portrait: DifferencePortrait, image?: string): BeforeRadFrame[] {
+  const images = portrait.stageImages;
+  return [
+    {
+      id: "idea",
+      src: images?.described,
+      color: portrait.palette.described.color,
+      accent: portrait.palette.described.accent,
+      caption: portrait.described,
+    },
+    {
+      id: "hand",
+      src: images?.artist,
+      color: portrait.palette.artist.color,
+      accent: portrait.palette.artist.accent,
+      caption: portrait.artistNotes[0],
+    },
+    {
+      id: "material",
+      src: images?.imagined,
+      color: portrait.palette.imagined.color,
+      accent: portrait.palette.imagined.accent,
+      caption: portrait.imaginedNote,
+    },
+    {
+      id: "rad",
+      src: image ?? images?.material,
+      color: portrait.palette.material.color,
+      accent: portrait.palette.material.accent,
+      caption: portrait.materialNotes[0],
+    },
+  ];
+}
 
 export function DifferencePortraitView({
   portrait,
@@ -18,45 +65,12 @@ export function DifferencePortraitView({
   image?: string;
   privateReveal?: boolean;
 }) {
-  const { locale, t } = useLocale();
-  const tabId = useId();
-  const [stage, setStage] = useState<DifferenceStageId>(
-    privateReveal ? "described" : "material",
-  );
-  const [playing, setPlaying] = useState(false);
+  const { locale, t, href } = useLocale();
+  const [progress, setProgress] = useState(privateReveal ? 0 : 1);
+  const stage = stageFromProgress(progress);
   const permission = surprisePermissions.find((item) => item.id === portrait.permission);
-  const activeMeta = differenceStages.find((item) => item.id === stage);
-  const notes =
-    stage === "artist"
-      ? portrait.artistNotes
-      : stage === "material"
-        ? portrait.materialNotes
-        : stage === "imagined"
-          ? [portrait.imaginedNote]
-          : [portrait.described];
-
-  useEffect(() => {
-    if (!playing) return;
-    const order: DifferenceStageId[] = ["described", "imagined", "artist", "material"];
-    let index = 0;
-    setStage("described");
-    const timer = window.setInterval(() => {
-      index += 1;
-      if (index >= order.length) {
-        window.clearInterval(timer);
-        setPlaying(false);
-        setStage("material");
-        return;
-      }
-      setStage(order[index]);
-    }, 1600);
-    return () => window.clearInterval(timer);
-  }, [playing]);
-
-  function selectStage(id: DifferenceStageId) {
-    setPlaying(false);
-    setStage(id);
-  }
+  const notes = stageNotes[stage](portrait);
+  const passport = findPassport(portrait.id) ?? findPassport(portrait.code);
 
   return (
     <article className="difference-portrait">
@@ -71,33 +85,21 @@ export function DifferencePortraitView({
         </div>
       </header>
 
-      <PortraitTabs tabId={tabId} stage={stage} onSelect={selectStage} />
+      <BeforeRad
+        frames={framesFromPortrait(portrait, image)}
+        value={progress}
+        onChange={setProgress}
+      />
 
-      <div
-        className="difference-stage-panel"
-        role="tabpanel"
-        id={`${tabId}-panel`}
-        aria-labelledby={`${tabId}-${stage}`}
-      >
-        <StageVisual portrait={portrait} stage={stage} image={image} locale={locale} />
-        <div className="difference-annotations">
-          <small>{activeMeta?.title[locale]}</small>
-          <ul>
-            {notes.map((note) => (
-              <li key={note.en}>{note[locale]}</li>
-            ))}
-          </ul>
-          {privateReveal ? (
-            <button
-              type="button"
-              className="button light"
-              onClick={() => setPlaying(true)}
-              disabled={playing}
-            >
-              {playing ? t("differenceRevealing") : t("differenceReveal")}
-            </button>
-          ) : null}
-        </div>
+      <div className="difference-annotations">
+        <ul>
+          {notes.map((note) => (
+            <li key={note.en}>{note[locale]}</li>
+          ))}
+        </ul>
+        {passport ? (
+          <Link href={href(`/passport/${passport.code}`)}>{t("pdpPassportLink")}</Link>
+        ) : null}
       </div>
 
       <PortraitCertificate portrait={portrait} />
