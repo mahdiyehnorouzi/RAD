@@ -74,6 +74,17 @@ export function AboutPage() {
             alt={c.traceAlt}
             fill
             sizes="(max-width: 760px) 88vw, 48vw"
+          // <div className="about-name-copy">
+          //   <span className="about-name-label">{c.nameTitle}</span>
+          //   <h2>{c.nameLine}</h2>
+          //   <p>{c.nameBody}</p>
+          // </div>
+          // <figure>
+          //   <Image
+          //     src="/difference/homesickness-bowl/material-v3.jpg"
+          //     alt={c.traceAlt}
+          //     fill
+          //     sizes="(max-width: 760px) 90vw, 48vw"
           />
         </figure>
       </section>
@@ -104,15 +115,35 @@ export function AboutPage() {
         <h2>{c.finalTitle}</h2>
         <div className="about-final-paths">
           <article>
-            <h3>{c.worksTitle}</h3>
-            <p>{c.worksBody}</p>
+            <figure className="about-final-image">
+              <Image
+                src="/difference/homesickness-bowl/material-v3.jpg"
+                alt=""
+                fill
+                sizes="(max-width: 760px) 100px, 180px"
+              />
+            </figure>
+            <div className="about-final-copy">
+              <h3>{c.worksTitle}</h3>
+              <p>{c.worksBody}</p>
+            </div>
             <ButtonLink href="/products" outline>
               {c.worksCta}
             </ButtonLink>
           </article>
           <article>
-            <h3>{c.customTitle}</h3>
-            <p>{c.customBody}</p>
+            <figure className="about-final-image">
+              <Image
+                src="/about/about-workbench.webp"
+                alt=""
+                fill
+                sizes="(max-width: 760px) 100px, 180px"
+              />
+            </figure>
+            <div className="about-final-copy">
+              <h3>{c.customTitle}</h3>
+              <p>{c.customBody}</p>
+            </div>
             <ButtonLink href="/studio">{c.customCta}</ButtonLink>
           </article>
         </div>

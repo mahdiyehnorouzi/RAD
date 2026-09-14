@@ -65,6 +65,40 @@
   letter-spacing: -0.055em;
 }
 
+.about-rad-preview-copy .about-rad-preview-statement {
+  max-width: 25rem;
+  margin-bottom: 1.65rem;
+  color: var(--moss);
+  font-size: clamp(1.12rem, 1.6vw, 1.45rem);
+  font-weight: 500;
+  line-height: 1.8;
+}
+
+html[dir="rtl"] .about-rad-preview-copy {
+  direction: rtl;
+  text-align: right;
+}
+
+html[dir="rtl"] .about-rad-preview-visual figcaption {
+  direction: rtl;
+  text-align: right;
+}
+
+html[dir="rtl"]
+  .about-rad-preview-visual
+  figcaption
+  span:not(:last-child)::after {
+  margin-right: 0.15rem;
+  margin-left: 0;
+}
+
+@media (min-width: 761px) {
+  html[dir="rtl"] .about-rad-preview-copy h2 {
+    left: clamp(-6rem, -6vw, -3rem);
+    margin-left: clamp(-15rem, -15vw, -8rem);
+  }
+}
+
 .about-rad-preview-copy p {
   margin: 0 0 1.2rem;
   color: color-mix(in srgb, var(--ink) 82%, transparent);
@@ -126,6 +160,9 @@ html[dir="rtl"]
   .about-rad-preview-copy {
     max-width: none;
     padding: 0 1.25rem 0;
+    padding: 0 1.25rem;
+    padding: 0 1.25rem;
+    padding: 0 1.25rem;
   }
 
   .about-rad-preview-copy h2 {
