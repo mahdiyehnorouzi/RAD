@@ -191,6 +191,9 @@ export function ProductDetail({ product }: { product: Product }) {
                   {t("pdpPassportLink")}
                 </Link>
               ) : null}
+              <Link className="pdp-passport-link" href={href(`/products/${resolved.slug}/qr`)}>
+                {t("pdpQrLink")}
+              </Link>
             </div>
             <span className="eyebrow">
               {category} ·{" "}

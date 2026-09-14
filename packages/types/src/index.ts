@@ -145,9 +145,46 @@ export interface Order {
   delivery: { name: string; city: string; phone?: string; address?: string };
   trackingCode?: string | null;
   estimatedDeliveryAt?: number | null;
+  /** Present while payment is still open (or after confirm for history). */
+  payment?: OrderPayment;
 }
 export interface Review { id: string; productSlug: string; author: string; rating: number; comment: string; image?: string; createdAt: number; }
-export interface PaymentIntent { id: string; orderId: string; amount: number; currency: "IRR" | "USD"; provider: "sandbox" | "zarinpal"; status: "created" | "redirected" | "verified" | "failed"; }
+export type PaymentProvider = "sandbox" | "manual_card" | "zarinpal";
+export type PaymentMode = "manual_card" | "gateway";
+export type PaymentStatus =
+  | "created"
+  | "redirected"
+  | "submitted"
+  | "verified"
+  | "failed";
+export interface ManualCardPayment {
+  cardNumber: string;
+  cardHolder: string;
+  bankName?: string;
+}
+/** How the customer should complete payment for a pending order. */
+export interface OrderPayment {
+  mode: PaymentMode;
+  provider: PaymentProvider;
+  status: PaymentStatus;
+  /** Shown while the live gateway is offline — customer transfers to this card. */
+  manualCard?: ManualCardPayment;
+  /** When the gateway is connected, the storefront navigates here. */
+  redirectUrl?: string;
+  /** Receipt uploaded by the customer (data URL). */
+  receiptImage?: string;
+  submittedAt?: number;
+}
+export interface PaymentIntent {
+  id: string;
+  orderId: string;
+  amount: number;
+  currency: "IRR" | "USD";
+  provider: PaymentProvider;
+  status: PaymentStatus;
+  receiptImage?: string;
+  submittedAt?: number;
+}
 export type NoticeKind =
   | "favorite"
   | "cart"

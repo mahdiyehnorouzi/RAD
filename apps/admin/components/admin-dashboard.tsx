@@ -103,12 +103,41 @@ function Orders({ orders, canWrite, onChange }: { orders: AdminOrder[]; canWrite
     {orders.length ? <div className="order-process-list">{orders.map((order) => {
       const current = Math.max(0, stages.findIndex(([value]) => value === order.status));
       const next = stages[current + 1]?.[1];
-      return <article className="order-process-card" key={order.id}>
+      const awaitingReceiptReview =
+        order.status === "payment_pending" && order.paymentStatus === "submitted";
+      return <article className={`order-process-card${awaitingReceiptReview ? " needs-receipt-review" : ""}`} key={order.id}>
         <header>
           <div><strong>{order.id}</strong><small>{date(order.createdAt)} · {order.customer}</small></div>
           <div className="order-process-meta"><b>{order.productName}</b><span>{money(order.amount)}</span></div>
           <select value={order.status} disabled={!canWrite} onChange={(event) => onChange({ ...order, status: event.target.value as AdminOrder["status"] })} aria-label={`وضعیت سفارش ${order.id}`}>{stages.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select>
         </header>
+        {awaitingReceiptReview ? (
+          <div className="order-receipt-review">
+            <p>رسید پرداخت ارسال شده و منتظر تأیید شماست.</p>
+            {order.receiptImage ? (
+              <a className="order-receipt-thumb" href={order.receiptImage} target="_blank" rel="noreferrer">
+                <img src={order.receiptImage} alt={`رسید سفارش ${order.id}`} />
+              </a>
+            ) : null}
+            {canWrite ? (
+              <button
+                className="primary-action"
+                type="button"
+                onClick={() => onChange({ ...order, status: "confirmed" })}
+              >
+                تأیید پرداخت و ثبت سفارش
+              </button>
+            ) : null}
+          </div>
+        ) : null}
+        {order.receiptImage && !awaitingReceiptReview ? (
+          <div className="order-receipt-review is-archived">
+            <a className="order-receipt-thumb" href={order.receiptImage} target="_blank" rel="noreferrer">
+              <img src={order.receiptImage} alt={`رسید سفارش ${order.id}`} />
+            </a>
+            <small>رسید پرداخت</small>
+          </div>
+        ) : null}
         <StageMeter
           index={current}
           total={stages.length}

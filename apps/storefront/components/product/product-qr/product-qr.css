@@ -1,0 +1,141 @@
+.product-qr {
+  display: grid;
+  gap: clamp(1.5rem, 3vw, 2.5rem);
+  max-width: 42rem;
+  margin-inline: auto;
+}
+
+.product-qr-intro {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.product-qr-intro h1 {
+  margin: 0;
+  font-size: clamp(1.7rem, 3vw, 2.35rem);
+  line-height: 1.15;
+}
+
+.product-qr-intro p {
+  margin: 0;
+  max-width: 36rem;
+  color: color-mix(in srgb, var(--ink) 72%, transparent);
+}
+
+.product-qr-label {
+  display: grid;
+  gap: 1.35rem;
+  justify-items: center;
+  text-align: center;
+  padding: clamp(1.5rem, 4vw, 2.25rem);
+  background:
+    linear-gradient(
+      160deg,
+      color-mix(in srgb, var(--paper) 92%, var(--sand)),
+      var(--paper)
+    );
+  border: 1px solid color-mix(in srgb, var(--line) 88%, transparent);
+}
+
+.product-qr-meta {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.product-qr-meta span {
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--ink) 58%, transparent);
+}
+
+.product-qr-meta h2 {
+  margin: 0;
+  font-size: clamp(1.35rem, 2.4vw, 1.75rem);
+  line-height: 1.2;
+}
+
+.product-qr-meta p {
+  margin: 0;
+  color: color-mix(in srgb, var(--ink) 68%, transparent);
+}
+
+.product-qr-code {
+  margin: 0;
+  width: min(100%, 16rem);
+  aspect-ratio: 1;
+  padding: 0.85rem;
+  background: #fff;
+  border: 1px solid color-mix(in srgb, var(--line) 80%, transparent);
+}
+
+.product-qr-code svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.product-qr-target {
+  display: grid;
+  gap: 0.35rem;
+  width: min(100%, 28rem);
+}
+
+.product-qr-target span {
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--ink) 55%, transparent);
+}
+
+.product-qr-target b {
+  font-size: 0.92rem;
+  font-weight: 600;
+  word-break: break-all;
+  color: var(--clay);
+}
+
+.product-qr-toolbar {
+  display: grid;
+  gap: 1rem;
+  justify-items: start;
+}
+
+.product-qr-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.product-qr-back {
+  color: var(--clay);
+  border-bottom: 1px solid color-mix(in srgb, var(--clay) 45%, transparent);
+}
+
+@media print {
+  .header,
+  .footer,
+  .route-back-bar,
+  .product-qr-intro,
+  .product-qr-toolbar {
+    display: none !important;
+  }
+
+  .product-qr {
+    max-width: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .product-qr-label {
+    border: 0;
+    background: #fff;
+    padding: 0;
+    gap: 1rem;
+  }
+
+  .product-qr-code {
+    width: 12rem;
+    border-color: #111;
+  }
+}

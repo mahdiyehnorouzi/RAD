@@ -63,6 +63,12 @@ export function toAdminOrder(
   order: Order & {
     trackingCode?: string | null;
     items: Array<OrderItem & { product?: { name: string } | null }>;
+    payment?: {
+      status: string;
+      receiptImage?: string | null;
+      submittedAt?: Date | null;
+      provider?: string;
+    } | null;
   },
 ) {
   return {
@@ -73,6 +79,15 @@ export function toAdminOrder(
     status: normalizeStoreOrderStatus(order.status),
     trackingCode: order.trackingCode ?? undefined,
     createdAt: order.createdAt.getTime(),
+    paymentStatus: order.payment?.status as
+      | "created"
+      | "redirected"
+      | "submitted"
+      | "verified"
+      | "failed"
+      | undefined,
+    receiptImage: order.payment?.receiptImage || undefined,
+    paymentSubmittedAt: order.payment?.submittedAt?.getTime(),
   };
 }
 

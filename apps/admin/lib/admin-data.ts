@@ -32,6 +32,9 @@ export interface AdminOrder {
   status: AdminOrderStatus;
   trackingCode?: string;
   createdAt: number;
+  paymentStatus?: "created" | "redirected" | "submitted" | "verified" | "failed";
+  receiptImage?: string;
+  paymentSubmittedAt?: number;
 }
 
 export interface AdminMember {

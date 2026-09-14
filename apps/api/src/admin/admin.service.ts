@@ -117,7 +117,7 @@ export class AdminService {
 
   async listOrders() {
     const orders = await this.prisma.order.findMany({
-      include: { items: { include: { product: true } } },
+      include: { items: { include: { product: true } }, payment: true },
       orderBy: { createdAt: "desc" },
     });
     return orders.map(toAdminOrder);
@@ -126,11 +126,12 @@ export class AdminService {
   async updateOrder(id: string, input: UpdateOrderDto) {
     const order = await this.prisma.order.findUnique({
       where: { id },
-      include: { items: { include: { product: true } } },
+      include: { items: { include: { product: true } }, payment: true },
     });
     if (!order) throw new NotFoundException("سفارش پیدا نشد.");
     const slugs = order.items.map((item) => item.productSlug);
     const nextStatus = input.status;
+    const currentStatus = order.status;
     const fulfillment = shopOrderFulfillment(order);
     const trackingCode =
       input.trackingCode?.trim() ||
@@ -138,16 +139,48 @@ export class AdminService {
         ? fulfillment.trackingCode || `RAD-POST-${id.slice(-4)}`
         : fulfillment.trackingCode);
 
+    if (
+      nextStatus === "confirmed" &&
+      currentStatus === "payment_pending" &&
+      order.payment &&
+      order.payment.status !== "submitted" &&
+      order.payment.status !== "verified"
+    ) {
+      throw new BadRequestException(
+        "هنوز رسید پرداخت ارسال نشده. پس از بارگذاری رسید توسط مشتری، پرداخت را تأیید کنید.",
+      );
+    }
+
     const updated = await this.prisma.$transaction(async (tx) => {
       if (nextStatus === "cancelled" || nextStatus === "returned") {
         await tx.product.updateMany({
           where: { slug: { in: slugs }, status: { in: ["reserved", "sold"] } },
           data: { status: "available" },
         });
-      } else if (nextStatus === "confirmed" || nextStatus === "packing" || nextStatus === "shipped" || nextStatus === "delivered") {
+        if (order.payment) {
+          await tx.paymentIntent.updateMany({
+            where: { orderId: id },
+            data: { status: "failed" },
+          });
+        }
+      } else if (nextStatus === "confirmed" && currentStatus === "payment_pending") {
         await tx.product.updateMany({
           where: { slug: { in: slugs } },
-          data: { status: nextStatus === "confirmed" || nextStatus === "packing" ? "reserved" : "sold" },
+          data: { status: "sold" },
+        });
+        await tx.paymentIntent.updateMany({
+          where: { orderId: id },
+          data: { status: "verified" },
+        });
+      } else if (
+        nextStatus === "confirmed" ||
+        nextStatus === "packing" ||
+        nextStatus === "shipped" ||
+        nextStatus === "delivered"
+      ) {
+        await tx.product.updateMany({
+          where: { slug: { in: slugs } },
+          data: { status: "sold" },
         });
       }
 
@@ -157,11 +190,14 @@ export class AdminService {
           status: nextStatus,
           trackingCode: trackingCode || null,
           estimatedDeliveryAt:
-            nextStatus === "shipped" || nextStatus === "confirmed" || nextStatus === "packing"
-              ? fulfillment.estimatedDeliveryAt ?? new Date(Date.now() + 6 * 24 * 60 * 60 * 1000)
+            nextStatus === "shipped" ||
+            nextStatus === "confirmed" ||
+            nextStatus === "packing"
+              ? fulfillment.estimatedDeliveryAt ??
+                new Date(Date.now() + 6 * 24 * 60 * 60 * 1000)
               : fulfillment.estimatedDeliveryAt,
         },
-        include: { items: { include: { product: true } } },
+        include: { items: { include: { product: true } }, payment: true },
       });
     });
     return toAdminOrder(updated);
