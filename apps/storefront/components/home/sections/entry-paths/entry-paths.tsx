@@ -2,9 +2,9 @@
 import Image from "next/image";
 import { ButtonLink } from "@/components/ui/button-link";
 import { useLocale } from "@/components/i18n";
-import { homeMedia } from "../const";
-import { useInView } from "../hooks";
-import "../motion/reveal.css";
+import { homeMedia } from "../../const";
+import { useInView } from "../../hooks";
+import "../../motion/reveal.css";
 import "./entry-paths.css";
 
 export function EntryPaths() {

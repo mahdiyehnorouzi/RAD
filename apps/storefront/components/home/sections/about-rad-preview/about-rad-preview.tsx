@@ -3,9 +3,9 @@
 import Image from "next/image";
 import { useLocale } from "@/components/i18n";
 import { ButtonLink } from "@/components/ui/button-link";
-import { homeMedia } from "../const";
-import { useInView } from "../hooks";
-import "../motion/reveal.css";
+import { homeMedia } from "../../const";
+import { useInView } from "../../hooks";
+import "../../motion/reveal.css";
 import "./about-rad-preview.css";
 
 const copy = {
