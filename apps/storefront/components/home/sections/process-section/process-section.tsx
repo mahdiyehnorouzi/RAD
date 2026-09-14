@@ -3,9 +3,9 @@
 import Image from "next/image";
 import { ButtonLink } from "@/components/ui/button-link";
 import { useLocale } from "@/components/i18n";
-import { homeProcessSteps } from "../const";
-import { useInView, useScrollStage } from "../hooks";
-import "../motion/reveal.css";
+import { homeProcessSteps } from "../../const";
+import { useInView, useScrollStage } from "../../hooks";
+import "../../motion/reveal.css";
 import "./process-section.css";
 
 function closeness(mix: number, index: number) {

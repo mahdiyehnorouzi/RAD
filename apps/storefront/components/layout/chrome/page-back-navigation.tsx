@@ -9,7 +9,7 @@ import "./page-back-navigation.css";
 export function PageBackNavigation() {
   const { locale, t, href } = useLocale();
   const { isHome, goBack, pathname } = useBackNavigation();
-  if (isHome) return null;
+  if (isHome || pathname === "/about") return null;
   const BackIcon = locale === "fa" ? ArrowRight : ArrowLeft;
   const isOrderDetail = /^\/orders\/.+/.test(pathname);
   const isMakingDetail = /^\/making\/.+/.test(pathname);

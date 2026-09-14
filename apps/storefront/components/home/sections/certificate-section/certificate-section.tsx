@@ -1,9 +1,9 @@
 "use client";
 
 import { useLocale } from "@/components/i18n";
-import { homeMedia } from "../const";
-import { useInView } from "../hooks";
-import "../motion/reveal.css";
+import { homeMedia } from "../../const";
+import { useInView } from "../../hooks";
+import "../../motion/reveal.css";
 import "./certificate-section.css";
 
 export function CertificateSection() {

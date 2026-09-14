@@ -3,8 +3,8 @@ import type { Product } from "@rad/types";
 import { ProductCard, ProductGridSkeleton } from "@/components/product";
 import { ButtonLink } from "@/components/ui/button-link";
 import { useLocale } from "@/components/i18n";
-import { useInView, useStickyPin } from "../hooks";
-import "../motion/reveal.css";
+import { useInView, useStickyPin } from "../../hooks";
+import "../../motion/reveal.css";
 import "./archive-section.css";
 
 export function ArchiveSection({
