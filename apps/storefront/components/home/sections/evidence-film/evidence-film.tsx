@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { useLocale } from "@/components/i18n";
-import { useInView } from "../hooks";
+import { useInView } from "../../hooks";
 import "./evidence-film.css";
 
 export function EvidenceFilm() {

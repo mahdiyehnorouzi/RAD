@@ -1,0 +1,192 @@
+.about-rad-preview.section {
+  display: grid;
+  grid-template-columns: minmax(0, 1.7fr) minmax(18rem, 1fr);
+  gap: 0;
+  align-items: end;
+  direction: ltr;
+  padding: 0;
+  background: var(--paper);
+}
+
+.about-rad-preview-visual {
+  position: relative;
+  isolation: isolate;
+  min-height: clamp(38rem, 67vw, 59rem);
+  margin: 0;
+  overflow: hidden;
+}
+
+.about-rad-preview-visual > span,
+.about-rad-preview-visual img {
+  z-index: 0;
+}
+
+.about-rad-preview-visual img {
+  object-fit: cover;
+  object-position: 50% 52%;
+  transition: transform 900ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.about-rad-preview-visual figcaption {
+  position: absolute;
+  z-index: 1;
+  top: clamp(1.25rem, 5%, 2.5rem);
+  inset-inline-start: clamp(1.25rem, 5%, 2.5rem);
+  display: grid;
+  gap: 0.42rem;
+  margin: 0;
+  color: var(--paper);
+  font-size: clamp(0.72rem, 1.1vw, 0.84rem);
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: 0.12em;
+  text-shadow: 0 1px 12px rgb(0 0 0 / 0.55);
+  pointer-events: none;
+}
+
+.about-rad-preview-visual figcaption span:not(:last-child)::after {
+  display: block;
+  width: 1px;
+  height: 0.7rem;
+  margin: 0.42rem 0 0 0.15rem;
+  background: currentColor;
+  content: "";
+  opacity: 0.6;
+}
+
+.about-rad-preview-copy {
+  direction: ltr;
+  max-width: 33rem;
+  padding: 0 0 clamp(2.5rem, 6vw, 6rem) clamp(2rem, 5vw, 6rem);
+}
+
+.about-rad-preview-copy h2 {
+  position: relative;
+  z-index: 1;
+  width: max-content;
+  max-width: calc(100% + clamp(4rem, 9vw, 9rem));
+  margin: 0 0 clamp(2rem, 4vw, 3.5rem) clamp(-9rem, -9vw, -4rem);
+  padding: 0.02em 0.16em 0.1em;
+  background: var(--paper);
+  color: var(--ink);
+  font-size: clamp(3.4rem, 7.2vw, 8rem);
+  font-weight: 400;
+  line-height: 0.96;
+  letter-spacing: -0.055em;
+}
+
+.about-rad-preview-copy .about-rad-preview-statement {
+  max-width: 25rem;
+  margin-bottom: 1.65rem;
+  color: var(--moss);
+  font-size: clamp(1.12rem, 1.6vw, 1.45rem);
+  font-weight: 500;
+  line-height: 1.8;
+}
+
+html[dir="rtl"] .about-rad-preview-copy {
+  direction: rtl;
+  text-align: right;
+}
+
+html[dir="rtl"] .about-rad-preview-visual figcaption {
+  direction: rtl;
+  text-align: right;
+}
+
+html[dir="rtl"]
+  .about-rad-preview-visual
+  figcaption
+  span:not(:last-child)::after {
+  margin-right: 0.15rem;
+  margin-left: 0;
+}
+
+@media (min-width: 761px) {
+  html[dir="rtl"] .about-rad-preview-copy h2 {
+    left: clamp(-6rem, -6vw, -3rem);
+    margin-left: clamp(-15rem, -15vw, -8rem);
+  }
+}
+
+.about-rad-preview-copy p {
+  margin: 0 0 1.2rem;
+  color: color-mix(in srgb, var(--ink) 82%, transparent);
+  line-height: 2;
+}
+
+.about-rad-preview-copy .about-rad-preview-statement {
+  max-width: 25rem;
+  margin-bottom: 1.65rem;
+  color: var(--moss);
+  font-size: clamp(1.12rem, 1.6vw, 1.45rem);
+  font-weight: 500;
+  line-height: 1.8;
+}
+
+html[dir="rtl"] .about-rad-preview-copy {
+  direction: rtl;
+  text-align: right;
+}
+
+html[dir="rtl"] .about-rad-preview-visual figcaption {
+  direction: rtl;
+  text-align: right;
+}
+
+html[dir="rtl"]
+  .about-rad-preview-visual
+  figcaption
+  span:not(:last-child)::after {
+  margin-right: 0.15rem;
+  margin-left: 0;
+}
+
+.about-rad-preview-copy .button {
+  margin-top: 1.75rem;
+}
+
+.about-rad-preview-copy .button svg {
+  width: 1.05rem;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .about-rad-preview:hover .about-rad-preview-visual img {
+    transform: scale(1.018);
+  }
+}
+
+@media (max-width: 760px) {
+  .about-rad-preview.section {
+    grid-template-columns: 1fr;
+    align-items: start;
+    padding: 0;
+  }
+
+  .about-rad-preview-visual {
+    min-height: min(133vw, 42rem);
+  }
+
+  .about-rad-preview-copy {
+    max-width: none;
+    padding: 0 1.25rem 0;
+    padding: 0 1.25rem;
+    padding: 0 1.25rem;
+    padding: 0 1.25rem;
+  }
+
+  .about-rad-preview-copy h2 {
+    margin: clamp(-2.3rem, -6vw, -1.75rem) 0 2rem;
+    font-size: clamp(3.5rem, 17vw, 5.7rem);
+  }
+
+  .about-rad-preview-copy .about-rad-preview-statement {
+    margin-bottom: 1.35rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .about-rad-preview-visual img {
+    transition: none;
+  }
+}

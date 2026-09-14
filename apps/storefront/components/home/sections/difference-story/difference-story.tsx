@@ -6,8 +6,8 @@ import type { DifferenceStageId } from "@/components/difference/type";
 import { ButtonLink } from "@/components/ui/button-link";
 import { useLocale, type Locale } from "@/components/i18n";
 import { museumPortraits } from "@/lib/difference";
-import { useInView, useScrollStage } from "../hooks";
-import "../motion/reveal.css";
+import { useInView, useScrollStage } from "../../hooks";
+import "../../motion/reveal.css";
 import "./difference-story.css";
 
 function stageCopy(

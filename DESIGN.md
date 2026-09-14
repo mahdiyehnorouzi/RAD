@@ -89,3 +89,7 @@ Every product owns an explicit category (`ceramics`, `painting`, `textile`, `woo
 The admin application uses the same kiln-green, paper, oxide and Vazirmatn foundations, but shifts to a denser operational rhythm. Its sidebar owns section navigation; paper panels own data views; product, order and member rows stay readable without hover. Product editing uses one shared dialog pattern with app-owned validation, while destructive actions always require an explicit confirmation dialog.
 
 Do use real Persian copy, Persian numerals, generous uneven whitespace, curated image ratios, and one-of-one inventory language. Do use the numbering system as structural information. Do not use stock luxury imagery, glassmorphism, generic gradients, uniform card grids, decorative borders, or hover-only product details.
+
+## About page
+
+The About page uses a quiet editorial reading rhythm: medium-weight, wide Persian headlines, 16–18px body copy, landscape workbench imagery, and a kiln-green maker section. Page-scoped styles in `apps/storefront/components/about/about-page.css` reuse the global palette and font tokens. Keep the full bilingual story and both works/custom-studio destinations. Workshop video is user-controlled rather than autoplaying.

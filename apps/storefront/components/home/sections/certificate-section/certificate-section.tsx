@@ -1,15 +1,18 @@
 "use client";
 
 import { useLocale } from "@/components/i18n";
+import { homeMedia } from "../../const";
+import { useInView } from "../../hooks";
 import { ButtonLink } from "@/components/ui/button-link";
-import { homeMedia } from "../const";
-import { useInView } from "../hooks";
-import "../motion/reveal.css";
+import "../../motion/reveal.css";
 import "./certificate-section.css";
 
 export function CertificateSection() {
   const { t } = useLocale();
-  const { ref, inView } = useInView<HTMLElement>({ threshold: 0.08, rootMargin: "80px 0px" });
+  const { ref, inView } = useInView<HTMLElement>({
+    threshold: 0.08,
+    rootMargin: "80px 0px",
+  });
   const facts = [
     t("certificateArtist"),
     t("certificateMaterial"),
