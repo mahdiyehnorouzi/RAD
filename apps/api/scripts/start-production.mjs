@@ -44,6 +44,8 @@ async function runWithRetry(command, args, attempts = 6) {
 
 async function main() {
   await runWithRetry("npx", ["prisma", "db", "push"]);
+  // Always upsert owner/editor so admin login works even when full catalog seed is skipped.
+  await run("npx", ["tsx", "prisma/ensure-staff.ts"]);
   if (process.env.RUN_SEED === "true") {
     await run("npx", ["prisma", "db", "seed"]);
   }

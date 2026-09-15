@@ -1,8 +1,8 @@
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { PrismaClient } from "@prisma/client";
-import { hash } from "bcryptjs";
 import { seedProducts, seedVendors } from "./data";
+import { ensureStaff } from "./ensure-staff";
 import { seedCommerce } from "./seed-commerce";
 
 const prisma = new PrismaClient();
@@ -15,52 +15,8 @@ function seedImageSrc(slug: string, imageIndex: number) {
   return `data:image/webp;base64,${readFileSync(filePath).toString("base64")}`;
 }
 
-async function seedStaff() {
-  const adminEmail = (process.env.ADMIN_EMAIL ?? "mahdiyeh.norozi77@gmail.com").toLowerCase();
-  const adminPassword = process.env.ADMIN_PASSWORD ?? "rad-studio-owner";
-  const passwordHash = await hash(adminPassword, 12);
-
-  await prisma.user.upsert({
-    where: { email: adminEmail },
-    update: {
-      name: "مهدیه نوروزی",
-      passwordHash,
-      role: "admin",
-      adminRole: "owner",
-      status: "active",
-    },
-    create: {
-      name: "مهدیه نوروزی",
-      email: adminEmail,
-      passwordHash,
-      role: "admin",
-      adminRole: "owner",
-      status: "active",
-    },
-  });
-
-  const editorHash = await hash("rad-editor-2026", 12);
-  await prisma.user.upsert({
-    where: { email: "sahar@rad.studio" },
-    update: {
-      name: "سحر میرزایی",
-      role: "artist",
-      adminRole: "editor",
-      status: "active",
-    },
-    create: {
-      name: "سحر میرزایی",
-      email: "sahar@rad.studio",
-      passwordHash: editorHash,
-      role: "artist",
-      adminRole: "editor",
-      status: "active",
-    },
-  });
-}
-
 async function main() {
-  await seedStaff();
+  await ensureStaff(prisma);
 
   for (const vendor of seedVendors) {
     await prisma.vendor.upsert({

@@ -1,8 +1,24 @@
 import type { Prisma, Product, ProductImage, Vendor } from "@prisma/client";
 
-function imageSrc(image: ProductImage, embedImages: boolean) {
-  if (!image.src) return undefined;
-  return embedImages ? image.src : `/catalog/images/${image.id}`;
+/** Public product payloads only need image metadata — never load base64 `src`. */
+export const productImageSelect = {
+  id: true,
+  alt: true,
+  enAlt: true,
+  color: true,
+  accent: true,
+  shape: true,
+  sortOrder: true,
+} satisfies Prisma.ProductImageSelect;
+
+type ProductImageMeta = Pick<
+  ProductImage,
+  "id" | "alt" | "enAlt" | "color" | "accent" | "shape" | "sortOrder"
+> & { src?: string | null };
+
+function imageSrc(image: ProductImageMeta, embedImages: boolean) {
+  if (embedImages) return image.src ?? undefined;
+  return `/catalog/images/${image.id}`;
 }
 
 function visualForCategory(category: string) {
@@ -26,7 +42,7 @@ export function formatToman(value: number) {
 }
 
 type ProductRecord = Product & {
-  images: ProductImage[];
+  images: ProductImageMeta[];
   vendor: Vendor | null;
 };
 
@@ -112,6 +128,12 @@ export function toProduct(product: ProductRecord, options?: { embedImages?: bool
 }
 
 export const productInclude = {
+  images: { select: productImageSelect },
+  vendor: true,
+} as const;
+
+/** Admin edit forms need the stored data-URL `src` values. */
+export const productIncludeWithSrc = {
   images: true,
   vendor: true,
 } as const;

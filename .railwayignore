@@ -1,0 +1,21 @@
+# Keep Railway uploads small — local/dev artifacts must not ship.
+node_modules/
+**/node_modules/
+.git/
+**/.git/
+.next/
+**/.next/
+.vinext/
+.wrangler/
+dist/
+**/dist/
+apps/api/data/
+apps/admin/
+apps/storefront/
+packages/
+*.tsbuildinfo
+.env
+.env.local
+*.db
+*.db-journal
+work/

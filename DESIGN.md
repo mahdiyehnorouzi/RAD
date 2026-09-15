@@ -12,9 +12,9 @@ colors:
   line: "#d6cfc3"
 typography:
   display:
-    fontFamily: "Vazirmatn, Vazir, Tahoma, sans-serif"
+    fontFamily: "IRANYekanX, Vazirmatn, Tahoma, sans-serif"
   body:
-    fontFamily: "Vazirmatn, Vazir, Tahoma, sans-serif"
+    fontFamily: "IRANYekanX, Vazirmatn, Tahoma, sans-serif"
 rounded:
   control: "2px"
   card: "4px"
@@ -42,7 +42,7 @@ Warm paper and plaster tones carry the gallery register. The new RAD mark define
 
 ## Typography
 
-All Persian and Latin interface text uses Vazirmatn/Vazir to preserve the project's explicit type requirement. Large Persian headlines use scale, regular-to-medium weight, and line rhythm rather than heavy weight. Hierarchy comes from size and space, not ubiquitous boldness.
+All Persian and Latin interface text uses IRANYekanX (FaNum) as the primary face, with Vazirmatn and Tahoma as fallbacks. Large Persian headlines use scale, regular-to-medium weight, and line rhythm rather than heavy weight. Hierarchy comes from size and space, not ubiquitous boldness.
 
 ## Layout
 
@@ -86,7 +86,7 @@ Every product owns an explicit category (`ceramics`, `painting`, `textile`, `woo
 
 ## Admin application
 
-The admin application uses the same kiln-green, paper, oxide and Vazirmatn foundations, but shifts to a denser operational rhythm. Its sidebar owns section navigation; paper panels own data views; product, order and member rows stay readable without hover. Product editing uses one shared dialog pattern with app-owned validation, while destructive actions always require an explicit confirmation dialog.
+The admin application uses the same kiln-green, paper, oxide and IRANYekanX foundations, but shifts to a denser operational rhythm. Its sidebar owns section navigation; paper panels own data views; product, order and member rows stay readable without hover. Product editing uses one shared dialog pattern with app-owned validation, while destructive actions always require an explicit confirmation dialog.
 
 Do use real Persian copy, Persian numerals, generous uneven whitespace, curated image ratios, and one-of-one inventory language. Do use the numbering system as structural information. Do not use stock luxury imagery, glassmorphism, generic gradients, uniform card grids, decorative borders, or hover-only product details.
 

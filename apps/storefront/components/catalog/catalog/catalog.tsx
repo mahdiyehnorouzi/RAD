@@ -170,7 +170,9 @@ export function AddToBag({ product }: { product: Product }) {
             setBusy(true);
             setError("");
             const addedToBag = await add(live);
-            if (addedToBag) await addNotice("cart", live.slug);
+            if (addedToBag) {
+              void addNotice("cart", live.slug).catch(() => {});
+            }
           } catch (err) {
             if (err instanceof ApiError && err.status === 409) {
               setBlocked(true);
