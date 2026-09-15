@@ -5,7 +5,6 @@ import {
 } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { IdentityService } from "../common/identity.service";
-import { productInclude, toProduct } from "../catalog/product.mapper";
 import type { Actor } from "../common/identity";
 
 @Injectable()
@@ -18,17 +17,17 @@ export class CartService {
   async get(actor: Actor) {
     const items = await this.prisma.cartItem.findMany({
       where: { ownerKey: this.identity.key(actor) },
-      include: { product: { include: productInclude } },
+      select: { productSlug: true },
       orderBy: { createdAt: "asc" },
     });
-    return {
-      slugs: items.map((item) => item.productSlug),
-      items: items.map((item) => toProduct(item.product)),
-    };
+    return { slugs: items.map((item) => item.productSlug) };
   }
 
   async add(actor: Actor, slug: string) {
-    const product = await this.prisma.product.findUnique({ where: { slug } });
+    const product = await this.prisma.product.findUnique({
+      where: { slug },
+      select: { status: true },
+    });
     if (!product || product.status === "draft") {
       throw new NotFoundException("اثر پیدا نشد.");
     }

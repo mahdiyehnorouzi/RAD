@@ -1,5 +1,5 @@
 export const fontFamily = {
-  sans: '"Vazirmatn", "Vazir", Tahoma, sans-serif',
+  sans: '"IRANYekanX", "Vazirmatn", Tahoma, sans-serif',
 } as const;
 
 export const fontWeight = {

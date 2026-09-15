@@ -23,7 +23,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
     const load = () =>
       api<{ slugs: string[] }>("/cart")
         .then((payload) => setSlugs(payload.slugs))
-        .catch(() => {})
+        .catch((err) => {
+          console.error("Failed to load cart", err);
+        })
         .finally(() => setReady(true));
     load();
     window.addEventListener("rad:session", load);

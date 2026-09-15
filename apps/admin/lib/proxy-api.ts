@@ -11,6 +11,27 @@ const HOP_BY_HOP = new Set([
   "upgrade",
 ]);
 
+function copyUpstreamHeaders(upstream: Response): Headers {
+  const responseHeaders = new Headers();
+  const getSetCookie = (
+    upstream.headers as Headers & { getSetCookie?: () => string[] }
+  ).getSetCookie?.();
+
+  upstream.headers.forEach((value, key) => {
+    if (key.toLowerCase() === "set-cookie") return;
+    if (!HOP_BY_HOP.has(key.toLowerCase())) responseHeaders.append(key, value);
+  });
+
+  if (getSetCookie?.length) {
+    for (const cookie of getSetCookie) responseHeaders.append("set-cookie", cookie);
+  } else {
+    const single = upstream.headers.get("set-cookie");
+    if (single) responseHeaders.append("set-cookie", single);
+  }
+
+  return responseHeaders;
+}
+
 export async function proxyApiRequest(request: Request, pathSegments: string[]): Promise<Response> {
   const path = pathSegments.map(encodeURIComponent).join("/");
   const target = new URL(`/${path}`, API_BASE);
@@ -34,14 +55,9 @@ export async function proxyApiRequest(request: Request, pathSegments: string[]):
   }
 
   const upstream = await fetch(target, init);
-  const responseHeaders = new Headers();
-  upstream.headers.forEach((value, key) => {
-    if (!HOP_BY_HOP.has(key.toLowerCase())) responseHeaders.append(key, value);
-  });
-
   return new Response(upstream.body, {
     status: upstream.status,
     statusText: upstream.statusText,
-    headers: responseHeaders,
+    headers: copyUpstreamHeaders(upstream),
   });
 }

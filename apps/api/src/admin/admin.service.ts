@@ -9,7 +9,7 @@ import { randomBytes } from "node:crypto";
 import { hash } from "bcryptjs";
 import { assertImageData, productImageError, productImageLimit } from "../common/image-data";
 import { PrismaService } from "../prisma/prisma.service";
-import { productInclude } from "../catalog/product.mapper";
+import { productIncludeWithSrc } from "../catalog/product.mapper";
 import { canAdmin, type AdminPermission } from "./permissions";
 import {
   artistVendorId,
@@ -32,7 +32,7 @@ export class AdminService {
 
   async listProducts() {
     const products = await this.prisma.product.findMany({
-      include: productInclude,
+      include: productIncludeWithSrc,
       orderBy: [{ sortOrder: "asc" }, { updatedAt: "desc" }],
     });
     return products.map(toAdminProduct);
@@ -92,7 +92,7 @@ export class AdminService {
     await this.replaceImages(product.slug, input.name.trim(), input.images);
     const saved = await this.prisma.product.findUniqueOrThrow({
       where: { id: product.id },
-      include: productInclude,
+      include: productIncludeWithSrc,
     });
     return toAdminProduct(saved);
   }

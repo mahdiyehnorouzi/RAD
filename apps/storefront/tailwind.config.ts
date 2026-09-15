@@ -38,7 +38,7 @@ export default {
       maxWidth: {
         site: "1600px",
       },
-      fontFamily: { sans: ["Vazirmatn", "Vazir", "Tahoma", "sans-serif"] },
+      fontFamily: { sans: ["IRANYekanX", "Vazirmatn", "Tahoma", "sans-serif"] },
       fontSize: {
         label: [
           "var(--text-label)",
