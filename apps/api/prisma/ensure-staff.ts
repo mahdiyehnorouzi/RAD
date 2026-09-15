@@ -36,10 +36,10 @@ export async function ensureStaff(client: PrismaClient = prisma) {
     where: { email: "sahar@rad.studio" },
     update: {
       name: "سحر میرزایی",
+      passwordHash: editorHash,
       role: "artist",
       adminRole: "editor",
       status: "active",
-      // Keep existing password on update so operators aren't reset unexpectedly.
     },
     create: {
       name: "سحر میرزایی",

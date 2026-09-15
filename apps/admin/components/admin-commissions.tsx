@@ -244,7 +244,11 @@ function CommissionDetail({
         </form>
       ) : (
         <p className="commission-note">
-          این سفارش از مرحلهٔ بازبینی گذشته است. مشتری وضعیت را در مسیر ساخت می‌بیند. برای ادامه‌ی ساخت از کارگاه هنرمند استفاده کنید.
+          این سفارش از مرحلهٔ بازبینی گذشته است. مشتری وضعیت را در مسیر ساخت می‌بیند. برای ادامه‌ی ساخت وارد{" "}
+          <a href="https://rad-object.com/workshop" target="_blank" rel="noreferrer">
+            کارگاه هنرمند
+          </a>{" "}
+          شوید با حساب سازنده: <code>sahar@rad.studio</code> / <code>rad-editor-2026</code>.
         </p>
       )}
     </div>

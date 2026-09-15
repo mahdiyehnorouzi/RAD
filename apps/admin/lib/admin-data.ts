@@ -128,6 +128,19 @@ export const orderStatusLabels: Record<AdminOrderStatus, string> = {
   returned: "مرجوع‌شده",
 };
 
+/** Happy-path fulfillment only — cancel/return are exceptional branches. */
+export const orderStatusProgress: AdminOrderStatus[] = [
+  "payment_pending",
+  "confirmed",
+  "packing",
+  "shipped",
+  "delivered",
+];
+
+export function isTerminalOrderStatus(status: AdminOrderStatus) {
+  return status === "cancelled" || status === "returned";
+}
+
 const faNumber = new Intl.NumberFormat("fa-IR");
 
 export function stageCountLabel(index: number, total: number) {

@@ -4,7 +4,7 @@ import { useMemo, useRef, useState } from "react";
 import { Archive, ChevronLeft, CircleGauge, ImagePlus, KeyRound, LayoutDashboard, LogOut, Menu, Package, Pencil, Plus, ScrollText, Search, ShieldCheck, ShoppingBag, Trash2, Users, X } from "lucide-react";
 import { useAdminWorkspace } from "../hooks/use-admin-workspace";
 import { loadRememberedEmail, loadRememberMe, saveLoginPreferences } from "../lib/admin-storage";
-import { orderStatusLabels, productStatusLabels, roleLabels, stageCountLabel, type AdminMember, type AdminOrder, type AdminProduct, type AdminRole, type AdminSection } from "../lib/admin-data";
+import { orderStatusLabels, orderStatusProgress, isTerminalOrderStatus, productStatusLabels, roleLabels, stageCountLabel, type AdminMember, type AdminOrder, type AdminProduct, type AdminRole, type AdminSection } from "../lib/admin-data";
 import { AdminCommissions } from "./admin-commissions";
 import { StageMeter } from "@rad/ui";
 
@@ -98,18 +98,21 @@ function Products({ products, canWrite, onCreate, onEdit, onDelete }: { products
 function ProductThumb({ product }: { product: AdminProduct }) { return <div className="product-thumb">{product.images[0] ? <img src={product.images[0]} alt="" /> : <Package />}<span>{number.format(product.images.length)} عکس</span></div>; }
 
 function Orders({ orders, canWrite, onChange }: { orders: AdminOrder[]; canWrite: boolean; onChange: (order: AdminOrder) => void | Promise<void> }) {
-  const stages = Object.entries(orderStatusLabels);
+  const statusOptions = Object.entries(orderStatusLabels);
   return <section className="paper-panel data-view"><div className="view-heading"><div><span className="eyebrow">از ثبت تا تحویل</span><h2>سفارش‌های فروشگاه</h2><p>این فهرست خرید آثار آماده است: پرداخت، بسته‌بندی و ارسال. ساخت سفارشی در بخش سفارش اختصاصی است.</p></div></div>
     {orders.length ? <div className="order-process-list">{orders.map((order) => {
-      const current = Math.max(0, stages.findIndex(([value]) => value === order.status));
-      const next = stages[current + 1]?.[1];
+      const terminal = isTerminalOrderStatus(order.status);
+      const progressIndex = orderStatusProgress.indexOf(order.status);
+      const current = terminal ? orderStatusProgress.length - 1 : Math.max(0, progressIndex);
+      const nextStatus = terminal || progressIndex < 0 ? undefined : orderStatusProgress[progressIndex + 1];
+      const next = nextStatus ? orderStatusLabels[nextStatus] : undefined;
       const awaitingReceiptReview =
         order.status === "payment_pending" && order.paymentStatus === "submitted";
-      return <article className={`order-process-card${awaitingReceiptReview ? " needs-receipt-review" : ""}`} key={order.id}>
+      return <article className={`order-process-card${awaitingReceiptReview ? " needs-receipt-review" : ""}${terminal ? " is-terminal" : ""}`} key={order.id}>
         <header>
           <div><strong>{order.id}</strong><small>{date(order.createdAt)} · {order.customer}</small></div>
           <div className="order-process-meta"><b>{order.productName}</b><span>{money(order.amount)}</span></div>
-          <select value={order.status} disabled={!canWrite} onChange={(event) => onChange({ ...order, status: event.target.value as AdminOrder["status"] })} aria-label={`وضعیت سفارش ${order.id}`}>{stages.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select>
+          <select value={order.status} disabled={!canWrite} onChange={(event) => onChange({ ...order, status: event.target.value as AdminOrder["status"] })} aria-label={`وضعیت سفارش ${order.id}`}>{statusOptions.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select>
         </header>
         {awaitingReceiptReview ? (
           <div className="order-receipt-review">
@@ -140,11 +143,15 @@ function Orders({ orders, canWrite, onChange }: { orders: AdminOrder[]; canWrite
         ) : null}
         <StageMeter
           index={current}
-          total={stages.length}
+          total={orderStatusProgress.length}
           label={orderStatusLabels[order.status]}
-          countLabel={stageCountLabel(current, stages.length)}
+          countLabel={
+            terminal
+              ? "شاخهٔ استثنایی"
+              : stageCountLabel(current, orderStatusProgress.length)
+          }
           kicker="وضعیت فعلی"
-          nextKicker="مرحله بعد"
+          nextKicker={next ? "مرحله بعد" : undefined}
           nextLabel={next}
           compact
         />

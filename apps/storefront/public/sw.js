@@ -1,4 +1,4 @@
-const CACHE = "rad-studio-v5";
+const CACHE = "rad-studio-v6";
 const CORE = ["/", "/products", "/rad-logo.png", "/manifest.webmanifest"];
 
 self.addEventListener("install", (event) => {

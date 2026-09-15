@@ -24,8 +24,11 @@ export {
   createCommission,
   fetchCommission,
   fetchMyCommissions,
+  fetchWorkshopCommissions,
   saveCommission,
+  saveWorkshopCommission,
   sendCommissionMessage,
+  slimCommissionBrief,
 } from "./commissions";
 export { createNotice, fetchNotices, markNoticesRead } from "./notices";
 export { cancelOrder, confirmDemoPayment, createOrder, fetchOrder, fetchOrders } from "./orders";

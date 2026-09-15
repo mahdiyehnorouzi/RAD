@@ -4,7 +4,8 @@ export type AdminRole = "owner" | "manager" | "editor" | "viewer";
 export const adminPermissions: Record<AdminRole, readonly AdminPermission[]> = {
   owner: ["product.write", "product.delete", "order.write", "member.write"],
   manager: ["product.write", "order.write", "member.write"],
-  editor: ["product.write"],
+  // Editors (studio makers) can progress commissions after feasibility review.
+  editor: ["product.write", "order.write"],
   viewer: [],
 };
 

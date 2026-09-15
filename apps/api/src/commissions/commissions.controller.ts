@@ -16,6 +16,24 @@ export class CommissionsController {
     return this.commissions.listMine(await this.identity.fromRequest(request));
   }
 
+  @Get("workshop")
+  async listWorkshop(@Req() request: AuthedRequest) {
+    return this.commissions.listWorkshop(await this.identity.fromRequest(request));
+  }
+
+  @Put("workshop/:id")
+  async saveWorkshop(
+    @Param("id") id: string,
+    @Body() body: SaveCommissionDto,
+    @Req() request: AuthedRequest,
+  ) {
+    return this.commissions.saveWorkshop(
+      await this.identity.fromRequest(request),
+      id,
+      body.payload,
+    );
+  }
+
   @Get(":id")
   async get(@Param("id") id: string, @Req() request: AuthedRequest) {
     return this.commissions.getMine(await this.identity.fromRequest(request), id);

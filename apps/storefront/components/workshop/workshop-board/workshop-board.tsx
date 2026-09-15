@@ -4,6 +4,7 @@ import "./workshop-board.css";
 import { useMemo } from "react";
 import { useMaking } from "@/hooks/use-making-workspace";
 import { useLocale } from "@/components/i18n";
+import { useCommerce } from "@/components/commerce";
 import { groupWorkshopCommissions } from "./group-commissions";
 import { WorkshopCard } from "./workshop-card";
 import type {MakingCommission} from "@/components/making/type";
@@ -31,9 +32,40 @@ function WorkshopColumn({
 }
 
 export function ArtistWorkshopBoard() {
-  const { commissions, ready } = useMaking();
-  const { t } = useLocale();
+  const { commissions, ready, mode } = useMaking();
+  const { user } = useCommerce();
+  const { t, href } = useLocale();
   const grouped = useMemo(() => groupWorkshopCommissions(commissions), [commissions]);
+
+  if (!user) {
+    return (
+      <section className="workshop-page section">
+        <header className="making-heading">
+          <span className="eyebrow">{t("workshopEyebrow")}</span>
+          <h1>{t("workshopTitle")}</h1>
+          <p>{t("workshopNeedMaker")}</p>
+          <a className="button" href={href("/account")}>
+            {t("login")}
+          </a>
+        </header>
+      </section>
+    );
+  }
+
+  if (mode !== "maker") {
+    return (
+      <section className="workshop-page section">
+        <header className="making-heading">
+          <span className="eyebrow">{t("workshopEyebrow")}</span>
+          <h1>{t("workshopTitle")}</h1>
+          <p>{t("workshopCustomerRedirect")}</p>
+          <a className="button" href={href("/account/making")}>
+            {t("myMakingOrders")}
+          </a>
+        </header>
+      </section>
+    );
+  }
 
   if (!ready) {
     return (
