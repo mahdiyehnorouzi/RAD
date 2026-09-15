@@ -165,23 +165,25 @@ export function AddToBag({ product }: { product: Product }) {
         type="button"
         className={`button add${added ? " add--in-bag" : ""}`}
         onClick={async () => {
-          if (busy) return;
+          if (busy || added) return;
           try {
             setBusy(true);
             setError("");
-            const addedToBag = await add(live);
+            const addPromise = add(live);
+            // Optimistic cart update flips `added` immediately; clear busy so UI isn't frozen.
+            setBusy(false);
+            const addedToBag = await addPromise;
             if (addedToBag) {
               void addNotice("cart", live.slug).catch(() => {});
             }
           } catch (err) {
+            setBusy(false);
             if (err instanceof ApiError && err.status === 409) {
               setBlocked(true);
               await refresh();
               return;
             }
             setError(errorMessage(err, t("requestFailed")));
-          } finally {
-            setBusy(false);
           }
         }}
         disabled={added || unavailable || busy}

@@ -32,14 +32,14 @@ export function errorMessage(err: unknown, fallback = "Request failed"): string 
   return firstString(err) ?? fallback;
 }
 
-export async function api<T>(path: string, init?: RequestInit): Promise<T> {
+export async function api<T>(path: string, init?: RequestInit & { timeoutMs?: number }): Promise<T> {
   const headers = new Headers(init?.headers);
   if (init?.body && !headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json");
   }
-  const timeoutMs = 20_000;
+  const { timeoutMs = 20_000, ...fetchInit } = init ?? {};
   const controller = new AbortController();
-  const external = init?.signal;
+  const external = fetchInit.signal;
   const onExternalAbort = () => controller.abort(external?.reason);
   if (external) {
     if (external.aborted) controller.abort(external.reason);
@@ -48,7 +48,7 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
     const response = await fetch(`${API_BASE}${path}`, {
-      ...init,
+      ...fetchInit,
       credentials: "include",
       headers,
       signal: controller.signal,

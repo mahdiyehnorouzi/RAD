@@ -38,12 +38,19 @@ export function CartProvider({ children }: { children: ReactNode }) {
       ready,
       add: async (product) => {
         if (product.status === "sold" || product.status === "reserved") return false;
-        const payload = await api<{ slugs: string[] }>("/cart/items", {
-          method: "POST",
-          body: JSON.stringify({ slug: product.slug }),
-        });
-        setSlugs(payload.slugs);
-        return true;
+        const slug = product.slug;
+        setSlugs((current) => (current.includes(slug) ? current : [...current, slug]));
+        try {
+          const payload = await api<{ slugs: string[] }>("/cart/items", {
+            method: "POST",
+            body: JSON.stringify({ slug }),
+          });
+          setSlugs(payload.slugs);
+          return true;
+        } catch (error) {
+          setSlugs((current) => current.filter((item) => item !== slug));
+          throw error;
+        }
       },
       remove: async (slug) => {
         const payload = await api<{ slugs: string[] }>(`/cart/items/${slug}`, {

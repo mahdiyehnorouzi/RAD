@@ -22,6 +22,7 @@ export function CheckoutPage() {
   const router = useRouter();
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [phone, setPhone] = useState("");
   const errorRef = useRef<HTMLParagraphElement>(null);
 
   const items = slugs
@@ -44,7 +45,7 @@ export function CheckoutPage() {
     const data = new FormData(event.currentTarget);
     const name = String(data.get("name") ?? "").trim();
     const city = String(data.get("city") ?? "").trim();
-    const phone = String(data.get("phone") ?? "").trim();
+    const phoneValue = phone.trim() || String(data.get("phone") ?? "").trim();
     const address = String(data.get("address") ?? "").trim();
     const postalCode = String(data.get("postalCode") ?? "").trim();
 
@@ -54,7 +55,7 @@ export function CheckoutPage() {
       const created = await placeOrder({
         name: name || user?.name || (locale === "fa" ? "کاربر رَد" : "RAD collector"),
         city: city || (locale === "fa" ? "تهران" : "Tehran"),
-        phone,
+        phone: phoneValue,
         address: [address, postalCode && `${t("postalCodeLabel")} ${postalCode}`]
           .filter(Boolean)
           .join("، "),
@@ -116,7 +117,18 @@ export function CheckoutPage() {
             autoComplete="name"
           />
           <label htmlFor="checkout-phone">{t("phoneLabel")}</label>
-          <input id="checkout-phone" name="phone" type="tel" inputMode="tel" autoComplete="tel" />
+          <input
+            id="checkout-phone"
+            className="checkout-ltr-field"
+            name="phone"
+            type="text"
+            inputMode="tel"
+            autoComplete="tel"
+            dir="ltr"
+            required
+            value={phone}
+            onChange={(event) => setPhone(event.target.value)}
+          />
           <label htmlFor="checkout-city">{t("cityLabel")}</label>
           <input id="checkout-city" name="city" type="text" autoComplete="address-level2" />
           <label htmlFor="checkout-address">{t("addressLabel")}</label>
@@ -130,10 +142,12 @@ export function CheckoutPage() {
           <label htmlFor="checkout-postal">{t("postalCodeLabel")}</label>
           <input
             id="checkout-postal"
+            className="checkout-ltr-field"
             name="postalCode"
             type="text"
             inputMode="numeric"
             autoComplete="postal-code"
+            dir="ltr"
           />
           <button className="button" type="submit" disabled={submitting}>
             {submitting ? t("placingOrder") : t("placeDemoOrder")}

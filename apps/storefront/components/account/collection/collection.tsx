@@ -1,16 +1,36 @@
 "use client";
 
 import Link from "next/link";
+import { useMemo } from "react";
+import { useCommerce } from "@/components/commerce";
 import { useLocale } from "@/components/i18n";
-import { findPassport, formatPassportCode, formatPassportName } from "@/lib/passport";
-import { MY_RAD_CODES } from "../const/my-rads";
+import {
+  findPassport,
+  formatPassportCode,
+  formatPassportName,
+  passportForProduct,
+} from "@/lib/passport";
 import "./collection.css";
+
+/** Collection is privately owned pieces — only delivered orders for this account. */
+const OWNED_STATUSES = new Set(["delivered"]);
 
 export function Collection() {
   const { locale, t, number, href } = useLocale();
-  const pieces = MY_RAD_CODES.map(findPassport).filter(
-    (item): item is NonNullable<typeof item> => Boolean(item),
-  );
+  const { orders, ready } = useCommerce();
+
+  const pieces = useMemo(() => {
+    const slugs = [
+      ...new Set(
+        orders
+          .filter((order) => OWNED_STATUSES.has(order.status))
+          .flatMap((order) => order.slugs),
+      ),
+    ];
+    return slugs
+      .map((slug) => passportForProduct({ slug, artworkNumber: "" }) ?? findPassport(slug))
+      .filter((item): item is NonNullable<typeof item> => Boolean(item));
+  }, [orders]);
 
   return (
     <section className="my-rads">
@@ -19,30 +39,23 @@ export function Collection() {
         <h2>{t("myRadsTitle")}</h2>
         <p>{t("myRadsBody")}</p>
       </header>
-      <ol>
-        {pieces.map((passport) => {
-          const transfer = passport.transfers?.at(-1);
-          return (
+      {!ready ? null : pieces.length ? (
+        <ol>
+          {pieces.map((passport) => (
             <li key={passport.code}>
               <Link href={href(`/passport/${passport.code}`)}>
                 <small>{formatPassportCode(passport.code, locale, number)}</small>
                 <b>{formatPassportName(passport, locale, number)}</b>
-                {transfer ? (
-                  <span>
-                    {t("transferLine", {
-                      from: transfer.from[locale],
-                      to: transfer.to[locale],
-                      when: transfer.when[locale],
-                    })}
-                  </span>
-                ) : (
-                  <span>{passport.city[locale]}</span>
-                )}
+                <span>{t("collectionOwnedHint")}</span>
               </Link>
             </li>
-          );
-        })}
-      </ol>
+          ))}
+        </ol>
+      ) : (
+        <p className="my-rads-empty" role="status">
+          {t("myRadsEmpty")}
+        </p>
+      )}
     </section>
   );
 }

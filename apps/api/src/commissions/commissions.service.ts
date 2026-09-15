@@ -57,12 +57,21 @@ export class CommissionsService {
     return rows.map((row) => this.toCommission(row.payload));
   }
 
+  async listWorkshop(actor: Actor) {
+    this.requireMaker(actor);
+    const rows = await this.prisma.commission.findMany({
+      orderBy: { updatedAt: "desc" },
+    });
+    return rows.map((row) => this.toCommission(row.payload));
+  }
+
   async getMine(actor: Actor, id: string) {
     this.requireSignedIn(actor);
     return this.toCommission((await this.requireOwned(actor, id)).payload);
   }
 
   async create(actor: Actor, input: CreateCommissionDto) {
+    this.requireSignedIn(actor);
     const payload = createSubmittedCommission({
       customerName: input.customerName,
       brief: input.brief,
@@ -87,6 +96,11 @@ export class CommissionsService {
       data: { payload: next as unknown as Prisma.InputJsonValue },
     });
     return next;
+  }
+
+  async saveWorkshop(actor: Actor, id: string, payload: MakingCommission) {
+    this.requireMaker(actor);
+    return this.saveAdmin(id, payload).then((row) => row.payload);
   }
 
   async addMineMessage(actor: Actor, id: string, body: LocaleCopy) {
@@ -163,6 +177,20 @@ export class CommissionsService {
   private requireSignedIn(actor: Actor) {
     if (!actor.user) {
       throw new UnauthorizedException("برای مشاهده این سفارش وارد حساب شوید.");
+    }
+  }
+
+  private requireMaker(actor: Actor) {
+    this.requireSignedIn(actor);
+    const role = actor.user?.role;
+    const adminRole = actor.user?.adminRole;
+    const isMaker =
+      role === "artist" ||
+      adminRole === "owner" ||
+      adminRole === "manager" ||
+      adminRole === "editor";
+    if (!isMaker) {
+      throw new ForbiddenException("این کارگاه فقط برای هنرمند در دسترس است.");
     }
   }
 

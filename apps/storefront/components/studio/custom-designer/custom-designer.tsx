@@ -2,7 +2,7 @@
 import "./custom-designer.css";
 
 import { useRouter } from "next/navigation";
-import type { CSSProperties } from "react";
+import { startTransition, useState, type CSSProperties } from "react";
 import { useLocale } from "@/components/i18n";
 import { useCommerce } from "@/components/commerce";
 import { useMaking } from "@/hooks/use-making-workspace";
@@ -15,14 +15,17 @@ import { freedomToPermission, useDesigner } from "./hooks";
 import { useBackNavigation } from "@/hooks/use-back-navigation";
 import { artworkCategories } from "@/lib/catalog/artwork";
 import { DESIGNER_FEELINGS } from "./const";
+import { errorMessage } from "@/lib/api";
 
 export function CustomDesigner() {
-  const { t, locale, number } = useLocale();
+  const { t, locale, number, href } = useLocale();
   const router = useRouter();
   const { goBack: leaveStudio } = useBackNavigation();
   const { user } = useCommerce();
   const { submitDesign } = useMaking();
   const designer = useDesigner();
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
   const {
     canAdvance,
     category,
@@ -53,36 +56,56 @@ export function CustomDesigner() {
   } = designer;
   const feelingLabel = DESIGNER_FEELINGS.find((item) => item.id === feeling)?.label[locale];
 
-  function submitCommission() {
+  function advance() {
     if (!canAdvance) return;
+    startTransition(() => {
+      goNext();
+    });
+  }
+
+  function submitCommission() {
+    if (!canAdvance || submitting) return;
+    if (!user) {
+      setSubmitError(t("designerNeedAccount"));
+      router.push(href("/account?next=/studio"));
+      return;
+    }
     void (async () => {
-      const references = [
-        prompt.trim(),
-        feelingLabel ? `${locale === "fa" ? "حس" : "Mood"}: ${feelingLabel}` : "",
-        colors.length ? `${locale === "fa" ? "رنگ" : "Colours"}: ${colors.join(" / ")}` : "",
-        `${locale === "fa" ? "آزادی سازنده" : "Maker freedom"}: ${freedom}%`,
-        hasVoice ? (locale === "fa" ? "یادداشت صوتی همراه است." : "A voice note is attached.") : "",
-      ].filter(Boolean);
-      const commission = await submitDesign({
-        customerName: user?.name ?? (locale === "fa" ? "مهمان" : "Guest"),
-        brief: {
-          concept: references.join("\n") || (locale === "fa" ? "ایده استودیو" : "Studio idea"),
-          dimensions: "",
-          material: selectedCategory?.label[locale] ?? "",
-          intendedUse,
-          budget: "",
-          permission: freedomToPermission(freedom),
-          category: category || "ceramics",
-          image: sketch || uploads[0],
-          images: [sketch, ...uploads].filter(Boolean),
-          colors,
-          feeling,
-          freedom,
-          sketch: sketch || undefined,
-          hasVoice,
-        },
-      });
-      router.push(`/making/${commission.id}`);
+      try {
+        setSubmitting(true);
+        setSubmitError("");
+        const references = [
+          prompt.trim(),
+          feelingLabel ? `${locale === "fa" ? "حس" : "Mood"}: ${feelingLabel}` : "",
+          colors.length ? `${locale === "fa" ? "رنگ" : "Colours"}: ${colors.join(" / ")}` : "",
+          `${locale === "fa" ? "آزادی سازنده" : "Maker freedom"}: ${freedom}%`,
+          hasVoice ? (locale === "fa" ? "یادداشت صوتی همراه است." : "A voice note is attached.") : "",
+        ].filter(Boolean);
+        const commission = await submitDesign({
+          customerName: user.name,
+          brief: {
+            concept: references.join("\n") || (locale === "fa" ? "ایده استودیو" : "Studio idea"),
+            dimensions: "",
+            material: selectedCategory?.label[locale] ?? "",
+            intendedUse,
+            budget: "",
+            permission: freedomToPermission(freedom),
+            category: category || "ceramics",
+            image: sketch || uploads[0],
+            images: [sketch, ...uploads].filter(Boolean),
+            colors,
+            feeling,
+            freedom,
+            sketch: sketch || undefined,
+            hasVoice,
+          },
+        });
+        router.push(`/making/${commission.id}`);
+      } catch (err) {
+        setSubmitError(errorMessage(err, t("requestFailed")));
+      } finally {
+        setSubmitting(false);
+      }
     })();
   }
 
@@ -161,6 +184,8 @@ export function CustomDesigner() {
               intendedUse={intendedUse}
               setIntendedUse={setIntendedUse}
               onSubmit={submitCommission}
+              submitting={submitting}
+              error={submitError}
             />
           ) : null}
 
@@ -177,7 +202,7 @@ export function CustomDesigner() {
                 type="button"
                 className="button"
                 disabled={!canAdvance}
-                onClick={goNext}
+                onClick={advance}
               >
                 {t("designerNext")}
               </button>
