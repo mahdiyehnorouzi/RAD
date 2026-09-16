@@ -12,10 +12,3 @@ export const orderStageKeys = [
   "orderStage9",
   "orderStage10",
 ] as const satisfies readonly MessageKey[];
-
-export const faqKeys = [
-  { q: "faqDamageQ", a: "faqDamageA" },
-  { q: "faqPackQ", a: "faqPackA" },
-  { q: "faqTimeQ", a: "faqTimeA" },
-  { q: "faqReturnQ", a: "faqReturnA" },
-] as const satisfies ReadonlyArray<{ q: MessageKey; a: MessageKey }>;

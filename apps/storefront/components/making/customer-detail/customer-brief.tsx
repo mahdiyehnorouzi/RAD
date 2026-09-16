@@ -11,34 +11,56 @@ export function CustomerBrief({ commission }: { commission: MakingCommission }) 
       ? [commission.brief.image]
       : []),
   ];
+  const rows = [
+    {
+      label: locale === "fa" ? "مفهوم" : "Concept",
+      value: commission.brief.concept,
+    },
+    {
+      label: locale === "fa" ? "ابعاد" : "Dimensions",
+      value: commission.brief.dimensions,
+    },
+    {
+      label: locale === "fa" ? "ماده" : "Material",
+      value: commission.brief.material,
+    },
+    {
+      label: locale === "fa" ? "کاربرد" : "Intended use",
+      value: commission.brief.intendedUse,
+    },
+    {
+      label: locale === "fa" ? "بودجه" : "Budget",
+      value: commission.brief.budget,
+    },
+    {
+      label: locale === "fa" ? "حس" : "Mood",
+      value: commission.brief.feeling,
+    },
+    {
+      label: locale === "fa" ? "رنگ" : "Colours",
+      value: commission.brief.colors?.length ? commission.brief.colors.join(" / ") : "",
+    },
+    {
+      label: locale === "fa" ? "آزادی سازنده" : "Maker freedom",
+      value:
+        typeof commission.brief.freedom === "number" ? `${commission.brief.freedom}%` : "",
+    },
+    {
+      label: locale === "fa" ? "اجازه غافلگیری" : "Permission for surprise",
+      value: commission.brief.permission,
+    },
+  ].filter((row) => Boolean(row.value?.toString().trim()));
+
   return (
     <>
       <h2>{locale === "fa" ? "مشخصات ارسال‌شده" : "Submitted specification"}</h2>
       <dl className="making-brief">
-        <div>
-          <dt>{locale === "fa" ? "مفهوم" : "Concept"}</dt>
-          <dd>{commission.brief.concept}</dd>
-        </div>
-        <div>
-          <dt>{locale === "fa" ? "ابعاد" : "Dimensions"}</dt>
-          <dd>{commission.brief.dimensions}</dd>
-        </div>
-        <div>
-          <dt>{locale === "fa" ? "ماده" : "Material"}</dt>
-          <dd>{commission.brief.material}</dd>
-        </div>
-        <div>
-          <dt>{locale === "fa" ? "کاربرد" : "Intended use"}</dt>
-          <dd>{commission.brief.intendedUse}</dd>
-        </div>
-        <div>
-          <dt>{locale === "fa" ? "بودجه" : "Budget"}</dt>
-          <dd>{commission.brief.budget}</dd>
-        </div>
-        <div>
-          <dt>{locale === "fa" ? "اجازه غافلگیری" : "Permission for surprise"}</dt>
-          <dd>{commission.brief.permission}</dd>
-        </div>
+        {rows.map((row) => (
+          <div key={row.label}>
+            <dt>{row.label}</dt>
+            <dd>{row.value}</dd>
+          </div>
+        ))}
       </dl>
       {images.length ? (
         <ul className="making-brief-images">

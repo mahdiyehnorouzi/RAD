@@ -71,6 +71,11 @@ export const en = {
   noticeCommissionDeclined: "Your custom design will not be made. The reason is on the making path.",
   noticeCommissionChange: "The artist has requested a specific change to your custom design.",
   noticeCommissionMessage: "The workshop sent a new message on your custom order.",
+  noticeCommissionQuote: "A quote and schedule for your custom order is ready.",
+  noticeCommissionPreKiln: "The pre-kiln checkpoint is open—review the glaze on the making path.",
+  noticeCommissionFiring: "Firing was recorded. The balance is due on the making path.",
+  noticeCommissionBalance: "Balance paid—your order is moving to shipping.",
+  noticeCommissionShipped: "Your custom order shipped. Tracking is on the making path.",
   home: "RAD home",
   logoSubtitle: "UNIQUE WORKS",
   collectionEyebrow: "COLLECTION 01",
@@ -417,20 +422,6 @@ export const en = {
   artworkCategoriesHeading: "Artwork categories",
   swipeToSeeMore: "Swipe to see more",
   filterCategoriesAria: "Filter artwork categories",
-  radDelivery: "RAD DELIVERY",
-  beforeYouBuy: "Before you buy",
-  faqDamageQ: "What if it is damaged?",
-  faqDamageA:
-    "Every work is insured. Report damage with photos within 24 hours; RAD manages the resolution.",
-  faqPackQ: "How is it packed?",
-  faqPackA:
-    "Each work travels in a double box with form-fitted protection and a signed certificate.",
-  faqTimeQ: "When will it arrive?",
-  faqTimeA:
-    "Tehran: 2–4 working days. Other cities: 4–8. Insured delivery is complimentary.",
-  faqReturnQ: "Colour, material, and returns",
-  faqReturnA:
-    "Screens may shift colour and texture slightly. Ready works can be returned within 48 hours; custom works cannot be returned.",
   guestCollector: "RAD collector",
   tehranCity: "Tehran",
   designerConnect: "RAD connects your idea to the right maker and process.",
@@ -471,6 +462,10 @@ export const en = {
   makingUseLabel: "Intended use",
   makingUsePlaceholder: "For example: daily table, entry wall, looking on a shelf…",
   makingUseHelp: "The artist reads use into feasibility and wall thickness.",
+  makingDimensionsLabel: "Approximate dimensions",
+  makingDimensionsPlaceholder: "e.g. 25 cm tall, 18 cm opening",
+  makingBudgetLabel: "Approximate budget (toman)",
+  makingBudgetPlaceholder: "e.g. 8,000,000",
   workshopEyebrow: "ARTIST WORKSHOP",
   workshopTitle: "Artist Workshop",
   workshopBody:

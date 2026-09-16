@@ -50,6 +50,10 @@ export function CustomDesigner() {
     setIntendedUse,
     setPrompt,
     setSketch,
+    setDimensions,
+    setBudget,
+    dimensions,
+    budget,
     sketch,
     step,
     uploads,
@@ -74,6 +78,9 @@ export function CustomDesigner() {
       try {
         setSubmitting(true);
         setSubmitError("");
+        const titleText =
+          prompt.trim().slice(0, 42) ||
+          (locale === "fa" ? "ایده استودیو" : "Studio idea");
         const references = [
           prompt.trim(),
           feelingLabel ? `${locale === "fa" ? "حس" : "Mood"}: ${feelingLabel}` : "",
@@ -83,12 +90,13 @@ export function CustomDesigner() {
         ].filter(Boolean);
         const commission = await submitDesign({
           customerName: user.name,
+          title: { fa: titleText, en: titleText },
           brief: {
-            concept: references.join("\n") || (locale === "fa" ? "ایده استودیو" : "Studio idea"),
-            dimensions: "",
+            concept: references.join("\n") || titleText,
+            dimensions: dimensions.trim(),
             material: selectedCategory?.label[locale] ?? "",
             intendedUse,
-            budget: "",
+            budget: budget.trim(),
             permission: freedomToPermission(freedom),
             category: category || "ceramics",
             image: sketch || uploads[0],
@@ -183,6 +191,10 @@ export function CustomDesigner() {
             <MakingRequest
               intendedUse={intendedUse}
               setIntendedUse={setIntendedUse}
+              dimensions={dimensions}
+              setDimensions={setDimensions}
+              budget={budget}
+              setBudget={setBudget}
               onSubmit={submitCommission}
               submitting={submitting}
               error={submitError}

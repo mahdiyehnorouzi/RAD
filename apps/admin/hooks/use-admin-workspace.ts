@@ -3,13 +3,14 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { AuthUser } from "@rad/types";
 import { api } from "../lib/api";
-import { permissions, type AdminCommission, type AdminMember, type AdminOrder, type AdminProduct, type AdminRole } from "../lib/admin-data";
+import { permissions, type AdminCommission, type AdminMember, type AdminOrder, type AdminProduct, type AdminRole, type AdminUser } from "../lib/admin-data";
 
 export function useAdminWorkspace() {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [products, setProducts] = useState<AdminProduct[]>([]);
   const [orders, setOrders] = useState<AdminOrder[]>([]);
   const [members, setMembers] = useState<AdminMember[]>([]);
+  const [users, setUsers] = useState<AdminUser[]>([]);
   const [commissions, setCommissions] = useState<AdminCommission[]>([]);
   const [ready, setReady] = useState(false);
   const [error, setError] = useState("");
@@ -22,18 +23,21 @@ export function useAdminWorkspace() {
       setProducts([]);
       setOrders([]);
       setMembers([]);
+      setUsers([]);
       setCommissions([]);
       return nextUser;
     }
-    const [productPayload, orderPayload, memberPayload, commissionPayload] = await Promise.all([
+    const [productPayload, orderPayload, memberPayload, userPayload, commissionPayload] = await Promise.all([
       api<AdminProduct[]>("/admin/products"),
       api<AdminOrder[]>("/admin/orders"),
       api<AdminMember[]>("/admin/members"),
+      api<AdminUser[]>("/admin/users"),
       api<AdminCommission[]>("/admin/commissions"),
     ]);
     setProducts(productPayload);
     setOrders(orderPayload);
     setMembers(memberPayload);
+    setUsers(userPayload);
     setCommissions(commissionPayload);
     return nextUser;
   }, []);
@@ -54,6 +58,7 @@ export function useAdminWorkspace() {
     products,
     orders,
     members,
+    users,
     commissions,
     currentRole,
     can,
@@ -94,6 +99,7 @@ export function useAdminWorkspace() {
       setProducts([]);
       setOrders([]);
       setMembers([]);
+      setUsers([]);
       setCommissions([]);
     },
     async saveProduct(product: AdminProduct) {
@@ -149,6 +155,13 @@ export function useAdminWorkspace() {
       });
       setMembers((items) => items.map((item) => (item.id === saved.id ? saved : item)));
     },
+    async beginCommissionReview(id: string) {
+      const saved = await api<AdminCommission>(`/admin/commissions/${id}/review`, {
+        method: "POST",
+      });
+      setCommissions((items) => items.map((item) => (item.id === saved.id ? saved : item)));
+      return saved;
+    },
     async decideCommission(input: {
       id: string;
       decision: "approve" | "request_change" | "offer_alternative" | "decline";
@@ -181,5 +194,5 @@ export function useAdminWorkspace() {
       setCommissions((items) => items.map((item) => (item.id === saved.id ? saved : item)));
       return saved;
     },
-  }), [commissions, currentRole, error, members, orders, products, ready, refresh, user]);
+  }), [commissions, currentRole, error, members, orders, products, ready, refresh, user, users]);
 }

@@ -17,6 +17,8 @@ export function useDesigner() {
   const [category, setCategory] = useState<ProductCategory | "">("");
   const [prompt, setPrompt] = useState("");
   const [intendedUse, setIntendedUse] = useState("");
+  const [dimensions, setDimensions] = useState("");
+  const [budget, setBudget] = useState("");
   const [image, setImage] = useState("");
   const [uploads, setUploads] = useState<string[]>([]);
   const [sketch, setSketch] = useState("");
@@ -93,6 +95,7 @@ export function useDesigner() {
     category,
     chooseCategory,
     colors,
+    dimensions,
     error,
     feeling,
     freedom,
@@ -111,6 +114,8 @@ export function useDesigner() {
     removeUpload,
     selectedCategory,
     setBrief,
+    setBudget,
+    setDimensions,
     setError,
     setFeeling,
     setFreedom,
@@ -123,6 +128,7 @@ export function useDesigner() {
     step,
     stepIndex,
     toggleColor,
+    budget,
     uploads,
   };
 }

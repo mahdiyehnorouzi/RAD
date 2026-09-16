@@ -347,7 +347,23 @@ export function createMakingActions(
     artistShip: (id, tracking) => {
       update(id, (current) =>
         touch(
-          { ...current, tracking, stage: "complete", nextActor: "none" },
+          {
+            ...current,
+            tracking,
+            stage: "complete",
+            nextActor: "none",
+            updates: [
+              ...current.updates,
+              {
+                id: newEntityId("u"),
+                stageId: "shipping",
+                note: loc("بسته‌بندی انجام شد.", "Packaging complete."),
+                photoKind: "packed",
+                requiresApproval: false,
+                createdAt: Date.now(),
+              },
+            ],
+          },
           {},
           {
             actor: "artist",

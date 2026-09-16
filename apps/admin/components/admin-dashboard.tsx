@@ -1,10 +1,10 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
-import { Archive, ChevronLeft, CircleGauge, ImagePlus, KeyRound, LayoutDashboard, LogOut, Menu, Package, Pencil, Plus, ScrollText, Search, ShieldCheck, ShoppingBag, Trash2, Users, X } from "lucide-react";
+import { Archive, ChevronLeft, CircleGauge, ImagePlus, KeyRound, LayoutDashboard, LogOut, Menu, Package, Pencil, Plus, ScrollText, Search, ShieldCheck, ShoppingBag, Trash2, UserRound, Users, X } from "lucide-react";
 import { useAdminWorkspace } from "../hooks/use-admin-workspace";
 import { loadRememberedEmail, loadRememberMe, saveLoginPreferences } from "../lib/admin-storage";
-import { orderStatusLabels, orderStatusProgress, isTerminalOrderStatus, productStatusLabels, roleLabels, stageCountLabel, type AdminMember, type AdminOrder, type AdminProduct, type AdminRole, type AdminSection } from "../lib/admin-data";
+import { orderStatusLabels, orderStatusProgress, isTerminalOrderStatus, productStatusLabels, roleLabels, stageCountLabel, type AdminMember, type AdminOrder, type AdminProduct, type AdminRole, type AdminSection, type AdminUser } from "../lib/admin-data";
 import { AdminCommissions } from "./admin-commissions";
 import { StageMeter } from "@rad/ui";
 
@@ -13,6 +13,7 @@ const navItems: { id: AdminSection; label: string; icon: typeof Package }[] = [
   { id: "products", label: "آثار و محصولات", icon: Archive },
   { id: "orders", label: "سفارش‌های فروشگاه", icon: ShoppingBag },
   { id: "commissions", label: "سفارش اختصاصی", icon: ScrollText },
+  { id: "users", label: "مشتریان", icon: UserRound },
   { id: "members", label: "افراد و دسترسی", icon: Users },
   { id: "account", label: "حساب کاربری", icon: KeyRound },
 ];
@@ -20,6 +21,22 @@ const navItems: { id: AdminSection; label: string; icon: typeof Package }[] = [
 const number = new Intl.NumberFormat("fa-IR");
 const money = (value: number) => `${number.format(value)} تومان`;
 const date = (value: number) => new Intl.DateTimeFormat("fa-IR", { dateStyle: "medium" }).format(value);
+
+function parsePriceInput(raw: string) {
+  const persian = "۰۱۲۳۴۵۶۷۸۹";
+  const arabic = "٠١٢٣٤٥٦٧٨٩";
+  const digits = raw
+    .replace(/[۰-۹]/g, (digit) => String(persian.indexOf(digit)))
+    .replace(/[٠-٩]/g, (digit) => String(arabic.indexOf(digit)))
+    .replace(/[^\d]/g, "");
+  if (!digits) return 0;
+  return Number(digits);
+}
+
+function formatPriceInput(value: number) {
+  if (!value) return "";
+  return number.format(value);
+}
 
 export function AdminDashboard() {
   const workspace = useAdminWorkspace();
@@ -56,7 +73,8 @@ export function AdminDashboard() {
       {section === "overview" && <Overview workspace={workspace} onNavigate={go} />}
       {section === "products" && <Products products={workspace.products} canWrite={workspace.can("product.write")} onCreate={() => setProductEditor("new")} onEdit={setProductEditor} onDelete={setDeleteTarget} />}
       {section === "orders" && <Orders orders={workspace.orders} canWrite={workspace.can("order.write")} onChange={async (order) => { try { await workspace.updateOrder(order); announce("وضعیت سفارش ذخیره شد."); } catch (error) { announce((error as Error).message); } }} />}
-      {section === "commissions" && <AdminCommissions commissions={workspace.commissions} canWrite={workspace.can("order.write")} onDecide={async (input) => { try { await workspace.decideCommission(input); announce("تصمیم برای مشتری ارسال شد."); } catch (error) { announce((error as Error).message); } }} onMessage={async (id, body, internal) => { try { await workspace.messageCommission(id, body, internal); announce("پیام برای مشتری ارسال شد."); } catch (error) { announce((error as Error).message); } }} />}
+      {section === "commissions" && <AdminCommissions commissions={workspace.commissions} canWrite={workspace.can("order.write")} onBeginReview={async (id) => { try { await workspace.beginCommissionReview(id); } catch (error) { announce((error as Error).message); } }} onDecide={async (input) => { try { await workspace.decideCommission(input); announce("تصمیم برای مشتری ارسال شد."); } catch (error) { announce((error as Error).message); } }} onMessage={async (id, body, internal) => { try { await workspace.messageCommission(id, body, internal); announce("پیام برای مشتری ارسال شد."); } catch (error) { announce((error as Error).message); } }} />}
+      {section === "users" && <UsersPanel users={workspace.users} />}
       {section === "members" && <Members members={workspace.members} canWrite={workspace.can("member.write")} onInvite={() => setInviteOpen(true)} onChange={async (member) => { try { await workspace.updateMember(member); announce("سطح دسترسی به‌روزرسانی شد."); } catch (error) { announce((error as Error).message); } }} />}
       {section === "account" && <AccountSettings user={workspace.user} onChangePassword={workspace.changePassword} onDone={(message) => announce(message)} />}
     </main>
@@ -160,6 +178,95 @@ function Orders({ orders, canWrite, onChange }: { orders: AdminOrder[]; canWrite
   </section>;
 }
 
+function UsersPanel({ users }: { users: AdminUser[] }) {
+  const [query, setQuery] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+  const filtered = useMemo(
+    () =>
+      users.filter((user) =>
+        `${user.name} ${user.email} ${user.id}`.toLowerCase().includes(query.trim().toLowerCase()),
+      ),
+    [users, query],
+  );
+
+  return (
+    <section className="paper-panel data-view">
+      <div className="view-heading">
+        <div>
+          <span className="eyebrow">حساب‌های فروشگاه</span>
+          <h2>مشتریان</h2>
+          <p>کاربرانی که از فروشگاه ثبت‌نام کرده‌اند.</p>
+        </div>
+      </div>
+      <div className="toolbar">
+        <div className="search-field">
+          <Search />
+          <input
+            ref={inputRef}
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="جست‌وجوی نام، ایمیل یا شناسه"
+            aria-label="جست‌وجوی مشتریان"
+          />
+          {query ? (
+            <button
+              type="button"
+              onClick={() => {
+                setQuery("");
+                inputRef.current?.focus();
+              }}
+              aria-label="پاک کردن جست‌وجو"
+            >
+              <X />
+            </button>
+          ) : null}
+        </div>
+      </div>
+      {filtered.length ? (
+        <div className="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>نام</th>
+                <th>ایمیل</th>
+                <th>وضعیت</th>
+                <th>تاریخ ثبت‌نام</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map((user) => (
+                <tr key={user.id}>
+                  <td>
+                    <strong>{user.name}</strong>
+                    <small>{user.id}</small>
+                  </td>
+                  <td>{user.email}</td>
+                  <td>
+                    <StatusBadge
+                      label={user.status === "active" ? "فعال" : "دعوت‌شده"}
+                      tone={user.status === "active" ? "green" : "muted"}
+                    />
+                  </td>
+                  <td>{date(user.createdAt)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <EmptyState
+          title="مشتری‌ای پیدا نشد"
+          description={
+            users.length
+              ? "عبارت جست‌وجو را تغییر دهید."
+              : "هنوز کسی از فروشگاه ثبت‌نام نکرده است."
+          }
+        />
+      )}
+    </section>
+  );
+}
+
 function Members({ members, canWrite, onInvite, onChange }: { members: AdminMember[]; canWrite: boolean; onInvite: () => void; onChange: (member: AdminMember) => void | Promise<void> }) {
   return <section className="paper-panel data-view"><div className="view-heading"><div><span className="eyebrow">حریم کارگاه</span><h2>افراد و دسترسی</h2><p>دسترسی هر فرد را بر اساس مسئولیت واقعی او تنظیم کنید.</p></div><button className="primary-action" type="button" onClick={onInvite} disabled={!canWrite}><Plus />دعوت فرد جدید</button></div><div className="member-list">{members.map((member) => <article className="member-row" key={member.id}><div className="member-avatar">{member.name.slice(0, 1)}</div><div><strong>{member.name}</strong><small>{member.email}</small></div><StatusBadge label={member.status === "active" ? "فعال" : "دعوت‌شده"} tone={member.status === "active" ? "green" : "muted"} /><select value={member.role} disabled={!canWrite || member.role === "owner"} onChange={(event) => onChange({ ...member, role: event.target.value as AdminRole })} aria-label={`نقش ${member.name}`}>{Object.entries(roleLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></article>)}</div><div className="permission-note"><ShieldCheck /><div><strong>مجوزها روی سرور بررسی می‌شوند</strong><p>هر تغییر محصول، سفارش یا عضو از طریق API و نقش ذخیره‌شده در پایگاه داده کنترل می‌شود.</p></div></div></section>;
 }
@@ -168,7 +275,18 @@ function ProductDialog({ product, onClose, onSave }: { product: AdminProduct | n
   const [draft, setDraft] = useState<AdminProduct>(product ?? { id: crypto.randomUUID(), slug: "", name: "", description: "", category: "گلدان", price: 0, status: "draft", artist: "استودیو رَد", images: [], updatedAt: Date.now() });
   const [imageError, setImageError] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const submit = (event: React.FormEvent) => { event.preventDefault(); const next: Record<string, string> = {}; if (!draft.name.trim()) next.name = "نام محصول را وارد کنید."; if (!draft.description.trim()) next.description = "توضیحات محصول را وارد کنید."; if (!draft.slug.trim()) next.slug = "شناسهٔ URL را وارد کنید."; if (draft.price <= 0) next.price = "قیمت باید بیشتر از صفر باشد."; setErrors(next); if (Object.keys(next).length) return; void onSave({ ...draft, updatedAt: Date.now() }); };
+  const submit = (event: React.FormEvent) => {
+    event.preventDefault();
+    const next: Record<string, string> = {};
+    if (!draft.name.trim()) next.name = "نام محصول را وارد کنید.";
+    if (!draft.description.trim()) next.description = "توضیحات محصول را وارد کنید.";
+    if (!draft.slug.trim()) next.slug = "شناسهٔ URL را وارد کنید.";
+    if (!draft.artist.trim()) next.artist = "نام هنرمند را وارد کنید.";
+    if (!Number.isFinite(draft.price) || draft.price <= 0) next.price = "قیمت باید بیشتر از صفر باشد.";
+    setErrors(next);
+    if (Object.keys(next).length) return;
+    void onSave({ ...draft, updatedAt: Date.now() });
+  };
   const addImage = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     event.target.value = "";
@@ -185,7 +303,7 @@ function ProductDialog({ product, onClose, onSave }: { product: AdminProduct | n
     reader.onerror = () => setImageError("بارگذاری تصویر ناموفق بود.");
     reader.readAsDataURL(file);
   };
-  return <DialogShell title={product ? "ویرایش محصول" : "محصول تازه"} description="نام، توضیحات، قیمت و تصاویر اثر را ثبت کنید." onClose={onClose}><form className="editor-form" onSubmit={submit} noValidate><div className="form-grid"><Field label="نام محصول" error={errors.name}><input value={draft.name} onChange={(event) => setDraft({ ...draft, name: event.target.value })} aria-invalid={Boolean(errors.name)} /></Field><Field label="شناسه URL" error={errors.slug}><input dir="ltr" value={draft.slug} readOnly={Boolean(product)} onChange={(event) => setDraft({ ...draft, slug: event.target.value.toLowerCase().replace(/\s+/g, "-") })} aria-invalid={Boolean(errors.slug)} /></Field><Field label="هنرمند"><input value={draft.artist} onChange={(event) => setDraft({ ...draft, artist: event.target.value })} /></Field><Field label="قیمت (تومان)" error={errors.price}><input dir="ltr" inputMode="numeric" value={draft.price || ""} onChange={(event) => setDraft({ ...draft, price: Number(event.target.value.replace(/\D/g, "")) })} aria-invalid={Boolean(errors.price)} /></Field><Field label="دسته‌بندی"><select value={draft.category} onChange={(event) => setDraft({ ...draft, category: event.target.value as AdminProduct["category"] })}><option>گلدان</option><option>ظروف</option><option>مجسمه</option><option>سفال و سرامیک</option><option>نقاشی</option><option>پارچه و بافت</option><option>آثار چوبی</option><option>زیورآلات هنری</option><option>چاپ دستی و تصویر</option></select></Field><Field label="وضعیت"><select value={draft.status} onChange={(event) => setDraft({ ...draft, status: event.target.value as AdminProduct["status"] })}>{Object.entries(productStatusLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></Field></div><Field label="توضیحات محصول" error={errors.description}><textarea rows={5} value={draft.description} onChange={(event) => setDraft({ ...draft, description: event.target.value })} aria-invalid={Boolean(errors.description)} /></Field><div className="image-editor"><div className="field-label"><span>عکس‌های محصول</span><small>تصاویر در پایگاه داده ذخیره می‌شوند؛ اولین تصویر، تصویر اصلی است.</small></div><div className="image-add"><label className="upload-button"><ImagePlus />افزودن عکس<input type="file" accept="image/jpeg,image/png,image/webp" onChange={addImage} aria-label="بارگذاری تصویر محصول" hidden /></label>{imageError && <small className="field-error" role="alert">{imageError}</small>}</div><div className="image-list">{draft.images.map((image, index) => <div key={`${index}-${image.slice(0, 32)}`}><img src={image} alt="" /><span>{index === 0 ? "تصویر اصلی" : `تصویر ${number.format(index + 1)}`}</span><button type="button" onClick={() => setDraft({ ...draft, images: draft.images.filter((_, itemIndex) => itemIndex !== index) })} aria-label={`حذف تصویر ${index + 1}`}><X /></button></div>)}{!draft.images.length && <div className="image-empty"><ImagePlus /><span>هنوز تصویری اضافه نشده است.</span></div>}</div></div><div className="dialog-actions"><button className="secondary-action" type="button" onClick={onClose}>انصراف</button><button className="primary-action" type="submit">ذخیره تغییرات</button></div></form></DialogShell>;
+  return <DialogShell title={product ? "ویرایش محصول" : "محصول تازه"} description="نام، توضیحات، قیمت و تصاویر اثر را ثبت کنید." onClose={onClose}><form className="editor-form" onSubmit={submit} noValidate><div className="form-grid"><Field label="نام محصول" error={errors.name}><input value={draft.name} onChange={(event) => setDraft({ ...draft, name: event.target.value })} aria-invalid={Boolean(errors.name)} /></Field><Field label="شناسه URL" error={errors.slug}><input dir="ltr" value={draft.slug} readOnly={Boolean(product)} onChange={(event) => setDraft({ ...draft, slug: event.target.value.toLowerCase().replace(/\s+/g, "-") })} aria-invalid={Boolean(errors.slug)} /></Field><Field label="هنرمند" error={errors.artist}><input value={draft.artist} onChange={(event) => setDraft({ ...draft, artist: event.target.value })} aria-invalid={Boolean(errors.artist)} /></Field><Field label="قیمت (تومان)" error={errors.price}><input dir="ltr" inputMode="numeric" value={formatPriceInput(draft.price)} onChange={(event) => setDraft({ ...draft, price: parsePriceInput(event.target.value) })} aria-invalid={Boolean(errors.price)} /></Field><Field label="دسته‌بندی"><select value={draft.category} onChange={(event) => setDraft({ ...draft, category: event.target.value as AdminProduct["category"] })}><option>گلدان</option><option>ظروف</option><option>مجسمه</option><option>سفال و سرامیک</option><option>نقاشی</option><option>پارچه و بافت</option><option>آثار چوبی</option><option>زیورآلات هنری</option><option>چاپ دستی و تصویر</option></select></Field><Field label="وضعیت"><select value={draft.status} onChange={(event) => setDraft({ ...draft, status: event.target.value as AdminProduct["status"] })}>{Object.entries(productStatusLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></Field></div><Field label="توضیحات محصول" error={errors.description}><textarea rows={5} value={draft.description} onChange={(event) => setDraft({ ...draft, description: event.target.value })} aria-invalid={Boolean(errors.description)} /></Field><div className="image-editor"><div className="field-label"><span>عکس‌های محصول</span><small>تصاویر در پایگاه داده ذخیره می‌شوند؛ اولین تصویر، تصویر اصلی است.</small></div><div className="image-add"><label className="upload-button"><ImagePlus />افزودن عکس<input type="file" accept="image/jpeg,image/png,image/webp" onChange={addImage} aria-label="بارگذاری تصویر محصول" hidden /></label>{imageError && <small className="field-error" role="alert">{imageError}</small>}</div><div className="image-list">{draft.images.map((image, index) => <div key={`${index}-${image.slice(0, 32)}`}><img src={image} alt="" /><span>{index === 0 ? "تصویر اصلی" : `تصویر ${number.format(index + 1)}`}</span><button type="button" onClick={() => setDraft({ ...draft, images: draft.images.filter((_, itemIndex) => itemIndex !== index) })} aria-label={`حذف تصویر ${index + 1}`}><X /></button></div>)}{!draft.images.length && <div className="image-empty"><ImagePlus /><span>هنوز تصویری اضافه نشده است.</span></div>}</div></div><div className="dialog-actions"><button className="secondary-action" type="button" onClick={onClose}>انصراف</button><button className="primary-action" type="submit">ذخیره تغییرات</button></div></form></DialogShell>;
 }
 
 function InviteDialog({ onClose, onInvite }: { onClose: () => void; onInvite: (member: AdminMember) => void | Promise<void> }) { const [name, setName] = useState(""); const [email, setEmail] = useState(""); const [role, setRole] = useState<AdminRole>("viewer"); const [error, setError] = useState(""); return <DialogShell title="دعوت فرد جدید" description="نقش را متناسب با مسئولیت فرد انتخاب کنید." onClose={onClose}><form className="editor-form" noValidate onSubmit={(event) => { event.preventDefault(); if (!name.trim() || !/^\S+@\S+\.\S+$/.test(email)) { setError("نام و ایمیل معتبر را وارد کنید."); return; } onInvite({ id: crypto.randomUUID(), name, email, role, status: "invited" }); }}><Field label="نام و نام خانوادگی"><input value={name} onChange={(event) => setName(event.target.value)} /></Field><Field label="ایمیل" error={error}><input dir="ltr" type="email" value={email} onChange={(event) => setEmail(event.target.value)} aria-invalid={Boolean(error)} /></Field><Field label="سطح دسترسی"><select value={role} onChange={(event) => setRole(event.target.value as AdminRole)}>{Object.entries(roleLabels).filter(([value]) => value !== "owner").map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></Field><div className="dialog-actions"><button className="secondary-action" type="button" onClick={onClose}>انصراف</button><button className="primary-action" type="submit">افزودن دعوت</button></div></form></DialogShell>; }

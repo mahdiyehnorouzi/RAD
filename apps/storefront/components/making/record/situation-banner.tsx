@@ -23,6 +23,12 @@ export function SituationBanner({ commission }: { commission: MakingCommission }
           <dt>{t("nextStageLabel")}</dt>
           <dd>{copy(situation.nextLabel, locale)}</dd>
         </div>
+        {commission.tracking ? (
+          <div>
+            <dt>{locale === "fa" ? "رهگیری ارسال" : "Shipment tracking"}</dt>
+            <dd dir="ltr">{commission.tracking}</dd>
+          </div>
+        ) : null}
       </dl>
     </aside>
   );

@@ -314,6 +314,11 @@ export function NotificationCenter() {
     if (notice.kind === "commission_declined") return t("noticeCommissionDeclined");
     if (notice.kind === "commission_change") return t("noticeCommissionChange");
     if (notice.kind === "commission_message") return t("noticeCommissionMessage");
+    if (notice.kind === "commission_quote") return t("noticeCommissionQuote");
+    if (notice.kind === "commission_pre_kiln") return t("noticeCommissionPreKiln");
+    if (notice.kind === "commission_firing") return t("noticeCommissionFiring");
+    if (notice.kind === "commission_balance") return t("noticeCommissionBalance");
+    if (notice.kind === "commission_shipped") return t("noticeCommissionShipped");
     return t("noticeWelcome");
   };
   return (
