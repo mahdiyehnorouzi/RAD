@@ -5,10 +5,22 @@ import {
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
 import { randomBytes } from "node:crypto";
 import { hash } from "bcryptjs";
+import { DataSource, In, IsNull, Not, Repository } from "typeorm";
 import { assertImageData, productImageError, productImageLimit } from "../common/image-data";
-import { PrismaService } from "../prisma/prisma.service";
+import {
+  CartItem,
+  Favorite,
+  Order,
+  PaymentIntent,
+  Product,
+  ProductImage,
+  Review,
+  User,
+  Vendor,
+} from "../database/entities";
 import { productIncludeWithSrc } from "../catalog/product.mapper";
 import { canAdmin, type AdminPermission } from "./permissions";
 import {
@@ -23,7 +35,27 @@ import type { InviteMemberDto, SaveProductDto, UpdateMemberDto, UpdateOrderDto }
 
 @Injectable()
 export class AdminService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly dataSource: DataSource,
+    @InjectRepository(Product)
+    private readonly products: Repository<Product>,
+    @InjectRepository(ProductImage)
+    private readonly productImages: Repository<ProductImage>,
+    @InjectRepository(Order)
+    private readonly orders: Repository<Order>,
+    @InjectRepository(User)
+    private readonly users: Repository<User>,
+    @InjectRepository(Vendor)
+    private readonly vendors: Repository<Vendor>,
+    @InjectRepository(CartItem)
+    private readonly cartItems: Repository<CartItem>,
+    @InjectRepository(Favorite)
+    private readonly favorites: Repository<Favorite>,
+    @InjectRepository(Review)
+    private readonly reviews: Repository<Review>,
+    @InjectRepository(PaymentIntent)
+    private readonly payments: Repository<PaymentIntent>,
+  ) {}
 
   assert(role: string | undefined, permission: AdminPermission) {
     if (!canAdmin(role, permission)) {
@@ -32,16 +64,16 @@ export class AdminService {
   }
 
   async listProducts() {
-    const products = await this.prisma.product.findMany({
-      include: productIncludeWithSrc,
-      orderBy: [{ sortOrder: "asc" }, { updatedAt: "desc" }],
+    const products = await this.products.find({
+      relations: productIncludeWithSrc,
+      order: { sortOrder: "ASC", updatedAt: "DESC" },
     });
     return products.map(toAdminProduct);
   }
 
   async saveProduct(input: SaveProductDto, existingId?: string) {
     const slug = input.slug.trim().toLowerCase().replace(/\s+/g, "-");
-    const duplicate = await this.prisma.product.findUnique({ where: { slug } });
+    const duplicate = await this.products.findOne({ where: { slug } });
     if (duplicate && duplicate.id !== existingId) {
       throw new ConflictException("این شناسه URL قبلاً استفاده شده است.");
     }
@@ -70,8 +102,8 @@ export class AdminService {
           story: input.description.trim(),
           vendorId,
         })
-      : await this.prisma.product.create({
-          data: {
+      : await this.products.save(
+          this.products.create({
             slug,
             name: input.name.trim(),
             subtitle,
@@ -87,47 +119,47 @@ export class AdminService {
             en,
             vendorId,
             sortOrder: await this.nextSortOrder(),
-          },
-        });
+          }),
+        );
 
     await this.replaceImages(product.slug, input.name.trim(), input.images);
-    const saved = await this.prisma.product.findUniqueOrThrow({
+    const saved = await this.products.findOneOrFail({
       where: { id: product.id },
-      include: productIncludeWithSrc,
+      relations: productIncludeWithSrc,
     });
     return toAdminProduct(saved);
   }
 
   async deleteProduct(id: string) {
-    const product = await this.prisma.product.findUnique({
+    const product = await this.products.findOne({
       where: { id },
-      include: { orderItems: true },
+      relations: { orderItems: true },
     });
     if (!product) throw new NotFoundException("محصول پیدا نشد.");
     if (product.orderItems.length) {
       throw new ConflictException("این اثر در سفارش ثبت شده و قابل حذف نیست.");
     }
-    await this.prisma.$transaction([
-      this.prisma.cartItem.deleteMany({ where: { productSlug: product.slug } }),
-      this.prisma.favorite.deleteMany({ where: { productSlug: product.slug } }),
-      this.prisma.review.deleteMany({ where: { productSlug: product.slug } }),
-      this.prisma.product.delete({ where: { id } }),
-    ]);
+    await this.dataSource.transaction(async (manager) => {
+      await manager.getRepository(CartItem).delete({ productSlug: product.slug });
+      await manager.getRepository(Favorite).delete({ productSlug: product.slug });
+      await manager.getRepository(Review).delete({ productSlug: product.slug });
+      await manager.getRepository(Product).delete({ id });
+    });
     return { ok: true };
   }
 
   async listOrders() {
-    const orders = await this.prisma.order.findMany({
-      include: { items: { include: { product: true } }, payment: true },
-      orderBy: { createdAt: "desc" },
+    const orders = await this.orders.find({
+      relations: { items: { product: true }, payment: true },
+      order: { createdAt: "DESC" },
     });
     return orders.map(toAdminOrder);
   }
 
   async updateOrder(id: string, input: UpdateOrderDto) {
-    const order = await this.prisma.order.findUnique({
+    const order = await this.orders.findOne({
       where: { id },
-      include: { items: { include: { product: true } }, payment: true },
+      relations: { items: { product: true }, payment: true },
     });
     if (!order) throw new NotFoundException("سفارش پیدا نشد.");
     const slugs = order.items.map((item) => item.productSlug);
@@ -152,42 +184,34 @@ export class AdminService {
       );
     }
 
-    const updated = await this.prisma.$transaction(async (tx) => {
+    const updated = await this.dataSource.transaction(async (manager) => {
+      const products = manager.getRepository(Product);
+      const payments = manager.getRepository(PaymentIntent);
+      const orders = manager.getRepository(Order);
+
       if (nextStatus === "cancelled" || nextStatus === "returned") {
-        await tx.product.updateMany({
-          where: { slug: { in: slugs }, status: { in: ["reserved", "sold"] } },
-          data: { status: "available" },
-        });
+        await products.update(
+          { slug: In(slugs), status: In(["reserved", "sold"]) },
+          { status: "available" },
+        );
         if (order.payment) {
-          await tx.paymentIntent.updateMany({
-            where: { orderId: id },
-            data: { status: "failed" },
-          });
+          await payments.update({ orderId: id }, { status: "failed" });
         }
       } else if (nextStatus === "confirmed" && currentStatus === "payment_pending") {
-        await tx.product.updateMany({
-          where: { slug: { in: slugs } },
-          data: { status: "sold" },
-        });
-        await tx.paymentIntent.updateMany({
-          where: { orderId: id },
-          data: { status: "verified" },
-        });
+        await products.update({ slug: In(slugs) }, { status: "sold" });
+        await payments.update({ orderId: id }, { status: "verified" });
       } else if (
         nextStatus === "confirmed" ||
         nextStatus === "packing" ||
         nextStatus === "shipped" ||
         nextStatus === "delivered"
       ) {
-        await tx.product.updateMany({
-          where: { slug: { in: slugs } },
-          data: { status: "sold" },
-        });
+        await products.update({ slug: In(slugs) }, { status: "sold" });
       }
 
-      return tx.order.update({
-        where: { id },
-        data: {
+      await orders.update(
+        { id },
+        {
           status: nextStatus,
           trackingCode: trackingCode || null,
           estimatedDeliveryAt:
@@ -198,80 +222,91 @@ export class AdminService {
                 new Date(Date.now() + 6 * 24 * 60 * 60 * 1000)
               : fulfillment.estimatedDeliveryAt,
         },
-        include: { items: { include: { product: true } }, payment: true },
+      );
+
+      return orders.findOneOrFail({
+        where: { id },
+        relations: { items: { product: true }, payment: true },
       });
     });
     return toAdminOrder(updated);
   }
 
   async listMembers() {
-    const users = await this.prisma.user.findMany({
-      where: { adminRole: { not: null } },
-      orderBy: { createdAt: "asc" },
+    const users = await this.users.find({
+      where: { adminRole: Not(IsNull()) },
+      order: { createdAt: "ASC" },
     });
     return users.map(toAdminMember);
   }
 
   async listUsers() {
-    const users = await this.prisma.user.findMany({
-      where: { adminRole: null },
-      orderBy: { createdAt: "desc" },
+    const users = await this.users.find({
+      where: { adminRole: IsNull() },
+      order: { createdAt: "DESC" },
     });
     return users.map(toAdminUser);
   }
 
   async inviteMember(input: InviteMemberDto) {
     const email = input.email.trim().toLowerCase();
-    const existing = await this.prisma.user.findUnique({ where: { email } });
+    const existing = await this.users.findOne({ where: { email } });
     if (existing) throw new ConflictException("این ایمیل قبلاً ثبت شده است.");
-    const user = await this.prisma.user.create({
-      data: {
+    const user = await this.users.save(
+      this.users.create({
         name: input.name.trim(),
         email,
         passwordHash: await hash(randomBytes(18).toString("hex"), 12),
         role: "admin",
         adminRole: input.role,
         status: "invited",
-      },
-    });
+      }),
+    );
     return toAdminMember(user);
   }
 
   async updateMember(id: string, input: UpdateMemberDto) {
-    const user = await this.prisma.user.findUnique({ where: { id } });
+    const user = await this.users.findOne({ where: { id } });
     if (!user?.adminRole) throw new NotFoundException("عضو پیدا نشد.");
     if (user.adminRole === "owner" && input.role && input.role !== "owner") {
       throw new ForbiddenException("نقش مالک قابل تغییر نیست.");
     }
-    const updated = await this.prisma.user.update({
-      where: { id },
-      data: {
+    await this.users.update(
+      { id },
+      {
         ...(input.role && user.adminRole !== "owner" ? { adminRole: input.role } : {}),
         ...(input.status ? { status: input.status } : {}),
       },
-    });
+    );
+    const updated = await this.users.findOneOrFail({ where: { id } });
     return toAdminMember(updated);
   }
 
   private async nextSortOrder() {
-    const last = await this.prisma.product.findFirst({ orderBy: { sortOrder: "desc" } });
-    return (last?.sortOrder ?? 0) + 1;
+    const last = await this.products.find({
+      order: { sortOrder: "DESC" },
+      take: 1,
+    });
+    return (last[0]?.sortOrder ?? 0) + 1;
   }
 
   private async ensureVendor(artist: string) {
     const id = artistVendorId(artist);
     if (!id) return null;
-    await this.prisma.vendor.upsert({
-      where: { id },
-      update: { displayName: artist.trim() },
-      create: {
-        id,
-        displayName: artist.trim(),
-        displayNameEn: artist.trim(),
-        kind: "guest_artist",
-        verified: true,
-      },
-    });
+    const existing = await this.vendors.findOne({ where: { id } });
+    if (existing) {
+      await this.vendors.update({ id }, { displayName: artist.trim() });
+    } else {
+      await this.vendors.save(
+        this.vendors.create({
+          id,
+          displayName: artist.trim(),
+          displayNameEn: artist.trim(),
+          kind: "guest_artist",
+          verified: true,
+        }),
+      );
+    }
     return id;
   }
 
@@ -289,14 +324,14 @@ export class AdminService {
       vendorId: string | null;
     },
   ) {
-    const current = await this.prisma.product.findUnique({ where: { id } });
+    const current = await this.products.findOne({ where: { id } });
     if (!current) throw new NotFoundException("محصول پیدا نشد.");
     if (current.slug !== data.slug) {
       throw new ConflictException("شناسه URL پس از ایجاد قابل تغییر نیست.");
     }
-    return this.prisma.product.update({
-      where: { id },
-      data: {
+    await this.products.update(
+      { id },
+      {
         name: data.name,
         subtitle: data.subtitle,
         tomanPrice: data.tomanPrice,
@@ -306,11 +341,12 @@ export class AdminService {
         story: data.story,
         vendorId: data.vendorId,
       },
-    });
+    );
+    return this.products.findOneOrFail({ where: { id } });
   }
 
   private async replaceImages(slug: string, name: string, images: string[]) {
-    await this.prisma.productImage.deleteMany({ where: { productSlug: slug } });
+    await this.productImages.delete({ productSlug: slug });
     if (!images.length) return;
     for (const src of images) {
       try {
@@ -319,15 +355,17 @@ export class AdminService {
         throw new BadRequestException(productImageError);
       }
     }
-    await this.prisma.productImage.createMany({
-      data: images.map((src, sortOrder) => ({
-        productSlug: slug,
-        src,
-        alt: name,
-        enAlt: name,
-        sortOrder,
-      })),
-    });
+    await this.productImages.save(
+      images.map((src, sortOrder) =>
+        this.productImages.create({
+          productSlug: slug,
+          src,
+          alt: name,
+          enAlt: name,
+          sortOrder,
+        }),
+      ),
+    );
   }
 }
 

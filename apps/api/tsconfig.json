@@ -5,7 +5,6 @@
     "target": "ES2022",
     "useDefineForClassFields": false,
     "outDir": "./dist",
-    "rootDir": "./src",
     "strict": true,
     "esModuleInterop": true,
     "emitDecoratorMetadata": true,
@@ -14,8 +13,9 @@
     "declaration": true,
     "sourceMap": true,
     "incremental": true,
-    "forceConsistentCasingInFileNames": true
+    "forceConsistentCasingInFileNames": true,
+    "types": ["node"]
   },
-  "include": ["src/**/*.ts"],
+  "include": ["src/**/*.ts", "scripts/**/*.ts", "seed/**/*.ts"],
   "exclude": ["node_modules", "dist"]
 }

@@ -1,15 +1,15 @@
-import type { Prisma, Product, ProductImage, Vendor } from "@prisma/client";
+import type { ProductImage, Vendor } from "../database/entities";
 
 /** Public product payloads only need image metadata — never load base64 `src`. */
-export const productImageSelect = {
-  id: true,
-  alt: true,
-  enAlt: true,
-  color: true,
-  accent: true,
-  shape: true,
-  sortOrder: true,
-} satisfies Prisma.ProductImageSelect;
+export const productImageSelect: (keyof ProductImage)[] = [
+  "id",
+  "alt",
+  "enAlt",
+  "color",
+  "accent",
+  "shape",
+  "sortOrder",
+];
 
 type ProductImageMeta = Pick<
   ProductImage,
@@ -41,14 +41,29 @@ export function formatToman(value: number) {
   return `${toPersianDigits(new Intl.NumberFormat("en-US").format(value).replace(/,/g, "٬"))} تومان`;
 }
 
-type ProductRecord = Product & {
+type ProductRecord = {
+  slug: string;
+  name: string;
+  subtitle: string;
+  tomanPrice: number;
+  usdPrice: number;
+  color: string;
+  accent: string;
+  shape: string;
+  category: string;
+  status: string;
+  story: string;
+  details: unknown;
+  en: unknown;
+  sortOrder: number;
   images: ProductImageMeta[];
   vendor: Vendor | null;
 };
 
 type EnCopy = { name: string; subtitle: string; story: string; details: string[] };
+type JsonValue = unknown;
 
-function asStringArray(value: Prisma.JsonValue): string[] {
+function asStringArray(value: JsonValue): string[] {
   if (Array.isArray(value)) return value.map((item) => String(item));
   if (typeof value === "string") {
     try {
@@ -61,7 +76,7 @@ function asStringArray(value: Prisma.JsonValue): string[] {
   return [];
 }
 
-function asEnCopy(value: Prisma.JsonValue, fallback: EnCopy): EnCopy {
+function asEnCopy(value: JsonValue, fallback: EnCopy): EnCopy {
   if (value && typeof value === "object" && !Array.isArray(value)) {
     const record = value as Record<string, unknown>;
     return {
@@ -73,7 +88,7 @@ function asEnCopy(value: Prisma.JsonValue, fallback: EnCopy): EnCopy {
   }
   if (typeof value === "string") {
     try {
-      return asEnCopy(JSON.parse(value) as Prisma.JsonValue, fallback);
+      return asEnCopy(JSON.parse(value) as JsonValue, fallback);
     } catch {
       return fallback;
     }
@@ -127,11 +142,6 @@ export function toProduct(product: ProductRecord, options?: { embedImages?: bool
   };
 }
 
-export const productInclude = {
-  images: { select: productImageSelect },
-  vendor: true,
-} as const;
-
 /** Admin edit forms need the stored data-URL `src` values. */
 export const productIncludeWithSrc = {
   images: true,
@@ -141,3 +151,15 @@ export const productIncludeWithSrc = {
 export const publicProductWhere = {
   status: { notIn: ["draft", "review"] as string[] },
 };
+
+export function stripImageSrc(images: ProductImage[]): ProductImageMeta[] {
+  return images.map(({ id, alt, enAlt, color, accent, shape, sortOrder }) => ({
+    id,
+    alt,
+    enAlt,
+    color,
+    accent,
+    shape,
+    sortOrder,
+  }));
+}

@@ -3,30 +3,35 @@ import {
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
-import { PrismaService } from "../prisma/prisma.service";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { CartItem, Product } from "../database/entities";
 import { IdentityService } from "../common/identity.service";
 import type { Actor } from "../common/identity";
 
 @Injectable()
 export class CartService {
   constructor(
-    private readonly prisma: PrismaService,
+    @InjectRepository(CartItem)
+    private readonly cartItems: Repository<CartItem>,
+    @InjectRepository(Product)
+    private readonly products: Repository<Product>,
     private readonly identity: IdentityService,
   ) {}
 
   async get(actor: Actor) {
-    const items = await this.prisma.cartItem.findMany({
+    const items = await this.cartItems.find({
       where: { ownerKey: this.identity.key(actor) },
-      select: { productSlug: true },
-      orderBy: { createdAt: "asc" },
+      select: { id: true, productSlug: true },
+      order: { createdAt: "ASC" },
     });
     return { slugs: items.map((item) => item.productSlug) };
   }
 
   async add(actor: Actor, slug: string) {
-    const product = await this.prisma.product.findUnique({
+    const product = await this.products.findOne({
       where: { slug },
-      select: { status: true },
+      select: { id: true, status: true },
     });
     if (!product || product.status === "draft") {
       throw new NotFoundException("اثر پیدا نشد.");
@@ -34,30 +39,26 @@ export class CartService {
     if (product.status === "sold" || product.status === "reserved") {
       throw new ConflictException("این اثر دیگر قابل افزودن به سبد نیست.");
     }
-    await this.prisma.cartItem.upsert({
-      where: {
-        ownerKey_productSlug: {
-          ownerKey: this.identity.key(actor),
-          productSlug: slug,
-        },
-      },
-      update: {},
-      create: { ownerKey: this.identity.key(actor), productSlug: slug },
+    const ownerKey = this.identity.key(actor);
+    const existing = await this.cartItems.findOne({
+      where: { ownerKey, productSlug: slug },
     });
+    if (!existing) {
+      await this.cartItems.save(this.cartItems.create({ ownerKey, productSlug: slug }));
+    }
     return this.get(actor);
   }
 
   async remove(actor: Actor, slug: string) {
-    await this.prisma.cartItem.deleteMany({
-      where: { ownerKey: this.identity.key(actor), productSlug: slug },
+    await this.cartItems.delete({
+      ownerKey: this.identity.key(actor),
+      productSlug: slug,
     });
     return this.get(actor);
   }
 
   async clear(actor: Actor) {
-    await this.prisma.cartItem.deleteMany({
-      where: { ownerKey: this.identity.key(actor) },
-    });
+    await this.cartItems.delete({ ownerKey: this.identity.key(actor) });
     return this.get(actor);
   }
 }

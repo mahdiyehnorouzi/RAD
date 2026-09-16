@@ -3,7 +3,7 @@ import { ConfigModule, ConfigService } from "@nestjs/config";
 import { APP_FILTER, APP_GUARD } from "@nestjs/core";
 import { JwtModule } from "@nestjs/jwt";
 import { ThrottlerGuard, ThrottlerModule } from "@nestjs/throttler";
-import { PrismaModule } from "./prisma/prisma.module";
+import { DatabaseModule } from "./database/database.module";
 import { CommonModule } from "./common/common.module";
 import { SessionMiddleware } from "./common/session.middleware";
 import { ApiExceptionFilter } from "./common/http-exception.filter";
@@ -35,7 +35,7 @@ import { HealthController } from "./health/health.controller";
     ThrottlerModule.forRoot({
       throttlers: [{ ttl: 60_000, limit: 120 }],
     }),
-    PrismaModule,
+    DatabaseModule,
     CommonModule,
     MailModule,
     AuthModule,

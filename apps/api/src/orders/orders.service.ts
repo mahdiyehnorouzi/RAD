@@ -5,7 +5,15 @@ import {
   NotFoundException,
   ServiceUnavailableException,
 } from "@nestjs/common";
-import { PrismaService } from "../prisma/prisma.service";
+import { InjectRepository } from "@nestjs/typeorm";
+import { DataSource, In, Repository } from "typeorm";
+import {
+  CartItem,
+  Order,
+  OrderItem,
+  PaymentIntent,
+  Product,
+} from "../database/entities";
 import { IdentityService } from "../common/identity.service";
 import { NoticesService } from "../notices/notices.service";
 import type { Actor } from "../common/identity";
@@ -60,16 +68,22 @@ type OrderRow = {
 @Injectable()
 export class OrdersService {
   constructor(
-    private readonly prisma: PrismaService,
+    private readonly dataSource: DataSource,
+    @InjectRepository(Order)
+    private readonly orders: Repository<Order>,
+    @InjectRepository(CartItem)
+    private readonly cartItems: Repository<CartItem>,
+    @InjectRepository(PaymentIntent)
+    private readonly payments: Repository<PaymentIntent>,
     private readonly identity: IdentityService,
     private readonly notices: NoticesService,
   ) {}
 
   async list(actor: Actor) {
-    const orders = await this.prisma.order.findMany({
+    const orders = await this.orders.find({
       where: { ownerKey: this.identity.key(actor) },
-      include: { items: true, payment: true },
-      orderBy: { createdAt: "desc" },
+      relations: { items: true, payment: true },
+      order: { createdAt: "DESC" },
     });
     return orders.map((order) => this.toOrder(order));
   }
@@ -83,9 +97,9 @@ export class OrdersService {
     input: { name?: string; city?: string; phone?: string; address?: string },
   ) {
     const ownerKey = this.identity.key(actor);
-    const cart = await this.prisma.cartItem.findMany({
+    const cart = await this.cartItems.find({
       where: { ownerKey },
-      include: { product: true },
+      relations: { product: true },
     });
     if (!cart.length) throw new BadRequestException("سبد خرید خالی است.");
 
@@ -94,9 +108,9 @@ export class OrdersService {
     const slugs = cart.map((item) => item.productSlug);
     const provider = paymentProvider();
 
-    const order = await this.prisma.$transaction(async (tx) => {
-      const products = await tx.product.findMany({
-        where: { slug: { in: slugs } },
+    const order = await this.dataSource.transaction(async (manager) => {
+      const products = await manager.getRepository(Product).find({
+        where: { slug: In(slugs) },
       });
       if (products.length !== slugs.length) {
         throw new BadRequestException("یکی از آثار سبد دیگر موجود نیست.");
@@ -107,45 +121,51 @@ export class OrdersService {
         }
       }
 
-      await tx.product.updateMany({
-        where: { slug: { in: slugs } },
-        data: { status: "reserved" },
-      });
+      await manager
+        .getRepository(Product)
+        .update({ slug: In(slugs) }, { status: "reserved" });
 
       const total = products.reduce((sum, product) => sum + product.tomanPrice, 0);
       const usdTotal = products.reduce((sum, product) => sum + product.usdPrice, 0);
       const id = `RAD-${Date.now().toString().slice(-6)}`;
 
-      const created = await tx.order.create({
-        data: {
-          id,
-          ownerKey,
-          userId: actor.user?.id,
-          total,
-          usdTotal,
-          status: "payment_pending",
-          name,
-          city,
-          phone: input.phone?.trim() ?? "",
-          address: input.address?.trim() ?? "",
-          items: { create: slugs.map((productSlug) => ({ productSlug })) },
-          payment: {
-            create: {
-              amount: total,
-              currency: "IRR",
-              provider,
-              status: "created",
-            },
-          },
-        },
-        include: { items: true, payment: true },
+      const created = manager.getRepository(Order).create({
+        id,
+        ownerKey,
+        userId: actor.user?.id ?? null,
+        total,
+        usdTotal,
+        status: "payment_pending",
+        name,
+        city,
+        phone: input.phone?.trim() ?? "",
+        address: input.address?.trim() ?? "",
       });
+      await manager.getRepository(Order).save(created);
 
-      await tx.cartItem.deleteMany({ where: { ownerKey } });
-      return created;
+      const items = slugs.map((productSlug) =>
+        manager.getRepository(OrderItem).create({ orderId: id, productSlug }),
+      );
+      await manager.getRepository(OrderItem).save(items);
+
+      const payment = manager.getRepository(PaymentIntent).create({
+        orderId: id,
+        amount: total,
+        currency: "IRR",
+        provider,
+        status: "created",
+      });
+      await manager.getRepository(PaymentIntent).save(payment);
+
+      await manager.getRepository(CartItem).delete({ ownerKey });
+
+      return {
+        ...created,
+        items,
+        payment,
+      };
     });
 
-    // Payment start seam: today returns manual card; later returns gateway redirectUrl.
     let redirectUrl: string | undefined;
     try {
       const session = startPaymentSession({
@@ -156,10 +176,10 @@ export class OrdersService {
       });
       if (session.kind === "redirect") {
         redirectUrl = session.redirectUrl;
-        await this.prisma.paymentIntent.updateMany({
-          where: { orderId: order.id },
-          data: { status: "redirected", provider: session.provider },
-        });
+        await this.payments.update(
+          { orderId: order.id },
+          { status: "redirected", provider: session.provider },
+        );
       }
     } catch (error) {
       throw new ServiceUnavailableException(
@@ -210,19 +230,20 @@ export class OrdersService {
       );
     }
 
-    const updated = await this.prisma.$transaction(async (tx) => {
-      await tx.paymentIntent.updateMany({
-        where: { orderId: order.id },
-        data: {
+    const updated = await this.dataSource.transaction(async (manager) => {
+      await manager.getRepository(PaymentIntent).update(
+        { orderId: order.id },
+        {
           status: "submitted",
           receiptImage,
           submittedAt: new Date(),
         },
-      });
-      return tx.order.findUniqueOrThrow({
+      );
+      const next = await manager.getRepository(Order).findOneOrFail({
         where: { id: order.id },
-        include: { items: true, payment: true },
+        relations: { items: true, payment: true },
       });
+      return next;
     });
     return this.toOrder(updated);
   }
@@ -240,37 +261,31 @@ export class OrdersService {
     }
 
     const slugs = order.items.map((item) => item.productSlug);
-    const updated = await this.prisma.$transaction(async (tx) => {
-      await tx.product.updateMany({
-        where: { slug: { in: slugs }, status: "reserved" },
-        data: { status: "available" },
-      });
-      await tx.paymentIntent.updateMany({
-        where: { orderId: order.id },
-        data: { status: "failed" },
-      });
-      return tx.order.update({
+    const updated = await this.dataSource.transaction(async (manager) => {
+      await manager.getRepository(Product).update(
+        { slug: In(slugs), status: "reserved" },
+        { status: "available" },
+      );
+      await manager.getRepository(PaymentIntent).update(
+        { orderId: order.id },
+        { status: "failed" },
+      );
+      await manager.getRepository(Order).update({ id: order.id }, { status: "cancelled" });
+      return manager.getRepository(Order).findOneOrFail({
         where: { id: order.id },
-        data: { status: "cancelled" },
-        include: { items: true, payment: true },
+        relations: { items: true, payment: true },
       });
     });
     return this.toOrder(updated);
   }
 
   private async ownedOrder(actor: Actor, id: string) {
-    const order = await this.prisma.order.findFirst({
+    const order = await this.orders.findOne({
       where: { id, ownerKey: this.identity.key(actor) },
-      include: { items: true, payment: true },
+      relations: { items: true, payment: true },
     });
     if (!order) throw new NotFoundException("سفارش پیدا نشد.");
     return order;
-  }
-
-  private estimateDelivery(city: string) {
-    const tehran = city.includes("تهران") || /tehran/i.test(city);
-    const days = tehran ? 4 : 8;
-    return new Date(Date.now() + days * 24 * 60 * 60 * 1000);
   }
 
   private toOrder(order: OrderRow, redirectUrl?: string) {

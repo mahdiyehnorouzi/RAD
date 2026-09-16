@@ -10,16 +10,13 @@
     "start": "node dist/main.js",
     "start:production": "node scripts/start-production.mjs",
     "typecheck": "tsc --noEmit",
-    "setup": "prisma generate && prisma db push && prisma db seed",
-    "db:ensure-staff": "tsx prisma/ensure-staff.ts",
-    "db:import-uploaded-products": "tsx prisma/import-uploaded-products.ts",
+    "setup": "tsx scripts/sync-schema.ts && tsx seed/seed.ts",
+    "db:ensure-staff": "tsx seed/ensure-staff.ts",
+    "db:import-uploaded-products": "tsx seed/import-uploaded-products.ts",
     "db:embedded": "node scripts/start-pg.mjs",
     "pricing:crawl": "tsx src/pricing/cli.ts",
     "test:pricing": "tsx --test src/pricing/*.spec.ts",
     "pricing:baseline": "tsx scripts/apply-baseline-prices.ts"
-  },
-  "prisma": {
-    "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
     "@nestjs/common": "^11.1.6",
@@ -29,17 +26,19 @@
     "@nestjs/platform-express": "^11.1.6",
     "@nestjs/swagger": "^11.4.7",
     "@nestjs/throttler": "^6.4.0",
-    "@prisma/client": "^6.14.0",
+    "@nestjs/typeorm": "^12.0.1",
+    "@paralleldrive/cuid2": "^3.3.0",
     "bcryptjs": "^3.0.2",
     "cheerio": "^1.2.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.2",
     "cookie-parser": "^1.4.7",
     "nodemailer": "^9.1.0",
-    "prisma": "^6.14.0",
+    "pg": "^8.23.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2",
-    "tsx": "^4.20.5"
+    "tsx": "^4.20.5",
+    "typeorm": "^1.1.1"
   },
   "devDependencies": {
     "@nestjs/cli": "^11.0.10",
@@ -48,6 +47,7 @@
     "@types/express": "^5.0.3",
     "@types/node": "^22",
     "@types/nodemailer": "^8.0.1",
+    "@types/pg": "^8.23.1",
     "embedded-postgres": "^18.1.0-beta.12",
     "typescript": "^5.8"
   }

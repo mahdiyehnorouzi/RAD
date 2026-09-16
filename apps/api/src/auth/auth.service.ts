@@ -1,8 +1,18 @@
 import { Injectable, ConflictException, NotFoundException, UnauthorizedException } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
+import { InjectRepository } from "@nestjs/typeorm";
 import { createHash, randomInt } from "node:crypto";
 import { hash, compare } from "bcryptjs";
-import { PrismaService } from "../prisma/prisma.service";
+import { MoreThan, Repository } from "typeorm";
+import {
+  CartItem,
+  Commission,
+  Favorite,
+  Notice,
+  Order,
+  PasswordResetToken,
+  User,
+} from "../database/entities";
 import { MailService } from "../mail/mail.service";
 import { toAuthUser, type Actor, type AuthUser } from "../common/identity";
 
@@ -13,7 +23,20 @@ const RESET_MAX_AGE_MS = 1000 * 60 * 15;
 @Injectable()
 export class AuthService {
   constructor(
-    private readonly prisma: PrismaService,
+    @InjectRepository(User)
+    private readonly users: Repository<User>,
+    @InjectRepository(Notice)
+    private readonly notices: Repository<Notice>,
+    @InjectRepository(PasswordResetToken)
+    private readonly resetTokens: Repository<PasswordResetToken>,
+    @InjectRepository(CartItem)
+    private readonly cartItems: Repository<CartItem>,
+    @InjectRepository(Favorite)
+    private readonly favorites: Repository<Favorite>,
+    @InjectRepository(Order)
+    private readonly orders: Repository<Order>,
+    @InjectRepository(Commission)
+    private readonly commissions: Repository<Commission>,
     private readonly jwt: JwtService,
     private readonly mail: MailService,
   ) {}
@@ -27,7 +50,7 @@ export class AuthService {
     actor: Actor,
   ) {
     const email = input.email.trim().toLowerCase();
-    const existing = await this.prisma.user.findUnique({ where: { email } });
+    const existing = await this.users.findOne({ where: { email } });
     if (!existing) {
       throw new UnauthorizedException({
         message: "حسابی با این ایمیل وجود ندارد.",
@@ -56,25 +79,25 @@ export class AuthService {
   ) {
     const email = input.email.trim().toLowerCase();
     const name = input.name.trim();
-    const existing = await this.prisma.user.findUnique({ where: { email } });
+    const existing = await this.users.findOne({ where: { email } });
     if (existing) {
       throw new ConflictException({
         message: "این ایمیل قبلاً ثبت شده است. وارد شوید.",
         code: "account_exists",
       });
     }
-    const created = await this.prisma.user.create({
-      data: {
+    const created = await this.users.save(
+      this.users.create({
         name,
         email,
         passwordHash: await hash(input.password, 12),
         role: "customer",
         status: "active",
-      },
-    });
-    await this.prisma.notice.create({
-      data: { ownerKey: `user:${created.id}`, kind: "welcome" },
-    });
+      }),
+    );
+    await this.notices.save(
+      this.notices.create({ ownerKey: `user:${created.id}`, kind: "welcome" }),
+    );
     return this.openSession(toAuthUser(created), actor);
   }
 
@@ -84,20 +107,20 @@ export class AuthService {
 
   async changePassword(actor: Actor, input: { currentPassword: string; newPassword: string }) {
     if (!actor.user) throw new UnauthorizedException("ابتدا وارد حساب شوید.");
-    const user = await this.prisma.user.findUnique({ where: { id: actor.user.id } });
+    const user = await this.users.findOne({ where: { id: actor.user.id } });
     if (!user?.adminRole) throw new UnauthorizedException("این حساب به دفتر کوره دسترسی ندارد.");
     const matches = await compare(input.currentPassword, user.passwordHash);
     if (!matches) throw new UnauthorizedException("رمز عبور فعلی نادرست است.");
-    await this.prisma.user.update({
-      where: { id: user.id },
-      data: { passwordHash: await hash(input.newPassword, 12) },
-    });
+    await this.users.update(
+      { id: user.id },
+      { passwordHash: await hash(input.newPassword, 12) },
+    );
     return { ok: true };
   }
 
   async requestPasswordReset(email: string) {
     const normalized = email.trim().toLowerCase();
-    const user = await this.prisma.user.findUnique({ where: { email: normalized } });
+    const user = await this.users.findOne({ where: { email: normalized } });
     if (!user || user.status === "invited") {
       return {
         message: "اگر این ایمیل ثبت شده باشد، کد بازیابی به آن ارسال می‌شود.",
@@ -106,14 +129,14 @@ export class AuthService {
 
     const code = String(randomInt(100000, 1_000_000));
     const tokenHash = createHash("sha256").update(code).digest("hex");
-    await this.prisma.passwordResetToken.deleteMany({ where: { userId: user.id } });
-    await this.prisma.passwordResetToken.create({
-      data: {
+    await this.resetTokens.delete({ userId: user.id });
+    await this.resetTokens.save(
+      this.resetTokens.create({
         userId: user.id,
         tokenHash,
         expiresAt: new Date(Date.now() + RESET_MAX_AGE_MS),
-      },
-    });
+      }),
+    );
 
     await this.mail.sendPasswordResetCode(user.email, code);
     return {
@@ -125,32 +148,30 @@ export class AuthService {
     const normalized = input.email.trim().toLowerCase();
     const code = input.code.trim();
     const tokenHash = createHash("sha256").update(code).digest("hex");
-    const user = await this.prisma.user.findUnique({ where: { email: normalized } });
+    const user = await this.users.findOne({ where: { email: normalized } });
     if (!user) {
       throw new NotFoundException("کد بازیابی نامعتبر یا منقضی شده است.");
     }
 
-    const record = await this.prisma.passwordResetToken.findFirst({
+    const record = await this.resetTokens.findOne({
       where: {
         userId: user.id,
         tokenHash,
-        expiresAt: { gt: new Date() },
+        expiresAt: MoreThan(new Date()),
       },
     });
     if (!record) {
       throw new NotFoundException("کد بازیابی نامعتبر یا منقضی شده است.");
     }
 
-    await this.prisma.$transaction([
-      this.prisma.user.update({
-        where: { id: user.id },
-        data: {
-          passwordHash: await hash(input.password, 12),
-          status: "active",
-        },
-      }),
-      this.prisma.passwordResetToken.deleteMany({ where: { userId: user.id } }),
-    ]);
+    await this.users.update(
+      { id: user.id },
+      {
+        passwordHash: await hash(input.password, 12),
+        status: "active",
+      },
+    );
+    await this.resetTokens.delete({ userId: user.id });
 
     return { ok: true };
   }
@@ -170,49 +191,25 @@ export class AuthService {
     const to = `user:${userId}`;
     if (from === to) return;
 
-    await this.moveRows(this.prisma.cartItem, from, to);
-    await this.moveRows(this.prisma.favorite, from, to);
-    await this.prisma.notice.updateMany({
-      where: { ownerKey: from },
-      data: { ownerKey: to },
-    });
-    await this.prisma.order.updateMany({
-      where: { ownerKey: from },
-      data: { ownerKey: to, userId },
-    });
-    const commissions = this.prisma as unknown as {
-      commission: {
-        updateMany: (args: {
-          where: { ownerKey: string };
-          data: { ownerKey: string };
-        }) => Promise<unknown>;
-      };
-    };
-    await commissions.commission.updateMany({
-      where: { ownerKey: from },
-      data: { ownerKey: to },
-    });
+    await this.moveRows(this.cartItems, from, to);
+    await this.moveRows(this.favorites, from, to);
+    await this.notices.update({ ownerKey: from }, { ownerKey: to });
+    await this.orders.update({ ownerKey: from }, { ownerKey: to, userId });
+    await this.commissions.update({ ownerKey: from }, { ownerKey: to });
   }
 
   private async moveRows(
-    delegate: {
-      findMany: (args: { where: { ownerKey: string } }) => Promise<Array<{ id: string; productSlug: string }>>;
-      findUnique: (args: {
-        where: { ownerKey_productSlug: { ownerKey: string; productSlug: string } };
-      }) => Promise<{ id: string } | null>;
-      delete: (args: { where: { id: string } }) => Promise<unknown>;
-      update: (args: { where: { id: string }; data: { ownerKey: string } }) => Promise<unknown>;
-    },
+    repo: Repository<CartItem> | Repository<Favorite>,
     from: string,
     to: string,
   ) {
-    const rows = await delegate.findMany({ where: { ownerKey: from } });
+    const rows = await repo.find({ where: { ownerKey: from } });
     for (const row of rows) {
-      const duplicate = await delegate.findUnique({
-        where: { ownerKey_productSlug: { ownerKey: to, productSlug: row.productSlug } },
+      const duplicate = await repo.findOne({
+        where: { ownerKey: to, productSlug: row.productSlug },
       });
-      if (duplicate) await delegate.delete({ where: { id: row.id } });
-      else await delegate.update({ where: { id: row.id }, data: { ownerKey: to } });
+      if (duplicate) await repo.delete({ id: row.id });
+      else await repo.update({ id: row.id }, { ownerKey: to });
     }
   }
 }

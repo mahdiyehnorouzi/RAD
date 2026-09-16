@@ -1,14 +1,19 @@
 import { Controller, Get, NotFoundException, Param, Res } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
 import type { Response } from "express";
-import { PrismaService } from "../prisma/prisma.service";
+import { Repository } from "typeorm";
+import { ProductImage } from "../database/entities";
 
 @Controller("catalog/images")
 export class MediaController {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    @InjectRepository(ProductImage)
+    private readonly images: Repository<ProductImage>,
+  ) {}
 
   @Get(":id")
   async byId(@Param("id") id: string, @Res() res: Response) {
-    const image = await this.prisma.productImage.findUnique({ where: { id } });
+    const image = await this.images.findOne({ where: { id } });
     if (!image?.src?.startsWith("data:image/")) {
       throw new NotFoundException("تصویر پیدا نشد.");
     }

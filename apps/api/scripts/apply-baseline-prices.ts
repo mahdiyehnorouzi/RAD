@@ -1,4 +1,5 @@
-import { PrismaClient } from "@prisma/client";
+import { createAppDataSource } from "../src/database/data-source";
+import { Product } from "../src/database/entities";
 
 const prices: Record<string, number> = {
   "blue-pedestal-tray": 3_500_000,
@@ -30,51 +31,54 @@ const prices: Record<string, number> = {
 };
 
 const apply = process.argv.includes("--apply");
-const prisma = new PrismaClient();
 
 async function main() {
-  const existing = await prisma.product.findMany({
-    select: { slug: true, name: true, tomanPrice: true },
-    orderBy: { sortOrder: "asc" },
-  });
-  const updates = existing.flatMap((product) => {
-    const nextPrice = prices[product.slug];
-    return nextPrice === undefined
-      ? []
-      : [
-          {
-            ...product,
-            nextPrice,
-            usdPrice: Math.max(1, Math.round(nextPrice / 85_000)),
-          },
-        ];
-  });
-  console.table(updates);
-  const missing = existing.filter(
-    (product) => prices[product.slug] === undefined,
-  );
-  if (missing.length)
-    throw new Error(
-      `No baseline price for: ${missing.map((product) => product.slug).join(", ")}`,
-    );
-  if (!apply) {
-    console.log("Preview only. Re-run with --apply to update the database.");
-    return;
+  const dataSource = createAppDataSource();
+  await dataSource.initialize();
+  try {
+    const products = dataSource.getRepository(Product);
+    const existing = await products.find({
+      select: { slug: true, name: true, tomanPrice: true },
+      order: { sortOrder: "ASC" },
+    });
+    const updates = existing.flatMap((product) => {
+      const nextPrice = prices[product.slug];
+      return nextPrice === undefined
+        ? []
+        : [
+            {
+              ...product,
+              nextPrice,
+              usdPrice: Math.max(1, Math.round(nextPrice / 85_000)),
+            },
+          ];
+    });
+    console.table(updates);
+    const missing = existing.filter((product) => prices[product.slug] === undefined);
+    if (missing.length) {
+      throw new Error(
+        `No baseline price for: ${missing.map((product) => product.slug).join(", ")}`,
+      );
+    }
+    if (!apply) {
+      console.log("Preview only. Re-run with --apply to update the database.");
+      return;
+    }
+    await dataSource.transaction(async (manager) => {
+      for (const product of updates) {
+        await manager.getRepository(Product).update(
+          { slug: product.slug },
+          { tomanPrice: product.nextPrice, usdPrice: product.usdPrice },
+        );
+      }
+    });
+    console.log(`Updated ${updates.length} product prices.`);
+  } finally {
+    await dataSource.destroy();
   }
-  await prisma.$transaction(
-    updates.map((product) =>
-      prisma.product.update({
-        where: { slug: product.slug },
-        data: { tomanPrice: product.nextPrice, usdPrice: product.usdPrice },
-      }),
-    ),
-  );
-  console.log(`Updated ${updates.length} product prices.`);
 }
 
-main()
-  .catch((error: unknown) => {
-    console.error(error instanceof Error ? error.message : error);
-    process.exitCode = 1;
-  })
-  .finally(() => prisma.$disconnect());
+main().catch((error: unknown) => {
+  console.error(error instanceof Error ? error.message : error);
+  process.exitCode = 1;
+});

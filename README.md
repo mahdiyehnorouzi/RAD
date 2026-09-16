@@ -8,7 +8,7 @@ The repo is an **npm workspaces monorepo** (version `1.3.0`). Three apps run ind
 | --- | --- | --- | --- |
 | Storefront | `@rad/storefront` | http://localhost:3000 | Public shop, account, custom commissions, checkout |
 | Admin | `@rad/admin` | http://localhost:3002 | Products, orders, commissions, customers, team access |
-| API | `@rad/api` | http://localhost:4000 | REST backend, auth, Postgres via Prisma |
+| API | `@rad/api` | http://localhost:4000 | REST backend, auth, Postgres via TypeORM |
 
 ---
 
@@ -38,7 +38,7 @@ npm install
 npm run setup:api
 ```
 
-`setup:api` runs `docker compose up`, then `prisma generate`, `prisma db push`, and `prisma db seed` inside `@rad/api`.
+`setup:api` runs `docker compose up`, then schema sync and seed inside `@rad/api`.
 
 ```bash
 # 3. Configure the API (first time only)
@@ -118,18 +118,18 @@ Inside `apps/api`:
 
 | Script | Description |
 | --- | --- |
-| `npm run setup` | `prisma generate`, `db push`, `db seed` |
+| `npm run setup` | Sync TypeORM schema and seed |
 | `npm run db:ensure-staff` | Create/update admin owner and editor accounts |
 | `npm run db:embedded` | Start embedded Postgres (no Docker) |
 | `npm run db:import-uploaded-products` | Import uploaded product data |
 
 ### Schema overview
 
-Prisma schema: `apps/api/prisma/schema.prisma`
+TypeORM entities: `apps/api/src/database/entities/`
 
 Main models: `User`, `Product`, `ProductImage`, `Vendor`, `CartItem`, `Favorite`, `Review`, `Order`, `PaymentIntent`, `Notice`, `Commission`.
 
-Seed data loads catalog products, vendors, sample commerce data, and staff accounts (`apps/api/prisma/seed.ts`).
+Seed data loads catalog products, vendors, sample commerce data, and staff accounts (`apps/api/seed/seed.ts`).
 
 ---
 
@@ -268,7 +268,7 @@ Dev: `npm run dev:admin` (port **3002**).
 
 ### API (`apps/api`)
 
-NestJS 11 + Prisma 6 + PostgreSQL.
+NestJS 11 + TypeORM + PostgreSQL.
 
 Dev: `npm run dev:api` — runs `nest start --watch` (builds first if `dist/` is missing).
 
@@ -296,7 +296,7 @@ Import from apps via workspace names, e.g. `import type { Product } from "@rad/t
 ```text
 RAD/
 ├── apps/
-│   ├── api/              # NestJS backend, Prisma, Swagger
+│   ├── api/              # NestJS backend, TypeORM, Swagger
 │   ├── admin/            # Next.js admin panel
 │   └── storefront/       # Next.js customer storefront
 ├── packages/
@@ -338,7 +338,7 @@ npm run deploy:admin
 
 On API boot in production (`scripts/start-production.mjs`):
 
-1. `prisma db push`
+1. TypeORM schema sync (`scripts/sync-schema.ts`)
 2. `ensure-staff` (owner/editor accounts)
 3. Full seed if `RUN_SEED=true`
 4. Start HTTP server

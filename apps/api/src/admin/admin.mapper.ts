@@ -1,4 +1,11 @@
-import type { Product, ProductImage, Vendor, Order, OrderItem, User } from "@prisma/client";
+import type {
+  Order,
+  OrderItem,
+  Product,
+  ProductImage,
+  User,
+  Vendor,
+} from "../database/entities";
 import { normalizeStoreOrderStatus } from "../orders/store-order-status";
 
 const categoryToStore: Record<string, string> = {
