@@ -37,6 +37,19 @@ function withMessage(
   return { ...commission, messages: [...commission.messages, entry] };
 }
 
+export function beginCommissionReview(commission: MakingCommission): MakingCommission {
+  if (commission.stage !== "design_submitted") return commission;
+  return touch(
+    commission,
+    { stage: "feasibility", nextActor: "artist" },
+    {
+      actor: "artist",
+      stageId: "design_submitted",
+      action: loc("بازبینی آغاز شد", "Review started"),
+    },
+  );
+}
+
 export function addCommissionMessage(
   commission: MakingCommission,
   input: { author: "customer" | "artist"; body: LocaleCopy; internal?: boolean },

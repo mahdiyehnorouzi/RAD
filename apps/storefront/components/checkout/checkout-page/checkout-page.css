@@ -192,14 +192,15 @@
 
 html[dir="rtl"] .checkout-page, html[dir="rtl"] .checkout-page>header, html[dir="rtl"] .checkout-grid, html[dir="rtl"] .checkout-form, html[dir="rtl"] .checkout-summary, html[dir="rtl"] .checkout-review {direction:rtl!important;text-align:right!important}
 
-html[dir="rtl"] .checkout-form label, html[dir="rtl"] .checkout-form input, html[dir="rtl"] .checkout-form textarea, html[dir="rtl"] .checkout-summary span, html[dir="rtl"] .checkout-summary b, html[dir="rtl"] .checkout-review dt, html[dir="rtl"] .checkout-review dd {width:100%;text-align:right!important}
+html[dir="rtl"] .checkout-form label, html[dir="rtl"] .checkout-form input:not(.checkout-ltr-field), html[dir="rtl"] .checkout-form textarea, html[dir="rtl"] .checkout-summary span, html[dir="rtl"] .checkout-summary b, html[dir="rtl"] .checkout-review dt, html[dir="rtl"] .checkout-review dd {width:100%;text-align:right!important}
 
-/* Phone/postal stay LTR — forced RTL on tel/numeric fields clears typed values in browsers. */
+/* Phone/postal stay LTR — never inherit the page RTL direction rules. */
 html[dir="rtl"] .checkout-form input.checkout-ltr-field,
 html[dir="rtl"] .checkout-form input.checkout-ltr-field:focus {
   direction: ltr !important;
   text-align: left !important;
   unicode-bidi: isolate;
+  width: 100%;
 }
 
 @media(max-width:900px) {

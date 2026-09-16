@@ -2,15 +2,21 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { cache } from "react";
 import { ProductDetail } from "@/components/product";
-import { fetchProduct } from "@/lib/api";
+import { fetchFaq, fetchProduct, fetchProductReviews } from "@/lib/api";
 import { getProduct, mockProducts } from "@/lib/catalog/products";
 import { photoWorks } from "@/lib/catalog/photo-works";
 import {
   hasRealProductImage,
   overlayLiveProduct,
 } from "@/lib/catalog/category-defaults";
-import { absoluteUrl, safeJsonLd } from "@/lib/seo";
-import { categoryLabel } from "@/lib/catalog/artwork";
+import {
+  breadcrumbJsonLd,
+  faqPageJsonLd,
+  languageAlternates,
+  productJsonLd,
+  safeJsonLd,
+  siteName,
+} from "@/lib/seo";
 
 const resolveProduct = cache(async (slug: string) => {
   const remote = await fetchProduct(slug).catch(() => null);
@@ -37,16 +43,28 @@ export async function generateMetadata({
   return {
     title,
     description,
-    alternates: { canonical: path },
+    alternates: {
+      canonical: path,
+      languages: languageAlternates(path),
+    },
     openGraph: {
       type: "website",
       locale: "fa_IR",
+      alternateLocale: ["en_US"],
+      siteName,
       title,
       description,
       url: path,
-      images: image ? [{ url: image, alt: product.images?.[0]?.alt || title }] : undefined,
+      images: image
+        ? [{ url: image, alt: product.images?.[0]?.alt || title }]
+        : undefined,
     },
-    twitter: { card: "summary_large_image", title, description, images: image ? [image] : undefined },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: image ? [image] : undefined,
+    },
   };
 }
 
@@ -64,33 +82,38 @@ export default async function PDP({
   const { slug } = await params;
   const product = await resolveProduct(slug);
   if (!product) notFound();
-  const image = product.images?.find((item) => item.src)?.src;
+
+  const [faq, reviews] = await Promise.all([
+    fetchFaq("fa"),
+    fetchProductReviews(product.slug).catch(() => []),
+  ]);
+
   const availability = product.status === "sold" ? "OutOfStock" : "InStock";
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "Product",
-    "@id": `${absoluteUrl(`/products/${product.slug}`)}#product`,
-    name: product.name,
-    alternateName: product.en.name,
-    description: product.story,
-    sku: product.artworkNumber || product.slug,
-    category: categoryLabel(product.category, "fa"),
-    image: image ? [absoluteUrl(image)] : undefined,
-    url: absoluteUrl(`/products/${product.slug}`),
-    brand: { "@type": "Brand", name: "رَد" },
-    offers: {
-      "@type": "Offer",
-      url: absoluteUrl(`/products/${product.slug}`),
-      priceCurrency: "USD",
-      price: product.usdPrice,
-      availability: `https://schema.org/${availability}`,
-      itemCondition: "https://schema.org/NewCondition",
-    },
-  };
+  const productSchema = productJsonLd(product, {
+    availability,
+    reviews,
+  });
+  const breadcrumbs = breadcrumbJsonLd([
+    { name: "خانه", path: "/" },
+    { name: "آثار", path: "/products" },
+    { name: product.name, path: `/products/${product.slug}` },
+  ]);
+
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }} />
-      <ProductDetail product={product} />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: safeJsonLd(productSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: safeJsonLd(breadcrumbs) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: safeJsonLd(faqPageJsonLd(faq)) }}
+      />
+      <ProductDetail product={product} initialFaq={faq} />
     </>
   );
 }

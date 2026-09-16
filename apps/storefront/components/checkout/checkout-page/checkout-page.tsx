@@ -22,8 +22,8 @@ export function CheckoutPage() {
   const router = useRouter();
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [phone, setPhone] = useState("");
   const errorRef = useRef<HTMLParagraphElement>(null);
+  const phoneRef = useRef<HTMLInputElement>(null);
 
   const items = slugs
     .map((slug) => getProduct(slug))
@@ -39,13 +39,25 @@ export function CheckoutPage() {
     errorRef.current?.scrollIntoView({ block: "center", behavior: "smooth" });
   }, [error]);
 
+  const normalizePhone = (raw: string) => {
+    const persian = "۰۱۲۳۴۵۶۷۸۹";
+    const arabic = "٠١٢٣٤٥٦٧٨٩";
+    return raw
+      .replace(/[۰-۹]/g, (digit) => String(persian.indexOf(digit)))
+      .replace(/[٠-٩]/g, (digit) => String(arabic.indexOf(digit)))
+      .replace(/[^\d+]/g, "")
+      .trim();
+  };
+
   const submitDemoOrder = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (submitting) return;
     const data = new FormData(event.currentTarget);
     const name = String(data.get("name") ?? "").trim();
     const city = String(data.get("city") ?? "").trim();
-    const phoneValue = phone.trim() || String(data.get("phone") ?? "").trim();
+    const phoneValue = normalizePhone(
+      phoneRef.current?.value || String(data.get("phone") ?? ""),
+    );
     const address = String(data.get("address") ?? "").trim();
     const postalCode = String(data.get("postalCode") ?? "").trim();
 
@@ -119,15 +131,15 @@ export function CheckoutPage() {
           <label htmlFor="checkout-phone">{t("phoneLabel")}</label>
           <input
             id="checkout-phone"
+            ref={phoneRef}
             className="checkout-ltr-field"
             name="phone"
-            type="text"
+            type="tel"
             inputMode="tel"
             autoComplete="tel"
             dir="ltr"
             required
-            value={phone}
-            onChange={(event) => setPhone(event.target.value)}
+            defaultValue=""
           />
           <label htmlFor="checkout-city">{t("cityLabel")}</label>
           <input id="checkout-city" name="city" type="text" autoComplete="address-level2" />

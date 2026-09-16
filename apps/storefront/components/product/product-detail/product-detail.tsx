@@ -1,5 +1,5 @@
 "use client";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 import Image from "next/image";
 import Link from "next/link";
@@ -11,7 +11,8 @@ import {
 } from "../listing";
 import { AddToBag } from "../../catalog/catalog/catalog";
 import { useLocale } from "@/components/i18n";
-import type { Product } from "@rad/types";
+import type { FaqContent, FaqIcon, Product } from "@rad/types";
+import { fetchFaq } from "@/lib/api";
 import { categoryLabel } from "@/lib/catalog/artwork";
 import { productCopy } from "@/lib/catalog/products";
 import { productPrice } from "@/lib/money";
@@ -34,10 +35,38 @@ import { ButtonLink } from "@/components/ui/button-link";
 import { CategoryDetailIcon, CategoryOrbitItems } from "./category-orbit-items";
 import "./product-detail.css";
 
-export function ProductDetail({ product }: { product: Product }) {
+const FAQ_ICONS: Record<FaqIcon, typeof ShieldCheck> = {
+  "shield-check": ShieldCheck,
+  "package-check": PackageCheck,
+  truck: Truck,
+  palette: Palette,
+};
+
+export function ProductDetail({
+  product,
+  initialFaq = null,
+}: {
+  product: Product;
+  initialFaq?: FaqContent | null;
+}) {
   const { locale, t, number, href } = useLocale();
   const carouselRef = useRef<HTMLDivElement>(null);
   const [activeImage, setActiveImage] = useState(0);
+  const [faq, setFaq] = useState<FaqContent | null>(initialFaq);
+
+  useEffect(() => {
+    let active = true;
+    fetchFaq(locale)
+      .then((payload) => {
+        if (active) setFaq(payload);
+      })
+      .catch(() => {
+        if (active) setFaq(null);
+      });
+    return () => {
+      active = false;
+    };
+  }, [locale]);
   const { products, getProduct, loading } = useCatalog();
   const catalogProduct = getProduct(product.slug);
   const visual =
@@ -254,69 +283,31 @@ export function ProductDetail({ product }: { product: Product }) {
           <WorkMarks src={passport.finalPhotos[0].src} marks={passport.marks} />
         ) : null}
       </section>
-      <section className="section shipping-faq">
-        <header>
-          <span className="eyebrow">
-            {locale === "fa" ? "ارسال آثار رَد" : "RAD DELIVERY"}
-          </span>
-          <h2>{locale === "fa" ? "پیش از خرید بدانید" : "Before you buy"}</h2>
-        </header>
-        <div className="faq-list">
-          {(locale === "fa"
-            ? [
-                [
-                  "اگر اثر در ارسال آسیب ببیند؟",
-                  "تمام آثار بیمه‌اند. آسیب را تا ۲۴ ساعت با عکس اعلام کنید؛ رَد مسئول پیگیری و جبران است.",
-                ],
-                [
-                  "بسته‌بندی چگونه است؟",
-                  "هر اثر در جعبه دولایه، با محافظ متناسب با فرم و شناسنامه امضاشده ارسال می‌شود.",
-                ],
-                [
-                  "زمان و محدوده ارسال؟",
-                  "تهران ۲ تا ۴ روز کاری و شهرستان ۴ تا ۸ روز کاری؛ ارسال بیمه‌شده رایگان است.",
-                ],
-                [
-                  "رنگ، متریال و مرجوعی",
-                  "نور نمایشگر می‌تواند رنگ و بافت را کمی تغییر دهد. آثار آماده تا ۴۸ ساعت امکان درخواست بازگشت دارند؛ سفارش شخصی مرجوع نمی‌شود.",
-                ],
-              ]
-            : [
-                [
-                  "What if it is damaged?",
-                  "Every work is insured. Report damage with photos within 24 hours; RAD manages the resolution.",
-                ],
-                [
-                  "How is it packed?",
-                  "Each work travels in a double box with form-fitted protection and a signed certificate.",
-                ],
-                [
-                  "When will it arrive?",
-                  "Tehran: 2–4 working days. Other cities: 4–8. Insured delivery is complimentary.",
-                ],
-                [
-                  "Colour, material, and returns",
-                  "Screens may shift colour and texture slightly. Ready works can be returned within 48 hours; custom works cannot be returned.",
-                ],
-              ]
-          ).map(([q, a], index) => {
-            const icons = [ShieldCheck, PackageCheck, Truck, Palette];
-            const Icon = icons[index];
-            return (
-              <details key={q}>
-                <summary>
-                  <span className="faq-title">
-                    <Icon aria-hidden="true" />
-                    {q}
-                  </span>
-                  <ChevronDown className="faq-chevron" aria-hidden="true" />
-                </summary>
-                <p>{a}</p>
-              </details>
-            );
-          })}
-        </div>
-      </section>
+      {faq ? (
+        <section className="section shipping-faq">
+          <header>
+            <span className="eyebrow">{faq.eyebrow}</span>
+            <h2>{faq.title}</h2>
+          </header>
+          <div className="faq-list">
+            {faq.items.map((item) => {
+              const Icon = FAQ_ICONS[item.icon];
+              return (
+                <details key={item.id}>
+                  <summary>
+                    <span className="faq-title">
+                      <Icon aria-hidden="true" />
+                      {item.question}
+                    </span>
+                    <ChevronDown className="faq-chevron" aria-hidden="true" />
+                  </summary>
+                  <p>{item.answer}</p>
+                </details>
+              );
+            })}
+          </div>
+        </section>
+      ) : null}
       <section className="section related">
         <header className="section-heading">
           <div>

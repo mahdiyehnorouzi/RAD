@@ -193,6 +193,26 @@ export type NoticeKind =
   | "commission_approved"
   | "commission_declined"
   | "commission_change"
-  | "commission_message";
+  | "commission_message"
+  | "commission_quote"
+  | "commission_pre_kiln"
+  | "commission_firing"
+  | "commission_balance"
+  | "commission_shipped";
 export interface Notice { id: string; kind: NoticeKind; productSlug?: string; read: boolean; createdAt: number; }
 export interface CartSnapshot { slugs: string[]; }
+
+export type FaqIcon = "shield-check" | "package-check" | "truck" | "palette";
+
+export interface FaqItem {
+  id: string;
+  icon: FaqIcon;
+  question: string;
+  answer: string;
+}
+
+export interface FaqContent {
+  eyebrow: string;
+  title: string;
+  items: FaqItem[];
+}

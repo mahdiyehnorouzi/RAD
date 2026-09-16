@@ -16,6 +16,7 @@ import {
   toAdminMember,
   toAdminOrder,
   toAdminProduct,
+  toAdminUser,
   toStoreCategory,
 } from "./admin.mapper";
 import type { InviteMemberDto, SaveProductDto, UpdateMemberDto, UpdateOrderDto } from "./dto";
@@ -209,6 +210,14 @@ export class AdminService {
       orderBy: { createdAt: "asc" },
     });
     return users.map(toAdminMember);
+  }
+
+  async listUsers() {
+    const users = await this.prisma.user.findMany({
+      where: { adminRole: null },
+      orderBy: { createdAt: "desc" },
+    });
+    return users.map(toAdminUser);
   }
 
   async inviteMember(input: InviteMemberDto) {

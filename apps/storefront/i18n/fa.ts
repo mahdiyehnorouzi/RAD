@@ -69,6 +69,11 @@ export const fa = {
   noticeCommissionDeclined: "طرح اختصاصی شما ساخته نمی‌شود. دلیل در مسیر ساخت ثبت شده است.",
   noticeCommissionChange: "هنرمند برای طرح اختصاصی شما یک تغییر مشخص خواسته است.",
   noticeCommissionMessage: "پیام تازه‌ای از کارگاه روی سفارش اختصاصی شماست.",
+  noticeCommissionQuote: "پیشنهاد قیمت و زمان‌بندی سفارش اختصاصی شما آماده است.",
+  noticeCommissionPreKiln: "ایستگاه پیش از کوره باز شد؛ لعاب را در مسیر ساخت ببینید.",
+  noticeCommissionFiring: "نتیجه پخت ثبت شد. مانده حساب در مسیر ساخت قابل پرداخت است.",
+  noticeCommissionBalance: "مانده حساب پرداخت شد؛ سفارش وارد مرحله ارسال می‌شود.",
+  noticeCommissionShipped: "سفارش اختصاصی شما ارسال شد. شماره رهگیری در مسیر ساخت است.",
   home: "خانه رَد",
   logoSubtitle: "گالری آثار یکتا",
   collectionEyebrow: "مجموعه ۰۱",
@@ -411,20 +416,6 @@ export const fa = {
   artworkCategoriesHeading: "دسته‌بندی آثار",
   swipeToSeeMore: "برای دیدن بیشتر بکشید",
   filterCategoriesAria: "فیلتر دسته‌بندی آثار",
-  radDelivery: "ارسال آثار رَد",
-  beforeYouBuy: "پیش از خرید بدانید",
-  faqDamageQ: "اگر اثر در ارسال آسیب ببیند؟",
-  faqDamageA:
-    "تمام آثار بیمه‌اند. آسیب را تا ۲۴ ساعت با عکس اعلام کنید؛ رَد مسئول پیگیری و جبران است.",
-  faqPackQ: "بسته‌بندی چگونه است؟",
-  faqPackA:
-    "هر اثر در جعبه دولایه، با محافظ متناسب با فرم و شناسنامه امضاشده ارسال می‌شود.",
-  faqTimeQ: "زمان و محدوده ارسال؟",
-  faqTimeA:
-    "تهران ۲ تا ۴ روز کاری و شهرستان ۴ تا ۸ روز کاری؛ ارسال بیمه‌شده رایگان است.",
-  faqReturnQ: "رنگ، متریال و مرجوعی",
-  faqReturnA:
-    "نور نمایشگر می‌تواند رنگ و بافت را کمی تغییر دهد. آثار آماده تا ۴۸ ساعت امکان درخواست بازگشت دارند؛ سفارش شخصی مرجوع نمی‌شود.",
   guestCollector: "کاربر رَد",
   tehranCity: "تهران",
   designerConnect: "رَد شما را به هنرمند و مسیر ساخت مناسب متصل می‌کند.",
@@ -465,6 +456,10 @@ export const fa = {
   makingUseLabel: "کاربرد مورد نظر",
   makingUsePlaceholder: "مثلاً سفره روزمره، دیوار ورودی، نگاه روی طاقچه…",
   makingUseHelp: "هنرمند کاربرد را در امکان ساخت و ضخامت فرم می‌خواند.",
+  makingDimensionsLabel: "ابعاد تقریبی",
+  makingDimensionsPlaceholder: "مثلاً ارتفاع ۲۵ سانتی‌متر، دهانه ۱۸ سانتی‌متر",
+  makingBudgetLabel: "بودجه تقریبی (تومان)",
+  makingBudgetPlaceholder: "مثلاً ۸٬۰۰۰٬۰۰۰",
   workshopEyebrow: "کارگاه هنرمند",
   workshopTitle: "کارگاه هنرمند",
   workshopBody:

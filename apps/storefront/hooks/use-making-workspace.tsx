@@ -6,6 +6,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -122,6 +123,8 @@ export function MakingProvider({ children }: { children: ReactNode }) {
     };
   }, [loadRemote]);
 
+  const saveQueues = useRef(new Map<string, Promise<unknown>>());
+
   const update = useCallback(
     (id: string, map: (current: MakingCommission) => MakingCommission) => {
       setCommissions((current) => {
@@ -129,7 +132,9 @@ export function MakingProvider({ children }: { children: ReactNode }) {
         const changed = next.find((item) => item.id === id);
         if (changed && !isDemoCommission(id)) {
           const save = maker ? saveWorkshopCommission : saveCommission;
-          void save(id, changed).catch(() => {});
+          const previous = saveQueues.current.get(id) ?? Promise.resolve();
+          const queued = previous.catch(() => undefined).then(() => save(id, changed));
+          saveQueues.current.set(id, queued);
         }
         return next;
       });

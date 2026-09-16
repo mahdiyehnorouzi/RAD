@@ -43,7 +43,7 @@ body {
   line-height: var(--leading-body);
 }
 
-button, a {
+button, a, input, select, textarea {
   font: inherit;
 }
 

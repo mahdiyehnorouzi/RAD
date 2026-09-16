@@ -86,6 +86,12 @@ export class AdminController {
     return this.commissions.saveAdmin(id, body.payload);
   }
 
+  @Post("commissions/:id/review")
+  beginCommissionReview(@Param("id") id: string, @Req() request: AuthedRequest) {
+    this.admin.assert(request.adminRole, "order.write");
+    return this.commissions.beginReview(id);
+  }
+
   @Post("commissions/:id/decide")
   decideCommission(
     @Param("id") id: string,
@@ -104,6 +110,11 @@ export class AdminController {
   ) {
     this.admin.assert(request.adminRole, "order.write");
     return this.commissions.addArtistMessage(id, body.body, body.internal);
+  }
+
+  @Get("users")
+  listUsers() {
+    return this.admin.listUsers();
   }
 
   @Get("members")

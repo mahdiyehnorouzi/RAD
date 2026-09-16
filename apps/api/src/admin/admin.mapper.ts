@@ -100,3 +100,13 @@ export function toAdminMember(user: User) {
     status: (user.status === "invited" ? "invited" : "active") as "active" | "invited",
   };
 }
+
+export function toAdminUser(user: User) {
+  return {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    status: (user.status === "invited" ? "invited" : "active") as "active" | "invited",
+    createdAt: user.createdAt.getTime(),
+  };
+}

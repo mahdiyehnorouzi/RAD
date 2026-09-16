@@ -1,6 +1,6 @@
 export type AdminRole = "owner" | "manager" | "editor" | "viewer";
 export type AdminSection =
-  "overview" | "products" | "orders" | "commissions" | "members" | "account";
+  "overview" | "products" | "orders" | "commissions" | "users" | "members" | "account";
 export type AdminProductStatus = "draft" | "available" | "reserved" | "sold";
 export type AdminOrderStatus =
   | "payment_pending"
@@ -43,6 +43,14 @@ export interface AdminMember {
   email: string;
   role: AdminRole;
   status: "active" | "invited";
+}
+
+export interface AdminUser {
+  id: string;
+  name: string;
+  email: string;
+  status: "active" | "invited";
+  createdAt: number;
 }
 
 export type AdminCommissionStage =

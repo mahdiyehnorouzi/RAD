@@ -76,7 +76,7 @@ export function DifferencePortraitView({
     <article className="difference-portrait">
       <header className="difference-portrait-head">
         <span className="eyebrow">{t("differenceEyebrow")}</span>
-        <h2>{t("differenceTitle")}</h2>
+        <h1>{t("differenceTitle")}</h1>
         <p>{t("differenceBody")}</p>
         <div className="difference-meta">
           <b dir="ltr">{portrait.code}</b>

@@ -1,7 +1,9 @@
 import { NestFactory } from "@nestjs/core";
 import { ValidationPipe } from "@nestjs/common";
+import { NestExpressApplication } from "@nestjs/platform-express";
 import cookieParser = require("cookie-parser");
 import { AppModule } from "./app.module";
+import { setupSwagger } from "./swagger";
 
 function isAllowedOrigin(origin?: string) {
   if (!origin) return true;
@@ -33,7 +35,12 @@ function isAllowedOrigin(origin?: string) {
 }
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  // Disable default parsers so we can raise the JSON limit for admin product images.
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+    bodyParser: false,
+  });
+  app.useBodyParser("json", { limit: "12mb" });
+  app.useBodyParser("urlencoded", { limit: "12mb", extended: true });
   app.use(cookieParser());
   app.enableCors({
     origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
@@ -48,6 +55,7 @@ async function bootstrap() {
       forbidNonWhitelisted: true,
     }),
   );
+  setupSwagger(app);
   const port = Number(process.env.PORT) || 4000;
   await app.listen(port, "0.0.0.0");
 }

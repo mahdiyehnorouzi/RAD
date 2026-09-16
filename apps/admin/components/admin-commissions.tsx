@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { commissionStageLabels, commissionStageOrder, stageCountLabel, type AdminCommission } from "../lib/admin-data";
 import { StageMeter } from "@rad/ui";
 
@@ -12,6 +12,7 @@ export function AdminCommissions({
   canWrite,
   onDecide,
   onMessage,
+  onBeginReview,
 }: {
   commissions: AdminCommission[];
   canWrite: boolean;
@@ -28,6 +29,7 @@ export function AdminCommissions({
     };
   }) => Promise<unknown>;
   onMessage: (id: string, body: { fa: string; en: string }, internal?: boolean) => Promise<unknown>;
+  onBeginReview: (id: string) => Promise<unknown>;
 }) {
   const inbox = useMemo(
     () => commissions.filter((item) => item.stage === "design_submitted" || item.stage === "feasibility"),
@@ -35,6 +37,24 @@ export function AdminCommissions({
   );
   const [selectedId, setSelectedId] = useState<string | null>(inbox[0]?.id ?? commissions[0]?.id ?? null);
   const selected = commissions.find((item) => item.id === selectedId) ?? null;
+
+  const selectCommission = (id: string) => {
+    setSelectedId(id);
+    const item = commissions.find((entry) => entry.id === id);
+    if (canWrite && item?.stage === "design_submitted") {
+      void onBeginReview(id);
+    }
+  };
+
+  useEffect(() => {
+    if (!canWrite || !selectedId) return;
+    const item = commissions.find((entry) => entry.id === selectedId);
+    if (item?.stage === "design_submitted") {
+      void onBeginReview(selectedId);
+    }
+    // Only when selection or write access changes — not on every commissions refresh.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedId, canWrite]);
 
   return (
     <section className="paper-panel data-view commission-view">
@@ -58,7 +78,7 @@ export function AdminCommissions({
                 key={item.id}
                 type="button"
                 className={item.id === selectedId ? "active" : ""}
-                onClick={() => setSelectedId(item.id)}
+                onClick={() => selectCommission(item.id)}
               >
                 <strong>{item.customerName}</strong>
                 <span>{item.concept}</span>
@@ -248,7 +268,7 @@ function CommissionDetail({
           <a href="https://rad-object.com/workshop" target="_blank" rel="noreferrer">
             کارگاه هنرمند
           </a>{" "}
-          شوید با حساب سازنده: <code>sahar@rad.studio</code> / <code>rad-editor-2026</code>.
+          شوید.
         </p>
       )}
     </div>

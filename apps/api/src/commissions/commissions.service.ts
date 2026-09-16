@@ -3,9 +3,14 @@ import { Prisma } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { IdentityService } from "../common/identity.service";
 import { NoticesService } from "../notices/notices.service";
+import { noticeForStageChange } from "../notices/notice-kinds";
 import type { Actor } from "../common/identity";
 import { createSubmittedCommission } from "./commission.factory";
-import { addCommissionMessage, artistDecideCommission } from "./commission.mutate";
+import {
+  addCommissionMessage,
+  artistDecideCommission,
+  beginCommissionReview,
+} from "./commission.mutate";
 import type { LocaleCopy, MakingCommission } from "./commission.types";
 import type { CommissionDecideDto, CreateCommissionDto } from "./dto";
 
@@ -90,11 +95,13 @@ export class CommissionsService {
   async saveMine(actor: Actor, id: string, payload: MakingCommission) {
     this.requireSignedIn(actor);
     const row = await this.requireOwned(actor, id);
+    const previous = this.toCommission(row.payload);
     const next = { ...payload, id: row.id, updatedAt: Date.now() };
     await this.prisma.commission.update({
       where: { id },
       data: { payload: next as unknown as Prisma.InputJsonValue },
     });
+    await this.emitStageNotice(row.ownerKey, previous.stage, next.stage, id);
     return next;
   }
 
@@ -125,10 +132,26 @@ export class CommissionsService {
     return this.toAdmin(row);
   }
 
-  async decide(id: string, input: CommissionDecideDto) {
+  async beginReview(id: string) {
     const row = await this.prisma.commission.findUnique({ where: { id } });
     if (!row) throw new NotFoundException("سفارش اختصاصی پیدا نشد.");
     const current = this.toCommission(row.payload);
+    const next = beginCommissionReview(current);
+    if (next === current) return this.toAdmin(row);
+    await this.prisma.commission.update({
+      where: { id },
+      data: { payload: next as unknown as Prisma.InputJsonValue },
+    });
+    return this.toAdmin({ ...row, payload: next as unknown as Prisma.JsonValue });
+  }
+
+  async decide(id: string, input: CommissionDecideDto) {
+    const row = await this.prisma.commission.findUnique({ where: { id } });
+    if (!row) throw new NotFoundException("سفارش اختصاصی پیدا نشد.");
+    let current = this.toCommission(row.payload);
+    if (current.stage === "design_submitted") {
+      current = beginCommissionReview(current);
+    }
     const next = artistDecideCommission(current, input.decision, {
       reason: input.reason,
       alternative: input.alternative,
@@ -166,12 +189,25 @@ export class CommissionsService {
   async saveAdmin(id: string, payload: MakingCommission) {
     const row = await this.prisma.commission.findUnique({ where: { id } });
     if (!row) throw new NotFoundException("سفارش اختصاصی پیدا نشد.");
+    const previous = this.toCommission(row.payload);
     const next = { ...payload, id, updatedAt: Date.now() };
     await this.prisma.commission.update({
       where: { id },
       data: { payload: next as unknown as Prisma.InputJsonValue },
     });
+    await this.emitStageNotice(row.ownerKey, previous.stage, next.stage, id);
     return this.toAdmin({ ...row, payload: next as unknown as Prisma.JsonValue });
+  }
+
+  private async emitStageNotice(
+    ownerKey: string,
+    previousStage: string | undefined,
+    nextStage: string,
+    commissionId: string,
+  ) {
+    const kind = noticeForStageChange(previousStage, nextStage);
+    if (!kind) return;
+    await this.notices.createForOwner(ownerKey, kind, commissionId);
   }
 
   private requireSignedIn(actor: Actor) {
