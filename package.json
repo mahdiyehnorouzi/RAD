@@ -35,12 +35,16 @@
     "format:check": "prettier --check \"apps/storefront/**/*.{ts,tsx,css,json,mjs}\""
   },
   "dependencies": {
+    "@nestjs/typeorm": "^12.0.1",
+    "@paralleldrive/cuid2": "^3.3.0",
     "@vinext/cloudflare": "^1.0.0-beta.6",
     "lucide-react": "^1.33.0",
     "next": "16.3.2",
+    "pg": "^8.23.0",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
     "react-server-dom-webpack": "^19.2.8",
+    "typeorm": "^1.1.1",
     "zustand": "^5.0.15"
   },
   "devDependencies": {

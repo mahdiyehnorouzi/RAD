@@ -1,6 +1,7 @@
 import { ForbiddenException, Injectable, NotFoundException, UnauthorizedException } from "@nestjs/common";
-import { Prisma } from "@prisma/client";
-import { PrismaService } from "../prisma/prisma.service";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { Commission } from "../database/entities";
 import { IdentityService } from "../common/identity.service";
 import { NoticesService } from "../notices/notices.service";
 import { noticeForStageChange } from "../notices/notice-kinds";
@@ -14,58 +15,28 @@ import {
 import type { LocaleCopy, MakingCommission } from "./commission.types";
 import type { CommissionDecideDto, CreateCommissionDto } from "./dto";
 
-type CommissionRow = {
-  id: string;
-  ownerKey: string;
-  payload: Prisma.JsonValue;
-  createdAt: Date;
-  updatedAt: Date;
-};
-
-type CommissionTable = {
-  findMany: (args?: {
-    where?: { ownerKey?: string };
-    orderBy?: { updatedAt?: "asc" | "desc" };
-  }) => Promise<CommissionRow[]>;
-  findUnique: (args: { where: { id: string } }) => Promise<CommissionRow | null>;
-  create: (args: {
-    data: { id: string; ownerKey: string; payload: Prisma.InputJsonValue };
-  }) => Promise<CommissionRow>;
-  update: (args: {
-    where: { id: string };
-    data: { payload: Prisma.InputJsonValue };
-  }) => Promise<CommissionRow>;
-};
-
-type PrismaWithCommission = Omit<PrismaService, "commission"> & {
-  commission: CommissionTable;
-};
-
 @Injectable()
 export class CommissionsService {
-  private readonly prisma: PrismaWithCommission;
-
   constructor(
-    prisma: PrismaService,
+    @InjectRepository(Commission)
+    private readonly commissions: Repository<Commission>,
     private readonly identity: IdentityService,
     private readonly notices: NoticesService,
-  ) {
-    this.prisma = prisma as unknown as PrismaWithCommission;
-  }
+  ) {}
 
   async listMine(actor: Actor) {
     if (!actor.user) return [];
-    const rows = await this.prisma.commission.findMany({
+    const rows = await this.commissions.find({
       where: { ownerKey: this.identity.key(actor) },
-      orderBy: { updatedAt: "desc" },
+      order: { updatedAt: "DESC" },
     });
     return rows.map((row) => this.toCommission(row.payload));
   }
 
   async listWorkshop(actor: Actor) {
     this.requireMaker(actor);
-    const rows = await this.prisma.commission.findMany({
-      orderBy: { updatedAt: "desc" },
+    const rows = await this.commissions.find({
+      order: { updatedAt: "DESC" },
     });
     return rows.map((row) => this.toCommission(row.payload));
   }
@@ -82,13 +53,13 @@ export class CommissionsService {
       brief: input.brief,
       title: input.title,
     });
-    await this.prisma.commission.create({
-      data: {
+    await this.commissions.save(
+      this.commissions.create({
         id: payload.id,
         ownerKey: this.identity.key(actor),
-        payload: payload as unknown as Prisma.InputJsonValue,
-      },
-    });
+        payload,
+      }),
+    );
     return payload;
   }
 
@@ -97,10 +68,7 @@ export class CommissionsService {
     const row = await this.requireOwned(actor, id);
     const previous = this.toCommission(row.payload);
     const next = { ...payload, id: row.id, updatedAt: Date.now() };
-    await this.prisma.commission.update({
-      where: { id },
-      data: { payload: next as unknown as Prisma.InputJsonValue },
-    });
+    await this.commissions.update({ id }, { payload: next });
     await this.emitStageNotice(row.ownerKey, previous.stage, next.stage, id);
     return next;
   }
@@ -114,39 +82,33 @@ export class CommissionsService {
     this.requireSignedIn(actor);
     const current = this.toCommission((await this.requireOwned(actor, id)).payload);
     const next = addCommissionMessage(current, { author: "customer", body });
-    await this.prisma.commission.update({
-      where: { id },
-      data: { payload: next as unknown as Prisma.InputJsonValue },
-    });
+    await this.commissions.update({ id }, { payload: next });
     return next;
   }
 
   async listAll() {
-    const rows = await this.prisma.commission.findMany({ orderBy: { updatedAt: "desc" } });
+    const rows = await this.commissions.find({ order: { updatedAt: "DESC" } });
     return rows.map((row) => this.toAdmin(row));
   }
 
   async getAdmin(id: string) {
-    const row = await this.prisma.commission.findUnique({ where: { id } });
+    const row = await this.commissions.findOne({ where: { id } });
     if (!row) throw new NotFoundException("سفارش اختصاصی پیدا نشد.");
     return this.toAdmin(row);
   }
 
   async beginReview(id: string) {
-    const row = await this.prisma.commission.findUnique({ where: { id } });
+    const row = await this.commissions.findOne({ where: { id } });
     if (!row) throw new NotFoundException("سفارش اختصاصی پیدا نشد.");
     const current = this.toCommission(row.payload);
     const next = beginCommissionReview(current);
     if (next === current) return this.toAdmin(row);
-    await this.prisma.commission.update({
-      where: { id },
-      data: { payload: next as unknown as Prisma.InputJsonValue },
-    });
-    return this.toAdmin({ ...row, payload: next as unknown as Prisma.JsonValue });
+    await this.commissions.update({ id }, { payload: next });
+    return this.toAdmin({ ...row, payload: next });
   }
 
   async decide(id: string, input: CommissionDecideDto) {
-    const row = await this.prisma.commission.findUnique({ where: { id } });
+    const row = await this.commissions.findOne({ where: { id } });
     if (!row) throw new NotFoundException("سفارش اختصاصی پیدا نشد.");
     let current = this.toCommission(row.payload);
     if (current.stage === "design_submitted") {
@@ -157,10 +119,7 @@ export class CommissionsService {
       alternative: input.alternative,
       change: input.change,
     });
-    await this.prisma.commission.update({
-      where: { id },
-      data: { payload: next as unknown as Prisma.InputJsonValue },
-    });
+    await this.commissions.update({ id }, { payload: next });
     const kind =
       input.decision === "approve"
         ? "commission_approved"
@@ -168,35 +127,29 @@ export class CommissionsService {
           ? "commission_declined"
           : "commission_change";
     await this.notices.createForOwner(row.ownerKey, kind, id);
-    return this.toAdmin({ ...row, payload: next as unknown as Prisma.JsonValue });
+    return this.toAdmin({ ...row, payload: next });
   }
 
   async addArtistMessage(id: string, body: LocaleCopy, internal?: boolean) {
-    const row = await this.prisma.commission.findUnique({ where: { id } });
+    const row = await this.commissions.findOne({ where: { id } });
     if (!row) throw new NotFoundException("سفارش اختصاصی پیدا نشد.");
     const current = this.toCommission(row.payload);
     const next = addCommissionMessage(current, { author: "artist", body, internal });
-    await this.prisma.commission.update({
-      where: { id },
-      data: { payload: next as unknown as Prisma.InputJsonValue },
-    });
+    await this.commissions.update({ id }, { payload: next });
     if (!internal) {
       await this.notices.createForOwner(row.ownerKey, "commission_message", id);
     }
-    return this.toAdmin({ ...row, payload: next as unknown as Prisma.JsonValue });
+    return this.toAdmin({ ...row, payload: next });
   }
 
   async saveAdmin(id: string, payload: MakingCommission) {
-    const row = await this.prisma.commission.findUnique({ where: { id } });
+    const row = await this.commissions.findOne({ where: { id } });
     if (!row) throw new NotFoundException("سفارش اختصاصی پیدا نشد.");
     const previous = this.toCommission(row.payload);
     const next = { ...payload, id, updatedAt: Date.now() };
-    await this.prisma.commission.update({
-      where: { id },
-      data: { payload: next as unknown as Prisma.InputJsonValue },
-    });
+    await this.commissions.update({ id }, { payload: next });
     await this.emitStageNotice(row.ownerKey, previous.stage, next.stage, id);
-    return this.toAdmin({ ...row, payload: next as unknown as Prisma.JsonValue });
+    return this.toAdmin({ ...row, payload: next });
   }
 
   private async emitStageNotice(
@@ -231,7 +184,7 @@ export class CommissionsService {
   }
 
   private async requireOwned(actor: Actor, id: string) {
-    const row = await this.prisma.commission.findUnique({ where: { id } });
+    const row = await this.commissions.findOne({ where: { id } });
     if (!row) throw new NotFoundException("سفارش اختصاصی پیدا نشد.");
     const ownerKey = this.identity.key(actor);
     const userKey = actor.user ? `user:${actor.user.id}` : "";
@@ -241,11 +194,17 @@ export class CommissionsService {
     return row;
   }
 
-  private toCommission(payload: Prisma.JsonValue): MakingCommission {
-    return payload as unknown as MakingCommission;
+  private toCommission(payload: unknown): MakingCommission {
+    return payload as MakingCommission;
   }
 
-  private toAdmin(row: { id: string; ownerKey: string; payload: Prisma.JsonValue; createdAt: Date; updatedAt: Date }) {
+  private toAdmin(row: {
+    id: string;
+    ownerKey: string;
+    payload: unknown;
+    createdAt: Date;
+    updatedAt: Date;
+  }) {
     const payload = this.toCommission(row.payload);
     return {
       id: row.id,

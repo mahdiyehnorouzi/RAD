@@ -1,7 +1,8 @@
-import { Prisma } from "@prisma/client";
-import type { PrismaClient } from "@prisma/client";
+import type { DataSource } from "typeorm";
+import { In } from "typeorm";
 import { createSubmittedCommission } from "../src/commissions/commission.factory";
 import { loc, newEntityId, type MakingCommission, type MakingStageId, type NextActor } from "../src/commissions/commission.types";
+import { Commission, Order, OrderItem, PaymentIntent, Product } from "../src/database/entities";
 
 const day = 24 * 60 * 60 * 1000;
 
@@ -205,9 +206,15 @@ function commission(input: {
   };
 }
 
-export async function seedCommerce(prisma: PrismaClient) {
-  const catalog = await prisma.product.findMany({
-    where: { slug: { in: shopOrders.map((item) => item.slug) } },
+export async function seedCommerce(dataSource: DataSource) {
+  const products = dataSource.getRepository(Product);
+  const orders = dataSource.getRepository(Order);
+  const orderItems = dataSource.getRepository(OrderItem);
+  const payments = dataSource.getRepository(PaymentIntent);
+  const commissionsRepo = dataSource.getRepository(Commission);
+
+  const catalog = await products.find({
+    where: { slug: In(shopOrders.map((item) => item.slug)) },
   });
   const bySlug = new Map(catalog.map((item) => [item.slug, item]));
 
@@ -216,54 +223,59 @@ export async function seedCommerce(prisma: PrismaClient) {
     if (!product) continue;
     const createdAt = new Date(Date.now() - item.daysAgo * day);
     const estimatedDeliveryAt =
-      item.etaDays != null ? new Date(Date.now() + item.etaDays * day) : undefined;
-    await prisma.order.upsert({
-      where: { id: item.id },
-      update: {
-        status: item.status,
-        name: item.name,
-        city: item.city,
-        phone: item.phone,
-        address: item.address,
-        trackingCode: item.trackingCode ?? null,
-        estimatedDeliveryAt: estimatedDeliveryAt ?? null,
-        total: product.tomanPrice,
-        usdTotal: product.usdPrice,
-      },
-      create: {
-        id: item.id,
-        ownerKey: `guest:seed-${item.id}`,
-        total: product.tomanPrice,
-        usdTotal: product.usdPrice,
-        status: item.status,
-        name: item.name,
-        city: item.city,
-        phone: item.phone,
-        address: item.address,
-        trackingCode: item.trackingCode,
-        estimatedDeliveryAt,
-        createdAt,
-        items: { create: [{ productSlug: item.slug }] },
-        payment: {
-          create: {
-            amount: product.tomanPrice,
-            currency: "IRR",
-            provider: "manual_card",
-            status: item.status === "payment_pending" ? "created" : "verified",
-          },
+      item.etaDays != null ? new Date(Date.now() + item.etaDays * day) : null;
+    const existing = await orders.findOne({ where: { id: item.id } });
+    if (existing) {
+      await orders.update(
+        { id: item.id },
+        {
+          status: item.status,
+          name: item.name,
+          city: item.city,
+          phone: item.phone,
+          address: item.address,
+          trackingCode: item.trackingCode ?? null,
+          estimatedDeliveryAt,
+          total: product.tomanPrice,
+          usdTotal: product.usdPrice,
         },
-      },
-    });
-    const existingItem = await prisma.orderItem.findFirst({
+      );
+    } else {
+      await orders.save(
+        orders.create({
+          id: item.id,
+          ownerKey: `guest:seed-${item.id}`,
+          total: product.tomanPrice,
+          usdTotal: product.usdPrice,
+          status: item.status,
+          name: item.name,
+          city: item.city,
+          phone: item.phone,
+          address: item.address,
+          trackingCode: item.trackingCode ?? null,
+          estimatedDeliveryAt,
+          createdAt,
+        }),
+      );
+      await payments.save(
+        payments.create({
+          orderId: item.id,
+          amount: product.tomanPrice,
+          currency: "IRR",
+          provider: "manual_card",
+          status: item.status === "payment_pending" ? "created" : "verified",
+        }),
+      );
+    }
+    const existingItem = await orderItems.findOne({
       where: { orderId: item.id, productSlug: item.slug },
     });
     if (!existingItem) {
-      await prisma.orderItem.create({ data: { orderId: item.id, productSlug: item.slug } });
+      await orderItems.save(
+        orderItems.create({ orderId: item.id, productSlug: item.slug }),
+      );
     }
-    await prisma.product.update({
-      where: { slug: item.slug },
-      data: { status: item.productStatus },
-    });
+    await products.update({ slug: item.slug }, { status: item.productStatus });
   }
 
   const commissions: MakingCommission[] = [
@@ -411,35 +423,20 @@ export async function seedCommerce(prisma: PrismaClient) {
     }),
   ];
 
-  const commissionsDb = prisma as unknown as {
-    commission: {
-      upsert: (args: {
-        where: { id: string };
-        update: { payload: Prisma.InputJsonValue };
-        create: {
-          id: string;
-          ownerKey: string;
-          payload: Prisma.InputJsonValue;
-          createdAt: Date;
-          updatedAt: Date;
-        };
-      }) => Promise<unknown>;
-    };
-  };
-
   for (const item of commissions) {
-    await commissionsDb.commission.upsert({
-      where: { id: item.id },
-      update: {
-        payload: item as unknown as Prisma.InputJsonValue,
-      },
-      create: {
-        id: item.id,
-        ownerKey: `guest:seed-${item.id}`,
-        payload: item as unknown as Prisma.InputJsonValue,
-        createdAt: new Date(item.createdAt),
-        updatedAt: new Date(item.updatedAt),
-      },
-    });
+    const existing = await commissionsRepo.findOne({ where: { id: item.id } });
+    if (existing) {
+      await commissionsRepo.update({ id: item.id }, { payload: item });
+    } else {
+      await commissionsRepo.save(
+        commissionsRepo.create({
+          id: item.id,
+          ownerKey: `guest:seed-${item.id}`,
+          payload: item,
+          createdAt: new Date(item.createdAt),
+          updatedAt: new Date(item.updatedAt),
+        }),
+      );
+    }
   }
 }

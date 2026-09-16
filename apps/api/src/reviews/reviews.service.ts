@@ -1,5 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
-import { PrismaService } from "../prisma/prisma.service";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { Product, Review } from "../database/entities";
 import type { Actor } from "../common/identity";
 
 const allowedImage = /^data:image\/(jpeg|png|webp);base64,/i;
@@ -19,37 +21,42 @@ function assertImage(image?: string) {
 
 @Injectable()
 export class ReviewsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    @InjectRepository(Product)
+    private readonly products: Repository<Product>,
+    @InjectRepository(Review)
+    private readonly reviews: Repository<Review>,
+  ) {}
 
   async list(slug: string) {
-    const product = await this.prisma.product.findUnique({ where: { slug } });
+    const product = await this.products.findOne({ where: { slug } });
     if (!product || product.status === "draft") {
       throw new NotFoundException("اثر پیدا نشد.");
     }
-    const reviews = await this.prisma.review.findMany({
+    const reviews = await this.reviews.find({
       where: { productSlug: slug },
-      orderBy: { createdAt: "desc" },
+      order: { createdAt: "DESC" },
     });
-    return reviews.map(this.toReview);
+    return reviews.map((review) => this.toReview(review));
   }
 
   async create(actor: Actor, slug: string, input: { rating: number; comment: string; image?: string }) {
     if (!actor.user) throw new BadRequestException("برای ثبت نظر باید وارد شوید.");
-    const product = await this.prisma.product.findUnique({ where: { slug } });
+    const product = await this.products.findOne({ where: { slug } });
     if (!product || product.status === "draft") {
       throw new NotFoundException("اثر پیدا نشد.");
     }
     assertImage(input.image);
-    const review = await this.prisma.review.create({
-      data: {
+    const review = await this.reviews.save(
+      this.reviews.create({
         productSlug: slug,
         userId: actor.user.id,
         author: actor.user.name,
         rating: input.rating,
         comment: input.comment.trim(),
-        image: input.image,
-      },
-    });
+        image: input.image ?? null,
+      }),
+    );
     return this.toReview(review);
   }
 

@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useLocale } from "@/components/i18n";
 import { ButtonLink } from "@/components/ui/button-link";
+import { AboutFounderVideo } from "./about-founder-video";
 import { aboutCopy, aboutMedia } from "./const";
 import "./about-page.css";
 
@@ -44,20 +45,7 @@ export function AboutPage() {
       </section>
 
       <section className="about-founder section">
-        <figure>
-          <video
-            controls
-            disablePictureInPicture
-            loop
-            muted
-            playsInline
-            poster="/about/about-workbench.webp"
-            preload="metadata"
-            aria-label={c.founderAlt}
-          >
-            <source src="/about/about-process-live.mp4" type="video/mp4" />
-          </video>
-        </figure>
+        <AboutFounderVideo label={c.founderAlt} />
         <div>
           <h2>{c.founderTitle}</h2>
           <p className="about-founder-lead">{c.founderLead}</p>
@@ -74,17 +62,6 @@ export function AboutPage() {
             alt={c.traceAlt}
             fill
             sizes="(max-width: 760px) 88vw, 48vw"
-          // <div className="about-name-copy">
-          //   <span className="about-name-label">{c.nameTitle}</span>
-          //   <h2>{c.nameLine}</h2>
-          //   <p>{c.nameBody}</p>
-          // </div>
-          // <figure>
-          //   <Image
-          //     src="/difference/homesickness-bowl/material-v3.jpg"
-          //     alt={c.traceAlt}
-          //     fill
-          //     sizes="(max-width: 760px) 90vw, 48vw"
           />
         </figure>
       </section>
@@ -115,35 +92,15 @@ export function AboutPage() {
         <h2>{c.finalTitle}</h2>
         <div className="about-final-paths">
           <article>
-            <figure className="about-final-image">
-              <Image
-                src="/difference/homesickness-bowl/material-v3.jpg"
-                alt=""
-                fill
-                sizes="(max-width: 760px) 100px, 180px"
-              />
-            </figure>
-            <div className="about-final-copy">
-              <h3>{c.worksTitle}</h3>
-              <p>{c.worksBody}</p>
-            </div>
+            <h3>{c.worksTitle}</h3>
+            <p>{c.worksBody}</p>
             <ButtonLink href="/products" outline>
               {c.worksCta}
             </ButtonLink>
           </article>
           <article>
-            <figure className="about-final-image">
-              <Image
-                src="/about/about-workbench.webp"
-                alt=""
-                fill
-                sizes="(max-width: 760px) 100px, 180px"
-              />
-            </figure>
-            <div className="about-final-copy">
-              <h3>{c.customTitle}</h3>
-              <p>{c.customBody}</p>
-            </div>
+            <h3>{c.customTitle}</h3>
+            <p>{c.customBody}</p>
             <ButtonLink href="/studio">{c.customCta}</ButtonLink>
           </article>
         </div>

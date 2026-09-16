@@ -42,11 +42,11 @@ Nest wires the module; folders do not change import paths for Nest providers. Pr
 ## Rules
 
 1. **Separate types from runtime code.** Module-owned `type` / `interface` / type-only aliases live in `type/`. Do not declare exported types inside `.service.ts`, `.controller.ts`, `.mapper.ts`, or `.data.ts`. Private one-off types used in a single function may stay local; anything reused or exported goes in `type/`.
-2. **`type/` is shapes only.** No functions, no Prisma queries, no class-validator DTOs. Helpers like `loc()` or `newEntityId()` belong in a dedicated util file (e.g. `commission.ids.ts`), not in `type/`.
+2. **`type/` is shapes only.** No functions, no TypeORM queries, no class-validator DTOs. Helpers like `loc()` or `newEntityId()` belong in a dedicated util file (e.g. `commission.ids.ts`), not in `type/`.
 3. **DTOs live in `dto/`.** One request DTO per file (or a tightly related request/response pair). Do not use a monolithic `dto.ts` that mixes unrelated endpoints. Prefer the existing auth/orders style: `dto/create-review.dto.ts`.
 4. **Constants in `const/` (or `*.data.ts` for static content).** Status lists, permission maps, FAQ copy, notice kind tables — not inlined in services.
 5. **One job per file.**
-   - `*.controller.ts` — routes, guards, parse params, call service, return. No business rules, no Prisma.
+   - `*.controller.ts` — routes, guards, parse params, call service, return. No business rules, no TypeORM.
    - `*.service.ts` — use-case orchestration and persistence. If a service grows multiple unrelated domains, split into focused services or extract `*.mutate.ts` / `*.factory.ts` / `*.mapper.ts`.
    - `*.mapper.ts` — record ↔ API/domain shape only.
    - `*.factory.ts` — create initial domain objects only.
@@ -55,7 +55,7 @@ Nest wires the module; folders do not change import paths for Nest providers. Pr
 6. **Shared cross-app contracts stay shared.** Types consumed by storefront/admin → `@rad/types`. Cross-module API internals → `apps/api/src/common/` (e.g. `identity.ts`). Do not re-declare `AuthUser` / `Product` inside a feature.
 7. **Import from the owning module path.** Controllers import DTOs from `./dto/...` or `./dto`; services import types from `./type`. Do not reach into another feature’s private files when a shared package or `common/` exists.
 8. **`common/` is shared infrastructure only** (guards, cookies, identity, filters) — not a dumping ground for feature types.
-9. **Prisma stays in `prisma/`.** Feature modules inject `PrismaService`; they do not own the Prisma client module.
+9. **TypeORM stays in `database/`.** Feature modules inject repositories / `DataSource`; they do not own the TypeORM root module.
 
 ## Module map
 
@@ -77,7 +77,7 @@ Nest wires the module; folders do not change import paths for Nest providers. Pr
 | `mail/` | Mail delivery |
 | `health/` | Health check only |
 | `common/` | Cross-cutting auth identity, guards, cookies |
-| `prisma/` | Prisma client module |
+| `database/` | TypeORM DataSource + entities |
 
 ## Checklist for a new module or file
 
@@ -107,9 +107,9 @@ export function loc(fa, en) { ... }   # → commission.ids.ts or similar
 // admin/dto.ts  (SaveProductDto + UpdateOrderDto + InviteMemberDto)
 # → dto/save-product.dto.ts, dto/update-order.dto.ts, dto/invite-member.dto.ts
 
-# BAD — controller with business logic / Prisma
+# BAD — controller with business logic / TypeORM
 async create(@Body() body) {
-  return this.prisma.product.create({ data: body });
+  return this.products.save(this.products.create(body));
 }
 
 # BAD — one service owning unrelated domains

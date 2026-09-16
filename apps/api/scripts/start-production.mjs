@@ -43,11 +43,12 @@ async function runWithRetry(command, args, attempts = 6) {
 }
 
 async function main() {
-  await runWithRetry("npx", ["prisma", "db", "push"]);
+  // TypeORM synchronize creates/updates tables to match entities (replaces prisma db push).
+  await runWithRetry("npx", ["tsx", "scripts/sync-schema.ts"]);
   // Always upsert owner/editor so admin login works even when full catalog seed is skipped.
-  await run("npx", ["tsx", "prisma/ensure-staff.ts"]);
+  await run("npx", ["tsx", "seed/ensure-staff.ts"]);
   if (process.env.RUN_SEED === "true") {
-    await run("npx", ["prisma", "db", "seed"]);
+    await run("npx", ["tsx", "seed/seed.ts"]);
   }
   await run(process.execPath, ["dist/main.js"]);
 }
