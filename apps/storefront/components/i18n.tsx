@@ -49,6 +49,14 @@ export function LocaleProvider({ children }: { children: React.ReactNode }) {
     try {
       localStorage.setItem(storageKey, locale);
     } catch {}
+    // Keep generateMetadata / layout titles for public detail URLs (SEO).
+    const keepsServerTitle =
+      /^\/products\/[^/]+/.test(pathname) ||
+      /^\/differences\/[^/]+/.test(pathname) ||
+      /^\/passport\/[^/]+/.test(pathname) ||
+      /^\/now\/[^/]+/.test(pathname);
+    if (keepsServerTitle) return;
+
     const catalog = messages[locale];
     const labels: Array<[string, MessageKey]> = [
       ["account/notifications", "titleNotifications"],

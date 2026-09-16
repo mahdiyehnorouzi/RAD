@@ -1,0 +1,16 @@
+---
+description: RAD NestJS API module structure (type/, dto/, one job per file). All API work must follow this.
+globs: apps/api/src/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# API module structure
+
+When creating or editing files under `apps/api/src`, follow `.cursor/skills/api-module-structure/SKILL.md`.
+
+- Module-owned types and interfaces live in `type/` (shapes only — no helpers).
+- Request DTOs live in `dto/`, one file per DTO (no monolithic `dto.ts`).
+- Constants and static datasets live in `const/` or `*.data.ts`.
+- Each file has one job: controller = HTTP, service = orchestration, mapper / factory / mutate = that concern only.
+- Shared contracts use `@rad/types` or `common/`; do not re-declare them inside a feature.
+- When touching a module, migrate its types/DTOs into this layout in the same change when practical.

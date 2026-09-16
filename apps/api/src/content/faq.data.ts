@@ -1,11 +1,4 @@
-export type FaqIcon = "shield-check" | "package-check" | "truck" | "palette";
-
-export type FaqEntry = {
-  id: string;
-  icon: FaqIcon;
-  question: { fa: string; en: string };
-  answer: { fa: string; en: string };
-};
+import type { FaqEntry } from "./type";
 
 export const faqSection = {
   eyebrow: { fa: "ارسال آثار رَد", en: "RAD DELIVERY" },

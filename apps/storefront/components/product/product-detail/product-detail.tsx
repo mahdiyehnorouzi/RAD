@@ -42,11 +42,17 @@ const FAQ_ICONS: Record<FaqIcon, typeof ShieldCheck> = {
   palette: Palette,
 };
 
-export function ProductDetail({ product }: { product: Product }) {
+export function ProductDetail({
+  product,
+  initialFaq = null,
+}: {
+  product: Product;
+  initialFaq?: FaqContent | null;
+}) {
   const { locale, t, number, href } = useLocale();
   const carouselRef = useRef<HTMLDivElement>(null);
   const [activeImage, setActiveImage] = useState(0);
-  const [faq, setFaq] = useState<FaqContent | null>(null);
+  const [faq, setFaq] = useState<FaqContent | null>(initialFaq);
 
   useEffect(() => {
     let active = true;

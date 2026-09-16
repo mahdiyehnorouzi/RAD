@@ -1,6 +1,13 @@
 import { api } from "./client";
 import type { FaqContent, Locale } from "@rad/types";
+import { faqFallbackEn, faqFallbackFa } from "@/lib/content/faq-fallback";
 
 export async function fetchFaq(locale: Locale = "fa"): Promise<FaqContent> {
-  return api<FaqContent>(`/content/faq?locale=${locale}`, { cache: "no-store" });
+  try {
+    return await api<FaqContent>(`/content/faq?locale=${locale}`, {
+      cache: "force-cache",
+    });
+  } catch {
+    return locale === "en" ? faqFallbackEn : faqFallbackFa;
+  }
 }

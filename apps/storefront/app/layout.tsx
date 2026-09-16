@@ -20,10 +20,15 @@ import { HomeBanner } from "@/components/home/home-banner";
 import {
   absoluteUrl,
   defaultDescription,
+  languageAlternates,
   safeJsonLd,
   siteName,
   siteUrl,
 } from "@/lib/seo";
+
+const googleVerification =
+  process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION ||
+  process.env.GOOGLE_SITE_VERIFICATION;
 
 export const metadata: Metadata = {
   metadataBase: siteUrl,
@@ -45,22 +50,27 @@ export const metadata: Metadata = {
     "سرامیک هنری",
     "نقاشی ایرانی",
     "سفارش اثر هنری",
+    "گالری آنلاین هنر",
+    "RAD studio",
+    "unique artworks",
   ],
-  alternates: { canonical: "/" },
+  alternates: {
+    canonical: "/",
+    languages: languageAlternates("/"),
+  },
   openGraph: {
     type: "website",
     locale: "fa_IR",
+    alternateLocale: ["en_US"],
     siteName,
     title: mockStorefront.brand.title.fa,
     description: defaultDescription,
     url: "/",
-    images: [{ url: "/rad-logo.png", width: 1254, height: 1254, alt: "نشان رَد" }],
   },
   twitter: {
     card: "summary_large_image",
     title: mockStorefront.brand.title.fa,
     description: defaultDescription,
-    images: ["/rad-logo.png"],
   },
   robots: {
     index: true,
@@ -74,10 +84,13 @@ export const metadata: Metadata = {
     },
   },
   icons: {
-    icon: "/rad-logo.png",
+    icon: [{ url: "/rad-logo.png", type: "image/png" }, { url: "/rad-icon.svg", type: "image/svg+xml" }],
     apple: "/rad-logo.png",
     shortcut: "/rad-logo.png",
   },
+  ...(googleVerification
+    ? { verification: { google: googleVerification } }
+    : {}),
 };
 
 export default function RootLayout({
@@ -105,8 +118,12 @@ export default function RootLayout({
                   name: "رَد",
                   alternateName: "RAD",
                   url: absoluteUrl(),
-                  logo: absoluteUrl("/rad-logo.png"),
+                  logo: {
+                    "@type": "ImageObject",
+                    url: absoluteUrl("/rad-logo.png"),
+                  },
                   description: defaultDescription,
+                  sameAs: [],
                 },
                 {
                   "@type": "WebSite",
@@ -114,7 +131,7 @@ export default function RootLayout({
                   url: absoluteUrl(),
                   name: siteName,
                   description: defaultDescription,
-                  inLanguage: "fa-IR",
+                  inLanguage: ["fa-IR", "en"],
                   publisher: { "@id": `${absoluteUrl()}#organization` },
                 },
               ],

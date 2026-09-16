@@ -1,16 +1,6 @@
 import { Injectable } from "@nestjs/common";
-import { faqSection, type FaqIcon } from "./faq.data";
-
-export type LocalizedFaq = {
-  eyebrow: string;
-  title: string;
-  items: Array<{
-    id: string;
-    icon: FaqIcon;
-    question: string;
-    answer: string;
-  }>;
-};
+import { faqSection } from "./faq.data";
+import type { LocalizedFaq } from "./type";
 
 @Injectable()
 export class ContentService {
