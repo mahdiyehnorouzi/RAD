@@ -2,17 +2,21 @@ import type { MessageKey } from "@/i18n/fa";
 import type { Order, Product, StoreOrderStatus } from "@rad/types";
 import {
   STORE_ORDER_PROGRESS,
+  isTerminalStoreOrderStatus,
   storeOrderStatusLabels,
 } from "@rad/types";
 
 export { STORE_ORDER_PROGRESS, storeOrderStatusLabels };
 
 export const STORE_ORDER_STATUS_KEY: Record<StoreOrderStatus, MessageKey> = {
-  payment_pending: "shopStagePaymentPending",
+  pending_payment: "shopStagePaymentPending",
+  pending_verification: "shopStagePaymentReview",
   confirmed: "shopStageConfirmed",
   packing: "shopStagePacking",
   shipped: "shopStageShipped",
   delivered: "shopStageDelivered",
+  expired: "shopStageExpired",
+  rejected: "shopStageRejected",
   cancelled: "shopStageCancelled",
   returned: "shopStageReturned",
 };
@@ -23,7 +27,7 @@ export function shopStageIndex(status: StoreOrderStatus) {
 }
 
 export function isTerminalStoreStatus(status: StoreOrderStatus) {
-  return status === "cancelled" || status === "returned";
+  return isTerminalStoreOrderStatus(status);
 }
 
 export function radArtworkNumber(slug: string, products: Product[]) {

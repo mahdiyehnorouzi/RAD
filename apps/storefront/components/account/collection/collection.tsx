@@ -4,11 +4,11 @@ import Link from "next/link";
 import { useMemo } from "react";
 import { useCommerce } from "@/components/commerce";
 import { useLocale } from "@/components/i18n";
+import { usePassports } from "@/hooks/use-artworks";
 import {
   findPassport,
   formatPassportCode,
   formatPassportName,
-  passportForProduct,
 } from "@/lib/passport";
 import "./collection.css";
 
@@ -18,6 +18,7 @@ const OWNED_STATUSES = new Set(["delivered"]);
 export function Collection() {
   const { locale, t, number, href } = useLocale();
   const { orders, ready } = useCommerce();
+  const passports = usePassports();
 
   const pieces = useMemo(() => {
     const slugs = [
@@ -28,9 +29,9 @@ export function Collection() {
       ),
     ];
     return slugs
-      .map((slug) => passportForProduct({ slug, artworkNumber: "" }) ?? findPassport(slug))
+      .map((slug) => findPassport(passports, slug))
       .filter((item): item is NonNullable<typeof item> => Boolean(item));
-  }, [orders]);
+  }, [orders, passports]);
 
   return (
     <section className="my-rads">
@@ -44,7 +45,9 @@ export function Collection() {
           {pieces.map((passport) => (
             <li key={passport.code}>
               <Link href={href(`/passport/${passport.code}`)}>
-                <small>{formatPassportCode(passport.code, locale, number)}</small>
+                <small>
+                  {formatPassportCode(passport.code, locale, number)}
+                </small>
                 <b>{formatPassportName(passport, locale, number)}</b>
                 <span>{t("collectionOwnedHint")}</span>
               </Link>

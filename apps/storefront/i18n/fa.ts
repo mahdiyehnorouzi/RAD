@@ -35,7 +35,8 @@ export const fa = {
   orderDate: "تاریخ ثبت",
   orderItems: "آثار سفارش",
   noOrders: "هنوز سفارشی از مجموعه ثبت نکرده‌اید.",
-  noOrdersBody: "پس از خرید اثر آماده، پرداخت، بسته‌بندی و ارسال را اینجا می‌بینید.",
+  noOrdersBody:
+    "پس از خرید اثر آماده، پرداخت، بسته‌بندی و ارسال را اینجا می‌بینید.",
   viewAvailableWorks: "دیدن آثار موجود",
   startCustomOrder: "شروع یک سفارش اختصاصی",
   makingProcessTitle: "مسیر ساخت چگونه است؟",
@@ -64,16 +65,28 @@ export const fa = {
   noticeFavorite: "به علاقه‌مندی‌ها اضافه شد:",
   noticeCart: "به کیسه اضافه شد:",
   noticeWelcome: "خوش آمدید؛ پروفایل شما روی این دستگاه فعال شد.",
-  noticeOrder: "سفارش نمایشی شما ثبت شد. وضعیت پرداخت و ارسال را در سفارش‌ها ببینید.",
-  noticeCommissionApproved: "طرح اختصاصی شما تأیید شد. پیشنهاد قیمت در مسیر ساخت می‌آید.",
-  noticeCommissionDeclined: "طرح اختصاصی شما ساخته نمی‌شود. دلیل در مسیر ساخت ثبت شده است.",
-  noticeCommissionChange: "هنرمند برای طرح اختصاصی شما یک تغییر مشخص خواسته است.",
+  noticeOrder:
+    "سفارش شما ثبت شد. مبلغ را کارت‌به‌کارت کنید و رسید را در صفحهٔ سفارش بارگذاری کنید.",
+  noticeOrderConfirmed: "پرداخت شما تأیید شد و سفارش ثبت نهایی شد.",
+  noticeOrderRejected:
+    "پرداخت سفارش شما تأیید نشد. دلیل را در صفحهٔ سفارش ببینید.",
+  noticeCommissionApproved:
+    "طرح اختصاصی شما تأیید شد. پیشنهاد قیمت در مسیر ساخت می‌آید.",
+  noticeCommissionDeclined:
+    "طرح اختصاصی شما ساخته نمی‌شود. دلیل در مسیر ساخت ثبت شده است.",
+  noticeCommissionChange:
+    "هنرمند برای طرح اختصاصی شما یک تغییر مشخص خواسته است.",
   noticeCommissionMessage: "پیام تازه‌ای از کارگاه روی سفارش اختصاصی شماست.",
-  noticeCommissionQuote: "پیشنهاد قیمت و زمان‌بندی سفارش اختصاصی شما آماده است.",
-  noticeCommissionPreKiln: "ایستگاه پیش از کوره باز شد؛ لعاب را در مسیر ساخت ببینید.",
-  noticeCommissionFiring: "نتیجه پخت ثبت شد. مانده حساب در مسیر ساخت قابل پرداخت است.",
-  noticeCommissionBalance: "مانده حساب پرداخت شد؛ سفارش وارد مرحله ارسال می‌شود.",
-  noticeCommissionShipped: "سفارش اختصاصی شما ارسال شد. شماره رهگیری در مسیر ساخت است.",
+  noticeCommissionQuote:
+    "پیشنهاد قیمت و زمان‌بندی سفارش اختصاصی شما آماده است.",
+  noticeCommissionPreKiln:
+    "ایستگاه پیش از کوره باز شد؛ لعاب را در مسیر ساخت ببینید.",
+  noticeCommissionFiring:
+    "نتیجه پخت ثبت شد. مانده حساب در مسیر ساخت قابل پرداخت است.",
+  noticeCommissionBalance:
+    "مانده حساب پرداخت شد؛ سفارش وارد مرحله ارسال می‌شود.",
+  noticeCommissionShipped:
+    "سفارش اختصاصی شما ارسال شد. شماره رهگیری در مسیر ساخت است.",
   home: "خانه رَد",
   logoSubtitle: "گالری آثار یکتا",
   collectionEyebrow: "مجموعه ۰۱",
@@ -135,17 +148,23 @@ export const fa = {
   zundBody:
     "زونْد (Zünd) کاتر دیجیتال کارگاه است. وقتی طرح تأیید شد و ماده به یک خط برش دقیق نیاز دارد — پارچه، چوب، چاپ، چرم، یا شابلون سرامیک — همان نقشه روی زونْد بریده می‌شود. برش زونْد خودِ اثر نیست؛ قالب یا قطعه‌ی دقیق است. بعد از آن دست هنرمند، و در سرامیک کوره، حرف آخر را می‌زنند.",
   step1Title: "توصیف",
-  step1Body: "نوع اثر، اندازه، ماده، کاربرد و حسی را که می‌خواهید در استودیو می‌نویسید.",
+  step1Body:
+    "نوع اثر، اندازه، ماده، کاربرد و حسی را که می‌خواهید در استودیو می‌نویسید.",
   step2Title: "تصویر نیت",
-  step2Body: "هوش مصنوعی و عکس‌های مرجع یک تصویر اولیه می‌سازند. این نیت است، نه وعده‌ی شیء نهایی.",
+  step2Body:
+    "هوش مصنوعی و عکس‌های مرجع یک تصویر اولیه می‌سازند. این نیت است، نه وعده‌ی شیء نهایی.",
   step3Title: "بازبینی هنرمند",
-  step3Body: "طرح به دفتر کوره می‌رود. هنرمند تأیید می‌کند، تغییر مشخص می‌خواهد، بدیل می‌دهد، یا با دلیل رد می‌کند.",
+  step3Body:
+    "طرح به دفتر کوره می‌رود. هنرمند تأیید می‌کند، تغییر مشخص می‌خواهد، بدیل می‌دهد، یا با دلیل رد می‌کند.",
   step4Title: "پیشنهاد و بیعانه",
-  step4Body: "پس از تأیید، قیمت، زمان و قواعد می‌آید. ساخت فقط با پذیرش مشخصات و بیعانه شروع می‌شود.",
+  step4Body:
+    "پس از تأیید، قیمت، زمان و قواعد می‌آید. ساخت فقط با پذیرش مشخصات و بیعانه شروع می‌شود.",
   step5Title: "ساخت و زونْد",
-  step5Body: "کارگاه فرم را می‌سازد. اگر برش دقیق لازم باشد زونْد نقشه را می‌بُرد؛ بعد دست و ماده کار را تمام می‌کنند.",
+  step5Body:
+    "کارگاه فرم را می‌سازد. اگر برش دقیق لازم باشد زونْد نقشه را می‌بُرد؛ بعد دست و ماده کار را تمام می‌کنند.",
   step6Title: "رونمایی و ارسال",
-  step6Body: "پیش از کوره، پخت، رونمایی، مانده‌حساب و ارسال در همان مسیر ساخت ثبت می‌شود.",
+  step6Body:
+    "پیش از کوره، پخت، رونمایی، مانده‌حساب و ارسال در همان مسیر ساخت ثبت می‌شود.",
   journalTitle1: "ماده، رنگ و",
   journalTitle2: "حافظه‌ی دست",
   journalBody:
@@ -156,7 +175,7 @@ export const fa = {
     "هر اثر فقط یک‌بار ساخته شده است. موجودی این صفحه یک مجموعه‌ی زنده و دائماً در حال تغییر است.",
   filterAll: "همه",
   filterAvailable: "موجود",
-  filterReserved: "رزرو‌شده",
+  filterUpcoming: "به‌زودی",
   filterSold: "فروخته‌شده",
   filterVases: "گلدان",
   filterTableware: "ظروف",
@@ -182,7 +201,16 @@ export const fa = {
   quickAdd: "افزودن سریع",
   inBag: "در کیسه است ✓",
   soldOut: "فروش رفته",
-  reserved: "رزرو شده",
+  statusAvailable: "موجود",
+  statusInWorkshop: "در کارگاه",
+  statusReady: "آماده، به‌زودی",
+  statusArchived: "در آرشیو",
+  statusUnavailable: "فعلاً قابل خرید نیست",
+  holdCountdown:
+    "این اثر {time} دیگر برای شما نگه داشته می‌شود؛ اگر پرداخت کامل نشود به فروشگاه برمی‌گردد.",
+  holdExpired: "زمان نگه‌داری تمام شد و اثر به فروشگاه برگشت.",
+  paymentDueIn:
+    "{time} برای واریز و بارگذاری رسید فرصت دارید؛ پس از آن سفارش منقضی می‌شود و اثر به فروشگاه برمی‌گردد.",
   shipping: "ارسال رایگان و بیمه‌شده در ایران • آماده‌سازی ۲ تا ۴ روز کاری",
   moreWorks: "آثار دیگر",
   emptyBag: "کیسه‌ی شما خالی است.",
@@ -296,6 +324,13 @@ export const fa = {
   checkoutTitle: "جزئیات دریافت اثر",
   checkoutBody:
     "نشانی را وارد کنید. پس از ثبت، مبلغ را به شماره کارت رَد واریز می‌کنید تا درگاه بانکی وصل شود.",
+  checkoutPaymentTitle: "روش پرداخت: کارت‌به‌کارت",
+  checkoutPaymentStepReserve:
+    "با ثبت سفارش، اثر {minutes} دقیقه فقط برای شما رزرو می‌شود.",
+  checkoutPaymentStepTransfer:
+    "شماره کارت و مبلغ دقیق در صفحهٔ سفارش نمایش داده می‌شود؛ همان مبلغ را واریز کنید.",
+  checkoutPaymentStepReceipt:
+    "تصویر رسید و شماره پیگیری را بارگذاری کنید. پس از تأیید رَد، سفارش ثبت نهایی می‌شود.",
   phoneLabel: "شماره تماس",
   cityLabel: "شهر",
   addressLabel: "نشانی",
@@ -305,7 +340,8 @@ export const fa = {
   checkoutError: "همه اطلاعات دریافت را کامل کنید.",
   placingOrder: "در حال ثبت سفارش…",
   requestFailed: "ثبت سفارش انجام نشد. دوباره تلاش کنید.",
-  workNoLongerAvailable: "یکی از آثار کیسه دیگر قابل خرید نیست. آن را حذف کنید و دوباره تلاش کنید.",
+  workNoLongerAvailable:
+    "یکی از آثار کیسه دیگر قابل خرید نیست. آن را حذف کنید و دوباره تلاش کنید.",
   nameError: "نام و نام خانوادگی را کامل وارد کنید.",
   phoneError: "شماره تماس معتبر وارد کنید.",
   cityError: "نام شهر را وارد کنید.",
@@ -328,8 +364,7 @@ export const fa = {
   promptLabel: "چی توی ذهنت داری؟",
   promptPlaceholder:
     "مثلاً یه ماگ می‌خوام شبیه گربه‌م، ولی نمی‌خوام واقعاً شکل گربه باشه.",
-  promptHelp:
-    "لازم نیست دقیق باشد. حس، رنگ، یا یک خط کج هم کافی است.",
+  promptHelp: "لازم نیست دقیق باشد. حس، رنگ، یا یک خط کج هم کافی است.",
   stopGeneration: "توقف ساخت",
   generate: "ساخت تصویر با هوش مصنوعی",
   generating: "در حال شکل‌دادن به ایده‌ی شما…",
@@ -395,8 +430,10 @@ export const fa = {
   homeProcessStep1: "ایده‌ات را توصیف کن",
   homeProcessStep2: "طرح و پیشنهاد هنرمند را ببین",
   homeProcessStep3: "مسیر ساخت را دنبال کن",
-  homeProcessBody1: "نوع اثر، ماده، اندازه و حسی را که می‌خواهید می‌نویسید. این نقطه‌ی شروع است، نه طرح نهایی.",
-  homeProcessBody2: "هنرمند طرح را می‌خواند، پیشنهاد می‌دهد، و ساخت فقط اگر بپذیرد آغاز می‌شود.",
+  homeProcessBody1:
+    "نوع اثر، ماده، اندازه و حسی را که می‌خواهید می‌نویسید. این نقطه‌ی شروع است، نه طرح نهایی.",
+  homeProcessBody2:
+    "هنرمند طرح را می‌خواند، پیشنهاد می‌دهد، و ساخت فقط اگر بپذیرد آغاز می‌شود.",
   homeProcessBody3: "هر مرحله ثبت می‌شود. مسیر ساخت همان زندگی‌نامه‌ی اثر است.",
   homeProcessDetails: "دیدن جزئیات مسیر ساخت",
   provenanceMadeTitle: "ساخت در تهران",
@@ -470,7 +507,8 @@ export const fa = {
   workshopQuiet: "در این ستون کاری نیست.",
   workshopBack: "بازگشت به کارگاه",
   workshopNeedMaker: "برای دیدن سفارش‌های کارگاه با حساب هنرمند وارد شوید.",
-  workshopCustomerRedirect: "مسیر ساخت سفارش‌های خودت در «ساخت‌های من» است. کارگاه هنرمند فقط برای سازنده است.",
+  workshopCustomerRedirect:
+    "مسیر ساخت سفارش‌های خودت در «ساخت‌های من» است. کارگاه هنرمند فقط برای سازنده است.",
   myMakingOrders: "ساخت‌های من",
   memoryLabel: "یک خاطره، مکان یا آیین (اختیاری)",
   memoryPlaceholder: "مثلاً صدای حیاط مادربزرگ، کوچه‌ای در تهران، حس دلتنگی…",
@@ -520,7 +558,10 @@ export const fa = {
   orderStage9: "بسته‌بندی",
   orderStage10: "ارسال",
   shopStagePaymentPending: "در انتظار پرداخت",
-  shopStageConfirmed: "سفارش ثبت شد",
+  shopStagePaymentReview: "در انتظار تأیید پرداخت",
+  shopStageConfirmed: "سفارش تأیید شد",
+  shopStageExpired: "منقضی‌شده",
+  shopStageRejected: "پرداخت رد شد",
   shopStagePacking: "در حال بسته‌بندی",
   shopStageShipped: "تحویل به پست",
   shopStageDelivered: "تحویل داده شد",
@@ -535,7 +576,8 @@ export const fa = {
   orderMissing: "این سفارش پیدا نشد.",
   viewOrder: "جزئیات سفارش",
   confirmDemoPayment: "تأیید پرداخت",
-  demoPaymentHint: "درگاه واقعی هنوز متصل نیست. این دکمه فقط سفارش نمایشی را ثبت‌شده می‌کند.",
+  demoPaymentHint:
+    "درگاه واقعی هنوز متصل نیست. این دکمه فقط سفارش نمایشی را ثبت‌شده می‌کند.",
   manualPaymentHint:
     "درگاه بانکی به‌زودی وصل می‌شود. فعلاً مبلغ سفارش را به شماره کارت زیر واریز کنید.",
   manualPaymentCardLabel: "شماره کارت",
@@ -549,8 +591,23 @@ export const fa = {
   receiptPreviewAlt: "پیش‌نمایش رسید پرداخت",
   receiptImageError: "فقط تصویر JPEG، PNG یا WebP تا ۱ مگابایت مجاز است.",
   receiptRequired: "برای ادامه، تصویر رسید را انتخاب کنید.",
+  trackingNumberLabel: "شماره پیگیری واریز",
+  trackingNumberHint: "شماره پیگیری یا شماره مرجع روی رسید بانکی",
+  trackingNumberError: "شماره پیگیری را درست وارد کنید (دست‌کم ۴ رقم).",
   receiptAwaitingReview:
-    "رسید شما دریافت شد و در انتظار تأیید رَد است. به‌محض تأیید، سفارش ادامه پیدا می‌کند.",
+    "رسید شما دریافت شد و در انتظار تأیید رَد است. تا پایان بررسی، اثر برای شما رزرو می‌ماند.",
+  receiptSubmittedTracking: "شماره پیگیری ثبت‌شده: {number}",
+  receiptReplaceToggle: "رسید اشتباه فرستادم",
+  receiptReplaceHint:
+    "رسید درست را جایگزین کنید؛ تیم رَد آخرین رسید را بررسی می‌کند.",
+  receiptReplaceSubmit: "جایگزینی رسید",
+  receiptReplaceCancel: "انصراف",
+  paymentRejectedTitle: "پرداخت این سفارش تأیید نشد.",
+  paymentRejectedReason: "دلیل: {reason}",
+  paymentRejectedHelp:
+    "اثر به فروشگاه برگشته است. اگر مبلغی واریز کرده‌اید، برای بازگشت وجه با پشتیبانی رَد تماس بگیرید.",
+  orderExpiredNote:
+    "مهلت پرداخت تمام شد و اثر به فروشگاه برگشت. اگر هنوز موجود است می‌توانید دوباره سفارش دهید.",
   gatewayPaymentHint: "برای تکمیل خرید به درگاه امن پرداخت منتقل می‌شوید.",
   continueToGateway: "ورود به درگاه پرداخت",
   cancelDemoOrder: "لغو سفارش",
@@ -559,11 +616,13 @@ export const fa = {
   leaveReview: "ثبت نظر برای این اثر",
   backToOrders: "بازگشت به سفارش‌ها",
   nextActionBrowse: "دیدن آثار آماده",
-  waitingPacking: "اثر آماده است و به‌زودی بسته‌بندی می‌شود.",
-  waitingShip: "بسته‌بندی در جریان است. کد پستی پس از تحویل به پست اینجا می‌آید.",
+  waitingPacking: "پرداخت شما تأیید شد؛ اثر به‌زودی بسته‌بندی می‌شود.",
+  waitingShip:
+    "بسته‌بندی در جریان است. کد پستی پس از تحویل به پست اینجا می‌آید.",
   waitingDelivery: "بسته به پست تحویل شده است.",
   orderComplete: "سفارش به دست شما رسیده است.",
-  makingCustomNote: "این صفحه سفارش‌های اختصاصی ارسال‌شده است — نه خرید اثر آماده.",
+  makingCustomNote:
+    "این صفحه سفارش‌های اختصاصی ارسال‌شده است — نه خرید اثر آماده.",
   currentStage: "مرحله فعلی",
   youAreHere: "شما اینجایید",
   stageOf: "مرحله {current} از {total}",
@@ -582,7 +641,7 @@ export const fa = {
   designerImagesHelp: "عکس الهام، طرح دستی یا نمونه رنگ — تا چهار تصویر.",
   designerYourImages: "تصاویر شما",
   designerRemoveImage: "حذف تصویر",
-  designerImageError: "فقط JPG، PNG یا WebP تا ۲ مگابایت.",
+  designerImageError: "فقط JPG، PNG یا WebP تا ۱۰ مگابایت.",
   designerSparkTitle: "رَد خودت را شروع کن",
   designerSparkLead: "چی توی ذهنت داری؟",
   designerSparkHelp:
@@ -654,7 +713,8 @@ export const fa = {
   pdpQrLink: "کد QR اثر",
   productQrEyebrow: "برچسب اثر",
   productQrTitle: "کد QR این اثر",
-  productQrBody: "این کد را چاپ کنید و روی اثر یا بسته‌بندی بگذارید. با اسکن، صفحهٔ جزئیات اثر باز می‌شود.",
+  productQrBody:
+    "این کد را چاپ کنید و روی اثر یا بسته‌بندی بگذارید. با اسکن، صفحهٔ جزئیات اثر باز می‌شود.",
   productQrScanTarget: "مقصد اسکن",
   productQrPrint: "چاپ برچسب",
   productQrCopyLink: "کپی پیوند اثر",
@@ -679,9 +739,7 @@ export const fa = {
   archiveTitleFull: "تمام رَدهایی که تا امروز وجود داشته‌اند",
   archiveBodyFull:
     "فروخته‌شده‌ها ناپدید نمی‌شوند. به آرشیو می‌روند و داستان‌شان می‌ماند.",
-  archiveMaking: "دارد ساخته می‌شود",
   archiveSoldMark: "SOLD · ۱/۱",
-  archiveInStudio: "در کارگاه",
   archiveNeverAgain: "این رَد دیگر تکرار نمی‌شود.",
   archiveBack: "بازگشت به آرشیو",
   sameFeeling: "چیزی با همین حس می‌خواهی؟",
@@ -699,7 +757,8 @@ export const fa = {
   myRadsTitle: "رَدهای من",
   myRadsEyebrow: "مجموعه‌ی من",
   myRadsBody: "رَدهایی که مال تو شده‌اند. سفارش نیستند؛ مجموعه‌اند.",
-  myRadsEmpty: "هنوز اثری در مجموعه‌ات نیست. پس از تحویل خرید، اینجا دیده می‌شود.",
+  myRadsEmpty:
+    "هنوز اثری در مجموعه‌ات نیست. پس از تحویل خرید، اینجا دیده می‌شود.",
   collectionOwnedHint: "در مجموعه‌ی تو",
   designerNeedAccount: "برای ارسال سفارش اختصاصی ابتدا وارد حساب شو.",
   transferLine: "این رَد از {from} به {to} رسید — {when}.",
@@ -709,6 +768,89 @@ export const fa = {
   footerArchive: "آرشیو",
   footerShape: "رَد من چه شکلیه؟",
   footerNow: "امروز در کارگاه",
+  retry: "تلاش دوباره",
+  retrying: "در حال تلاش…",
+  dismiss: "بستن",
+  goHome: "صفحه‌ی اصلی",
+  errorPageTitle: "مشکلی پیش آمد.",
+  errorPageBody:
+    "این صفحه کامل بارگذاری نشد. دوباره تلاش کنید یا به صفحه‌ی اصلی برگردید.",
+  catalogErrorTitle: "آثار بارگذاری نشد.",
+  catalogErrorBody:
+    "اتصال به فروشگاه برقرار نشد. اتصال اینترنت را بررسی کنید و دوباره تلاش کنید.",
+  catalogStaleNotice:
+    "وضعیت زنده‌ی آثار به‌روز نشد؛ موجودی نمایش‌داده‌شده ممکن است قدیمی باشد.",
+  catalogEmptyTitle: "مجموعه فعلاً میان دو فصل است.",
+  catalogEmptyBody:
+    "همه‌ی آثار فعلی به خانه‌های تازه رفته‌اند. آرشیو را ببینید یا اثر خودتان را سفارش دهید.",
+  viewArchive: "دیدن آرشیو",
+  commissionOwn: "سفارش اثر اختصاصی",
+  catalogSearchLabel: "جست‌وجو در آثار",
+  noSearchTitle: "اثری با «{query}» پیدا نشد.",
+  noSearchBody:
+    "املای دیگری امتحان کنید یا با نام دسته، رنگ یا جنس جست‌وجو کنید.",
+  searchAllWorks: "جست‌وجو در همه‌ی آثار",
+  seeAllResults: "دیدن همه‌ی نتایج",
+  noCategoryTitle: "فعلاً اثری در «{category}» نیست.",
+  noCategoryBody:
+    "هر اثر فقط یک‌بار ساخته می‌شود و این دسته فعلاً خالی است. آثار دیگر را ببینید یا اثری در همین دسته سفارش دهید.",
+  statusReserved: "رزرو شده",
+  productNotFoundEyebrow: "خطای ۴۰۴",
+  productNotFoundTitle: "این اثر در فروشگاه پیدا نشد.",
+  productNotFoundBody:
+    "ممکن است نشانی اشتباه باشد یا اثر از فروشگاه برداشته شده باشد. آثار موجود یا آرشیو را ببینید.",
+  productErrorTitle: "صفحه‌ی اثر بارگذاری نشد.",
+  productErrorBody: "ارتباط با فروشگاه قطع شد. چند لحظه بعد دوباره تلاش کنید.",
+  liveSoldTitle: "همین حالا مجموعه‌دار دیگری این اثر را خرید.",
+  liveSoldBody:
+    "هر اثر رَد فقط یک نسخه دارد. آثار دیگر را پایین همین صفحه ببینید.",
+  liveReservedTitle: "این اثر در کیسه‌ی مجموعه‌دار دیگری است.",
+  liveReservedBody:
+    "اگر پرداخت تا {time} دیگر کامل نشود، دوباره قابل خرید می‌شود. این صفحه خودش به‌روز می‌شود.",
+  liveReturnedTitle: "این اثر دوباره قابل خرید است.",
+  liveDeletedTitle: "این اثر از فروشگاه برداشته شد.",
+  liveDeletedBody: "دیگر امکان خرید آن نیست. آثار دیگر را ببینید.",
+  liveOffline: "اتصال اینترنت قطع است؛ وضعیت موجودی ممکن است قدیمی باشد.",
+  liveCheckFailed: "وضعیت موجودی به‌روز نشد؛ ممکن است قدیمی باشد.",
+  addBagFailed: "اثر به کیسه اضافه نشد. دوباره تلاش کنید.",
+  addBagNetwork: "اتصال برقرار نیست؛ اثر به کیسه اضافه نشد. دوباره تلاش کنید.",
+  addBagTaken: "همین حالا کس دیگری این اثر را برداشت.",
+  cartErrorTitle: "کیسه بارگذاری نشد.",
+  cartErrorBody:
+    "اتصال به فروشگاه برقرار نشد. چیزی از کیسه‌ی شما حذف نشده است؛ دوباره تلاش کنید.",
+  cartItemSold: "این اثر فروخته شده و دیگر قابل خرید نیست.",
+  cartItemReserved:
+    "این اثر در کیسه‌ی مجموعه‌دار دیگری است؛ ممکن است تا {time} دیگر آزاد شود.",
+  cartItemWithdrawn: "این اثر از فروشگاه برداشته شده است.",
+  cartPriceChanged: "قیمت از {from} به {to} تغییر کرده است.",
+  cartPriceChangedAlert:
+    "قیمت یک یا چند اثر از زمان افزودن به کیسه تغییر کرده است. مبلغ نهایی با قیمت تازه محاسبه می‌شود.",
+  cartReleasedTitle: "این آثار از کیسه‌ی شما خارج شدند:",
+  cartReleasedSold: "زمان نگه‌داری تمام شد و مجموعه‌دار دیگری آن را خرید.",
+  cartReleasedReserved: "زمان نگه‌داری تمام شد و اکنون در کیسه‌ی کس دیگری است.",
+  cartReleasedAvailable: "زمان نگه‌داری تمام شد، اما هنوز قابل خرید است.",
+  cartReleasedGone: "از فروشگاه برداشته شد.",
+  addAgain: "افزودن دوباره",
+  cartActionFailed: "کیسه به‌روز نشد. دوباره تلاش کنید.",
+  removing: "در حال حذف…",
+  designerImageTypeError: "«{name}» تصویر JPG، PNG یا WebP نیست.",
+  designerImageTooLarge:
+    "«{name}» {size} مگابایت است؛ حداکثر حجم ۱۰ مگابایت است.",
+  designerImageCorrupt: "«{name}» باز نشد؛ ممکن است فایل خراب باشد.",
+  designerImageUploadFailed: "بارگذاری «{name}» انجام نشد. دوباره امتحان کن.",
+  designerImageLimit: "حداکثر {count} تصویر؛ بقیه اضافه نشدند.",
+  designerImageProcessing: "در حال آماده‌سازی تصویر…",
+  designerOffline:
+    "اتصال اینترنت قطع است. ایده‌ات روی همین دستگاه ذخیره شده؛ وقتی وصل شدی می‌توانی بفرستی.",
+  designerSessionExpired:
+    "نشست تو منقضی شده است. دوباره وارد شو؛ ایده‌ات سر جایش می‌ماند.",
+  designerSignInAgain: "ورود دوباره",
+  designerSubmitNetwork:
+    "اتصال هنگام ارسال قطع شد. ایده‌ات ذخیره است؛ دوباره بفرست.",
+  designerSubmitFailed:
+    "ارسال ایده انجام نشد. ایده‌ات ذخیره است؛ چند لحظه بعد دوباره امتحان کن.",
+  designerDraftRestored: "پیش‌نویس قبلی‌ات بازگردانده شد.",
+  designerDraftDiscard: "شروع از نو",
 } as const;
 
 export type MessageKey = keyof typeof fa;

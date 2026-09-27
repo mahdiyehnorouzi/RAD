@@ -1,4 +1,4 @@
-import type {MessageKey} from "./fa";
+import type { MessageKey } from "./fa";
 
 export const en = {
   navProducts: "Works",
@@ -37,7 +37,8 @@ export const en = {
   orderDate: "Created",
   orderItems: "Ordered works",
   noOrders: "You have not placed an order from the collection yet.",
-  noOrdersBody: "After buying a ready-made work, you can follow payment, packing, and delivery here.",
+  noOrdersBody:
+    "After buying a ready-made work, you can follow payment, packing, and delivery here.",
   viewAvailableWorks: "See available works",
   startCustomOrder: "Start a custom order",
   makingProcessTitle: "How does the making path work?",
@@ -66,16 +67,27 @@ export const en = {
   noticeFavorite: "Added to favourites:",
   noticeCart: "Added to bag:",
   noticeWelcome: "Welcome—your local profile is now active.",
-  noticeOrder: "Your demo shop order was recorded. Follow payment and delivery in Orders.",
-  noticeCommissionApproved: "Your custom design was approved. A quote will appear on the making path.",
-  noticeCommissionDeclined: "Your custom design will not be made. The reason is on the making path.",
-  noticeCommissionChange: "The artist has requested a specific change to your custom design.",
-  noticeCommissionMessage: "The workshop sent a new message on your custom order.",
+  noticeOrder:
+    "Your order was placed. Transfer the amount by card and upload the receipt on the order page.",
+  noticeOrderConfirmed: "Your payment was confirmed and the order is final.",
+  noticeOrderRejected:
+    "Your payment could not be confirmed. See the reason on the order page.",
+  noticeCommissionApproved:
+    "Your custom design was approved. A quote will appear on the making path.",
+  noticeCommissionDeclined:
+    "Your custom design will not be made. The reason is on the making path.",
+  noticeCommissionChange:
+    "The artist has requested a specific change to your custom design.",
+  noticeCommissionMessage:
+    "The workshop sent a new message on your custom order.",
   noticeCommissionQuote: "A quote and schedule for your custom order is ready.",
-  noticeCommissionPreKiln: "The pre-kiln checkpoint is open—review the glaze on the making path.",
-  noticeCommissionFiring: "Firing was recorded. The balance is due on the making path.",
+  noticeCommissionPreKiln:
+    "The pre-kiln checkpoint is open—review the glaze on the making path.",
+  noticeCommissionFiring:
+    "Firing was recorded. The balance is due on the making path.",
   noticeCommissionBalance: "Balance paid—your order is moving to shipping.",
-  noticeCommissionShipped: "Your custom order shipped. Tracking is on the making path.",
+  noticeCommissionShipped:
+    "Your custom order shipped. Tracking is on the making path.",
   home: "RAD home",
   logoSubtitle: "UNIQUE WORKS",
   collectionEyebrow: "COLLECTION 01",
@@ -137,17 +149,23 @@ export const en = {
   zundBody:
     "Zünd is the workshop’s digital cutter. After a design is approved, when the material needs a precise contour — textile, wood, print, leather, or a ceramic stencil — that drawing is cut on the Zünd. The cut is not the finished work; it is the accurate template or piece. The artist’s hand, and the kiln for ceramic, still keep the last word.",
   step1Title: "Describe",
-  step1Body: "In the studio you write the type, size, material, intended use, and the feeling you want.",
+  step1Body:
+    "In the studio you write the type, size, material, intended use, and the feeling you want.",
   step2Title: "Intention image",
-  step2Body: "AI and your reference photos produce a first image. That image is intention, not a promise of the object.",
+  step2Body:
+    "AI and your reference photos produce a first image. That image is intention, not a promise of the object.",
   step3Title: "Artist review",
-  step3Body: "The design arrives in the kiln office. The artist approves, asks for a specific change, offers an alternative, or declines with a reason.",
+  step3Body:
+    "The design arrives in the kiln office. The artist approves, asks for a specific change, offers an alternative, or declines with a reason.",
   step4Title: "Quote and deposit",
-  step4Body: "After approval come price, timing, and rules. Making starts only when you accept the specification and pay the deposit.",
+  step4Body:
+    "After approval come price, timing, and rules. Making starts only when you accept the specification and pay the deposit.",
   step5Title: "Making and Zünd",
-  step5Body: "The workshop forms the piece. If a precise cut is required, Zünd cuts the drawing; then hand and material finish the work.",
+  step5Body:
+    "The workshop forms the piece. If a precise cut is required, Zünd cuts the drawing; then hand and material finish the work.",
   step6Title: "Reveal and delivery",
-  step6Body: "Pre-kiln, firing, reveal, remaining payment, and shipping stay on the same making path.",
+  step6Body:
+    "Pre-kiln, firing, reveal, remaining payment, and shipping stay on the same making path.",
   journalTitle1: "Material, colour, and",
   journalTitle2: "the memory of hands",
   journalBody:
@@ -158,7 +176,7 @@ export const en = {
     "Each work is made only once. This is a living collection that is always changing.",
   filterAll: "All",
   filterAvailable: "Available",
-  filterReserved: "Reserved",
+  filterUpcoming: "Coming soon",
   filterSold: "Sold",
   filterVases: "Vases",
   filterTableware: "Tableware",
@@ -184,7 +202,16 @@ export const en = {
   quickAdd: "Quick add",
   inBag: "In your bag ✓",
   soldOut: "Sold",
-  reserved: "Reserved",
+  statusAvailable: "Available",
+  statusInWorkshop: "In the workshop",
+  statusReady: "Ready, coming soon",
+  statusArchived: "Archived",
+  statusUnavailable: "Not available right now",
+  holdCountdown:
+    "Held for you for {time}. If payment isn't completed, it goes back to the shop.",
+  holdExpired: "Your hold ended and the work went back to the shop.",
+  paymentDueIn:
+    "You have {time} to transfer and upload your receipt. After that the order expires and the work goes back to the shop.",
   shipping: "Free insured shipping in Iran • dispatch in 2–4 business days",
   moreWorks: "More works",
   emptyBag: "Your bag is empty.",
@@ -231,7 +258,8 @@ export const en = {
   emailInvalid: "Enter a valid email.",
   passwordTooShort: "Password must be at least 8 characters.",
   signupTitle: "Create an account",
-  signupBody: "Enter your name, email, and password to create your personal space.",
+  signupBody:
+    "Enter your name, email, and password to create your personal space.",
   signup: "Create account",
   needAccount: "No account yet? Create one",
   haveAccount: "Already have an account? Sign in",
@@ -258,7 +286,8 @@ export const en = {
   customOrdersBody:
     "Artwork projects you have submitted. Open the making path of each order separately.",
   viewSamplePath: "View sample path",
-  makingDemoBanner: "Sample custom-order path — details are read-only and actions are disabled.",
+  makingDemoBanner:
+    "Sample custom-order path — details are read-only and actions are disabled.",
   makingPathTitle: "Making path of my work",
   accountInfoEyebrow: "YOUR ACCOUNT",
   accountInfoBody: "Your name, email, and session on this device.",
@@ -300,6 +329,13 @@ export const en = {
   checkoutTitle: "Delivery details",
   checkoutBody:
     "Enter your delivery details. After placing the order you will pay by card transfer until the bank gateway is connected.",
+  checkoutPaymentTitle: "Payment: card-to-card transfer",
+  checkoutPaymentStepReserve:
+    "Placing the order reserves the work for you alone for {minutes} minutes.",
+  checkoutPaymentStepTransfer:
+    "The card number and exact amount appear on the order page; transfer exactly that amount.",
+  checkoutPaymentStepReceipt:
+    "Upload the receipt and its tracking number. Once RAD confirms it, the order is final.",
   phoneLabel: "Phone number",
   cityLabel: "City",
   addressLabel: "Address",
@@ -309,7 +345,8 @@ export const en = {
   checkoutError: "Complete all delivery details.",
   placingOrder: "Placing order…",
   requestFailed: "The order could not be placed. Please try again.",
-  workNoLongerAvailable: "A work in your bag is no longer available. Remove it and try again.",
+  workNoLongerAvailable:
+    "A work in your bag is no longer available. Remove it and try again.",
   nameError: "Enter your full name.",
   phoneError: "Enter a valid phone number.",
   cityError: "Enter your city.",
@@ -332,7 +369,8 @@ export const en = {
   promptLabel: "What is in your mind?",
   promptPlaceholder:
     "I want a mug that feels like my cat, but I do not want it to actually look like a cat.",
-  promptHelp: "It does not have to be exact. A feeling, a colour, or a crooked line is enough.",
+  promptHelp:
+    "It does not have to be exact. A feeling, a colour, or a crooked line is enough.",
   stopGeneration: "Stop generation",
   generate: "Create with GPT",
   generating: "Shaping your idea…",
@@ -371,10 +409,12 @@ export const en = {
   createPathIndex: "II — CREATE",
   createPathTitle: "Custom order",
   createPathBody: "Describe an idea and develop it with the artist.",
-  makingPathPhotoAlt: "Customer and artist discussing the sketch for a ceramic bowl",
+  makingPathPhotoAlt:
+    "Customer and artist discussing the sketch for a ceramic bowl",
   archiveEyebrow: "RAD ARCHIVE",
   archiveTitle: "New works",
-  archiveBody: "A short selection from the living collection; the full archive lives on the works page.",
+  archiveBody:
+    "A short selection from the living collection; the full archive lives on the works page.",
   homeArchiveLink: "See all works and the archive",
   studioImagineTitle: "Imagine what does not exist yet.",
   studioImagineBody: "RAD helps you see it and make it.",
@@ -402,7 +442,8 @@ export const en = {
     "You write the type, material, size, and feeling. This is the start, not the finished design.",
   homeProcessBody2:
     "The artist reads the brief, proposes a direction, and making begins only if they accept.",
-  homeProcessBody3: "Every stage is recorded. The making path is the work's biography.",
+  homeProcessBody3:
+    "Every stage is recorded. The making path is the work's biography.",
   homeProcessDetails: "See the making path in detail",
   provenanceMadeTitle: "Made in Tehran",
   provenanceMadeBody:
@@ -414,7 +455,8 @@ export const en = {
   provenanceNumberBody:
     "Each work is recorded with its number, material, year, and 1/1 mark.",
   ordersEntryEyebrow: "YOUR ORDERS",
-  ordersEntryTitle: "Follow a ready-made purchase separately from a custom commission.",
+  ordersEntryTitle:
+    "Follow a ready-made purchase separately from a custom commission.",
   ordersEntryBody:
     "A finished work only has payment, packing, and delivery. A custom piece has artist review and its own making path.",
   ordersEntryShop: "Track a shop order",
@@ -460,7 +502,8 @@ export const en = {
   makingMissing: "This making path was not found.",
   makingSubmit: "Submit design for making",
   makingUseLabel: "Intended use",
-  makingUsePlaceholder: "For example: daily table, entry wall, looking on a shelf…",
+  makingUsePlaceholder:
+    "For example: daily table, entry wall, looking on a shelf…",
   makingUseHelp: "The artist reads use into feasibility and wall thickness.",
   makingDimensionsLabel: "Approximate dimensions",
   makingDimensionsPlaceholder: "e.g. 25 cm tall, 18 cm opening",
@@ -475,13 +518,16 @@ export const en = {
   workshopStages: "Production stage",
   workshopQuiet: "Nothing in this column.",
   workshopBack: "Back to the workshop",
-  workshopNeedMaker: "Sign in with a maker account to see workshop commissions.",
-  workshopCustomerRedirect: "Your own commissions live under My making. The artist workshop is for makers only.",
+  workshopNeedMaker:
+    "Sign in with a maker account to see workshop commissions.",
+  workshopCustomerRedirect:
+    "Your own commissions live under My making. The artist workshop is for makers only.",
   myMakingOrders: "My making",
   memoryLabel: "A memory, place, or ritual (optional)",
   memoryPlaceholder:
     "For example: a grandmother’s courtyard, a Tehran alley, the feeling of homesickness…",
-  memoryHelp: "RAD translates emotional qualities into weight, texture, and colour.",
+  memoryHelp:
+    "RAD translates emotional qualities into weight, texture, and colour.",
   surpriseLegend: "How much surprise do you permit?",
   differenceEyebrow: "THE BEAUTIFUL DIFFERENCE",
   differenceTitle: "Difference Portrait",
@@ -527,7 +573,10 @@ export const en = {
   orderStage9: "Packed",
   orderStage10: "Shipped",
   shopStagePaymentPending: "Awaiting payment",
-  shopStageConfirmed: "Order placed",
+  shopStagePaymentReview: "Awaiting payment review",
+  shopStageConfirmed: "Order confirmed",
+  shopStageExpired: "Expired",
+  shopStageRejected: "Payment rejected",
   shopStagePacking: "Packing",
   shopStageShipped: "Handed to post",
   shopStageDelivered: "Delivered",
@@ -542,7 +591,8 @@ export const en = {
   orderMissing: "This order was not found.",
   viewOrder: "Order details",
   confirmDemoPayment: "Confirm payment",
-  demoPaymentHint: "A live payment gateway is not connected yet. This only confirms the demo order.",
+  demoPaymentHint:
+    "A live payment gateway is not connected yet. This only confirms the demo order.",
   manualPaymentHint:
     "The bank gateway will be connected soon. For now, transfer the order total to the card below.",
   manualPaymentCardLabel: "Card number",
@@ -556,9 +606,25 @@ export const en = {
   receiptPreviewAlt: "Payment receipt preview",
   receiptImageError: "Only JPEG, PNG, or WebP images up to 1 MB are allowed.",
   receiptRequired: "Choose a receipt image to continue.",
+  trackingNumberLabel: "Transfer tracking number",
+  trackingNumberHint: "The tracking or reference number on your bank receipt",
+  trackingNumberError: "Enter a valid tracking number (at least 4 digits).",
   receiptAwaitingReview:
-    "Your receipt was received and is awaiting RAD review. The order continues once payment is confirmed.",
-  gatewayPaymentHint: "You will continue to a secure payment gateway to finish this purchase.",
+    "Your receipt was received and is awaiting RAD review. The work stays reserved for you until then.",
+  receiptSubmittedTracking: "Tracking number on file: {number}",
+  receiptReplaceToggle: "I sent the wrong receipt",
+  receiptReplaceHint:
+    "Replace it with the correct receipt; RAD reviews the latest one.",
+  receiptReplaceSubmit: "Replace receipt",
+  receiptReplaceCancel: "Never mind",
+  paymentRejectedTitle: "Payment for this order was not confirmed.",
+  paymentRejectedReason: "Reason: {reason}",
+  paymentRejectedHelp:
+    "The work went back to the shop. If you transferred money, contact RAD support for a refund.",
+  orderExpiredNote:
+    "The payment window ended and the work went back to the shop. If it's still available you can order again.",
+  gatewayPaymentHint:
+    "You will continue to a secure payment gateway to finish this purchase.",
   continueToGateway: "Continue to payment gateway",
   cancelDemoOrder: "Cancel order",
   copyTracking: "Copy tracking code",
@@ -566,11 +632,13 @@ export const en = {
   leaveReview: "Review this work",
   backToOrders: "Back to orders",
   nextActionBrowse: "Browse ready-made works",
-  waitingPacking: "The work is ready and will be packed shortly.",
-  waitingShip: "Packing is underway. A postal code will appear here after handover.",
+  waitingPacking: "Your payment was confirmed; the work will be packed shortly.",
+  waitingShip:
+    "Packing is underway. A postal code will appear here after handover.",
   waitingDelivery: "The parcel has been handed to the post.",
   orderComplete: "This order has been delivered.",
-  makingCustomNote: "This page is submitted custom artwork projects — not ready-made purchases.",
+  makingCustomNote:
+    "This page is submitted custom artwork projects — not ready-made purchases.",
   currentStage: "Current stage",
   youAreHere: "You are here",
   stageOf: "Step {current} of {total}",
@@ -586,10 +654,11 @@ export const en = {
   designerNext: "Next",
   designerSkipImages: "Continue without images",
   designerAddImages: "Add reference images",
-  designerImagesHelp: "Inspiration, a sketch, or a colour sample — up to four images.",
+  designerImagesHelp:
+    "Inspiration, a sketch, or a colour sample — up to four images.",
   designerYourImages: "Your images",
   designerRemoveImage: "Remove image",
-  designerImageError: "Use a JPG, PNG, or WebP image up to 2 MB.",
+  designerImageError: "Use a JPG, PNG, or WebP image up to 10 MB.",
   designerSparkTitle: "Start your RAD",
   designerSparkLead: "What is in your mind?",
   designerSparkHelp:
@@ -620,7 +689,8 @@ export const en = {
   ideaCardColors: "Colours",
   ideaCardReference: "Reference",
   ideaCardFreedom: "Freedom given to the maker",
-  ideaCardDisclaimer: "This is not the finished object. It is our starting point.",
+  ideaCardDisclaimer:
+    "This is not the finished object. It is our starting point.",
   ideaCardEmpty: "The card is still empty.",
   ideaCardHasPhoto: "Uploaded image",
   ideaCardHasSketch: "Hand sketch",
@@ -661,7 +731,8 @@ export const en = {
   pdpQrLink: "Work QR code",
   productQrEyebrow: "Work label",
   productQrTitle: "QR code for this work",
-  productQrBody: "Print this code and place it on the piece or its packaging. Scanning opens the work detail page.",
+  productQrBody:
+    "Print this code and place it on the piece or its packaging. Scanning opens the work detail page.",
   productQrScanTarget: "Scan destination",
   productQrPrint: "Print label",
   productQrCopyLink: "Copy work link",
@@ -686,9 +757,7 @@ export const en = {
   archiveTitleFull: "Every RAD that has existed so far",
   archiveBodyFull:
     "Sold pieces do not disappear. They move into the archive and keep their story.",
-  archiveMaking: "Being made",
   archiveSoldMark: "SOLD · 1/1",
-  archiveInStudio: "In the studio",
   archiveNeverAgain: "This RAD will not be made again.",
   archiveBack: "Back to the archive",
   sameFeeling: "Want something with the same feeling?",
@@ -706,7 +775,8 @@ export const en = {
   myRadsTitle: "My RADs",
   myRadsEyebrow: "My collection",
   myRadsBody: "The RADs that became yours. Not orders — a collection.",
-  myRadsEmpty: "Nothing in your collection yet. Delivered purchases will appear here.",
+  myRadsEmpty:
+    "Nothing in your collection yet. Delivered purchases will appear here.",
   collectionOwnedHint: "In your collection",
   designerNeedAccount: "Sign in before sending a custom commission.",
   transferLine: "This RAD passed from {from} to {to} — {when}.",
@@ -716,4 +786,84 @@ export const en = {
   footerArchive: "Archive",
   footerShape: "What shape is my RAD?",
   footerNow: "Today in the workshop",
+  retry: "Try again",
+  retrying: "Trying…",
+  dismiss: "Dismiss",
+  goHome: "Home",
+  errorPageTitle: "Something went wrong.",
+  errorPageBody: "This page didn't load completely. Try again or go back home.",
+  catalogErrorTitle: "The works couldn't be loaded.",
+  catalogErrorBody:
+    "We couldn't reach the shop. Check your connection and try again.",
+  catalogStaleNotice:
+    "Live availability couldn't be refreshed; what you see may be out of date.",
+  catalogEmptyTitle: "The collection is between pieces.",
+  catalogEmptyBody:
+    "Every current work has found a home. Browse the archive or commission your own piece.",
+  viewArchive: "Browse the archive",
+  commissionOwn: "Commission a piece",
+  catalogSearchLabel: "Search works",
+  noSearchTitle: "Nothing matches “{query}”.",
+  noSearchBody:
+    "Try another spelling, or search by category, colour or material.",
+  searchAllWorks: "Search all works",
+  seeAllResults: "See all results",
+  noCategoryTitle: "No {category} works right now.",
+  noCategoryBody:
+    "Each work is made once, and this category is empty for now. See other works or commission one in this category.",
+  statusReserved: "Reserved",
+  productNotFoundEyebrow: "Error 404",
+  productNotFoundTitle: "This work isn't in the shop.",
+  productNotFoundBody:
+    "The link may be wrong, or the work has been withdrawn. See the current works or the archive.",
+  productErrorTitle: "This work couldn't be loaded.",
+  productErrorBody: "We lost contact with the shop. Try again in a moment.",
+  liveSoldTitle: "Another collector acquired this work just now.",
+  liveSoldBody: "Each RAD work exists once. Other works are listed below.",
+  liveReservedTitle: "This work is in another collector's bag.",
+  liveReservedBody:
+    "If they don't complete payment within {time}, it returns to the shop. This page updates on its own.",
+  liveReturnedTitle: "This work is available again.",
+  liveDeletedTitle: "This work has been withdrawn from the shop.",
+  liveDeletedBody: "It can no longer be bought. See other works.",
+  liveOffline: "You're offline; availability may be out of date.",
+  liveCheckFailed: "Availability couldn't be refreshed and may be out of date.",
+  addBagFailed: "The work couldn't be added to your bag. Try again.",
+  addBagNetwork: "No connection — the work wasn't added. Try again.",
+  addBagTaken: "Someone else just took this work.",
+  cartErrorTitle: "Your bag couldn't be loaded.",
+  cartErrorBody:
+    "We couldn't reach the shop. Nothing has been removed from your bag — try again.",
+  cartItemSold: "This work has been sold and can't be bought.",
+  cartItemReserved:
+    "This work is in another collector's bag; it may be released in {time}.",
+  cartItemWithdrawn: "This work has been withdrawn from the shop.",
+  cartPriceChanged: "Price changed from {from} to {to}.",
+  cartPriceChangedAlert:
+    "The price of one or more works changed since you added them. The total uses the new prices.",
+  cartReleasedTitle: "These works left your bag:",
+  cartReleasedSold: "Your hold ended and another collector bought it.",
+  cartReleasedReserved: "Your hold ended and it's now in someone else's bag.",
+  cartReleasedAvailable: "Your hold ended, but it's still available.",
+  cartReleasedGone: "Withdrawn from the shop.",
+  addAgain: "Add again",
+  cartActionFailed: "Your bag couldn't be updated. Try again.",
+  removing: "Removing…",
+  designerImageTypeError: "“{name}” isn't a JPG, PNG or WebP image.",
+  designerImageTooLarge: "“{name}” is {size} MB; the limit is 10 MB.",
+  designerImageCorrupt: "“{name}” couldn't be opened; the file may be damaged.",
+  designerImageUploadFailed: "“{name}” couldn't be uploaded. Try again.",
+  designerImageLimit: "Up to {count} images; the rest were skipped.",
+  designerImageProcessing: "Preparing image…",
+  designerOffline:
+    "You're offline. Your idea is saved on this device — send it when you're back online.",
+  designerSessionExpired:
+    "Your session has expired. Sign in again — your idea will be kept.",
+  designerSignInAgain: "Sign in again",
+  designerSubmitNetwork:
+    "The connection dropped while sending. Your idea is saved — send it again.",
+  designerSubmitFailed:
+    "Your idea couldn't be sent. It's saved — try again in a moment.",
+  designerDraftRestored: "Your previous draft was restored.",
+  designerDraftDiscard: "Start over",
 } as const satisfies Record<MessageKey, string>;

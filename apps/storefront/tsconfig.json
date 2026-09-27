@@ -17,6 +17,7 @@
     "paths": {
       "@/*": ["./*"],
       "@rad/types": ["../../packages/types/src/index.ts"],
+      "@rad/artworks": ["../../packages/artworks/src/index.ts"],
       "@rad/ui": ["../../packages/ui/src/index.ts"],
       "@rad/state": ["../../packages/state/src/index.ts"],
       "@rad/i18n/*": ["../../packages/i18n/src/*"]

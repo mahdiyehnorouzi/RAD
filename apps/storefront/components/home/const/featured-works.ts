@@ -1,8 +1,10 @@
 import type { Product } from "@rad/types";
+import { isPurchasableStatus } from "@rad/types";
 import {
   isFileProductImage,
   productPhotoSrc,
 } from "@/lib/catalog/category-defaults";
+import { isGoneStatus } from "@/lib/catalog/product-status";
 import {
   catalogLifestylePhotoSrc,
   catalogLifestylePhotoSlugs,
@@ -10,15 +12,16 @@ import {
 
 const FEATURED_LIMIT = 4;
 
-function isScarce(product: Product) {
-  return product.status === "sold" || product.status === "reserved";
-}
-
 export function featuredHomeWorks(products: Product[]): Product[] {
-  const available = products.filter((product) => !isScarce(product));
-  const scarce = products.find(isScarce);
-  if (!scarce) return available.slice(0, FEATURED_LIMIT);
-  return [...available.slice(0, FEATURED_LIMIT - 1), scarce];
+  const available = products.filter((product) =>
+    isPurchasableStatus(product.status),
+  );
+  const pool = available.length
+    ? available
+    : products.filter((product) => !isGoneStatus(product.status));
+  const scarce = products.find((product) => isGoneStatus(product.status));
+  if (!scarce) return pool.slice(0, FEATURED_LIMIT);
+  return [...pool.slice(0, FEATURED_LIMIT - 1), scarce];
 }
 
 export function featuredWorkPhoto(product?: Product) {

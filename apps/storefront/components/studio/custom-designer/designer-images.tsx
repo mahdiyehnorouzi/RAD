@@ -1,19 +1,8 @@
 "use client";
 
-import { ChangeEvent, useRef } from "react";
+import { ChangeEvent, useRef, useState } from "react";
 import { useLocale } from "@/components/i18n";
-
-const allowed = [/^image\/jpeg$/, /^image\/png$/, /^image\/webp$/];
-const maxBytes = 2 * 1024 * 1024;
-
-function readFile(file: File) {
-  return new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(String(reader.result));
-    reader.onerror = () => reject(new Error("read"));
-    reader.readAsDataURL(file);
-  });
-}
+import { prepareImage } from "@/lib/media/prepare-image";
 
 export function DesignerImages({
   uploads,
@@ -30,28 +19,49 @@ export function DesignerImages({
   onAdd: (files: string[]) => void;
   onRemove: (index: number) => void;
 }) {
-  const { t } = useLocale();
+  const { t, number } = useLocale();
   const input = useRef<HTMLInputElement>(null);
+  const [processing, setProcessing] = useState(false);
 
   async function pick(event: ChangeEvent<HTMLInputElement>) {
-    const files = Array.from(event.target.files ?? []);
+    const picked = Array.from(event.target.files ?? []);
     event.target.value = "";
+    if (!picked.length) return;
+    const room = Math.max(0, maxImages - uploads.length);
+    const files = picked.slice(0, room);
+    const messages: string[] = [];
+    if (picked.length > room)
+      messages.push(t("designerImageLimit", { count: number(maxImages) }));
+
+    setProcessing(true);
     const accepted: string[] = [];
     for (const file of files) {
-      if (!allowed.some((type) => type.test(file.type)) || file.size > maxBytes) {
-        onError(t("designerImageError"));
+      const result = await prepareImage(file);
+      if (result.ok) {
+        accepted.push(result.dataUrl);
         continue;
       }
-      accepted.push(await readFile(file));
+      const name = file.name;
+      if (result.reason === "type")
+        messages.push(t("designerImageTypeError", { name }));
+      else if (result.reason === "size")
+        messages.push(
+          t("designerImageTooLarge", {
+            name,
+            size: number(Math.round((file.size / 1024 / 1024) * 10) / 10),
+          }),
+        );
+      else if (result.reason === "corrupt")
+        messages.push(t("designerImageCorrupt", { name }));
+      else messages.push(t("designerImageUploadFailed", { name }));
     }
-    if (accepted.length) {
-      onError("");
-      onAdd(accepted);
-    }
+    setProcessing(false);
+    if (accepted.length) onAdd(accepted);
+    onError(messages.join("\n"));
   }
 
   return (
-    <fieldset className="designer-images">
+    <fieldset className="designer-images" aria-busy={processing}>
       <legend>{t("designerAddImages")}</legend>
       <p>{t("designerImagesHelp")}</p>
       <input
@@ -65,13 +75,16 @@ export function DesignerImages({
       <button
         type="button"
         className="button outline"
-        disabled={uploads.length >= maxImages}
+        disabled={uploads.length >= maxImages || processing}
         onClick={() => input.current?.click()}
       >
-        {t("designerAddImages")}
+        {processing ? t("designerImageProcessing") : t("designerAddImages")}
       </button>
       {uploads.length ? (
-        <ul className="designer-upload-grid" aria-label={t("designerYourImages")}>
+        <ul
+          className="designer-upload-grid"
+          aria-label={t("designerYourImages")}
+        >
           {uploads.map((src, index) => (
             <li key={`${index}-${src.slice(-12)}`}>
               <img src={src} alt="" />
@@ -83,7 +96,7 @@ export function DesignerImages({
         </ul>
       ) : null}
       {error ? (
-        <p className="form-error" role="alert">
+        <p className="form-error designer-image-errors" role="alert">
           {error}
         </p>
       ) : null}

@@ -9,3 +9,8 @@ export type PlaceOrderInput = {
   phone?: string;
   address?: string;
 };
+
+export type PaymentReceiptInput = {
+  receiptImage: string;
+  trackingNumber: string;
+};

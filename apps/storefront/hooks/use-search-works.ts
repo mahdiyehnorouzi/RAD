@@ -1,22 +1,19 @@
 import { useMemo } from "react";
-import { productCopy } from "@/lib/catalog/products";
 import { useCatalog } from "@/components/catalog/catalog-provider";
 import { useLocale } from "@/components/i18n";
+import { normalizeQuery, productMatchesQuery } from "@/lib/catalog/search";
 
 export function useSearchWorks(query: string) {
   const { locale } = useLocale();
   const { products } = useCatalog();
-  const normalizedQuery = query.trim().toLocaleLowerCase(locale);
+  const normalizedQuery = normalizeQuery(query, locale);
 
   const results = useMemo(
     () =>
       normalizedQuery
-        ? products.filter((product) => {
-            const copy = productCopy(product, locale);
-            return `${copy.name} ${copy.subtitle} ${copy.story}`
-              .toLocaleLowerCase(locale)
-              .includes(normalizedQuery);
-          })
+        ? products.filter((product) =>
+            productMatchesQuery(product, normalizedQuery, locale),
+          )
         : [],
     [locale, normalizedQuery, products],
   );

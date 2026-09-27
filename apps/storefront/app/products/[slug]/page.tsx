@@ -2,13 +2,11 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { cache } from "react";
 import { ProductDetail } from "@/components/product";
-import { fetchFaq, fetchProduct, fetchProductReviews } from "@/lib/api";
-import { getProduct, mockProducts } from "@/lib/catalog/products";
-import { photoWorks } from "@/lib/catalog/photo-works";
-import {
-  hasRealProductImage,
-  overlayLiveProduct,
-} from "@/lib/catalog/category-defaults";
+import { fetchFaq, fetchProductReviews } from "@/lib/api";
+import { productFromArtwork, resolveArtwork } from "@/lib/artworks";
+import { displayWorks } from "@/lib/catalog/get-catalog-works";
+import { isUpcomingStatus } from "@/lib/catalog/product-status";
+import { isPurchasableStatus } from "@rad/types";
 import {
   breadcrumbJsonLd,
   faqPageJsonLd,
@@ -18,12 +16,11 @@ import {
   siteName,
 } from "@/lib/seo";
 
+/** Only works offered in the shop have a product page; the rest live on their passport. */
 const resolveProduct = cache(async (slug: string) => {
-  const remote = await fetchProduct(slug).catch(() => null);
-  const local =
-    photoWorks.find((item) => item.slug === slug) ?? getProduct(slug);
-  const visual = remote && hasRealProductImage(remote) ? remote : local ?? remote;
-  return visual ? overlayLiveProduct(visual, remote ?? undefined) : null;
+  const artwork = await resolveArtwork(slug);
+  if (!artwork || artwork.slug !== slug || artwork.price === null) return null;
+  return productFromArtwork(artwork);
 });
 
 export async function generateMetadata({
@@ -32,8 +29,11 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const product = await resolveProduct(slug);
-  if (!product) return { title: "اثر پیدا نشد", robots: { index: false, follow: false } };
+  const product = await resolveProduct(slug).catch(() => undefined);
+  if (product === undefined)
+    return { title: siteName, robots: { index: false, follow: false } };
+  if (!product)
+    return { title: "اثر پیدا نشد", robots: { index: false, follow: false } };
 
   const title = product.name;
   const description = `${product.subtitle}؛ ${product.story}`.slice(0, 160);
@@ -69,9 +69,7 @@ export async function generateMetadata({
 }
 
 export function generateStaticParams() {
-  return [...photoWorks, ...mockProducts]
-    .filter((product, index, all) => all.findIndex((item) => item.slug === product.slug) === index)
-    .map((product) => ({ slug: product.slug }));
+  return displayWorks.map((product) => ({ slug: product.slug }));
 }
 
 export default async function PDP({
@@ -88,7 +86,11 @@ export default async function PDP({
     fetchProductReviews(product.slug).catch(() => []),
   ]);
 
-  const availability = product.status === "sold" ? "OutOfStock" : "InStock";
+  const availability = isPurchasableStatus(product.status)
+    ? "InStock"
+    : isUpcomingStatus(product.status)
+      ? "PreOrder"
+      : "OutOfStock";
   const productSchema = productJsonLd(product, {
     availability,
     reviews,

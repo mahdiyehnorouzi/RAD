@@ -1,4 +1,10 @@
-import type { LiveMilestone, LivePiece } from "@/components/now/type";
+import { formatRadCode, type Artwork } from "@rad/types";
+import type {
+  LiveJournal,
+  LiveMilestone,
+  LivePiece,
+} from "@/components/now/type";
+import { fallbackArtworks, findArtwork } from "@/lib/artworks";
 import type { LocaleCopy } from "@/types/locale";
 
 function copy(fa: string, en: string): LocaleCopy {
@@ -7,7 +13,9 @@ function copy(fa: string, en: string): LocaleCopy {
 
 function rail(
   current: LivePiece["current"],
-  extras: Partial<Record<LivePiece["current"], { media?: string; note?: LocaleCopy }>> = {},
+  extras: Partial<
+    Record<LivePiece["current"], { media?: string; note?: LocaleCopy }>
+  > = {},
 ): LiveMilestone[] {
   const order: LivePiece["current"][] = [
     "idea",
@@ -38,11 +46,9 @@ function rail(
   }));
 }
 
-export const livePieces: LivePiece[] = [
+const journals: LiveJournal[] = [
   {
-    code: "021",
-    name: copy("کاسه صبح", "Morning bowl"),
-    maker: copy("سحر میرزایی", "Sahar Mirzaei"),
+    radNumber: 21,
     startedDaysAgo: 4,
     current: "drying",
     image: "/making/RAD-M-1405-17/cleaned.png",
@@ -62,9 +68,7 @@ export const livePieces: LivePiece[] = [
     ],
   },
   {
-    code: "014",
-    name: copy("کاسه هاله", "Halo bowl"),
-    maker: copy("نیلوفر نادری", "Niloufar Naderi"),
+    radNumber: 14,
     startedDaysAgo: 11,
     current: "glaze",
     image: "/making/RAD-M-1405-17/glaze-tile.png",
@@ -107,11 +111,33 @@ export const livePieces: LivePiece[] = [
   },
 ];
 
-export function findLivePiece(code: string) {
-  const digits = code.replace(/\D/g, "").padStart(3, "0");
-  return livePieces.find((item) => item.code === digits);
+/** Journals whose artwork is still being made; a finished work leaves the workshop pages. */
+export function livePiecesFrom(artworks: Artwork[]): LivePiece[] {
+  return journals.flatMap(({ radNumber, ...journal }) => {
+    const artwork = findArtwork(artworks, radNumber);
+    if (!artwork || (artwork.status && artwork.status !== "in_workshop"))
+      return [];
+    return [
+      {
+        ...journal,
+        code: formatRadCode(radNumber),
+        slug: artwork.slug,
+        status: artwork.status,
+        name: artwork.title,
+        maker: artwork.artist.name,
+      },
+    ];
+  });
 }
 
-export function workshopToday() {
-  return livePieces.find((item) => item.code === "021") ?? livePieces[0];
+/** Registry pieces for static params and metadata; client views read live artworks. */
+export const livePieces: LivePiece[] = livePiecesFrom(fallbackArtworks);
+
+export function findLivePiece(pieces: LivePiece[], code: string) {
+  const digits = code.replace(/\D/g, "").padStart(3, "0");
+  return pieces.find((item) => item.code === digits);
+}
+
+export function workshopToday(pieces: LivePiece[]) {
+  return pieces.find((item) => item.code === "021") ?? pieces[0];
 }

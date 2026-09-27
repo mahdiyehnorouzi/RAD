@@ -25,14 +25,20 @@ import {
   Truck,
 } from "lucide-react";
 import { useCatalog } from "../../catalog/catalog-provider";
+import { overlayLiveProduct } from "@/lib/catalog/category-defaults";
 import {
-  hasRealProductImage,
-  overlayLiveProduct,
-} from "@/lib/catalog/category-defaults";
-import { formatPassportName, passportForProduct, relatedByFeeling } from "@/lib/passport";
+  formatPassportName,
+  passportForProduct,
+  relatedByFeeling,
+} from "@/lib/passport";
+import { usePassports } from "@/hooks/use-artworks";
 import { WorkMarks } from "@/components/passport";
 import { ButtonLink } from "@/components/ui/button-link";
+import { isGoneStatus } from "@/lib/catalog/product-status";
+import { useProductStatus } from "@/hooks/use-product-status";
 import { CategoryDetailIcon, CategoryOrbitItems } from "./category-orbit-items";
+import { ProductLiveNotice } from "./product-live-notice";
+import { useLiveProduct } from "./hooks";
 import "./product-detail.css";
 
 const FAQ_ICONS: Record<FaqIcon, typeof ShieldCheck> = {
@@ -67,18 +73,12 @@ export function ProductDetail({
       active = false;
     };
   }, [locale]);
-  const { products, getProduct, loading } = useCatalog();
-  const catalogProduct = getProduct(product.slug);
-  const visual =
-    catalogProduct && hasRealProductImage(catalogProduct)
-      ? catalogProduct
-      : hasRealProductImage(product)
-        ? product
-        : (catalogProduct ?? product);
-  const resolved = overlayLiveProduct(
-    overlayLiveProduct(visual, product),
-    catalogProduct,
-  );
+  const { products, getProduct, loading, status: catalogStatus } = useCatalog();
+  const live = useLiveProduct(product.slug);
+  const passports = usePassports();
+  const catalogProduct =
+    catalogStatus === "live" ? getProduct(product.slug) : undefined;
+  const resolved = overlayLiveProduct(catalogProduct ?? product, live.product);
 
   const imageCount = Math.max(resolved.images?.length ?? 0, 1);
 
@@ -95,9 +95,16 @@ export function ProductDetail({
   const artworkNumber = formatArtworkNumber(resolved, number, locale);
   const recordNumber =
     artworkNumber || (locale === "fa" ? "در انتظار شماره" : "NUMBER PENDING");
-  const passport = passportForProduct(resolved);
-  const sold = resolved.status === "sold" || Boolean(passport?.sold);
-  const related = passport ? relatedByFeeling(passport.code) : [];
+  const passport = passportForProduct(passports, resolved);
+  const {
+    inBag,
+    reserved,
+    label: statusLabel,
+    status,
+  } = useProductStatus(resolved);
+  const withdrawn = live.withdrawn && !inBag;
+  const sold = !inBag && !reserved && !withdrawn && isGoneStatus(status);
+  const related = passport ? relatedByFeeling(passports, passport.code) : [];
 
   const sceneStyle = () => {
     const media = resolved.images?.[activeImage];
@@ -214,23 +221,35 @@ export function ProductDetail({
             <div className="pdp-record">
               <span>{locale === "fa" ? "ثبت آرشیو" : "ARCHIVE RECORD"}</span>
               <strong>{recordNumber}</strong>
-              <i>{sold ? t("archiveSoldMark") : locale === "fa" ? "۱ / ۱" : "1 / 1"}</i>
+              <i>
+                {sold
+                  ? t("archiveSoldMark")
+                  : locale === "fa"
+                    ? "۱ / ۱"
+                    : "1 / 1"}
+              </i>
               {passport ? (
-                <Link className="pdp-passport-link" href={href(`/passport/${passport.code}`)}>
+                <Link
+                  className="pdp-passport-link"
+                  href={href(`/passport/${passport.code}`)}
+                >
                   {t("pdpPassportLink")}
                 </Link>
               ) : null}
-              <Link className="pdp-passport-link" href={href(`/products/${resolved.slug}/qr`)}>
+              <Link
+                className="pdp-passport-link"
+                href={href(`/products/${resolved.slug}/qr`)}
+              >
                 {t("pdpQrLink")}
               </Link>
             </div>
             <span className="eyebrow">
-              {category} ·{" "}
-              {resolved.status === "reserved"
-                ? t("reserved")
-                : sold
-                  ? t("soldOut")
-                  : t("uniqueAvailable")}
+              {category}
+              {status === "available" && !inBag
+                ? ` · ${t("uniqueAvailable")}`
+                : statusLabel
+                  ? ` · ${statusLabel}`
+                  : null}
             </span>
             <h1>{copy.name}</h1>
             <p className="subtitle">{copy.subtitle}</p>
@@ -245,33 +264,44 @@ export function ProductDetail({
               <small>{category}</small>
             </div>
             <div className="pdp-spec-motion">{renderDetails()}</div>
-            {sold ? (
-              <div className="pdp-sold-archive">
-                <p>{t("archiveNeverAgain")}</p>
-                <p>{t("sameFeeling")}</p>
-                {related.length ? (
-                  <ul>
-                    {related.map((item) => (
-                      <li key={item.code}>
-                        <Link href={href(`/passport/${item.code}`)}>
-                          {formatPassportName(item, locale, number)}
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                ) : null}
-                <ButtonLink href="/shape" outline>
-                  {t("shapeTitle")}
-                </ButtonLink>
-              </div>
-            ) : (
-              <>
+            <div className="pdp-purchase">
+              <ProductLiveNotice
+                product={resolved}
+                live={live}
+                inBag={inBag}
+                reserved={reserved}
+              />
+              {withdrawn ? null : sold ? (
+                <div className="pdp-sold-archive">
+                  <p>{t("archiveNeverAgain")}</p>
+                  <p>{t("sameFeeling")}</p>
+                  {related.length ? (
+                    <ul>
+                      {related.map((item) => (
+                        <li key={item.code}>
+                          <Link href={href(`/passport/${item.code}`)}>
+                            {formatPassportName(item, locale, number)}
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : null}
+                  <ButtonLink href="/shape" outline>
+                    {t("shapeTitle")}
+                  </ButtonLink>
+                </div>
+              ) : (
                 <div className="pdp-actions">
-                  <AddToBag product={resolved} />
+                  <AddToBag
+                    product={resolved}
+                    onConflict={() => void live.check()}
+                  />
                   <FavoriteButton slug={resolved.slug} />
                 </div>
-                <p className="shipping">{t("shipping")}</p>
-              </>
+              )}
+            </div>
+            {withdrawn || sold ? null : (
+              <p className="shipping">{t("shipping")}</p>
             )}
           </div>
         </div>

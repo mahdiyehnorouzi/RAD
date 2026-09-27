@@ -1,4 +1,8 @@
-import type {LocaleCopy, MakingCommission, QuoteProposal} from "@/components/making/type";
+import type {
+  LocaleCopy,
+  MakingCommission,
+  QuoteProposal,
+} from "@/components/making/type";
 
 function loc(fa: string, en: string): LocaleCopy {
   return { fa, en };
@@ -17,7 +21,10 @@ const saharQuote: QuoteProposal = {
   priceUsd: 220,
   depositToman: 9_200_000,
   depositUsd: 110,
-  completionWindow: loc("چهار تا شش هفته از بیعانه", "Four to six weeks from deposit"),
+  completionWindow: loc(
+    "چهار تا شش هفته از بیعانه",
+    "Four to six weeks from deposit",
+  ),
   includedRevisions: 1,
   cancellationRules: loc(
     "پیش از کوره، بیعانه پس از کسر مواد و زمان مصرف‌شده قابل استرداد است. پس از ورود به کوره، فرم و لعاب برگشت‌ناپذیرند و بیعانه قابل بازگشت نیست.",
@@ -29,11 +36,12 @@ const saharQuote: QuoteProposal = {
 export const seedCommissions: MakingCommission[] = [
   {
     id: "RAD-M-1405-17",
-    title: loc("کاسه خانه‌تنگی", "Homesickness bowl"),
+    title: loc("کاسه حیاط مادربزرگ", "Grandmother’s courtyard bowl"),
     customerName: "آوا صالحی",
     artistName: "سحر میرزایی",
     brief: {
-      concept: "کاسه‌ای که حس خانه‌تنگی حیاط مادربزرگ را نگه دارد؛ لبه آرام، خاکی، نه تزئینی.",
+      concept:
+        "کاسه‌ای که حس خانه‌تنگی حیاط مادربزرگ را نگه دارد؛ لبه آرام، خاکی، نه تزئینی.",
       dimensions: "متوسط — حدود ۱۸ سانتی‌متر دهانه",
       material: "سنگ‌رس تهران، سطح مات",
       intendedUse: "سفره روزمره و نگاه روی طاقچه",
@@ -52,7 +60,8 @@ export const seedCommissions: MakingCommission[] = [
     approvedSnapshot: {
       quote: saharQuote,
       brief: {
-        concept: "کاسه‌ای که حس خانه‌تنگی حیاط مادربزرگ را نگه دارد؛ لبه آرام، خاکی، نه تزئینی.",
+        concept:
+          "کاسه‌ای که حس خانه‌تنگی حیاط مادربزرگ را نگه دارد؛ لبه آرام، خاکی، نه تزئینی.",
         dimensions: "متوسط — حدود ۱۸ سانتی‌متر دهانه",
         material: "سنگ‌رس تهران، سطح مات",
         intendedUse: "سفره روزمره و نگاه روی طاقچه",
@@ -81,7 +90,10 @@ export const seedCommissions: MakingCommission[] = [
     ],
     changeRequests: [],
     preKiln: {
-      dimensions: loc("دهانه ۱۷.۶ سانتی‌متر، بلندی ۸.۲ سانتی‌متر", "Rim 17.6 cm, height 8.2 cm"),
+      dimensions: loc(
+        "دهانه ۱۷.۶ سانتی‌متر، بلندی ۸.۲ سانتی‌متر",
+        "Rim 17.6 cm, height 8.2 cm",
+      ),
       glazeCode: "G-17",
       glazeName: loc("خاکستر زیتونی روی سنگ‌رس", "Olive ash over stoneware"),
       colorRange: loc(
@@ -98,12 +110,15 @@ export const seedCommissions: MakingCommission[] = [
       {
         id: "u-17-1",
         stageId: "making",
-        note: loc("فرم روی چرخ گرفته شد؛ لبه کمی به داخل برگشت.", "Thrown on the wheel; the rim turns slightly inward."),
+        note: loc(
+          "فرم روی چرخ گرفته شد؛ لبه کمی به داخل برگشت.",
+          "Thrown on the wheel; the rim turns slightly inward.",
+        ),
         photoKind: "forming",
         image: "/making/RAD-M-1405-17/forming.png",
         imageAlt: loc(
-          "دست‌های هنرمند هنگام شکل‌دادن کاسه خانه‌تنگی روی چرخ",
-          "The artist forming the Homesickness Bowl on the wheel",
+          "دست‌های هنرمند هنگام شکل‌دادن کاسه حیاط مادربزرگ روی چرخ",
+          "The artist forming the courtyard bowl on the wheel",
         ),
         requiresApproval: false,
         createdAt: now - 8 * day,
@@ -111,12 +126,15 @@ export const seedCommissions: MakingCommission[] = [
       {
         id: "u-17-2",
         stageId: "pre_kiln",
-        note: loc("فرم خشک و پاک شده؛ آماده پیشنهاد لعاب.", "Form dried and cleaned; ready for the glaze proposal."),
+        note: loc(
+          "فرم خشک و پاک شده؛ آماده پیشنهاد لعاب.",
+          "Form dried and cleaned; ready for the glaze proposal.",
+        ),
         photoKind: "cleaned",
         image: "/making/RAD-M-1405-17/cleaned.png",
         imageAlt: loc(
-          "کاسه خانه‌تنگی در مرحله خشک و پاک‌شده پیش از لعاب",
-          "The dried and cleaned Homesickness Bowl before glazing",
+          "کاسه حیاط مادربزرگ در مرحله خشک و پاک‌شده پیش از لعاب",
+          "The dried and cleaned courtyard bowl before glazing",
         ),
         requiresApproval: true,
         createdAt: now - 1 * day,
@@ -124,7 +142,10 @@ export const seedCommissions: MakingCommission[] = [
       {
         id: "u-17-3",
         stageId: "pre_kiln",
-        note: loc("کاشی آزمایشی G-17 از پخت پیشین.", "G-17 test tile from a previous firing."),
+        note: loc(
+          "کاشی آزمایشی G-17 از پخت پیشین.",
+          "G-17 test tile from a previous firing.",
+        ),
         photoKind: "tile",
         image: "/making/RAD-M-1405-17/glaze-tile.png",
         imageAlt: loc(
@@ -194,7 +215,10 @@ export const seedCommissions: MakingCommission[] = [
         at: now - 11 * day,
         actor: "customer",
         stageId: "approval_deposit",
-        action: loc("مشخصات تأیید و بیعانه پرداخت شد", "Specification accepted and deposit paid"),
+        action: loc(
+          "مشخصات تأیید و بیعانه پرداخت شد",
+          "Specification accepted and deposit paid",
+        ),
       },
       {
         id: "a-17-5",
@@ -256,7 +280,10 @@ export const seedCommissions: MakingCommission[] = [
       {
         id: "u-22-0",
         stageId: "design_submitted",
-        note: loc("تصویر تولیدشده همراه طرح ارسال شد.", "The generated image was submitted with the design."),
+        note: loc(
+          "تصویر تولیدشده همراه طرح ارسال شد.",
+          "The generated image was submitted with the design.",
+        ),
         photoKind: "concept",
         requiresApproval: false,
         createdAt: now - 2 * day,
@@ -346,14 +373,23 @@ export const seedCommissions: MakingCommission[] = [
       dimensions: loc("بلندی ۱۴ سانتی‌متر", "Height 14 cm"),
       glazeCode: "G-04",
       glazeName: loc("زیتون مات", "Matte olive"),
-      colorRange: loc("زیتون خاکی تا قهوه‌ای گرم", "Earthy olive to warm brown"),
+      colorRange: loc(
+        "زیتون خاکی تا قهوه‌ای گرم",
+        "Earthy olive to warm brown",
+      ),
       testTileNote: loc("کاشی آزمایشی G-04", "G-04 test tile"),
       createdAt: now - 55 * day,
     },
     firing: {
       firingNote: loc("پخت مخروط ۶، کاهش ملایم.", "Cone 6, gentle reduction."),
-      finishingNote: loc("پایه سنگ‌زنی شد؛ امضا زیر اثر.", "Foot stoned; signed underneath."),
-      qcNote: loc("در بازه تأییدشده. یک لکه آهن روی شانه مانده است.", "Within the approved range. An iron speck remains on the shoulder."),
+      finishingNote: loc(
+        "پایه سنگ‌زنی شد؛ امضا زیر اثر.",
+        "Foot stoned; signed underneath.",
+      ),
+      qcNote: loc(
+        "در بازه تأییدشده. یک لکه آهن روی شانه مانده است.",
+        "Within the approved range. An iron speck remains on the shoulder.",
+      ),
       unexpected: false,
       createdAt: now - 44 * day,
     },
@@ -377,7 +413,10 @@ export const seedCommissions: MakingCommission[] = [
       {
         id: "u-09-3",
         stageId: "shipping",
-        note: loc("بسته‌بندی دو لایه با conservator wrap.", "Double-wrapped for transit."),
+        note: loc(
+          "بسته‌بندی دو لایه با conservator wrap.",
+          "Double-wrapped for transit.",
+        ),
         photoKind: "packed",
         requiresApproval: false,
         createdAt: now - 38 * day,

@@ -1,4 +1,9 @@
-import { Injectable, ConflictException, NotFoundException, UnauthorizedException } from "@nestjs/common";
+import {
+  Injectable,
+  ConflictException,
+  NotFoundException,
+  UnauthorizedException,
+} from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import { InjectRepository } from "@nestjs/typeorm";
 import { createHash, randomInt } from "node:crypto";
@@ -14,6 +19,7 @@ import {
   User,
 } from "../database/entities";
 import { MailService } from "../mail/mail.service";
+import { InventoryService } from "../inventory/inventory.service";
 import { toAuthUser, type Actor, type AuthUser } from "../common/identity";
 
 const SESSION_MAX_AGE_MS = 1000 * 60 * 60 * 24 * 7;
@@ -39,6 +45,7 @@ export class AuthService {
     private readonly commissions: Repository<Commission>,
     private readonly jwt: JwtService,
     private readonly mail: MailService,
+    private readonly inventory: InventoryService,
   ) {}
 
   sessionMaxAge(rememberMe?: boolean) {
@@ -105,10 +112,14 @@ export class AuthService {
     return { user: actor.user };
   }
 
-  async changePassword(actor: Actor, input: { currentPassword: string; newPassword: string }) {
+  async changePassword(
+    actor: Actor,
+    input: { currentPassword: string; newPassword: string },
+  ) {
     if (!actor.user) throw new UnauthorizedException("ابتدا وارد حساب شوید.");
     const user = await this.users.findOne({ where: { id: actor.user.id } });
-    if (!user?.adminRole) throw new UnauthorizedException("این حساب به دفتر کوره دسترسی ندارد.");
+    if (!user?.adminRole)
+      throw new UnauthorizedException("این حساب به دفتر کوره دسترسی ندارد.");
     const matches = await compare(input.currentPassword, user.passwordHash);
     if (!matches) throw new UnauthorizedException("رمز عبور فعلی نادرست است.");
     await this.users.update(
@@ -140,11 +151,16 @@ export class AuthService {
 
     await this.mail.sendPasswordResetCode(user.email, code);
     return {
-      message: "کد بازیابی به ایمیل شما ارسال شد. صندوق ورودی و پوشهٔ اسپم را بررسی کنید.",
+      message:
+        "کد بازیابی به ایمیل شما ارسال شد. صندوق ورودی و پوشهٔ اسپم را بررسی کنید.",
     };
   }
 
-  async resetPassword(input: { email: string; code: string; password: string }) {
+  async resetPassword(input: {
+    email: string;
+    code: string;
+    password: string;
+  }) {
     const normalized = input.email.trim().toLowerCase();
     const code = input.code.trim();
     const tokenHash = createHash("sha256").update(code).digest("hex");
@@ -176,7 +192,11 @@ export class AuthService {
     return { ok: true };
   }
 
-  private async openSession(user: AuthUser, actor: Actor, rememberMe?: boolean) {
+  private async openSession(
+    user: AuthUser,
+    actor: Actor,
+    rememberMe?: boolean,
+  ) {
     await this.mergeGuestState(actor.guestId, user.id);
     const sessionToken = await this.jwt.signAsync({
       sub: user.id,
@@ -192,6 +212,7 @@ export class AuthService {
     if (from === to) return;
 
     await this.moveRows(this.cartItems, from, to);
+    await this.inventory.transferHolds(from, to);
     await this.moveRows(this.favorites, from, to);
     await this.notices.update({ ownerKey: from }, { ownerKey: to });
     await this.orders.update({ ownerKey: from }, { ownerKey: to, userId });

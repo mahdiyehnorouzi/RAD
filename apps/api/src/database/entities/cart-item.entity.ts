@@ -29,6 +29,13 @@ export class CartItem {
   @JoinColumn({ name: "productSlug", referencedColumnName: "slug" })
   product!: Product;
 
+  /** Price when the work entered the bag, so the cart can flag a later change. */
+  @Column("int", { nullable: true })
+  tomanPriceAtAdd!: number | null;
+
+  @Column("int", { nullable: true })
+  usdPriceAtAdd!: number | null;
+
   @CreateDateColumn({ type: "timestamptz" })
   createdAt!: Date;
 

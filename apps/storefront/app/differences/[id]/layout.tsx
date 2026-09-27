@@ -12,7 +12,7 @@ export async function generateMetadata({
   params: Promise<{ id: string }>;
 }): Promise<Metadata> {
   const { id } = await params;
-  const portrait = portraitById(id);
+  const portrait = portraitById(museumPortraits, id);
   if (!portrait)
     return { title: "روایت پیدا نشد", robots: { index: false, follow: false } };
   const title = `روایت ساخت ${portrait.code}`;
@@ -30,7 +30,7 @@ export default async function DifferenceLayout({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const portrait = portraitById(id);
+  const portrait = portraitById(museumPortraits, id);
   if (!portrait) return children;
 
   const path = `/differences/${portrait.id}`;

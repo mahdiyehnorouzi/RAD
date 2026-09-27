@@ -28,8 +28,13 @@ export class Order {
   @Column("int")
   usdTotal!: number;
 
-  @Column("text", { default: "payment_pending" })
+  @Index()
+  @Column("text", { default: "pending_payment" })
   status!: string;
+
+  /** Unpaid (`pending_payment`) orders expire and restock their works after this. */
+  @Column({ type: "timestamptz", nullable: true })
+  paymentDueAt!: Date | null;
 
   @Column("text")
   name!: string;

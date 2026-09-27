@@ -1,8 +1,15 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { cache } from "react";
 import { PassportPage } from "@/components/passport";
-import { findPassport, radPassports } from "@/lib/passport";
+import { resolveArtwork } from "@/lib/artworks";
+import { passportFromArtwork, radPassports } from "@/lib/passport";
 import { absoluteUrl, pageMetadata, safeJsonLd } from "@/lib/seo";
+
+const resolvePassport = cache(async (code: string) => {
+  const artwork = await resolveArtwork(code).catch(() => null);
+  return artwork ? passportFromArtwork(artwork) : null;
+});
 
 export function generateStaticParams() {
   return radPassports.map((passport) => ({ code: passport.code }));
@@ -14,7 +21,7 @@ export async function generateMetadata({
   params: Promise<{ code: string }>;
 }): Promise<Metadata> {
   const { code } = await params;
-  const passport = findPassport(code);
+  const passport = await resolvePassport(code);
   if (!passport) {
     return { title: "گذرنامه پیدا نشد", robots: { index: false, follow: false } };
   }
@@ -33,7 +40,7 @@ export default async function PassportDetail({
   params: Promise<{ code: string }>;
 }) {
   const { code } = await params;
-  const passport = findPassport(code);
+  const passport = await resolvePassport(code);
   if (!passport) notFound();
 
   const path = `/passport/${passport.code}`;

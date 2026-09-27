@@ -12,10 +12,12 @@ import { formatArtworkNumber, ProductMedia } from "@/components/product";
 import { useCatalog } from "@/components/catalog";
 import { productCopy } from "@/lib/catalog/products";
 import { errorMessage } from "@/lib/api";
-import type { Product } from "@rad/types";
+import { formatCountdown } from "@/lib/catalog/product-status";
+import { useCountdown } from "@/hooks/use-countdown";
+import { ORDER_PAYMENT_WINDOW_MINUTES, type Product } from "@rad/types";
 
 export function CheckoutPage() {
-  const { slugs, clear } = useCart();
+  const { slugs, holds, holdEndsAt, clear } = useCart();
   const { user, placeOrder } = useCommerce();
   const { locale, t, href, number } = useLocale();
   const { getProduct } = useCatalog();
@@ -29,9 +31,8 @@ export function CheckoutPage() {
     .map((slug) => getProduct(slug))
     .filter((item): item is Product => Boolean(item));
   const total = cartTotal(items, locale);
-  const unavailable = items.filter(
-    (item) => item.status === "sold" || item.status === "reserved",
-  );
+  const unavailable = slugs.filter((slug) => !holds[slug]);
+  const remaining = useCountdown(holdEndsAt);
 
   useEffect(() => {
     if (!error) return;
@@ -65,10 +66,16 @@ export function CheckoutPage() {
       setError("");
       setSubmitting(true);
       const created = await placeOrder({
-        name: name || user?.name || (locale === "fa" ? "کاربر رَد" : "RAD collector"),
+        name:
+          name ||
+          user?.name ||
+          (locale === "fa" ? "کاربر رَد" : "RAD collector"),
         city: city || (locale === "fa" ? "تهران" : "Tehran"),
         phone: phoneValue,
-        address: [address, postalCode && `${t("postalCodeLabel")} ${postalCode}`]
+        address: [
+          address,
+          postalCode && `${t("postalCodeLabel")} ${postalCode}`,
+        ]
           .filter(Boolean)
           .join("، "),
       });
@@ -89,9 +96,7 @@ export function CheckoutPage() {
     return (
       <section className="cart-empty section">
         <h1>{t("emptyBag")}</h1>
-        <ButtonLink href="/products">
-          {t("viewWorks")}
-        </ButtonLink>
+        <ButtonLink href="/products">{t("viewWorks")}</ButtonLink>
       </section>
     );
   }
@@ -106,18 +111,19 @@ export function CheckoutPage() {
       <div className="checkout-grid">
         <form className="checkout-form" onSubmit={submitDemoOrder} noValidate>
           {error ? (
-            <p
-              ref={errorRef}
-              className="form-error"
-              role="alert"
-              tabIndex={-1}
-            >
+            <p ref={errorRef} className="form-error" role="alert" tabIndex={-1}>
               {error}
             </p>
           ) : null}
           {unavailable.length ? (
             <p className="form-error" role="status">
               {t("workNoLongerAvailable")}
+            </p>
+          ) : remaining !== null ? (
+            <p className="checkout-hold" role="status" aria-live="off">
+              {t("holdCountdown", {
+                time: formatCountdown(remaining, locale, number),
+              })}
             </p>
           ) : null}
           <label htmlFor="checkout-name">{t("nameLabel")}</label>
@@ -142,7 +148,12 @@ export function CheckoutPage() {
             defaultValue=""
           />
           <label htmlFor="checkout-city">{t("cityLabel")}</label>
-          <input id="checkout-city" name="city" type="text" autoComplete="address-level2" />
+          <input
+            id="checkout-city"
+            name="city"
+            type="text"
+            autoComplete="address-level2"
+          />
           <label htmlFor="checkout-address">{t("addressLabel")}</label>
           <textarea
             className="resize-none"
@@ -193,6 +204,21 @@ export function CheckoutPage() {
             <span>{t("finalTotal")}</span>
             <b>{formatTotal(total, locale)}</b>
           </div>
+          <section
+            className="checkout-payment-steps"
+            aria-labelledby="checkout-payment-title"
+          >
+            <h2 id="checkout-payment-title">{t("checkoutPaymentTitle")}</h2>
+            <ol>
+              <li>
+                {t("checkoutPaymentStepReserve", {
+                  minutes: number(ORDER_PAYMENT_WINDOW_MINUTES),
+                })}
+              </li>
+              <li>{t("checkoutPaymentStepTransfer")}</li>
+              <li>{t("checkoutPaymentStepReceipt")}</li>
+            </ol>
+          </section>
         </aside>
       </div>
     </section>

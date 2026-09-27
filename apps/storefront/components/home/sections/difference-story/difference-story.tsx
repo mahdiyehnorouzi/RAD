@@ -2,16 +2,19 @@
 
 import Image from "next/image";
 import { differenceStages } from "@/components/difference/const";
-import type { DifferenceStageId } from "@/components/difference/type";
+import type {
+  DifferencePortrait,
+  DifferenceStageId,
+} from "@/components/difference/type";
 import { ButtonLink } from "@/components/ui/button-link";
 import { useLocale, type Locale } from "@/components/i18n";
-import { museumPortraits } from "@/lib/difference";
+import { usePortraits } from "@/hooks/use-artworks";
 import { useInView, useScrollStage } from "../../hooks";
 import "../../motion/reveal.css";
 import "./difference-story.css";
 
 function stageCopy(
-  portrait: (typeof museumPortraits)[number],
+  portrait: DifferencePortrait,
   stageId: DifferenceStageId,
   locale: Locale,
 ) {
@@ -19,6 +22,12 @@ function stageCopy(
   if (stageId === "imagined") return portrait.imaginedNote[locale];
   if (stageId === "artist") return portrait.artistNotes[0]?.[locale];
   return portrait.materialNotes[0]?.[locale];
+}
+
+/** Names the work so the section heading is never read as its story. */
+function byline(portrait: DifferencePortrait, locale: Locale) {
+  const title = portrait.title ? ` — ${portrait.title[locale]}` : "";
+  return `${portrait.code}${title} · ${portrait.maker[locale]}`;
 }
 
 function stageTransition(progress: number, count: number) {
@@ -49,7 +58,7 @@ export function DifferenceStory() {
   const { ref: scrollerRef, progress } = useScrollStage(
     differenceStages.length,
   );
-  const storyPortrait = museumPortraits[0];
+  const storyPortrait = usePortraits()[0];
   if (!storyPortrait) return null;
 
   const transition = stageTransition(progress, differenceStages.length);
@@ -114,8 +123,11 @@ export function DifferenceStory() {
                 >
                   {t("homeDifferenceTitle")}
                 </h2>
-                <p className="difference-story-maker reveal-item" data-reveal="body">
-                  {storyPortrait.maker[locale]} · {storyPortrait.code}
+                <p
+                  className="difference-story-maker reveal-item"
+                  data-reveal="body"
+                >
+                  {byline(storyPortrait, locale)}
                 </p>
               </header>
               <ol aria-hidden="true">
@@ -141,7 +153,10 @@ export function DifferenceStory() {
                 <p>{copy}</p>
               </div>
             </div>
-            <div className="difference-story-actions reveal-item" data-reveal="cta">
+            <div
+              className="difference-story-actions reveal-item"
+              data-reveal="cta"
+            >
               <ButtonLink href={`/differences/${storyPortrait.id}`} outline>
                 {t("differenceOpen")}
               </ButtonLink>
@@ -156,7 +171,7 @@ export function DifferenceStory() {
         <header className="difference-story-heading">
           <h2>{t("homeDifferenceTitle")}</h2>
           <p className="difference-story-maker">
-            {storyPortrait.maker[locale]} · {storyPortrait.code}
+            {byline(storyPortrait, locale)}
           </p>
         </header>
         {differenceStages.map((item) => {

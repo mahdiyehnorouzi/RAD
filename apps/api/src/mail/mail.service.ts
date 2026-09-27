@@ -31,10 +31,68 @@ export class MailService {
     return this.transporter;
   }
 
-  async sendPasswordResetCode(to: string, code: string) {
-    const from =
+  isConfigured() {
+    return Boolean(
+      this.config.get<string>("SMTP_HOST") &&
+        this.config.get<string>("SMTP_USER") &&
+        this.config.get<string>("SMTP_PASS"),
+    );
+  }
+
+  private from() {
+    return (
       this.config.get<string>("SMTP_FROM") ??
-      `RAD Studio <${this.config.get<string>("SMTP_USER")}>`;
+      `RAD Studio <${this.config.get<string>("SMTP_USER")}>`
+    );
+  }
+
+  /** Payment verified by RAD; order is confirmed. Throws when SMTP fails. */
+  async sendOrderConfirmed(
+    to: string,
+    order: { id: string; name: string; total: number },
+  ) {
+    const total = new Intl.NumberFormat("fa-IR").format(order.total);
+    const text = [
+      `${order.name} عزیز، سلام`,
+      "",
+      `پرداخت سفارش ${order.id} به مبلغ ${total} تومان تأیید شد و سفارش شما ثبت نهایی شد.`,
+      "اثر برای شما کنار گذاشته شده و به‌زودی بسته‌بندی و ارسال می‌شود.",
+      "",
+      "— استودیو رَد",
+    ].join("\n");
+    await this.getTransporter().sendMail({
+      from: this.from(),
+      to,
+      subject: `سفارش ${order.id} تأیید شد — رَد`,
+      text,
+    });
+  }
+
+  /** RAD refused the receipt; the work went back on sale. */
+  async sendPaymentRejected(
+    to: string,
+    order: { id: string; name: string; reason: string },
+  ) {
+    const text = [
+      `${order.name} عزیز، سلام`,
+      "",
+      `پرداخت سفارش ${order.id} تأیید نشد.`,
+      `دلیل: ${order.reason}`,
+      "",
+      "اگر مبلغی واریز کرده‌اید، برای پیگیری بازگشت وجه با پشتیبانی رَد تماس بگیرید.",
+      "",
+      "— استودیو رَد",
+    ].join("\n");
+    await this.getTransporter().sendMail({
+      from: this.from(),
+      to,
+      subject: `پرداخت سفارش ${order.id} تأیید نشد — رَد`,
+      text,
+    });
+  }
+
+  async sendPasswordResetCode(to: string, code: string) {
+    const from = this.from();
     const subject = "کد بازیابی رمز عبور — دفتر کوره رَد";
     const text = [
       "سلام،",

@@ -12,15 +12,24 @@ export {
   fetchCart,
   removeCartItem,
 } from "./cart";
+export { fetchArtwork, fetchArtworks } from "./artworks";
 export {
   fetchProduct,
   fetchProducts,
   fetchRelatedProducts,
 } from "./catalog";
-export { api, ApiError, API_BASE, errorMessage } from "./client";
+export {
+  api,
+  ApiError,
+  API_BASE,
+  errorMessage,
+  isNetworkError,
+  isSessionExpired,
+} from "./client";
 export { createDesign } from "./design";
 export { fetchFavorites, toggleFavorite } from "./favorites";
 export {
+  COMMISSION_UPLOAD_IMAGES,
   createCommission,
   fetchCommission,
   fetchMyCommissions,

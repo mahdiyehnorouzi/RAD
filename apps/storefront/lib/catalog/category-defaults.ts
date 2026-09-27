@@ -1,4 +1,4 @@
-import type { Product, ProductCategory, ProductStatus } from "@rad/types";
+import type { Product, ProductCategory } from "@rad/types";
 
 const CATEGORY_DEFAULT_IMAGE: Record<ProductCategory, string> = {
   ceramics: "/catalog/defaults/ceramics.webp",
@@ -35,42 +35,30 @@ export function isFileProductImage(src?: string) {
 export function productPhotoSrc(src?: string) {
   if (!src) return null;
   if (src.startsWith("/catalog/images/")) return `/backend${src}`;
-  if (src.startsWith("/catalog/") || src.startsWith("data:") || src.startsWith("http")) {
+  if (
+    src.startsWith("/catalog/") ||
+    src.startsWith("data:") ||
+    src.startsWith("http")
+  ) {
     return src;
   }
   return null;
 }
 
 export function hasRealProductImage(product: Product) {
-  return Boolean(product.images?.some((image) => isFileProductImage(image.src)));
+  return Boolean(
+    product.images?.some((image) => isFileProductImage(image.src)),
+  );
 }
 
-function availabilityRank(status?: ProductStatus) {
-  if (status === "sold") return 2;
-  if (status === "reserved") return 1;
-  return 0;
-}
-
+/** Static display data supplies visuals only; status and price always come from the API. */
 export function overlayLiveProduct(display: Product, live?: Product): Product {
   if (!live) return display;
   return {
     ...display,
-    status:
-      availabilityRank(display.status) >= availabilityRank(live.status)
-        ? display.status
-        : live.status,
+    status: live.status ?? display.status,
+    reservedUntil: live.reservedUntil,
+    price: live.price || display.price,
+    usdPrice: live.usdPrice ?? display.usdPrice,
   };
-}
-
-export function overlayLiveCatalog(display: Product[], live: Product[]): Product[] {
-  const bySlug = new Map(live.map((product) => [product.slug, product]));
-  const seen = new Set<string>();
-  const merged = display.map((product) => {
-    seen.add(product.slug);
-    return overlayLiveProduct(product, bySlug.get(product.slug));
-  });
-  for (const product of live) {
-    if (!seen.has(product.slug) && hasRealProductImage(product)) merged.push(product);
-  }
-  return merged;
 }

@@ -1,8 +1,20 @@
 import type { DataSource } from "typeorm";
 import { In } from "typeorm";
 import { createSubmittedCommission } from "../src/commissions/commission.factory";
-import { loc, newEntityId, type MakingCommission, type MakingStageId, type NextActor } from "../src/commissions/commission.types";
-import { Commission, Order, OrderItem, PaymentIntent, Product } from "../src/database/entities";
+import {
+  loc,
+  newEntityId,
+  type MakingCommission,
+  type MakingStageId,
+  type NextActor,
+} from "../src/commissions/commission.types";
+import {
+  Commission,
+  Order,
+  OrderItem,
+  PaymentIntent,
+  Product,
+} from "../src/database/entities";
 
 const day = 24 * 60 * 60 * 1000;
 
@@ -15,20 +27,20 @@ const shopOrders: Array<{
   phone: string;
   address: string;
   slug: string;
-  productStatus: "reserved" | "sold" | "available";
+  productStatus: "sold" | "available";
   trackingCode?: string;
   etaDays?: number;
 }> = [
   {
     id: "RAD-S-1405-01",
     daysAgo: 1,
-    status: "payment_pending",
-    name: "نیلوفر نادری",
+    status: "pending_verification",
+    name: "نگار نادری",
     city: "تهران",
     phone: "09121234501",
     address: "خیابان ولیعصر، کوچهٔ صنوبر، پلاک ۱۲",
     slug: "blue-pedestal-tray",
-    productStatus: "reserved",
+    productStatus: "sold",
   },
   {
     id: "RAD-S-1405-02",
@@ -39,7 +51,7 @@ const shopOrders: Array<{
     phone: "09131234502",
     address: "چهارباغ عباسی، پلاک ۴۸",
     slug: "blue-pink-jar",
-    productStatus: "reserved",
+    productStatus: "sold",
     etaDays: 8,
   },
   {
@@ -51,7 +63,7 @@ const shopOrders: Array<{
     phone: "09171234503",
     address: "بلوار چمران، کوچهٔ نارنج",
     slug: "cat-cup",
-    productStatus: "reserved",
+    productStatus: "sold",
     etaDays: 5,
   },
   {
@@ -63,7 +75,7 @@ const shopOrders: Array<{
     phone: "09141234504",
     address: "خیابان ارتش، پلاک ۲۲",
     slug: "contour-jar",
-    productStatus: "reserved",
+    productStatus: "sold",
     etaDays: 4,
   },
   {
@@ -200,7 +212,13 @@ function commission(input: {
     kilnLocked: input.kilnLocked ?? false,
     messages: input.messages ?? [],
     audit: [
-      audit("customer", "design_submitted", "طرح ارسال شد", "Design submitted", createdAt),
+      audit(
+        "customer",
+        "design_submitted",
+        "طرح ارسال شد",
+        "Design submitted",
+        createdAt,
+      ),
       ...(input.extraAudit ?? []),
     ],
   };
@@ -220,7 +238,8 @@ export async function seedCommerce(dataSource: DataSource) {
 
   for (const item of shopOrders) {
     const product = bySlug.get(item.slug);
-    if (!product) continue;
+    if (!product || product.tomanPrice === null || product.usdPrice === null)
+      continue;
     const createdAt = new Date(Date.now() - item.daysAgo * day);
     const estimatedDeliveryAt =
       item.etaDays != null ? new Date(Date.now() + item.etaDays * day) : null;
@@ -263,7 +282,14 @@ export async function seedCommerce(dataSource: DataSource) {
           amount: product.tomanPrice,
           currency: "IRR",
           provider: "manual_card",
-          status: item.status === "payment_pending" ? "created" : "verified",
+          ...(item.status === "pending_verification"
+            ? {
+                status: "submitted",
+                trackingNumber: `SEED${item.id.slice(-2)}4455`,
+                submittedAt: createdAt,
+                receiptSubmissions: 1,
+              }
+            : { status: "verified" }),
         }),
       );
     }
@@ -275,7 +301,17 @@ export async function seedCommerce(dataSource: DataSource) {
         orderItems.create({ orderId: item.id, productSlug: item.slug }),
       );
     }
-    await products.update({ slug: item.slug }, { status: item.productStatus });
+    await products.update(
+      { slug: item.slug },
+      {
+        status: item.productStatus,
+        holdExpiresAt: null,
+        heldBy:
+          item.status === "pending_verification"
+            ? `guest:seed-${item.id}`
+            : null,
+      },
+    );
   }
 
   const commissions: MakingCommission[] = [
@@ -321,7 +357,13 @@ export async function seedCommerce(dataSource: DataSource) {
         ),
       ],
       extraAudit: [
-        audit("artist", "feasibility", "تغییر مشخص درخواست شد", "A specific change was requested", Date.now() - 2 * day),
+        audit(
+          "artist",
+          "feasibility",
+          "تغییر مشخص درخواست شد",
+          "A specific change was requested",
+          Date.now() - 2 * day,
+        ),
       ],
     }),
     commission({
@@ -345,8 +387,20 @@ export async function seedCommerce(dataSource: DataSource) {
         ),
       ],
       extraAudit: [
-        audit("artist", "feasibility", "طرح تأیید شد", "Design approved", Date.now() - 5 * day),
-        audit("artist", "quote", "پیشنهاد ارسال شد", "Quote sent", Date.now() - 3 * day),
+        audit(
+          "artist",
+          "feasibility",
+          "طرح تأیید شد",
+          "Design approved",
+          Date.now() - 5 * day,
+        ),
+        audit(
+          "artist",
+          "quote",
+          "پیشنهاد ارسال شد",
+          "Quote sent",
+          Date.now() - 3 * day,
+        ),
       ],
     }),
     commission({
@@ -370,8 +424,20 @@ export async function seedCommerce(dataSource: DataSource) {
         ),
       ],
       extraAudit: [
-        audit("artist", "feasibility", "طرح تأیید شد", "Design approved", Date.now() - 12 * day),
-        audit("customer", "approval_deposit", "بیعانه پرداخت شد", "Deposit paid", Date.now() - 10 * day),
+        audit(
+          "artist",
+          "feasibility",
+          "طرح تأیید شد",
+          "Design approved",
+          Date.now() - 12 * day,
+        ),
+        audit(
+          "customer",
+          "approval_deposit",
+          "بیعانه پرداخت شد",
+          "Deposit paid",
+          Date.now() - 10 * day,
+        ),
       ],
     }),
     commission({
@@ -417,8 +483,20 @@ export async function seedCommerce(dataSource: DataSource) {
         ),
       ],
       extraAudit: [
-        audit("artist", "shipping", "ارسال شد", "Shipped", Date.now() - 6 * day),
-        audit("system", "complete", "تحویل ثبت شد", "Delivery recorded", Date.now() - 2 * day),
+        audit(
+          "artist",
+          "shipping",
+          "ارسال شد",
+          "Shipped",
+          Date.now() - 6 * day,
+        ),
+        audit(
+          "system",
+          "complete",
+          "تحویل ثبت شد",
+          "Delivery recorded",
+          Date.now() - 2 * day,
+        ),
       ],
     }),
   ];

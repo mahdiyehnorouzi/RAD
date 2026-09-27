@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { useLocale } from "@/components/i18n";
+import { useLivePieces } from "@/hooks/use-artworks";
 import { formatPassportCode } from "@/lib/passport";
-import { livePieces } from "@/lib/now";
 import "./now-index.css";
 
 export function NowIndex() {
   const { locale, t, number, href } = useLocale();
+  const livePieces = useLivePieces();
 
   return (
     <section className="now-index">

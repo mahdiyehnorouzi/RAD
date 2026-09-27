@@ -70,12 +70,14 @@ button.add--in-bag:disabled,
 
   html[dir="rtl"] .catalog-panel--availability {
     padding-inline-start: 1.5rem;
-    border-inline-start: 1px solid color-mix(in srgb, var(--line) 88%, transparent);
+    border-inline-start: 1px solid
+      color-mix(in srgb, var(--line) 88%, transparent);
   }
 
   html[dir="ltr"] .catalog-panel--availability {
     padding-inline-end: 1.5rem;
-    border-inline-end: 1px solid color-mix(in srgb, var(--line) 88%, transparent);
+    border-inline-end: 1px solid
+      color-mix(in srgb, var(--line) 88%, transparent);
   }
 
   .catalog-availability-row {
@@ -96,6 +98,79 @@ button.add--in-bag:disabled,
   .catalog-count {
     grid-area: count;
   }
+}
+
+.catalog-search,
+.catalog-search-skeleton {
+  grid-column: 1 / -1;
+  order: -2;
+}
+
+.catalog-search-skeleton {
+  height: 3rem;
+}
+
+.catalog-search {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-height: 3rem;
+  padding-inline: 0.9rem;
+  border: 1px solid color-mix(in srgb, var(--line) 88%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--paper) 70%, transparent);
+  transition: border-color 160ms ease;
+}
+
+.catalog-search:focus-within {
+  border-color: var(--clay);
+}
+
+.catalog-search > svg {
+  flex: 0 0 18px;
+  width: 18px;
+  height: 18px;
+  stroke-width: 1.5;
+  color: #71665b;
+}
+
+.catalog-search input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  outline: 0;
+}
+
+.catalog-search input::-webkit-search-cancel-button {
+  display: none;
+}
+
+.catalog-search button {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: #71665b;
+  cursor: pointer;
+}
+
+.catalog-search button svg {
+  width: 16px;
+  height: 16px;
+}
+
+.catalog-search button:focus-visible {
+  outline: 1px solid var(--clay);
+}
+
+.catalog-notice {
+  margin-bottom: 2rem;
 }
 
 .catalog-panel {
@@ -154,7 +229,11 @@ button.add--in-bag:disabled,
   bottom: 0;
   inset-inline-end: 0;
   width: 42px;
-  background: linear-gradient(to var(--fade-direction, left), transparent, var(--canvas));
+  background: linear-gradient(
+    to var(--fade-direction, left),
+    transparent,
+    var(--canvas)
+  );
   pointer-events: none;
 }
 
@@ -193,7 +272,10 @@ html[dir="ltr"] .catalog-rail-shell {
   color: color-mix(in srgb, var(--ink) 82%, transparent);
   white-space: nowrap;
   cursor: pointer;
-  transition: background 160ms ease, border-color 160ms ease, color 160ms ease;
+  transition:
+    background 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease;
 }
 
 .catalog-rail button:hover {
@@ -254,7 +336,10 @@ html[dir="ltr"] .catalog-rail-shell {
   color: color-mix(in srgb, var(--ink) 72%, transparent);
   font-size: 0.84rem;
   cursor: pointer;
-  transition: background 160ms ease, color 160ms ease, box-shadow 160ms ease;
+  transition:
+    background 160ms ease,
+    color 160ms ease,
+    box-shadow 160ms ease;
 }
 
 .catalog-segment button i {
@@ -268,7 +353,7 @@ html[dir="ltr"] .catalog-rail-shell {
   background: #5f6d4d;
 }
 
-.catalog-segment button[data-status="reserved"] i {
+.catalog-segment button[data-status="upcoming"] i {
   background: #c4a46a;
 }
 

@@ -1,4 +1,13 @@
-import type { ProductImage, Vendor } from "../database/entities";
+import type { ProductImage } from "../database/entities";
+import { HIDDEN_PRODUCT_STATUSES } from "../inventory/const/product-status";
+import { normalizeProductStatus } from "../inventory/product-status";
+import { formatArtworkNumber } from "./rad-number";
+import type {
+  CatalogImage,
+  EnCopy,
+  ProductImageMeta,
+  ProductRecord,
+} from "./type";
 
 /** Public product payloads only need image metadata — never load base64 `src`. */
 export const productImageSelect: (keyof ProductImage)[] = [
@@ -11,14 +20,25 @@ export const productImageSelect: (keyof ProductImage)[] = [
   "sortOrder",
 ];
 
-type ProductImageMeta = Pick<
-  ProductImage,
-  "id" | "alt" | "enAlt" | "color" | "accent" | "shape" | "sortOrder"
-> & { src?: string | null };
-
 function imageSrc(image: ProductImageMeta, embedImages: boolean) {
   if (embedImages) return image.src ?? undefined;
   return `/catalog/images/${image.id}`;
+}
+
+export function toCatalogImages(
+  images: ProductImageMeta[],
+  embedImages = false,
+): CatalogImage[] {
+  return [...images]
+    .sort((a, b) => a.sortOrder - b.sortOrder)
+    .map((image) => ({
+      src: imageSrc(image, embedImages),
+      alt: image.alt,
+      enAlt: image.enAlt,
+      color: image.color ?? undefined,
+      accent: image.accent ?? undefined,
+      shape: image.shape ?? undefined,
+    }));
 }
 
 function visualForCategory(category: string) {
@@ -41,29 +61,7 @@ export function formatToman(value: number) {
   return `${toPersianDigits(new Intl.NumberFormat("en-US").format(value).replace(/,/g, "٬"))} تومان`;
 }
 
-type ProductRecord = {
-  slug: string;
-  name: string;
-  subtitle: string;
-  tomanPrice: number;
-  usdPrice: number;
-  color: string;
-  accent: string;
-  shape: string;
-  category: string;
-  status: string;
-  story: string;
-  details: unknown;
-  en: unknown;
-  sortOrder: number;
-  images: ProductImageMeta[];
-  vendor: Vendor | null;
-};
-
-type EnCopy = { name: string; subtitle: string; story: string; details: string[] };
-type JsonValue = unknown;
-
-function asStringArray(value: JsonValue): string[] {
+export function asStringArray(value: unknown): string[] {
   if (Array.isArray(value)) return value.map((item) => String(item));
   if (typeof value === "string") {
     try {
@@ -76,19 +74,21 @@ function asStringArray(value: JsonValue): string[] {
   return [];
 }
 
-function asEnCopy(value: JsonValue, fallback: EnCopy): EnCopy {
+export function asEnCopy(value: unknown, fallback: EnCopy): EnCopy {
   if (value && typeof value === "object" && !Array.isArray(value)) {
     const record = value as Record<string, unknown>;
     return {
       name: String(record.name ?? fallback.name),
       subtitle: String(record.subtitle ?? fallback.subtitle),
       story: String(record.story ?? fallback.story),
-      details: Array.isArray(record.details) ? record.details.map(String) : fallback.details,
+      details: Array.isArray(record.details)
+        ? record.details.map(String)
+        : fallback.details,
     };
   }
   if (typeof value === "string") {
     try {
-      return asEnCopy(JSON.parse(value) as JsonValue, fallback);
+      return asEnCopy(JSON.parse(value) as unknown, fallback);
     } catch {
       return fallback;
     }
@@ -96,34 +96,37 @@ function asEnCopy(value: JsonValue, fallback: EnCopy): EnCopy {
   return fallback;
 }
 
-export function toProduct(product: ProductRecord, options?: { embedImages?: boolean }) {
+export function toProduct(
+  product: ProductRecord,
+  options?: { embedImages?: boolean },
+) {
   const embedImages = options?.embedImages ?? false;
   const details = asStringArray(product.details);
+  const status = normalizeProductStatus(product.status);
   return {
     slug: product.slug,
     name: product.name,
     subtitle: product.subtitle,
-    price: formatToman(product.tomanPrice),
-    usdPrice: product.usdPrice,
+    price: product.tomanPrice === null ? "" : formatToman(product.tomanPrice),
+    usdPrice: product.usdPrice ?? 0,
     color: product.color,
     accent: product.accent,
     shape: product.shape,
     category: product.category,
     visual: visualForCategory(product.category),
-    status: product.status,
+    status,
+    // Held in someone's bag or unpaid checkout: may return to the shop. Never exposes who holds it.
+    reservedUntil:
+      status === "sold" && product.holdExpiresAt
+        ? product.holdExpiresAt.getTime()
+        : undefined,
     story: product.story,
     details,
-    images: product.images
-      .sort((a, b) => a.sortOrder - b.sortOrder)
-      .map((image) => ({
-        src: imageSrc(image, embedImages),
-        alt: image.alt,
-        enAlt: image.enAlt,
-        color: image.color ?? undefined,
-        accent: image.accent ?? undefined,
-        shape: image.shape ?? undefined,
-      })),
-    artworkNumber: `RAD-${String(product.sortOrder + 27).padStart(3, "0")}`,
+    images: toCatalogImages(product.images, embedImages),
+    radNumber: product.radNumber ?? undefined,
+    artworkNumber: product.radNumber
+      ? formatArtworkNumber(product.radNumber)
+      : undefined,
     vendor: product.vendor
       ? {
           id: product.vendor.id,
@@ -149,7 +152,7 @@ export const productIncludeWithSrc = {
 } as const;
 
 export const publicProductWhere = {
-  status: { notIn: ["draft", "review"] as string[] },
+  status: { notIn: [...HIDDEN_PRODUCT_STATUSES] as string[] },
 };
 
 export function stripImageSrc(images: ProductImage[]): ProductImageMeta[] {

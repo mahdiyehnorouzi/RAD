@@ -14,7 +14,7 @@ function noticeHref(notice: Notice) {
   if (notice.kind.startsWith("commission") && notice.productSlug) {
     return `/making/${notice.productSlug}`;
   }
-  if (notice.kind === "order") return "/orders";
+  if (notice.kind.startsWith("order")) return "/orders";
   return null;
 }
 
@@ -29,6 +29,8 @@ export function NotificationsPage() {
     if (notice.kind === "favorite") return `${t("noticeFavorite")} ${name}`;
     if (notice.kind === "cart") return `${t("noticeCart")} ${name}`;
     if (notice.kind === "order") return t("noticeOrder");
+    if (notice.kind === "order_confirmed") return t("noticeOrderConfirmed");
+    if (notice.kind === "order_rejected") return t("noticeOrderRejected");
     if (notice.kind === "commission_approved") return t("noticeCommissionApproved");
     if (notice.kind === "commission_declined") return t("noticeCommissionDeclined");
     if (notice.kind === "commission_change") return t("noticeCommissionChange");

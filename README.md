@@ -20,7 +20,6 @@ The repo is an **npm workspaces monorepo** (version `1.3.0`). Three apps run ind
 
 Optional for deployment:
 
-- [Railway CLI](https://docs.railway.app/develop/cli) — API hosting
 - [Wrangler](https://developers.cloudflare.com/workers/wrangler/) — Cloudflare Workers frontends
 - `CLOUDFLARE_API_TOKEN` — storefront/admin Cloudflare deploys
 
@@ -199,8 +198,7 @@ Copy from `apps/api/.env.example`:
 | `npm run build:admin` | Build admin |
 | `npm run build:all` | Build all workspaces |
 | `npm run typecheck:all` | Typecheck all workspaces |
-| `npm run deploy:release` | Deploy API + storefront + admin (CI/release) |
-| `npm run deploy:api` | Deploy API to Railway |
+| `npm run deploy:release` | Deploy storefront + admin (CI/release) |
 | `npm run deploy:storefront` | Deploy storefront to Cloudflare |
 | `npm run deploy:admin` | Deploy admin to Cloudflare |
 
@@ -318,11 +316,11 @@ RAD/
 
 Production layout:
 
-- **API** — Railway or Render (`Dockerfile.api`, health check `/health`)
+- **API** — VPS at `https://api.rad-object.com` (`Dockerfile.api`, health check `/health`)
 - **Storefront** — Cloudflare Workers (`vinext` build)
 - **Admin** — Cloudflare Workers
 
-Full release (from root, with Railway/Cloudflare credentials configured):
+Full frontend release (from root, with Cloudflare credentials configured):
 
 ```bash
 npm run deploy:release
@@ -331,7 +329,6 @@ npm run deploy:release
 Individual deploys:
 
 ```bash
-npm run deploy:api
 npm run deploy:storefront
 npm run deploy:admin
 ```

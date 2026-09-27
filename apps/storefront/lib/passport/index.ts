@@ -3,12 +3,13 @@ export {
   formatPassportCode,
   formatPassportName,
   passportForProduct,
+  passportFromArtwork,
+  passportsFrom,
   radPassports,
 } from "./passports";
 export {
   familyForCode,
   familyMembers,
-  radFamilies,
   relatedByFeeling,
   traitDistance,
 } from "./families";

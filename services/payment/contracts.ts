@@ -11,7 +11,9 @@ export interface CreatePaymentInput {
 
 /** Live gateway adapter (e.g. Zarinpal). Browser never holds merchant credentials. */
 export interface PaymentGateway {
-  create(input: CreatePaymentInput): Promise<PaymentIntent & { redirectUrl: string }>;
+  create(
+    input: CreatePaymentInput,
+  ): Promise<PaymentIntent & { redirectUrl: string }>;
   verify(authority: string): Promise<PaymentIntent>;
 }
 
@@ -22,12 +24,16 @@ export interface ManualCardDetails {
 }
 
 /**
- * Result of starting payment after inventory is reserved.
+ * Result of starting payment after the works are held for the customer.
  * - `redirect` → send the browser to the gateway
  * - `manual_card` → show card details until the gateway is connected
  */
 export type PaymentStartResult =
-  | { kind: "redirect"; redirectUrl: string; provider: PaymentIntent["provider"] }
+  | {
+      kind: "redirect";
+      redirectUrl: string;
+      provider: PaymentIntent["provider"];
+    }
   | {
       kind: "manual_card";
       provider: PaymentIntent["provider"];

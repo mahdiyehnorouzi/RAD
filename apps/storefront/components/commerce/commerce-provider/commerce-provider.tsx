@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import type { AuthUser, Notice, NoticeKind, Order, Review } from "@rad/types";
+import type { PaymentReceiptInput } from "@/types/api";
 import { productCopy } from "@/lib/catalog/products";
 import { api } from "@/lib/api";
 import { useCatalog } from "../../catalog/catalog-provider";
@@ -38,7 +39,7 @@ type CommerceContextValue = {
     phone?: string;
     address?: string;
   }) => Promise<Order>;
-  confirmDemoPayment: (id: string, receiptImage: string) => Promise<Order>;
+  confirmDemoPayment: (id: string, receipt: PaymentReceiptInput) => Promise<Order>;
   cancelOrder: (id: string) => Promise<Order>;
   reviews: Review[];
   addReview: (review: Omit<Review, "id" | "createdAt">) => Promise<void>;
@@ -190,10 +191,10 @@ export function CommerceProvider({ children }: { children: React.ReactNode }) {
         window.dispatchEvent(new Event("rad:session"));
         return created;
       },
-      confirmDemoPayment: async (id, receiptImage) => {
+      confirmDemoPayment: async (id, receipt) => {
         const updated = await api<Order>(`/orders/${id}/confirm-payment`, {
           method: "POST",
-          body: JSON.stringify({ receiptImage }),
+          body: JSON.stringify(receipt),
         });
         setOrders((current) => current.map((item) => (item.id === id ? updated : item)));
         await refresh();
@@ -310,6 +311,8 @@ export function NotificationCenter() {
     if (notice.kind === "favorite") return `${t("noticeFavorite")} ${name}`;
     if (notice.kind === "cart") return `${t("noticeCart")} ${name}`;
     if (notice.kind === "order") return t("noticeOrder");
+    if (notice.kind === "order_confirmed") return t("noticeOrderConfirmed");
+    if (notice.kind === "order_rejected") return t("noticeOrderRejected");
     if (notice.kind === "commission_approved") return t("noticeCommissionApproved");
     if (notice.kind === "commission_declined") return t("noticeCommissionDeclined");
     if (notice.kind === "commission_change") return t("noticeCommissionChange");

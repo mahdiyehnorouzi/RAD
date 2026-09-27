@@ -3,6 +3,7 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  Index,
   JoinColumn,
   ManyToOne,
   OneToMany,
@@ -17,10 +18,15 @@ import { ProductImage } from "./product-image.entity";
 import { Review } from "./review.entity";
 import { Vendor } from "./vendor.entity";
 
+/** One row per artwork; commerce reads it as a product. */
 @Entity("Product")
 export class Product {
   @PrimaryColumn("text")
   id!: string;
+
+  /** Permanent archive number (`RAD / 041`). */
+  @Column("int", { unique: true, nullable: true })
+  radNumber!: number | null;
 
   @Column("text", { unique: true })
   slug!: string;
@@ -31,11 +37,34 @@ export class Product {
   @Column("text")
   subtitle!: string;
 
-  @Column("int")
-  tomanPrice!: number;
+  /** `null` for archive works that were never offered for sale. */
+  @Column("int", { nullable: true })
+  tomanPrice!: number | null;
 
-  @Column("int")
-  usdPrice!: number;
+  @Column("int", { nullable: true })
+  usdPrice!: number | null;
+
+  @Column("int", { nullable: true })
+  year!: number | null;
+
+  /** `{ body, surface, process }`, each `{ fa, en }`. */
+  @Column("jsonb", { nullable: true })
+  materials!: unknown;
+
+  @Column("jsonb", { nullable: true })
+  dimensions!: unknown;
+
+  @Column("jsonb", { nullable: true })
+  care!: unknown;
+
+  @Column("jsonb", { nullable: true })
+  owner!: unknown;
+
+  @Column("jsonb", { nullable: true })
+  passport!: unknown;
+
+  @Column("jsonb", { nullable: true })
+  difference!: unknown;
 
   @Column("text")
   color!: string;
@@ -49,8 +78,18 @@ export class Product {
   @Column("text")
   category!: string;
 
-  @Column("text", { default: "available" })
+  @Index()
+  @Column("text", { default: "draft" })
   status!: string;
+
+  /** Set while a cart/checkout holds the work as `sold`; cleared once paid. */
+  @Index()
+  @Column({ type: "timestamptz", nullable: true })
+  holdExpiresAt!: Date | null;
+
+  /** Owner key (`user:…` / `guest:…`) of the cart that holds the work. */
+  @Column("text", { nullable: true })
+  heldBy!: string | null;
 
   @Column("text")
   story!: string;

@@ -39,6 +39,9 @@ async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     bodyParser: false,
   });
+  // Number of reverse proxies in front of the API; the throttler keys on `req.ip`.
+  const trustedProxies = Number(process.env.TRUST_PROXY ?? 0);
+  if (trustedProxies > 0) app.set("trust proxy", trustedProxies);
   app.useBodyParser("json", { limit: "12mb" });
   app.useBodyParser("urlencoded", { limit: "12mb", extended: true });
   app.use(cookieParser());
@@ -57,7 +60,7 @@ async function bootstrap() {
   );
   setupSwagger(app);
   const port = Number(process.env.PORT) || 4000;
-  await app.listen(port, "0.0.0.0");
+  await app.listen(port, process.env.HOST || "0.0.0.0");
 }
 
 bootstrap();

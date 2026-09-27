@@ -1017,3 +1017,24 @@
     scroll-behavior: auto;
   }
 }
+
+.pdp-purchase {
+  display: grid;
+  align-content: start;
+  min-width: 0;
+  grid-column: 3;
+  grid-row: 4;
+}
+
+.pdp-purchase > .pdp-actions,
+.pdp-purchase > .pdp-sold-archive {
+  grid-column: auto;
+  grid-row: auto;
+}
+
+.pdp-live-notices {
+  display: grid;
+  gap: 0.6rem;
+  margin-top: 1.2rem;
+  font-size: 0.86rem;
+}

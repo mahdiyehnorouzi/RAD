@@ -3,21 +3,14 @@ import { notFound } from "next/navigation";
 import { cache } from "react";
 import QRCode from "qrcode";
 import { ProductQr } from "@/components/product";
-import { fetchProduct } from "@/lib/api";
-import { getProduct, mockProducts } from "@/lib/catalog/products";
-import { photoWorks } from "@/lib/catalog/photo-works";
-import {
-  hasRealProductImage,
-  overlayLiveProduct,
-} from "@/lib/catalog/category-defaults";
+import { productFromArtwork, resolveArtwork } from "@/lib/artworks";
+import { displayWorks } from "@/lib/catalog/get-catalog-works";
 import { absoluteUrl } from "@/lib/seo";
 
 const resolveProduct = cache(async (slug: string) => {
-  const remote = await fetchProduct(slug).catch(() => null);
-  const local =
-    photoWorks.find((item) => item.slug === slug) ?? getProduct(slug);
-  const visual = remote && hasRealProductImage(remote) ? remote : local ?? remote;
-  return visual ? overlayLiveProduct(visual, remote ?? undefined) : null;
+  const artwork = await resolveArtwork(slug).catch(() => null);
+  if (!artwork || artwork.slug !== slug || artwork.price === null) return null;
+  return productFromArtwork(artwork);
 });
 
 export async function generateMetadata({
@@ -40,12 +33,7 @@ export async function generateMetadata({
 }
 
 export function generateStaticParams() {
-  return [...photoWorks, ...mockProducts]
-    .filter(
-      (product, index, all) =>
-        all.findIndex((item) => item.slug === product.slug) === index,
-    )
-    .map((product) => ({ slug: product.slug }));
+  return displayWorks.map((product) => ({ slug: product.slug }));
 }
 
 export default async function ProductQrPage({

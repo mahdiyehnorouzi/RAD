@@ -1,18 +1,22 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Repository, type SelectQueryBuilder } from "typeorm";
+import { Repository } from "typeorm";
 import { Product } from "../database/entities";
-import { publicProductWhere, stripImageSrc, toProduct } from "./product.mapper";
+import { InventoryService } from "../inventory/inventory.service";
+import { pricedCatalogQuery } from "./catalog.query";
+import { stripImageSrc, toProduct } from "./product.mapper";
 
 @Injectable()
 export class CatalogService {
   constructor(
     @InjectRepository(Product)
     private readonly products: Repository<Product>,
+    private readonly inventory: InventoryService,
   ) {}
 
   async list(category?: string) {
-    const qb = this.publicProductsQuery();
+    await this.inventory.releaseExpiredHolds();
+    const qb = pricedCatalogQuery(this.products);
     if (category && category !== "all") {
       qb.andWhere("product.category = :category", { category });
     }
@@ -23,17 +27,22 @@ export class CatalogService {
   }
 
   async bySlug(slug: string) {
-    const product = await this.publicProductsQuery()
+    await this.inventory.releaseExpiredHolds();
+    const product = await pricedCatalogQuery(this.products)
       .andWhere("product.slug = :slug", { slug })
       .getOne();
-    if (!product || product.status === "draft" || product.status === "review") {
+    if (!product || !this.inventory.isPublic(product.status)) {
       throw new NotFoundException("اثر پیدا نشد.");
     }
-    return toProduct({ ...product, images: stripImageSrc(product.images ?? []) });
+    return toProduct({
+      ...product,
+      images: stripImageSrc(product.images ?? []),
+    });
   }
 
   async related(slug: string) {
-    const products = await this.publicProductsQuery()
+    await this.inventory.releaseExpiredHolds();
+    const products = await pricedCatalogQuery(this.products)
       .andWhere("product.slug != :slug", { slug })
       .getMany();
     return products.map((product) =>
@@ -47,39 +56,9 @@ export class CatalogService {
     const products = await this.list();
     return products.filter((product) => {
       const copy = locale === "en" ? product.en : product;
-      return `${copy.name} ${copy.subtitle} ${copy.story}`
+      return `${copy.name} ${copy.subtitle} ${copy.story} ${product.artworkNumber ?? ""}`
         .toLocaleLowerCase(locale)
         .includes(needle);
     });
-  }
-
-  /**
-   * Public catalog loads image metadata only (never base64 `src`) and skips
-   * rows that cannot be served by `/catalog/images/:id`.
-   */
-  private publicProductsQuery(): SelectQueryBuilder<Product> {
-    return this.products
-      .createQueryBuilder("product")
-      .leftJoinAndSelect("product.vendor", "vendor")
-      .leftJoin(
-        "product.images",
-        "images",
-        "images.src IS NOT NULL AND images.src LIKE :imagePrefix",
-        { imagePrefix: "data:image/%" },
-      )
-      .addSelect([
-        "images.id",
-        "images.alt",
-        "images.enAlt",
-        "images.color",
-        "images.accent",
-        "images.shape",
-        "images.sortOrder",
-      ])
-      .where("product.status NOT IN (:...hidden)", {
-        hidden: publicProductWhere.status.notIn,
-      })
-      .orderBy("product.sortOrder", "ASC")
-      .addOrderBy("images.sortOrder", "ASC");
   }
 }

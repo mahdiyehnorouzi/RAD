@@ -12,17 +12,24 @@ import {
 } from "@/components/passport";
 import { surprisePermissions } from "../const";
 import type { DifferencePortrait } from "../type";
+import { usePassports } from "@/hooks/use-artworks";
 import { findPassport } from "@/lib/passport";
 import { PortraitCertificate } from "./portrait-certificate";
 
-const stageNotes: Record<BeforeRadStageId, (portrait: DifferencePortrait) => DifferencePortrait["described"][]> = {
+const stageNotes: Record<
+  BeforeRadStageId,
+  (portrait: DifferencePortrait) => DifferencePortrait["described"][]
+> = {
   idea: (portrait) => [portrait.described],
   hand: (portrait) => portrait.artistNotes,
   material: (portrait) => [portrait.imaginedNote],
   rad: (portrait) => portrait.materialNotes,
 };
 
-function framesFromPortrait(portrait: DifferencePortrait, image?: string): BeforeRadFrame[] {
+function framesFromPortrait(
+  portrait: DifferencePortrait,
+  image?: string,
+): BeforeRadFrame[] {
   const images = portrait.stageImages;
   return [
     {
@@ -68,9 +75,14 @@ export function DifferencePortraitView({
   const { locale, t, href } = useLocale();
   const [progress, setProgress] = useState(privateReveal ? 0 : 1);
   const stage = stageFromProgress(progress);
-  const permission = surprisePermissions.find((item) => item.id === portrait.permission);
+  const permission = surprisePermissions.find(
+    (item) => item.id === portrait.permission,
+  );
   const notes = stageNotes[stage](portrait);
-  const passport = findPassport(portrait.id) ?? findPassport(portrait.code);
+  const passports = usePassports();
+  const passport =
+    findPassport(passports, portrait.id) ??
+    findPassport(passports, portrait.code);
 
   return (
     <article className="difference-portrait">
@@ -98,7 +110,9 @@ export function DifferencePortraitView({
           ))}
         </ul>
         {passport ? (
-          <Link href={href(`/passport/${passport.code}`)}>{t("pdpPassportLink")}</Link>
+          <Link href={href(`/passport/${passport.code}`)}>
+            {t("pdpPassportLink")}
+          </Link>
         ) : null}
       </div>
 

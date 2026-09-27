@@ -1,30 +1,56 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { ProductCard, ProductGridSkeleton } from "@/components/product/listing";
 import type { Product } from "@rad/types";
 import { useCart } from "@/components/cart";
 import { useLocale } from "@/components/i18n";
 import { useCommerce } from "@/components/commerce";
 import { useCatalog } from "../catalog-provider";
 import { artworkCategories } from "@/lib/catalog/artwork";
-import { ApiError, errorMessage } from "@/lib/api";
+import { ApiError, isNetworkError } from "@/lib/api";
+import { isShopStatus, isUpcomingStatus } from "@/lib/catalog/product-status";
+import {
+  applyCatalogFilters,
+  type AvailabilityFilter,
+  type CatalogFilters,
+} from "@/lib/catalog/filters";
+import { normalizeQuery, productMatchesQuery } from "@/lib/catalog/search";
+import { useProductStatus } from "@/hooks/use-product-status";
 import { MoveLeft, MoveRight } from "lucide-react";
+import { CatalogSearch } from "./catalog-search";
+import { CatalogResults } from "./catalog-results";
 import "./catalog.css";
 
-type AvailabilityFilter = "all" | "available" | "reserved" | "sold";
-
-function matchesAvailability(product: Product, availability: AvailabilityFilter) {
-  const status = product.status ?? "available";
+function matchesAvailability(
+  product: Product,
+  availability: AvailabilityFilter,
+) {
+  const status = product.status;
   if (availability === "all") return true;
-  if (availability === "available") return status === "available";
+  if (availability === "upcoming") return isUpcomingStatus(status);
   return status === availability;
 }
 
-export function Catalog({ products: seeded = [] }: { products?: Product[] }) {
+const defaultFilters: CatalogFilters = {
+  query: "",
+  category: "all",
+  availability: "all",
+};
+
+export function Catalog({
+  products: seeded = [],
+  seededLive = true,
+  initialFilters = defaultFilters,
+}: {
+  products?: Product[];
+  /** Whether the server render reached the API; false means `products` are fixtures. */
+  seededLive?: boolean;
+  initialFilters?: CatalogFilters;
+}) {
   const { t, number, locale } = useLocale();
-  const { products: liveProducts, loading } = useCatalog();
-  const products = liveProducts.length ? liveProducts : seeded;
+  const { products: liveProducts, loading, status, refresh } = useCatalog();
+  const products = loading ? seeded : liveProducts;
   const pending = loading && products.length === 0;
+  const failed = status === "error" || (loading && !seededLive);
   const filters = [
     { id: "all", label: t("filterAll") },
     ...artworkCategories.map((category) => ({
@@ -35,17 +61,40 @@ export function Catalog({ products: seeded = [] }: { products?: Product[] }) {
   const availabilityFilters: { id: AvailabilityFilter; label: string }[] = [
     { id: "all", label: t("filterAll") },
     { id: "available", label: t("filterAvailable") },
-    { id: "reserved", label: t("filterReserved") },
+    { id: "upcoming", label: t("filterUpcoming") },
     { id: "sold", label: t("filterSold") },
   ];
-  const [active, setActive] = useState("all");
-  const [availability, setAvailability] = useState<AvailabilityFilter>("all");
+  const [active, setActive] = useState(initialFilters.category);
+  const [availability, setAvailability] = useState<AvailabilityFilter>(
+    initialFilters.availability,
+  );
+  const [query, setQuery] = useState(initialFilters.query);
   const [canSwipe, setCanSwipe] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const visible = products.filter((product) => {
+  const normalizedQuery = normalizeQuery(query, locale);
+  const shopProducts = products.filter((product) =>
+    isShopStatus(product.status),
+  );
+  const visible = shopProducts.filter((product) => {
     const byCategory = active === "all" || product.category === active;
-    return byCategory && matchesAvailability(product, availability);
+    return (
+      byCategory &&
+      matchesAvailability(product, availability) &&
+      productMatchesQuery(product, normalizedQuery, locale)
+    );
   });
+
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    applyCatalogFilters(url.searchParams, {
+      query,
+      category: active,
+      availability,
+    });
+    if (url.href !== window.location.href) {
+      window.history.replaceState(window.history.state, "", url);
+    }
+  }, [query, active, availability]);
 
   useEffect(() => {
     const node = scrollRef.current;
@@ -61,20 +110,37 @@ export function Catalog({ products: seeded = [] }: { products?: Product[] }) {
     };
   }, [filters.length]);
 
+  const [retrying, setRetrying] = useState(false);
+  const retry = async () => {
+    setRetrying(true);
+    try {
+      await refresh();
+    } finally {
+      setRetrying(false);
+    }
+  };
+
   return (
     <>
       <div className="catalog-toolbar">
+        <CatalogSearch value={query} onChange={setQuery} />
         <section className="catalog-panel catalog-panel--categories">
           <div className="catalog-panel-head">
             <b>{t("artworkCategoriesHeading")}</b>
             {canSwipe ? (
               <span className="filter-scroll-hint">
                 {t("swipeToSeeMore")}
-                {locale === "fa" ? <MoveLeft aria-hidden="true" /> : <MoveRight aria-hidden="true" />}
+                {locale === "fa" ? (
+                  <MoveLeft aria-hidden="true" />
+                ) : (
+                  <MoveRight aria-hidden="true" />
+                )}
               </span>
             ) : null}
           </div>
-          <div className={`catalog-rail-shell${canSwipe ? " is-overflowing" : ""}`}>
+          <div
+            className={`catalog-rail-shell${canSwipe ? " is-overflowing" : ""}`}
+          >
             <div
               ref={scrollRef}
               className="catalog-rail"
@@ -98,7 +164,11 @@ export function Catalog({ products: seeded = [] }: { products?: Product[] }) {
         <section className="catalog-panel catalog-panel--availability">
           <div className="catalog-availability-row">
             <b>{t("availabilityHeading")}</b>
-            <div className="catalog-segment" role="group" aria-label={t("availabilityFilterAria")}>
+            <div
+              className="catalog-segment"
+              role="group"
+              aria-label={t("availabilityFilterAria")}
+            >
               {availabilityFilters.map((item) => (
                 <button
                   type="button"
@@ -119,46 +189,55 @@ export function Catalog({ products: seeded = [] }: { products?: Product[] }) {
           </div>
         </section>
       </div>
-      {pending ? (
-        <ProductGridSkeleton />
-      ) : visible.length ? (
-        <div className="product-grid">
-          {visible.map((p) => (
-            <ProductCard product={p} key={p.slug} />
-          ))}
-        </div>
-      ) : (
-        <div className="empty-state">
-          <h2>{t("emptyTitle")}</h2>
-          <p>{t("emptyBody")}</p>
-          <button
-            onClick={() => {
-              setActive("all");
-              setAvailability("all");
-            }}
-            className="button"
-          >
-            {t("seeAll")}
-          </button>
-        </div>
-      )}
+      <CatalogResults
+        visible={visible}
+        shopCount={shopProducts.length}
+        pending={pending}
+        failed={failed}
+        retrying={retrying}
+        filters={{ query, category: active, availability }}
+        onRetry={() => void retry()}
+        onClearQuery={() => setQuery("")}
+        onClearFilters={() => {
+          setActive("all");
+          setAvailability("all");
+        }}
+        onReset={() => {
+          setActive("all");
+          setAvailability("all");
+          setQuery("");
+        }}
+      />
     </>
   );
 }
 
-export function AddToBag({ product }: { product: Product }) {
-  const { add, has } = useCart();
+export function AddToBag({
+  product,
+  onConflict,
+}: {
+  product: Product;
+  /** Called after the API refuses the add (taken or withdrawn) so the page can re-check. */
+  onConflict?: () => void;
+}) {
+  const { add } = useCart();
   const { t } = useLocale();
   const { addNotice } = useCommerce();
   const { refresh, getProduct } = useCatalog();
   const [error, setError] = useState("");
   const [blocked, setBlocked] = useState(false);
   const [busy, setBusy] = useState(false);
-  const live = getProduct(product.slug) ?? product;
-  const added = has(live.slug);
-  const unavailable =
-    blocked || live.status === "sold" || live.status === "reserved";
-  const unavailableLabel = live.status === "reserved" ? t("reserved") : t("soldOut");
+  const catalogProduct = getProduct(product.slug);
+  const live = product.status ? product : (catalogProduct ?? product);
+  const { inBag: added, purchasable, label } = useProductStatus(live);
+  const unavailable = blocked || (!added && !purchasable);
+  const unavailableLabel = label && !purchasable ? label : t("soldOut");
+
+  useEffect(() => {
+    if (live.status !== "available") return;
+    setBlocked(false);
+    setError("");
+  }, [live.status, live.reservedUntil]);
   return (
     <div className="add-to-bag">
       <button
@@ -178,18 +257,33 @@ export function AddToBag({ product }: { product: Product }) {
             }
           } catch (err) {
             setBusy(false);
-            if (err instanceof ApiError && err.status === 409) {
+            if (
+              err instanceof ApiError &&
+              (err.status === 409 || err.status === 404)
+            ) {
               setBlocked(true);
+              setError(
+                err.status === 404 ? t("liveDeletedTitle") : t("addBagTaken"),
+              );
+              onConflict?.();
               await refresh();
               return;
             }
-            setError(errorMessage(err, t("requestFailed")));
+            setError(
+              isNetworkError(err) ? t("addBagNetwork") : t("addBagFailed"),
+            );
           }
         }}
         disabled={added || unavailable || busy}
         aria-live="polite"
       >
-        {unavailable ? unavailableLabel : added ? t("inBag") : busy ? t("submitting") : t("addBag")}
+        {added
+          ? t("inBag")
+          : unavailable
+            ? unavailableLabel
+            : busy
+              ? t("submitting")
+              : t("addBag")}
       </button>
       {error ? (
         <p className="form-error" role="alert">

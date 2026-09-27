@@ -1,10 +1,14 @@
 "use client";
 
-import { useRef, useState, type ChangeEvent } from "react";
+import { useEffect, useState } from "react";
 import type { Order } from "@rad/types";
+import type { PaymentReceiptInput } from "@/types/api";
 import { useLocale } from "@/components/i18n";
 import { Button, ButtonLink } from "@/components/ui/button-link";
-import { formatTotal } from "@/lib/money";
+import { formatToman } from "@/lib/money";
+import { formatCountdown } from "@/lib/catalog/product-status";
+import { useCountdown } from "@/hooks/use-countdown";
+import { ReceiptForm } from "./receipt-form";
 
 export function OrderNextAction({
   order,
@@ -14,56 +18,48 @@ export function OrderNextAction({
 }: {
   order: Order;
   busy: boolean;
-  onConfirmPayment: (receiptImage: string) => void;
+  onConfirmPayment: (receipt: PaymentReceiptInput) => void;
   onCancel: () => void;
 }) {
-  const { locale, t } = useLocale();
-  const fileRef = useRef<HTMLInputElement>(null);
+  const { locale, t, number } = useLocale();
+  const remaining = useCountdown(order.payment?.dueAt);
   const [copied, setCopied] = useState(false);
   const [cardCopied, setCardCopied] = useState(false);
-  const [receiptImage, setReceiptImage] = useState("");
-  const [fileName, setFileName] = useState("");
-  const [receiptError, setReceiptError] = useState("");
-  const productHref = order.slugs[0] ? `/products/${order.slugs[0]}` : "/products";
+  const [replacing, setReplacing] = useState(false);
+  const submittedAt = order.payment?.submittedAt;
+
+  useEffect(() => {
+    setReplacing(false);
+  }, [submittedAt]);
+
+  const productHref = order.slugs[0]
+    ? `/products/${order.slugs[0]}`
+    : "/products";
   const manualCard = order.payment?.manualCard;
   const redirectUrl = order.payment?.redirectUrl;
-  const receiptSubmitted = order.payment?.status === "submitted";
+  const amountDue = order.payment?.amount ?? order.total;
+  const amountLabel =
+    locale === "fa"
+      ? formatToman(amountDue)
+      : `${new Intl.NumberFormat("en-US").format(amountDue)} toman`;
 
-  const onReceiptChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    if (
-      ![/^image\/jpeg$/, /^image\/png$/, /^image\/webp$/].some((type) =>
-        type.test(file.type),
-      ) ||
-      file.size > 1024 * 1024 ||
-      file.size === 0
-    ) {
-      setReceiptError(t("receiptImageError"));
-      setReceiptImage("");
-      setFileName("");
-      event.target.value = "";
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = () => {
-      setReceiptImage(String(reader.result));
-      setFileName(file.name);
-      setReceiptError("");
-    };
-    reader.onerror = () => {
-      setReceiptError(t("receiptImageError"));
-      setReceiptImage("");
-      setFileName("");
-    };
-    reader.readAsDataURL(file);
-  };
+  const deadline =
+    remaining === null ? null : (
+      <p className="order-pay-note" role="status" aria-live="off">
+        {remaining > 0
+          ? t("paymentDueIn", {
+              time: formatCountdown(remaining, locale, number),
+            })
+          : t("holdExpired")}
+      </p>
+    );
 
-  if (order.status === "payment_pending") {
+  if (order.status === "pending_payment") {
     if (redirectUrl) {
       return (
         <div className="order-next">
           <p>{t("gatewayPaymentHint")}</p>
+          {deadline}
           <div className="order-next-actions">
             <Button
               type="button"
@@ -82,33 +78,15 @@ export function OrderNextAction({
       );
     }
 
-    if (receiptSubmitted) {
-      return (
-        <div className="order-next">
-          <p>{t("receiptAwaitingReview")}</p>
-          {order.payment?.receiptImage ? (
-            <figure className="order-receipt-preview">
-              <img
-                src={order.payment.receiptImage}
-                alt={t("receiptPreviewAlt")}
-              />
-            </figure>
-          ) : null}
-          <div className="order-next-actions">
-            <Button type="button" outline onClick={onCancel} disabled={busy}>
-              {t("cancelDemoOrder")}
-            </Button>
-          </div>
-        </div>
-      );
-    }
-
     return (
       <div className="order-next">
         <p>{t("manualPaymentHint")}</p>
+        {deadline}
         {manualCard ? (
           <div className="order-pay-card">
-            <span className="order-pay-card-label">{t("manualPaymentCardLabel")}</span>
+            <span className="order-pay-card-label">
+              {t("manualPaymentCardLabel")}
+            </span>
             <b className="order-pay-card-number" dir="ltr">
               {manualCard.cardNumber}
             </b>
@@ -117,12 +95,7 @@ export function OrderNextAction({
               {manualCard.bankName ? ` · ${manualCard.bankName}` : ""}
             </span>
             <span className="order-pay-card-amount">
-              {t("manualPaymentAmount", {
-                amount: formatTotal(
-                  locale === "fa" ? order.total : order.usdTotal ?? order.total,
-                  locale,
-                ),
-              })}
+              {t("manualPaymentAmount", { amount: amountLabel })}
             </span>
             <Button
               type="button"
@@ -135,55 +108,109 @@ export function OrderNextAction({
                 window.setTimeout(() => setCardCopied(false), 1800);
               }}
             >
-              {cardCopied ? t("manualPaymentCardCopied") : t("manualPaymentCopyCard")}
+              {cardCopied
+                ? t("manualPaymentCardCopied")
+                : t("manualPaymentCopyCard")}
             </Button>
           </div>
         ) : null}
 
-        <div className="order-receipt-upload">
-          <p className="order-pay-note">{t("manualPaymentConfirmNote")}</p>
-          <label className="order-receipt-label" htmlFor="order-receipt-input">
-            {t("receiptUploadLabel")}
-          </label>
-          <input
-            ref={fileRef}
-            id="order-receipt-input"
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
-            onChange={onReceiptChange}
-            disabled={busy}
-          />
-          {fileName ? <small>{fileName}</small> : null}
-          {receiptImage ? (
-            <figure className="order-receipt-preview">
-              <img src={receiptImage} alt={t("receiptPreviewAlt")} />
-            </figure>
-          ) : null}
-          {receiptError ? (
-            <p className="form-error" role="alert">
-              {receiptError}
-            </p>
-          ) : null}
-        </div>
-
-        <div className="order-next-actions">
-          <Button
-            type="button"
-            onClick={() => {
-              if (!receiptImage) {
-                setReceiptError(t("receiptRequired"));
-                fileRef.current?.focus();
-                return;
-              }
-              onConfirmPayment(receiptImage);
-            }}
-            disabled={busy}
-          >
-            {t("confirmManualPayment")}
-          </Button>
+        <ReceiptForm
+          busy={busy}
+          note={t("manualPaymentConfirmNote")}
+          submitLabel={t("confirmManualPayment")}
+          onSubmit={onConfirmPayment}
+        >
           <Button type="button" outline onClick={onCancel} disabled={busy}>
             {t("cancelDemoOrder")}
           </Button>
+        </ReceiptForm>
+      </div>
+    );
+  }
+
+  if (order.status === "pending_verification") {
+    return (
+      <div className="order-next">
+        <p role="status">{t("receiptAwaitingReview")}</p>
+        {order.payment?.trackingNumber ? (
+          <p className="order-pay-note">
+            {t("receiptSubmittedTracking", {
+              number: order.payment.trackingNumber,
+            })}
+          </p>
+        ) : null}
+        {order.payment?.receiptImage && !replacing ? (
+          <figure className="order-receipt-preview">
+            <img
+              src={order.payment.receiptImage}
+              alt={t("receiptPreviewAlt")}
+            />
+          </figure>
+        ) : null}
+        {replacing ? (
+          <ReceiptForm
+            busy={busy}
+            note={t("receiptReplaceHint")}
+            submitLabel={t("receiptReplaceSubmit")}
+            onSubmit={onConfirmPayment}
+          >
+            <Button
+              type="button"
+              outline
+              onClick={() => setReplacing(false)}
+              disabled={busy}
+            >
+              {t("receiptReplaceCancel")}
+            </Button>
+          </ReceiptForm>
+        ) : (
+          <div className="order-next-actions">
+            <Button
+              type="button"
+              outline
+              onClick={() => setReplacing(true)}
+              disabled={busy}
+            >
+              {t("receiptReplaceToggle")}
+            </Button>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  if (order.status === "rejected") {
+    return (
+      <div className="order-next order-next-rejected" role="status">
+        <p>
+          <b>{t("paymentRejectedTitle")}</b>
+        </p>
+        {order.payment?.rejectionReason ? (
+          <p className="order-rejection-reason">
+            {t("paymentRejectedReason", {
+              reason: order.payment.rejectionReason,
+            })}
+          </p>
+        ) : null}
+        <p className="order-pay-note">{t("paymentRejectedHelp")}</p>
+        <div className="order-next-actions">
+          <ButtonLink href={productHref} outline>
+            {t("nextActionBrowse")}
+          </ButtonLink>
+        </div>
+      </div>
+    );
+  }
+
+  if (order.status === "expired") {
+    return (
+      <div className="order-next">
+        <p>{t("orderExpiredNote")}</p>
+        <div className="order-next-actions">
+          <ButtonLink href={productHref} outline>
+            {t("nextActionBrowse")}
+          </ButtonLink>
         </div>
       </div>
     );

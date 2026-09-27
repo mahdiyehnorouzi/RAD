@@ -3,7 +3,8 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useLocale } from "@/components/i18n";
-import { formatPassportName, radPassports, traitDistance } from "@/lib/passport";
+import { usePassports } from "@/hooks/use-artworks";
+import { formatPassportName, traitDistance } from "@/lib/passport";
 import type { PassportTraits } from "@/components/passport/type";
 import { SHAPE_QUESTIONS } from "./const";
 import "./shape-quiz.css";
@@ -20,6 +21,7 @@ export function ShapeQuiz() {
   const { locale, t, number, href } = useLocale();
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<number[]>([]);
+  const passports = usePassports();
   const done = answers.length === SHAPE_QUESTIONS.length;
   const traits = useMemo(() => {
     const next = { ...empty };
@@ -31,7 +33,7 @@ export function ShapeQuiz() {
     return next;
   }, [answers]);
   const matches = done
-    ? radPassports
+    ? passports
         .filter((item) => item.traits)
         .map((item) => ({ item, distance: traitDistance(traits, item.traits) }))
         .sort((a, b) => a.distance - b.distance)
@@ -64,7 +66,10 @@ export function ShapeQuiz() {
                 type="button"
                 className="button outline"
                 onClick={() => {
-                  setAnswers((current) => [...current.slice(0, step), choice.value]);
+                  setAnswers((current) => [
+                    ...current.slice(0, step),
+                    choice.value,
+                  ]);
                   setStep((current) => current + 1);
                 }}
               >
