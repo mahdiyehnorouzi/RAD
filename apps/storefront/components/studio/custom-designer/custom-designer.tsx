@@ -1,21 +1,26 @@
 "use client";
 import "./custom-designer.css";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { startTransition, useState, type CSSProperties } from "react";
 import { useLocale } from "@/components/i18n";
 import { useCommerce } from "@/components/commerce";
 import { useMaking } from "@/hooks/use-making-workspace";
+import { useOnline } from "@/hooks/use-online";
+import { StateNotice } from "@/components/ui/state-panel";
 import { MakingRequest } from "./making-request";
 import { DesignerNav } from "./designer-nav";
 import { SparkInput } from "./spark-input";
 import { FreedomSlider } from "./freedom-slider";
 import { IdeaCard } from "./idea-card";
-import { freedomToPermission, useDesigner } from "./hooks";
+import { freedomToPermission, useDesigner, useDesignerDraft } from "./hooks";
 import { useBackNavigation } from "@/hooks/use-back-navigation";
 import { artworkCategories } from "@/lib/catalog/artwork";
 import { DESIGNER_FEELINGS } from "./const";
-import { errorMessage } from "@/lib/api";
+import { isNetworkError, isSessionExpired } from "@/lib/api";
+
+type SubmitFailure = "session" | "network" | "failed" | null;
 
 export function CustomDesigner() {
   const { t, locale, number, href } = useLocale();
@@ -24,8 +29,12 @@ export function CustomDesigner() {
   const { user } = useCommerce();
   const { submitDesign } = useMaking();
   const designer = useDesigner();
+  const online = useOnline();
+  const draftStore = useDesignerDraft(designer.draft, designer.restoreDraft);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
+  const [failure, setFailure] = useState<SubmitFailure>(null);
+  const signInHref = href("/account?next=/studio");
   const {
     canAdvance,
     category,
@@ -69,15 +78,21 @@ export function CustomDesigner() {
 
   function submitCommission() {
     if (!canAdvance || submitting) return;
+    if (!online) {
+      setFailure("network");
+      setSubmitError(t("designerOffline"));
+      return;
+    }
     if (!user) {
       setSubmitError(t("designerNeedAccount"));
-      router.push(href("/account?next=/studio"));
+      router.push(signInHref);
       return;
     }
     void (async () => {
       try {
         setSubmitting(true);
         setSubmitError("");
+        setFailure(null);
         const titleText =
           prompt.trim().slice(0, 42) ||
           (locale === "fa" ? "ایده استودیو" : "Studio idea");
@@ -108,9 +123,22 @@ export function CustomDesigner() {
             hasVoice,
           },
         });
-        router.push(`/making/${commission.id}`);
+        draftStore.clear();
+        router.push(href(`/making/${commission.id}`));
       } catch (err) {
-        setSubmitError(errorMessage(err, t("requestFailed")));
+        const kind: SubmitFailure = isSessionExpired(err)
+          ? "session"
+          : isNetworkError(err)
+            ? "network"
+            : "failed";
+        setFailure(kind);
+        setSubmitError(
+          kind === "session"
+            ? t("designerSessionExpired")
+            : kind === "network"
+              ? t("designerSubmitNetwork")
+              : t("designerSubmitFailed"),
+        );
       } finally {
         setSubmitting(false);
       }
@@ -129,6 +157,31 @@ export function CustomDesigner() {
         <form className="designer-form" onSubmit={(event) => event.preventDefault()} noValidate>
           <h1>{t("designerSparkTitle")}</h1>
           <p className="designer-promise">{t("designerFreeIdea")}</p>
+
+          {!online || draftStore.restored ? (
+            <div className="designer-notices">
+              {!online ? (
+                <StateNotice tone="error">
+                  <p>{t("designerOffline")}</p>
+                </StateNotice>
+              ) : null}
+              {draftStore.restored ? (
+                <StateNotice
+                  action={
+                    <button
+                      type="button"
+                      className="state-action"
+                      onClick={draftStore.discard}
+                    >
+                      {t("designerDraftDiscard")}
+                    </button>
+                  }
+                >
+                  <p>{t("designerDraftRestored")}</p>
+                </StateNotice>
+              ) : null}
+            </div>
+          ) : null}
 
           {step === "spark" ? (
             <SparkInput
@@ -197,7 +250,13 @@ export function CustomDesigner() {
               setBudget={setBudget}
               onSubmit={submitCommission}
               submitting={submitting}
+              offline={!online}
               error={submitError}
+              errorAction={
+                failure === "session" ? (
+                  <Link href={signInHref}>{t("designerSignInAgain")}</Link>
+                ) : null
+              }
             />
           ) : null}
 

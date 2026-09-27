@@ -9,7 +9,11 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { randomBytes } from "node:crypto";
 import { hash } from "bcryptjs";
 import { DataSource, In, IsNull, Not, Repository } from "typeorm";
-import { assertImageData, productImageError, productImageLimit } from "../common/image-data";
+import {
+  assertImageData,
+  productImageError,
+  productImageLimit,
+} from "../common/image-data";
 import {
   CartItem,
   Favorite,
@@ -22,6 +26,15 @@ import {
   Vendor,
 } from "../database/entities";
 import { productIncludeWithSrc } from "../catalog/product.mapper";
+import { nextRadNumber } from "../catalog/rad-number";
+import { InventoryService } from "../inventory/inventory.service";
+import type { ProductStatus } from "../inventory/type";
+import { PaymentReviewService } from "../orders/payment-review.service";
+import {
+  canManuallyTransitionOrder,
+  normalizeStoreOrderStatus,
+} from "../orders/store-order-status";
+import { adminOrderRelations } from "./const/order-relations";
 import { canAdmin, type AdminPermission } from "./permissions";
 import {
   artistVendorId,
@@ -31,7 +44,12 @@ import {
   toAdminUser,
   toStoreCategory,
 } from "./admin.mapper";
-import type { InviteMemberDto, SaveProductDto, UpdateMemberDto, UpdateOrderDto } from "./dto";
+import type {
+  InviteMemberDto,
+  SaveProductDto,
+  UpdateMemberDto,
+  UpdateOrderDto,
+} from "./dto";
 
 @Injectable()
 export class AdminService {
@@ -55,6 +73,8 @@ export class AdminService {
     private readonly reviews: Repository<Review>,
     @InjectRepository(PaymentIntent)
     private readonly payments: Repository<PaymentIntent>,
+    private readonly inventory: InventoryService,
+    private readonly paymentReview: PaymentReviewService,
   ) {}
 
   assert(role: string | undefined, permission: AdminPermission) {
@@ -64,6 +84,7 @@ export class AdminService {
   }
 
   async listProducts() {
+    await this.inventory.releaseExpiredHolds();
     const products = await this.products.find({
       relations: productIncludeWithSrc,
       order: { sortOrder: "ASC", updatedAt: "DESC" },
@@ -118,6 +139,8 @@ export class AdminService {
             details,
             en,
             vendorId,
+            radNumber: await nextRadNumber(this.products),
+            year: new Date().getFullYear(),
             sortOrder: await this.nextSortOrder(),
           }),
         );
@@ -140,8 +163,12 @@ export class AdminService {
       throw new ConflictException("این اثر در سفارش ثبت شده و قابل حذف نیست.");
     }
     await this.dataSource.transaction(async (manager) => {
-      await manager.getRepository(CartItem).delete({ productSlug: product.slug });
-      await manager.getRepository(Favorite).delete({ productSlug: product.slug });
+      await manager
+        .getRepository(CartItem)
+        .delete({ productSlug: product.slug });
+      await manager
+        .getRepository(Favorite)
+        .delete({ productSlug: product.slug });
       await manager.getRepository(Review).delete({ productSlug: product.slug });
       await manager.getRepository(Product).delete({ id });
     });
@@ -149,87 +176,95 @@ export class AdminService {
   }
 
   async listOrders() {
+    await this.inventory.releaseExpiredHolds();
     const orders = await this.orders.find({
-      relations: { items: { product: true }, payment: true },
+      relations: adminOrderRelations,
       order: { createdAt: "DESC" },
     });
     return orders.map(toAdminOrder);
   }
 
   async updateOrder(id: string, input: UpdateOrderDto) {
+    await this.inventory.releaseExpiredHolds();
     const order = await this.orders.findOne({
       where: { id },
-      relations: { items: { product: true }, payment: true },
+      relations: adminOrderRelations,
     });
     if (!order) throw new NotFoundException("سفارش پیدا نشد.");
     const slugs = order.items.map((item) => item.productSlug);
-    const nextStatus = input.status;
-    const currentStatus = order.status;
-    const fulfillment = shopOrderFulfillment(order);
+    const currentStatus = normalizeStoreOrderStatus(order.status);
+    const nextStatus = normalizeStoreOrderStatus(input.status);
     const trackingCode =
       input.trackingCode?.trim() ||
       (nextStatus === "shipped"
-        ? fulfillment.trackingCode || `RAD-POST-${id.slice(-4)}`
-        : fulfillment.trackingCode);
+        ? order.trackingCode || `RAD-POST-${id.slice(-4)}`
+        : order.trackingCode);
 
-    if (
-      nextStatus === "confirmed" &&
-      currentStatus === "payment_pending" &&
-      order.payment &&
-      order.payment.status !== "submitted" &&
-      order.payment.status !== "verified"
-    ) {
+    if (!canManuallyTransitionOrder(currentStatus, nextStatus)) {
+      if (nextStatus === "confirmed" || nextStatus === "rejected") {
+        throw new BadRequestException(
+          "تأیید یا رد پرداخت فقط از بخش بررسی رسید انجام می‌شود.",
+        );
+      }
       throw new BadRequestException(
-        "هنوز رسید پرداخت ارسال نشده. پس از بارگذاری رسید توسط مشتری، پرداخت را تأیید کنید.",
+        `تغییر وضعیت سفارش از «${currentStatus}» به «${nextStatus}» مجاز نیست.`,
       );
     }
 
     const updated = await this.dataSource.transaction(async (manager) => {
-      const products = manager.getRepository(Product);
-      const payments = manager.getRepository(PaymentIntent);
       const orders = manager.getRepository(Order);
-
-      if (nextStatus === "cancelled" || nextStatus === "returned") {
-        await products.update(
-          { slug: In(slugs), status: In(["reserved", "sold"]) },
-          { status: "available" },
-        );
-        if (order.payment) {
-          await payments.update({ orderId: id }, { status: "failed" });
+      if (nextStatus !== currentStatus) {
+        if (nextStatus === "cancelled" || nextStatus === "returned") {
+          await this.inventory.restock(manager, slugs);
+          await manager
+            .getRepository(PaymentIntent)
+            .update(
+              { orderId: id, status: In(["created", "redirected", "submitted"]) },
+              { status: "failed" },
+            );
+        } else {
+          await this.inventory.markSold(manager, slugs);
         }
-      } else if (nextStatus === "confirmed" && currentStatus === "payment_pending") {
-        await products.update({ slug: In(slugs) }, { status: "sold" });
-        await payments.update({ orderId: id }, { status: "verified" });
-      } else if (
-        nextStatus === "confirmed" ||
-        nextStatus === "packing" ||
-        nextStatus === "shipped" ||
-        nextStatus === "delivered"
-      ) {
-        await products.update({ slug: In(slugs) }, { status: "sold" });
       }
 
       await orders.update(
         { id },
         {
           status: nextStatus,
+          paymentDueAt:
+            nextStatus === "cancelled" ? null : order.paymentDueAt,
           trackingCode: trackingCode || null,
           estimatedDeliveryAt:
             nextStatus === "shipped" ||
             nextStatus === "confirmed" ||
             nextStatus === "packing"
-              ? fulfillment.estimatedDeliveryAt ??
-                new Date(Date.now() + 6 * 24 * 60 * 60 * 1000)
-              : fulfillment.estimatedDeliveryAt,
+              ? (order.estimatedDeliveryAt ??
+                new Date(Date.now() + 6 * 24 * 60 * 60 * 1000))
+              : order.estimatedDeliveryAt,
         },
       );
 
-      return orders.findOneOrFail({
-        where: { id },
-        relations: { items: { product: true }, payment: true },
-      });
+      return orders.findOneOrFail({ where: { id }, relations: adminOrderRelations });
     });
     return toAdminOrder(updated);
+  }
+
+  async approvePayment(id: string, reviewerId: string | null) {
+    await this.paymentReview.approve(id, reviewerId);
+    return this.adminOrder(id);
+  }
+
+  async rejectPayment(id: string, reason: string, reviewerId: string | null) {
+    await this.paymentReview.reject(id, reason, reviewerId);
+    return this.adminOrder(id);
+  }
+
+  private async adminOrder(id: string) {
+    const order = await this.orders.findOneOrFail({
+      where: { id },
+      relations: adminOrderRelations,
+    });
+    return toAdminOrder(order);
   }
 
   async listMembers() {
@@ -274,7 +309,9 @@ export class AdminService {
     await this.users.update(
       { id },
       {
-        ...(input.role && user.adminRole !== "owner" ? { adminRole: input.role } : {}),
+        ...(input.role && user.adminRole !== "owner"
+          ? { adminRole: input.role }
+          : {}),
         ...(input.status ? { status: input.status } : {}),
       },
     );
@@ -319,7 +356,7 @@ export class AdminService {
       tomanPrice: number;
       usdPrice: number;
       category: string;
-      status: string;
+      status: ProductStatus;
       story: string;
       vendorId: string | null;
     },
@@ -329,6 +366,7 @@ export class AdminService {
     if (current.slug !== data.slug) {
       throw new ConflictException("شناسه URL پس از ایجاد قابل تغییر نیست.");
     }
+    this.inventory.assertManualTransition(current, data.status);
     await this.products.update(
       { id },
       {
@@ -367,15 +405,4 @@ export class AdminService {
       ),
     );
   }
-}
-
-function shopOrderFulfillment(order: unknown) {
-  const row = order as {
-    trackingCode?: string | null;
-    estimatedDeliveryAt?: Date | null;
-  };
-  return {
-    trackingCode: row.trackingCode ?? null,
-    estimatedDeliveryAt: row.estimatedDeliveryAt ?? null,
-  };
 }

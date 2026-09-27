@@ -14,6 +14,7 @@ import type { AuthUser } from "@rad/types";
 import type { MakingCommission } from "@/components/making/type";
 import { isDemoCommission, seedCommissions } from "@/lib/making";
 import {
+  COMMISSION_UPLOAD_IMAGES,
   createCommission,
   fetchMyCommissions,
   fetchWorkshopCommissions,
@@ -21,7 +22,10 @@ import {
   saveWorkshopCommission,
   slimCommissionBrief,
 } from "@/lib/api";
-import { createMakingActions, type MakingActions } from "@/hooks/making-actions";
+import {
+  createMakingActions,
+  type MakingActions,
+} from "@/hooks/making-actions";
 import { useCommerce } from "@/components/commerce";
 
 const storageKey = "rad-making-commissions-v2";
@@ -63,10 +67,17 @@ export function MakingProvider({ children }: { children: ReactNode }) {
 
   const loadRemote = useCallback(async () => {
     try {
-      const remote = maker ? await fetchWorkshopCommissions() : await fetchMyCommissions();
+      const remote = maker
+        ? await fetchWorkshopCommissions()
+        : await fetchMyCommissions();
       if (Array.isArray(remote)) {
         setCommissions((current) =>
-          maker ? remote : mergeCommissions(current.filter((item) => !isDemoCommission(item.id)), remote),
+          maker
+            ? remote
+            : mergeCommissions(
+                current.filter((item) => !isDemoCommission(item.id)),
+                remote,
+              ),
         );
         return true;
       }
@@ -81,9 +92,9 @@ export function MakingProvider({ children }: { children: ReactNode }) {
     setReady(false);
     const local = maker ? [] : readLocal();
     (async () => {
-      const remote = await (maker ? fetchWorkshopCommissions() : fetchMyCommissions()).catch(
-        () => [] as MakingCommission[],
-      );
+      const remote = await (
+        maker ? fetchWorkshopCommissions() : fetchMyCommissions()
+      ).catch(() => [] as MakingCommission[]);
       if (cancelled) return;
       if (maker) setCommissions(remote);
       else {
@@ -101,7 +112,10 @@ export function MakingProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!ready || maker) return;
     try {
-      window.localStorage.setItem(storageKey, JSON.stringify(persistable(commissions)));
+      window.localStorage.setItem(
+        storageKey,
+        JSON.stringify(persistable(commissions)),
+      );
     } catch {
       /* quota */
     }
@@ -133,7 +147,9 @@ export function MakingProvider({ children }: { children: ReactNode }) {
         if (changed && !isDemoCommission(id)) {
           const save = maker ? saveWorkshopCommission : saveCommission;
           const previous = saveQueues.current.get(id) ?? Promise.resolve();
-          const queued = previous.catch(() => undefined).then(() => save(id, changed));
+          const queued = previous
+            .catch(() => undefined)
+            .then(() => save(id, changed));
           saveQueues.current.set(id, queued);
         }
         return next;
@@ -142,13 +158,22 @@ export function MakingProvider({ children }: { children: ReactNode }) {
     [maker],
   );
 
-  const actions = useMemo(() => createMakingActions(update, setCommissions), [update]);
+  const actions = useMemo(
+    () => createMakingActions(update, setCommissions),
+    [update],
+  );
 
   const submitDesign = useCallback(
     async (input: Parameters<MakingActions["submitDesign"]>[0]) => {
-      const slimInput = { ...input, brief: slimCommissionBrief(input.brief) };
+      const slimInput = {
+        ...input,
+        brief: slimCommissionBrief(input.brief, COMMISSION_UPLOAD_IMAGES),
+      };
       const saved = await createCommission(slimInput);
-      setCommissions((current) => [saved, ...current.filter((item) => item.id !== saved.id)]);
+      setCommissions((current) => [
+        saved,
+        ...current.filter((item) => item.id !== saved.id),
+      ]);
       return saved;
     },
     [],
@@ -168,7 +193,9 @@ export function MakingProvider({ children }: { children: ReactNode }) {
     [actions, commissions, maker, ready, submitDesign],
   );
 
-  return <MakingContext.Provider value={value}>{children}</MakingContext.Provider>;
+  return (
+    <MakingContext.Provider value={value}>{children}</MakingContext.Provider>
+  );
 }
 
 export function useMaking() {
@@ -179,7 +206,9 @@ export function useMaking() {
 
 function readLocal(): MakingCommission[] {
   try {
-    const raw = window.localStorage.getItem(storageKey) ?? window.localStorage.getItem("rad-making-commissions");
+    const raw =
+      window.localStorage.getItem(storageKey) ??
+      window.localStorage.getItem("rad-making-commissions");
     if (!raw) return [];
     const parsed = JSON.parse(raw) as MakingCommission[];
     return Array.isArray(parsed) ? parsed : [];
@@ -188,11 +217,15 @@ function readLocal(): MakingCommission[] {
   }
 }
 
-function mergeCommissions(local: MakingCommission[], remote: MakingCommission[]) {
+function mergeCommissions(
+  local: MakingCommission[],
+  remote: MakingCommission[],
+) {
   const byId = new Map(local.map((item) => [item.id, item]));
   for (const item of remote) {
     const existing = byId.get(item.id);
-    if (!existing || item.updatedAt >= existing.updatedAt) byId.set(item.id, item);
+    if (!existing || item.updatedAt >= existing.updatedAt)
+      byId.set(item.id, item);
   }
   return [...byId.values()].sort((a, b) => b.updatedAt - a.updatedAt);
 }

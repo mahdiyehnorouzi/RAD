@@ -5,6 +5,7 @@ import { JwtModule } from "@nestjs/jwt";
 import { ThrottlerGuard, ThrottlerModule } from "@nestjs/throttler";
 import { DatabaseModule } from "./database/database.module";
 import { CommonModule } from "./common/common.module";
+import { InventoryModule } from "./inventory/inventory.module";
 import { SessionMiddleware } from "./common/session.middleware";
 import { ApiExceptionFilter } from "./common/http-exception.filter";
 import { AuthModule } from "./auth/auth.module";
@@ -37,6 +38,7 @@ import { HealthController } from "./health/health.controller";
     }),
     DatabaseModule,
     CommonModule,
+    InventoryModule,
     MailModule,
     AuthModule,
     CatalogModule,

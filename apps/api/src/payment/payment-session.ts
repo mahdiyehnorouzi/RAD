@@ -49,7 +49,7 @@ export function manualCardDetails(): ManualCardDetails {
 }
 
 /**
- * Start payment for a reserved order.
+ * Start payment for an order whose works are held for the customer.
  * Today: returns manual card instructions (no redirect).
  * Later: call a PaymentGateway adapter from services/payment/contracts
  * and return `{ kind: "redirect", redirectUrl }`.

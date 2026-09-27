@@ -1,52 +1,34 @@
 import type { LocaleCopy } from "@/types/locale";
-import type { ProductCategory } from "@rad/types";
+import type {
+  BeforeRadFrame,
+  PassportPhoto,
+  PassportPlace,
+  PassportTraits,
+  PassportTransfer,
+  ProductCategory,
+  ProductStatus,
+  WorkMark,
+} from "@rad/types";
 
-export const BEFORE_RAD_STAGES = ["idea", "hand", "material", "rad"] as const;
+export {
+  BEFORE_RAD_STAGES,
+  type BeforeRadFrame,
+  type BeforeRadStageId,
+  type PassportPhoto,
+  type PassportPlace,
+  type PassportTraits,
+  type PassportTransfer,
+  type WorkMark,
+} from "@rad/types";
 
-export type BeforeRadStageId = (typeof BEFORE_RAD_STAGES)[number];
-
-export type PassportPhoto = {
-  src: string;
-  note: LocaleCopy;
-};
-
-export type PassportPlace = {
-  place: LocaleCopy;
-  note: LocaleCopy;
-};
-
-export type BeforeRadFrame = {
-  id: BeforeRadStageId;
-  src?: string;
-  color: string;
-  accent: string;
-  caption: LocaleCopy;
-};
-
-export type WorkMark = {
-  x: number;
-  y: number;
-  title: LocaleCopy;
-  note: LocaleCopy;
-};
-
-export type PassportTransfer = {
-  from: LocaleCopy;
-  to: LocaleCopy;
-  when: LocaleCopy;
-};
-
-export type PassportTraits = {
-  crooked: number;
-  quiet: number;
-  worn: number;
-  surprise: number;
-  strange: number;
-};
-
+/** Passport view of an `Artwork`; every field is projected from that one record. */
 export type RadPassport = {
+  radNumber: number;
   code: string;
   slug: string;
+  /** API status of the artwork; absent while only the registry fallback is loaded. */
+  status?: ProductStatus;
+  /** Set when the work is offered in the shop. */
   productSlug?: string;
   differenceId?: string;
   familyId?: string;
@@ -71,7 +53,6 @@ export type RadPassport = {
   owner: LocaleCopy;
   city: LocaleCopy;
   care: LocaleCopy;
-  sold: boolean;
   whereabouts: {
     current: LocaleCopy;
     trail: PassportPlace[];

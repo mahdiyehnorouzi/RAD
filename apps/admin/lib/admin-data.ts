@@ -1,15 +1,32 @@
+import {
+  PRODUCT_STATUSES,
+  canTransitionProductStatus,
+  type ProductStatus,
+} from "@rad/types";
+
 export type AdminRole = "owner" | "manager" | "editor" | "viewer";
 export type AdminSection =
   "overview" | "products" | "orders" | "commissions" | "users" | "members" | "account";
-export type AdminProductStatus = "draft" | "available" | "reserved" | "sold";
+export type AdminProductStatus = ProductStatus;
 export type AdminOrderStatus =
-  | "payment_pending"
+  | "pending_payment"
+  | "pending_verification"
   | "confirmed"
   | "packing"
   | "shipped"
   | "delivered"
+  | "expired"
+  | "rejected"
   | "cancelled"
   | "returned";
+
+export type AdminPaymentStatus =
+  | "created"
+  | "redirected"
+  | "submitted"
+  | "verified"
+  | "rejected"
+  | "failed";
 
 export interface AdminProduct {
   id: string;
@@ -19,6 +36,10 @@ export interface AdminProduct {
   category: string;
   price: number;
   status: AdminProductStatus;
+  /** Set while a customer's cart or unpaid order holds the work. */
+  holdExpiresAt?: number;
+  /** A customer holds the work (cart, unpaid order, or receipt awaiting review). */
+  held?: boolean;
   artist: string;
   images: string[];
   updatedAt: number;
@@ -27,14 +48,27 @@ export interface AdminProduct {
 export interface AdminOrder {
   id: string;
   customer: string;
+  phone?: string;
+  city?: string;
+  address?: string;
   productName: string;
+  products: Array<{ slug: string; name: string; radNumber?: number }>;
   amount: number;
   status: AdminOrderStatus;
+  /** Postal tracking code once shipped. */
   trackingCode?: string;
   createdAt: number;
-  paymentStatus?: "created" | "redirected" | "submitted" | "verified" | "failed";
+  /** `pending_payment` orders expire after this. */
+  paymentDueAt?: number;
+  paymentStatus?: AdminPaymentStatus;
+  paymentAmount?: number;
   receiptImage?: string;
+  /** Bank transfer tracking number the customer entered with the receipt. */
+  paymentTrackingNumber?: string;
   paymentSubmittedAt?: number;
+  receiptSubmissions?: number;
+  paymentReviewedAt?: number;
+  rejectionReason?: string;
 }
 
 export interface AdminMember {
@@ -127,18 +161,22 @@ export const roleLabels: Record<AdminRole, string> = {
 };
 
 export const orderStatusLabels: Record<AdminOrderStatus, string> = {
-  payment_pending: "در انتظار پرداخت",
-  confirmed: "سفارش ثبت شد",
+  pending_payment: "در انتظار پرداخت",
+  pending_verification: "در انتظار تأیید پرداخت",
+  confirmed: "پرداخت تأیید شد",
   packing: "در حال بسته‌بندی",
   shipped: "تحویل به پست",
   delivered: "تحویل داده شد",
+  expired: "منقضی شد",
+  rejected: "پرداخت رد شد",
   cancelled: "لغوشده",
   returned: "مرجوع‌شده",
 };
 
-/** Happy-path fulfillment only — cancel/return are exceptional branches. */
+/** Happy path only — expired/rejected/cancel/return are exceptional branches. */
 export const orderStatusProgress: AdminOrderStatus[] = [
-  "payment_pending",
+  "pending_payment",
+  "pending_verification",
   "confirmed",
   "packing",
   "shipped",
@@ -146,8 +184,42 @@ export const orderStatusProgress: AdminOrderStatus[] = [
 ];
 
 export function isTerminalOrderStatus(status: AdminOrderStatus) {
-  return status === "cancelled" || status === "returned";
+  return (
+    status === "expired" ||
+    status === "rejected" ||
+    status === "cancelled" ||
+    status === "returned"
+  );
 }
+
+/**
+ * Mirrors `MANUAL_ORDER_TRANSITIONS` in the API. Confirming or rejecting a
+ * payment is not a manual status change; it goes through receipt review.
+ */
+const manualOrderTransitions: Record<AdminOrderStatus, AdminOrderStatus[]> = {
+  pending_payment: ["cancelled"],
+  pending_verification: ["cancelled"],
+  confirmed: ["packing", "shipped", "cancelled"],
+  packing: ["confirmed", "shipped", "cancelled"],
+  shipped: ["packing", "delivered", "returned"],
+  delivered: ["shipped", "returned"],
+  expired: [],
+  rejected: [],
+  cancelled: [],
+  returned: [],
+};
+
+export function orderStatusOptions(current: AdminOrderStatus) {
+  return [current, ...manualOrderTransitions[current]];
+}
+
+/** Common reasons staff pick when a receipt does not check out. */
+export const paymentRejectionReasons = [
+  "مبلغ واریزی با مبلغ سفارش مطابقت ندارد.",
+  "رسید خوانا نیست یا مربوط به این سفارش نیست.",
+  "واریزی با این شماره پیگیری در حساب رَد دیده نشد.",
+  "این رسید قبلاً برای سفارش دیگری استفاده شده است.",
+] as const;
 
 const faNumber = new Intl.NumberFormat("fa-IR");
 
@@ -157,10 +229,28 @@ export function stageCountLabel(index: number, total: number) {
 
 export const productStatusLabels: Record<AdminProductStatus, string> = {
   draft: "پیش‌نویس",
+  in_workshop: "در کارگاه",
+  ready: "آماده، هنوز عرضه نشده",
   available: "موجود",
-  reserved: "رزرو شده",
   sold: "فروخته شده",
+  archived: "آرشیو",
 };
+
+const faTime = new Intl.DateTimeFormat("fa-IR", { hour: "2-digit", minute: "2-digit" });
+
+export function productStatusLabel(product: AdminProduct) {
+  if (product.holdExpiresAt) {
+    return `در سبد مشتری تا ${faTime.format(product.holdExpiresAt)}`;
+  }
+  if (product.held) return "فروخته شده · در انتظار تأیید پرداخت";
+  return productStatusLabels[product.status];
+}
+
+/** Statuses the editor may pick; new products can start anywhere. */
+export function productStatusOptions(current?: AdminProductStatus) {
+  if (!current) return [...PRODUCT_STATUSES];
+  return PRODUCT_STATUSES.filter((status) => canTransitionProductStatus(current, status));
+}
 
 export const permissions = {
   owner: ["product.write", "product.delete", "order.write", "member.write"],
@@ -168,68 +258,6 @@ export const permissions = {
   editor: ["product.write"],
   viewer: [],
 } as const;
-
-export const seedProducts: AdminProduct[] = [
-  {
-    id: "rad-027",
-    slug: "red-vessel-27",
-    name: "کوزه‌ی سرخ شماره ۲۷",
-    description:
-      "کوزه‌ای یکتا با لعاب خاکستر و اکسید آهن؛ ساخته‌شده و امضاشده در استودیوی رَد.",
-    category: "گلدان",
-    price: 4500000,
-    status: "available",
-    artist: "استودیو رَد",
-    images: ["/rad-icon.svg"],
-    updatedAt: Date.now(),
-  },
-  {
-    id: "rad-028",
-    slug: "olive-memory",
-    name: "حافظه‌ی زیتونی",
-    description:
-      "فرمی آرام و متراکم با سطح مات برای نگه‌داشتن نور و شاخه‌های کوتاه.",
-    category: "گلدان",
-    price: 4000000,
-    status: "reserved",
-    artist: "سحر میرزایی",
-    images: ["/rad-icon.svg", "/rad-logo.png"],
-    updatedAt: Date.now() - 86400000,
-  },
-  {
-    id: "rad-029",
-    slug: "lut-line",
-    name: "خط لوت",
-    description:
-      "پرسلان شنی با لبه‌ی نامتقارن؛ قطعه‌ای میان ظرف روزمره و مجسمه.",
-    category: "ظروف",
-    price: 4000000,
-    status: "draft",
-    artist: "استودیو رَد",
-    images: [],
-    updatedAt: Date.now() - 172800000,
-  },
-];
-
-export const seedOrders: AdminOrder[] = [
-  {
-    id: "RAD-408189",
-    customer: "مهدیه نوروزی",
-    productName: "کوزه‌ی سرخ شماره ۲۷",
-    amount: 12800000,
-    status: "packing",
-    createdAt: Date.now() - 86400000,
-  },
-  {
-    id: "RAD-385651",
-    customer: "رها احمدی",
-    productName: "حافظه‌ی زیتونی",
-    amount: 9600000,
-    status: "shipped",
-    trackingCode: "RAD-POST-3856",
-    createdAt: Date.now() - 259200000,
-  },
-];
 
 export const seedMembers: AdminMember[] = [
   {

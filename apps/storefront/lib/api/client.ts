@@ -26,6 +26,15 @@ function firstString(value: unknown): string | undefined {
   return undefined;
 }
 
+/** The request never reached the API: offline, DNS, dropped connection or timeout. */
+export function isNetworkError(err: unknown) {
+  return err instanceof ApiError && (err.code === "network" || err.code === "timeout");
+}
+
+export function isSessionExpired(err: unknown) {
+  return err instanceof ApiError && err.status === 401;
+}
+
 export function errorMessage(err: unknown, fallback = "Request failed"): string {
   if (err instanceof ApiError) return err.message || fallback;
   if (err instanceof Error && err.message) return err.message;
@@ -66,6 +75,9 @@ export async function api<T>(path: string, init?: RequestInit & { timeoutMs?: nu
     if (err instanceof ApiError) throw err;
     if (err instanceof DOMException && err.name === "AbortError") {
       throw new ApiError("درخواست طولانی شد. دوباره تلاش کنید.", 408, "timeout");
+    }
+    if (err instanceof TypeError) {
+      throw new ApiError("اتصال به اینترنت برقرار نیست. دوباره تلاش کنید.", 0, "network");
     }
     throw err;
   } finally {

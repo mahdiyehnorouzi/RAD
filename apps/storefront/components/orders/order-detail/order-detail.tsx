@@ -16,6 +16,7 @@ import {
   STORE_ORDER_PROGRESS,
   STORE_ORDER_STATUS_KEY,
   formatShippingAddress,
+  isTerminalStoreStatus,
   radArtworkNumber,
 } from "../const";
 import { OrderTimeline } from "./order-timeline";
@@ -156,7 +157,7 @@ export function OrderDetail({ id }: { id: string }) {
             </div>
           ) : null}
         </dl>
-        {order.status !== "cancelled" && order.status !== "returned" ? (
+        {!isTerminalStoreStatus(order.status) ? (
           <OrderTimeline
             status={order.status}
             stages={stages}
@@ -173,8 +174,8 @@ export function OrderDetail({ id }: { id: string }) {
         <OrderNextAction
           order={order}
           busy={busy}
-          onConfirmPayment={(receiptImage) =>
-            run(() => confirmDemoPayment(order.id, receiptImage))
+          onConfirmPayment={(receipt) =>
+            run(() => confirmDemoPayment(order.id, receipt))
           }
           onCancel={() => run(() => cancelOrder(order.id))}
         />

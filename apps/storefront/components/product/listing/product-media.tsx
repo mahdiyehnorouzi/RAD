@@ -13,6 +13,7 @@ import {
   catalogPhotoSrc,
 } from "@/lib/catalog/photo-works";
 import { ArtworkVisual } from "../artwork-visual";
+import { useProductStatus } from "@/hooks/use-product-status";
 import "./product-media.css";
 
 function ownPhotoSrc(
@@ -44,14 +45,12 @@ export function ProductMedia({
   showStatusBadge?: boolean;
   preserveTransparentBackground?: boolean;
 }) {
-  const { locale, t } = useLocale();
+  const { locale } = useLocale();
+  const { badge } = useProductStatus(product);
   const [failedSrc, setFailedSrc] = useState<string | null>(null);
   const soldBadge =
-    showStatusBadge &&
-    (product.status === "sold" || product.status === "reserved") ? (
-      <span className="sold-media-badge">
-        {product.status === "reserved" ? t("reserved") : t("soldOut")}
-      </span>
+    showStatusBadge && badge ? (
+      <span className="sold-media-badge">{badge}</span>
     ) : null;
 
   const media = product.images?.[imageIndex] ?? product.images?.[0];

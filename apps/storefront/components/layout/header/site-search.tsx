@@ -1,11 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 import { productCopy } from "@/lib/catalog/products";
 import { useLocale } from "@/components/i18n";
 import { Search, X } from "lucide-react";
-import { useCatalog } from "@/components/catalog";
+import { useSearchWorks } from "@/hooks/use-search-works";
 import "./site-search.css";
 
 export function SiteSearch() {
@@ -13,22 +14,12 @@ export function SiteSearch() {
   const [query, setQuery] = useState("");
 
   const inputRef = useRef<HTMLInputElement>(null);
+  const router = useRouter();
 
   const { locale, t, href } = useLocale();
-  const { products } = useCatalog();
-  const normalizedQuery = query.trim().toLocaleLowerCase(locale);
-
-  const results = useMemo(
-    () =>
-      normalizedQuery
-        ? products.filter((product) => {
-            const copy = productCopy(product, locale);
-            return `${copy.name} ${copy.subtitle} ${copy.story}`
-              .toLocaleLowerCase(locale)
-              .includes(normalizedQuery);
-          })
-        : [],
-    [locale, normalizedQuery, products],
+  const { normalizedQuery, results } = useSearchWorks(query);
+  const allResultsHref = href(
+    `/products?q=${encodeURIComponent(query.trim())}`,
   );
 
   useEffect(() => {
@@ -87,6 +78,12 @@ export function SiteSearch() {
               inputMode="search"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key !== "Enter" || !normalizedQuery) return;
+                event.preventDefault();
+                setOpen(false);
+                router.push(allResultsHref);
+              }}
               placeholder={t("searchPlaceholder")}
               autoComplete="off"
             />
@@ -123,6 +120,13 @@ export function SiteSearch() {
               ) : (
                 <p>{t("searchEmpty")}</p>
               )}
+              <Link
+                className="search-all-results"
+                href={allResultsHref}
+                onClick={() => setOpen(false)}
+              >
+                {t("seeAllResults")}
+              </Link>
             </div>
           )}
         </section>

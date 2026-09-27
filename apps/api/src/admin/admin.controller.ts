@@ -11,9 +11,19 @@ import {
 } from "@nestjs/common";
 import { AdminGuard } from "../common/guards/admin.guard";
 import { AdminService } from "./admin.service";
-import { InviteMemberDto, SaveProductDto, UpdateMemberDto, UpdateOrderDto } from "./dto";
+import {
+  InviteMemberDto,
+  RejectPaymentDto,
+  SaveProductDto,
+  UpdateMemberDto,
+  UpdateOrderDto,
+} from "./dto";
 import { CommissionsService } from "../commissions/commissions.service";
-import { CommissionDecideDto, CommissionMessageDto, SaveCommissionDto } from "../commissions/dto";
+import {
+  CommissionDecideDto,
+  CommissionMessageDto,
+  SaveCommissionDto,
+} from "../commissions/dto";
 import type { AuthedRequest } from "../common/session.middleware";
 
 @Controller("admin")
@@ -66,6 +76,24 @@ export class AdminController {
     return this.admin.updateOrder(id, body);
   }
 
+  /** Receipt matches the order: confirm it, sell the work, notify the buyer. */
+  @Post("orders/:id/payment/approve")
+  approvePayment(@Param("id") id: string, @Req() request: AuthedRequest) {
+    this.admin.assert(request.adminRole, "order.write");
+    return this.admin.approvePayment(id, request.userId ?? null);
+  }
+
+  /** Receipt refused: order becomes `rejected` and the work goes back on sale. */
+  @Post("orders/:id/payment/reject")
+  rejectPayment(
+    @Param("id") id: string,
+    @Body() body: RejectPaymentDto,
+    @Req() request: AuthedRequest,
+  ) {
+    this.admin.assert(request.adminRole, "order.write");
+    return this.admin.rejectPayment(id, body.reason, request.userId ?? null);
+  }
+
   @Get("commissions")
   listCommissions() {
     return this.commissions.listAll();
@@ -87,7 +115,10 @@ export class AdminController {
   }
 
   @Post("commissions/:id/review")
-  beginCommissionReview(@Param("id") id: string, @Req() request: AuthedRequest) {
+  beginCommissionReview(
+    @Param("id") id: string,
+    @Req() request: AuthedRequest,
+  ) {
     this.admin.assert(request.adminRole, "order.write");
     return this.commissions.beginReview(id);
   }

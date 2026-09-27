@@ -1,3 +1,5 @@
+export * from "./artwork";
+
 export type Locale = "fa" | "en";
 export type ProductShape = "tall" | "round" | "wide";
 export type ProductCategory =
@@ -18,7 +20,57 @@ export type ProductVisual =
   | "sculpture"
   | "jewelry"
   | "print";
-export type ProductStatus = "draft" | "review" | "available" | "reserved" | "sold";
+/**
+ * Single inventory state machine for every one-of-one work. The API owns it;
+ * storefront and admin only read it.
+ *
+ * draft → in_workshop → ready → available → sold → archived
+ *
+ * A cart hold is not a separate state: the product becomes `sold` with a
+ * `holdExpiresAt`, and returns to `available` if payment is not completed.
+ */
+export const PRODUCT_STATUSES = [
+  "draft",
+  "in_workshop",
+  "ready",
+  "available",
+  "sold",
+  "archived",
+] as const;
+export type ProductStatus = (typeof PRODUCT_STATUSES)[number];
+
+/** Statuses the public API returns. Drafts never leave the admin. */
+export const PUBLIC_PRODUCT_STATUSES: ProductStatus[] = [
+  "in_workshop",
+  "ready",
+  "available",
+  "sold",
+  "archived",
+];
+
+/** Manual transitions staff may make; checkout owns available → sold. */
+export const PRODUCT_STATUS_TRANSITIONS: Record<
+  ProductStatus,
+  ProductStatus[]
+> = {
+  draft: ["in_workshop", "ready", "available", "archived"],
+  in_workshop: ["draft", "ready", "archived"],
+  ready: ["in_workshop", "available", "archived"],
+  available: ["ready", "sold", "archived"],
+  sold: ["available", "archived"],
+  archived: ["available", "sold"],
+};
+
+export function canTransitionProductStatus(
+  from: ProductStatus,
+  to: ProductStatus,
+) {
+  return from === to || PRODUCT_STATUS_TRANSITIONS[from].includes(to);
+}
+
+export function isPurchasableStatus(status?: ProductStatus) {
+  return status === "available";
+}
 
 const categoryVisual: Record<string, ProductVisual> = {
   ceramics: "vessel",
@@ -65,10 +117,14 @@ export interface Product {
   category: ProductCategory;
   visual?: ProductVisual;
   status?: ProductStatus;
+  /** Epoch ms. Set while a `sold` work is only held by a cart or unpaid checkout. */
+  reservedUntil?: number;
   story: string;
   details: string[];
   images?: ProductImage[];
   vendor?: Vendor;
+  /** Same permanent number as `Artwork.radNumber`. */
+  radNumber?: number;
   artworkNumber?: string;
   en: { name: string; subtitle: string; story: string; details: string[] };
 }
@@ -80,46 +136,80 @@ export interface AuthUser {
   role: "customer" | "artist" | "admin";
   adminRole?: "owner" | "manager" | "editor" | "viewer" | null;
 }
+/**
+ * pending_payment → pending_verification → confirmed → packing → shipped → delivered
+ *
+ * A valid order reserves its works for {@link ORDER_PAYMENT_WINDOW_MINUTES};
+ * without a receipt it becomes `expired`. Once a receipt is uploaded the
+ * order waits in `pending_verification` without a deadline until RAD
+ * confirms or rejects it. `expired`, `rejected`, `cancelled` and `returned`
+ * are terminal and restock the work.
+ */
 export type StoreOrderStatus =
-  | "payment_pending"
+  | "pending_payment"
+  | "pending_verification"
   | "confirmed"
   | "packing"
   | "shipped"
   | "delivered"
+  | "expired"
+  | "rejected"
   | "cancelled"
   | "returned";
 export type OrderStatus = StoreOrderStatus;
 
 export const STORE_ORDER_STATUSES: StoreOrderStatus[] = [
-  "payment_pending",
+  "pending_payment",
+  "pending_verification",
   "confirmed",
   "packing",
   "shipped",
   "delivered",
+  "expired",
+  "rejected",
   "cancelled",
   "returned",
 ];
 
 export const STORE_ORDER_PROGRESS: StoreOrderStatus[] = [
-  "payment_pending",
+  "pending_payment",
+  "pending_verification",
   "confirmed",
   "packing",
   "shipped",
   "delivered",
 ];
 
+export const TERMINAL_STORE_ORDER_STATUSES: StoreOrderStatus[] = [
+  "expired",
+  "rejected",
+  "cancelled",
+  "returned",
+];
+
+export function isTerminalStoreOrderStatus(status: StoreOrderStatus) {
+  return TERMINAL_STORE_ORDER_STATUSES.includes(status);
+}
+
+/** Mirrors `ORDER_PAYMENT_WINDOW_MS` in the API. */
+export const ORDER_PAYMENT_WINDOW_MINUTES = 30;
+
 export const storeOrderStatusLabels = {
-  payment_pending: "در انتظار پرداخت",
-  confirmed: "سفارش ثبت شد",
+  pending_payment: "در انتظار پرداخت",
+  pending_verification: "در انتظار تأیید پرداخت",
+  confirmed: "سفارش تأیید شد",
   packing: "در حال بسته‌بندی",
   shipped: "تحویل به پست",
   delivered: "تحویل داده شد",
+  expired: "منقضی‌شده",
+  rejected: "پرداخت رد شد",
   cancelled: "لغوشده",
   returned: "مرجوع‌شده",
 } as const satisfies Record<StoreOrderStatus, string>;
 
 const legacyStoreOrderStatus: Record<string, StoreOrderStatus> = {
-  received: "payment_pending",
+  payment_pending: "pending_payment",
+  received: "pending_payment",
   approved: "confirmed",
   forming: "packing",
   drying: "packing",
@@ -148,15 +238,19 @@ export interface Order {
   /** Present while payment is still open (or after confirm for history). */
   payment?: OrderPayment;
 }
-export interface Review { id: string; productSlug: string; author: string; rating: number; comment: string; image?: string; createdAt: number; }
+export interface Review {
+  id: string;
+  productSlug: string;
+  author: string;
+  rating: number;
+  comment: string;
+  image?: string;
+  createdAt: number;
+}
 export type PaymentProvider = "sandbox" | "manual_card" | "zarinpal";
 export type PaymentMode = "manual_card" | "gateway";
 export type PaymentStatus =
-  | "created"
-  | "redirected"
-  | "submitted"
-  | "verified"
-  | "failed";
+  "created" | "redirected" | "submitted" | "verified" | "rejected" | "failed";
 export interface ManualCardPayment {
   cardNumber: string;
   cardHolder: string;
@@ -167,13 +261,22 @@ export interface OrderPayment {
   mode: PaymentMode;
   provider: PaymentProvider;
   status: PaymentStatus;
+  /** Exact toman amount the customer must transfer. */
+  amount?: number;
   /** Shown while the live gateway is offline — customer transfers to this card. */
   manualCard?: ManualCardPayment;
   /** When the gateway is connected, the storefront navigates here. */
   redirectUrl?: string;
   /** Receipt uploaded by the customer (data URL). */
   receiptImage?: string;
+  /** Bank transfer tracking / reference number entered with the receipt. */
+  trackingNumber?: string;
   submittedAt?: number;
+  reviewedAt?: number;
+  /** Why RAD refused the receipt; set when `status` is `rejected`. */
+  rejectionReason?: string;
+  /** `pending_payment` orders expire and restock their works after this (epoch ms). */
+  dueAt?: number;
 }
 export interface PaymentIntent {
   id: string;
@@ -190,6 +293,8 @@ export type NoticeKind =
   | "cart"
   | "welcome"
   | "order"
+  | "order_confirmed"
+  | "order_rejected"
   | "commission_approved"
   | "commission_declined"
   | "commission_change"
@@ -199,8 +304,25 @@ export type NoticeKind =
   | "commission_firing"
   | "commission_balance"
   | "commission_shipped";
-export interface Notice { id: string; kind: NoticeKind; productSlug?: string; read: boolean; createdAt: number; }
-export interface CartSnapshot { slugs: string[]; }
+export interface Notice {
+  id: string;
+  kind: NoticeKind;
+  productSlug?: string;
+  read: boolean;
+  createdAt: number;
+}
+export interface CartSnapshot {
+  slugs: string[];
+  /** Hold deadline per slug (epoch ms). Unpaid holds return to `available` after it. */
+  holds: Record<string, number>;
+  /** Price per slug when it entered the bag; missing for older cart rows. */
+  prices?: Record<string, CartPriceAtAdd>;
+}
+
+export interface CartPriceAtAdd {
+  toman: number;
+  usd: number;
+}
 
 export type FaqIcon = "shield-check" | "package-check" | "truck" | "palette";
 

@@ -31,7 +31,8 @@ export function SparkDraw({
     context.lineCap = "round";
     if (sketch) {
       const image = new Image();
-      image.onload = () => context.drawImage(image, 0, 0, box.width, box.height);
+      image.onload = () =>
+        context.drawImage(image, 0, 0, box.width, box.height);
       image.src = sketch;
     }
   }, [sketch]);
@@ -43,7 +44,10 @@ export function SparkDraw({
 
   function persist() {
     const canvas = canvasRef.current;
-    if (canvas) onChange(canvas.toDataURL("image/png"));
+    if (!canvas) return;
+    const png = canvas.toDataURL("image/png");
+    // Commission briefs drop data-URLs over 120k chars; dense sketches fall back to JPEG.
+    onChange(png.length <= 110_000 ? png : canvas.toDataURL("image/jpeg", 0.8));
   }
 
   return (
@@ -73,7 +77,11 @@ export function SparkDraw({
           persist();
         }}
       />
-      <button type="button" className="button outline" onClick={() => onChange("")}>
+      <button
+        type="button"
+        className="button outline"
+        onClick={() => onChange("")}
+      >
         {t("designerDrawClear")}
       </button>
     </div>

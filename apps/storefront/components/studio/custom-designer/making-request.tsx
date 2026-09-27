@@ -1,6 +1,7 @@
 "use client";
 import "./making-request.css";
 
+import type { ReactNode } from "react";
 import { Button } from "@/components/ui/button-link";
 import { useLocale } from "@/components/i18n";
 
@@ -13,7 +14,9 @@ export function MakingRequest({
   setBudget,
   onSubmit,
   submitting = false,
+  offline = false,
   error = "",
+  errorAction,
 }: {
   intendedUse: string;
   setIntendedUse: (value: string) => void;
@@ -23,7 +26,9 @@ export function MakingRequest({
   setBudget: (value: string) => void;
   onSubmit: () => void;
   submitting?: boolean;
+  offline?: boolean;
   error?: string;
+  errorAction?: ReactNode;
 }) {
   const { t } = useLocale();
   return (
@@ -55,12 +60,17 @@ export function MakingRequest({
         inputMode="numeric"
       />
       {error ? (
-        <p className="form-error" role="alert">
-          {error}
-        </p>
+        <div className="form-error" role="alert">
+          <p>{error}</p>
+          {errorAction}
+        </div>
       ) : null}
       <div className="making-actions">
-        <Button type="button" onClick={onSubmit} disabled={!intendedUse.trim() || submitting}>
+        <Button
+          type="button"
+          onClick={onSubmit}
+          disabled={!intendedUse.trim() || submitting || offline}
+        >
           {submitting ? t("submitting") : t("makingSubmit")}
         </Button>
       </div>

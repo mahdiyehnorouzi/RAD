@@ -1,93 +1,44 @@
-import type { LocaleCopy } from "@/types/locale";
-import { findPassport, radPassports } from "./passports";
-
-function copy(fa: string, en: string): LocaleCopy {
-  return { fa, en };
-}
-
-export type FamilyLink = {
-  from: string;
-  to: string;
-  note: LocaleCopy;
-};
-
-export type RadFamily = {
-  id: string;
-  name: LocaleCopy;
-  codes: string[];
-  links: FamilyLink[];
-};
-
-export const radFamilies: RadFamily[] = [
-  {
-    id: "kaj-dasteh",
-    name: copy("خانواده کج‌دسته‌ها", "The crooked-handle family"),
-    codes: ["017", "007", "031"],
-    links: [
-      {
-        from: "017",
-        to: "007",
-        note: copy("الهام از همان کجی", "Inspired by that same lean"),
-      },
-      {
-        from: "007",
-        to: "031",
-        note: copy("آزمایش رنگ روی همان دسته", "A colour experiment on the same handle"),
-      },
-    ],
-  },
-  {
-    id: "haleh",
-    name: copy("خانواده هاله", "The halo family"),
-    codes: ["029"],
-    links: [],
-  },
-  {
-    id: "kiln",
-    name: copy("خانواده اتفاق‌های کوره", "The kiln-accident family"),
-    codes: ["041", "044"],
-    links: [
-      {
-        from: "041",
-        to: "044",
-        note: copy("شکست رنگ کوره، مسیر دیگری شد", "A kiln colour-break became another path"),
-      },
-    ],
-  },
-];
+import { artworkFamilies } from "@rad/artworks";
+import { formatRadCode } from "@rad/types";
+import type { PassportTraits, RadPassport } from "@/components/passport/type";
+import { findPassport } from "./passports";
 
 export function familyForCode(code: string) {
-  return radFamilies.find((family) => family.codes.includes(code));
+  return artworkFamilies.find((family) =>
+    family.members.some((member) => formatRadCode(member) === code),
+  );
 }
 
-export function familyMembers(code: string) {
+/** Members in the order the family grew; each carries its own `inspiredNote` link. */
+export function familyMembers(passports: RadPassport[], code: string) {
   const family = familyForCode(code);
   if (!family) return [];
-  return family.codes
-    .map((item) => findPassport(item))
-    .filter((item): item is NonNullable<typeof item> => Boolean(item));
+  return family.members
+    .map((member) => findPassport(passports, member))
+    .filter((item): item is RadPassport => Boolean(item));
 }
 
-export function relatedByFeeling(code: string, limit = 3) {
-  const current = findPassport(code);
+export function relatedByFeeling(
+  passports: RadPassport[],
+  code: string,
+  limit = 3,
+) {
+  const current = findPassport(passports, code);
   if (!current?.traits) {
-    return radPassports.filter((item) => item.code !== code && item.sold).slice(0, limit);
+    return passports.filter((item) => item.code !== code).slice(0, limit);
   }
-  return radPassports
+  return passports
     .filter((item) => item.code !== code && item.traits)
     .map((item) => ({
       item,
-      distance: traitDistance(current.traits!, item.traits!),
+      distance: traitDistance(current.traits, item.traits),
     }))
     .sort((a, b) => a.distance - b.distance)
     .slice(0, limit)
     .map((entry) => entry.item);
 }
 
-export function traitDistance(
-  a: NonNullable<ReturnType<typeof findPassport>>["traits"],
-  b: NonNullable<ReturnType<typeof findPassport>>["traits"],
-) {
+export function traitDistance(a?: PassportTraits, b?: PassportTraits) {
   if (!a || !b) return 99;
   return (
     Math.abs(a.crooked - b.crooked) +

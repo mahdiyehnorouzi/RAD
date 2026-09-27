@@ -1,7 +1,12 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ProductCategory } from "@rad/types";
 import { artworkCategoryById } from "@/lib/catalog/artwork";
-import { DESIGNER_STEPS, MAX_DESIGNER_COLORS, type DesignerStep } from "../const";
+import {
+  DESIGNER_STEPS,
+  MAX_DESIGNER_COLORS,
+  type DesignerStep,
+} from "../const";
+import type { DesignerDraft } from "../type";
 
 const maxImages = 4;
 
@@ -37,7 +42,12 @@ export function useDesigner() {
   const stepIndex = DESIGNER_STEPS.indexOf(step);
   const reachedIndex = DESIGNER_STEPS.indexOf(reached);
   const hasSpark = Boolean(
-    prompt.trim() || uploads.length || sketch || hasVoice || colors.length || feeling,
+    prompt.trim() ||
+    uploads.length ||
+    sketch ||
+    hasVoice ||
+    colors.length ||
+    feeling,
   );
 
   const canAdvance = useMemo(() => {
@@ -73,7 +83,8 @@ export function useDesigner() {
 
   function toggleColor(value: string) {
     setColors((current) => {
-      if (current.includes(value)) return current.filter((item) => item !== value);
+      if (current.includes(value))
+        return current.filter((item) => item !== value);
       if (current.length >= MAX_DESIGNER_COLORS) return current;
       return [...current, value];
     });
@@ -87,7 +98,61 @@ export function useDesigner() {
     setUploads((current) => current.filter((_, item) => item !== index));
   }
 
+  const draft = useMemo<DesignerDraft>(
+    () => ({
+      step,
+      reached,
+      category,
+      prompt,
+      intendedUse,
+      dimensions,
+      budget,
+      uploads,
+      sketch,
+      hasVoice,
+      colors,
+      feeling,
+      freedom,
+    }),
+    [
+      step,
+      reached,
+      category,
+      prompt,
+      intendedUse,
+      dimensions,
+      budget,
+      uploads,
+      sketch,
+      hasVoice,
+      colors,
+      feeling,
+      freedom,
+    ],
+  );
+
+  const restoreDraft = useCallback((next: DesignerDraft) => {
+    setStep(next.step);
+    setReached(next.reached);
+    setCategory(next.category);
+    setPrompt(next.prompt);
+    setIntendedUse(next.intendedUse);
+    setDimensions(next.dimensions);
+    setBudget(next.budget);
+    setUploads(next.uploads.slice(0, maxImages));
+    setSketch(next.sketch);
+    setHasVoice(next.hasVoice);
+    setColors(next.colors.slice(0, MAX_DESIGNER_COLORS));
+    setFeeling(next.feeling);
+    setFreedom(next.freedom);
+    setBrief({});
+    setImage("");
+    setError("");
+  }, []);
+
   return {
+    draft,
+    restoreDraft,
     abort,
     addUploads,
     brief,

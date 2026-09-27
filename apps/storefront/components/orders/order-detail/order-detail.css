@@ -125,6 +125,30 @@
   font-weight: 600;
 }
 
+.order-tracking-input {
+  width: min(100%, 18rem);
+  letter-spacing: 0.06em;
+}
+
+.order-receipt-upload small {
+  color: color-mix(in srgb, var(--ink) 62%, transparent);
+}
+
+.order-next-rejected {
+  padding: 1rem 1.1rem;
+  border-inline-start: 3px solid #8f2e20;
+  background: color-mix(in srgb, #8f2e20 6%, var(--paper));
+}
+
+.order-next-rejected p {
+  margin: 0;
+}
+
+.order-rejection-reason {
+  color: #8f2e20;
+  font-weight: 600;
+}
+
 .order-receipt-preview {
   margin: 0;
   width: min(100%, 14rem);

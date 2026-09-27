@@ -1,5 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsString, MinLength } from "class-validator";
+import { IsString, MaxLength, MinLength } from "class-validator";
 
 export class ConfirmPaymentDto {
   @ApiProperty({
@@ -10,4 +10,12 @@ export class ConfirmPaymentDto {
   @IsString()
   @MinLength(32)
   receiptImage!: string;
+
+  @ApiProperty({
+    example: "123456789012",
+    description: "Bank transfer tracking / reference number (شماره پیگیری)",
+  })
+  @IsString()
+  @MaxLength(64)
+  trackingNumber!: string;
 }

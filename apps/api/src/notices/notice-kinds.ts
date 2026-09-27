@@ -3,6 +3,8 @@ export type StoredNoticeKind =
   | "cart"
   | "welcome"
   | "order"
+  | "order_confirmed"
+  | "order_rejected"
   | "commission_approved"
   | "commission_declined"
   | "commission_change"

@@ -1,3 +1,4 @@
+import type { ProductStatus } from "@rad/types";
 import type { LocaleCopy } from "@/types/locale";
 
 export const LIVE_MILESTONES = [
@@ -27,13 +28,22 @@ export type LiveNote = {
   media?: string;
 };
 
-export type LivePiece = {
-  code: string;
-  name: LocaleCopy;
-  maker: LocaleCopy;
+/** Workshop diary of one artwork; everything about the work itself lives on the artwork. */
+export type LiveJournal = {
+  radNumber: number;
   startedDaysAgo: number;
   current: LiveMilestoneId;
   image?: string;
   milestones: LiveMilestone[];
   notes: LiveNote[];
+};
+
+/** A journal joined with its artwork. */
+export type LivePiece = Omit<LiveJournal, "radNumber"> & {
+  code: string;
+  slug: string;
+  /** API status of the artwork; the only status shown. */
+  status?: ProductStatus;
+  name: LocaleCopy;
+  maker: LocaleCopy;
 };

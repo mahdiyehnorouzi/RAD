@@ -2,14 +2,17 @@ import type { MakingBrief, MakingCommission } from "@/components/making/type";
 import type { LocaleCopy } from "@/types/locale";
 import { api } from "./client";
 
+/** Sketch plus the studio's four reference photos, each pre-compressed under the slim limit. */
+export const COMMISSION_UPLOAD_IMAGES = 5;
+
 /** Drop heavy data-URLs so commission POSTs finish before the API timeout. */
-export function slimCommissionBrief(brief: MakingBrief): MakingBrief {
+export function slimCommissionBrief(brief: MakingBrief, maxImages = 2): MakingBrief {
   const slimImage = (value?: string) =>
     value && value.startsWith("data:") && value.length > 120_000 ? undefined : value;
   const images = (brief.images ?? [])
     .map(slimImage)
     .filter((item): item is string => Boolean(item))
-    .slice(0, 2);
+    .slice(0, maxImages);
   return {
     ...brief,
     image: slimImage(brief.image) ?? images[0],
@@ -47,7 +50,7 @@ export async function createCommission(input: {
     timeoutMs: 25_000,
     body: JSON.stringify({
       ...input,
-      brief: slimCommissionBrief(input.brief),
+      brief: slimCommissionBrief(input.brief, COMMISSION_UPLOAD_IMAGES),
     }),
   });
 }

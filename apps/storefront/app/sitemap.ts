@@ -1,18 +1,12 @@
 import type { MetadataRoute } from "next";
-import { getCatalogWorks } from "@/lib/catalog/get-catalog-works";
-import { museumPortraits } from "@/lib/difference";
-import { livePieces } from "@/lib/now";
-import { radPassports } from "@/lib/passport";
+import { loadCatalogWorks } from "@/lib/catalog/get-catalog-works";
+import { portraitsFrom } from "@/lib/difference";
+import { livePiecesFrom } from "@/lib/now";
+import { passportsFrom } from "@/lib/passport";
 import { absoluteUrl } from "@/lib/seo";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const catalog = await getCatalogWorks();
-  const products = catalog.filter(
-    (product, index, all) =>
-      product.status !== "draft" &&
-      product.status !== "review" &&
-      all.findIndex((candidate) => candidate.slug === product.slug) === index,
-  );
+  const { artworks, products } = await loadCatalogWorks();
   const lastModified = new Date();
 
   const staticRoutes: MetadataRoute.Sitemap = [
@@ -69,7 +63,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   return [
     ...staticRoutes,
-    ...livePieces.map((piece) => ({
+    ...livePiecesFrom(artworks).map((piece) => ({
       url: absoluteUrl(`/now/${piece.code}`),
       lastModified,
       changeFrequency: "daily" as const,
@@ -85,7 +79,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         .filter((src): src is string => Boolean(src))
         .map(absoluteUrl),
     })),
-    ...museumPortraits.map((portrait) => ({
+    ...portraitsFrom(artworks).map((portrait) => ({
       url: absoluteUrl(`/differences/${portrait.id}`),
       lastModified,
       changeFrequency: "yearly" as const,
@@ -94,7 +88,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         ? Object.values(portrait.stageImages).map(absoluteUrl)
         : undefined,
     })),
-    ...radPassports.map((passport) => ({
+    ...passportsFrom(artworks).map((passport) => ({
       url: absoluteUrl(`/passport/${passport.code}`),
       lastModified,
       changeFrequency: "yearly" as const,

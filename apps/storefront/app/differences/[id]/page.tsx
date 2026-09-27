@@ -4,12 +4,14 @@ import { useParams } from "next/navigation";
 import { DifferencePortraitView } from "@/components/difference";
 import { useLocale } from "@/components/i18n";
 import { ButtonLink } from "@/components/ui/button-link";
-import { portraitById } from "@/lib/difference";
+import { usePortraits } from "@/hooks/use-artworks";
+import { museumPortraits, portraitById } from "@/lib/difference";
 
 export default function DifferenceDetail() {
   const params = useParams<{ id: string }>();
   const { t } = useLocale();
-  const portrait = portraitById(String(params.id ?? ""));
+  const id = String(params.id ?? "");
+  const portrait = portraitById(usePortraits(), id) ?? portraitById(museumPortraits, id);
   if (!portrait) {
     return (
       <section className="museum-page section">

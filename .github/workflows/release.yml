@@ -36,35 +36,23 @@ jobs:
 
       - name: Check deploy secrets
         env:
-          HAS_RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN != '' || vars.RAILWAY_TOKEN != '' }}
-          HAS_RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_API_TOKEN != '' }}
           HAS_CLOUDFLARE: ${{ secrets.CLOUDFLARE_API_TOKEN != '' }}
         run: |
-          echo "RAILWAY_TOKEN present: ${HAS_RAILWAY_TOKEN}"
-          echo "RAILWAY_API_TOKEN present: ${HAS_RAILWAY_API_TOKEN}"
           echo "CLOUDFLARE_API_TOKEN present: ${HAS_CLOUDFLARE}"
-          if [[ "${HAS_RAILWAY_TOKEN}" != "true" && "${HAS_RAILWAY_API_TOKEN}" != "true" ]]; then
-            echo "::error::No Railway credential reached this job. Need RAILWAY_TOKEN (project token) or RAILWAY_API_TOKEN (account token) as a Repository secret."
+          if [[ "${HAS_CLOUDFLARE}" != "true" ]]; then
+            echo "::error::CLOUDFLARE_API_TOKEN is missing. Add it as a Repository secret."
             exit 1
           fi
-
-      - name: Deploy API
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN || vars.RAILWAY_TOKEN }}
-          RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_API_TOKEN }}
-          RAILWAY_PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID || vars.RAILWAY_PROJECT_ID }}
-          RAILWAY_API_SERVICE: ${{ vars.RAILWAY_API_SERVICE || 'rad-api-web' }}
-        run: bash scripts/deploy-api-railway.sh
 
       - name: Deploy storefront
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          API_URL: ${{ vars.API_URL || 'https://rad-api-web-production-9b7c.up.railway.app' }}
+          API_URL: ${{ vars.API_URL || 'https://api.rad-object.com' }}
           NEXT_PUBLIC_GA_MEASUREMENT_ID: ${{ secrets.NEXT_PUBLIC_GA_MEASUREMENT_ID || vars.NEXT_PUBLIC_GA_MEASUREMENT_ID }}
         run: bash scripts/deploy-storefront-cloudflare.sh
 
       - name: Deploy admin
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          API_URL: ${{ vars.API_URL || 'https://rad-api-web-production-9b7c.up.railway.app' }}
+          API_URL: ${{ vars.API_URL || 'https://api.rad-object.com' }}
         run: bash scripts/deploy-admin-cloudflare.sh

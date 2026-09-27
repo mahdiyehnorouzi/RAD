@@ -4,7 +4,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT/apps/admin"
 
-API_URL="${API_URL:-https://rad-api-web-production-9b7c.up.railway.app}"
+API_URL="${API_URL:-https://api.rad-object.com}"
 RAD_VERSION="${RAD_VERSION:-$(tr -d '[:space:]' < "$ROOT/VERSION")}"
 export API_URL
 export RAD_VERSION

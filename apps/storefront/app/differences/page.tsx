@@ -3,10 +3,11 @@
 import { DifferenceTrailStrip, surprisePermissions } from "@/components/difference";
 import { useLocale } from "@/components/i18n";
 import { ButtonLink } from "@/components/ui/button-link";
-import { museumPortraits } from "@/lib/difference";
+import { usePortraits } from "@/hooks/use-artworks";
 
 export default function DifferencesMuseum() {
   const { locale, t } = useLocale();
+  const museumPortraits = usePortraits();
   return (
     <section className="museum-page section">
       <header className="museum-heading">
@@ -25,6 +26,7 @@ export default function DifferencesMuseum() {
               <span dir="ltr">{portrait.code}</span>
               <h2 id={headingId}>{portrait.described[locale]}</h2>
               <p>
+                {portrait.title ? `${portrait.title[locale]} · ` : ""}
                 {portrait.maker[locale]}
                 {permission ? ` · ${permission.title[locale]}` : ""}
               </p>

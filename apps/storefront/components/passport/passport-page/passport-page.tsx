@@ -3,7 +3,14 @@
 import Link from "next/link";
 import { useLocale } from "@/components/i18n";
 import { ButtonLink } from "@/components/ui/button-link";
-import { formatPassportCode, formatPassportName, relatedByFeeling } from "@/lib/passport";
+import {
+  findPassport,
+  formatPassportCode,
+  formatPassportName,
+  relatedByFeeling,
+} from "@/lib/passport";
+import { isGoneStatus } from "@/lib/catalog/product-status";
+import { usePassports } from "@/hooks/use-artworks";
 import { BeforeRad } from "../before-rad";
 import type { RadPassport } from "../type";
 import { WorkMarks } from "../work-marks";
@@ -14,8 +21,13 @@ import { PassportMark } from "./passport-mark";
 import { PassportWhere } from "./passport-where";
 import "./passport-page.css";
 
-export function PassportPage({ passport }: { passport: RadPassport }) {
+export function PassportPage({ passport: source }: { passport: RadPassport }) {
   const { locale, t, number, href } = useLocale();
+  const passports = usePassports();
+  const live = findPassport(passports, source.radNumber);
+  const passport = live?.status ? live : source;
+  const status = passport.status;
+  const sold = isGoneStatus(status);
   const code = formatPassportCode(passport.code, locale, number);
   const path = `/passport/${passport.code}`;
 
@@ -31,7 +43,9 @@ export function PassportPage({ passport }: { passport: RadPassport }) {
           {t("passportOnce")}
           <span>{t("passportOnceBody")}</span>
         </p>
-        {passport.sold ? <p className="passport-sold">{t("archiveNeverAgain")}</p> : null}
+        {sold ? (
+          <p className="passport-sold">{t("archiveNeverAgain")}</p>
+        ) : null}
         {passport.transfers?.at(-1) ? (
           <p className="passport-transfer">
             {t("transferLine", {
@@ -53,7 +67,7 @@ export function PassportPage({ passport }: { passport: RadPassport }) {
       {passport.marks?.length && passport.finalPhotos[0] ? (
         <WorkMarks src={passport.finalPhotos[0].src} marks={passport.marks} />
       ) : null}
-      <PassportFamily passport={passport} />
+      <PassportFamily passport={passport} passports={passports} />
       <BeforeRad frames={passport.beforeRad} />
 
       <section className="passport-care">
@@ -61,11 +75,11 @@ export function PassportPage({ passport }: { passport: RadPassport }) {
         <p>{passport.care[locale]}</p>
       </section>
 
-      {passport.sold ? (
+      {sold ? (
         <section className="passport-same-feeling">
           <h2>{t("sameFeeling")}</h2>
           <ul>
-            {relatedByFeeling(passport.code).map((item) => (
+            {relatedByFeeling(passports, passport.code).map((item) => (
               <li key={item.code}>
                 <Link href={href(`/passport/${item.code}`)}>
                   {formatPassportName(item, locale, number)}
@@ -80,7 +94,7 @@ export function PassportPage({ passport }: { passport: RadPassport }) {
       ) : null}
 
       <div className="passport-actions">
-        {passport.productSlug && !passport.sold ? (
+        {passport.productSlug && status && !sold ? (
           <ButtonLink href={`/products/${passport.productSlug}`}>
             {t("passportViewWork")}
           </ButtonLink>

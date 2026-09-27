@@ -1,13 +1,23 @@
 "use client";
 
 import Link from "next/link";
+import type { ProductStatus } from "@rad/types";
 import { useLocale } from "@/components/i18n";
-import { livePieces } from "@/lib/now";
-import { formatPassportCode, formatPassportName, radPassports } from "@/lib/passport";
+import { useLivePieces, usePassports } from "@/hooks/use-artworks";
+import { productStatusLabelKey } from "@/lib/catalog/product-status";
+import { formatPassportCode, formatPassportName } from "@/lib/passport";
 import "./passport-page/passport-page.css";
 
 export function PassportIndex() {
   const { locale, t, number, href } = useLocale();
+  const livePieces = useLivePieces();
+  const passports = usePassports();
+  const label = (status?: ProductStatus) => {
+    if (!status) return "";
+    return status === "sold" || status === "archived"
+      ? t("archiveSoldMark")
+      : t(productStatusLabelKey[status]);
+  };
   const making = livePieces.map((piece) => ({
     code: piece.code,
     href: `/now/${piece.code}`,
@@ -15,15 +25,17 @@ export function PassportIndex() {
       locale === "fa"
         ? `رَد ${formatPassportCode(piece.code, locale, number)} — ${piece.name.fa}`
         : `RAD ${formatPassportCode(piece.code, locale, number)} — ${piece.name.en}`,
-    status: t("archiveMaking"),
+    status: label(piece.status),
   }));
-  const finished = radPassports.map((passport) => ({
+  const finished = passports.map((passport) => ({
     code: passport.code,
     href: `/passport/${passport.code}`,
     title: formatPassportName(passport, locale, number),
-    status: passport.sold ? t("archiveSoldMark") : t("archiveInStudio"),
+    status: label(passport.status),
   }));
-  const rows = [...making, ...finished].sort((a, b) => Number(a.code) - Number(b.code));
+  const rows = [...making, ...finished].sort(
+    (a, b) => Number(a.code) - Number(b.code),
+  );
 
   return (
     <section className="passport-index">

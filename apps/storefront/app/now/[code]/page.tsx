@@ -14,7 +14,7 @@ export async function generateMetadata({
   params: Promise<{ code: string }>;
 }): Promise<Metadata> {
   const { code } = await params;
-  const piece = findLivePiece(code);
+  const piece = findLivePiece(livePieces, code);
   if (!piece) {
     return { title: "این رَد پیدا نشد", robots: { index: false, follow: false } };
   }
@@ -31,7 +31,7 @@ export default async function LiveMaking({
   params: Promise<{ code: string }>;
 }) {
   const { code } = await params;
-  const piece = findLivePiece(code);
+  const piece = findLivePiece(livePieces, code);
   if (!piece) notFound();
 
   const path = `/now/${piece.code}`;

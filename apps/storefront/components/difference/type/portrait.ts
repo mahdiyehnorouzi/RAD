@@ -2,11 +2,14 @@ import type { ProductCategory, ProductVisual } from "@rad/types";
 import type { LocaleCopy } from "@/types/locale";
 import type { SurprisePermission } from "./permission";
 
-export type DifferenceStageId = "described" | "imagined" | "artist" | "material";
+export type DifferenceStageId =
+  "described" | "imagined" | "artist" | "material";
 
 export type DifferencePortrait = {
   id: string;
   code: string;
+  /** Title of the artwork; absent for a visitor's own studio portrait. */
+  title?: LocaleCopy;
   year: string;
   permission: SurprisePermission;
   category: ProductCategory;

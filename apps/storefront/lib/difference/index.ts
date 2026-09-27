@@ -1,2 +1,7 @@
 export { composeLivePortrait } from "./compose";
-export { museumPortraits, portraitById } from "./portraits";
+export {
+  museumPortraits,
+  portraitById,
+  portraitFromArtwork,
+  portraitsFrom,
+} from "./portraits";

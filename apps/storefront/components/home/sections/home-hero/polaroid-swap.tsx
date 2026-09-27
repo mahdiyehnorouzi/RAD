@@ -10,25 +10,38 @@ import { usePolaroidSwap, usePolaroidSwipe } from "./hooks";
 import "./polaroid-swap.css";
 
 const code39Patterns: Readonly<Record<string, string>> = {
-  "0": "nnnwwnwnn", "1": "wnnwnnnnw", "3": "wnwwnnnnn", "4": "nnnwwnnnw",
-  "5": "wnnwwnnnn", "6": "nnwwwnnnn", "8": "wnnwnnwnn", "9": "nnwwnnwnn",
-  A: "wnnnnwnnw", D: "nnnnwwnnw", R: "wnnnnnwwn", "-": "nwnnnnwnw",
+  "0": "nnnwwnwnn",
+  "1": "wnnwnnnnw",
+  "3": "wnwwnnnnn",
+  "4": "nnnwwnnnw",
+  "5": "wnnwwnnnn",
+  "6": "nnwwwnnnn",
+  "8": "wnnwnnwnn",
+  "9": "nnwwnnwnn",
+  "2": "nnwwnnnnw",
+  A: "wnnnnwnnw",
+  C: "wnwnnwnnn",
+  D: "nnnnwwnnw",
+  R: "wnnnnnwwn",
+  "-": "nwnnnnwnw",
   "*": "nwnnwnwnn",
 };
 
 function code39Segments(value: string) {
-  return `*${value}*`.split("").flatMap((character, characterIndex, characters) => {
-    const pattern = code39Patterns[character];
-    if (!pattern) return [];
-    const segments = pattern.split("").map((width, index) => ({
-      bar: index % 2 === 0,
-      key: `${characterIndex}-${index}`,
-      width: width === "w" ? 3 : 1,
-    }));
-    return characterIndex < characters.length - 1
-      ? [...segments, { bar: false, key: `${characterIndex}-gap`, width: 1 }]
-      : segments;
-  });
+  return `*${value}*`
+    .split("")
+    .flatMap((character, characterIndex, characters) => {
+      const pattern = code39Patterns[character];
+      if (!pattern) return [];
+      const segments = pattern.split("").map((width, index) => ({
+        bar: index % 2 === 0,
+        key: `${characterIndex}-${index}`,
+        width: width === "w" ? 3 : 1,
+      }));
+      return characterIndex < characters.length - 1
+        ? [...segments, { bar: false, key: `${characterIndex}-gap`, width: 1 }]
+        : segments;
+    });
 }
 
 function conceptFrames(locale: Locale): PolaroidFrame[] {
@@ -43,9 +56,11 @@ function conceptFrames(locale: Locale): PolaroidFrame[] {
         : "Hand-carved alabaster lamp with a walnut base",
       caption: isFa ? "چراغ سنگ و گردو" : "Alabaster & walnut lamp",
       material: isFa ? "سنگ مرمر · چوب گردو" : "Alabaster · walnut",
-      archiveNumber: "041",
-      barcode: "RAD-1405-041",
-      note: isFa ? "نور از دل سنگ رد می‌شود." : "Light passes through the stone.",
+      conceptLabel: isFa ? "ایده ۰۱" : "CONCEPT 01",
+      barcode: "RAD-C-01",
+      note: isFa
+        ? "نور از دل سنگ رد می‌شود."
+        : "Light passes through the stone.",
       tone: "stone",
     },
     {
@@ -56,9 +71,11 @@ function conceptFrames(locale: Locale): PolaroidFrame[] {
         : "Handwoven wall textile with a topographic composition",
       caption: isFa ? "بافته توپوگرافیک" : "Topographic textile",
       material: isFa ? "پشم دست‌باف" : "Handwoven wool",
-      archiveNumber: "086",
-      barcode: "RAD-1405-086",
-      note: isFa ? "رد کوه، میان تار و پود." : "A mountain trace, held in the weave.",
+      conceptLabel: isFa ? "ایده ۰۲" : "CONCEPT 02",
+      barcode: "RAD-C-02",
+      note: isFa
+        ? "رد کوه، میان تار و پود."
+        : "A mountain trace, held in the weave.",
       tone: "textile",
     },
     {
@@ -69,9 +86,11 @@ function conceptFrames(locale: Locale): PolaroidFrame[] {
         : "Sculptural incense holder in blackened brass",
       caption: isFa ? "عودسوز برنجی هلال" : "Crescent brass incense holder",
       material: isFa ? "برنج سیاه‌کاری‌شده" : "Blackened brass",
-      archiveNumber: "113",
-      barcode: "RAD-1405-113",
-      note: isFa ? "دود، شکل ناپیدای اثر است." : "Smoke is the work’s unseen form.",
+      conceptLabel: isFa ? "ایده ۰۳" : "CONCEPT 03",
+      barcode: "RAD-C-03",
+      note: isFa
+        ? "دود، شکل ناپیدای اثر است."
+        : "Smoke is the work’s unseen form.",
       tone: "metal",
     },
   ];
@@ -110,7 +129,11 @@ export function PolaroidSwap() {
       dir={locale === "fa" ? "rtl" : "ltr"}
       role="region"
       aria-roledescription="carousel"
-      aria-label={locale === "fa" ? "گالری پولاروید. برای عوض‌کردن بکشید." : "Polaroid gallery. Swipe to change."}
+      aria-label={
+        locale === "fa"
+          ? "گالری پولاروید. برای عوض‌کردن بکشید."
+          : "Polaroid gallery. Swipe to change."
+      }
       tabIndex={0}
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
@@ -131,89 +154,98 @@ export function PolaroidSwap() {
         }
       }}
     >
-    <div
-      className="polaroid-swap"
-      onPointerDown={swipe.onPointerDown}
-      onPointerMove={swipe.onPointerMove}
-      onPointerUp={swipe.onPointerUp}
-      onPointerCancel={swipe.clearSwipe}
-    >
-      {frames.map((frame, index) => {
-        const depth = (index - front + frames.length) % frames.length;
-        const tilt = POLAROID_TILTS[index % POLAROID_TILTS.length];
-        const isFront = depth === 0;
-        const isLeaving = leaving === index;
-        const stackDir = locale === "fa" ? 1 : -1;
+      <div
+        className="polaroid-swap"
+        onPointerDown={swipe.onPointerDown}
+        onPointerMove={swipe.onPointerMove}
+        onPointerUp={swipe.onPointerUp}
+        onPointerCancel={swipe.clearSwipe}
+      >
+        {frames.map((frame, index) => {
+          const depth = (index - front + frames.length) % frames.length;
+          const tilt = POLAROID_TILTS[index % POLAROID_TILTS.length];
+          const isFront = depth === 0;
+          const isLeaving = leaving === index;
+          const stackDir = locale === "fa" ? 1 : -1;
 
-        return (
-          <Link
-            key={frame.src}
-            href={href(frame.href)}
-            className={`polaroid${isLeaving ? " polaroid--leave" : ""}`}
-            data-tone={frame.tone}
-            data-front={isFront ? "true" : "false"}
-            style={{
-              zIndex: isLeaving ? frames.length + 2 : frames.length - depth,
-              ["--polaroid-tilt" as string]: `${tilt + depth * (stackDir * 2.8)}deg`,
-              ["--polaroid-x" as string]: `${depth * 36 * stackDir}px`,
-              ["--polaroid-y" as string]: `${depth * 18}px`,
-              ["--polaroid-scale" as string]: 1 - depth * 0.055,
-            }}
-            aria-current={isFront ? "true" : undefined}
-            aria-label={frame.caption}
-            draggable={false}
-            onClick={(event) => {
-              if (swipe.didSwipe()) {
-                event.preventDefault();
-                swipe.clearSwipe();
-                return;
-              }
-              if (!isFront) {
-                event.preventDefault();
-                goTo(index);
-              }
-            }}
-          >
-            <span className="polaroid-sheet">
-              <span className="polaroid-face polaroid-face--front">
-                <span className="polaroid-pin" aria-hidden="true" />
-                <span className="polaroid-window">
-                  <img src={frame.src} alt={frame.alt} draggable={false} />
-                  <span className="hero-identifier" aria-hidden="true">
-                    <span>RĀD / {frame.archiveNumber}</span>
-                    <span>{t("tehranSlashYear")}</span>
+          return (
+            <Link
+              key={frame.src}
+              href={href(frame.href)}
+              className={`polaroid${isLeaving ? " polaroid--leave" : ""}`}
+              data-tone={frame.tone}
+              data-front={isFront ? "true" : "false"}
+              style={{
+                zIndex: isLeaving ? frames.length + 2 : frames.length - depth,
+                ["--polaroid-tilt" as string]: `${tilt + depth * (stackDir * 2.8)}deg`,
+                ["--polaroid-x" as string]: `${depth * 36 * stackDir}px`,
+                ["--polaroid-y" as string]: `${depth * 18}px`,
+                ["--polaroid-scale" as string]: 1 - depth * 0.055,
+              }}
+              aria-current={isFront ? "true" : undefined}
+              aria-label={frame.caption}
+              draggable={false}
+              onClick={(event) => {
+                if (swipe.didSwipe()) {
+                  event.preventDefault();
+                  swipe.clearSwipe();
+                  return;
+                }
+                if (!isFront) {
+                  event.preventDefault();
+                  goTo(index);
+                }
+              }}
+            >
+              <span className="polaroid-sheet">
+                <span className="polaroid-face polaroid-face--front">
+                  <span className="polaroid-pin" aria-hidden="true" />
+                  <span className="polaroid-window">
+                    <img src={frame.src} alt={frame.alt} draggable={false} />
+                    <span className="hero-identifier" aria-hidden="true">
+                      <span>{frame.conceptLabel}</span>
+                      <span>{t("tehranSlashYear")}</span>
+                    </span>
+                  </span>
+                  <span className="polaroid-caption">
+                    <b>{t("editionMark")}</b>
+                    <span>{frame.caption}</span>
+                    <small>{frame.material}</small>
                   </span>
                 </span>
-                <span className="polaroid-caption">
-                  <b>{t("editionMark")}</b>
-                  <span>{frame.caption}</span>
-                  <small>{frame.material}</small>
-                </span>
-              </span>
-              <span className="polaroid-face polaroid-face--back" aria-hidden="true">
-                <span className="polaroid-back-index">RĀD / {frame.archiveNumber}</span>
-                <em>{frame.note}</em>
-                <span className="polaroid-barcode">
-                  <span className="polaroid-bars">
-                    {code39Segments(frame.barcode).map((segment) => (
-                      <i
-                        key={`${frame.barcode}-${segment.key}`}
-                        style={{
-                          flex: `${segment.width} 1 0`,
-                          opacity: segment.bar ? 1 : 0,
-                        }}
-                      />
-                    ))}
+                <span
+                  className="polaroid-face polaroid-face--back"
+                  aria-hidden="true"
+                >
+                  <span className="polaroid-back-index">
+                    {frame.conceptLabel}
                   </span>
-                  <code>{frame.barcode}</code>
+                  <em>{frame.note}</em>
+                  <span className="polaroid-barcode">
+                    <span className="polaroid-bars">
+                      {code39Segments(frame.barcode).map((segment) => (
+                        <i
+                          key={`${frame.barcode}-${segment.key}`}
+                          style={{
+                            flex: `${segment.width} 1 0`,
+                            opacity: segment.bar ? 1 : 0,
+                          }}
+                        />
+                      ))}
+                    </span>
+                    <code>{frame.barcode}</code>
+                  </span>
                 </span>
               </span>
-            </span>
-          </Link>
-        );
-      })}
-    </div>
-      <div className="polaroid-dots" role="tablist" aria-label={locale === "fa" ? "انتخاب پولاروید" : "Choose polaroid"}>
+            </Link>
+          );
+        })}
+      </div>
+      <div
+        className="polaroid-dots"
+        role="tablist"
+        aria-label={locale === "fa" ? "انتخاب پولاروید" : "Choose polaroid"}
+      >
         {frames.map((frame, index) => (
           <button
             type="button"

@@ -2,12 +2,15 @@
 
 import Link from "next/link";
 import { useLocale } from "@/components/i18n";
+import { useLivePieces } from "@/hooks/use-artworks";
+import { findLivePiece } from "@/lib/now";
 import { formatPassportCode } from "@/lib/passport";
 import type { LivePiece } from "../type";
 import "./live-page.css";
 
-export function LivePage({ piece }: { piece: LivePiece }) {
+export function LivePage({ piece: source }: { piece: LivePiece }) {
   const { locale, t, number, href } = useLocale();
+  const piece = findLivePiece(useLivePieces(), source.code) ?? source;
   const code = formatPassportCode(piece.code, locale, number);
   const current = piece.milestones.find((item) => item.current);
 
@@ -31,7 +34,9 @@ export function LivePage({ piece }: { piece: LivePiece }) {
         {piece.milestones.map((milestone, index) => (
           <li
             key={milestone.id}
-            className={milestone.current ? "is-current" : milestone.done ? "is-done" : ""}
+            className={
+              milestone.current ? "is-current" : milestone.done ? "is-done" : ""
+            }
           >
             <b>
               {number(index + 1)}

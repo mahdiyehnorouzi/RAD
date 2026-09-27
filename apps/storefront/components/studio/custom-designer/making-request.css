@@ -25,3 +25,18 @@
   gap: 0.75rem;
   justify-items: start;
 }
+
+.making-request .form-error {
+  display: grid;
+  justify-items: start;
+  gap: 0.5rem;
+}
+
+.making-request .form-error p {
+  margin: 0;
+}
+
+.making-request .form-error a {
+  border-bottom: 1px solid currentColor;
+  font-weight: 600;
+}

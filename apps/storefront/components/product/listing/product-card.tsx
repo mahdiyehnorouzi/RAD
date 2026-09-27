@@ -8,6 +8,8 @@ import { FavoriteButton } from "@/components/commerce";
 import { categoryLabel } from "@/lib/catalog/artwork";
 import { ProductCardArtwork } from "./product-card-artwork";
 import { formatArtworkNumber } from "./const";
+import { LinkPending } from "./link-pending";
+import { useProductStatus } from "@/hooks/use-product-status";
 import "./product-card.css";
 
 export function ProductCard({
@@ -21,10 +23,8 @@ export function ProductCard({
   const { locale, t, href, number } = useLocale();
   const copy = productCopy(product, locale);
   const category = categoryLabel(product.category, locale);
-  const unavailable =
-    product.status === "sold" || product.status === "reserved";
-  const statusLabel =
-    product.status === "reserved" ? t("reserved") : t("soldOut");
+  const { badge: statusLabel, purchasable, inBag } = useProductStatus(product);
+  const unavailable = Boolean(product.status) && !purchasable && !inBag;
   const artworkNumber = formatArtworkNumber(product, number, locale);
   const artistName = product.vendor
     ? locale === "fa"
@@ -38,7 +38,7 @@ export function ProductCard({
     <article className={`product-card${unavailable ? " is-unavailable" : ""}`}>
       <div className="product-media-shell">
         <FavoriteButton slug={product.slug} compact />
-        {unavailable ? (
+        {statusLabel ? (
           <span className="product-status-badge">{statusLabel}</span>
         ) : null}
         <Link
@@ -52,6 +52,7 @@ export function ProductCard({
             edition={locale === "fa" ? "۱/۱" : "1/1"}
             forceCategoryArtwork={forceCategoryArtwork}
           />
+          <LinkPending />
         </Link>
       </div>
       <div className="flex justify-between w-full h-[3.2rem] align-end">

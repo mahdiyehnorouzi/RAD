@@ -1,1 +1,6 @@
-export { findLivePiece, livePieces, workshopToday } from "./pieces";
+export {
+  findLivePiece,
+  livePieces,
+  livePiecesFrom,
+  workshopToday,
+} from "./pieces";

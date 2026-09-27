@@ -4,7 +4,8 @@ export type PolaroidFrame = {
   alt: string;
   caption: string;
   material: string;
-  archiveNumber: string;
+  /** Concept pieces are not archive works, so they never carry a RAD number. */
+  conceptLabel: string;
   barcode: string;
   note: string;
   tone: "stone" | "textile" | "metal";

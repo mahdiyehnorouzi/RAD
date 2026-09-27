@@ -25,7 +25,6 @@
     "build:admin": "npm run build --workspace @rad/admin",
     "build:admin:cloudflare": "npm run build:vinext --workspace @rad/admin",
     "deploy:admin": "bash scripts/deploy-admin-cloudflare.sh",
-    "deploy:api": "bash scripts/deploy-api-railway.sh",
     "deploy:release": "bash scripts/deploy-release.sh",
     "version:set": "bash scripts/bump-version.sh",
     "deploy:api:render": "echo 'Connect render.yaml in the Render dashboard, then set admin API_URL to the Render service URL.'",

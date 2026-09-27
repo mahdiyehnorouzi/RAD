@@ -16,6 +16,7 @@
     "db:embedded": "node scripts/start-pg.mjs",
     "pricing:crawl": "tsx src/pricing/cli.ts",
     "test:pricing": "tsx --test src/pricing/*.spec.ts",
+    "test:purchase": "tsx --test src/orders/*.spec.ts",
     "pricing:baseline": "tsx scripts/apply-baseline-prices.ts"
   },
   "dependencies": {
@@ -43,6 +44,7 @@
   "devDependencies": {
     "@nestjs/cli": "^11.0.10",
     "@nestjs/schematics": "^11.0.7",
+    "@rad/artworks": "1.3.0",
     "@types/cookie-parser": "^1.4.9",
     "@types/express": "^5.0.3",
     "@types/node": "^22",

@@ -31,9 +31,9 @@ async function main() {
         where: { status: In(["available", "draft"]) },
       }),
     ]);
-    const recommendations = products.map((product) =>
-      recommendPrice(product, comparables, config),
-    );
+    const recommendations = products
+      .filter((product): product is Product & { tomanPrice: number } => product.tomanPrice !== null)
+      .map((product) => recommendPrice(product, comparables, config));
     if (apply) {
       const accepted = recommendations.filter(
         (item) => item.status === "recommended" && item.recommendedPriceToman,

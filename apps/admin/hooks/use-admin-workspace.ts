@@ -141,6 +141,23 @@ export function useAdminWorkspace() {
       });
       setOrders((items) => items.map((item) => (item.id === saved.id ? saved : item)));
     },
+    async approvePayment(id: string) {
+      const saved = await api<AdminOrder>(`/admin/orders/${id}/payment/approve`, {
+        method: "POST",
+      });
+      setOrders((items) => items.map((item) => (item.id === saved.id ? saved : item)));
+      const refreshed = await api<AdminProduct[]>("/admin/products");
+      setProducts(refreshed);
+    },
+    async rejectPayment(id: string, reason: string) {
+      const saved = await api<AdminOrder>(`/admin/orders/${id}/payment/reject`, {
+        method: "POST",
+        body: JSON.stringify({ reason }),
+      });
+      setOrders((items) => items.map((item) => (item.id === saved.id ? saved : item)));
+      const refreshed = await api<AdminProduct[]>("/admin/products");
+      setProducts(refreshed);
+    },
     async inviteMember(member: AdminMember) {
       const saved = await api<AdminMember>("/admin/members", {
         method: "POST",

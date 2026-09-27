@@ -6,7 +6,9 @@ import type {
   User,
   Vendor,
 } from "../database/entities";
+import { normalizeProductStatus } from "../inventory/product-status";
 import { normalizeStoreOrderStatus } from "../orders/store-order-status";
+import type { OrderPaymentStatus } from "../orders/type";
 
 const categoryToStore: Record<string, string> = {
   گلدان: "ceramics",
@@ -42,7 +44,12 @@ export function toAdminCategory(value: string) {
 
 export function artistVendorId(artist: string) {
   const name = artist.trim();
-  if (!name || name.includes("رَد") || name.toLowerCase().includes("rad studio")) return null;
+  if (
+    !name ||
+    name.includes("رَد") ||
+    name.toLowerCase().includes("rad studio")
+  )
+    return null;
   return `artist-${name.toLowerCase().replace(/\s+/g, "-")}`;
 }
 
@@ -55,8 +62,10 @@ export function toAdminProduct(
     name: product.name,
     description: product.story,
     category: toAdminCategory(product.category),
-    price: product.tomanPrice,
-    status: product.status as "draft" | "available" | "reserved" | "sold",
+    price: product.tomanPrice ?? 0,
+    status: normalizeProductStatus(product.status),
+    holdExpiresAt: product.holdExpiresAt?.getTime(),
+    held: Boolean(product.heldBy),
     artist: product.vendor?.displayName ?? "استودیو رَد",
     images: product.images
       .sort((a, b) => a.sortOrder - b.sortOrder)
@@ -68,33 +77,41 @@ export function toAdminProduct(
 
 export function toAdminOrder(
   order: Order & {
-    trackingCode?: string | null;
-    items: Array<OrderItem & { product?: { name: string } | null }>;
-    payment?: {
-      status: string;
-      receiptImage?: string | null;
-      submittedAt?: Date | null;
-      provider?: string;
-    } | null;
+    items: Array<
+      OrderItem & {
+        product?: { name: string; radNumber: number | null } | null;
+      }
+    >;
   },
 ) {
+  const payment = order.payment;
   return {
     id: order.id,
     customer: order.name,
-    productName: order.items.map((item) => item.product?.name ?? item.productSlug).join("، "),
+    phone: order.phone || undefined,
+    city: order.city || undefined,
+    address: order.address || undefined,
+    productName: order.items
+      .map((item) => item.product?.name ?? item.productSlug)
+      .join("، "),
+    products: order.items.map((item) => ({
+      slug: item.productSlug,
+      name: item.product?.name ?? item.productSlug,
+      radNumber: item.product?.radNumber ?? undefined,
+    })),
     amount: order.total,
     status: normalizeStoreOrderStatus(order.status),
     trackingCode: order.trackingCode ?? undefined,
     createdAt: order.createdAt.getTime(),
-    paymentStatus: order.payment?.status as
-      | "created"
-      | "redirected"
-      | "submitted"
-      | "verified"
-      | "failed"
-      | undefined,
-    receiptImage: order.payment?.receiptImage || undefined,
-    paymentSubmittedAt: order.payment?.submittedAt?.getTime(),
+    paymentDueAt: order.paymentDueAt?.getTime(),
+    paymentStatus: payment?.status as OrderPaymentStatus | undefined,
+    paymentAmount: payment?.amount,
+    receiptImage: payment?.receiptImage || undefined,
+    paymentTrackingNumber: payment?.trackingNumber || undefined,
+    paymentSubmittedAt: payment?.submittedAt?.getTime(),
+    receiptSubmissions: payment?.receiptSubmissions ?? 0,
+    paymentReviewedAt: payment?.reviewedAt?.getTime(),
+    rejectionReason: payment?.rejectionReason || undefined,
   };
 }
 
@@ -103,8 +120,10 @@ export function toAdminMember(user: User) {
     id: user.id,
     name: user.name,
     email: user.email,
-    role: (user.adminRole ?? "viewer") as "owner" | "manager" | "editor" | "viewer",
-    status: (user.status === "invited" ? "invited" : "active") as "active" | "invited",
+    role: (user.adminRole ?? "viewer") as
+      "owner" | "manager" | "editor" | "viewer",
+    status: (user.status === "invited" ? "invited" : "active") as
+      "active" | "invited",
   };
 }
 
@@ -113,7 +132,8 @@ export function toAdminUser(user: User) {
     id: user.id,
     name: user.name,
     email: user.email,
-    status: (user.status === "invited" ? "invited" : "active") as "active" | "invited",
+    status: (user.status === "invited" ? "invited" : "active") as
+      "active" | "invited",
     createdAt: user.createdAt.getTime(),
   };
 }

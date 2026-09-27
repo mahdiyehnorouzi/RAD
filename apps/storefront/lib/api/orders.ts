@@ -1,8 +1,8 @@
 import type { Order } from "@rad/types";
-import type { PlaceOrderInput } from "@/types/api";
+import type { PaymentReceiptInput, PlaceOrderInput } from "@/types/api";
 import { api } from "./client";
 
-export type { PlaceOrderInput };
+export type { PaymentReceiptInput, PlaceOrderInput };
 
 export async function fetchOrders() {
   return api<Order[]>("/orders");
@@ -19,10 +19,10 @@ export async function createOrder(order: PlaceOrderInput) {
   });
 }
 
-export async function confirmDemoPayment(id: string, receiptImage: string) {
+export async function confirmDemoPayment(id: string, receipt: PaymentReceiptInput) {
   return api<Order>(`/orders/${encodeURIComponent(id)}/confirm-payment`, {
     method: "POST",
-    body: JSON.stringify({ receiptImage }),
+    body: JSON.stringify(receipt),
   });
 }
 

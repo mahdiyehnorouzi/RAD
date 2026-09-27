@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useLocale } from "@/components/i18n";
+import { useLivePieces } from "@/hooks/use-artworks";
 import { formatPassportCode } from "@/lib/passport";
 import { workshopToday } from "@/lib/now";
 import { useInView } from "../hooks";
@@ -11,7 +12,8 @@ import "./today-in-workshop.css";
 export function TodayInWorkshop() {
   const { locale, t, number, href } = useLocale();
   const { ref, inView } = useInView<HTMLElement>({ threshold: 0.16 });
-  const piece = workshopToday();
+  const piece = workshopToday(useLivePieces());
+  if (!piece) return null;
   const current = piece.milestones.find((item) => item.current);
   const code = formatPassportCode(piece.code, locale, number);
 
@@ -34,7 +36,9 @@ export function TodayInWorkshop() {
           <p>
             {t("liveNow")}: {current?.title[locale]}
           </p>
-          <small>{t("liveDaysAgo", { days: number(piece.startedDaysAgo) })}</small>
+          <small>
+            {t("liveDaysAgo", { days: number(piece.startedDaysAgo) })}
+          </small>
         </div>
       </Link>
     </section>
