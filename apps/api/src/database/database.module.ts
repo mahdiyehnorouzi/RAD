@@ -9,13 +9,25 @@ import { entities } from "./entities";
   imports: [
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],
-      useFactory: (config: ConfigService) => ({
-        type: "postgres" as const,
-        url: cleanDatabaseUrl(config.get<string>("DATABASE_URL") ?? process.env.DATABASE_URL),
-        entities: [...entities],
-        synchronize: true,
-        logging: false,
-      }),
+      useFactory: (config: ConfigService) => {
+        const synchronize =
+          (config.get<string>("TYPEORM_SYNCHRONIZE") ?? process.env.TYPEORM_SYNCHRONIZE ?? "true") !==
+          "false";
+        return {
+          type: "postgres" as const,
+          url: cleanDatabaseUrl(config.get<string>("DATABASE_URL") ?? process.env.DATABASE_URL),
+          entities: [...entities],
+          synchronize,
+          logging: false,
+          extra: {
+            max: 5,
+            keepAlive: true,
+            keepAliveInitialDelayMillis: 1000,
+            connectionTimeoutMillis: 20_000,
+            idleTimeoutMillis: 10_000,
+          },
+        };
+      },
     }),
     TypeOrmModule.forFeature([...entities]),
   ],
