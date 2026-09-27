@@ -13,12 +13,20 @@ export function cleanDatabaseUrl(url = process.env.DATABASE_URL ?? "") {
 }
 
 export function typeOrmOptions(overrides: Partial<DataSourceOptions> = {}): DataSourceOptions {
+  const synchronize = (process.env.TYPEORM_SYNCHRONIZE ?? "true") !== "false";
   return {
     type: "postgres",
     url: cleanDatabaseUrl(),
     entities: [...entities],
-    synchronize: true,
+    synchronize,
     logging: false,
+    extra: {
+      max: 5,
+      keepAlive: true,
+      keepAliveInitialDelayMillis: 1000,
+      connectionTimeoutMillis: 20_000,
+      idleTimeoutMillis: 10_000,
+    },
     ...overrides,
   } as DataSourceOptions;
 }
