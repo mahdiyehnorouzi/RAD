@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import type { AuthUser, Notice, NoticeKind, Order, Review } from "@rad/types";
-import type { PaymentReceiptInput } from "@/types/api";
+import type { PaymentReceiptInput, PlaceOrderInput } from "@/types/api";
 import { productCopy } from "@/lib/catalog/products";
 import { api } from "@/lib/api";
 import { useCatalog } from "../../catalog/catalog-provider";
@@ -33,12 +33,7 @@ type CommerceContextValue = {
   addNotice: (kind: NoticeKind, productSlug?: string) => Promise<void>;
   markAllRead: () => Promise<void>;
   orders: Order[];
-  placeOrder: (order: {
-    name?: string;
-    city?: string;
-    phone?: string;
-    address?: string;
-  }) => Promise<Order>;
+  placeOrder: (order: PlaceOrderInput) => Promise<Order>;
   confirmDemoPayment: (id: string, receipt: PaymentReceiptInput) => Promise<Order>;
   cancelOrder: (id: string) => Promise<Order>;
   reviews: Review[];

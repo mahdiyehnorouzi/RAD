@@ -6,6 +6,8 @@ import { IdentityService } from "../common/identity.service";
 import { NoticesService } from "../notices/notices.service";
 import { noticeForStageChange } from "../notices/notice-kinds";
 import type { Actor } from "../common/identity";
+import { COMMISSION_POLICY_SLUGS } from "../policies/const";
+import { acceptedPolicyVersions } from "../policies/policy-acceptance";
 import { createSubmittedCommission } from "./commission.factory";
 import {
   addCommissionMessage,
@@ -48,10 +50,16 @@ export class CommissionsService {
 
   async create(actor: Actor, input: CreateCommissionDto) {
     this.requireSignedIn(actor);
+    const versions = acceptedPolicyVersions(
+      input.acceptedPolicies,
+      COMMISSION_POLICY_SLUGS,
+      "برای ارسال سفارش، شرایط سفارش اختصاصی را بخوان و تیک پذیرش را بزن.",
+    );
     const payload = createSubmittedCommission({
       customerName: input.customerName,
       brief: input.brief,
       title: input.title,
+      policyAcceptance: { versions, acceptedAt: Date.now() },
     });
     await this.commissions.save(
       this.commissions.create({

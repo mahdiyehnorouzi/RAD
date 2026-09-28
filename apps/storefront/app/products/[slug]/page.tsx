@@ -1,13 +1,21 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { cache } from "react";
+import QRCode from "qrcode";
+import { formatRadCode, type Artwork, type Product } from "@rad/types";
 import { ProductDetail } from "@/components/product";
 import { fetchFaq, fetchProductReviews } from "@/lib/api";
 import { productFromArtwork, resolveArtwork } from "@/lib/artworks";
 import { displayWorks } from "@/lib/catalog/get-catalog-works";
-import { isUpcomingStatus } from "@/lib/catalog/product-status";
-import { isPurchasableStatus } from "@rad/types";
 import {
+  PRODUCT_SEO,
+  productSeoDescription,
+  productSeoState,
+  productSeoTitle,
+} from "@/lib/catalog/product-seo";
+import { passportFromArtwork } from "@/lib/passport";
+import {
+  absoluteUrl,
   breadcrumbJsonLd,
   faqPageJsonLd,
   languageAlternates,
@@ -16,11 +24,37 @@ import {
   siteName,
 } from "@/lib/seo";
 
-/** Only works offered in the shop have a product page; the rest live on their passport. */
-const resolveProduct = cache(async (slug: string) => {
+type Work =
+  | { kind: "moved"; to: string }
+  | {
+      kind: "product";
+      product: Product;
+      artwork: Artwork;
+      priceToman: number;
+      passportPath?: string;
+    };
+
+/**
+ * Only works offered in the shop have a product page. A RAD number resolves to
+ * its slug, and a work never offered for sale lives on its passport. Both are
+ * temporary redirects: slugs and prices can still change.
+ */
+const resolveWork = cache(async (slug: string): Promise<Work | null> => {
   const artwork = await resolveArtwork(slug);
-  if (!artwork || artwork.slug !== slug || artwork.price === null) return null;
-  return productFromArtwork(artwork);
+  if (!artwork) return null;
+  const passport = passportFromArtwork(artwork);
+  const passportPath = passport ? `/passport/${passport.code}` : undefined;
+  if (artwork.price === null)
+    return passportPath ? { kind: "moved", to: passportPath } : null;
+  if (artwork.slug !== slug)
+    return { kind: "moved", to: `/products/${artwork.slug}` };
+  return {
+    kind: "product",
+    product: productFromArtwork(artwork),
+    artwork,
+    priceToman: artwork.price,
+    passportPath,
+  };
 });
 
 export async function generateMetadata({
@@ -29,20 +63,26 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const product = await resolveProduct(slug).catch(() => undefined);
-  if (product === undefined)
+  const work = await resolveWork(slug).catch(() => undefined);
+  if (work === undefined)
     return { title: siteName, robots: { index: false, follow: false } };
-  if (!product)
+  if (!work)
     return { title: "اثر پیدا نشد", robots: { index: false, follow: false } };
+  if (work.kind === "moved") return { robots: { index: false, follow: true } };
 
-  const title = product.name;
-  const description = `${product.subtitle}؛ ${product.story}`.slice(0, 160);
+  const { product, priceToman } = work;
+  const state = productSeoState(product);
+  const title = productSeoTitle(product, state);
+  const description = productSeoDescription(product, state, priceToman);
   const path = `/products/${product.slug}`;
-  const image = product.images?.find((item) => item.src)?.src;
+  const image = product.images?.find((item) => item.src);
 
   return {
-    title,
+    title: { absolute: `${title} | رَد` },
     description,
+    ...(PRODUCT_SEO[state].index
+      ? {}
+      : { robots: { index: false, follow: true } }),
     alternates: {
       canonical: path,
       languages: languageAlternates(path),
@@ -55,15 +95,15 @@ export async function generateMetadata({
       title,
       description,
       url: path,
-      images: image
-        ? [{ url: image, alt: product.images?.[0]?.alt || title }]
+      images: image?.src
+        ? [{ url: image.src, alt: image.alt || product.name }]
         : undefined,
     },
     twitter: {
       card: "summary_large_image",
       title,
       description,
-      images: image ? [image] : undefined,
+      images: image?.src ? [image.src] : undefined,
     },
   };
 }
@@ -78,21 +118,31 @@ export default async function PDP({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const product = await resolveProduct(slug);
-  if (!product) notFound();
+  const work = await resolveWork(slug);
+  if (!work) notFound();
+  if (work.kind === "moved") redirect(work.to);
 
-  const [faq, reviews] = await Promise.all([
+  const { product, artwork, priceToman, passportPath } = work;
+  const qrTarget = absoluteUrl(
+    product.radNumber
+      ? `/r/${formatRadCode(product.radNumber)}`
+      : `/products/${product.slug}`,
+  );
+  const [faq, reviews, qrSvg] = await Promise.all([
     fetchFaq("fa"),
     fetchProductReviews(product.slug).catch(() => []),
+    QRCode.toString(qrTarget, {
+      type: "svg",
+      margin: 0,
+      errorCorrectionLevel: "M",
+      color: { dark: "#1a1714", light: "#00000000" },
+    }).catch(() => undefined),
   ]);
 
-  const availability = isPurchasableStatus(product.status)
-    ? "InStock"
-    : isUpcomingStatus(product.status)
-      ? "PreOrder"
-      : "OutOfStock";
   const productSchema = productJsonLd(product, {
-    availability,
+    availability: PRODUCT_SEO[productSeoState(product)].availability,
+    priceToman,
+    passportPath,
     reviews,
   });
   const breadcrumbs = breadcrumbJsonLd([
@@ -115,7 +165,12 @@ export default async function PDP({
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: safeJsonLd(faqPageJsonLd(faq)) }}
       />
-      <ProductDetail product={product} initialFaq={faq} />
+      <ProductDetail
+        product={product}
+        artwork={artwork}
+        initialFaq={faq}
+        qrSvg={qrSvg}
+      />
     </>
   );
 }

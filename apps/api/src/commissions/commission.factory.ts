@@ -5,6 +5,7 @@ import {
   type MakingBrief,
   type MakingCommission,
 } from "./commission.types";
+import type { PolicyAcceptance } from "../policies/type";
 
 const day = 24 * 60 * 60 * 1000;
 
@@ -12,6 +13,7 @@ export function createSubmittedCommission(input: {
   customerName: string;
   brief: MakingBrief;
   title?: { fa: string; en: string };
+  policyAcceptance?: PolicyAcceptance;
 }): MakingCommission {
   const createdAt = Date.now();
   return {
@@ -29,6 +31,7 @@ export function createSubmittedCommission(input: {
     kilnLocked: false,
     messages: [],
     changeRequests: [],
+    policyAcceptance: input.policyAcceptance,
     updates:
       input.brief.image || input.brief.images?.length
         ? [

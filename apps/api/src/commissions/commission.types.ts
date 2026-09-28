@@ -1,3 +1,5 @@
+import type { PolicyAcceptance } from "../policies/type";
+
 export type LocaleCopy = { fa: string; en: string };
 
 export type MakingStageId =
@@ -49,6 +51,8 @@ export type MakingCommission = {
   createdAt: number;
   updatedAt: number;
   kilnLocked: boolean;
+  /** Custom-order rule versions the customer accepted when sending the request. */
+  policyAcceptance?: PolicyAcceptance;
   messages: StageMessage[];
   changeRequests: Array<{
     id: string;

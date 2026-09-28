@@ -3,7 +3,17 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { AuthUser } from "@rad/types";
 import { api } from "../lib/api";
-import { permissions, type AdminCommission, type AdminMember, type AdminOrder, type AdminProduct, type AdminRole, type AdminUser } from "../lib/admin-data";
+import {
+  permissions,
+  type AdminCommission,
+  type AdminContactMessage,
+  type AdminDamageReport,
+  type AdminMember,
+  type AdminOrder,
+  type AdminProduct,
+  type AdminRole,
+  type AdminUser,
+} from "../lib/admin-data";
 
 export function useAdminWorkspace() {
   const [user, setUser] = useState<AuthUser | null>(null);
@@ -12,6 +22,8 @@ export function useAdminWorkspace() {
   const [members, setMembers] = useState<AdminMember[]>([]);
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [commissions, setCommissions] = useState<AdminCommission[]>([]);
+  const [messages, setMessages] = useState<AdminContactMessage[]>([]);
+  const [damageReports, setDamageReports] = useState<AdminDamageReport[]>([]);
   const [ready, setReady] = useState(false);
   const [error, setError] = useState("");
   const currentRole: AdminRole = (user?.adminRole as AdminRole | undefined) ?? "viewer";
@@ -25,20 +37,26 @@ export function useAdminWorkspace() {
       setMembers([]);
       setUsers([]);
       setCommissions([]);
+      setMessages([]);
+      setDamageReports([]);
       return nextUser;
     }
-    const [productPayload, orderPayload, memberPayload, userPayload, commissionPayload] = await Promise.all([
+    const [productPayload, orderPayload, memberPayload, userPayload, commissionPayload, messagePayload, damagePayload] = await Promise.all([
       api<AdminProduct[]>("/admin/products"),
       api<AdminOrder[]>("/admin/orders"),
       api<AdminMember[]>("/admin/members"),
       api<AdminUser[]>("/admin/users"),
       api<AdminCommission[]>("/admin/commissions"),
+      api<AdminContactMessage[]>("/admin/messages"),
+      api<AdminDamageReport[]>("/admin/damage-reports"),
     ]);
     setProducts(productPayload);
     setOrders(orderPayload);
     setMembers(memberPayload);
     setUsers(userPayload);
     setCommissions(commissionPayload);
+    setMessages(messagePayload);
+    setDamageReports(damagePayload);
     return nextUser;
   }, []);
 
@@ -60,6 +78,8 @@ export function useAdminWorkspace() {
     members,
     users,
     commissions,
+    messages,
+    damageReports,
     currentRole,
     can,
     async login(input: { email: string; password: string; rememberMe?: boolean }) {
@@ -101,6 +121,8 @@ export function useAdminWorkspace() {
       setMembers([]);
       setUsers([]);
       setCommissions([]);
+      setMessages([]);
+      setDamageReports([]);
     },
     async saveProduct(product: AdminProduct) {
       const payload = {
@@ -158,6 +180,23 @@ export function useAdminWorkspace() {
       const refreshed = await api<AdminProduct[]>("/admin/products");
       setProducts(refreshed);
     },
+    async setMessageStatus(id: string, status: AdminContactMessage["status"]) {
+      const saved = await api<AdminContactMessage>(`/admin/messages/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ status }),
+      });
+      setMessages((items) => items.map((item) => (item.id === saved.id ? saved : item)));
+    },
+    async reviewDamageReport(
+      id: string,
+      review: { status: AdminDamageReport["status"]; resolution?: AdminDamageReport["resolution"]; note?: string },
+    ) {
+      const saved = await api<AdminDamageReport>(`/admin/damage-reports/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify(review),
+      });
+      setDamageReports((items) => items.map((item) => (item.id === saved.id ? saved : item)));
+    },
     async inviteMember(member: AdminMember) {
       const saved = await api<AdminMember>("/admin/members", {
         method: "POST",
@@ -211,5 +250,5 @@ export function useAdminWorkspace() {
       setCommissions((items) => items.map((item) => (item.id === saved.id ? saved : item)));
       return saved;
     },
-  }), [commissions, currentRole, error, members, orders, products, ready, refresh, user, users]);
+  }), [commissions, currentRole, damageReports, error, members, messages, orders, products, ready, refresh, user, users]);
 }

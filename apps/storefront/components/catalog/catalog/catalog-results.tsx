@@ -2,15 +2,22 @@
 
 import type { Product } from "@rad/types";
 import { ProductCard, ProductGridSkeleton } from "@/components/product/listing";
-import { StateNotice, StatePanel } from "@/components/ui/state-panel";
+import { StateNotice } from "@/components/ui/state-panel";
 import { Button, ButtonLink } from "@/components/ui/button-link";
 import { useLocale } from "@/components/i18n";
-import { categoryLabel } from "@/lib/catalog/artwork";
-import type { CatalogFilters } from "@/lib/catalog/filters";
+import {
+  EmptyCategoryState,
+  ErrorState,
+  NoResultsState,
+} from "@/components/states";
+import { artworkCategories, categoryLabel } from "@/lib/catalog/artwork";
+import { hasRefinements, type CatalogFilters } from "@/lib/catalog/filters";
+import { categoryChipLabels } from "../const";
 
 export function CatalogResults({
   visible,
   shopCount,
+  stockedCategories,
   pending,
   failed,
   retrying,
@@ -19,10 +26,13 @@ export function CatalogResults({
   onClearQuery,
   onClearFilters,
   onReset,
+  onPickCategory,
 }: {
   visible: Product[];
   /** Works on the shop floor before any filter; 0 means the collection itself is empty. */
   shopCount: number;
+  /** Categories that hold at least one work on the shop floor. */
+  stockedCategories: string[];
   pending: boolean;
   failed: boolean;
   retrying: boolean;
@@ -31,10 +41,14 @@ export function CatalogResults({
   onClearQuery: () => void;
   onClearFilters: () => void;
   onReset: () => void;
+  onPickCategory: (category: string) => void;
 }) {
   const { t, locale } = useLocale();
   const query = filters.query.trim();
-  const filtered = filters.category !== "all" || filters.availability !== "all";
+  const filtered = hasRefinements(filters);
+  const onlyCategory =
+    filters.category !== "all" &&
+    !hasRefinements({ ...filters, category: "all" });
   const retryButton = (
     <button
       type="button"
@@ -46,24 +60,33 @@ export function CatalogResults({
     </button>
   );
 
-  if (pending) return <ProductGridSkeleton />;
+  if (pending) {
+    return (
+      <ProductGridSkeleton
+        count={8}
+        className="product-grid product-grid--catalog"
+      />
+    );
+  }
 
   if (failed && shopCount === 0) {
     return (
-      <StatePanel
-        tone="error"
-        title={t("catalogErrorTitle")}
-        actions={retryButton}
-      >
-        <p>{t("catalogErrorBody")}</p>
-      </StatePanel>
+      <ErrorState
+        layout="stack"
+        onRetry={onRetry}
+        retrying={retrying}
+        title="catalogErrorTitle"
+        body="catalogErrorBody"
+        back={{ href: "/archive", label: "viewArchive" }}
+      />
     );
   }
 
   if (shopCount === 0) {
     return (
-      <StatePanel
+      <EmptyCategoryState
         title={t("catalogEmptyTitle")}
+        body={t("catalogEmptyBody")}
         actions={
           <>
             <ButtonLink href="/archive">{t("viewArchive")}</ButtonLink>
@@ -72,9 +95,7 @@ export function CatalogResults({
             </ButtonLink>
           </>
         }
-      >
-        <p>{t("catalogEmptyBody")}</p>
-      </StatePanel>
+      />
     );
   }
 
@@ -88,9 +109,13 @@ export function CatalogResults({
     return (
       <>
         {staleNotice}
-        <div className="product-grid">
+        <div className="product-grid product-grid--catalog">
           {visible.map((product) => (
-            <ProductCard product={product} key={product.slug} />
+            <ProductCard
+              product={product}
+              key={product.slug}
+              variant="catalog"
+            />
           ))}
         </div>
       </>
@@ -98,40 +123,44 @@ export function CatalogResults({
   }
 
   if (query) {
+    const categories = artworkCategories
+      .filter((category) => stockedCategories.includes(category.id))
+      .map((category) => ({
+        id: category.id,
+        label: (categoryChipLabels[category.id] ?? category.shortLabel)[locale],
+        onSelect: () => onPickCategory(category.id),
+      }));
     return (
       <>
         {staleNotice}
-        <StatePanel
-          title={t("noSearchTitle", { query })}
+        <NoResultsState
+          query={query}
+          onClearQuery={onClearQuery}
+          categories={categories}
           actions={
             <>
+              <Button onClick={onReset}>{t("seeAll")}</Button>
               {filtered ? (
-                <Button onClick={onClearFilters}>{t("searchAllWorks")}</Button>
+                <Button outline onClick={onClearFilters}>
+                  {t("searchAllWorks")}
+                </Button>
               ) : null}
-              <button
-                type="button"
-                className="state-action"
-                onClick={onClearQuery}
-              >
-                {t("clearSearch")}
-              </button>
             </>
           }
-        >
-          <p>{t("noSearchBody")}</p>
-        </StatePanel>
+        />
       </>
     );
   }
 
-  if (filters.category !== "all") {
+  if (onlyCategory) {
     return (
       <>
         {staleNotice}
-        <StatePanel
+        <EmptyCategoryState
           title={t("noCategoryTitle", {
             category: categoryLabel(filters.category, locale),
           })}
+          body={t("noCategoryBody")}
           actions={
             <>
               <Button onClick={onReset}>{t("seeAll")}</Button>
@@ -140,9 +169,7 @@ export function CatalogResults({
               </ButtonLink>
             </>
           }
-        >
-          <p>{t("noCategoryBody")}</p>
-        </StatePanel>
+        />
       </>
     );
   }
@@ -150,12 +177,18 @@ export function CatalogResults({
   return (
     <>
       {staleNotice}
-      <StatePanel
+      <EmptyCategoryState
         title={t("emptyTitle")}
-        actions={<Button onClick={onReset}>{t("seeAll")}</Button>}
-      >
-        <p>{t("emptyBody")}</p>
-      </StatePanel>
+        body={t("emptyBody")}
+        actions={
+          <>
+            <Button onClick={onClearFilters}>{t("clearFilters")}</Button>
+            <Button outline onClick={onReset}>
+              {t("seeAll")}
+            </Button>
+          </>
+        }
+      />
     </>
   );
 }

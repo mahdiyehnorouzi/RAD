@@ -1,3 +1,4 @@
+import type { PolicyAcceptance } from "@rad/types";
 import type { LocaleCopy } from "@/types/locale";
 
 export type { LocaleCopy };
@@ -49,6 +50,9 @@ export interface MakingBrief {
   freedom?: number;
   sketch?: string;
   hasVoice?: boolean;
+  forms?: string[];
+  size?: string;
+  timeline?: string;
 }
 
 export interface StageMessage {
@@ -160,4 +164,6 @@ export interface MakingCommission {
   payments: MakingPayment[];
   audit: AuditEvent[];
   internalNotes: StageMessage[];
+  /** Custom-order rule versions accepted when the request was sent. */
+  policyAcceptance?: PolicyAcceptance;
 }

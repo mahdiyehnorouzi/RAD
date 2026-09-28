@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import type { FaqContent, Product, Review } from "@rad/types";
+import type { SchemaAvailability } from "@/lib/catalog/product-seo";
 
-const FALLBACK_SITE_URL = "https://rad-studio.rad-studio.workers.dev";
+const FALLBACK_SITE_URL = "https://www.rad-object.com";
 
 export const siteUrl = new URL(
   process.env.NEXT_PUBLIC_SITE_URL || process.env.SITE_URL || FALLBACK_SITE_URL,
@@ -74,6 +75,24 @@ export const privatePageMetadata: Metadata = {
   robots: { index: false, follow: false, noarchive: true },
 };
 
+/**
+ * 404 boundaries merge with the layouts above them, so a missing
+ * `/products/x` would otherwise inherit `/products`' canonical and OG URL.
+ */
+export function notFoundMetadata(
+  title = "صفحه پیدا نشد",
+  description = "این صفحه در رَد وجود ندارد.",
+): Metadata {
+  return {
+    ...privatePageMetadata,
+    title: { absolute: `${title} | رَد` },
+    description,
+    alternates: null,
+    openGraph: null,
+    twitter: null,
+  };
+}
+
 export function safeJsonLd(value: unknown) {
   return JSON.stringify(value).replace(/</g, "\\u003c");
 }
@@ -125,15 +144,19 @@ export function faqPageJsonLd(faq: FaqContent) {
 
 export function productJsonLd(
   product: Product,
-  options?: {
-    availability?: "InStock" | "OutOfStock" | "PreOrder";
+  options: {
+    availability: SchemaAvailability;
+    priceToman: number;
+    passportPath?: string;
     reviews?: Review[];
   },
 ) {
   const path = `/products/${product.slug}`;
-  const image = product.images?.find((item) => item.src)?.src;
-  const availability = options?.availability ?? "InStock";
-  const reviews = options?.reviews ?? [];
+  const images = (product.images ?? [])
+    .map((item) => item.src)
+    .filter((src): src is string => Boolean(src))
+    .map(absoluteUrl);
+  const reviews = options.reviews ?? [];
   const ratingSum = reviews.reduce((sum, review) => sum + review.rating, 0);
   const aggregateRating =
     reviews.length > 0
@@ -152,19 +175,23 @@ export function productJsonLd(
     "@id": `${absoluteUrl(path)}#product`,
     name: product.name,
     alternateName: product.en.name,
-    description: product.story,
+    description: `${product.subtitle}. ${product.story}`,
     sku: product.artworkNumber || product.slug,
     category: product.category,
-    image: image ? [absoluteUrl(image)] : undefined,
+    image: images.length ? images : undefined,
     url: absoluteUrl(path),
-    brand: { "@type": "Brand", name: "رَد" },
+    brand: { "@type": "Brand", name: "رَد", alternateName: "RĀD" },
     seller: { "@id": `${absoluteUrl()}#organization` },
+    ...(options.passportPath
+      ? { subjectOf: { "@id": `${absoluteUrl(options.passportPath)}#passport` } }
+      : {}),
     offers: {
       "@type": "Offer",
       url: absoluteUrl(path),
-      priceCurrency: "USD",
-      price: product.usdPrice,
-      availability: `https://schema.org/${availability}`,
+      // ISO 4217 has no Toman; 1 Toman = 10 IRR.
+      priceCurrency: "IRR",
+      price: options.priceToman * 10,
+      availability: `https://schema.org/${options.availability}`,
       itemCondition: "https://schema.org/NewCondition",
       seller: { "@id": `${absoluteUrl()}#organization` },
     },

@@ -1,6 +1,6 @@
 "use client";
 
-import { RouteError } from "@/components/ui/route-error";
+import { ErrorState } from "@/components/states";
 
 export default function ProductError({
   error,
@@ -12,13 +12,12 @@ export default function ProductError({
   reset?: () => void;
 }) {
   return (
-    <RouteError
+    <ErrorState
       error={error}
-      retry={() => (retry ?? reset)?.()}
+      onRetry={() => (retry ?? reset)?.()}
       title="productErrorTitle"
       body="productErrorBody"
-      backHref="/products"
-      backLabel="viewWorks"
+      back={{ href: "/products", label: "viewWorks" }}
     />
   );
 }

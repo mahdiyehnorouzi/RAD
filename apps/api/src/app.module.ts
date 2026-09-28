@@ -19,6 +19,8 @@ import { DesignModule } from "./design/design.module";
 import { CommissionsModule } from "./commissions/commissions.module";
 import { AdminModule } from "./admin/admin.module";
 import { ContentModule } from "./content/content.module";
+import { ContactModule } from "./contact/contact.module";
+import { DamageReportsModule } from "./damage/damage-reports.module";
 import { MailModule } from "./mail/mail.module";
 import { HealthController } from "./health/health.controller";
 
@@ -51,6 +53,8 @@ import { HealthController } from "./health/health.controller";
     CommissionsModule,
     AdminModule,
     ContentModule,
+    ContactModule,
+    DamageReportsModule,
   ],
   controllers: [HealthController],
   providers: [

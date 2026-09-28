@@ -1,12 +1,28 @@
 import {
   PRODUCT_STATUSES,
   canTransitionProductStatus,
+  type ContactMessageStatus,
+  type ContactSource,
+  type ContactTopic,
+  type DamageReport,
+  type DamageReportStatus,
+  type DamageResolution,
+  type PolicyAcceptance,
+  type PolicySlug,
   type ProductStatus,
 } from "@rad/types";
 
 export type AdminRole = "owner" | "manager" | "editor" | "viewer";
 export type AdminSection =
-  "overview" | "products" | "orders" | "commissions" | "users" | "members" | "account";
+  | "overview"
+  | "products"
+  | "orders"
+  | "messages"
+  | "damage"
+  | "commissions"
+  | "users"
+  | "members"
+  | "account";
 export type AdminProductStatus = ProductStatus;
 export type AdminOrderStatus =
   | "pending_payment"
@@ -69,6 +85,34 @@ export interface AdminOrder {
   receiptSubmissions?: number;
   paymentReviewedAt?: number;
   rejectionReason?: string;
+  /** Stamped when staff mark the order delivered; starts the damage and return windows. */
+  deliveredAt?: number;
+  /** Rule versions the customer ticked at checkout. */
+  policyAcceptance?: PolicyAcceptance;
+}
+
+export interface AdminDamageReport extends DamageReport {
+  customer: string;
+  phone?: string;
+  signedIn: boolean;
+  deliveredAt?: number;
+}
+
+export interface AdminContactMessage {
+  id: string;
+  topic: ContactTopic;
+  source: ContactSource;
+  name: string;
+  /** Email or phone the customer asked RAD to reply to. */
+  contact: string;
+  body: string;
+  status: ContactMessageStatus;
+  orderId?: string;
+  /** False when someone typed an order number that isn't theirs. */
+  fromOrderOwner: boolean;
+  signedIn: boolean;
+  createdAt: number;
+  resolvedAt?: number;
 }
 
 export interface AdminMember {
@@ -212,6 +256,41 @@ const manualOrderTransitions: Record<AdminOrderStatus, AdminOrderStatus[]> = {
 export function orderStatusOptions(current: AdminOrderStatus) {
   return [current, ...manualOrderTransitions[current]];
 }
+
+export const damageStatusLabels: Record<DamageReportStatus, string> = {
+  submitted: "تازه",
+  reviewing: "در حال بررسی",
+  approved: "تأیید شد",
+  declined: "تأیید نشد",
+};
+
+export const damageResolutionLabels: Record<DamageResolution, string> = {
+  repair: "مرمت به دست سازنده",
+  refund: "بازگشت کامل مبلغ",
+};
+
+export const policyTitleLabels: Record<PolicySlug, string> = {
+  buying: "خرید آثار آماده",
+  custom: "سفارش اختصاصی",
+  shipping: "ارسال و تحویل",
+  returns: "مرجوعی و آسیب",
+  terms: "شرایط استفاده",
+  privacy: "حریم خصوصی",
+};
+
+export const contactTopicLabels: Record<ContactTopic, string> = {
+  custom: "سفارش اختصاصی",
+  order: "پیگیری سفارش",
+  payment: "پرداخت و فیش",
+  collaboration: "همکاری",
+  other: "موضوع دیگر",
+};
+
+export const contactSourceLabels: Record<ContactSource, string> = {
+  contact: "صفحه‌ی «حرف بزنیم»",
+  checkout: "راهنمای تسویه",
+  order: "صفحه‌ی سفارش",
+};
 
 /** Common reasons staff pick when a receipt does not check out. */
 export const paymentRejectionReasons = [

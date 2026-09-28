@@ -39,6 +39,8 @@ export {
   sendCommissionMessage,
   slimCommissionBrief,
 } from "./commissions";
+export { sendContactMessage } from "./contact";
+export { createDamageReport, fetchDamageReports } from "./damage-reports";
 export { fetchFaq } from "./content";
 export { createNotice, fetchNotices, markNoticesRead } from "./notices";
 export { cancelOrder, confirmDemoPayment, createOrder, fetchOrder, fetchOrders } from "./orders";

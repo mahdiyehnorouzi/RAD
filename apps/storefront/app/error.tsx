@@ -1,6 +1,6 @@
 "use client";
 
-import { RouteError } from "@/components/ui/route-error";
+import { ErrorState } from "@/components/states";
 
 export default function AppError({
   error,
@@ -11,5 +11,5 @@ export default function AppError({
   retry?: () => void;
   reset?: () => void;
 }) {
-  return <RouteError error={error} retry={() => (retry ?? reset)?.()} />;
+  return <ErrorState error={error} onRetry={() => (retry ?? reset)?.()} />;
 }

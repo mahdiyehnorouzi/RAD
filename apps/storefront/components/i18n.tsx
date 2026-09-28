@@ -76,6 +76,8 @@ export function LocaleProvider({ children }: { children: React.ReactNode }) {
       ["shape", "titleShape"],
       ["now", "titleNow"],
       ["about", "navAbout"],
+      ["contact", "titleContact"],
+      ["help", "titleHelp"],
     ];
     const section: MessageKey | undefined =
       pathname === "/making"

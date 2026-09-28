@@ -10,11 +10,18 @@ import { useLocale } from "@/components/i18n";
 import { ButtonLink } from "@/components/ui/button-link";
 import { formatArtworkNumber, ProductMedia } from "@/components/product";
 import { useCatalog } from "@/components/catalog";
+import { HelpPanel } from "@/components/contact";
+import { CheckoutAgreement, purchasePathCopy } from "@/components/help";
 import { productCopy } from "@/lib/catalog/products";
 import { errorMessage } from "@/lib/api";
 import { formatCountdown } from "@/lib/catalog/product-status";
 import { useCountdown } from "@/hooks/use-countdown";
-import { ORDER_PAYMENT_WINDOW_MINUTES, type Product } from "@rad/types";
+import {
+  ORDER_PAYMENT_WINDOW_MINUTES,
+  ORDER_POLICY_SLUGS,
+  currentPolicyVersions,
+  type Product,
+} from "@rad/types";
 
 export function CheckoutPage() {
   const { slugs, holds, holdEndsAt, clear } = useCart();
@@ -26,6 +33,9 @@ export function CheckoutPage() {
   const [submitting, setSubmitting] = useState(false);
   const errorRef = useRef<HTMLParagraphElement>(null);
   const phoneRef = useRef<HTMLInputElement>(null);
+  const agreeRef = useRef<HTMLInputElement>(null);
+  const [accepted, setAccepted] = useState(false);
+  const [agreeMissing, setAgreeMissing] = useState(false);
 
   const items = slugs
     .map((slug) => getProduct(slug))
@@ -61,6 +71,11 @@ export function CheckoutPage() {
     );
     const address = String(data.get("address") ?? "").trim();
     const postalCode = String(data.get("postalCode") ?? "").trim();
+    if (!accepted) {
+      setAgreeMissing(true);
+      agreeRef.current?.focus();
+      return;
+    }
 
     try {
       setError("");
@@ -78,6 +93,7 @@ export function CheckoutPage() {
         ]
           .filter(Boolean)
           .join("، "),
+        acceptedPolicies: currentPolicyVersions(ORDER_POLICY_SLUGS),
       });
       await clear();
       if (created.payment?.redirectUrl) {
@@ -109,73 +125,95 @@ export function CheckoutPage() {
         <p>{t("checkoutBody")}</p>
       </header>
       <div className="checkout-grid">
-        <form className="checkout-form" onSubmit={submitDemoOrder} noValidate>
-          {error ? (
-            <p ref={errorRef} className="form-error" role="alert" tabIndex={-1}>
-              {error}
-            </p>
-          ) : null}
-          {unavailable.length ? (
-            <p className="form-error" role="status">
-              {t("workNoLongerAvailable")}
-            </p>
-          ) : remaining !== null ? (
-            <p className="checkout-hold" role="status" aria-live="off">
-              {t("holdCountdown", {
-                time: formatCountdown(remaining, locale, number),
-              })}
-            </p>
-          ) : null}
-          <label htmlFor="checkout-name">{t("nameLabel")}</label>
-          <input
-            id="checkout-name"
-            name="name"
-            type="text"
-            defaultValue={user?.name ?? ""}
-            autoComplete="name"
+        <div className="checkout-main">
+          <form className="checkout-form" onSubmit={submitDemoOrder} noValidate>
+            {error ? (
+              <p
+                ref={errorRef}
+                className="form-error"
+                role="alert"
+                tabIndex={-1}
+              >
+                {error}
+              </p>
+            ) : null}
+            {unavailable.length ? (
+              <p className="form-error" role="status">
+                {t("workNoLongerAvailable")}
+              </p>
+            ) : remaining !== null ? (
+              <p className="checkout-hold" role="status" aria-live="off">
+                {t("holdCountdown", {
+                  time: formatCountdown(remaining, locale, number),
+                })}
+              </p>
+            ) : null}
+            <label htmlFor="checkout-name">{t("nameLabel")}</label>
+            <input
+              id="checkout-name"
+              name="name"
+              type="text"
+              defaultValue={user?.name ?? ""}
+              autoComplete="name"
+            />
+            <label htmlFor="checkout-phone">{t("phoneLabel")}</label>
+            <input
+              id="checkout-phone"
+              ref={phoneRef}
+              className="checkout-ltr-field"
+              name="phone"
+              type="tel"
+              inputMode="tel"
+              autoComplete="tel"
+              dir="ltr"
+              required
+              defaultValue=""
+            />
+            <label htmlFor="checkout-city">{t("cityLabel")}</label>
+            <input
+              id="checkout-city"
+              name="city"
+              type="text"
+              autoComplete="address-level2"
+            />
+            <label htmlFor="checkout-address">{t("addressLabel")}</label>
+            <textarea
+              className="resize-none"
+              id="checkout-address"
+              name="address"
+              rows={4}
+              autoComplete="street-address"
+            />
+            <label htmlFor="checkout-postal">{t("postalCodeLabel")}</label>
+            <input
+              id="checkout-postal"
+              className="checkout-ltr-field"
+              name="postalCode"
+              type="text"
+              inputMode="numeric"
+              autoComplete="postal-code"
+              dir="ltr"
+            />
+            <CheckoutAgreement
+              ref={agreeRef}
+              checked={accepted}
+              invalid={agreeMissing}
+              onChange={(checked) => {
+                setAccepted(checked);
+                if (checked) setAgreeMissing(false);
+              }}
+            />
+            <button className="button" type="submit" disabled={submitting}>
+              {submitting ? t("placingOrder") : t("placeDemoOrder")}
+            </button>
+          </form>
+          <HelpPanel
+            context="checkout"
+            subject={items
+              .map((product) => productCopy(product, locale).name)
+              .join(locale === "fa" ? "، " : ", ")}
           />
-          <label htmlFor="checkout-phone">{t("phoneLabel")}</label>
-          <input
-            id="checkout-phone"
-            ref={phoneRef}
-            className="checkout-ltr-field"
-            name="phone"
-            type="tel"
-            inputMode="tel"
-            autoComplete="tel"
-            dir="ltr"
-            required
-            defaultValue=""
-          />
-          <label htmlFor="checkout-city">{t("cityLabel")}</label>
-          <input
-            id="checkout-city"
-            name="city"
-            type="text"
-            autoComplete="address-level2"
-          />
-          <label htmlFor="checkout-address">{t("addressLabel")}</label>
-          <textarea
-            className="resize-none"
-            id="checkout-address"
-            name="address"
-            rows={4}
-            autoComplete="street-address"
-          />
-          <label htmlFor="checkout-postal">{t("postalCodeLabel")}</label>
-          <input
-            id="checkout-postal"
-            className="checkout-ltr-field"
-            name="postalCode"
-            type="text"
-            inputMode="numeric"
-            autoComplete="postal-code"
-            dir="ltr"
-          />
-          <button className="button" type="submit" disabled={submitting}>
-            {submitting ? t("placingOrder") : t("placeDemoOrder")}
-          </button>
-        </form>
+        </div>
         <aside className="checkout-summary">
           <span className="checkout-summary-title">{t("orderSummary")}</span>
           {items.map((product) => (
@@ -217,6 +255,7 @@ export function CheckoutPage() {
               </li>
               <li>{t("checkoutPaymentStepTransfer")}</li>
               <li>{t("checkoutPaymentStepReceipt")}</li>
+              <li>{purchasePathCopy[locale].afterReceipt}</li>
             </ol>
           </section>
         </aside>

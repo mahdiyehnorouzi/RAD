@@ -1,4 +1,10 @@
 export * from "./artwork";
+export * from "./contact";
+export * from "./damage-report";
+export * from "./policy";
+
+import type { LocalizedText, WorkMark } from "./artwork";
+import type { PolicyAcceptance } from "./policy";
 
 export type Locale = "fa" | "en";
 export type ProductShape = "tall" | "round" | "wide";
@@ -96,6 +102,19 @@ export interface Vendor {
   verified: boolean;
 }
 
+/**
+ * A place on a photograph where one material of the work is seen up close.
+ * `x`/`y` are % of the frame; `span` is how much of the frame's width a long
+ * strip may cover around that point and still show only this material. Across
+ * a work, the widest spot leads.
+ */
+export interface MaterialSpot {
+  x: number;
+  y: number;
+  span?: number;
+  material: LocalizedText;
+}
+
 export interface ProductImage {
   src?: string;
   alt: string;
@@ -103,6 +122,9 @@ export interface ProductImage {
   color?: string;
   accent?: string;
   shape?: ProductShape;
+  spots?: MaterialSpot[];
+  /** Points on this photograph the maker annotated. */
+  marks?: WorkMark[];
 }
 
 export interface Product {
@@ -126,6 +148,8 @@ export interface Product {
   /** Same permanent number as `Artwork.radNumber`. */
   radNumber?: number;
   artworkNumber?: string;
+  /** Epoch ms the work entered the catalogue; absent in static fallback data. */
+  listedAt?: number;
   en: { name: string; subtitle: string; story: string; details: string[] };
 }
 
@@ -235,8 +259,12 @@ export interface Order {
   delivery: { name: string; city: string; phone?: string; address?: string };
   trackingCode?: string | null;
   estimatedDeliveryAt?: number | null;
+  /** Epoch ms the order was marked delivered; starts the damage-report window. */
+  deliveredAt?: number;
   /** Present while payment is still open (or after confirm for history). */
   payment?: OrderPayment;
+  /** Policy versions the buyer accepted at checkout. Older orders have none. */
+  policyAcceptance?: PolicyAcceptance;
 }
 export interface Review {
   id: string;

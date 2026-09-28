@@ -1,0 +1,68 @@
+.rad-fingerprint {
+  display: block;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+}
+
+.rad-fingerprint.is-mark {
+  stroke-width: 3;
+}
+
+.rad-fingerprint.is-field {
+  stroke-width: 1.1;
+}
+
+/* Oxide ink: the theme remaps --clay to kiln green, the seal stays red-brown. */
+.object-stamp {
+  display: block;
+  overflow: visible;
+  color: #8a4938;
+  font-family: inherit;
+}
+
+.object-stamp-rim,
+.object-stamp-inner,
+.object-stamp-rule {
+  fill: none;
+  stroke: currentColor;
+}
+
+.object-stamp-rim {
+  stroke-width: 2.4;
+}
+
+.object-stamp-inner,
+.object-stamp-rule {
+  stroke-width: 0.8;
+}
+
+.object-stamp text {
+  fill: currentColor;
+}
+
+.object-stamp-dot {
+  fill: currentColor;
+}
+
+.object-stamp-arc {
+  font-size: 9.4px;
+  font-weight: var(--font-weight-medium, 500);
+  letter-spacing: 0.26em;
+}
+
+.object-stamp-no {
+  font-size: 9px;
+}
+
+.object-stamp-code {
+  font-size: 25px;
+  font-weight: var(--font-weight-medium, 500);
+  letter-spacing: 0.04em;
+}
+
+.object-stamp-year {
+  font-size: 8.5px;
+  letter-spacing: 0.18em;
+}

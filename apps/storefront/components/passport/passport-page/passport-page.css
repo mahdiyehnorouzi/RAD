@@ -81,23 +81,35 @@
   padding: 1.4rem 0 0;
 }
 
-.passport-mark-stamp {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 4px;
-  width: 108px;
-  padding: 10px;
-  border: 1px solid var(--ink);
-  background: var(--paper);
+.passport-mark-seal {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
 }
 
-.passport-mark-stamp i {
-  aspect-ratio: 1;
-  background: transparent;
+.passport-mark-seal .object-stamp {
+  width: 7.5rem;
+  height: 7.5rem;
+  mix-blend-mode: multiply;
+  transform: rotate(-8deg);
+  transition: transform 480ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.passport-mark-stamp i.is-on {
-  background: var(--ink);
+.passport-mark-seal:hover .object-stamp {
+  transform: rotate(-2deg);
+}
+
+.passport-mark-print {
+  width: 5.5rem;
+  height: 5.5rem;
+  color: var(--ink);
+  opacity: 0.55;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .passport-mark-seal .object-stamp {
+    transition: none;
+  }
 }
 
 .passport-mark p {

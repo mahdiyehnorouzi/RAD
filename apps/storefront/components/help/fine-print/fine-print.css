@@ -1,0 +1,120 @@
+.help-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* A person to ask: the one warm panel on every help page. */
+
+.help-contact {
+  padding: clamp(1.3rem, 3vw, 1.75rem);
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--sand) 34%, var(--paper));
+}
+
+.help-contact h2 {
+  margin: 0;
+  color: var(--ink);
+  font-size: 1.08rem;
+  font-weight: var(--font-weight-medium);
+  line-height: 1.6;
+}
+
+.help-contact p {
+  margin: 0.35rem 0 1.15rem;
+  color: color-mix(in srgb, var(--ink) 72%, transparent);
+  font-size: 0.92rem;
+  line-height: 1.85;
+}
+
+.help-contact-action {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  min-height: 46px;
+  padding: 0.55rem 1rem;
+  border: 1px solid var(--moss);
+  border-radius: 2px;
+  color: var(--moss);
+  font-size: 0.92rem;
+  font-weight: var(--font-weight-medium);
+  transition:
+    background 180ms ease-out,
+    color 180ms ease-out;
+}
+
+.help-contact-action:hover {
+  background: var(--moss);
+  color: var(--paper);
+}
+
+.help-contact-action svg {
+  transition: transform 260ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.help-contact-action:hover svg {
+  transform: translateX(-3px);
+}
+
+html[dir="ltr"] .help-contact-action:hover svg {
+  transform: translateX(3px);
+}
+
+/* Official texts: quiet rows, each dated. */
+
+.legal-texts {
+  margin-top: 1.75rem;
+}
+
+.legal-texts h2 {
+  margin: 0 0 0.6rem;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: var(--font-weight-medium);
+  letter-spacing: 0.02em;
+}
+
+.legal-texts ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--line);
+}
+
+.legal-texts li {
+  border-bottom: 1px solid var(--line);
+}
+
+.legal-texts a {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 0.8rem;
+  align-items: center;
+  padding: 0.85rem 0.35rem;
+  color: var(--moss);
+  transition: background 200ms ease-out;
+}
+
+.legal-texts a:hover {
+  background: color-mix(in srgb, var(--moss) 4.5%, transparent);
+}
+
+.legal-texts-copy {
+  display: grid;
+  min-width: 0;
+}
+
+.legal-texts-copy strong {
+  color: var(--ink);
+  font-size: 0.95rem;
+  font-weight: var(--font-weight-medium);
+}
+
+.legal-texts-copy small {
+  color: var(--muted);
+  font-size: 0.78rem;
+}

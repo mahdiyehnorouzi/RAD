@@ -51,8 +51,10 @@ describe("E2E purchase (card-to-card)", () => {
       phone: "۰۹۱۲۱۲۳۴۵۶۷",
       city: "تهران",
       address: "ولیعصر",
+      acceptedPolicies: rad.acceptedPolicies,
     });
     assert.equal(order.status, "pending_payment");
+    assert.deepEqual(order.policyAcceptance?.versions, rad.acceptedPolicies);
     assert.equal(order.total, 12_500_000);
     assert.equal(order.payment?.amount, 12_500_000);
     assert.ok(
@@ -118,7 +120,10 @@ describe("E2E purchase (card-to-card)", () => {
       "held in a bag",
     );
 
-    const order = await rad.orders.checkout(owner, { phone: "09120000001" });
+    const order = await rad.orders.checkout(owner, {
+      phone: "09120000001",
+      acceptedPolicies: rad.acceptedPolicies,
+    });
     await assert.rejects(
       rad.cart.add(other, slug),
       ConflictException,
@@ -354,7 +359,10 @@ describe("E2E purchase (card-to-card)", () => {
     );
     const [winner, other] = loser === 1 ? [buyerA, buyerB] : [buyerB, buyerA];
 
-    const order = await rad.orders.checkout(winner, { phone: "09120000002" });
+    const order = await rad.orders.checkout(winner, {
+      phone: "09120000002",
+      acceptedPolicies: rad.acceptedPolicies,
+    });
 
     // A cart row written before holds existed must not let the other buyer through.
     const cartItems = rad.dataSource.getRepository(CartItem);
@@ -365,7 +373,10 @@ describe("E2E purchase (card-to-card)", () => {
       }),
     );
     await assert.rejects(
-      rad.orders.checkout(other, { phone: "09120000003" }),
+      rad.orders.checkout(other, {
+      phone: "09120000003",
+      acceptedPolicies: rad.acceptedPolicies,
+    }),
       ConflictException,
     );
 
@@ -446,5 +457,33 @@ describe("E2E purchase (card-to-card)", () => {
     } finally {
       mock.timers.reset();
     }
+  });
+
+  test("checkout needs the current rules accepted and saves their versions", async () => {
+    const slug = await rad.product();
+    const buyer = rad.buyer("reader");
+    await rad.cart.add(buyer, slug);
+
+    await assert.rejects(
+      rad.orders.checkout(buyer, { phone: "09120000004" }),
+      BadRequestException,
+      "no acceptance",
+    );
+    await assert.rejects(
+      rad.orders.checkout(buyer, {
+        phone: "09120000004",
+        acceptedPolicies: { ...rad.acceptedPolicies, returns: "2020-01-01" },
+      }),
+      ConflictException,
+      "outdated returns text",
+    );
+    assert.equal((await rad.cart.get(buyer)).slugs.length, 1, "bag kept");
+
+    const order = await rad.orders.checkout(buyer, {
+      phone: "09120000004",
+      acceptedPolicies: rad.acceptedPolicies,
+    });
+    assert.ok(order.policyAcceptance?.acceptedAt);
+    assert.equal(order.policyAcceptance?.versions.terms, rad.acceptedPolicies.terms);
   });
 });

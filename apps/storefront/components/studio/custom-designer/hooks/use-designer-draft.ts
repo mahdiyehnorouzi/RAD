@@ -1,39 +1,56 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { artworkCategoryById } from "@/lib/catalog/artwork";
-import { DESIGNER_STEPS } from "../const";
+import {
+  BUDGET_OPTIONS,
+  DEFAULT_SIZE_INDEX,
+  DESIGNER_STEPS,
+  FORM_OPTIONS,
+  SIZE_OPTIONS,
+  TIMELINE_OPTIONS,
+} from "../const";
 import type { DesignerDraft } from "../type";
 
 const storageKey = "rad-studio-draft-v1";
 const SAVE_DELAY_MS = 400;
 
 const emptyDesignerDraft: DesignerDraft = {
-  step: "spark",
-  reached: "spark",
-  category: "",
+  step: "idea",
+  reached: "idea",
   prompt: "",
-  intendedUse: "",
-  dimensions: "",
-  budget: "",
   uploads: [],
   sketch: "",
   hasVoice: false,
+  forms: [],
+  sizeIndex: DEFAULT_SIZE_INDEX,
+  dimensions: "",
   colors: [],
-  feeling: "",
   freedom: 70,
+  budget: "",
+  timeline: "",
+  needBy: "",
 };
 
 function hasContent(draft: DesignerDraft) {
   return Boolean(
     draft.prompt.trim() ||
-    draft.intendedUse.trim() ||
-    draft.dimensions.trim() ||
-    draft.budget.trim() ||
     draft.uploads.length ||
     draft.sketch ||
+    draft.hasVoice ||
+    draft.forms.length ||
+    draft.dimensions.trim() ||
     draft.colors.length ||
-    draft.feeling ||
-    draft.category,
+    draft.budget ||
+    draft.timeline,
   );
+}
+
+function strings(value: unknown) {
+  return Array.isArray(value)
+    ? value.filter((item): item is string => typeof item === "string")
+    : [];
+}
+
+function known(value: unknown, options: Array<{ id: string }>) {
+  return options.some((option) => option.id === value) ? String(value) : "";
 }
 
 function readDraft(): DesignerDraft | null {
@@ -44,31 +61,33 @@ function readDraft(): DesignerDraft | null {
     if (!parsed || typeof parsed !== "object") return null;
     const step = DESIGNER_STEPS.includes(parsed.step as never)
       ? parsed.step!
-      : "spark";
+      : "idea";
     const reached = DESIGNER_STEPS.includes(parsed.reached as never)
       ? parsed.reached!
       : step;
+    const sizeIndex =
+      typeof parsed.sizeIndex === "number" &&
+      parsed.sizeIndex >= 0 &&
+      parsed.sizeIndex < SIZE_OPTIONS.length
+        ? Math.round(parsed.sizeIndex)
+        : DEFAULT_SIZE_INDEX;
     const draft: DesignerDraft = {
       step,
       reached,
-      category:
-        parsed.category && artworkCategoryById(parsed.category)
-          ? parsed.category
-          : "",
       prompt: String(parsed.prompt ?? ""),
-      intendedUse: String(parsed.intendedUse ?? ""),
-      dimensions: String(parsed.dimensions ?? ""),
-      budget: String(parsed.budget ?? ""),
-      uploads: Array.isArray(parsed.uploads)
-        ? parsed.uploads.filter((item) => typeof item === "string")
-        : [],
+      uploads: strings(parsed.uploads),
       sketch: String(parsed.sketch ?? ""),
       hasVoice: Boolean(parsed.hasVoice),
-      colors: Array.isArray(parsed.colors)
-        ? parsed.colors.filter((item) => typeof item === "string")
-        : [],
-      feeling: String(parsed.feeling ?? ""),
+      forms: strings(parsed.forms).filter((id) =>
+        FORM_OPTIONS.some((option) => option.id === id),
+      ),
+      sizeIndex,
+      dimensions: String(parsed.dimensions ?? ""),
+      colors: strings(parsed.colors),
       freedom: typeof parsed.freedom === "number" ? parsed.freedom : 70,
+      budget: known(parsed.budget, BUDGET_OPTIONS),
+      timeline: known(parsed.timeline, TIMELINE_OPTIONS),
+      needBy: String(parsed.needBy ?? ""),
     };
     return hasContent(draft) ? draft : null;
   } catch {
@@ -143,5 +162,11 @@ export function useDesignerDraft(
     restore(emptyDesignerDraft);
   }, [restore]);
 
-  return { restored, clear, discard };
+  /** After a sent idea, begin a new one and resume autosaving. */
+  const reset = useCallback(() => {
+    restore(emptyDesignerDraft);
+    hydrated.current = true;
+  }, [restore]);
+
+  return { restored, clear, discard, reset };
 }

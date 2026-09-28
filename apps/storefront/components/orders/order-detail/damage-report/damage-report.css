@@ -1,0 +1,278 @@
+.damage-report {
+  display: grid;
+  gap: 0.55rem;
+  padding: clamp(1.1rem, 3vw, 1.5rem);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--paper);
+}
+
+.damage-report h2 {
+  margin: 0;
+  color: var(--ink);
+  font-size: 1.05rem;
+  font-weight: var(--font-weight-medium);
+}
+
+.damage-report p {
+  margin: 0;
+}
+
+.damage-lede,
+.damage-compensation {
+  color: color-mix(in srgb, var(--ink) 72%, transparent);
+  font-size: 0.88rem;
+  line-height: 1.9;
+}
+
+.damage-deadline {
+  justify-self: start;
+  padding: 0.3rem 0.65rem;
+  border-radius: 2px;
+  background: color-mix(in srgb, #8a4938 8%, var(--paper));
+  color: #8a4938;
+  font-size: 0.84rem;
+  line-height: 1.8;
+}
+
+.damage-compensation a {
+  color: var(--moss);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--moss) 35%, transparent);
+  text-underline-offset: 0.35em;
+}
+
+.damage-sent {
+  padding: 0.7rem 0.9rem;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--moss) 8%, var(--paper));
+  color: var(--moss);
+  font-size: 0.88rem;
+}
+
+.damage-open {
+  margin-top: 0.35rem;
+}
+
+/* Form */
+
+.damage-form {
+  display: grid;
+  gap: 0.6rem;
+  margin-top: 0.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--line);
+}
+
+.damage-photos {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+.damage-photo {
+  display: grid;
+  gap: 0.4rem;
+  align-content: start;
+}
+
+.damage-photo-label,
+.damage-body-label {
+  color: var(--ink);
+  font-size: 0.86rem;
+  font-weight: var(--font-weight-medium);
+}
+
+.damage-photo-drop {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 0.4rem;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  border: 1px dashed color-mix(in srgb, var(--moss) 40%, var(--line));
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--moss) 3%, var(--canvas));
+  color: var(--moss);
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: background 180ms ease-out;
+}
+
+.damage-photo-drop:hover {
+  background: color-mix(in srgb, var(--moss) 7%, var(--canvas));
+}
+
+.damage-photo-drop img {
+  grid-area: 1 / 1;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.damage-photo-drop img + span {
+  grid-area: 1 / 1;
+  align-self: end;
+  justify-self: stretch;
+  padding: 0.35rem;
+  background: color-mix(in srgb, var(--ink) 62%, transparent);
+  color: var(--paper);
+  text-align: center;
+}
+
+.damage-photo-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.damage-photo:has(.damage-photo-input:focus-visible) .damage-photo-drop {
+  outline: 2px solid #8a4938;
+  outline-offset: 2px;
+}
+
+.damage-photo.is-invalid .damage-photo-drop {
+  border-color: #8f2e20;
+  background: #fff7f3;
+}
+
+.damage-form textarea {
+  width: 100%;
+  min-height: 96px;
+  padding: 0.65rem 0.85rem;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--canvas);
+  font: inherit;
+  font-size: 0.9rem;
+  resize: vertical;
+}
+
+.damage-form textarea[aria-invalid="true"] {
+  border-color: #8f2e20;
+  background: #fff7f3;
+}
+
+.damage-field-error {
+  color: #8f2e20;
+  font-size: 0.8rem;
+}
+
+.damage-form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1.25rem;
+  margin-top: 0.35rem;
+}
+
+.damage-cancel {
+  min-height: 44px;
+  padding: 0 0.25rem;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.88rem;
+  cursor: pointer;
+}
+
+/* Reports and their review status */
+
+.damage-reports {
+  margin-top: 0.6rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid var(--line);
+}
+
+.damage-reports h3 {
+  margin: 0 0 0.5rem;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: var(--font-weight-medium);
+}
+
+.damage-reports ul {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.damage-item {
+  display: grid;
+  gap: 0.5rem;
+  padding: 0.9rem 1rem;
+  border-radius: 4px;
+  background: var(--canvas);
+}
+
+.damage-item-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.35rem 1rem;
+}
+
+.damage-item-head small {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.damage-status {
+  padding: 0.12rem 0.55rem;
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--ink) 8%, transparent);
+  color: var(--ink);
+  font-size: 0.78rem;
+  font-weight: var(--font-weight-medium);
+}
+
+.damage-item.is-reviewing .damage-status {
+  background: color-mix(in srgb, var(--sand) 55%, transparent);
+  color: #6d5a33;
+}
+
+.damage-item.is-approved .damage-status {
+  background: color-mix(in srgb, var(--moss) 12%, transparent);
+  color: var(--moss);
+}
+
+.damage-item.is-declined .damage-status {
+  background: color-mix(in srgb, #8a4938 11%, transparent);
+  color: #8a4938;
+}
+
+.damage-item-body,
+.damage-item-reply {
+  color: color-mix(in srgb, var(--ink) 78%, transparent);
+  font-size: 0.88rem;
+  line-height: 1.85;
+  white-space: pre-line;
+}
+
+.damage-item-reply strong {
+  color: var(--ink);
+  font-weight: var(--font-weight-medium);
+}
+
+.damage-item-photos {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.damage-item-photos img {
+  width: 5.5rem;
+  height: 4.25rem;
+  border-radius: 2px;
+  object-fit: cover;
+}
+
+@media (max-width: 520px) {
+  .damage-photos {
+    grid-template-columns: 1fr;
+  }
+}

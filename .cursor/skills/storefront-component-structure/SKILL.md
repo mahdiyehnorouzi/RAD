@@ -74,6 +74,7 @@ feature/
 | `product/` | `listing/`, `artwork-visual/`, `product-detail/` |
 | `home/` | `sections/`, `home-banner.tsx` |
 | `layout/` | `header/`, `chrome/` |
+| `states/` | `state-screen/` (shared layout, chips, suggested works), named empty/error states, `type/`, `const/` |
 | `i18n.tsx` | Locale provider (must stay a file, not a folder) |
 | `ui/` | Flat primitives |
 

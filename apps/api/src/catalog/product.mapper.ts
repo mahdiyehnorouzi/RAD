@@ -127,6 +127,7 @@ export function toProduct(
     artworkNumber: product.radNumber
       ? formatArtworkNumber(product.radNumber)
       : undefined,
+    listedAt: product.createdAt.getTime(),
     vendor: product.vendor
       ? {
           id: product.vendor.id,

@@ -1,5 +1,7 @@
 import { CartItem } from "./cart-item.entity";
 import { Commission } from "./commission.entity";
+import { ContactMessage } from "./contact-message.entity";
+import { DamageReport } from "./damage-report.entity";
 import { Favorite } from "./favorite.entity";
 import { Notice } from "./notice.entity";
 import { Order } from "./order.entity";
@@ -26,6 +28,8 @@ export const entities = [
   Notice,
   Commission,
   PaymentIntent,
+  ContactMessage,
+  DamageReport,
 ] as const;
 
 export type EntityClass = (typeof entities)[number];
@@ -33,6 +37,8 @@ export type EntityClass = (typeof entities)[number];
 export {
   CartItem,
   Commission,
+  ContactMessage,
+  DamageReport,
   Favorite,
   Notice,
   Order,

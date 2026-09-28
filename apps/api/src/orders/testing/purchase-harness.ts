@@ -25,6 +25,7 @@ import {
 import { InventoryService } from "../../inventory/inventory.service";
 import { MailService } from "../../mail/mail.service";
 import { NoticesService } from "../../notices/notices.service";
+import { CURRENT_POLICY_VERSIONS, ORDER_POLICY_SLUGS } from "../../policies/const";
 import { OrdersService } from "../orders.service";
 import { PaymentReviewService } from "../payment-review.service";
 
@@ -105,6 +106,11 @@ export async function startPurchaseHarness() {
   let productCount = 0;
   let receiptCount = 0;
 
+  /** The versions the checkout page sends: the rules a ready-work order is placed under. */
+  const acceptedPolicies: Record<string, string> = Object.fromEntries(
+    ORDER_POLICY_SLUGS.map((slug) => [slug, CURRENT_POLICY_VERSIONS[slug]]),
+  );
+
   return {
     dataSource,
     cart,
@@ -112,6 +118,7 @@ export async function startPurchaseHarness() {
     admin,
     inventory,
     notices,
+    acceptedPolicies,
 
     buyer(name: string): Actor {
       return { user: null, guestId: `${name}-${Date.now()}-${Math.random()}` };
@@ -162,6 +169,7 @@ export async function startPurchaseHarness() {
         phone: "09121234567",
         city: "تهران",
         address: "خیابان ولیعصر",
+        acceptedPolicies,
       });
     },
 
