@@ -569,6 +569,7 @@ export const en = {
   museumBack: "Back to the museum",
   museumMissing: "This portrait is not in the archive yet.",
   homeDifferenceTitle: "The gap between imagination and reality",
+  homeDifferenceScroll: "Scroll to continue",
   impossibleEyebrow: "IMPOSSIBLE BRIEF ARCHIVE",
   impossibleTitle: "Commission something that is hard to say.",
   impossibleBody:
@@ -814,6 +815,9 @@ export const en = {
   footerLegal: "Official texts",
   footerEmail: "Email",
   footerEmailSoon: "coming soon",
+  footerShop: "Shop",
+  footerConnect: "Connect",
+  footerMore: "More {group} links",
   retry: "Try again",
   retrying: "Trying…",
   dismiss: "Dismiss",

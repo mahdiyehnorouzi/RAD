@@ -4,6 +4,7 @@ import { ProductCard, ProductGridSkeleton } from "@/components/product";
 import { ButtonLink } from "@/components/ui/button-link";
 import { useLocale } from "@/components/i18n";
 import { useInView, useStickyPin } from "../../hooks";
+import { ArchivePinbar } from "./archive-pinbar";
 import "../../motion/reveal.css";
 import "./archive-section.css";
 
@@ -16,7 +17,7 @@ export function ArchiveSection({
 }) {
   const { t } = useLocale();
   const { ref: inViewRef, inView } = useInView<HTMLElement>({ threshold: 0.16 });
-  const { containerRef, headingRef, pinned, barHeight } = useStickyPin();
+  const { containerRef, headingRef, pinned } = useStickyPin();
 
   const setSectionRef = (node: HTMLElement | null) => {
     inViewRef.current = node;
@@ -31,10 +32,7 @@ export function ArchiveSection({
       <span className="eyebrow reveal-item" data-reveal="eyebrow">
         {t("archiveEyebrow")}
       </span>
-      <header
-        className={`section-heading${pinned ? " is-pinned" : ""}`}
-        ref={headingRef}
-      >
+      <header className="section-heading" ref={headingRef}>
         <div className="archive-heading-pin">
           <div className="reveal-item" data-reveal="cta">
             <h2 className="reveal-item" data-reveal="heading">
@@ -51,17 +49,15 @@ export function ArchiveSection({
       ) : (
         <div className="product-grid home-products">
           {products.map((product, index) => (
-            <ProductCard product={product} index={index} key={product.slug} />
+            <ProductCard
+              product={product}
+              variant={index === 0 ? "featured" : "standard"}
+              key={product.slug}
+            />
           ))}
         </div>
       )}
-      {pinned ? (
-        <div
-          aria-hidden="true"
-          className="archive-heading-blur"
-          style={{ height: barHeight }}
-        />
-      ) : null}
+      <ArchivePinbar shown={pinned} />
     </section>
   );
 }

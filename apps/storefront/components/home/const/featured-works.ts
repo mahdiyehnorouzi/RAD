@@ -10,7 +10,8 @@ import {
   catalogLifestylePhotoSlugs,
 } from "@/lib/catalog/photo-works";
 
-const FEATURED_LIMIT = 4;
+/** One wide featured plate beside a card, then a full row of three. */
+const FEATURED_LIMIT = 5;
 
 export function featuredHomeWorks(products: Product[]): Product[] {
   const available = products.filter((product) =>

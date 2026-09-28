@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 64" preserveAspectRatio="none">
+  <defs>
+    <mask id="dry" maskUnits="userSpaceOnUse" x="0" y="0" width="200" height="64">
+      <rect width="200" height="64" fill="#fff"/>
+      <g fill="none" stroke="#000" stroke-linecap="round">
+        <path d="M18 50 L120 26" stroke-width="1.4"/>
+        <path d="M30 55 L150 30" stroke-width=".9"/>
+        <path d="M60 44 L186 14" stroke-width="1.1"/>
+        <path d="M44 52 L96 40" stroke-width="2"/>
+        <path d="M98 30 L178 12" stroke-width=".7"/>
+        <path d="M110 36 L190 18" stroke-width="1.6"/>
+        <path d="M70 38 L130 24" stroke-width=".6"/>
+        <path d="M12 47 L50 38" stroke-width=".8"/>
+        <path d="M136 30 L196 16" stroke-width="2.2"/>
+        <path d="M56 58 L112 46" stroke-width="1.2"/>
+        <path d="M84 20 L150 9" stroke-width="1"/>
+      </g>
+    </mask>
+  </defs>
+  <path mask="url(#dry)" d="M6 44 C24 30 60 18 104 13 C136 9 168 7 190 8 C197 9 198 16 192 20 C184 26 170 30 150 34 C116 42 76 50 40 56 C22 59 8 58 5 53 C3 50 4 47 6 44 Z"/>
+  <g fill="none" stroke="#000" stroke-linecap="round">
+    <path d="M160 9 L199 5" stroke-width="1.8" opacity=".8"/>
+    <path d="M170 16 L199 12" stroke-width="1.3" opacity=".6"/>
+    <path d="M150 28 L196 22" stroke-width="1.5" opacity=".7"/>
+    <path d="M176 22 L199 19" stroke-width=".9" opacity=".5"/>
+    <path d="M1 50 L22 45" stroke-width="1.4" opacity=".6"/>
+    <path d="M3 57 L30 53" stroke-width="1" opacity=".5"/>
+    <path d="M8 40 L24 35" stroke-width=".8" opacity=".45"/>
+  </g>
+</svg>

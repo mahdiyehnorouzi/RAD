@@ -1,0 +1,430 @@
+.hero-cards {
+  --end: -1;
+  --turn: -180deg;
+  --ease-turn: cubic-bezier(0.65, 0, 0.25, 1);
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  contain: paint;
+  pointer-events: none;
+}
+
+.hero-cards[dir="ltr"] {
+  --end: 1;
+  --turn: 180deg;
+}
+
+/* Contact shade on the plinth, kept out of the 3D context so it never sorts above a card. */
+.hero-cards::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: calc(var(--stand) * var(--scene-h) - 0.9rem);
+  width: calc(var(--card-w) * 2.5);
+  height: 2rem;
+  translate: -50% 0;
+  background: radial-gradient(closest-side, rgba(72, 50, 26, 0.3), transparent);
+  pointer-events: none;
+}
+
+.hero-cards-stage {
+  --spread: calc(var(--card-w) * 0.74);
+  --fan-turn: 14deg;
+  --fan-tilt: 5deg;
+  --fan-depth: 7rem;
+  position: absolute;
+  left: 50%;
+  bottom: calc(var(--stand) * var(--scene-h));
+  width: var(--card-w);
+  height: var(--card-h);
+  translate: -50% 0;
+  perspective: 1500px;
+  perspective-origin: 50% 30%;
+  transform-style: preserve-3d;
+  pointer-events: auto;
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.hero-card {
+  --side: calc(var(--o) * var(--end));
+  --lift: 0rem;
+  --peek: 0rem;
+  --card-transform: translate3d(
+      calc(var(--side) * (var(--spread) + var(--peek))),
+      var(--lift),
+      calc(var(--abs) * var(--fan-depth) * -1)
+    )
+    rotateY(calc(var(--side) * var(--fan-turn) * -1))
+    rotateZ(calc(var(--side) * var(--fan-tilt)))
+    scale(calc(1 - var(--abs) * 0.12));
+  position: absolute;
+  inset: 0;
+  transform: var(--card-transform);
+  transform-origin: 50% 100%;
+  transform-style: preserve-3d;
+  transition: transform 1s var(--ease-turn);
+}
+
+.hero-card[data-turned="true"] {
+  --lift: -0.5rem;
+}
+
+/* A card wrapping round slips behind the fan instead of crossing in front of it. */
+.hero-card[data-wrapping="true"] {
+  transition: none;
+  animation: hero-card-wrap 1s var(--ease-turn) both;
+}
+
+.hero-card-deal {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  animation: hero-card-deal 1.25s var(--ease-out) calc(0.5s + var(--abs) * 0.16s) both;
+}
+
+.hero-card-sheet {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  transition: transform 1.05s var(--ease-turn);
+}
+
+.hero-card[data-turned="true"] .hero-card-sheet {
+  transform: rotateY(var(--turn));
+}
+
+.hero-card-face {
+  position: absolute;
+  inset: 0;
+  container-type: inline-size;
+  border-radius: 2px;
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .35 0 0 0 0 .28 0 0 0 0 .18 0 0 0 .09 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),
+    linear-gradient(172deg, #fcf9f2, #f1e9da);
+  box-shadow:
+    -0.7rem 1.1rem 1.7rem -0.8rem rgba(74, 52, 28, 0.45),
+    -0.1rem 0.2rem 0.45rem rgba(74, 52, 28, 0.14),
+    inset 0 0 0 1px rgba(120, 96, 64, 0.1);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  animation: hero-card-appear 0.5s ease-out calc(0.5s + var(--abs) * 0.16s) both;
+}
+
+.hero-card-back {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--moss);
+  text-align: center;
+  transform: rotateY(180deg);
+  box-shadow:
+    0.7rem 1.1rem 1.7rem -0.8rem rgba(74, 52, 28, 0.45),
+    0.1rem 0.2rem 0.45rem rgba(74, 52, 28, 0.14),
+    inset 0 0 0 1px rgba(120, 96, 64, 0.1);
+}
+
+.hero-card-hit {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  padding: 0;
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  cursor: pointer;
+}
+
+.hero-card-hit:focus-visible {
+  outline: 2px solid var(--clay);
+  outline-offset: 5px;
+}
+
+.hero-card-pin {
+  position: absolute;
+  top: 2.6cqi;
+  left: 50%;
+  z-index: 2;
+  width: 5.4cqi;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  translate: -50% 0;
+  background: radial-gradient(circle at 34% 30%, #f6e3b4, #b8904f 48%, #5d4322 100%);
+  box-shadow:
+    -0.12rem 0.2rem 0.3rem rgba(58, 40, 20, 0.4),
+    inset 0 -1px 1px rgba(40, 26, 10, 0.35);
+  pointer-events: none;
+}
+
+.hero-card-window {
+  position: absolute;
+  inset: 8cqi 6.5cqi 8.5cqi;
+  overflow: hidden;
+  background: var(--ink);
+  box-shadow:
+    inset 0 0 0 1px rgba(24, 35, 31, 0.14),
+    0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+.hero-card-window img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: saturate(0.94) contrast(1.03);
+  pointer-events: none;
+}
+
+.hero-card[data-tone="textile"] img {
+  object-position: 50% 48%;
+}
+
+.hero-card[data-tone="stone"] img {
+  object-position: 50% 54%;
+}
+
+.hero-card[data-tone="metal"] img {
+  object-position: 50% 56%;
+  filter: saturate(0.8) contrast(1.06);
+}
+
+.hero-card-tag {
+  position: absolute;
+  top: 12cqi;
+  inset-inline-end: 3.5cqi;
+  z-index: 2;
+  display: grid;
+  gap: 0.1em;
+  padding: 0.45em 0.7em 0.5em;
+  background: linear-gradient(175deg, #fbf7ee, #efe6d5);
+  box-shadow: -0.1rem 0.2rem 0.4rem rgba(58, 40, 20, 0.22);
+  color: var(--moss);
+  font-size: max(0.55rem, 4.2cqi);
+  font-weight: 600;
+  line-height: 1.35;
+  text-align: start;
+  rotate: 4deg;
+  pointer-events: none;
+}
+
+.hero-cards[dir="ltr"] .hero-card-tag {
+  font-size: max(0.5rem, 3.6cqi);
+  letter-spacing: 0.08em;
+  rotate: -4deg;
+}
+
+.hero-card-back > p {
+  position: relative;
+  margin: 0;
+  max-width: 82cqi;
+  pointer-events: none;
+}
+
+.hero-card-back > .hero-card-title {
+  margin-top: 5cqi;
+  font-size: max(0.9rem, 7.6cqi);
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.hero-card-back > .hero-card-material {
+  margin-top: 1.6cqi;
+  color: color-mix(in srgb, var(--moss) 78%, var(--paper));
+  font-size: max(0.7rem, 5cqi);
+  line-height: 1.5;
+}
+
+.hero-card-back > .hero-card-note {
+  margin-top: 5cqi;
+  padding-bottom: 6cqi;
+  color: color-mix(in srgb, var(--ink) 82%, var(--paper));
+  font-size: max(0.72rem, 5.4cqi);
+  line-height: 1.85;
+  text-wrap: balance;
+}
+
+.hero-card-note::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: 40cqi;
+  height: 1px;
+  translate: -50% 0;
+  background: color-mix(in srgb, var(--moss) 22%, transparent);
+}
+
+.hero-card-qr {
+  display: block;
+  width: 30cqi;
+  margin-top: 6cqi;
+  fill: var(--ink);
+  pointer-events: none;
+}
+
+.hero-card-link {
+  position: relative;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45em;
+  margin-top: 4.5cqi;
+  padding: 0.35em 0.2em;
+  color: var(--moss);
+  font-size: max(0.72rem, 5cqi);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.hero-card-link svg {
+  width: 1.15em;
+  height: 1.15em;
+  transition: translate 0.25s var(--ease-out);
+}
+
+.hero-card-link:hover svg {
+  translate: calc(var(--end) * 0.2em) 0;
+}
+
+.hero-card-link:focus-visible {
+  outline: 2px solid var(--clay);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+.hero-cards-toggle {
+  position: absolute;
+  inset-inline-end: var(--page);
+  bottom: 2.1rem;
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  border: 1px solid color-mix(in srgb, var(--moss) 22%, transparent);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--paper) 78%, transparent);
+  color: var(--moss);
+  cursor: pointer;
+  pointer-events: auto;
+  transition: background 0.2s ease-out;
+}
+
+.hero-cards-toggle:hover {
+  background: var(--paper);
+}
+
+.hero-cards-toggle:focus-visible {
+  outline: 2px solid var(--clay);
+  outline-offset: 3px;
+}
+
+.hero-cards-toggle svg {
+  width: 0.9rem;
+  height: 0.9rem;
+}
+
+@media (hover: hover) {
+  .hero-card:hover {
+    transition-duration: 0.45s;
+  }
+
+  .hero-card[data-active="true"]:not([data-turned="true"]):hover {
+    --lift: -0.4rem;
+  }
+
+  .hero-card[data-active="false"]:hover {
+    --peek: 1rem;
+  }
+}
+
+@keyframes hero-card-wrap {
+  from {
+    transform: translate3d(calc(var(--side) * var(--spread) * -1), 0, calc(var(--fan-depth) * -1))
+      rotateY(calc(var(--side) * var(--fan-turn)))
+      rotateZ(calc(var(--side) * var(--fan-tilt) * -1))
+      scale(0.88);
+  }
+  50% {
+    transform: translate3d(0, -0.5rem, calc(var(--fan-depth) * -2.6)) rotateY(0deg) rotateZ(0deg)
+      scale(0.8);
+  }
+  to {
+    transform: var(--card-transform);
+  }
+}
+
+@keyframes hero-card-deal {
+  from {
+    transform: translate3d(calc(var(--side) * var(--spread) * -1), 2rem, 0)
+      rotateZ(calc(var(--side) * var(--fan-tilt) * -1));
+  }
+  to {
+    transform: none;
+  }
+}
+
+@keyframes hero-card-appear {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (max-width: 700px) {
+  .hero-cards-stage {
+    --spread: calc(var(--card-w) * 0.58);
+    --fan-turn: 12deg;
+    --fan-depth: 5rem;
+  }
+
+  .hero-cards-toggle {
+    bottom: 1.9rem;
+    width: 2rem;
+    height: 2rem;
+  }
+}
+
+/* Positions still change and the record still replaces the photograph, by crossfade instead of travel. */
+@media (prefers-reduced-motion: reduce) {
+  .hero-card,
+  .hero-card-sheet {
+    transition: none;
+  }
+
+  .hero-card[data-wrapping="true"],
+  .hero-card-deal {
+    animation: none;
+  }
+
+  .hero-card[data-turned="true"] .hero-card-sheet {
+    transform: none;
+  }
+
+  .hero-card-face {
+    animation: none;
+    transition: opacity 0.25s ease-out;
+  }
+
+  .hero-card-back {
+    opacity: 0;
+    transform: none;
+    box-shadow:
+      -0.7rem 1.1rem 1.7rem -0.8rem rgba(74, 52, 28, 0.45),
+      -0.1rem 0.2rem 0.45rem rgba(74, 52, 28, 0.14),
+      inset 0 0 0 1px rgba(120, 96, 64, 0.1);
+  }
+
+  .hero-card[data-turned="true"] .hero-card-back {
+    opacity: 1;
+  }
+
+  .hero-card[data-turned="true"] .hero-card-front {
+    opacity: 0;
+  }
+}

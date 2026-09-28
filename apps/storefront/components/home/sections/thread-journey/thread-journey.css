@@ -1,0 +1,248 @@
+/* The hero and the journey share one stacking context so the thread can pass behind their papers. */
+.thread-home {
+  --oxide: #8a4938;
+  --oxide-deep: #6f3526;
+
+  position: relative;
+  isolation: isolate;
+}
+
+.journey {
+  --kraft: #d9bf93;
+  --kraft-ink: #4f321f;
+  --journey-max: 76rem;
+  --journey-gutter: max(var(--page), (100% - var(--journey-max)) / 2);
+  --journey-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --tear: 16px;
+  --tear-top: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 24' preserveAspectRatio='none'%3E%3Cpath d='M0 24V11l22 2 19-4 27 3 16-5 31 4 18-2 24 5 29-6 17 3 26-2 21 4 33-5 14 2 28-3 23 5 19-4 31 3 16-2 27 4 22-5 18 3 35-3 21 4 15-5 29 3 24-2 19 4 32-4 17 3 26-5 20 4 30-2 18 3 25-4 21 5 28-4 16 2 33-3 19 4 23-5 27 3 17-2 31 4 20-3 24 3 18-4 29 5 22-4 26 2 15-3 30 4 21-2 19 3V24Z'/%3E%3C/svg%3E");
+  --tear-bottom: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 24' preserveAspectRatio='none'%3E%3Cpath transform='matrix(-1 0 0 -1 1200 24)' d='M0 24V11l22 2 19-4 27 3 16-5 31 4 18-2 24 5 29-6 17 3 26-2 21 4 33-5 14 2 28-3 23 5 19-4 31 3 16-2 27 4 22-5 18 3 35-3 21 4 15-5 29 3 24-2 19 4 32-4 17 3 26-5 20 4 30-2 18 3 25-4 21 5 28-4 16 2 33-3 19 4 23-5 27 3 17-2 31 4 20-3 24 3 18-4 29 5 22-4 26 2 15-3 30 4 21-2 19 3V24Z'/%3E%3C/svg%3E");
+  --tear-left: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 1200' preserveAspectRatio='none'%3E%3Cpath d='M24 0H11l2 22 -4 19 3 27 -5 16 4 31 -2 18 5 24 -6 29 3 17 -2 26 4 21 -5 33 2 14 -3 28 5 23 -4 19 3 31 -2 16 4 27 -5 22 3 18 -3 35 4 21 -5 15 3 29 -2 24 4 19 -4 32 3 17 -5 26 4 20 -2 30 3 18 -4 25 5 21 -4 28 2 16 -3 33 4 19 -5 23 3 27 -2 17 4 31 -3 20 3 24 -4 18 5 29 -4 22 2 26 -3 15 4 30 -2 21 3 19H24Z'/%3E%3C/svg%3E");
+  --tear-right: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 1200' preserveAspectRatio='none'%3E%3Cpath transform='matrix(-1 0 0 1 24 0)' d='M24 0H11l2 22 -4 19 3 27 -5 16 4 31 -2 18 5 24 -6 29 3 17 -2 26 4 21 -5 33 2 14 -3 28 5 23 -4 19 3 31 -2 16 4 27 -5 22 3 18 -3 35 4 21 -5 15 3 29 -2 24 4 19 -4 32 3 17 -5 26 4 20 -2 30 3 18 -4 25 5 21 -4 28 2 16 -3 33 4 19 -5 23 3 27 -2 17 4 31 -3 20 3 24 -4 18 5 29 -4 22 2 26 -3 15 4 30 -2 21 3 19H24Z'/%3E%3C/svg%3E");
+
+  position: relative;
+  display: grid;
+  gap: clamp(0.55rem, 1.4vw, 1rem);
+  padding-block: clamp(0.8rem, 2vw, 1.4rem) 0;
+  overflow: clip;
+  background: var(--canvas);
+  color: var(--ink);
+}
+
+.journey h2 {
+  margin: 0;
+  color: var(--moss);
+  font-size: clamp(1.25rem, 4.2vw, 2.7rem);
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.journey p {
+  margin: 0;
+}
+
+.journey-band {
+  position: relative;
+  margin: 0;
+}
+
+/* The thread */
+
+.red-thread {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 5;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.red-thread path {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 0 1000000;
+}
+
+.red-thread-line {
+  stroke: var(--oxide);
+  stroke-width: 1.8;
+}
+
+.red-thread-shade {
+  stroke: rgb(52 26 14 / 0.22);
+  stroke-width: 2.6;
+  filter: blur(1.4px);
+  transform: translate(1.5px, 3.5px);
+}
+
+.red-thread-bead {
+  fill: var(--oxide-deep);
+  opacity: 0;
+  transition: opacity 0.3s ease-out;
+}
+
+.red-thread-knot circle {
+  fill: var(--oxide);
+}
+
+.red-thread-knot .red-thread-knot-shade {
+  fill: rgb(52 26 14 / 0.28);
+  filter: blur(1.4px);
+}
+
+.red-thread-knot .red-thread-knot-shine {
+  fill: rgb(255 240 225 / 0.55);
+}
+
+/*
+ * Torn paper. The shadow filter lives on the span and the jagged mask on its
+ * ::before, so the tear keeps its shadow. Edges: top and bottom by default,
+ * all four for cards, or top, bottom and one inner side for sheets laid over
+ * a photograph.
+ */
+
+.journey-paper {
+  --paper-mask:
+    var(--tear-top) top / 100% var(--tear) no-repeat,
+    linear-gradient(#000 0 0) center / 100% calc(100% - 2 * var(--tear) + 2px) no-repeat,
+    var(--tear-bottom) bottom / 100% var(--tear) no-repeat;
+
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  filter: drop-shadow(0 10px 16px rgb(58 44 30 / 0.14)) drop-shadow(0 1px 1px rgb(58 44 30 / 0.12));
+  pointer-events: none;
+}
+
+.journey-paper::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(120% 90% at 20% 0%, rgb(255 255 255 / 0.5), transparent 60%),
+    radial-gradient(90% 70% at 90% 100%, rgb(190 160 115 / 0.12), transparent 70%),
+    var(--paper);
+  -webkit-mask: var(--paper-mask);
+  mask: var(--paper-mask);
+}
+
+.journey-paper.is-card {
+  --tear: 10px;
+  --paper-mask:
+    var(--tear-top) top / 100% var(--tear) no-repeat,
+    var(--tear-bottom) bottom / 100% var(--tear) no-repeat,
+    var(--tear-left) left / var(--tear) 100% no-repeat,
+    var(--tear-right) right / var(--tear) 100% no-repeat,
+    linear-gradient(#000 0 0) center / calc(100% - 2 * var(--tear) + 2px) calc(100% - 2 * var(--tear) + 2px) no-repeat;
+}
+
+.journey-paper.is-card::before {
+  background:
+    radial-gradient(140% 100% at 0% 0%, rgb(255 255 255 / 0.65), transparent 55%),
+    color-mix(in srgb, var(--paper) 70%, white);
+}
+
+/* Inner side torn on the inline end (a sheet at the start, over a photo at the end) */
+.journey-paper.is-end-torn {
+  --paper-mask:
+    var(--tear-top) top / 100% var(--tear) no-repeat,
+    var(--tear-bottom) bottom / 100% var(--tear) no-repeat,
+    var(--side-tear) var(--side) / var(--tear) 100% no-repeat,
+    linear-gradient(#000 0 0) var(--solid) center / calc(100% - var(--tear) + 1px) calc(100% - 2 * var(--tear) + 2px) no-repeat;
+  --side-tear: var(--tear-right);
+  --side: right;
+  --solid: left;
+}
+
+html[dir="rtl"] .journey-paper.is-end-torn {
+  --side-tear: var(--tear-left);
+  --side: left;
+  --solid: right;
+}
+
+/* Inner side torn on the inline start (a sheet at the end, over a photo at the start) */
+.journey-paper.is-start-torn {
+  --paper-mask:
+    var(--tear-top) top / 100% var(--tear) no-repeat,
+    var(--tear-bottom) bottom / 100% var(--tear) no-repeat,
+    var(--side-tear) var(--side) / var(--tear) 100% no-repeat,
+    linear-gradient(#000 0 0) var(--solid) center / calc(100% - var(--tear) + 1px) calc(100% - 2 * var(--tear) + 2px) no-repeat;
+  --side-tear: var(--tear-left);
+  --side: left;
+  --solid: right;
+}
+
+html[dir="rtl"] .journey-paper.is-start-torn {
+  --side-tear: var(--tear-right);
+  --side: right;
+  --solid: left;
+}
+
+/* Paper cards pinned to the thread */
+
+.journey-card {
+  position: relative;
+  display: grid;
+  justify-items: start;
+  gap: 0.6rem;
+  padding: clamp(1.2rem, 3vw, 2.2rem) clamp(1rem, 2.6vw, 2rem) clamp(1.1rem, 2.8vw, 2rem);
+}
+
+.journey-card > :not(.journey-paper) {
+  position: relative;
+}
+
+.journey .button {
+  gap: 0.5rem;
+  padding-inline: 1.1rem;
+  white-space: nowrap;
+}
+
+.journey .journey-card .button {
+  min-height: 44px;
+  background: var(--oxide);
+  color: var(--paper);
+}
+
+.journey .journey-card .button:hover {
+  background: var(--oxide-deep);
+}
+
+.journey-pin {
+  position: absolute;
+  z-index: 6;
+  top: -0.35rem;
+  inset-inline-start: 50%;
+  width: 0.9rem;
+  height: 0.9rem;
+  margin-inline-start: -0.45rem;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #f1dca0 0 12%, #c49a45 40%, #6d4f1c 100%);
+  box-shadow:
+    0 2px 2px rgb(40 20 12 / 0.35),
+    1px 4px 5px rgb(40 20 12 / 0.2);
+  transition:
+    transform 0.5s var(--journey-ease),
+    box-shadow 0.5s var(--journey-ease);
+}
+
+[data-thread="live"] .journey-pin:not(.is-reached) {
+  transform: translateY(-0.45rem) scale(1.18);
+  box-shadow:
+    0 8px 8px rgb(40 20 12 / 0.16),
+    2px 12px 14px rgb(40 20 12 / 0.12);
+}
+
+.journey-point {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .journey-pin,
+  .red-thread-bead {
+    transition: none;
+  }
+}

@@ -1,0 +1,202 @@
+.journey-custom {
+  --custom-split: 35%;
+
+  display: grid;
+  grid-template-columns: minmax(0, var(--custom-split)) minmax(0, 1fr);
+  min-height: clamp(19rem, 78vw, 36rem);
+}
+
+.journey-custom-photo {
+  position: relative;
+  grid-column: 1;
+  grid-row: 1;
+  margin: calc(var(--tear) - 5px) 0;
+  overflow: hidden;
+  clip-path: inset(0);
+  transition: clip-path 1.2s var(--journey-ease);
+}
+
+.journey-custom-photo img {
+  object-fit: cover;
+  object-position: 68% 50%;
+  transition: transform 1.6s var(--journey-ease);
+}
+
+/* No z-index here: the pinned card inside must rise above the thread */
+.journey-custom-sheet {
+  position: relative;
+  grid-column: 2;
+  grid-row: 1;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  column-gap: clamp(0.5rem, 2vw, 2rem);
+  margin-inline-start: -1rem;
+  padding-block: 2rem;
+  padding-inline: 1.3rem clamp(0.75rem, 3vw, 2rem);
+}
+
+@media (min-width: 900px) {
+  .journey-custom-sheet {
+    padding-inline-end: var(--journey-gutter);
+  }
+}
+
+/* Three steps on their own short rail beside the photo */
+.journey-steps {
+  position: relative;
+  display: grid;
+  justify-items: end;
+  gap: clamp(1.1rem, 4vw, 2.2rem);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.journey-steps::before {
+  content: "";
+  position: absolute;
+  top: 1.2rem;
+  bottom: 1.2rem;
+  inset-inline-end: calc(0.425rem - 0.75px);
+  width: 1.5px;
+  background: color-mix(in srgb, var(--oxide) 70%, transparent);
+  transform-origin: top;
+  transition: transform 1.2s var(--journey-ease);
+}
+
+.journey-steps li {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto auto;
+  align-items: center;
+  column-gap: 0.45rem;
+  min-height: 2.4rem;
+}
+
+.journey-step-text {
+  display: grid;
+  justify-items: end;
+  gap: 0.1rem;
+  text-align: end;
+}
+
+.journey-step-index {
+  color: var(--oxide);
+  font-size: 0.7rem;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.journey-step-name {
+  color: var(--ink);
+  font-size: clamp(0.74rem, 1.5vw, 1rem);
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.journey-step-dot {
+  width: 0.85rem;
+  height: 0.85rem;
+  border: 1.5px solid var(--oxide);
+  border-radius: 50%;
+  background: var(--oxide);
+  box-shadow: 0 0 0 0.2rem var(--paper);
+  transition:
+    background 0.35s ease-out,
+    transform 0.5s var(--journey-ease);
+}
+
+.journey-custom-card-wrap {
+  position: relative;
+  z-index: 7;
+}
+
+.journey-custom-card {
+  grid-template-columns: minmax(0, 1fr);
+  transform: rotate(-1.2deg);
+  transform-origin: 50% 0;
+  transition: transform 0.9s var(--journey-ease);
+}
+
+.journey-custom-card h2 {
+  font-size: clamp(1.1rem, 3.9vw, 2.2rem);
+}
+
+.journey-custom-card p {
+  display: grid;
+  margin-bottom: 0.4rem;
+  color: var(--muted);
+  font-size: clamp(0.8rem, 1.6vw, 1.1rem);
+  line-height: 1.75;
+}
+
+.journey-custom-card .button {
+  justify-self: stretch;
+}
+
+@media (max-width: 899px) {
+  .journey .journey-custom-card .button {
+    min-height: 40px;
+    padding-inline: 0.7rem;
+    font-size: 0.8rem;
+    white-space: normal;
+    text-align: center;
+  }
+}
+
+.journey-custom-exit {
+  bottom: 0.6rem;
+  left: 50%;
+}
+
+[data-thread="live"] .journey-custom:not(:has(.journey-pin.is-reached)) .journey-custom-card {
+  transform: rotate(-4.5deg) translateY(0.5rem);
+}
+
+[data-thread="live"] .journey-custom:not(:has(.journey-pin.is-reached)) .journey-custom-photo {
+  clip-path: inset(0 0 100% 0);
+}
+
+[data-thread="live"] .journey-custom:not(:has(.journey-pin.is-reached)) .journey-custom-photo img {
+  transform: scale(1.1);
+}
+
+[data-thread="live"] .journey-steps:not(:has(.is-reached))::before {
+  transform: scaleY(0);
+}
+
+[data-thread="live"] .journey-step-dot:not(.is-reached) {
+  background: var(--paper);
+  transform: scale(0.8);
+}
+
+@media (min-width: 900px) {
+  .journey-custom {
+    --custom-split: 50%;
+    min-height: clamp(30rem, 42vw, 40rem);
+  }
+
+  .journey-custom-card-wrap {
+    max-width: 27rem;
+  }
+
+  .journey-step-dot {
+    width: 1rem;
+    height: 1rem;
+  }
+
+  .journey-steps::before {
+    inset-inline-end: calc(0.5rem - 0.75px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .journey-custom-photo,
+  .journey-custom-photo img,
+  .journey-custom-card,
+  .journey-step-dot,
+  .journey-steps::before {
+    transition: none;
+  }
+}
