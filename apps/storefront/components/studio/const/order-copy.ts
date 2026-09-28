@@ -1,0 +1,58 @@
+export const orderCopy = {
+  fa: {
+    heroTitle: "چیزی می‌خواهی که هنوز وجود ندارد؟",
+    heroLede:
+      "ایده‌ات لازم نیست کامل باشد. یک عکس، یک طرح دستی، چند کلمه یا حتی یک پیام صوتی کافی است.",
+    heroCta: "ایده‌ام را می‌فرستم",
+    heroNote: "فرستادن ایده هزینه‌ای ندارد؛ پرداخت فقط بعد از تأیید پیشنهاد رَد است.",
+    heroSketchAlt: "طرح دستی یک ماگ و ماگ سرامیکی ساخته‌شده از روی همان طرح",
+    heroSketchLabel: "طرح تو",
+    heroResultLabel: "اثر رَد",
+    factsTitle: "پیش از شروع، این‌ها را بدان",
+    makesTitle: "چه چیزهایی می‌سازیم؟",
+    makesClosingTitle: "لازم نیست بدانی دقیقاً چطور ساخته می‌شود.",
+    makesClosingBody: "تو ایده را بگو؛ ما می‌بینیم می‌شود ساختش یا نه.",
+    pricesTitle: "محدوده‌ی قیمت",
+    pricesLede:
+      "قبل از اینکه وقتت را روی فرم بگذاری، بدان سفارش اختصاصی از کجا شروع می‌شود.",
+    pricesTypeHead: "نوع سفارش",
+    pricesStartHead: "قیمت شروع",
+    pricesDisclaimer:
+      "قیمت اولیه بر اساس ابعاد، ماده، جزئیات و پیچیدگی تغییر می‌کند. قیمت نهایی پیش از شروع ساخت تأیید می‌شود.",
+    pathTitle: "مسیر سفارش چطور پیش می‌رود؟",
+    pathLede: "از لحظه‌ای که ایده را می‌فرستی تا روزی که اثر به دستت می‌رسد.",
+    rulesTitle: "چند نکته پیش از سفارش",
+    formTitle: "ایده‌ی تو",
+    closingTitle: "هنوز مطمئن نیستی چه می‌خواهی؟",
+    closingBody: "ببین ایده‌های دیگران از کجا شروع شدند و به چه رسیدند.",
+    closingCta: "نمونه‌ی سفارش‌های اختصاصی",
+  },
+  en: {
+    heroTitle: "Want us to make something that doesn’t exist yet?",
+    heroLede:
+      "Your idea doesn’t have to be perfect. A photo, a sketch, a few words or even a voice note is enough.",
+    heroCta: "Send my idea",
+    heroNote: "Sending an idea is free; you only pay after you approve RAD’s proposal.",
+    heroSketchAlt: "A hand sketch of a mug next to the ceramic mug made from it",
+    heroSketchLabel: "Your sketch",
+    heroResultLabel: "The RAD piece",
+    factsTitle: "Know this before you start",
+    makesTitle: "What can we make?",
+    makesClosingTitle: "You don’t need to know how it’s made.",
+    makesClosingBody: "Tell us the idea; we’ll see whether we can make it.",
+    pricesTitle: "Price range",
+    pricesLede:
+      "Before you spend time on the form, here is where a custom piece starts.",
+    pricesTypeHead: "Order type",
+    pricesStartHead: "Starting price",
+    pricesDisclaimer:
+      "The starting price changes with size, material, detail and complexity. The final price is confirmed before making begins.",
+    pathTitle: "How does it go?",
+    pathLede: "From the moment you send your idea to the day the piece reaches you.",
+    rulesTitle: "A few things to know before ordering",
+    formTitle: "Your idea",
+    closingTitle: "Still not sure what you want?",
+    closingBody: "See where other people’s ideas started and what they became.",
+    closingCta: "See custom order examples",
+  },
+} as const;

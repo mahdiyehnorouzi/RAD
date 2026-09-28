@@ -1,4 +1,5 @@
 import type {ChangeRequest, FeasibilityDecision, FiringRecord, MakingBrief, MakingCommission, MakingStageId, PhotoKind, PreKilnProposal, QuoteProposal, StageMessage} from "@/components/making/type";
+import type { PolicyVersions } from "@rad/types";
 import type {LocaleCopy} from "@/types/locale";
 import { createSubmittedCommission, newEntityId, touch } from "@/lib/making";
 export function loc(fa: string, en: string): LocaleCopy {
@@ -25,6 +26,8 @@ export type MakingActions = {
     customerName: string;
     brief: MakingBrief;
     title?: LocaleCopy;
+    /** Custom-order rule versions the customer ticked before sending. */
+    acceptedPolicies?: PolicyVersions;
   }) => MakingCommission;
   addMessage: (
     id: string,

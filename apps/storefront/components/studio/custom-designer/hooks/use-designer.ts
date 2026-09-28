@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { ProductCategory } from "@rad/types";
-import { artworkCategoryById } from "@/lib/catalog/artwork";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
+  DATED_TIMELINE,
+  DEFAULT_SIZE_INDEX,
   DESIGNER_STEPS,
   MAX_DESIGNER_COLORS,
+  UNSURE_FORM,
   type DesignerStep,
 } from "../const";
 import type { DesignerDraft } from "../type";
@@ -17,45 +18,38 @@ export function freedomToPermission(value: number) {
 }
 
 export function useDesigner() {
-  const [step, setStep] = useState<DesignerStep>("spark");
-  const [reached, setReached] = useState<DesignerStep>("spark");
-  const [category, setCategory] = useState<ProductCategory | "">("");
+  const [step, setStep] = useState<DesignerStep>("idea");
+  const [reached, setReached] = useState<DesignerStep>("idea");
   const [prompt, setPrompt] = useState("");
-  const [intendedUse, setIntendedUse] = useState("");
-  const [dimensions, setDimensions] = useState("");
-  const [budget, setBudget] = useState("");
-  const [image, setImage] = useState("");
   const [uploads, setUploads] = useState<string[]>([]);
   const [sketch, setSketch] = useState("");
   const [hasVoice, setHasVoice] = useState(false);
+  const [forms, setForms] = useState<string[]>([]);
+  const [sizeIndex, setSizeIndex] = useState(DEFAULT_SIZE_INDEX);
+  const [dimensions, setDimensions] = useState("");
   const [colors, setColors] = useState<string[]>([]);
-  const [feeling, setFeeling] = useState("");
   const [freedom, setFreedom] = useState(70);
+  const [budget, setBudget] = useState("");
+  const [timeline, setTimeline] = useState("");
+  const [needBy, setNeedBy] = useState("");
+  const [agreed, setAgreed] = useState(false);
   const [error, setError] = useState("");
-  const [brief, setBrief] = useState<Record<string, string>>({});
   const [ideaNumber, setIdeaNumber] = useState(24);
   useEffect(() => {
     setIdeaNumber(18 + Math.floor(Math.random() * 40));
   }, []);
-  const abort = useRef<AbortController | null>(null);
-  const selectedCategory = category ? artworkCategoryById(category) : null;
   const stepIndex = DESIGNER_STEPS.indexOf(step);
   const reachedIndex = DESIGNER_STEPS.indexOf(reached);
-  const hasSpark = Boolean(
-    prompt.trim() ||
-    uploads.length ||
-    sketch ||
-    hasVoice ||
-    colors.length ||
-    feeling,
-  );
+  const hasSpark = Boolean(prompt.trim() || uploads.length || sketch || hasVoice);
 
   const canAdvance = useMemo(() => {
-    if (step === "spark") return hasSpark;
-    if (step === "type") return Boolean(category);
-    if (step === "freedom") return true;
-    return Boolean(intendedUse.trim());
-  }, [category, hasSpark, intendedUse, step]);
+    if (step === "idea") return hasSpark;
+    if (step === "form") return forms.length > 0;
+    if (step === "details") return true;
+    if (step === "plan")
+      return Boolean(budget && timeline && (timeline !== DATED_TIMELINE || needBy.trim()));
+    return agreed;
+  }, [agreed, budget, forms.length, hasSpark, needBy, step, timeline]);
 
   function goTo(next: DesignerStep) {
     const nextIndex = DESIGNER_STEPS.indexOf(next);
@@ -75,10 +69,13 @@ export function useDesigner() {
     if (prev) setStep(prev);
   }
 
-  function chooseCategory(next: ProductCategory) {
-    setCategory(next);
-    setBrief({});
-    setImage("");
+  /** "I don't know" stands alone: picking it clears the rest, and vice versa. */
+  function toggleForm(id: string) {
+    setForms((current) => {
+      if (current.includes(id)) return current.filter((item) => item !== id);
+      if (id === UNSURE_FORM) return [UNSURE_FORM];
+      return [...current.filter((item) => item !== UNSURE_FORM), id];
+    });
   }
 
   function toggleColor(value: string) {
@@ -98,102 +95,107 @@ export function useDesigner() {
     setUploads((current) => current.filter((_, item) => item !== index));
   }
 
+  function chooseTimeline(id: string) {
+    setTimeline(id);
+    if (id !== DATED_TIMELINE) setNeedBy("");
+  }
+
   const draft = useMemo<DesignerDraft>(
     () => ({
       step,
       reached,
-      category,
       prompt,
-      intendedUse,
-      dimensions,
-      budget,
       uploads,
       sketch,
       hasVoice,
+      forms,
+      sizeIndex,
+      dimensions,
       colors,
-      feeling,
       freedom,
+      budget,
+      timeline,
+      needBy,
     }),
     [
       step,
       reached,
-      category,
       prompt,
-      intendedUse,
-      dimensions,
-      budget,
       uploads,
       sketch,
       hasVoice,
+      forms,
+      sizeIndex,
+      dimensions,
       colors,
-      feeling,
       freedom,
+      budget,
+      timeline,
+      needBy,
     ],
   );
 
   const restoreDraft = useCallback((next: DesignerDraft) => {
     setStep(next.step);
     setReached(next.reached);
-    setCategory(next.category);
     setPrompt(next.prompt);
-    setIntendedUse(next.intendedUse);
-    setDimensions(next.dimensions);
-    setBudget(next.budget);
     setUploads(next.uploads.slice(0, maxImages));
     setSketch(next.sketch);
     setHasVoice(next.hasVoice);
+    setForms(next.forms);
+    setSizeIndex(next.sizeIndex);
+    setDimensions(next.dimensions);
     setColors(next.colors.slice(0, MAX_DESIGNER_COLORS));
-    setFeeling(next.feeling);
     setFreedom(next.freedom);
-    setBrief({});
-    setImage("");
+    setBudget(next.budget);
+    setTimeline(next.timeline);
+    setNeedBy(next.needBy);
+    setAgreed(false);
     setError("");
   }, []);
 
   return {
     draft,
     restoreDraft,
-    abort,
     addUploads,
-    brief,
+    agreed,
+    budget,
     canAdvance,
-    category,
-    chooseCategory,
+    chooseTimeline,
     colors,
     dimensions,
     error,
-    feeling,
+    forms,
     freedom,
     goBack,
     goNext,
     goTo,
-    hasSpark,
     hasVoice,
     ideaNumber,
-    image,
-    intendedUse,
     maxImages,
+    needBy,
     prompt,
-    reached,
     reachedIndex,
     removeUpload,
-    selectedCategory,
-    setBrief,
+    setAgreed,
     setBudget,
     setDimensions,
     setError,
-    setFeeling,
     setFreedom,
     setHasVoice,
-    setImage,
-    setIntendedUse,
+    setNeedBy,
     setPrompt,
+    setSizeIndex,
     setSketch,
+    sizeIndex,
     sketch,
     step,
     stepIndex,
+    timeline,
     toggleColor,
-    budget,
+    toggleForm,
     uploads,
   };
 }
+
+export type Designer = ReturnType<typeof useDesigner>;

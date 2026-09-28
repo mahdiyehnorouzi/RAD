@@ -23,17 +23,17 @@
 }
 
 .product-qr-label {
+  position: relative;
   display: grid;
   gap: 1.35rem;
   justify-items: center;
   text-align: center;
   padding: clamp(1.5rem, 4vw, 2.25rem);
-  background:
-    linear-gradient(
-      160deg,
-      color-mix(in srgb, var(--paper) 92%, var(--sand)),
-      var(--paper)
-    );
+  background: linear-gradient(
+    160deg,
+    color-mix(in srgb, var(--paper) 92%, var(--sand)),
+    var(--paper)
+  );
   border: 1px solid color-mix(in srgb, var(--line) 88%, transparent);
 }
 
@@ -47,6 +47,30 @@
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: color-mix(in srgb, var(--ink) 58%, transparent);
+}
+
+.product-qr-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  direction: ltr;
+}
+
+.product-qr-number .rad-fingerprint {
+  width: 1.5rem;
+  height: 1.5rem;
+  color: var(--ink);
+}
+
+.product-qr-seal {
+  position: absolute;
+  top: clamp(0.75rem, 2.5vw, 1.4rem);
+  inset-inline-end: clamp(0.75rem, 2.5vw, 1.4rem);
+  width: clamp(4.5rem, 12vw, 6rem);
+  height: clamp(4.5rem, 12vw, 6rem);
+  mix-blend-mode: multiply;
+  transform: rotate(-9deg);
 }
 
 .product-qr-meta h2 {

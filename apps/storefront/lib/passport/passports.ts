@@ -256,6 +256,14 @@ export function formatPassportName(
     : `RAD ${digits} — ${title}`;
 }
 
+/** The year in the work's recorded making date, in that locale's digits. */
+export function passportYear(
+  passport: Pick<RadPassport, "dateCreated">,
+  locale: "fa" | "en",
+) {
+  return passport.dateCreated[locale].match(/[0-9۰-۹]{4}/)?.[0];
+}
+
 export function formatPassportCode(
   code: string,
   locale: "fa" | "en",

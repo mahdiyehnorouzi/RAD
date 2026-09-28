@@ -1,0 +1,75 @@
+.idea-step .designer-prompt {
+  display: block;
+  width: 100%;
+  min-height: 11rem;
+  margin-top: 1.5rem;
+  font-size: 1.05rem;
+}
+
+.idea-attach {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1.5rem;
+  margin-top: 1.1rem;
+}
+
+.idea-attach button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 44px;
+  padding: 0.35rem 0;
+  border: 0;
+  border-bottom: 1px solid transparent;
+  background: transparent;
+  color: color-mix(in srgb, var(--paper) 82%, transparent);
+  cursor: pointer;
+  transition:
+    color 180ms ease-out,
+    border-color 180ms ease-out;
+}
+
+.idea-attach button:hover,
+.idea-attach button.is-open {
+  color: var(--paper);
+  border-bottom-color: color-mix(in srgb, var(--paper) 60%, transparent);
+}
+
+.idea-attach button.is-filled {
+  color: var(--sand);
+}
+
+.idea-attach-panel {
+  margin-top: 0.75rem;
+  padding: 1.1rem 0 0.25rem;
+  border-top: 1px solid color-mix(in srgb, var(--paper) 16%, transparent);
+}
+
+.idea-attach-panel .designer-images {
+  margin: 0;
+}
+
+.idea-attach-panel .designer-images legend {
+  display: none;
+}
+
+.spark-draw canvas {
+  display: block;
+  width: 100%;
+  height: 220px;
+  margin: 0.75rem 0;
+  border-radius: 2px;
+  background: #f7f2e9;
+  touch-action: none;
+  cursor: crosshair;
+}
+
+.spark-draw p,
+.spark-voice p {
+  margin: 0 0 0.75rem;
+  color: color-mix(in srgb, var(--paper) 74%, transparent);
+}
+
+.spark-voice p + p {
+  margin-top: 0.75rem;
+}

@@ -1,63 +1,41 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
-import type { CSSProperties } from "react";
-import Image from "next/image";
-import Link from "next/link";
-import {
-  formatArtworkNumber,
-  ProductCard,
-  ProductGridSkeleton,
-  ProductMedia,
-} from "../listing";
-import { AddToBag } from "../../catalog/catalog/catalog";
+import { useEffect, useState } from "react";
+import type { Artwork, FaqContent, Product } from "@rad/types";
 import { useLocale } from "@/components/i18n";
-import type { FaqContent, FaqIcon, Product } from "@rad/types";
-import { fetchFaq } from "@/lib/api";
-import { categoryLabel } from "@/lib/catalog/artwork";
-import { productCopy } from "@/lib/catalog/products";
-import { productPrice } from "@/lib/money";
-import { FavoriteButton } from "@/components/commerce";
-import {
-  ChevronDown,
-  PackageCheck,
-  Palette,
-  ShieldCheck,
-  Truck,
-} from "lucide-react";
-import { useCatalog } from "../../catalog/catalog-provider";
-import { overlayLiveProduct } from "@/lib/catalog/category-defaults";
-import {
-  formatPassportName,
-  passportForProduct,
-  relatedByFeeling,
-} from "@/lib/passport";
 import { usePassports } from "@/hooks/use-artworks";
-import { WorkMarks } from "@/components/passport";
-import { ButtonLink } from "@/components/ui/button-link";
-import { isGoneStatus } from "@/lib/catalog/product-status";
 import { useProductStatus } from "@/hooks/use-product-status";
-import { CategoryDetailIcon, CategoryOrbitItems } from "./category-orbit-items";
-import { ProductLiveNotice } from "./product-live-notice";
+import { fetchFaq } from "@/lib/api";
+import { overlayLiveProduct } from "@/lib/catalog/category-defaults";
+import { workTextures } from "@/lib/catalog/material-texture";
+import { isGoneStatus } from "@/lib/catalog/product-status";
+import { passportForProduct } from "@/lib/passport";
+import { useCatalog } from "../../catalog/catalog-provider";
 import { useLiveProduct } from "./hooks";
+import { MaterialTexture } from "./material-texture";
+import { ProductAnatomy } from "./product-anatomy";
+import { ProductCare } from "./product-care";
+import { ProductCrumbs } from "./product-crumbs";
+import { ProductGallery } from "./product-gallery";
+import { ProductMaking } from "./product-making";
+import { ProductQuestions } from "./product-questions";
+import { ProductStory } from "./product-story";
+import { ProductSummary } from "./product-summary";
+import { RelatedWorks } from "./related-works";
+import type { PurchaseState } from "./type";
 import "./product-detail.css";
-
-const FAQ_ICONS: Record<FaqIcon, typeof ShieldCheck> = {
-  "shield-check": ShieldCheck,
-  "package-check": PackageCheck,
-  truck: Truck,
-  palette: Palette,
-};
 
 export function ProductDetail({
   product,
+  artwork: initialArtwork,
   initialFaq = null,
+  qrSvg,
 }: {
   product: Product;
+  artwork?: Artwork;
   initialFaq?: FaqContent | null;
+  qrSvg?: string;
 }) {
-  const { locale, t, number, href } = useLocale();
-  const carouselRef = useRef<HTMLDivElement>(null);
-  const [activeImage, setActiveImage] = useState(0);
+  const { locale } = useLocale();
   const [faq, setFaq] = useState<FaqContent | null>(initialFaq);
 
   useEffect(() => {
@@ -73,316 +51,76 @@ export function ProductDetail({
       active = false;
     };
   }, [locale]);
-  const { products, getProduct, loading, status: catalogStatus } = useCatalog();
+
+  const {
+    products,
+    artworks,
+    getProduct,
+    loading,
+    status: catalogStatus,
+  } = useCatalog();
   const live = useLiveProduct(product.slug);
   const passports = usePassports();
   const catalogProduct =
     catalogStatus === "live" ? getProduct(product.slug) : undefined;
   const resolved = overlayLiveProduct(catalogProduct ?? product, live.product);
-
-  const imageCount = Math.max(resolved.images?.length ?? 0, 1);
-
-  const copy = productCopy(resolved, locale);
-  const price = productPrice(resolved, locale);
-  const category = categoryLabel(resolved.category, locale);
-  const maker = resolved.vendor
-    ? locale === "fa"
-      ? resolved.vendor.displayName
-      : resolved.vendor.displayNameEn
-    : locale === "fa"
-      ? "استودیوی رَد"
-      : "RAD Studio";
-  const artworkNumber = formatArtworkNumber(resolved, number, locale);
-  const recordNumber =
-    artworkNumber || (locale === "fa" ? "در انتظار شماره" : "NUMBER PENDING");
+  const artwork =
+    artworks.find((item) => item.slug === resolved.slug) ?? initialArtwork;
   const passport = passportForProduct(passports, resolved);
-  const {
+  const textures = workTextures(resolved);
+
+  const { inBag, reserved, label, status } = useProductStatus(resolved);
+  const withdrawn = live.withdrawn && !inBag;
+  const state: PurchaseState = {
     inBag,
     reserved,
-    label: statusLabel,
+    withdrawn,
+    sold: !inBag && !reserved && !withdrawn && isGoneStatus(status),
     status,
-  } = useProductStatus(resolved);
-  const withdrawn = live.withdrawn && !inBag;
-  const sold = !inBag && !reserved && !withdrawn && isGoneStatus(status);
-  const related = passport ? relatedByFeeling(passports, passport.code) : [];
-
-  const sceneStyle = () => {
-    const media = resolved.images?.[activeImage];
-    return {
-      "--pdp-scene-color": media?.color ?? resolved.color ?? "var(--sand)",
-      "--pdp-scene-accent": media?.accent ?? resolved.accent ?? "var(--clay)",
-    } as CSSProperties;
+    label,
   };
-
-  const sceneDetails = () => {
-    const details = [
-      copy.subtitle,
-      ...copy.details.filter((detail) => detail !== copy.subtitle),
-    ];
-    return Array.from(
-      { length: Math.min(3, Math.max(details.length, 1)) },
-      (_, row) => details[row % details.length],
-    );
-  };
-
-  const renderDetails = () => (
-    <ul className="pdp-specs is-static">
-      {sceneDetails().map((detail, index) => (
-        <li
-          key={`${detail}-${index}`}
-          style={{ "--row": index } as CSSProperties}
-        >
-          <CategoryDetailIcon category={resolved.category} index={index} />
-          <b>{detail}</b>
-          <i>{locale === "fa" ? number(index + 1) : `0${index + 1}`}</i>
-        </li>
-      ))}
-    </ul>
-  );
 
   return (
-    <>
-      <section className="pdp section">
-        <div className="pdp-showcase">
-          <div className="pdp-gallery" aria-live="off">
-            <div className="pdp-static-stage" style={sceneStyle()}>
-              <div className="pdp-color-field" />
-              <div className="pdp-stage-index" aria-hidden="true">
-                <span>{recordNumber}</span>
-                <i>{locale === "fa" ? "اثر یگانه" : "ONE OF ONE"}</i>
-              </div>
-              <div className="pdp-stage-context">
-                <span>
-                  {locale === "fa" ? "دسته‌بندی اثر" : "WORK CATEGORY"}
-                </span>
-                <strong>{category}</strong>
-                <i>{maker}</i>
-              </div>
-              <strong className="pdp-giant-name">{copy.name}</strong>
-              <CategoryOrbitItems category={resolved.category} />
-              <div
-                className={`pdp-static-art${resolved.slug === "red-vessel-27" ? " is-graphic" : ""}`}
-              >
-                {resolved.slug === "red-vessel-27" ? (
-                  <Image
-                    src="/catalog/graphic/red-vessel-27.png"
-                    alt={copy.name}
-                    fill
-                    priority
-                    sizes="(max-width: 900px) 62vw, 34vw"
-                    className="pdp-graphic-product"
-                  />
-                ) : (
-                  <ProductMedia
-                    product={resolved}
-                    imageIndex={activeImage}
-                    preserveTransparentBackground
-                  />
-                )}
-              </div>
-            </div>
-            <div
-              className="pdp-detail-art"
-              role="group"
-              aria-label={t("imageNumber")}
-            >
-              <span className="pdp-gallery-label">
-                {locale === "fa" ? "نماهای اثر" : "WORK VIEWS"}
-              </span>
-              <div className="pdp-thumbnail-rail">
-                {Array.from({ length: imageCount }, (_, index) => (
-                  <button
-                    key={index}
-                    type="button"
-                    className={activeImage === index ? "active" : ""}
-                    onClick={() => setActiveImage(index)}
-                    aria-pressed={activeImage === index}
-                    aria-label={`${t("imageNumber")} ${locale === "fa" ? new Intl.NumberFormat("fa-IR").format(index + 1) : index + 1}`}
-                  >
-                    <span className="pdp-thumbnail-image" aria-hidden="true">
-                      <ProductMedia
-                        product={resolved}
-                        imageIndex={index}
-                        showStatusBadge={false}
-                        preserveTransparentBackground
-                      />
-                    </span>
-                    <small>
-                      {locale === "fa"
-                        ? number(index + 1)
-                        : String(index + 1).padStart(2, "0")}
-                    </small>
-                  </button>
-                ))}
-              </div>
-            </div>
+    <article className="pdp">
+      <div className="pdp-top">
+        <ProductCrumbs product={resolved} />
+        <ProductGallery product={resolved} />
+        <ProductSummary
+          product={resolved}
+          artwork={artwork}
+          state={state}
+          live={live}
+          passport={passport}
+          qrSvg={qrSvg}
+          textures={textures}
+        />
+        <div className="pdp-rest">
+          <ProductStory product={resolved} textures={textures} />
+          <ProductAnatomy product={resolved} artwork={artwork} />
+          <ProductMaking
+            product={resolved}
+            artwork={artwork}
+            passport={passport}
+          />
+          <ProductCare text={(artwork?.care ?? passport?.care)?.[locale]} />
+          <div className="pdp-fold-list">
+            <ProductQuestions
+              faq={faq}
+              showShipping={!state.sold && !state.withdrawn}
+            />
           </div>
-          <div className="pdp-info">
-            <div className="pdp-record">
-              <span>{locale === "fa" ? "ثبت آرشیو" : "ARCHIVE RECORD"}</span>
-              <strong>{recordNumber}</strong>
-              <i>
-                {sold
-                  ? t("archiveSoldMark")
-                  : locale === "fa"
-                    ? "۱ / ۱"
-                    : "1 / 1"}
-              </i>
-              {passport ? (
-                <Link
-                  className="pdp-passport-link"
-                  href={href(`/passport/${passport.code}`)}
-                >
-                  {t("pdpPassportLink")}
-                </Link>
-              ) : null}
-              <Link
-                className="pdp-passport-link"
-                href={href(`/products/${resolved.slug}/qr`)}
-              >
-                {t("pdpQrLink")}
-              </Link>
-            </div>
-            <span className="eyebrow">
-              {category}
-              {status === "available" && !inBag
-                ? ` · ${t("uniqueAvailable")}`
-                : statusLabel
-                  ? ` · ${statusLabel}`
-                  : null}
-            </span>
-            <h1>{copy.name}</h1>
-            <p className="subtitle">{copy.subtitle}</p>
-            <div className="pdp-price-row">
-              <span>{locale === "fa" ? "قیمت اثر" : "ACQUISITION"}</span>
-              <p className="price">{price}</p>
-            </div>
-            <div className="pdp-material-heading">
-              <span>
-                {locale === "fa" ? "مواد و جزئیات ساخت" : "MATERIALS & MAKING"}
-              </span>
-              <small>{category}</small>
-            </div>
-            <div className="pdp-spec-motion">{renderDetails()}</div>
-            <div className="pdp-purchase">
-              <ProductLiveNotice
-                product={resolved}
-                live={live}
-                inBag={inBag}
-                reserved={reserved}
-              />
-              {withdrawn ? null : sold ? (
-                <div className="pdp-sold-archive">
-                  <p>{t("archiveNeverAgain")}</p>
-                  <p>{t("sameFeeling")}</p>
-                  {related.length ? (
-                    <ul>
-                      {related.map((item) => (
-                        <li key={item.code}>
-                          <Link href={href(`/passport/${item.code}`)}>
-                            {formatPassportName(item, locale, number)}
-                          </Link>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : null}
-                  <ButtonLink href="/shape" outline>
-                    {t("shapeTitle")}
-                  </ButtonLink>
-                </div>
-              ) : (
-                <div className="pdp-actions">
-                  <AddToBag
-                    product={resolved}
-                    onConflict={() => void live.check()}
-                  />
-                  <FavoriteButton slug={resolved.slug} />
-                </div>
-              )}
-            </div>
-            {withdrawn || sold ? null : (
-              <p className="shipping">{t("shipping")}</p>
-            )}
-          </div>
+          <MaterialTexture
+            texture={textures[0]}
+            shape="strip"
+            className="pdp-rest-strip"
+          />
+          <RelatedWorks
+            current={resolved}
+            products={products}
+            loading={loading}
+          />
         </div>
-        <aside className="pdp-note">
-          <span>{locale === "fa" ? "یادداشت اثر" : "WORK NOTE"}</span>
-          <p>{copy.story}</p>
-        </aside>
-        {passport?.marks?.length && passport.finalPhotos[0] ? (
-          <WorkMarks src={passport.finalPhotos[0].src} marks={passport.marks} />
-        ) : null}
-      </section>
-      {faq ? (
-        <section className="section shipping-faq">
-          <header>
-            <span className="eyebrow">{faq.eyebrow}</span>
-            <h2>{faq.title}</h2>
-          </header>
-          <div className="faq-list">
-            {faq.items.map((item) => {
-              const Icon = FAQ_ICONS[item.icon];
-              return (
-                <details key={item.id}>
-                  <summary>
-                    <span className="faq-title">
-                      <Icon aria-hidden="true" />
-                      {item.question}
-                    </span>
-                    <ChevronDown className="faq-chevron" aria-hidden="true" />
-                  </summary>
-                  <p>{item.answer}</p>
-                </details>
-              );
-            })}
-          </div>
-        </section>
-      ) : null}
-      <section className="section related">
-        <header className="section-heading">
-          <div>
-            <span className="eyebrow">{t("relatedEyebrow")}</span>
-            <h2>{t("moreWorks")}</h2>
-          </div>
-          <div className="carousel-controls">
-            <button
-              type="button"
-              aria-label={t("previousWorks")}
-              onClick={() =>
-                carouselRef.current?.scrollBy({
-                  left: -carouselRef.current.clientWidth * 0.75,
-                  behavior: "smooth",
-                })
-              }
-            >
-              ←
-            </button>
-            <button
-              type="button"
-              aria-label={t("nextWorks")}
-              onClick={() =>
-                carouselRef.current?.scrollBy({
-                  left: carouselRef.current.clientWidth * 0.75,
-                  behavior: "smooth",
-                })
-              }
-            >
-              →
-            </button>
-          </div>
-        </header>
-        <div ref={carouselRef} className="related-carousel">
-          {loading && products.length === 0 ? (
-            <ProductGridSkeleton count={3} className="related-carousel" />
-          ) : (
-            products
-              .filter((item) => item.slug !== resolved.slug)
-              .map((item, index) => (
-                <ProductCard key={item.slug} product={item} index={index} />
-              ))
-          )}
-        </div>
-      </section>
-    </>
+      </div>
+    </article>
   );
 }

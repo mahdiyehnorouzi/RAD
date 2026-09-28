@@ -33,6 +33,14 @@ export class CreateCommissionDto {
   @IsOptional()
   @IsObject()
   title?: LocaleCopy;
+
+  @ApiPropertyOptional({
+    description: "Version of each custom-order rule the customer accepted",
+    example: { custom: "2026-09-27", terms: "2026-09-27", privacy: "2026-09-27" },
+  })
+  @IsOptional()
+  @IsObject()
+  acceptedPolicies?: Record<string, string>;
 }
 
 export class SaveCommissionDto {

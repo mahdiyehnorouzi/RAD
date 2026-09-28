@@ -36,8 +36,8 @@ export const faqSection = {
       icon: "palette",
       question: { fa: "رنگ، متریال و مرجوعی", en: "Colour, material, and returns" },
       answer: {
-        fa: "نور نمایشگر می‌تواند رنگ و بافت را کمی تغییر دهد. آثار آماده تا ۴۸ ساعت امکان درخواست بازگشت دارند؛ سفارش شخصی مرجوع نمی‌شود.",
-        en: "Screens may shift colour and texture slightly. Ready works can be returned within 48 hours; custom works cannot be returned.",
+        fa: "نور نمایشگر می‌تواند رنگ و بافت را کمی تغییر دهد. آثار آماده تا ۴۸ ساعت امکان درخواست بازگشت دارند؛ سفارش شخصی مرجوع نمی‌شود، مگر آسیب‌دیده برسد یا با پیشنهاد تأییدشده فرق اساسی داشته باشد.",
+        en: "Screens may shift colour and texture slightly. Ready works can be returned within 48 hours; custom works cannot, unless damaged or substantially different from the approved proposal.",
       },
     },
   ] satisfies FaqEntry[],

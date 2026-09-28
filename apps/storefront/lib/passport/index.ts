@@ -5,6 +5,7 @@ export {
   passportForProduct,
   passportFromArtwork,
   passportsFrom,
+  passportYear,
   radPassports,
 } from "./passports";
 export {

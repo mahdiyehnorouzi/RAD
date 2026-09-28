@@ -5,11 +5,14 @@ import { useCart } from "../cart-provider";
 import { cartTotal, formatTotal } from "@/lib/money";
 import { Button, ButtonLink } from "@/components/ui/button-link";
 import { CardListSkeleton } from "@/components/ui/skeleton";
-import { StateNotice, StatePanel } from "@/components/ui/state-panel";
+import { StateNotice } from "@/components/ui/state-panel";
 import { useLocale } from "@/components/i18n";
 import { useCatalog } from "@/components/catalog";
+import { CartPolicyNote } from "@/components/help";
+import { EmptyBagState, ErrorState } from "@/components/states";
 import { useCountdown } from "@/hooks/use-countdown";
 import {
+  availableWorks,
   formatCountdown,
   isGoneStatus,
   isReserved,
@@ -36,6 +39,7 @@ export function CartPage() {
     clear,
   } = useCart();
   const {
+    products,
     getProduct,
     loading: catalogLoading,
     status: catalogStatus,
@@ -121,15 +125,15 @@ export function CartPage() {
   if (loadError && !loaded) {
     return (
       <section className="cart-page section">
-        <StatePanel
-          tone="error"
+        <ErrorState
+          layout="stack"
           as="h1"
-          eyebrow={t("bagEyebrow")}
-          title={t("cartErrorTitle")}
-          actions={retryButton}
-        >
-          <p>{t("cartErrorBody")}</p>
-        </StatePanel>
+          onRetry={() => void retry()}
+          retrying={retrying}
+          title="cartErrorTitle"
+          body="cartErrorBody"
+          back={{ href: "/products", label: "viewWorks" }}
+        />
       </section>
     );
   }
@@ -146,15 +150,14 @@ export function CartPage() {
   if (!slugs.length)
     return (
       <section className="cart-empty section">
-        <span className="eyebrow">
-          {t("bagEyebrow")} / {number(0)}
-        </span>
-        <h1>{t("emptyBag")}</h1>
-        <p>{t("emptyBagBody")}</p>
-        {released.length ? (
-          <div className="cart-empty-released">{releasedNotice}</div>
-        ) : null}
-        <ButtonLink href="/products">{t("viewWorks")}</ButtonLink>
+        <EmptyBagState
+          suggestions={availableWorks(products, released)}
+          notice={
+            released.length ? (
+              <div className="cart-empty-released">{releasedNotice}</div>
+            ) : null
+          }
+        />
       </section>
     );
 
@@ -243,6 +246,7 @@ export function CartPage() {
             <ButtonLink href="/checkout">{t("checkout")}</ButtonLink>
           )}
           <small>{t("checkoutNote")}</small>
+          <CartPolicyNote />
         </aside>
       </div>
     </section>

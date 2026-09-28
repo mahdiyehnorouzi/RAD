@@ -3,6 +3,7 @@ import {
   paymentMode,
   paymentProvider,
 } from "../payment/payment-session";
+import { toPolicyAcceptance } from "../policies/policy-acceptance";
 import { normalizeStoreOrderStatus } from "./store-order-status";
 import type {
   OrderPayment,
@@ -29,7 +30,12 @@ export function toOrder(order: OrderRow, redirectUrl?: string) {
     },
     trackingCode: order.trackingCode || undefined,
     estimatedDeliveryAt: order.estimatedDeliveryAt?.getTime() ?? undefined,
+    deliveredAt: order.deliveredAt?.getTime() ?? undefined,
     payment: toPayment(order, status, redirectUrl),
+    policyAcceptance: toPolicyAcceptance(
+      order.policyVersions,
+      order.policiesAcceptedAt,
+    ),
   };
 }
 

@@ -1,20 +1,18 @@
 "use client";
 
-import { DESIGNER_STEP_KEY, DESIGNER_STEPS, type DesignerStep } from "./const";
+import { DESIGNER_STEP_LABEL, DESIGNER_STEPS, type DesignerStep } from "./const";
 import { useLocale } from "@/components/i18n";
 
 export function DesignerNav({
   step,
   reachedIndex,
-  number,
   onSelect,
 }: {
   step: DesignerStep;
   reachedIndex: number;
-  number: (value: number) => string;
   onSelect: (step: DesignerStep) => void;
 }) {
-  const { t } = useLocale();
+  const { t, locale, number } = useLocale();
   const currentIndex = DESIGNER_STEPS.indexOf(step);
   return (
     <div className="designer-nav">
@@ -37,7 +35,7 @@ export function DesignerNav({
                 onClick={() => onSelect(id)}
               >
                 <i>{number(index + 1)}</i>
-                <span>{t(DESIGNER_STEP_KEY[id])}</span>
+                <span>{DESIGNER_STEP_LABEL[id][locale]}</span>
               </button>
             </li>
           );

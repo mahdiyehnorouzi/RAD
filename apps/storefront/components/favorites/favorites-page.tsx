@@ -8,14 +8,15 @@ import { useCommerce } from "@/components/commerce";
 import { useLocale } from "@/components/i18n";
 import { ProductCard } from "@/components/product";
 import { useCatalog } from "@/components/catalog";
-import { ButtonLink } from "@/components/ui/button-link";
+import { EmptyFavoritesState } from "@/components/states";
+import { availableWorks } from "@/lib/catalog/product-status";
 import { AccountShell } from "../account/account-shell";
 
 export function FavoritesPage() {
   const params = useSearchParams();
   const { favorites, ready } = useCommerce();
   const { t, number } = useLocale();
-  const { getProduct } = useCatalog();
+  const { products, getProduct } = useCatalog();
   const [shared, setShared] = useState(false);
 
   const sharedSlugs = params.get("items")?.split(",").filter(Boolean);
@@ -76,14 +77,7 @@ export function FavoritesPage() {
           )}
         </div>
       ) : (
-        <div className="favorites-state">
-          <Heart aria-hidden="true" strokeWidth={1.6} />
-          <h2>{t("emptyFavorites")}</h2>
-          <p>{t("emptyFavoritesBody")}</p>
-          <ButtonLink href="/products" outline>
-            {t("emptyFavoritesAction")}
-          </ButtonLink>
-        </div>
+        <EmptyFavoritesState suggestions={availableWorks(products)} />
       )}
     </section>
   );

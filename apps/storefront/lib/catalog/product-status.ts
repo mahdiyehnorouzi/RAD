@@ -27,6 +27,20 @@ export function isGoneStatus(status?: ProductStatus) {
   return status === "sold" || status === "archived";
 }
 
+/** A few works still for sale, leaving out ones the visitor already has in view. */
+export function availableWorks(
+  products: Product[],
+  exclude: string[] = [],
+  limit = 4,
+) {
+  return products
+    .filter(
+      (product) =>
+        product.status === "available" && !exclude.includes(product.slug),
+    )
+    .slice(0, limit);
+}
+
 /** Held by a cart or unpaid checkout: shows as `sold` but may come back. */
 export function isReserved(
   product: Pick<Product, "status" | "reservedUntil">,

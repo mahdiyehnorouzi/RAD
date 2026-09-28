@@ -31,7 +31,7 @@ export const faqFallbackFa: FaqContent = {
       icon: "palette",
       question: "رنگ، متریال و مرجوعی",
       answer:
-        "نور نمایشگر می‌تواند رنگ و بافت را کمی تغییر دهد. آثار آماده تا ۴۸ ساعت امکان درخواست بازگشت دارند؛ سفارش شخصی مرجوع نمی‌شود.",
+        "نور نمایشگر می‌تواند رنگ و بافت را کمی تغییر دهد. آثار آماده تا ۴۸ ساعت امکان درخواست بازگشت دارند؛ سفارش شخصی مرجوع نمی‌شود، مگر آسیب‌دیده برسد یا با پیشنهاد تأییدشده فرق اساسی داشته باشد.",
     },
   ],
 };
@@ -66,7 +66,7 @@ export const faqFallbackEn: FaqContent = {
       icon: "palette",
       question: "Colour, material, and returns",
       answer:
-        "Screens may shift colour and texture slightly. Ready works can be returned within 48 hours; custom works cannot be returned.",
+        "Screens may shift colour and texture slightly. Ready works can be returned within 48 hours; custom works cannot, unless damaged or substantially different from the approved proposal.",
     },
   ],
 };

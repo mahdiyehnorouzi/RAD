@@ -8,6 +8,7 @@ API_URL="${API_URL:-https://api.rad-object.com}"
 RAD_VERSION="${RAD_VERSION:-$(tr -d '[:space:]' < "$ROOT/VERSION")}"
 export API_URL
 export RAD_VERSION
+export NEXT_PUBLIC_SITE_URL="${NEXT_PUBLIC_SITE_URL:-https://www.rad-object.com}"
 export NEXT_PUBLIC_GA_MEASUREMENT_ID="${NEXT_PUBLIC_GA_MEASUREMENT_ID:-}"
 
 if [[ -z "${CLOUDFLARE_API_TOKEN:-}" ]]; then
@@ -18,7 +19,7 @@ if [[ -z "${CLOUDFLARE_API_TOKEN:-}" ]]; then
   fi
 fi
 
-echo "Building storefront ${RAD_VERSION} for Cloudflare (API_URL=${API_URL})..."
+echo "Building storefront ${RAD_VERSION} for Cloudflare (API_URL=${API_URL}, SITE_URL=${NEXT_PUBLIC_SITE_URL})..."
 npm run build:vinext
 
 echo "Deploying rad-studio to Cloudflare Workers..."
@@ -26,5 +27,5 @@ npm run deploy:cloudflare
 
 echo ""
 echo "Storefront deployed."
-echo "Storefront: https://rad-object.com"
+echo "Storefront: ${NEXT_PUBLIC_SITE_URL}"
 echo "Worker: https://rad-studio.rad-studio.workers.dev"

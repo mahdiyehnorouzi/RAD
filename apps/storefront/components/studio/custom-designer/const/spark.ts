@@ -1,24 +1,17 @@
-import type { LocaleCopy } from "@/types/locale";
-
 export const DESIGNER_COLORS = [
-  { id: "moss", value: "#263d34" },
-  { id: "clay", value: "#8a4938" },
-  { id: "sand", value: "#cbb892" },
-  { id: "cream", value: "#eee7dc" },
-  { id: "blue", value: "#6ba3c4" },
-  { id: "ink", value: "#18231f" },
-  { id: "oxide", value: "#d87855" },
-  { id: "olive", value: "#4b513c" },
+  { id: "moss", value: "#263d34", label: { fa: "سبز کوره", en: "Kiln green" } },
+  { id: "clay", value: "#8a4938", label: { fa: "اکسید", en: "Oxide" } },
+  { id: "sand", value: "#cbb892", label: { fa: "شنی", en: "Sand" } },
+  { id: "cream", value: "#eee7dc", label: { fa: "کرم", en: "Cream" } },
+  { id: "blue", value: "#6ba3c4", label: { fa: "آبی", en: "Blue" } },
+  { id: "ink", value: "#18231f", label: { fa: "جوهری", en: "Ink" } },
+  { id: "oxide", value: "#d87855", label: { fa: "نارنجی سوخته", en: "Burnt orange" } },
+  { id: "olive", value: "#4b513c", label: { fa: "زیتونی", en: "Olive" } },
 ] as const;
 
-export const DESIGNER_FEELINGS: Array<{ id: string; label: LocaleCopy }> = [
-  { id: "playful", label: { fa: "شوخ", en: "playful" } },
-  { id: "quiet", label: { fa: "آرام", en: "quiet" } },
-  { id: "homesick", label: { fa: "دلتنگ", en: "homesick" } },
-  { id: "wild", label: { fa: "وحشی", en: "wild" } },
-  { id: "tender", label: { fa: "نرم", en: "tender" } },
-  { id: "stubborn", label: { fa: "کله‌شق", en: "stubborn" } },
-  { id: "warm", label: { fa: "گرم", en: "warm" } },
-];
-
 export const MAX_DESIGNER_COLORS = 3;
+
+export function colorLabel(value: string, locale: "fa" | "en") {
+  const preset = DESIGNER_COLORS.find((color) => color.value === value);
+  return preset ? preset.label[locale] : value;
+}

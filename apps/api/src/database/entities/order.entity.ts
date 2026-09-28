@@ -54,6 +54,17 @@ export class Order {
   @Column({ type: "timestamptz", nullable: true })
   estimatedDeliveryAt!: Date | null;
 
+  /** Starts the transit-damage report window. */
+  @Column({ type: "timestamptz", nullable: true })
+  deliveredAt!: Date | null;
+
+  /** `{ slug: version }` of the rules the buyer accepted at checkout. */
+  @Column("jsonb", { nullable: true })
+  policyVersions!: Record<string, string> | null;
+
+  @Column({ type: "timestamptz", nullable: true })
+  policiesAcceptedAt!: Date | null;
+
   @CreateDateColumn({ type: "timestamptz" })
   createdAt!: Date;
 

@@ -1,3 +1,4 @@
+import type { PolicyVersions } from "@rad/types";
 import type { MakingBrief, MakingCommission } from "@/components/making/type";
 import type { LocaleCopy } from "@/types/locale";
 import { api } from "./client";
@@ -44,6 +45,7 @@ export async function createCommission(input: {
   customerName: string;
   brief: MakingBrief;
   title?: LocaleCopy;
+  acceptedPolicies?: PolicyVersions;
 }) {
   return api<MakingCommission>("/commissions", {
     method: "POST",

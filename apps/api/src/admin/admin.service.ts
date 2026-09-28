@@ -234,6 +234,12 @@ export class AdminService {
           paymentDueAt:
             nextStatus === "cancelled" ? null : order.paymentDueAt,
           trackingCode: trackingCode || null,
+          deliveredAt:
+            nextStatus === "delivered"
+              ? (order.deliveredAt ?? new Date())
+              : nextStatus === "returned"
+                ? order.deliveredAt
+                : null,
           estimatedDeliveryAt:
             nextStatus === "shipped" ||
             nextStatus === "confirmed" ||

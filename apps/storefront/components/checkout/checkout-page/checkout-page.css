@@ -76,6 +76,12 @@
   align-items: start;
 }
 
+.checkout-main {
+  display: grid;
+  gap: 1.25rem;
+  min-width: 0;
+}
+
 .checkout-summary {
   position: sticky;
   top: 120px;

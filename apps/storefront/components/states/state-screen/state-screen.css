@@ -1,0 +1,467 @@
+.state-screen {
+  --state-body: color-mix(in srgb, var(--ink) 80%, var(--muted, #6f726b));
+  display: grid;
+  width: min(100%, 76rem);
+  margin-inline: auto;
+}
+
+.state-screen-copy {
+  display: grid;
+  min-width: 0;
+}
+
+/* ——— Split: a whole page given to the state ——— */
+
+.state-screen--split {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: center;
+  gap: clamp(2rem, 6vw, 6rem);
+  min-height: min(44rem, calc(100svh - var(--header-height, 104px) - 6rem));
+  padding: clamp(2.5rem, 6vw, 5rem) var(--page);
+}
+
+.state-screen--split .state-screen-copy {
+  justify-items: start;
+  max-width: 34rem;
+  text-align: start;
+}
+
+.state-screen--split .state-art {
+  justify-self: center;
+  max-width: 34rem;
+}
+
+/* ——— Stack: the state sits inside a page that keeps its own heading ——— */
+
+.state-screen--stack {
+  justify-items: center;
+  padding-block: clamp(1rem, 3vw, 2rem) clamp(2.5rem, 6vw, 4.5rem);
+  text-align: center;
+}
+
+.state-screen--stack .state-screen-copy {
+  justify-items: center;
+  width: 100%;
+  max-width: 48rem;
+}
+
+.state-screen--stack .state-art {
+  order: -1;
+  width: clamp(10rem, 19vw, 14.5rem);
+  margin-bottom: 0.25rem;
+}
+
+/* ——— Copy ——— */
+
+.state-screen .state-screen-code {
+  margin: 0 0 0.9rem;
+  color: #8a4938;
+  font-size: 0.88rem;
+  font-weight: 500;
+  line-height: 1.6;
+}
+
+.state-screen .state-screen-title {
+  margin: 0;
+  color: var(--ink);
+  font-weight: 500;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+
+.state-screen--split .state-screen-title {
+  font-size: clamp(2rem, 3.6vw, 2.9rem);
+}
+
+.state-screen--stack .state-screen-title {
+  font-size: clamp(1.4rem, 2.4vw, 1.85rem);
+}
+
+.state-screen-body {
+  max-width: 44ch;
+  margin-top: 1rem;
+  color: var(--state-body);
+  font-size: 1rem;
+  line-height: 1.9;
+  text-wrap: pretty;
+}
+
+.state-screen--stack .state-screen-body {
+  margin-inline: auto;
+}
+
+.state-screen-body p {
+  margin: 0;
+}
+
+.state-screen-body p + p {
+  margin-top: 0.5rem;
+}
+
+/* ——— Actions ——— */
+
+.state-screen-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 0.75rem;
+  margin-top: 2rem;
+}
+
+.state-screen--stack .state-screen-actions {
+  justify-content: center;
+}
+
+.state-screen-actions .button {
+  min-height: 50px;
+  padding-inline: 1.5rem;
+  gap: 0.6rem;
+}
+
+.state-screen-actions .button.outline {
+  min-height: 50px !important;
+  padding: 0 1.4rem !important;
+  border: 1px solid color-mix(in srgb, var(--moss) 45%, var(--line)) !important;
+  border-radius: 2px !important;
+  background: transparent !important;
+  color: var(--ink);
+  transition:
+    border-color 0.2s ease-out,
+    background-color 0.2s ease-out;
+}
+
+.state-screen-actions .button.outline:hover {
+  border-color: var(--moss) !important;
+  background: var(--paper) !important;
+  color: var(--ink);
+}
+
+.state-screen-actions .button:disabled {
+  opacity: 0.72;
+  cursor: progress;
+}
+
+.state-screen-icon {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+  stroke-width: 1.7;
+}
+
+.state-screen-actions .button[aria-busy="true"] .state-screen-icon {
+  animation: state-spin 1s linear infinite;
+}
+
+/* ——— Art ——— */
+
+.state-art {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+}
+
+.state-art img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  mix-blend-mode: multiply;
+}
+
+.state-art-badge {
+  position: absolute;
+  top: 47%;
+  left: 60%;
+  display: grid;
+  place-items: center;
+  width: 16%;
+  min-width: 2.75rem;
+  aspect-ratio: 1;
+  border-radius: 4px;
+  background: var(--moss);
+  color: var(--paper);
+  box-shadow: 0 12px 22px -12px rgb(24 35 31 / 0.55);
+}
+
+.state-art-badge svg {
+  width: 44%;
+  height: 44%;
+  stroke-width: 1.6;
+}
+
+/* ——— Secondary ways out ——— */
+
+.state-screen .state-footer-title {
+  margin: 0 0 0.85rem;
+  color: var(--ink);
+  font-size: 0.9rem;
+  font-weight: 500;
+  line-height: 1.6;
+}
+
+.state-query {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-height: 2.75rem;
+  margin-top: 1.4rem;
+  padding-block: 0.3rem;
+  padding-inline: 1rem 0.35rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 0.92rem;
+  cursor: pointer;
+  transition: border-color 0.2s ease-out;
+}
+
+.state-query:hover {
+  border-color: color-mix(in srgb, var(--moss) 50%, var(--line));
+}
+
+.state-query-search {
+  width: 16px;
+  height: 16px;
+  color: var(--muted, #6f726b);
+  stroke-width: 1.7;
+}
+
+.state-query-clear {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--sand) 30%, var(--paper));
+  transition: background-color 0.2s ease-out;
+}
+
+.state-query:hover .state-query-clear {
+  background: color-mix(in srgb, var(--sand) 55%, var(--paper));
+}
+
+.state-query-clear svg {
+  width: 14px;
+  height: 14px;
+  stroke-width: 1.8;
+}
+
+.state-chips {
+  width: 100%;
+  margin-top: 2.25rem;
+}
+
+.state-chips ul {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.state-screen--split .state-chips ul {
+  justify-content: flex-start;
+}
+
+.state-chips button {
+  min-height: 2.5rem;
+  padding: 0.4rem 1.1rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--paper) 70%, transparent);
+  color: var(--ink);
+  font-size: 0.88rem;
+  cursor: pointer;
+  transition:
+    border-color 0.2s ease-out,
+    background-color 0.2s ease-out;
+}
+
+.state-chips button:hover {
+  border-color: color-mix(in srgb, var(--moss) 50%, var(--line));
+  background: var(--paper);
+}
+
+.state-works {
+  width: 100%;
+  margin-top: clamp(2.5rem, 5vw, 3.5rem);
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--line);
+  text-align: start;
+}
+
+.state-works ul {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.state-works a {
+  display: grid;
+  gap: 0.55rem;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.state-works-media {
+  position: relative;
+  display: block;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--sand) 30%, var(--paper));
+}
+
+.state-works-media > .product-photo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 700ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.state-works-media > .product-photo-default,
+.state-works-media > .vessel,
+.state-works-media > .mock-artwork {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.state-works-name {
+  overflow: hidden;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  text-underline-offset: 0.3em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: text-decoration-color 0.2s ease-out;
+}
+
+.state-works a:hover .state-works-name {
+  text-decoration-color: #8a4938;
+}
+
+.state-query:focus-visible,
+.state-chips button:focus-visible,
+.state-works a:focus-visible {
+  outline: 1px solid #8a4938;
+  outline-offset: 3px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .state-works a:hover .product-photo {
+    transform: scale(1.035);
+  }
+}
+
+/* ——— Motion: the object settles onto the surface ——— */
+
+@media (prefers-reduced-motion: no-preference) {
+  .state-art img {
+    animation: state-settle 900ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .state-art-badge {
+    animation: state-settle 900ms 160ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+}
+
+@keyframes state-settle {
+  from {
+    transform: translateY(14px) scale(0.97);
+  }
+}
+
+@keyframes state-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .state-screen-actions .button[aria-busy="true"] .state-screen-icon,
+  .state-works-media > .product-photo {
+    animation: none;
+    transition: none;
+  }
+}
+
+/* ——— Small screens: one centred column, object first ——— */
+
+@media (max-width: 760px) {
+  .state-screen--split {
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: center;
+    gap: 0.5rem;
+    min-height: 0;
+    padding-top: 1.5rem;
+    text-align: center;
+  }
+
+  .state-screen--split .state-art {
+    order: -1;
+    max-width: 16rem;
+  }
+
+  .state-screen--split .state-screen-copy {
+    justify-items: center;
+    max-width: 30rem;
+    text-align: center;
+  }
+
+  .state-screen--split .state-screen-body {
+    margin-inline: auto;
+  }
+
+  .state-screen--split .state-screen-actions,
+  .state-screen--split .state-chips ul {
+    justify-content: center;
+  }
+
+  .state-screen--split .state-screen-title {
+    font-size: clamp(1.6rem, 6.4vw, 2rem);
+  }
+}
+
+@media (max-width: 560px) {
+  .state-works ul {
+    display: flex;
+    gap: 0.6rem;
+    margin-inline: calc(var(--page) * -1);
+    padding-inline: var(--page);
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+  }
+
+  .state-works ul::-webkit-scrollbar {
+    display: none;
+  }
+
+  .state-works li {
+    flex: 0 0 min(42%, 11rem);
+    scroll-snap-align: start;
+  }
+
+  .state-screen-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .state-screen-actions .button {
+    width: 100%;
+    justify-content: center;
+  }
+}

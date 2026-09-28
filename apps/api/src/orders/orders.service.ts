@@ -29,6 +29,8 @@ import {
   receiptImageError,
   receiptImageLimit,
 } from "../common/image-data";
+import { ORDER_POLICY_SLUGS } from "../policies/const";
+import { acceptedPolicyVersions } from "../policies/policy-acceptance";
 import { ORDER_PAYMENT_WINDOW_MS } from "./const";
 import { toOrder } from "./order.mapper";
 import { nextOrderId } from "./order-id";
@@ -86,8 +88,19 @@ export class OrdersService implements OnModuleInit {
    */
   async checkout(
     actor: Actor,
-    input: { name?: string; city?: string; phone?: string; address?: string },
+    input: {
+      name?: string;
+      city?: string;
+      phone?: string;
+      address?: string;
+      acceptedPolicies?: Record<string, string>;
+    },
   ) {
+    const policyVersions = acceptedPolicyVersions(
+      input.acceptedPolicies,
+      ORDER_POLICY_SLUGS,
+      "برای ثبت سفارش، شرایط خرید، ارسال و بازگشت را بخوان و تیک پذیرش را بزن.",
+    );
     await this.inventory.releaseExpiredHolds();
     const ownerKey = this.identity.key(actor);
     const cart = await this.cartItems.find({
@@ -147,6 +160,8 @@ export class OrdersService implements OnModuleInit {
         city,
         phone,
         address: input.address?.trim() ?? "",
+        policyVersions,
+        policiesAcceptedAt: new Date(),
       });
       await manager.getRepository(Order).save(created);
 

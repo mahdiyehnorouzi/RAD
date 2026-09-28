@@ -24,6 +24,10 @@ import {
   CommissionMessageDto,
   SaveCommissionDto,
 } from "../commissions/dto";
+import { ContactService } from "../contact/contact.service";
+import { UpdateContactMessageDto } from "../contact/dto";
+import { DamageReportsService } from "../damage/damage-reports.service";
+import { ReviewDamageReportDto } from "../damage/dto";
 import type { AuthedRequest } from "../common/session.middleware";
 
 @Controller("admin")
@@ -32,6 +36,8 @@ export class AdminController {
   constructor(
     private readonly admin: AdminService,
     private readonly commissions: CommissionsService,
+    private readonly contact: ContactService,
+    private readonly damageReports: DamageReportsService,
   ) {}
 
   @Get("products")
@@ -92,6 +98,37 @@ export class AdminController {
   ) {
     this.admin.assert(request.adminRole, "order.write");
     return this.admin.rejectPayment(id, body.reason, request.userId ?? null);
+  }
+
+  @Get("messages")
+  listMessages() {
+    return this.contact.listAll();
+  }
+
+  @Patch("messages/:id")
+  updateMessage(
+    @Param("id") id: string,
+    @Body() body: UpdateContactMessageDto,
+    @Req() request: AuthedRequest,
+  ) {
+    this.admin.assert(request.adminRole, "order.write");
+    return this.contact.setStatus(id, body.status);
+  }
+
+  @Get("damage-reports")
+  listDamageReports() {
+    return this.damageReports.listAll();
+  }
+
+  /** Approve with a resolution, decline with a reason, or mark as being reviewed. */
+  @Patch("damage-reports/:id")
+  reviewDamageReport(
+    @Param("id") id: string,
+    @Body() body: ReviewDamageReportDto,
+    @Req() request: AuthedRequest,
+  ) {
+    this.admin.assert(request.adminRole, "order.write");
+    return this.damageReports.review(id, body, request.userId ?? null);
   }
 
   @Get("commissions")

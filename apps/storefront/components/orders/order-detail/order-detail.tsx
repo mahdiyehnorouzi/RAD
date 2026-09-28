@@ -12,7 +12,11 @@ import { ProductMedia } from "@/components/product";
 import { useCatalog } from "@/components/catalog";
 import { AccountShell } from "../../account/account-shell";
 import { CardListSkeleton } from "@/components/ui/skeleton";
+import { HelpPanel } from "@/components/contact";
+import { OrderPolicies, OrderStatusGuide } from "@/components/help";
+import { NoAccessState, NotFoundState } from "@/components/states";
 import {
+  PAYMENT_HELP_STATUSES,
   STORE_ORDER_PROGRESS,
   STORE_ORDER_STATUS_KEY,
   formatShippingAddress,
@@ -21,6 +25,7 @@ import {
 } from "../const";
 import { OrderTimeline } from "./order-timeline";
 import { OrderNextAction } from "./order-next-action";
+import { DamageReportPanel } from "./damage-report";
 
 function formatDate(value: number, locale: "fa" | "en") {
   return new Intl.DateTimeFormat(locale === "fa" ? "fa-IR" : "en-US", {
@@ -29,7 +34,7 @@ function formatDate(value: number, locale: "fa" | "en") {
 }
 
 export function OrderDetail({ id }: { id: string }) {
-  const { orders, confirmDemoPayment, cancelOrder } = useCommerce();
+  const { user, orders, confirmDemoPayment, cancelOrder } = useCommerce();
   const { locale, t, number } = useLocale();
   const { products, getProduct } = useCatalog();
   const [error, setError] = useState("");
@@ -73,9 +78,15 @@ export function OrderDetail({ id }: { id: string }) {
   if (!order) {
     return (
       <AccountShell>
-        <section className="order-detail section">
-          <h1>{t("orderMissing")}</h1>
-        </section>
+        {user ? (
+          <NotFoundState
+            title="orderMissing"
+            body="orderMissingBody"
+            primary={{ href: "/orders", label: "ordersTitle" }}
+          />
+        ) : (
+          <NoAccessState returnTo={`/orders/${id}`} />
+        )}
       </AccountShell>
     );
   }
@@ -166,6 +177,7 @@ export function OrderDetail({ id }: { id: string }) {
             currentLabel={t("youAreHere")}
           />
         ) : null}
+        <OrderStatusGuide status={order.status} />
         {error ? (
           <p className="form-error" role="alert">
             {error}
@@ -179,6 +191,17 @@ export function OrderDetail({ id }: { id: string }) {
           }
           onCancel={() => run(() => cancelOrder(order.id))}
         />
+        <DamageReportPanel order={order} />
+        <div className="order-help">
+          {order.policyAcceptance ? (
+            <OrderPolicies acceptance={order.policyAcceptance} />
+          ) : null}
+          <HelpPanel
+            context="order"
+            orderId={order.id}
+            tone={PAYMENT_HELP_STATUSES.includes(order.status) ? "payment" : "general"}
+          />
+        </div>
       </article>
     </section>
     </AccountShell>

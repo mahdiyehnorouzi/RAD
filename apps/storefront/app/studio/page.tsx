@@ -1,10 +1,5 @@
-"use client";
-import { CustomDesigner } from "@/components/studio";
+import { CustomOrder } from "@/components/studio";
 
 export default function Studio() {
-  return (
-    <section className="studio-page section">
-      <CustomDesigner />
-    </section>
-  );
+  return <CustomOrder />;
 }

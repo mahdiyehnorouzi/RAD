@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { useLocale } from "@/components/i18n";
-import { formatPassportCode } from "@/lib/passport";
+import { ObjectStamp, RadFingerprint } from "@/components/identity";
+import { formatPassportCode, passportYear } from "@/lib/passport";
 import type { RadPassport } from "../type";
 
 export function PassportMark({
@@ -15,6 +16,7 @@ export function PassportMark({
   const { locale, t, number } = useLocale();
   const [copied, setCopied] = useState(false);
   const code = formatPassportCode(passport.code, locale, number);
+  const year = passportYear(passport, locale);
 
   async function copyLink() {
     try {
@@ -28,11 +30,20 @@ export function PassportMark({
 
   return (
     <aside className="passport-mark">
-      <div className="passport-mark-stamp" aria-hidden="true">
-        {Array.from({ length: 25 }, (_, index) => {
-          const on = (Number(passport.code) * (index + 3)) % 7 > 2;
-          return <i key={index} className={on ? "is-on" : ""} />;
-        })}
+      <div className="passport-mark-seal">
+        <ObjectStamp
+          radNumber={passport.radNumber}
+          code={code}
+          year={year}
+          label={[`RĀD ${code}`, t("oneOfOne"), year]
+            .filter(Boolean)
+            .join(locale === "fa" ? "، " : ", ")}
+        />
+        <RadFingerprint
+          radNumber={passport.radNumber}
+          density="field"
+          className="passport-mark-print"
+        />
       </div>
       <p>
         {t("passportOnce")}

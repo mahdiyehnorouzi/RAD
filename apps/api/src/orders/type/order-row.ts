@@ -10,6 +10,9 @@ export type OrderRow = {
   address: string;
   trackingCode?: string | null;
   estimatedDeliveryAt?: Date | null;
+  deliveredAt?: Date | null;
+  policyVersions?: Record<string, string> | null;
+  policiesAcceptedAt?: Date | null;
   paymentDueAt?: Date | null;
   items: Array<{ productSlug: string }>;
   payment?: {

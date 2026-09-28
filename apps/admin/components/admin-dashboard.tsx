@@ -6,11 +6,13 @@ import {
   ChevronLeft,
   CircleGauge,
   ImagePlus,
+  Inbox,
   KeyRound,
   LayoutDashboard,
   LogOut,
   Menu,
   Package,
+  PackageX,
   Pencil,
   Plus,
   ScrollText,
@@ -38,6 +40,8 @@ import {
   productStatusOptions,
   roleLabels,
   stageCountLabel,
+  type AdminContactMessage,
+  type AdminDamageReport,
   type AdminMember,
   type AdminOrder,
   type AdminProduct,
@@ -47,12 +51,20 @@ import {
 } from "../lib/admin-data";
 import { AdminCommissions } from "./admin-commissions";
 import { AdminOrderPayment } from "./admin-order-payment";
+import { AdminMessages } from "./admin-messages";
+import { AdminOrderMessages } from "./admin-order-messages";
+import { AdminDamageReports } from "./admin-damage-reports";
+import { AdminOrderDamage } from "./admin-order-damage";
+import { AdminOrderPolicies } from "./admin-order-policies";
+import type { DamageReview } from "./admin-damage-report";
 import { StageMeter } from "@rad/ui";
 
 const navItems: { id: AdminSection; label: string; icon: typeof Package }[] = [
   { id: "overview", label: "مرور استودیو", icon: LayoutDashboard },
   { id: "products", label: "آثار و محصولات", icon: Archive },
   { id: "orders", label: "سفارش‌های فروشگاه", icon: ShoppingBag },
+  { id: "messages", label: "پیام‌ها", icon: Inbox },
+  { id: "damage", label: "گزارش‌های آسیب", icon: PackageX },
   { id: "commissions", label: "سفارش اختصاصی", icon: ScrollText },
   { id: "users", label: "مشتریان", icon: UserRound },
   { id: "members", label: "افراد و دسترسی", icon: Users },
@@ -106,6 +118,53 @@ export function AdminDashboard() {
     setMobileNav(false);
   };
 
+  const openOrder = (orderId: string) => {
+    go("orders");
+    window.requestAnimationFrame(() => {
+      document
+        .getElementById(`order-${orderId}`)
+        ?.scrollIntoView({ block: "start", behavior: "smooth" });
+    });
+  };
+
+  const setMessageStatus = async (
+    id: string,
+    status: AdminContactMessage["status"],
+  ) => {
+    try {
+      await workspace.setMessageStatus(id, status);
+      announce(
+        status === "resolved"
+          ? "پیام رسیدگی‌شده ثبت شد."
+          : "پیام دوباره باز شد.",
+      );
+    } catch (error) {
+      announce((error as Error).message);
+    }
+  };
+
+  const openMessages = workspace.messages.filter(
+    (message) => message.status === "new",
+  ).length;
+  const openDamage = workspace.damageReports.filter(
+    (report) => report.status === "submitted" || report.status === "reviewing",
+  ).length;
+
+  const reviewDamage = async (id: string, review: DamageReview) => {
+    try {
+      await workspace.reviewDamageReport(id, review);
+      announce(
+        review.status === "reviewing"
+          ? "گزارش آسیب در حال بررسی است."
+          : "تصمیم گزارش آسیب ثبت شد و مشتری آن را در صفحه‌ی سفارش می‌بیند.",
+      );
+      return true;
+    } catch (error) {
+      announce((error as Error).message);
+      return false;
+    }
+  };
+
   if (!workspace.ready)
     return (
       <div className="admin-shell">
@@ -154,7 +213,25 @@ export function AdminDashboard() {
               onClick={() => go(id)}
             >
               <Icon />
-              <span>{label}</span>
+              <span>
+                {label}
+                {id === "messages" && openMessages ? (
+                  <em
+                    className="nav-count"
+                    aria-label={`${number.format(openMessages)} پیام رسیدگی‌نشده`}
+                  >
+                    {number.format(openMessages)}
+                  </em>
+                ) : null}
+                {id === "damage" && openDamage ? (
+                  <em
+                    className="nav-count"
+                    aria-label={`${number.format(openDamage)} گزارش آسیب باز`}
+                  >
+                    {number.format(openDamage)}
+                  </em>
+                ) : null}
+              </span>
               <ChevronLeft />
             </button>
           ))}
@@ -221,6 +298,10 @@ export function AdminDashboard() {
         {section === "orders" && (
           <Orders
             orders={workspace.orders}
+            messages={workspace.messages}
+            onSetMessageStatus={setMessageStatus}
+            damageReports={workspace.damageReports}
+            onReviewDamage={reviewDamage}
             canWrite={workspace.can("order.write")}
             onChange={async (order) => {
               try {
@@ -250,6 +331,24 @@ export function AdminDashboard() {
                 return false;
               }
             }}
+          />
+        )}
+        {section === "messages" && (
+          <AdminMessages
+            messages={workspace.messages}
+            orders={workspace.orders}
+            canWrite={workspace.can("order.write")}
+            onSetStatus={setMessageStatus}
+            onOpenOrder={openOrder}
+          />
+        )}
+        {section === "damage" && (
+          <AdminDamageReports
+            reports={workspace.damageReports}
+            orders={workspace.orders}
+            canWrite={workspace.can("order.write")}
+            onReview={reviewDamage}
+            onOpenOrder={openOrder}
           />
         )}
         {section === "commissions" && (
@@ -614,12 +713,23 @@ function ProductThumb({ product }: { product: AdminProduct }) {
 
 function Orders({
   orders,
+  messages,
+  onSetMessageStatus,
+  damageReports,
+  onReviewDamage,
   canWrite,
   onChange,
   onApprovePayment,
   onRejectPayment,
 }: {
   orders: AdminOrder[];
+  messages: AdminContactMessage[];
+  onSetMessageStatus: (
+    id: string,
+    status: AdminContactMessage["status"],
+  ) => Promise<void>;
+  damageReports: AdminDamageReport[];
+  onReviewDamage: (id: string, review: DamageReview) => Promise<boolean>;
   canWrite: boolean;
   onChange: (order: AdminOrder) => void | Promise<void>;
   onApprovePayment: (id: string) => Promise<boolean>;
@@ -650,10 +760,12 @@ function Orders({
                 ? undefined
                 : orderStatusProgress[progressIndex + 1];
             const next = nextStatus ? orderStatusLabels[nextStatus] : undefined;
-            const awaitingReceiptReview = order.status === "pending_verification";
+            const awaitingReceiptReview =
+              order.status === "pending_verification";
             const statusOptions = orderStatusOptions(order.status);
             return (
               <article
+                id={`order-${order.id}`}
                 className={`order-process-card${awaitingReceiptReview ? " needs-receipt-review" : ""}${terminal ? " is-terminal" : ""}`}
                 key={order.id}
               >
@@ -720,6 +832,12 @@ function Orders({
                     <dt>زمان ثبت</dt>
                     <dd>{dateTime(order.createdAt)}</dd>
                   </div>
+                  {order.deliveredAt ? (
+                    <div>
+                      <dt>تحویل</dt>
+                      <dd>{dateTime(order.deliveredAt)}</dd>
+                    </div>
+                  ) : null}
                 </dl>
                 <AdminOrderPayment
                   order={order}
@@ -727,6 +845,21 @@ function Orders({
                   onApprove={onApprovePayment}
                   onReject={onRejectPayment}
                 />
+                <AdminOrderMessages
+                  messages={messages.filter(
+                    (message) => message.orderId === order.id,
+                  )}
+                  canWrite={canWrite}
+                  onSetStatus={onSetMessageStatus}
+                />
+                <AdminOrderDamage
+                  reports={damageReports.filter(
+                    (report) => report.orderId === order.id,
+                  )}
+                  canWrite={canWrite}
+                  onReview={onReviewDamage}
+                />
+                <AdminOrderPolicies order={order} />
                 <StageMeter
                   index={current}
                   total={orderStatusProgress.length}

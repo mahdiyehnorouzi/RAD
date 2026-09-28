@@ -626,11 +626,48 @@ export const catalogArtworks: ArtworkRecord[] = [
         src: "/catalog/photos/transparent/cobalt-fold-bowl.png",
         alt: "نمای روبه‌روی کاسه چین کبالت",
         enAlt: "Front view of the Cobalt Fold Bowl",
+        spots: [
+          { x: 68, y: 71, span: 0.12, material: t("استون‌ور", "Stoneware") },
+        ],
+        marks: [
+          {
+            x: 26,
+            y: 42,
+            title: t("لبه‌ی آزاد", "Free rim"),
+            note: t(
+              "چین‌ها آزادند؛ هیچ دو موجی یکسان نیست.",
+              "Folded freely; no two waves match.",
+            ),
+          },
+          {
+            x: 58,
+            y: 49,
+            title: t("لعاب کبالت", "Cobalt glaze"),
+            note: t(
+              "آبی عمیق، سراسر درون کاسه.",
+              "Deep blue across the whole interior.",
+            ),
+          },
+          {
+            x: 36,
+            y: 73,
+            title: t("فرم پیکره‌وار", "Sculptural form"),
+            note: t("بیرونِ شیری استون‌ور.", "A creamy stoneware exterior."),
+          },
+        ],
       },
       {
         src: "/catalog/photos/transparent/cobalt-fold-bowl-2.png",
         alt: "نمای بالا از کاسه چین کبالت",
         enAlt: "Top view of the Cobalt Fold Bowl",
+        spots: [
+          {
+            x: 46,
+            y: 50,
+            span: 0.5,
+            material: t("لعاب کبالت", "Cobalt glaze"),
+          },
+        ],
       },
     ],
     passport: null,

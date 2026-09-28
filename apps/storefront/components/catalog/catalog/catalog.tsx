@@ -1,114 +1,85 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import type { Product } from "@rad/types";
 import { useCart } from "@/components/cart";
 import { useLocale } from "@/components/i18n";
 import { useCommerce } from "@/components/commerce";
 import { useCatalog } from "../catalog-provider";
-import { artworkCategories } from "@/lib/catalog/artwork";
 import { ApiError, isNetworkError } from "@/lib/api";
-import { isShopStatus, isUpcomingStatus } from "@/lib/catalog/product-status";
 import {
-  applyCatalogFilters,
-  type AvailabilityFilter,
+  defaultCatalogFilters,
   type CatalogFilters,
 } from "@/lib/catalog/filters";
-import { normalizeQuery, productMatchesQuery } from "@/lib/catalog/search";
+import {
+  catalogArtists,
+  refineCatalog,
+  shopFloor,
+} from "@/lib/catalog/refine";
 import { useProductStatus } from "@/hooks/use-product-status";
-import { MoveLeft, MoveRight } from "lucide-react";
+import { CatalogBar } from "./catalog-bar";
+import { CatalogCategories } from "./catalog-categories";
+import { CatalogFilterPanel } from "./catalog-filters";
+import { CatalogHero } from "./catalog-hero";
 import { CatalogSearch } from "./catalog-search";
 import { CatalogResults } from "./catalog-results";
+import { useCatalogFilters } from "./hooks";
 import "./catalog.css";
 
-function matchesAvailability(
-  product: Product,
-  availability: AvailabilityFilter,
-) {
-  const status = product.status;
-  if (availability === "all") return true;
-  if (availability === "upcoming") return isUpcomingStatus(status);
-  return status === availability;
-}
-
-const defaultFilters: CatalogFilters = {
-  query: "",
-  category: "all",
-  availability: "all",
+const clearedPanel: Partial<CatalogFilters> = {
+  status: "all",
+  artist: "all",
+  minPrice: null,
+  maxPrice: null,
 };
+
+const clearedRefinements: Partial<CatalogFilters> = {
+  ...clearedPanel,
+  category: "all",
+};
+
+function panelRefinements(filters: CatalogFilters) {
+  return [
+    filters.status !== "all",
+    filters.artist !== "all",
+    filters.minPrice !== null || filters.maxPrice !== null,
+  ].filter(Boolean).length;
+}
 
 export function Catalog({
   products: seeded = [],
   seededLive = true,
-  initialFilters = defaultFilters,
+  initialFilters = defaultCatalogFilters,
+  intro,
 }: {
   products?: Product[];
   /** Whether the server render reached the API; false means `products` are fixtures. */
   seededLive?: boolean;
   initialFilters?: CatalogFilters;
+  /** Page title block; the search box joins it inside the hero. */
+  intro?: React.ReactNode;
 }) {
-  const { t, number, locale } = useLocale();
+  const { locale } = useLocale();
   const { products: liveProducts, loading, status, refresh } = useCatalog();
   const products = loading ? seeded : liveProducts;
   const pending = loading && products.length === 0;
   const failed = status === "error" || (loading && !seededLive);
-  const filters = [
-    { id: "all", label: t("filterAll") },
-    ...artworkCategories.map((category) => ({
-      id: category.id,
-      label: category.label[locale],
-    })),
-  ];
-  const availabilityFilters: { id: AvailabilityFilter; label: string }[] = [
-    { id: "all", label: t("filterAll") },
-    { id: "available", label: t("filterAvailable") },
-    { id: "upcoming", label: t("filterUpcoming") },
-    { id: "sold", label: t("filterSold") },
-  ];
-  const [active, setActive] = useState(initialFilters.category);
-  const [availability, setAvailability] = useState<AvailabilityFilter>(
-    initialFilters.availability,
+  const { filters: state, update } = useCatalogFilters(initialFilters);
+  const panelId = useId();
+  const [filtersOpen, setFiltersOpen] = useState(
+    () => panelRefinements(initialFilters) > 0,
   );
-  const [query, setQuery] = useState(initialFilters.query);
-  const [canSwipe, setCanSwipe] = useState(false);
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const normalizedQuery = normalizeQuery(query, locale);
-  const shopProducts = products.filter((product) =>
-    isShopStatus(product.status),
+  const shopProducts = shopFloor(products);
+  const visible = refineCatalog(shopProducts, state, locale);
+  const artistCounts = new Map(
+    catalogArtists(
+      refineCatalog(shopProducts, { ...state, artist: "all" }, locale),
+    ).map((artist) => [artist.key, artist.count]),
   );
-  const visible = shopProducts.filter((product) => {
-    const byCategory = active === "all" || product.category === active;
-    return (
-      byCategory &&
-      matchesAvailability(product, availability) &&
-      productMatchesQuery(product, normalizedQuery, locale)
-    );
-  });
-
-  useEffect(() => {
-    const url = new URL(window.location.href);
-    applyCatalogFilters(url.searchParams, {
-      query,
-      category: active,
-      availability,
-    });
-    if (url.href !== window.location.href) {
-      window.history.replaceState(window.history.state, "", url);
-    }
-  }, [query, active, availability]);
-
-  useEffect(() => {
-    const node = scrollRef.current;
-    if (!node) return undefined;
-    const sync = () => setCanSwipe(node.scrollWidth > node.clientWidth + 2);
-    sync();
-    const observer = new ResizeObserver(sync);
-    observer.observe(node);
-    node.addEventListener("scroll", sync, { passive: true });
-    return () => {
-      observer.disconnect();
-      node.removeEventListener("scroll", sync);
-    };
-  }, [filters.length]);
+  const artists = catalogArtists(shopProducts).map((artist) => ({
+    ...artist,
+    count: artistCounts.get(artist.key) ?? 0,
+  }));
+  const activeFilters = panelRefinements(state);
 
   const [retrying, setRetrying] = useState(false);
   const retry = async () => {
@@ -122,91 +93,55 @@ export function Catalog({
 
   return (
     <>
-      <div className="catalog-toolbar">
-        <CatalogSearch value={query} onChange={setQuery} />
-        <section className="catalog-panel catalog-panel--categories">
-          <div className="catalog-panel-head">
-            <b>{t("artworkCategoriesHeading")}</b>
-            {canSwipe ? (
-              <span className="filter-scroll-hint">
-                {t("swipeToSeeMore")}
-                {locale === "fa" ? (
-                  <MoveLeft aria-hidden="true" />
-                ) : (
-                  <MoveRight aria-hidden="true" />
-                )}
-              </span>
-            ) : null}
-          </div>
-          <div
-            className={`catalog-rail-shell${canSwipe ? " is-overflowing" : ""}`}
-          >
-            <div
-              ref={scrollRef}
-              className="catalog-rail"
-              tabIndex={0}
-              aria-label={t("filterCategoriesAria")}
-            >
-              {filters.map((x) => (
-                <button
-                  type="button"
-                  key={x.id}
-                  className={active === x.id ? "active" : ""}
-                  onClick={() => setActive(x.id)}
-                  aria-pressed={active === x.id}
-                >
-                  {x.label}
-                </button>
-              ))}
-            </div>
-          </div>
-        </section>
-        <section className="catalog-panel catalog-panel--availability">
-          <div className="catalog-availability-row">
-            <b>{t("availabilityHeading")}</b>
-            <div
-              className="catalog-segment"
-              role="group"
-              aria-label={t("availabilityFilterAria")}
-            >
-              {availabilityFilters.map((item) => (
-                <button
-                  type="button"
-                  key={item.id}
-                  className={availability === item.id ? "active" : ""}
-                  data-status={item.id}
-                  onClick={() => setAvailability(item.id)}
-                  aria-pressed={availability === item.id}
-                >
-                  <i aria-hidden="true" />
-                  {item.label}
-                </button>
-              ))}
-            </div>
-            <span className="catalog-count">
-              {number(visible.length)} {t("availableWorks")}
-            </span>
-          </div>
-        </section>
-      </div>
+      <CatalogHero
+        intro={intro}
+        search={
+          <CatalogSearch
+            value={state.query}
+            onChange={(query) => update({ query })}
+          />
+        }
+      />
+      <CatalogCategories
+        products={shopProducts}
+        active={state.category}
+        onSelect={(category) => update({ category })}
+      />
+      <CatalogBar
+        count={visible.length}
+        sort={state.sort}
+        onSort={(sort) => update({ sort })}
+        filtersOpen={filtersOpen}
+        activeFilters={activeFilters}
+        panelId={panelId}
+        onToggleFilters={() => setFiltersOpen((open) => !open)}
+      />
+      <CatalogFilterPanel
+        id={panelId}
+        open={filtersOpen}
+        filters={state}
+        activeCount={activeFilters}
+        artists={artists}
+        onChange={update}
+        onClear={() => update(clearedPanel)}
+      />
       <CatalogResults
         visible={visible}
         shopCount={shopProducts.length}
         pending={pending}
         failed={failed}
         retrying={retrying}
-        filters={{ query, category: active, availability }}
+        filters={state}
         onRetry={() => void retry()}
-        onClearQuery={() => setQuery("")}
-        onClearFilters={() => {
-          setActive("all");
-          setAvailability("all");
-        }}
-        onReset={() => {
-          setActive("all");
-          setAvailability("all");
-          setQuery("");
-        }}
+        stockedCategories={[
+          ...new Set(shopProducts.map((product) => product.category)),
+        ]}
+        onClearQuery={() => update({ query: "" })}
+        onClearFilters={() => update(clearedRefinements)}
+        onReset={() => update({ ...clearedRefinements, query: "" })}
+        onPickCategory={(category) =>
+          update({ ...clearedRefinements, query: "", category })
+        }
       />
     </>
   );
@@ -215,10 +150,12 @@ export function Catalog({
 export function AddToBag({
   product,
   onConflict,
+  icon,
 }: {
   product: Product;
   /** Called after the API refuses the add (taken or withdrawn) so the page can re-check. */
   onConflict?: () => void;
+  icon?: React.ReactNode;
 }) {
   const { add } = useCart();
   const { t } = useLocale();
@@ -277,6 +214,7 @@ export function AddToBag({
         disabled={added || unavailable || busy}
         aria-live="polite"
       >
+        {icon}
         {added
           ? t("inBag")
           : unavailable
