@@ -62,6 +62,7 @@ export function ProductSummary({
               <RadFingerprint
                 radNumber={product.radNumber}
                 className="pdp-record-print"
+                animate
               />
             ) : null}
             <span>{recordNumber}</span>
@@ -145,6 +146,7 @@ export function ProductSummary({
         artwork={artwork}
         passport={passport}
         textures={textures}
+        index={0}
       />
     </div>
   );

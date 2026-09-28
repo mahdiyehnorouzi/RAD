@@ -11,7 +11,9 @@ import {
   catalogPhotoSrc,
 } from "@/lib/catalog/photo-works";
 import { pdpCopy } from "./const";
+import type { WorkTexture } from "@/lib/catalog/material-texture";
 import { PdpSection } from "./pdp-section";
+import { WorkStroke } from "./work-stroke";
 
 /** Marks drawn on one of the work's photos, else the passport's marks on its first. */
 function anatomyOf(product: Product, artwork?: Artwork) {
@@ -32,9 +34,13 @@ function anatomyOf(product: Product, artwork?: Artwork) {
 export function ProductAnatomy({
   product,
   artwork,
+  textures,
+  index,
 }: {
   product: Product;
   artwork?: Artwork;
+  textures: WorkTexture[];
+  index: number;
 }) {
   const { locale, number } = useLocale();
   const c = pdpCopy[locale];
@@ -47,6 +53,8 @@ export function ProductAnatomy({
     <PdpSection
       id="pdp-anatomy-title"
       title={c.anatomyTitle}
+      lede={c.anatomyLede}
+      mark={<WorkStroke textures={textures} index={index} />}
       className="pdp-anatomy"
     >
       <div className="pdp-anatomy-body">

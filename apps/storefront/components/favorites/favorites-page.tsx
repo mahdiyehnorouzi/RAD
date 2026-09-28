@@ -70,10 +70,7 @@ export function FavoritesPage() {
       ) : items.length ? (
         <div className="product-grid">
           {items.map(
-            (item, index) =>
-              item && (
-                <ProductCard key={item.slug} product={item} index={index} />
-              ),
+            (item) => item && <ProductCard key={item.slug} product={item} />,
           )}
         </div>
       ) : (

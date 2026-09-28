@@ -3,7 +3,7 @@ import { useMemo } from "react";
 import type { Product } from "@rad/types";
 import { useLocale } from "@/components/i18n";
 import { isGoneStatus } from "@/lib/catalog/product-status";
-import { ProductCard, ProductGridSkeleton } from "../listing";
+import { ProductCarousel, ProductGridSkeleton } from "../listing";
 import { pdpCopy } from "./const";
 
 /** Works still on sale lead; within each group, same category first. */
@@ -38,11 +38,7 @@ export function RelatedWorks({
       {works.length === 0 ? (
         <ProductGridSkeleton count={4} className="pdp-related-track" />
       ) : (
-        <div className="pdp-related-track">
-          {works.map((item) => (
-            <ProductCard key={item.slug} product={item} variant="catalog" />
-          ))}
-        </div>
+        <ProductCarousel products={works} label={c.similarTitle} />
       )}
     </section>
   );

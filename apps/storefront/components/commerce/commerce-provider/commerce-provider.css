@@ -150,6 +150,95 @@
   color: var(--clay);
 }
 
+/* Saving a work: the heart dips, fills and swells, and a ring of short marks flares out. */
+.favorite-button {
+  position: relative;
+}
+
+.favorite-button.is-bursting svg {
+  animation: favorite-pop 600ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.favorite-burst {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.favorite-button:not(.compact) .favorite-burst {
+  left: calc(1rem + 10px);
+}
+
+html[dir="rtl"] .favorite-button:not(.compact) .favorite-burst {
+  left: auto;
+  right: calc(1rem + 10px);
+}
+
+.favorite-burst i {
+  position: absolute;
+  top: -3px;
+  left: -1px;
+  width: 2px;
+  height: 6px;
+  border-radius: 2px;
+  background: #b0442f;
+  opacity: 0;
+  transform: rotate(calc(var(--ray) * 45deg)) translateY(-12px) scaleY(0.3);
+  animation: favorite-ray 600ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.favorite-burst i:nth-child(even) {
+  height: 4px;
+  top: -2px;
+}
+
+@keyframes favorite-pop {
+  0% {
+    transform: scale(1);
+  }
+  22% {
+    transform: scale(0.72);
+  }
+  52% {
+    transform: scale(1.24);
+  }
+  76% {
+    transform: scale(0.95);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes favorite-ray {
+  0%,
+  28% {
+    opacity: 0;
+    transform: rotate(calc(var(--ray) * 45deg)) translateY(-11px) scaleY(0.3);
+  }
+  50% {
+    opacity: 1;
+    transform: rotate(calc(var(--ray) * 45deg)) translateY(-18px) scaleY(1);
+  }
+  100% {
+    opacity: 0;
+    transform: rotate(calc(var(--ray) * 45deg)) translateY(-24px) scaleY(0.5);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .favorite-button.is-bursting svg,
+  .favorite-burst i {
+    animation: none;
+  }
+  .favorite-burst {
+    display: none;
+  }
+}
+
 .favorite-button.compact {
   position: absolute;
   z-index: 5;

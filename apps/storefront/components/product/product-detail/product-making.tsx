@@ -4,19 +4,25 @@ import type { Artwork, Product } from "@rad/types";
 import { useLocale } from "@/components/i18n";
 import { RadFingerprint } from "@/components/identity";
 import type { RadPassport } from "@/components/passport/type";
+import type { WorkTexture } from "@/lib/catalog/material-texture";
 import { passportYear } from "@/lib/passport";
 import { formatArtworkNumber } from "../listing";
 import { MAKING_PATHS, pdpCopy } from "./const";
 import { PdpSection } from "./pdp-section";
+import { WorkStroke } from "./work-stroke";
 
 export function ProductMaking({
   product,
   artwork,
   passport,
+  textures,
+  index,
 }: {
   product: Product;
   artwork?: Artwork;
   passport?: RadPassport;
+  textures: WorkTexture[];
+  index: number;
 }) {
   const { locale, number } = useLocale();
   const c = pdpCopy[locale];
@@ -39,6 +45,8 @@ export function ProductMaking({
     <PdpSection
       id="pdp-making-title"
       title={c.makingTitle}
+      lede={c.makingLede}
+      mark={<WorkStroke textures={textures} index={index} />}
       className="pdp-making"
     >
       <ol
@@ -55,6 +63,7 @@ export function ProductMaking({
           <RadFingerprint
             radNumber={product.radNumber}
             className="pdp-making-print"
+            animate
           />
           <span dir="ltr">{recordNumber}</span>
           {year ? <small>{year}</small> : null}

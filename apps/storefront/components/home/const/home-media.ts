@@ -7,6 +7,11 @@ export const homeMedia = {
     "/home/custom-order/02-artist-proposal-v2.jpg",
     "/home/custom-order/03-making-v2.jpg",
   ],
-  certificate: "/home/custom-order/certificate.webp",
   videoPoster: "/studio-process.jpg",
+} as const;
+
+/** The finished vase and the brass RAD stamp; the tall crop keeps the stamp in frame on phones. */
+export const certificateScene = {
+  wide: { src: "/home/certificate/scene-wide.jpg", width: 1280, height: 720 },
+  tall: { src: "/home/certificate/scene-tall.jpg", width: 720, height: 1152 },
 } as const;

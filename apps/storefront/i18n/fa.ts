@@ -554,6 +554,7 @@ export const fa = {
   museumBack: "بازگشت به موزه",
   museumMissing: "این پرتره هنوز در آرشیو نیست.",
   homeDifferenceTitle: "فاصله خیال تا واقعیت",
+  homeDifferenceScroll: "با اسکرول ادامه بده",
   impossibleEyebrow: "آرشیو سفارش‌های ناممکن",
   impossibleTitle: "چیزی را سفارش دهید که گفتنش سخت است.",
   impossibleBody:
@@ -796,6 +797,9 @@ export const fa = {
   footerLegal: "متن‌های رسمی",
   footerEmail: "ایمیل",
   footerEmailSoon: "به‌زودی",
+  footerShop: "خرید",
+  footerConnect: "ارتباط",
+  footerMore: "پیوندهای بیشتر {group}",
   retry: "تلاش دوباره",
   retrying: "در حال تلاش…",
   dismiss: "بستن",

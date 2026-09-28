@@ -1,9 +1,11 @@
 export {
-  POLAROID_INTERVAL_MS,
-  POLAROID_LEAVE_MS,
-  POLAROID_SWIPE_PX,
-  POLAROID_TILTS,
-} from "./polaroid";
+  HERO_CARD_BACK_MS,
+  HERO_CARD_FRONT_MS,
+  HERO_CARD_SWIPE_PX,
+  heroCardCopy,
+  heroCards,
+  heroScene,
+} from "./hero-cards";
 export { featuredHomeWorks, featuredWorkPhoto } from "./featured-works";
-export { homeMedia } from "./home-media";
+export { certificateScene, homeMedia } from "./home-media";
 export { homeProcessSteps } from "./process-steps";

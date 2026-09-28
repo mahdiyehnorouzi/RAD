@@ -114,7 +114,7 @@ export function CatalogResults({
             <ProductCard
               product={product}
               key={product.slug}
-              variant="catalog"
+              variant="compact"
             />
           ))}
         </div>

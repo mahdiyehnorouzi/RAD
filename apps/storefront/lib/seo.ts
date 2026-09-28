@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import type { FaqContent, Product, Review } from "@rad/types";
 import type { SchemaAvailability } from "@/lib/catalog/product-seo";
 
-const FALLBACK_SITE_URL = "https://www.rad-object.com";
+export const FALLBACK_SITE_URL = "https://www.rad-object.com";
 
 export const siteUrl = new URL(
   process.env.NEXT_PUBLIC_SITE_URL || process.env.SITE_URL || FALLBACK_SITE_URL,

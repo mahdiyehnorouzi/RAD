@@ -39,6 +39,16 @@ export const pdpCopy = {
     careTitle: "مراقبت از اثر",
     questionsTitle: "ارسال، بسته‌بندی و پرسش‌ها",
     ask: "سؤالی مانده؟ با ما حرف بزن",
+    askLede: "پیام بفرستید یا در اینستاگرام بنویسید.",
+    specsLede: "مواد، ابعاد و شناسنامه",
+    aboutLede: "داستان و الهام",
+    anatomyLede: "آنچه سازنده نشان داده",
+    makingLede: "از گل تا کوره",
+    careLede: "برای ماندگاری بیشتر",
+    questionsLede: "هرچه پیش از سفارش باید بدانید",
+    glazeNote:
+      "لعاب این اثر با دست زده شده؛ تفاوت‌های جزئی رنگ و بافت طبیعی‌اند و بخشی از هویت اثر.",
+    makerNote: "یادداشت سازنده",
   },
   en: {
     breadcrumb: "Breadcrumb",
@@ -83,5 +93,15 @@ export const pdpCopy = {
     careTitle: "Caring for it",
     questionsTitle: "Shipping, packing and questions",
     ask: "Still wondering? Talk to us",
+    askLede: "Send a message or write to us on Instagram.",
+    specsLede: "Materials, size and record",
+    aboutLede: "Story and inspiration",
+    anatomyLede: "What the maker points out",
+    makingLede: "From clay to kiln",
+    careLede: "So it lasts",
+    questionsLede: "What to know before you order",
+    glazeNote:
+      "The glaze on this work was laid by hand; small shifts in colour and texture are natural and part of who it is.",
+    makerNote: "Maker's note",
   },
 } as const;
