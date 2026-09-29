@@ -2,7 +2,7 @@
 import "./fine-print.css";
 
 import Link from "next/link";
-import { ArrowLeft, ArrowRight } from "lucide-react";
+import { ArrowLeft, ArrowRight, FileText } from "lucide-react";
 import type { PolicySlug } from "@rad/types";
 import { useLocale } from "@/components/i18n";
 import {
@@ -24,7 +24,10 @@ export function LegalTexts({ exclude }: { exclude?: PolicySlug }) {
 
   return (
     <section className="legal-texts" aria-labelledby="legal-texts-title">
-      <h2 id="legal-texts-title">{c.legalTitle}</h2>
+      <h2 id="legal-texts-title">
+        <FileText size={16} strokeWidth={1.6} aria-hidden="true" />
+        {c.legalTitle}
+      </h2>
       <ul>
         {docs.map((doc) => (
           <li key={doc.slug}>

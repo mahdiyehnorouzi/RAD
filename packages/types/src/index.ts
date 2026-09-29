@@ -218,6 +218,9 @@ export function isTerminalStoreOrderStatus(status: StoreOrderStatus) {
 /** Mirrors `ORDER_PAYMENT_WINDOW_MS` in the API. */
 export const ORDER_PAYMENT_WINDOW_MINUTES = 30;
 
+/** Mirrors `CART_HOLD_MS` in the API. */
+export const CART_HOLD_MINUTES = 15;
+
 export const storeOrderStatusLabels = {
   pending_payment: "در انتظار پرداخت",
   pending_verification: "در انتظار تأیید پرداخت",

@@ -1,5 +1,7 @@
 "use client";
 import { useEffect, useId, useState } from "react";
+import Link from "next/link";
+import { Check } from "lucide-react";
 import type { Product } from "@rad/types";
 import { useCart } from "@/components/cart";
 import { useLocale } from "@/components/i18n";
@@ -156,7 +158,7 @@ export function AddToBag({
   icon?: React.ReactNode;
 }) {
   const { add } = useCart();
-  const { t } = useLocale();
+  const { t, href } = useLocale();
   const { addNotice } = useCommerce();
   const { refresh, getProduct } = useCatalog();
   const [error, setError] = useState("");
@@ -212,7 +214,7 @@ export function AddToBag({
         disabled={added || unavailable || busy}
         aria-live="polite"
       >
-        {icon}
+        {added ? <Check aria-hidden="true" /> : icon}
         {added
           ? t("inBag")
           : unavailable
@@ -221,6 +223,11 @@ export function AddToBag({
               ? t("submitting")
               : t("addBag")}
       </button>
+      {added ? (
+        <Link className="add-to-bag-next" href={href("/cart")}>
+          {t("goToBag")}
+        </Link>
+      ) : null}
       {error ? (
         <p className="form-error" role="alert">
           {error}

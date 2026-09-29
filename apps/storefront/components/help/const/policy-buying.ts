@@ -16,6 +16,7 @@ export const BUYING_POLICY: PolicyDocument = {
       points: [
         {
           id: "one-of-one",
+          icon: "fingerprint",
           label: { fa: "هر اثر", en: "Every work" },
           value: {
             fa: "فقط یک نسخه؛ بعد از فروش دوباره ساخته نمی‌شود",
@@ -24,11 +25,13 @@ export const BUYING_POLICY: PolicyDocument = {
         },
         {
           id: "bag-hold",
+          icon: "bag",
           label: { fa: "نگه‌داری در سبد", en: "Held in your bag" },
           value: { fa: "۱۵ دقیقه", en: "15 minutes" },
         },
         {
           id: "payment-window",
+          icon: "clock",
           label: {
             fa: "مهلت واریز و ارسال رسید",
             en: "Time to pay and send the receipt",
@@ -40,6 +43,7 @@ export const BUYING_POLICY: PolicyDocument = {
         },
         {
           id: "final-price",
+          icon: "receipt",
           label: { fa: "مبلغ نهایی", en: "Final amount" },
           value: {
             fa: "همان قیمت اثر؛ ارسال رایگان است",

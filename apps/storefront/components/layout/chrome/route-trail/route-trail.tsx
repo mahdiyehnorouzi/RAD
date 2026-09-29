@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useEffect, useRef, type CSSProperties } from "react";
-import { ArrowLeft, ArrowRight } from "lucide-react";
 import { useLocale } from "@/components/i18n";
 import { trailCopy } from "./const";
 import { useRouteTrail } from "./hooks";
@@ -10,11 +9,10 @@ import "./route-trail.css";
 
 export function RouteTrail() {
   const { locale, href } = useLocale();
-  const { crumbs, hidden, goBack, pathname } = useRouteTrail();
+  const { crumbs, hidden, pathname } = useRouteTrail();
   const listRef = useRef<HTMLOListElement>(null);
   const c = trailCopy[locale];
   const rtl = locale === "fa";
-  const BackIcon = rtl ? ArrowRight : ArrowLeft;
   const trailKey = crumbs.map((crumb) => crumb.label).join("|");
 
   useEffect(() => {
@@ -34,15 +32,6 @@ export function RouteTrail() {
 
   return (
     <nav className="route-trail" aria-label={c.aria} dir={rtl ? "rtl" : "ltr"}>
-      <button
-        type="button"
-        className="route-trail-back"
-        onClick={goBack}
-        aria-label={c.back}
-        title={c.back}
-      >
-        <BackIcon aria-hidden="true" />
-      </button>
       <ol ref={listRef} className="route-trail-list" key={pathname}>
         {crumbs.map((crumb, index) => (
           <li

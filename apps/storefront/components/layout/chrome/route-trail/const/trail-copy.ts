@@ -1,7 +1,6 @@
 export const trailCopy = {
   fa: {
     aria: "مسیر صفحه",
-    back: "بازگشت به صفحه قبل",
     home: "خانه",
     about: "درباره رَد",
     works: "آثار",
@@ -31,7 +30,6 @@ export const trailCopy = {
   },
   en: {
     aria: "Breadcrumb",
-    back: "Back to previous page",
     home: "Home",
     about: "About RAD",
     works: "Works",

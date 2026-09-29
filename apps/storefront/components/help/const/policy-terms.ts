@@ -17,6 +17,7 @@ export const TERMS_POLICY: PolicyDocument = {
       points: [
         {
           id: "contract",
+          icon: "check",
           label: { fa: "قطعی شدن خرید", en: "When a sale is final" },
           value: {
             fa: "با تأیید پرداخت از سوی رَد",
@@ -25,6 +26,7 @@ export const TERMS_POLICY: PolicyDocument = {
         },
         {
           id: "version",
+          icon: "history",
           label: { fa: "نسخه‌ی معتبر", en: "Which version applies" },
           value: {
             fa: "نسخه‌ای که هنگام ثبت سفارش پذیرفته‌ای",
@@ -33,6 +35,7 @@ export const TERMS_POLICY: PolicyDocument = {
         },
         {
           id: "favour",
+          icon: "scale",
           label: { fa: "اگر متن‌ها فرق داشتند", en: "If texts disagree" },
           value: {
             fa: "تفسیر به نفع خریدار ملاک است",

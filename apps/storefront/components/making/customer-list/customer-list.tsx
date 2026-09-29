@@ -5,7 +5,10 @@ import { isDemoCommission, seedCommissions } from "@/lib/making";
 import { useMaking } from "@/hooks/use-making-workspace";
 import { useLocale } from "@/components/i18n";
 import { ButtonLink } from "@/components/ui/button-link";
+import Image from "next/image";
+import { PenLine } from "lucide-react";
 import { AccountShell } from "../../account/account-shell";
+import { AccountHeading } from "../../account/account-heading";
 import { CommissionCard } from "./commission-card";
 import { CardListSkeleton } from "@/components/ui/skeleton";
 
@@ -25,14 +28,11 @@ export function CustomerMakingList() {
   return (
     <AccountShell requireAuth>
     <section className="making-page section">
-      <header className="making-heading">
-        <span className="eyebrow">{t("customOrdersEyebrow")}</span>
-        <h1>{t("customOrdersTitle")}</h1>
-        <div className="making-heading-copy">
-          <p>{t("makingCustomNote")}</p>
-          <p>{t("customOrdersBody")}</p>
-        </div>
-      </header>
+      <AccountHeading icon={PenLine} title={t("customOrdersTitle")} body={t("customOrdersBody")} />
+      <aside className="making-note">
+        <p>{t("makingCustomNote")}</p>
+        <Image src="/contact/contact-sprig.webp" alt="" width={108} height={116} />
+      </aside>
       {mine.length ? (
         <div className="making-grid">
           {mine.map((item) => (
@@ -40,7 +40,7 @@ export function CustomerMakingList() {
           ))}
         </div>
       ) : (
-        <div className="empty-state">
+        <div className="account-empty making-empty">
           <h2>{t("makingEmpty")}</h2>
           <p>{t("makingEmptyBody")}</p>
           <ButtonLink href="/studio">{t("startCustomOrder")}</ButtonLink>

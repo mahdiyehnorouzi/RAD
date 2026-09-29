@@ -4,6 +4,8 @@ import { useCommerce } from "@/components/commerce";
 import { useLocale } from "@/components/i18n";
 import { AccountShell } from "../account-shell";
 import { AccountLogin } from "./account-login";
+import { AccountBanner } from "./account-banner";
+import { AccountMenu } from "./account-menu";
 import { Collection } from "../collection";
 import { RecentActivity } from "./recent-activity";
 import "./account-page.css";
@@ -18,23 +20,26 @@ export function AccountPage() {
   return (
     <AccountShell>
       <title>{pageTitle}</title>
-      <section className="profile-page section">
-        <header className="profile-hero">
-          <div className="profile-identity">
-            <span className="profile-avatar" aria-hidden="true">
-              {user.name.trim().charAt(0)}
-            </span>
-            <div>
-              <span className="eyebrow">{t("accountOverview")}</span>
-              <h1>
-                {t("hello")} {user.name}
-              </h1>
-              <p>{user.email}</p>
-            </div>
+      <section className="account-hub section">
+        <header className="account-hub-greeting">
+          <span className="account-hub-avatar" aria-hidden="true">
+            {user.name.trim().charAt(0)}
+          </span>
+          <div>
+            <h1>
+              {t("hello")} {user.name}
+            </h1>
+            <p>
+              <span dir="ltr">{user.email}</span>
+            </p>
           </div>
         </header>
-        <Collection />
-        <RecentActivity />
+        <AccountBanner />
+        <AccountMenu />
+        <div className="account-hub-records">
+          <Collection />
+          <RecentActivity />
+        </div>
       </section>
     </AccountShell>
   );

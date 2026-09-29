@@ -67,7 +67,7 @@
   padding-top: clamp(2rem, 4vw, 3.25rem);
 }
 
-.auth-copy h1, .profile-hero h1 {
+.auth-copy h1 {
   font-size: clamp(1.8rem, 4vw, 3rem);
   line-height: 1.2;
   margin: 0;
@@ -141,155 +141,284 @@
   color: #71665b;
 }
 
-.profile-page {
-  min-height: 70vh;
-}
-
-.profile-hero {
-  display: flex;
-  align-items: end;
-  justify-content: space-between;
-  gap: 2rem;
-  padding-bottom: 2rem;
-  border-bottom: 1px solid var(--line);
-}
-
-.profile-hero p {
-  color: #71665b;
-  direction: ltr;
-  text-align: start;
-}
-
-.profile-identity {
-  display: flex;
-  align-items: center;
-  gap: 1.25rem;
-}
-
-.profile-avatar {
-  width: clamp(64px, 7vw, 92px);
-  aspect-ratio: 1;
-  border-radius: 50%;
-  background: var(--clay);
-  color: white;
-  display: grid;
-  place-items: center;
-  font-size: clamp(1.7rem, 3vw, 2.7rem);
-  font-weight: 800;
-}
-
-.profile-hero h1 {
-  font-size: clamp(2.4rem, 4.5vw, 4.4rem);
-}
-
-.profile-hero .eyebrow {
-  margin-bottom: 0.45rem;
-}
-
-.profile-hero p {
-  margin: 0.5rem 0 0;
-}
-
-.profile-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1.25rem;
-  padding-top: 2rem;
-}
-
-.profile-panel {
-  min-height: 250px;
-  padding: clamp(1.4rem, 3vw, 2.4rem);
-  border: 1px solid rgba(32, 27, 23, 0.08);
-  border-radius: var(--radius);
-  background: var(--paper);
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-}
-
-.profile-panel h2 {
-  margin: 0.2rem 0;
-  font-size: clamp(1.8rem, 3vw, 2.8rem);
-}
-
-.profile-panel p {
-  max-width: 32rem;
-}
-
-.profile-panel .button {
-  margin-top: auto;
-}
-
-.profile-feature > svg {
-  width: 34px;
-  height: 34px;
-  margin-bottom: 1.4rem;
-  color: var(--clay);
-  stroke-width: 1.4;
-}
-
-.profile-grid > .pwa-panel {
-  grid-column: 1/-1;
-  min-height: 220px;
-  background: var(--moss);
-  color: var(--paper);
-}
-
-.profile-grid > .pwa-panel .eyebrow, .profile-grid > .pwa-panel .pwa-steps {
-  color: var(--sand);
-}
-
-.profile-grid > .pwa-panel .button.outline {
-  border-color: var(--paper);
-  color: var(--paper);
-}
-
-.profile-actions {
-  display: flex;
-  gap: 0.75rem;
-  flex-wrap: wrap;
-}
-
 @media (max-width: 900px) {
-.account-page, .profile-grid {
+  .account-page {
     grid-template-columns: 1fr;
-  }
-.account-page {
     align-items: start;
   }
 }
 
+/* ——— Profile hub ——— */
+.account-hub-greeting {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  text-align: start;
+}
+
+.account-hub-avatar {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: clamp(3.75rem, 6vw, 4.5rem);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--account-green);
+  color: var(--account-paper);
+  font-size: clamp(1.5rem, 2.4vw, 1.85rem);
+  font-weight: 600;
+  line-height: 1;
+}
+
+.account-hub-greeting h1 {
+  margin: 0;
+  color: var(--account-green);
+  font-size: clamp(1.45rem, 2.8vw, 2.2rem);
+  font-weight: 700;
+  line-height: 1.35;
+  text-wrap: balance;
+}
+
+.account-hub-greeting p {
+  margin: 0.15rem 0 0;
+  color: var(--account-muted);
+  font-size: 0.92rem;
+  line-height: 1.6;
+}
+
+.account-hub-greeting p span {
+  unicode-bidi: isolate;
+}
+
+/* The banner: a kiln-green sheet torn top and bottom, the mug fading in from the reading end. */
+.account-banner {
+  --banner-green: var(--account-green);
+  position: relative;
+  margin: clamp(1.5rem, 3vw, 2.25rem) 0 0;
+  filter: drop-shadow(0 12px 18px rgb(24 35 31 / 0.16));
+}
+
+.account-banner-tear {
+  display: block;
+  width: 100%;
+  height: 12px;
+  fill: var(--banner-green);
+}
+
+.account-banner-tear.is-top {
+  margin-bottom: -1px;
+}
+
+.account-banner-tear.is-bottom {
+  margin-top: -1px;
+}
+
+.account-banner-body {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-height: clamp(9.5rem, 20vw, 12.5rem);
+  overflow: hidden;
+  background: var(--banner-green);
+}
+
+.account-banner-photo {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-end: 0;
+  width: 54%;
+  -webkit-mask-image: linear-gradient(to right, #000 52%, transparent 96%);
+  mask-image: linear-gradient(to right, #000 52%, transparent 96%);
+}
+
+html[dir="ltr"] .account-banner-photo {
+  -webkit-mask-image: linear-gradient(to left, #000 52%, transparent 96%);
+  mask-image: linear-gradient(to left, #000 52%, transparent 96%);
+}
+
+.account-banner-photo img {
+  object-fit: cover;
+  object-position: 50% 76%;
+}
+
+.account-banner-line {
+  position: relative;
+  z-index: 1;
+  max-width: 52%;
+  margin: 0;
+  padding: 1.25rem clamp(1.35rem, 4vw, 2.75rem);
+  color: #f3ead9;
+  font-family: var(--font-hand);
+  font-size: clamp(1.4rem, 3vw, 2.05rem);
+  line-height: 1.75;
+  white-space: pre-line;
+}
+
+html[lang="en"] .account-banner-line {
+  font-family: var(--font-pen);
+  font-size: clamp(1.6rem, 3.3vw, 2.3rem);
+  line-height: 1.3;
+}
+
+.account-banner-thread {
+  position: absolute;
+  inset-block: -4px;
+  inset-inline-start: 47%;
+  width: 12px;
+  height: calc(100% + 8px);
+  overflow: visible;
+  fill: none;
+  stroke: #c07a61;
+  stroke-width: 1.3;
+  stroke-linecap: round;
+}
+
+.account-banner-thread path {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 0;
+  animation: accountThread 1.4s cubic-bezier(0.16, 1, 0.3, 1) 0.2s both;
+}
+
+@keyframes accountThread {
+  from {
+    stroke-dashoffset: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .account-banner-thread path {
+    animation: none;
+  }
+}
+
+/* Phone menu: one paper card per tab. The sidebar replaces it on wide screens. */
+.account-menu {
+  margin-top: 1.5rem;
+}
+
+.account-menu ul {
+  display: grid;
+  gap: 0.6rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.account-menu a {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 0.9rem;
+  min-height: 4.5rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--account-line);
+  border-radius: var(--account-radius);
+  background: var(--account-paper);
+  box-shadow: var(--account-shadow);
+  color: inherit;
+  text-decoration: none;
+  transition: border-color 0.2s ease;
+}
+
+.account-menu a:hover {
+  border-color: color-mix(in srgb, var(--account-green) 35%, var(--account-line));
+}
+
+.account-menu a:focus-visible {
+  outline: 2px solid var(--account-oxide);
+  outline-offset: 2px;
+}
+
+.account-menu .account-badge {
+  width: 2.75rem;
+  height: 2.75rem;
+}
+
+.account-menu .account-badge svg {
+  width: 1.2rem;
+  height: 1.2rem;
+}
+
+.account-menu-text {
+  display: grid;
+  min-width: 0;
+}
+
+.account-menu-text b {
+  color: var(--account-green);
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.account-menu-text small {
+  color: var(--account-muted);
+  font-size: 0.84rem;
+  line-height: 1.55;
+}
+
+.account-menu-count {
+  display: grid;
+  place-items: center;
+  min-width: 1.5rem;
+  height: 1.5rem;
+  padding: 0 0.4rem;
+  border-radius: 999px;
+  background: var(--account-oxide);
+  color: var(--account-paper);
+  font-size: 0.76rem;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.account-menu-chevron {
+  width: 1.15rem;
+  height: 1.15rem;
+  color: var(--account-muted);
+}
+
+@media (min-width: 901px) {
+  .account-menu {
+    display: none;
+  }
+}
+
+.account-hub-records {
+  display: grid;
+  gap: clamp(2.5rem, 5vw, 3.25rem);
+  margin-top: clamp(2.5rem, 5vw, 3.5rem);
+}
+
+@media (min-width: 1180px) {
+  .account-hub-records {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+    gap: 2rem;
+  }
+}
+
 @media (max-width: 600px) {
-.profile-hero {
-    align-items: flex-start;
-    flex-direction: column;
+  .account-banner {
+    margin-inline: calc(var(--page) * -0.5);
   }
-.profile-actions {
-    width: 100%;
+
+  .account-banner-line {
+    max-width: 58%;
+    padding-inline: 1.2rem;
   }
-.profile-actions .button {
-    flex: 1;
+
+  .account-banner-photo {
+    width: 50%;
   }
-.auth-copy h1, .profile-hero h1 {
+}
+
+@media (max-width: 600px) {
+  .auth-copy h1 {
     font-size: 2.35rem;
   }
-.profile-identity {
-    align-items: flex-start;
-  }
-.profile-avatar {
-    width: 58px;
-    flex: 0 0 58px;
-  }
-.profile-panel {
-    min-height: 230px;
-  }
-}
 
-@media(max-width:900px) {
-html[dir="rtl"] .profile-hero {direction:rtl!important;text-align:right!important;align-items:start!important}
-}
-
-@media(max-width:600px) {
-.account-page.section {padding-block:2rem!important;padding-inline:1rem!important}
+  .account-page.section {
+    padding-block: 2rem !important;
+    padding-inline: 1rem !important;
+  }
 }

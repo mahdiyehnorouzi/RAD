@@ -4,20 +4,12 @@ import { useId, useRef, useState, type ChangeEvent, type ReactNode } from "react
 import type { PaymentReceiptInput } from "@/types/api";
 import { useLocale } from "@/components/i18n";
 import { Button } from "@/components/ui/button-link";
-
-const RECEIPT_TYPES = ["image/jpeg", "image/png", "image/webp"];
-const RECEIPT_MAX_BYTES = 1024 * 1024;
-
-function normalizeTrackingNumber(raw: string) {
-  const persian = "۰۱۲۳۴۵۶۷۸۹";
-  const arabic = "٠١٢٣٤٥٦٧٨٩";
-  const value = raw
-    .replace(/[۰-۹]/g, (digit) => String(persian.indexOf(digit)))
-    .replace(/[٠-٩]/g, (digit) => String(arabic.indexOf(digit)))
-    .replace(/[\s-]/g, "")
-    .toUpperCase();
-  return /^[A-Z0-9]{4,32}$/.test(value) ? value : null;
-}
+import {
+  RECEIPT_TYPES,
+  isReceiptFile,
+  normalizeTrackingNumber,
+  readReceiptFile,
+} from "@/lib/payment/receipt";
 
 /** Receipt image + bank tracking number, for the first upload or a replacement. */
 export function ReceiptForm({
@@ -52,23 +44,18 @@ export function ReceiptForm({
   const onReceiptChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
-    if (
-      !RECEIPT_TYPES.includes(file.type) ||
-      file.size === 0 ||
-      file.size > RECEIPT_MAX_BYTES
-    ) {
+    if (!isReceiptFile(file)) {
       resetFile(t("receiptImageError"));
       event.target.value = "";
       return;
     }
-    const reader = new FileReader();
-    reader.onload = () => {
-      setReceiptImage(String(reader.result));
-      setFileName(file.name);
-      setReceiptError("");
-    };
-    reader.onerror = () => resetFile(t("receiptImageError"));
-    reader.readAsDataURL(file);
+    readReceiptFile(file)
+      .then((dataUrl) => {
+        setReceiptImage(dataUrl);
+        setFileName(file.name);
+        setReceiptError("");
+      })
+      .catch(() => resetFile(t("receiptImageError")));
   };
 
   const submit = () => {

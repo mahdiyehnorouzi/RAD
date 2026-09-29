@@ -16,21 +16,25 @@ export const SHIPPING_POLICY: PolicyDocument = {
       points: [
         {
           id: "cost",
+          icon: "shield",
           label: { fa: "هزینه‌ی ارسال", en: "Shipping cost" },
           value: { fa: "رایگان و بیمه‌شده", en: "Free and insured" },
         },
         {
           id: "tehran",
+          icon: "pin",
           label: { fa: "تهران", en: "Tehran" },
           value: { fa: "۲ تا ۴ روز کاری", en: "2–4 working days" },
         },
         {
           id: "cities",
+          icon: "map",
           label: { fa: "شهرهای دیگر", en: "Other cities" },
           value: { fa: "۴ تا ۸ روز کاری", en: "4–8 working days" },
         },
         {
           id: "tracking",
+          icon: "route",
           label: { fa: "پیگیری", en: "Tracking" },
           value: {
             fa: "کد رهگیری در صفحه‌ی سفارش",

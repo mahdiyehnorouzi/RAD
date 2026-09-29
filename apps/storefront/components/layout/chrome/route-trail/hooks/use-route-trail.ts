@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useCatalog } from "@/components/catalog/catalog-provider";
 import { formatPolicyDate, policyDocument } from "@/components/help";
 import { useLocale } from "@/components/i18n";
@@ -26,20 +25,14 @@ function humanize(segment: string) {
   return segmentText(segment).replace(/[-_]+/g, " ");
 }
 
-/** The page path as clickable steps, plus a back action that falls back to the parent step. */
+/** The page path as clickable steps, ending at the current page. */
 export function useRouteTrail() {
   const pathname = usePathname();
-  const router = useRouter();
-  const { locale, href } = useLocale();
+  const { locale } = useLocale();
   const { getProduct, getArtwork } = useCatalog();
   const making = useMaking();
   const portraits = usePortraits();
-  const visits = useRef(0);
   const c = trailCopy[locale];
-
-  useEffect(() => {
-    visits.current += 1;
-  }, [pathname]);
 
   const crumbs: Crumb[] = [{ label: c.home, path: "/" }];
   const add = (label: string, path: string) => crumbs.push({ label, path });
@@ -181,20 +174,9 @@ export function useRouteTrail() {
 
   const current = crumbs[crumbs.length - 1];
   crumbs[crumbs.length - 1] = { label: current.label };
-  const parentPath = crumbs[crumbs.length - 2]?.path ?? "/";
-
-  const goBack = () => {
-    const cameFromSite =
-      visits.current > 1 ||
-      (document.referrer.startsWith(window.location.origin) &&
-        window.history.length > 1);
-    if (cameFromSite) router.back();
-    else router.push(href(parentPath));
-  };
 
   return {
     crumbs,
-    goBack,
     pathname,
     hidden: TRAIL_HIDDEN_PATHS.includes(pathname),
   };

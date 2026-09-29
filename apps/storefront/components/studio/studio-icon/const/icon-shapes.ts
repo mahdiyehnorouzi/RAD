@@ -27,6 +27,8 @@ export const STUDIO_ICONS = {
     ],
   },
   chevron_down: { width: 1.8, shapes: [{ d: "m6 9 6 6 6-6" }] },
+  chevron_left: { width: 1.9, shapes: [{ d: "m14.5 6-6 6 6 6" }] },
+  chevron_right: { width: 1.9, shapes: [{ d: "m9.5 6 6 6-6 6" }] },
   close: { width: 1.8, shapes: [{ d: "M6.5 6.5l11 11M17.5 6.5l-11 11" }] },
   document: {
     width: 1.7,

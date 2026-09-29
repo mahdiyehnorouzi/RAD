@@ -1,6 +1,6 @@
 "use client";
 
-import { Scale } from "lucide-react";
+import { ChevronDown, Scale } from "lucide-react";
 import { useLocale } from "@/components/i18n";
 import { helpCopy } from "../const";
 import type { PolicyBlock, PolicySection } from "../type";
@@ -32,12 +32,17 @@ function PolicyBlockView({ block }: { block: PolicyBlock }) {
   }
 }
 
+/** Each clause folds; find-in-page and `#section` links unfold it. */
 export function PolicyArticle({
   sections,
   numbered,
+  open,
+  onToggle,
 }: {
   sections: PolicySection[];
   numbered: boolean;
+  open: ReadonlySet<string>;
+  onToggle: (id: string, open: boolean) => void;
 }) {
   const { locale, number } = useLocale();
   const c = helpCopy[locale];
@@ -45,30 +50,44 @@ export function PolicyArticle({
   return (
     <div className="policy-article">
       {sections.map((section, index) => (
-        <section
+        <details
           key={section.id}
           id={section.id}
           className="policy-section"
-          aria-labelledby={`${section.id}-title`}
+          open={open.has(section.id)}
+          onToggle={(event) => onToggle(section.id, event.currentTarget.open)}
         >
-          <h2 id={`${section.id}-title`}>
-            {numbered ? (
-              <span className="policy-section-index">{number(index + 1)}.</span>
+          <summary>
+            <h2 id={`${section.id}-title`}>
+              {numbered ? (
+                <span className="policy-section-index">
+                  {number(index + 1)}.
+                </span>
+              ) : null}
+              {section.title[locale]}
+            </h2>
+            <ChevronDown
+              className="policy-section-chevron"
+              size={20}
+              strokeWidth={1.6}
+              aria-hidden="true"
+            />
+          </summary>
+          <div className="policy-section-body">
+            {section.underReview ? (
+              <p className="policy-review">
+                <Scale size={16} strokeWidth={1.6} aria-hidden="true" />
+                <span>
+                  <strong>{c.underReview}</strong>{" "}
+                  {section.underReview[locale]}
+                </span>
+              </p>
             ) : null}
-            {section.title[locale]}
-          </h2>
-          {section.underReview ? (
-            <p className="policy-review">
-              <Scale size={16} strokeWidth={1.6} aria-hidden="true" />
-              <span>
-                <strong>{c.underReview}</strong> {section.underReview[locale]}
-              </span>
-            </p>
-          ) : null}
-          {section.blocks.map((block, blockIndex) => (
-            <PolicyBlockView key={blockIndex} block={block} />
-          ))}
-        </section>
+            {section.blocks.map((block, blockIndex) => (
+              <PolicyBlockView key={blockIndex} block={block} />
+            ))}
+          </div>
+        </details>
       ))}
     </div>
   );

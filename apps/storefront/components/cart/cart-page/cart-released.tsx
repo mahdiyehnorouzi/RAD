@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import Link from "next/link";
+import { RotateCcw, X } from "lucide-react";
 import type { Product } from "@rad/types";
-import { StateNotice } from "@/components/ui/state-panel";
+import { ProductMedia } from "@/components/product";
+import { WatercolorWash } from "@/components/ui/watercolor-wash";
 import { useLocale } from "@/components/i18n";
 import { productCopy } from "@/lib/catalog/products";
 import { isGoneStatus, isReserved } from "@/lib/catalog/product-status";
@@ -22,6 +24,7 @@ export function CartReleased({
   onDismiss: () => void;
 }) {
   const { t, locale, href } = useLocale();
+  const titleId = useId();
   const [busy, setBusy] = useState<string | null>(null);
   const [failed, setFailed] = useState<Record<string, string>>({});
 
@@ -45,22 +48,29 @@ export function CartReleased({
   };
 
   return (
-    <StateNotice
-      className="cart-released"
-      action={
-        <button type="button" className="state-action" onClick={onDismiss}>
-          {t("dismiss")}
+    <section className="cart-released" aria-labelledby={titleId}>
+      <WatercolorWash shape="corner" className="cart-released-wash" />
+      <header className="cart-released-head">
+        <h2 id={titleId}>{t("cartReleasedTitle")}</h2>
+        <button
+          type="button"
+          className="cart-released-dismiss"
+          onClick={onDismiss}
+          aria-label={t("dismiss")}
+          title={t("dismiss")}
+        >
+          <X aria-hidden="true" />
         </button>
-      }
-    >
-      <strong>{t("cartReleasedTitle")}</strong>
+      </header>
       <ul>
         {slugs.map((slug) => {
           const product = getProduct(slug);
           if (!product) {
             return (
-              <li key={slug}>
-                <b dir="ltr">{slug}</b> — {t("cartReleasedGone")}
+              <li key={slug} className="cart-released-item">
+                <p>
+                  <b dir="ltr">{slug}</b> — {t("cartReleasedGone")}
+                </p>
               </li>
             );
           }
@@ -74,26 +84,38 @@ export function CartReleased({
                 ? t("cartReleasedSold")
                 : t("statusUnavailable");
           return (
-            <li key={slug}>
-              <Link href={href(`/products/${slug}`)}>{name}</Link> — {reason}
-              {available ? (
-                <>
-                  {" "}
+            <li key={slug} className="cart-released-item">
+              <div className="cart-released-copy">
+                <p>
+                  <Link href={href(`/products/${slug}`)}>{name}</Link> — {reason}
+                </p>
+                {available ? (
                   <button
                     type="button"
-                    className="state-action"
+                    className="cart-released-add"
                     disabled={busy === slug}
                     onClick={() => void addAgain(product)}
                   >
                     {busy === slug ? t("submitting") : t("addAgain")}
+                    <RotateCcw aria-hidden="true" />
                   </button>
-                </>
-              ) : null}
-              {failed[slug] ? <small role="alert">{failed[slug]}</small> : null}
+                ) : null}
+                {failed[slug] ? (
+                  <small role="alert">{failed[slug]}</small>
+                ) : null}
+              </div>
+              <Link
+                href={href(`/products/${slug}`)}
+                className="cart-released-art"
+                tabIndex={-1}
+                aria-hidden="true"
+              >
+                <ProductMedia product={product} showStatusBadge={false} />
+              </Link>
             </li>
           );
         })}
       </ul>
-    </StateNotice>
+    </section>
   );
 }

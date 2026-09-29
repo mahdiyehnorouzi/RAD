@@ -3,7 +3,7 @@ import "./favorites-page.css";
 
 import { useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
-import { Heart } from "lucide-react";
+import { Heart, Share2 } from "lucide-react";
 import { useCommerce } from "@/components/commerce";
 import { useLocale } from "@/components/i18n";
 import { ProductCard } from "@/components/product";
@@ -11,6 +11,7 @@ import { useCatalog } from "@/components/catalog";
 import { EmptyFavoritesState } from "@/components/states";
 import { availableWorks } from "@/lib/catalog/product-status";
 import { AccountShell } from "../account/account-shell";
+import { AccountHeading } from "../account/account-heading";
 
 export function FavoritesPage() {
   const params = useSearchParams();
@@ -46,21 +47,23 @@ export function FavoritesPage() {
 
   const content = (
     <section className="favorites-page section">
-      <header className="favorites-heading">
-        <div>
-          <h1>{t("favoritesTitle")}</h1>
-          <p>
-            {waiting
-              ? t("favoritesWaitingCount")
-              : `${number(items.length)} ${t("savedWorks")}`}
-          </p>
-        </div>
-        {!waiting && !sharedSlugs?.length && favorites.length > 0 ? (
-          <button type="button" className="button outline" onClick={share}>
-            {shared ? t("linkCopied") : t("shareList")}
-          </button>
-        ) : null}
-      </header>
+      <AccountHeading
+        icon={Heart}
+        title={t("favoritesTitle")}
+        body={
+          waiting
+            ? t("favoritesWaitingCount")
+            : `${number(items.length)} ${t("savedWorks")}`
+        }
+        action={
+          !waiting && !sharedSlugs?.length && favorites.length > 0 ? (
+            <button type="button" className="account-button account-button--quiet" onClick={share}>
+              <Share2 aria-hidden="true" strokeWidth={1.6} />
+              {shared ? t("linkCopied") : t("shareList")}
+            </button>
+          ) : null
+        }
+      />
       {waiting ? (
         <div className="favorites-state is-waiting" role="status" aria-live="polite">
           <Heart aria-hidden="true" strokeWidth={1.6} />

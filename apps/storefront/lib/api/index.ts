@@ -25,6 +25,7 @@ export {
   errorMessage,
   isNetworkError,
   isSessionExpired,
+  readableErrorMessage,
 } from "./client";
 export { createDesign } from "./design";
 export { fetchFavorites, toggleFavorite } from "./favorites";

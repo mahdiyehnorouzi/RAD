@@ -1,4 +1,4 @@
-/* One trail for every non-home route: back arrow, then each step of the path. */
+/* One trail for every non-home route: each step of the path. */
 .route-trail {
   --trail-thread: #8a4938;
   --trail-quiet: color-mix(in srgb, var(--muted) 72%, var(--ink));
@@ -6,7 +6,6 @@
   --trail-shift: -8px;
   display: flex;
   align-items: center;
-  gap: 0.9rem;
   width: 100%;
   max-width: 1600px;
   margin-inline: auto;
@@ -18,61 +17,6 @@
   --trail-shift: 8px;
 }
 
-/* Back */
-.route-trail-back {
-  flex: none;
-  display: grid;
-  place-items: center;
-  width: 2.5rem;
-  height: 2.5rem;
-  padding: 0;
-  border: 1px solid var(--line);
-  border-radius: 50%;
-  background: transparent;
-  color: var(--ink);
-  cursor: pointer;
-  transition:
-    background-color 0.25s var(--trail-ease),
-    border-color 0.25s var(--trail-ease),
-    color 0.25s var(--trail-ease),
-    box-shadow 0.3s var(--trail-ease),
-    transform 0.2s var(--trail-ease);
-}
-
-.route-trail-back svg {
-  width: 1.15rem;
-  height: 1.15rem;
-  stroke-width: 1.6;
-  transition: transform 0.4s var(--trail-ease);
-}
-
-.route-trail-back:hover {
-  border-color: var(--moss);
-  background: var(--moss);
-  color: var(--paper);
-  box-shadow: 0 6px 14px -8px rgba(24, 35, 31, 0.55);
-}
-
-.route-trail[dir="rtl"] .route-trail-back:hover svg {
-  transform: translateX(3px);
-}
-
-.route-trail[dir="ltr"] .route-trail-back:hover svg {
-  transform: translateX(-3px);
-}
-
-.route-trail-back:active {
-  transform: scale(0.93);
-  box-shadow: none;
-}
-
-.route-trail .route-trail-back:focus-visible {
-  outline: 2px solid var(--trail-thread) !important;
-  outline-offset: 3px;
-  box-shadow: none !important;
-}
-
-/* Path */
 .route-trail-list {
   display: flex;
   align-items: center;
@@ -194,13 +138,7 @@
 
 @media (max-width: 600px) {
   .route-trail {
-    gap: 0.65rem;
     padding-top: 0.6rem;
-  }
-
-  .route-trail-back {
-    width: 2.25rem;
-    height: 2.25rem;
   }
 
   .route-trail-list li + li::before {
@@ -222,8 +160,6 @@
     animation: none;
   }
 
-  .route-trail-back,
-  .route-trail-back svg,
   .route-trail-link,
   .route-trail-link::after {
     transition-duration: 0s;

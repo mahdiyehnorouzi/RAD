@@ -51,3 +51,10 @@ export function readingArrow(locale: "fa" | "en", way: "forward" | "back"): Stud
   const back = locale === "fa" ? "arrow_right" : "arrow_left";
   return way === "forward" ? forward : back;
 }
+
+/** Chevron pointing in the reading direction (forward) or against it (back). */
+export function readingChevron(locale: "fa" | "en", way: "forward" | "back"): StudioIconName {
+  const forward = locale === "fa" ? "chevron_left" : "chevron_right";
+  const back = locale === "fa" ? "chevron_right" : "chevron_left";
+  return way === "forward" ? forward : back;
+}
