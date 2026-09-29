@@ -7,9 +7,6 @@ export {
   formatRadDigits,
   LinkPending,
   ProductCard,
-  ProductCarousel,
   ProductGridSkeleton,
   ProductMedia,
 } from "./listing";
-export type { ProductCardVariant } from "./listing";
-export { ArtworkVisual, Vessel } from "./artwork-visual";

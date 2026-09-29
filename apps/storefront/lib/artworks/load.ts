@@ -3,7 +3,7 @@ import { fetchArtworks } from "@/lib/api";
 import { fallbackArtworks } from "./fallback";
 import { mergeArtworks } from "./merge";
 
-export type ArtworksLoad = {
+type ArtworksLoad = {
   artworks: Artwork[];
   /** False when the API could not be reached and `artworks` is the registry fallback. */
   live: boolean;

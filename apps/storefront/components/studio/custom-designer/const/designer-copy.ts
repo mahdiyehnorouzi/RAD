@@ -72,7 +72,8 @@ export const designerCopy = {
     agreeLink: "قوانین و شرایط سفارش اختصاصی",
     agreeAfter: "را می‌پذیرم.",
     submit: "ایده را برای بررسی بفرست",
-    submitNote: "ارسال ایده رایگان است و پرداخت فقط پس از تأیید نهایی انجام می‌شود.",
+    submitNote:
+      "ارسال ایده رایگان است و پرداخت فقط پس از تأیید نهایی انجام می‌شود.",
     sentTitle: "درخواستت به رَد رسید.",
     sentBody:
       "اول بررسی می‌کنیم ایده ساختنی است یا نه؛ بعد قیمت و زمان دقیق را با تو هماهنگ می‌کنیم.",
@@ -178,5 +179,3 @@ export const designerCopy = {
     fallbackTitle: "Studio idea",
   },
 } as const;
-
-export type DesignerCopy = (typeof designerCopy)[keyof typeof designerCopy];

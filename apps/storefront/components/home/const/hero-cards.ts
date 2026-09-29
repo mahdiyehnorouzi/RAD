@@ -61,7 +61,9 @@ export function heroCards(locale: Locale): HeroCard[] {
       note: isFa
         ? "دود، شکلِ ناپیدای این اثر است."
         : "Smoke is this work’s unseen form.",
-      noteArt: isFa ? "/home/hero/notes/note-03-brass-incense-holder.webp" : undefined,
+      noteArt: isFa
+        ? "/home/hero/notes/note-03-brass-incense-holder.webp"
+        : undefined,
       tone: "metal",
     },
     {
@@ -85,7 +87,9 @@ export function heroCards(locale: Locale): HeroCard[] {
       note: isFa
         ? "دو بدنه، روی هم؛ برای یک چایِ آرام."
         : "Two bodies, stacked for one slow pot of tea.",
-      noteArt: isFa ? "/home/hero/notes/note-05-ceramic-teapot.webp" : undefined,
+      noteArt: isFa
+        ? "/home/hero/notes/note-05-ceramic-teapot.webp"
+        : undefined,
       tone: "ceramic",
     },
   ];

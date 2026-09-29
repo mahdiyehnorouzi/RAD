@@ -1,10 +1,10 @@
 import type { MetadataRoute } from "next";
-import { mockStorefront } from "@/lib/catalog/mock-storefront";
+import { brand } from "@/lib/brand";
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: mockStorefront.brand.title.fa,
+    name: brand.title.fa,
     short_name: "رَد",
-    description: mockStorefront.brand.description.fa,
+    description: brand.description.fa,
     start_url: "/",
     display: "standalone",
     background_color: "#eee7da",

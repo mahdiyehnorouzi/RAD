@@ -48,7 +48,7 @@ export const ORDER_OVERVIEW: OrderOverviewStep[] = [
   },
 ];
 
-export type OrderPriceTier = {
+type OrderPriceTier = {
   id: string;
   label: LocaleCopy;
   examples: LocaleCopy;
@@ -99,7 +99,7 @@ export const ORDER_PRICE_TIERS: OrderPriceTier[] = [
   },
 ];
 
-export type OrderPathStep = { id: string; title: LocaleCopy; short: LocaleCopy };
+type OrderPathStep = { id: string; title: LocaleCopy; short: LocaleCopy };
 
 export const ORDER_PATH: OrderPathStep[] = [
   {
@@ -120,7 +120,10 @@ export const ORDER_PATH: OrderPathStep[] = [
   {
     id: "deposit",
     title: { fa: "بیعانه", en: "Deposit" },
-    short: { fa: "با بیعانه، ساخت شروع می‌شود", en: "Making starts with the deposit" },
+    short: {
+      fa: "با بیعانه، ساخت شروع می‌شود",
+      en: "Making starts with the deposit",
+    },
   },
   {
     id: "making",
@@ -130,7 +133,10 @@ export const ORDER_PATH: OrderPathStep[] = [
   {
     id: "result",
     title: { fa: "نتیجه و ارسال", en: "Result and shipping" },
-    short: { fa: "ارسال بیمه‌شده به سراسر ایران", en: "Insured shipping across Iran" },
+    short: {
+      fa: "ارسال بیمه‌شده به سراسر ایران",
+      en: "Insured shipping across Iran",
+    },
   },
 ];
 
@@ -146,7 +152,10 @@ export const ORDER_RULES: OrderRule[] = [
   {
     id: "changes",
     title: { fa: "درباره‌ی تغییرات", en: "About changes" },
-    brief: { fa: "تا ۲ بار اصلاح، پیش از ساخت", en: "Up to 2 revisions before making" },
+    brief: {
+      fa: "تا ۲ بار اصلاح، پیش از ساخت",
+      en: "Up to 2 revisions before making",
+    },
     body: [
       {
         fa: "جزئیات سفارش پیش از شروع ساخت با تو نهایی می‌شود. تا ۲ بار اصلاح طرح در این مرحله جزو سفارش است.",
@@ -161,7 +170,10 @@ export const ORDER_RULES: OrderRule[] = [
   {
     id: "kiln",
     title: { fa: "نکته‌ای درباره‌ی سرامیک", en: "A note about ceramics" },
-    brief: { fa: "رنگ و لعاب بعد از کوره کمی فرق می‌کند", en: "Glaze shifts slightly in the kiln" },
+    brief: {
+      fa: "رنگ و لعاب بعد از کوره کمی فرق می‌کند",
+      en: "Glaze shifts slightly in the kiln",
+    },
     body: [
       {
         fa: "نتیجه‌ی نهایی به‌خاطر فرایند ساخت و پخت در کوره ممکن است کمی با تصویر یا مرجع اولیه فرق داشته باشد؛ مخصوصاً در رنگ، لعاب و بافت.",
@@ -176,7 +188,10 @@ export const ORDER_RULES: OrderRule[] = [
   {
     id: "cancel",
     title: { fa: "اگر نظرم عوض شد؟", en: "What if I change my mind?" },
-    brief: { fa: "تا پیش از بیعانه، لغو آزاد است", en: "Free to cancel until the deposit" },
+    brief: {
+      fa: "تا پیش از بیعانه، لغو آزاد است",
+      en: "Free to cancel until the deposit",
+    },
     body: [
       {
         fa: "تا پیش از تأیید نهایی و پرداخت بیعانه، درخواست را می‌توانی لغو کنی.",

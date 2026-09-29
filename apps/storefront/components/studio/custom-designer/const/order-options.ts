@@ -3,7 +3,7 @@ import type { LocaleCopy } from "@/types/locale";
 
 type Option = { id: string; label: LocaleCopy };
 
-export type FormOption = Option & { category: ProductCategory; image: string };
+type FormOption = Option & { category: ProductCategory; image: string };
 
 /** Reading order: two wide cards, then three narrow ones. */
 export const FORM_OPTIONS: FormOption[] = [
@@ -55,26 +55,27 @@ export const USE_OPTIONS: Option[] = [
 ];
 
 /** Smallest first, so the size track grows along the reading direction. */
-export const SIZE_OPTIONS: Array<Option & { hint: LocaleCopy; scale: number }> = [
-  {
-    id: "small",
-    label: { fa: "کوچک", en: "Small" },
-    hint: { fa: "۱۰ تا ۱۵ سانتی‌متر", en: "10–15 cm" },
-    scale: 0.62,
-  },
-  {
-    id: "medium",
-    label: { fa: "متوسط", en: "Medium" },
-    hint: { fa: "۱۵ تا ۲۵ سانتی‌متر", en: "15–25 cm" },
-    scale: 0.8,
-  },
-  {
-    id: "large",
-    label: { fa: "بزرگ", en: "Large" },
-    hint: { fa: "بیش از ۲۵ سانتی‌متر", en: "over 25 cm" },
-    scale: 1,
-  },
-];
+export const SIZE_OPTIONS: Array<Option & { hint: LocaleCopy; scale: number }> =
+  [
+    {
+      id: "small",
+      label: { fa: "کوچک", en: "Small" },
+      hint: { fa: "۱۰ تا ۱۵ سانتی‌متر", en: "10–15 cm" },
+      scale: 0.62,
+    },
+    {
+      id: "medium",
+      label: { fa: "متوسط", en: "Medium" },
+      hint: { fa: "۱۵ تا ۲۵ سانتی‌متر", en: "15–25 cm" },
+      scale: 0.8,
+    },
+    {
+      id: "large",
+      label: { fa: "بزرگ", en: "Large" },
+      hint: { fa: "بیش از ۲۵ سانتی‌متر", en: "over 25 cm" },
+      scale: 1,
+    },
+  ];
 
 export const DEFAULT_SIZE = "medium";
 
@@ -83,7 +84,10 @@ export const BUDGET_OPTIONS: Option[] = [
   { id: "3-5", label: { fa: "۳ تا ۵ میلیون تومان", en: "$35–60" } },
   { id: "5-8", label: { fa: "۵ تا ۸ میلیون تومان", en: "$60–100" } },
   { id: "8-12", label: { fa: "۸ تا ۱۲ میلیون تومان", en: "$100–150" } },
-  { id: "more", label: { fa: "بیشتر از ۱۲ میلیون تومان", en: "More than $150" } },
+  {
+    id: "more",
+    label: { fa: "بیشتر از ۱۲ میلیون تومان", en: "More than $150" },
+  },
 ];
 
 export const DATED_TIMELINE = "date";
@@ -92,7 +96,10 @@ export const TIMELINE_OPTIONS: Option[] = [
   { id: "relaxed", label: { fa: "عجله‌ای ندارم", en: "I’m not in a hurry" } },
   { id: "weeks", label: { fa: "حدود ۲ تا ۳ هفته", en: "In about 2–3 weeks" } },
   { id: "month", label: { fa: "حدود یک ماه", en: "In about a month" } },
-  { id: DATED_TIMELINE, label: { fa: "تاریخ مشخصی دارم", en: "I have a specific date" } },
+  {
+    id: DATED_TIMELINE,
+    label: { fa: "تاریخ مشخصی دارم", en: "I have a specific date" },
+  },
 ];
 
 /** Matches `freedomToPermission` bands so the words agree with what the maker receives. */
@@ -102,6 +109,10 @@ export function fidelityKey(freedom: number) {
   return "fidelityFree" as const;
 }
 
-export function optionLabel(options: Option[], id: string, locale: "fa" | "en") {
+export function optionLabel(
+  options: Option[],
+  id: string,
+  locale: "fa" | "en",
+) {
   return options.find((option) => option.id === id)?.label[locale] ?? "";
 }

@@ -5,13 +5,7 @@ import { useLocale } from "@/components/i18n";
 import type { WorkMark } from "./type";
 import "./work-marks.css";
 
-export function WorkMarks({
-  src,
-  marks,
-}: {
-  src: string;
-  marks: WorkMark[];
-}) {
+export function WorkMarks({ src, marks }: { src: string; marks: WorkMark[] }) {
   const { locale, t } = useLocale();
   const [open, setOpen] = useState<number | null>(0);
 

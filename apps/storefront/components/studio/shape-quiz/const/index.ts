@@ -1,2 +1,2 @@
-export { fill, quizCopy, type QuizCopy } from "./quiz-copy";
+export { fill, quizCopy } from "./quiz-copy";
 export { quizTear } from "./quiz-tear";

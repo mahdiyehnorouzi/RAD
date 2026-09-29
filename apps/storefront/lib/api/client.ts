@@ -1,6 +1,6 @@
 import { withCurrentAssetPaths } from "@/lib/media/legacy-assets";
 
-export const API_BASE =
+const API_BASE =
   typeof window === "undefined"
     ? process.env.API_URL || "http://localhost:4000"
     : "/backend";
@@ -30,14 +30,20 @@ function firstString(value: unknown): string | undefined {
 
 /** The request never reached the API: offline, DNS, dropped connection or timeout. */
 export function isNetworkError(err: unknown) {
-  return err instanceof ApiError && (err.code === "network" || err.code === "timeout");
+  return (
+    err instanceof ApiError &&
+    (err.code === "network" || err.code === "timeout")
+  );
 }
 
 export function isSessionExpired(err: unknown) {
   return err instanceof ApiError && err.status === 401;
 }
 
-export function errorMessage(err: unknown, fallback = "Request failed"): string {
+export function errorMessage(
+  err: unknown,
+  fallback = "Request failed",
+): string {
   if (err instanceof ApiError) return err.message || fallback;
   if (err instanceof Error && err.message) return err.message;
   return firstString(err) ?? fallback;
@@ -53,7 +59,10 @@ export function readableErrorMessage(err: unknown, fallback: string): string {
   return /[\u0600-\u06FF]/.test(message) ? message : fallback;
 }
 
-export async function api<T>(path: string, init?: RequestInit & { timeoutMs?: number }): Promise<T> {
+export async function api<T>(
+  path: string,
+  init?: RequestInit & { timeoutMs?: number },
+): Promise<T> {
   const headers = new Headers(init?.headers);
   if (init?.body && !headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json");
@@ -77,7 +86,9 @@ export async function api<T>(path: string, init?: RequestInit & { timeoutMs?: nu
     const data = (await response.json().catch(() => ({}))) as T & ApiErrorBody;
     if (!response.ok) {
       throw new ApiError(
-        firstString(data.error) || firstString(data.message) || "Request failed",
+        firstString(data.error) ||
+          firstString(data.message) ||
+          "Request failed",
         response.status,
         firstString(data.code),
       );
@@ -86,10 +97,18 @@ export async function api<T>(path: string, init?: RequestInit & { timeoutMs?: nu
   } catch (err) {
     if (err instanceof ApiError) throw err;
     if (err instanceof DOMException && err.name === "AbortError") {
-      throw new ApiError("درخواست طولانی شد. دوباره تلاش کنید.", 408, "timeout");
+      throw new ApiError(
+        "درخواست طولانی شد. دوباره تلاش کنید.",
+        408,
+        "timeout",
+      );
     }
     if (err instanceof TypeError) {
-      throw new ApiError("اتصال به اینترنت برقرار نیست. دوباره تلاش کنید.", 0, "network");
+      throw new ApiError(
+        "اتصال به اینترنت برقرار نیست. دوباره تلاش کنید.",
+        0,
+        "network",
+      );
     }
     throw err;
   } finally {

@@ -1,8 +1,5 @@
-import type { AuthUser, PolicyVersions } from "@rad/types";
+import type { PolicyVersions } from "@rad/types";
 
-export type SessionPayload = { user: AuthUser | null };
-export type LoginInput = { email: string; password: string };
-export type RegisterInput = { name: string; email: string; password: string };
 export type PlaceOrderInput = {
   name?: string;
   city?: string;

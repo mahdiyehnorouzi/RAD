@@ -1,1 +1,1 @@
-export { checkoutCopy, fillCopy, type CheckoutCopy } from "./checkout-copy";
+export { checkoutCopy, fillCopy } from "./checkout-copy";

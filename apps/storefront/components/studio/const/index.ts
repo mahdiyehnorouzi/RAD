@@ -8,7 +8,5 @@ export {
   ORDER_PRICE_TIERS,
   ORDER_RULES,
   type OrderOverviewStep,
-  type OrderPathStep,
-  type OrderPriceTier,
   type OrderRule,
 } from "./order-policy";

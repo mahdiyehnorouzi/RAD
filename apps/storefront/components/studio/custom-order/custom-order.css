@@ -13,8 +13,10 @@
   --cs-pick: #dccdb6;
   --cs-oxide: #8a4938;
   --cs-hand: #7a5238;
-  --cs-shadow: 0 1px 2px rgb(74 54 34 / 0.06), 0 12px 26px -16px rgb(74 54 34 / 0.34);
-  --cs-print-shadow: 0 2px 3px rgb(74 54 34 / 0.08), 0 18px 34px -20px rgb(74 54 34 / 0.5);
+  --cs-shadow:
+    0 1px 2px rgb(74 54 34 / 0.06), 0 12px 26px -16px rgb(74 54 34 / 0.34);
+  --cs-print-shadow:
+    0 2px 3px rgb(74 54 34 / 0.08), 0 18px 34px -20px rgb(74 54 34 / 0.5);
   --cs-ease: cubic-bezier(0.22, 1, 0.36, 1);
   --icon-knock: var(--cs-paper);
   overflow: clip;
@@ -522,7 +524,9 @@ html[dir="rtl"] .cs-how-thread {
 
 .cs-make:hover {
   transform: translateY(-3px);
-  box-shadow: 0 2px 3px rgb(74 54 34 / 0.06), 0 20px 30px -18px rgb(74 54 34 / 0.45);
+  box-shadow:
+    0 2px 3px rgb(74 54 34 / 0.06),
+    0 20px 30px -18px rgb(74 54 34 / 0.45);
 }
 
 .cs-make-art {
@@ -704,7 +708,9 @@ html[dir="ltr"] .cs-make:hover .cs-round {
   border: 1px solid rgb(255 255 255 / 0.7);
   border-radius: 14px;
   background: var(--cs-paper);
-  box-shadow: 0 2px 4px rgb(74 54 34 / 0.08), 0 28px 50px -30px rgb(74 54 34 / 0.55);
+  box-shadow:
+    0 2px 4px rgb(74 54 34 / 0.08),
+    0 28px 50px -30px rgb(74 54 34 / 0.55);
 }
 
 .cs-flow-sheet > .cs-head {
@@ -902,7 +908,8 @@ html[dir="ltr"] .cs-make:hover .cs-round {
     column-gap: clamp(2rem, 5vw, 5rem);
     min-height: clamp(38rem, 50vw, 48rem);
     overflow: hidden;
-    padding: clamp(2.5rem, 4vw, 4rem) max(var(--page), calc((100% - 76rem) / 2)) 0;
+    padding: clamp(2.5rem, 4vw, 4rem) max(var(--page), calc((100% - 76rem) / 2))
+      0;
     background:
       linear-gradient(rgb(244 239 231 / 0.3), rgb(244 239 231 / 0.3)),
       url("/studio/window.webp") center / cover #ece2d4;
@@ -919,7 +926,9 @@ html[dir="ltr"] .cs-make:hover .cs-round {
     border: 0.55rem solid var(--cs-paper);
     border-bottom: 0;
     border-radius: 999px 999px 0 0;
-    box-shadow: 0 -2px 6px rgb(74 54 34 / 0.06), 0 30px 60px -30px rgb(74 54 34 / 0.55);
+    box-shadow:
+      0 -2px 6px rgb(74 54 34 / 0.06),
+      0 30px 60px -30px rgb(74 54 34 / 0.55);
   }
 
   .cs-hero-arch img {

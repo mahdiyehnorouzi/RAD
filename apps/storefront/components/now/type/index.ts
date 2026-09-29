@@ -1,8 +1,1 @@
-export type {
-  LiveJournal,
-  LiveMilestone,
-  LiveMilestoneId,
-  LiveNote,
-  LivePiece,
-} from "./live";
-export { LIVE_MILESTONES } from "./live";
+export type { LiveJournal, LiveMilestone, LivePiece } from "./live";

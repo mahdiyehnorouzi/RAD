@@ -22,9 +22,3 @@ export const spacing = {
   page: "clamp(1.25rem, 5vw, 5rem)",
   section: "clamp(5rem, 11vw, 11rem)",
 } as const;
-
-export const theme = {
-  colors,
-  rounded,
-  spacing,
-} as const;

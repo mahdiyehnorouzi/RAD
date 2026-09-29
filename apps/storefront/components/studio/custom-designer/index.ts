@@ -1,2 +1,2 @@
 export { CustomDesigner } from "./custom-designer";
-export { useDesigner, type Designer } from "./hooks";
+export { useDesigner } from "./hooks";

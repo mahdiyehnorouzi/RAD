@@ -5,7 +5,7 @@ import { resolveArtwork } from "@/lib/artworks/server";
 import { passportFromArtwork } from "@/lib/passport";
 import { portraitFromArtwork } from "./portraits";
 
-export type DifferenceWork = {
+type DifferenceWork = {
   portrait: DifferencePortrait;
   /** Passport code, when the work has a passport to link to. */
   passportCode?: string;

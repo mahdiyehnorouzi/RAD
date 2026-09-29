@@ -1,8 +1,5 @@
 export { HomeHero } from "./home-hero";
-export { DifferenceStory } from "./difference-story";
 export { ThreadJourney } from "./thread-journey";
 export { ArchiveSection } from "./archive-section";
-export { StudioCallout } from "./studio-callout";
-export { StorySection, ProcessSection } from "./story-sections";
-export { HomeProcessSection } from "./process-section";
+export { ProcessSection } from "./story-sections";
 export { CertificateSection } from "./certificate-section";

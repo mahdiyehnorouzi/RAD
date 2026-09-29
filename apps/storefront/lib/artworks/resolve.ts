@@ -4,7 +4,7 @@ import { fallbackArtworks } from "./fallback";
 import { findArtwork } from "./find";
 import { mergeArtwork } from "./merge";
 
-export class ArtworkUnreachableError extends Error {
+class ArtworkUnreachableError extends Error {
   constructor(key: string, cause: unknown) {
     super(`Artwork API unreachable while loading "${key}"`, { cause });
   }

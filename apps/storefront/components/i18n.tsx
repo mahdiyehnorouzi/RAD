@@ -3,7 +3,7 @@
 import { createContext, useContext, useEffect, useMemo } from "react";
 import { usePublicPathname } from "@/hooks/use-public-pathname";
 import type { Locale } from "@rad/types";
-import { mockStorefront } from "@/lib/catalog/mock-storefront";
+import { brand } from "@/lib/brand";
 import { fa, type MessageKey } from "@/i18n/fa";
 import { en } from "@/i18n/en";
 import {
@@ -13,7 +13,7 @@ import {
   isLocale,
 } from "@/lib/locale";
 
-export type { Locale, MessageKey };
+export type { MessageKey };
 
 const messages = { fa, en } as const;
 
@@ -127,8 +127,8 @@ export function LocaleProvider({
     document.title = section
       ? `${catalog[section]} | ${catalog.brandName}`
       : locale === "fa"
-        ? mockStorefront.brand.title.fa
-        : mockStorefront.brand.title.en;
+        ? brand.title.fa
+        : brand.title.en;
   }, [locale, pathname]);
   const value = useMemo<LocaleContextValue>(
     () => ({

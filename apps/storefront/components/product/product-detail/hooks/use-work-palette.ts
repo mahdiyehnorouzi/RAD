@@ -6,7 +6,7 @@ import {
 } from "@/lib/catalog/material-texture";
 import { useTextureFocus } from "./use-texture-focus";
 
-export type PaletteSample = { src: string; point: TexturePoint };
+type PaletteSample = { src: string; point: TexturePoint };
 
 /**
  * The surfaces a work lends its brush strokes: each authored material spot,

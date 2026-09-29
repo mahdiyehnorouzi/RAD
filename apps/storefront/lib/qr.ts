@@ -9,7 +9,7 @@ import { FALLBACK_SITE_URL } from "./seo";
  */
 const PUBLIC_ORIGIN = process.env.NEXT_PUBLIC_SITE_URL || FALLBACK_SITE_URL;
 
-export function publicPageUrl(path: string) {
+function publicPageUrl(path: string) {
   return new URL(path, PUBLIC_ORIGIN).toString();
 }
 

@@ -6,7 +6,7 @@ import { fallbackArtworks, loadArtworks } from "@/lib/artworks/server";
 import type { CatalogIndexEntry } from "./catalog-index";
 import { CATALOG_TAG } from "./catalog-tag";
 
-export type CatalogLoad = {
+type CatalogLoad = {
   artworks: Artwork[];
   /** The shop projection of `artworks`. */
   products: Product[];

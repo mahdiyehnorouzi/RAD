@@ -6,7 +6,8 @@ export const quizCopy = {
     errorBody: "اتصال به رَد برقرار نشد. کمی بعد دوباره امتحان کنید.",
     retry: "دوباره امتحان کن",
     emptyTitle: "پرسش‌ها به‌زودی برمی‌گردند",
-    emptyBody: "داریم سؤال‌های تازه می‌نویسیم. تا آن موقع می‌توانی آرشیو رَد را ببینی.",
+    emptyBody:
+      "داریم سؤال‌های تازه می‌نویسیم. تا آن موقع می‌توانی آرشیو رَد را ببینی.",
     archive: "دیدن آرشیو",
     stepsLabel: "مراحل پرسش",
     step: "مرحله {n}",
@@ -30,7 +31,8 @@ export const quizCopy = {
     errorBody: "We could not reach RAD. Please try again in a moment.",
     retry: "Try again",
     emptyTitle: "The questions will be back soon",
-    emptyBody: "We are writing new questions. Meanwhile, you can browse the RAD archive.",
+    emptyBody:
+      "We are writing new questions. Meanwhile, you can browse the RAD archive.",
     archive: "Browse the archive",
     stepsLabel: "Quiz steps",
     step: "Step {n}",
@@ -49,8 +51,9 @@ export const quizCopy = {
   },
 } as const;
 
-export type QuizCopy = (typeof quizCopy)[keyof typeof quizCopy];
-
 export function fill(template: string, values: Record<string, string>) {
-  return template.replace(/\{(\w+)\}/g, (match, key: string) => values[key] ?? match);
+  return template.replace(
+    /\{(\w+)\}/g,
+    (match, key: string) => values[key] ?? match,
+  );
 }

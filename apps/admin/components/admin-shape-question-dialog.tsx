@@ -18,7 +18,8 @@ const blankChoice = (value: number): ShapeChoice => ({
   value,
 });
 
-const filled = (text: { fa: string; en: string }) => Boolean(text.fa.trim() && text.en.trim());
+const filled = (text: { fa: string; en: string }) =>
+  Boolean(text.fa.trim() && text.en.trim());
 const validSrc = (src: string) => /^(\/\S*|https?:\/\/\S+)$/.test(src.trim());
 
 export function AdminShapeQuestionDialog({
@@ -48,7 +49,10 @@ export function AdminShapeQuestionDialog({
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
-  const setChoice = (index: 0 | 1, change: (choice: ShapeChoice) => ShapeChoice) => {
+  const setChoice = (
+    index: 0 | 1,
+    change: (choice: ShapeChoice) => ShapeChoice,
+  ) => {
     const choices = [...draft.choices] as ShapeQuestionInput["choices"];
     choices[index] = change(choices[index]);
     setDraft({ ...draft, choices });
@@ -61,7 +65,9 @@ export function AdminShapeQuestionDialog({
       filled(draft.hint) &&
       draft.choices.every(
         (choice) =>
-          filled(choice.label) && filled(choice.note) && filled(choice.photo.alt),
+          filled(choice.label) &&
+          filled(choice.note) &&
+          filled(choice.photo.alt),
       );
     if (!complete) {
       setError("همه‌ی متن‌ها را به فارسی و انگلیسی پر کنید.");
@@ -89,7 +95,10 @@ export function AdminShapeQuestionDialog({
             <select
               value={draft.trait}
               onChange={(event) =>
-                setDraft({ ...draft, trait: event.target.value as ShapeQuestionInput["trait"] })
+                setDraft({
+                  ...draft,
+                  trait: event.target.value as ShapeQuestionInput["trait"],
+                })
               }
             >
               {SHAPE_TRAITS.map((trait) => (
@@ -104,7 +113,10 @@ export function AdminShapeQuestionDialog({
             <input
               value={draft.prompt.fa}
               onChange={(event) =>
-                setDraft({ ...draft, prompt: { ...draft.prompt, fa: event.target.value } })
+                setDraft({
+                  ...draft,
+                  prompt: { ...draft.prompt, fa: event.target.value },
+                })
               }
             />
           </Field>
@@ -113,7 +125,10 @@ export function AdminShapeQuestionDialog({
               dir="ltr"
               value={draft.prompt.en}
               onChange={(event) =>
-                setDraft({ ...draft, prompt: { ...draft.prompt, en: event.target.value } })
+                setDraft({
+                  ...draft,
+                  prompt: { ...draft.prompt, en: event.target.value },
+                })
               }
             />
           </Field>
@@ -121,7 +136,10 @@ export function AdminShapeQuestionDialog({
             <input
               value={draft.hint.fa}
               onChange={(event) =>
-                setDraft({ ...draft, hint: { ...draft.hint, fa: event.target.value } })
+                setDraft({
+                  ...draft,
+                  hint: { ...draft.hint, fa: event.target.value },
+                })
               }
             />
           </Field>
@@ -130,7 +148,10 @@ export function AdminShapeQuestionDialog({
               dir="ltr"
               value={draft.hint.en}
               onChange={(event) =>
-                setDraft({ ...draft, hint: { ...draft.hint, en: event.target.value } })
+                setDraft({
+                  ...draft,
+                  hint: { ...draft.hint, en: event.target.value },
+                })
               }
             />
           </Field>
@@ -146,7 +167,10 @@ export function AdminShapeQuestionDialog({
                   <input
                     value={choice.label.fa}
                     onChange={(event) =>
-                      setChoice(index, (c) => ({ ...c, label: { ...c.label, fa: event.target.value } }))
+                      setChoice(index, (c) => ({
+                        ...c,
+                        label: { ...c.label, fa: event.target.value },
+                      }))
                     }
                   />
                 </Field>
@@ -155,7 +179,10 @@ export function AdminShapeQuestionDialog({
                     dir="ltr"
                     value={choice.label.en}
                     onChange={(event) =>
-                      setChoice(index, (c) => ({ ...c, label: { ...c.label, en: event.target.value } }))
+                      setChoice(index, (c) => ({
+                        ...c,
+                        label: { ...c.label, en: event.target.value },
+                      }))
                     }
                   />
                 </Field>
@@ -163,7 +190,10 @@ export function AdminShapeQuestionDialog({
                   <input
                     value={choice.note.fa}
                     onChange={(event) =>
-                      setChoice(index, (c) => ({ ...c, note: { ...c.note, fa: event.target.value } }))
+                      setChoice(index, (c) => ({
+                        ...c,
+                        note: { ...c.note, fa: event.target.value },
+                      }))
                     }
                   />
                 </Field>
@@ -172,7 +202,10 @@ export function AdminShapeQuestionDialog({
                     dir="ltr"
                     value={choice.note.en}
                     onChange={(event) =>
-                      setChoice(index, (c) => ({ ...c, note: { ...c.note, en: event.target.value } }))
+                      setChoice(index, (c) => ({
+                        ...c,
+                        note: { ...c.note, en: event.target.value },
+                      }))
                     }
                   />
                 </Field>
@@ -181,7 +214,10 @@ export function AdminShapeQuestionDialog({
                     dir="ltr"
                     value={choice.photo.src}
                     onChange={(event) =>
-                      setChoice(index, (c) => ({ ...c, photo: { ...c.photo, src: event.target.value } }))
+                      setChoice(index, (c) => ({
+                        ...c,
+                        photo: { ...c.photo, src: event.target.value },
+                      }))
                     }
                   />
                 </Field>
@@ -196,7 +232,10 @@ export function AdminShapeQuestionDialog({
                     onChange={(event) =>
                       setChoice(index, (c) => ({
                         ...c,
-                        value: Math.min(1, Math.max(0, Number(event.target.value) || 0)),
+                        value: Math.min(
+                          1,
+                          Math.max(0, Number(event.target.value) || 0),
+                        ),
                       }))
                     }
                   />
@@ -207,7 +246,10 @@ export function AdminShapeQuestionDialog({
                     onChange={(event) =>
                       setChoice(index, (c) => ({
                         ...c,
-                        photo: { ...c.photo, alt: { ...c.photo.alt, fa: event.target.value } },
+                        photo: {
+                          ...c.photo,
+                          alt: { ...c.photo.alt, fa: event.target.value },
+                        },
                       }))
                     }
                   />
@@ -219,14 +261,21 @@ export function AdminShapeQuestionDialog({
                     onChange={(event) =>
                       setChoice(index, (c) => ({
                         ...c,
-                        photo: { ...c.photo, alt: { ...c.photo.alt, en: event.target.value } },
+                        photo: {
+                          ...c.photo,
+                          alt: { ...c.photo.alt, en: event.target.value },
+                        },
                       }))
                     }
                   />
                 </Field>
               </div>
               {validSrc(choice.photo.src) ? (
-                <img className="shape-choice-preview" src={storefrontUrl(choice.photo.src.trim())} alt="" />
+                <img
+                  className="shape-choice-preview"
+                  src={storefrontUrl(choice.photo.src.trim())}
+                  alt=""
+                />
               ) : null}
             </fieldset>
           );

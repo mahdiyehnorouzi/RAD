@@ -1,4 +1,9 @@
-import type {AuditEvent, LocaleCopy, MakingBrief, MakingCommission,} from "@/components/making/type";
+import type {
+  AuditEvent,
+  LocaleCopy,
+  MakingBrief,
+  MakingCommission,
+} from "@/components/making/type";
 
 function loc(fa: string, en: string): LocaleCopy {
   return { fa, en };
@@ -9,7 +14,7 @@ function id(prefix: string) {
 }
 
 const day = 24 * 60 * 60 * 1000;
-export function newCommissionId() {
+function newCommissionId() {
   const n = Math.floor(100 + Math.random() * 900);
   return `RAD-M-1405-${n}`;
 }
@@ -26,7 +31,9 @@ export function createSubmittedCommission(input: {
   const createdAt = Date.now();
   const commission: MakingCommission = {
     id: newCommissionId(),
-    title: input.title ?? loc(input.brief.concept.slice(0, 42), input.brief.concept.slice(0, 42)),
+    title:
+      input.title ??
+      loc(input.brief.concept.slice(0, 42), input.brief.concept.slice(0, 42)),
     customerName: input.customerName,
     artistName: "سحر میرزایی",
     brief: input.brief,

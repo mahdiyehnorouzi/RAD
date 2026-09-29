@@ -1,1 +1,1 @@
-export type { AccountActivityItem, AccountActivityKind } from "./activity";
+export type { AccountActivityItem } from "./activity";

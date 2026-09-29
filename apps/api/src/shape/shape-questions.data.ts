@@ -51,13 +51,19 @@ export const defaultShapeQuestions: ShapeQuestionView[] = [
         note: { fa: "ساده، آرام و بی‌ادعا", en: "Plain, calm and unassuming" },
         photo: {
           src: "/shape/q2-quiet.webp",
-          alt: { fa: "کاسه‌ی سفید مات بدون نقش", en: "A plain matte white bowl" },
+          alt: {
+            fa: "کاسه‌ی سفید مات بدون نقش",
+            en: "A plain matte white bowl",
+          },
         },
         value: 0.9,
       },
       {
         label: { fa: "شلوغ", en: "Busy" },
-        note: { fa: "پرنقش، شاد و پرحرف", en: "Patterned, lively and talkative" },
+        note: {
+          fa: "پرنقش، شاد و پرحرف",
+          en: "Patterned, lively and talkative",
+        },
         photo: {
           src: "/shape/q2-busy.webp",
           alt: {
@@ -72,7 +78,10 @@ export const defaultShapeQuestions: ShapeQuestionView[] = [
   {
     id: "worn",
     trait: "worn",
-    prompt: { fa: "لبه‌ی تمیز یا دست‌خورده؟", en: "A clean edge or a worn one?" },
+    prompt: {
+      fa: "لبه‌ی تمیز یا دست‌خورده؟",
+      en: "A clean edge or a worn one?",
+    },
     hint: {
       fa: "در لبه و جزئیات فرم‌ها، کدوم حس رو بیشتر دوست داری؟",
       en: "In the edges and details of a form, which feeling do you like more?",
@@ -132,8 +141,14 @@ export const defaultShapeQuestions: ShapeQuestionView[] = [
         value: 0.2,
       },
       {
-        label: { fa: "رنگی که غافلگیرم می‌کند", en: "A colour that surprises me" },
-        note: { fa: "پیش‌بینی‌نشده، جسور و زنده", en: "Unplanned, bold and alive" },
+        label: {
+          fa: "رنگی که غافلگیرم می‌کند",
+          en: "A colour that surprises me",
+        },
+        note: {
+          fa: "پیش‌بینی‌نشده، جسور و زنده",
+          en: "Unplanned, bold and alive",
+        },
         photo: {
           src: "/shape/q4-surprise.webp",
           alt: {
@@ -156,7 +171,10 @@ export const defaultShapeQuestions: ShapeQuestionView[] = [
     choices: [
       {
         label: { fa: "کاربردی", en: "Useful" },
-        note: { fa: "هر روز در دست، بی‌دردسر", en: "In the hand every day, no fuss" },
+        note: {
+          fa: "هر روز در دست، بی‌دردسر",
+          en: "In the hand every day, no fuss",
+        },
         photo: {
           src: "/shape/q5-useful.webp",
           alt: {

@@ -17,7 +17,10 @@ export const ORDER_MAKES: OrderMake[] = [
   {
     id: "container",
     title: { fa: "ظرف و کاربردی", en: "Tableware" },
-    examples: { fa: "ماگ، بشقاب، کاسه و …", en: "Mugs, plates, bowls and more" },
+    examples: {
+      fa: "ماگ، بشقاب، کاسه و …",
+      en: "Mugs, plates, bowls and more",
+    },
     image: "/catalog/photos/transparent/cobalt-ripple-tray.webp",
     form: "container",
   },
@@ -39,7 +42,10 @@ export const ORDER_MAKES: OrderMake[] = [
   {
     id: "sculpture",
     title: { fa: "مجسمه", en: "Sculpture" },
-    examples: { fa: "فیگور، حیوان و صحنه‌های کوچک", en: "Figures, animals, small scenes" },
+    examples: {
+      fa: "فیگور، حیوان و صحنه‌های کوچک",
+      en: "Figures, animals, small scenes",
+    },
     image: "/catalog/photos/transparent/orange-boat-sculpture.webp",
     form: "sculpture",
   },

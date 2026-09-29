@@ -3,7 +3,7 @@ import "../globals.css";
 import "@/components/ui/button-link.css";
 import "@/components/ui/section.css";
 import "@/components/ui/skeleton.css";
-import { mockStorefront } from "@/lib/catalog/mock-storefront";
+import { brand } from "@/lib/brand";
 import {
   Footer,
   GoogleAnalytics,
@@ -39,7 +39,7 @@ const googleVerification =
 export const metadata: Metadata = {
   metadataBase: siteUrl,
   title: {
-    default: mockStorefront.brand.title.fa,
+    default: brand.title.fa,
     template: "%s | رَد",
   },
   description: defaultDescription,
@@ -69,13 +69,13 @@ export const metadata: Metadata = {
     locale: "fa_IR",
     alternateLocale: ["en_US"],
     siteName,
-    title: mockStorefront.brand.title.fa,
+    title: brand.title.fa,
     description: defaultDescription,
     url: "/",
   },
   twitter: {
     card: "summary_large_image",
-    title: mockStorefront.brand.title.fa,
+    title: brand.title.fa,
     description: defaultDescription,
   },
   robots: {

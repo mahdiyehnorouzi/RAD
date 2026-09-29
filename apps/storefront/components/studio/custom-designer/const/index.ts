@@ -1,4 +1,4 @@
-export { designerCopy, type DesignerCopy } from "./designer-copy";
+export { designerCopy } from "./designer-copy";
 export {
   DESIGNER_STEP_LABEL,
   DESIGNER_STEPS,
@@ -15,6 +15,5 @@ export {
   USE_OPTIONS,
   fidelityKey,
   optionLabel,
-  type FormOption,
 } from "./order-options";
 export { DESIGNER_COLORS, MAX_DESIGNER_COLORS, colorLabel } from "./spark";

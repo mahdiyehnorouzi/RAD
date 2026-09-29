@@ -1,6 +1,11 @@
-import type {LocaleCopy, MakingCommission, MakingStageId, NextActor,} from "@/components/making/type";
+import type {
+  LocaleCopy,
+  MakingCommission,
+  MakingStageId,
+  NextActor,
+} from "@/components/making/type";
 
-export const BIOGRAPHY_STAGES: MakingStageId[] = [
+const BIOGRAPHY_STAGES: MakingStageId[] = [
   "design_submitted",
   "feasibility",
   "quote",
@@ -16,7 +21,10 @@ export const STAGE_LABEL: Record<MakingStageId, LocaleCopy> = {
   design_submitted: { fa: "طرح ارسال شد", en: "Design submitted" },
   feasibility: { fa: "بازبینی امکان‌پذیری", en: "Artist feasibility review" },
   quote: { fa: "پیشنهاد و زمان‌بندی", en: "Quote and schedule" },
-  approval_deposit: { fa: "تأیید مشتری و بیعانه", en: "Customer approval and deposit" },
+  approval_deposit: {
+    fa: "تأیید مشتری و بیعانه",
+    en: "Customer approval and deposit",
+  },
   making: { fa: "ساخت", en: "Making" },
   pre_kiln: { fa: "ایستگاه پیش از کوره", en: "Pre-kiln checkpoint" },
   firing: { fa: "پخت و پرداخت", en: "Firing and finishing" },
@@ -36,12 +44,7 @@ export function copy(value: LocaleCopy, locale: "fa" | "en") {
   return value[locale];
 }
 
-export function stageIndex(stage: MakingStageId) {
-  const index = BIOGRAPHY_STAGES.indexOf(stage);
-  return index < 0 ? -1 : index;
-}
-
-export function stagesFor(commission: MakingCommission): MakingStageId[] {
+function stagesFor(commission: MakingCommission): MakingStageId[] {
   if (commission.stage === "declined") {
     return ["design_submitted", "feasibility", "declined"];
   }
@@ -62,7 +65,12 @@ export function stageProgress(commission: MakingCommission) {
   };
 }
 
-export function moneyFor(commission: MakingCommission, locale: "fa" | "en", toman: number, usd: number) {
+export function moneyFor(
+  commission: MakingCommission,
+  locale: "fa" | "en",
+  toman: number,
+  usd: number,
+) {
   if (locale === "fa") {
     return `${new Intl.NumberFormat("fa-IR").format(toman)} تومان`;
   }
@@ -82,13 +90,18 @@ export function situationFor(commission: MakingCommission): {
 } {
   const stageLabel = STAGE_LABEL[commission.stage];
   const actorLabel = ACTOR_LABEL[commission.nextActor];
-  const openChange = commission.changeRequests.find((item) => item.status === "open");
+  const openChange = commission.changeRequests.find(
+    (item) => item.status === "open",
+  );
   const glaze = commission.preKiln?.glazeCode ?? "G-17";
   const artist = commission.artistName;
 
   if (commission.stage === "declined") {
     return {
-      headline: { fa: "این طرح ساخته نمی‌شود", en: "This design will not be made" },
+      headline: {
+        fa: "این طرح ساخته نمی‌شود",
+        en: "This design will not be made",
+      },
       body: {
         fa: `${artist} این سفارش را رد کرده است. دلیل در همین مرحله ثبت شده است.`,
         en: `${artist} declined this commission. The reason is attached to this stage.`,
@@ -104,7 +117,10 @@ export function situationFor(commission: MakingCommission): {
 
   if (openChange) {
     return {
-      headline: { fa: "تغییر مشخص لازم است", en: "A specific change is required" },
+      headline: {
+        fa: "تغییر مشخص لازم است",
+        en: "A specific change is required",
+      },
       body: {
         fa: `${artist} طرح را دیده و یک تغییر مشخص پیشنهاد کرده است. ببینید چه چیزی عوض می‌شود، چرا لازم است، و آیا قیمت یا زمان را جابه‌جا می‌کند.`,
         en: `${artist} has reviewed the design and requested a specific change. See what changes, why it is necessary, and whether price or delivery is affected.`,
@@ -123,7 +139,10 @@ export function situationFor(commission: MakingCommission): {
     { headline: LocaleCopy; body: LocaleCopy; next: LocaleCopy }
   > = {
     design_submitted: {
-      headline: { fa: "طرح برای بازبینی هنرمند ارسال شد", en: "Design submitted for artist review" },
+      headline: {
+        fa: "طرح برای بازبینی هنرمند ارسال شد",
+        en: "Design submitted for artist review",
+      },
       body: {
         fa: "مفهوم، ابعاد، ماده، کاربرد، بودجه و تصویر تولیدشده ثبت شده‌اند. هنرمند حالا امکان ساخت را می‌سنجد.",
         en: "Concept, dimensions, material, intended use, budget, and the generated image are on record. The artist now judges whether the piece can be made.",
@@ -134,7 +153,10 @@ export function situationFor(commission: MakingCommission): {
       },
     },
     feasibility: {
-      headline: { fa: "در انتظار تصمیم هنرمند", en: "Waiting for the artist’s decision" },
+      headline: {
+        fa: "در انتظار تصمیم هنرمند",
+        en: "Waiting for the artist’s decision",
+      },
       body: {
         fa: `${artist} در حال سنجش امکان ساخت است؛ هنوز ساخت آغاز نشده.`,
         en: `${artist} is judging feasibility. Making has not begun.`,
@@ -145,7 +167,10 @@ export function situationFor(commission: MakingCommission): {
       },
     },
     quote: {
-      headline: { fa: "پیشنهاد در حال تنظیم است", en: "A proposal is being prepared" },
+      headline: {
+        fa: "پیشنهاد در حال تنظیم است",
+        en: "A proposal is being prepared",
+      },
       body: {
         fa: "هنرمند مشخصات نهایی، قیمت، بیعانه، مانده، پنجره تکمیل و قواعد لغو را می‌نویسد.",
         en: "The artist is writing the final specification, price, deposit, balance, completion window, and cancellation rules.",
@@ -156,7 +181,10 @@ export function situationFor(commission: MakingCommission): {
       },
     },
     approval_deposit: {
-      headline: { fa: "تأیید مشخصات و پرداخت بیعانه", en: "Approve the specification and pay the deposit" },
+      headline: {
+        fa: "تأیید مشخصات و پرداخت بیعانه",
+        en: "Approve the specification and pay the deposit",
+      },
       body: {
         fa: "این یک پیشنهاد کامل است، نه فقط یک عدد. ساخت تنها پس از پذیرش مشخصات و پرداخت بیعانه آغاز می‌شود. آنچه تأیید کنید به‌صورت غیرقابل‌تغییر ذخیره می‌شود.",
         en: "This is a full proposal, not only a number. Making begins only after you accept the specification and pay the deposit. Exactly what you approve is stored as an immutable snapshot.",
@@ -167,7 +195,10 @@ export function situationFor(commission: MakingCommission): {
       },
     },
     making: {
-      headline: { fa: "قطعه در حال شکل‌گرفتن است", en: "The piece is being formed" },
+      headline: {
+        fa: "قطعه در حال شکل‌گرفتن است",
+        en: "The piece is being formed",
+      },
       body: {
         fa: `${artist} وضعیت را جلو می‌برد و می‌تواند عکس یا یادداشت کوتاه بگذارد. هر به‌روزرسانی نیاز به تأیید شما ندارد.`,
         en: `${artist} moves the order through making and may add photographs or short notes. Not every update needs your approval.`,
@@ -178,7 +209,10 @@ export function situationFor(commission: MakingCommission): {
       },
     },
     pre_kiln: {
-      headline: { fa: "تأیید پیش از کوره لازم است", en: "Pre-kiln approval required" },
+      headline: {
+        fa: "تأیید پیش از کوره لازم است",
+        en: "Pre-kiln approval required",
+      },
       body: {
         fa: `${artist} فرم‌دهی را تمام کرده و لعاب ${glaze} را پیشنهاد داده است. عکس‌ها، ابعاد و بازه رنگ مورد انتظار را ببینید. پس از تأیید، قطعه وارد کوره می‌شود و فرم و لعاب دیگر تغییرپذیر نیستند.`,
         en: `${artist} has finished forming your piece and proposed glaze ${glaze}. Review the photographs and expected colour range. Once approved, the piece will enter the kiln and its form and glaze cannot be changed.`,
@@ -190,7 +224,10 @@ export function situationFor(commission: MakingCommission): {
     },
     firing: {
       headline: commission.firing?.unexpected
-        ? { fa: "نتیجه پخت نیاز به تصمیم دارد", en: "The firing result needs a resolution" }
+        ? {
+            fa: "نتیجه پخت نیاز به تصمیم دارد",
+            en: "The firing result needs a resolution",
+          }
         : { fa: "پخت در جریان است", en: "Firing and finishing are underway" },
       body: commission.firing?.unexpected
         ? {
@@ -212,7 +249,10 @@ export function situationFor(commission: MakingCommission): {
           },
     },
     reveal: {
-      headline: { fa: "رونمایی نهایی و مانده حساب", en: "Final reveal and remaining balance" },
+      headline: {
+        fa: "رونمایی نهایی و مانده حساب",
+        en: "Final reveal and remaining balance",
+      },
       body: {
         fa: "عکس تمام‌شده، تاریخچه ساخت و مانده حساب اینجاست. پس از پرداخت، سفارش به بسته‌بندی و ارسال می‌رود.",
         en: "Finished photographs, the making history, and the remaining balance are here. After payment, the order moves to packaging and shipping.",
@@ -223,7 +263,10 @@ export function situationFor(commission: MakingCommission): {
       },
     },
     shipping: {
-      headline: { fa: "بسته‌بندی و رهگیری ارسال", en: "Packaging and shipment tracking" },
+      headline: {
+        fa: "بسته‌بندی و رهگیری ارسال",
+        en: "Packaging and shipment tracking",
+      },
       body: {
         fa: "بیعانه و مانده پرداخت شده‌اند. هنرمند بسته‌بندی را ثبت می‌کند و شماره رهگیری را می‌گذارد.",
         en: "Deposit and balance are paid. The artist records packaging and adds tracking.",
@@ -234,7 +277,10 @@ export function situationFor(commission: MakingCommission): {
       },
     },
     complete: {
-      headline: { fa: "رکورد ساخت این قطعه کامل است", en: "This piece’s Record of Making is complete" },
+      headline: {
+        fa: "رکورد ساخت این قطعه کامل است",
+        en: "This piece’s Record of Making is complete",
+      },
       body: {
         fa: "گفت‌وگو، تصمیم‌های هنرمند، مرجع لعاب، نتیجه پخت و عکس‌ها زندگی‌نامه این اثر شده‌اند.",
         en: "The conversation, artist decisions, glaze reference, firing result, and photographs are now this piece’s biography.",
@@ -270,8 +316,15 @@ export function workshopBucket(commission: MakingCommission) {
   return "production" as const;
 }
 
-export function deadlineWarning(commission: MakingCommission, now = Date.now()) {
-  if (!commission.deadlineAt || commission.stage === "complete" || commission.stage === "declined") {
+export function deadlineWarning(
+  commission: MakingCommission,
+  now = Date.now(),
+) {
+  if (
+    !commission.deadlineAt ||
+    commission.stage === "complete" ||
+    commission.stage === "declined"
+  ) {
     return false;
   }
   return commission.deadlineAt - now < 3 * 24 * 60 * 60 * 1000;

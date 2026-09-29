@@ -10,12 +10,19 @@ const LEGACY_PUBLIC_IMAGE =
  */
 export function withCurrentAssetPaths<T>(value: T): T {
   if (typeof value === "string") {
-    return (LEGACY_PUBLIC_IMAGE.test(value) ? value.replace(/\.(?:png|jpe?g)$/, ".webp") : value) as T;
+    return (
+      LEGACY_PUBLIC_IMAGE.test(value)
+        ? value.replace(/\.(?:png|jpe?g)$/, ".webp")
+        : value
+    ) as T;
   }
   if (Array.isArray(value)) return value.map(withCurrentAssetPaths) as T;
   if (value && typeof value === "object") {
     return Object.fromEntries(
-      Object.entries(value).map(([key, entry]) => [key, withCurrentAssetPaths(entry)]),
+      Object.entries(value).map(([key, entry]) => [
+        key,
+        withCurrentAssetPaths(entry),
+      ]),
     ) as T;
   }
   return value;

@@ -1,5 +1,1 @@
-export {
-  StorySection,
-  ProvenanceSection,
-  ProcessSection,
-} from "./story-sections";
+export { ProcessSection } from "./story-sections";

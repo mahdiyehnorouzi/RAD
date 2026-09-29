@@ -23,8 +23,10 @@ export const checkoutCopy = {
     fixFields: "چند مورد از اطلاعات ارسال کامل نیست.",
     holdTitle: "این اثر تک‌نسخه است.",
     holdBody: "تا پایان این زمان فقط برای شما نگه داشته می‌شود.",
-    holdAfter: "با ثبت سفارش، {minutes} دقیقه برای واریز و فرستادن رسید وقت دارید.",
-    holdGone: "یکی از آثار کیسه دیگر برای شما نگه داشته نمی‌شود. به کیسه برگردید و آن را بردارید.",
+    holdAfter:
+      "با ثبت سفارش، {minutes} دقیقه برای واریز و فرستادن رسید وقت دارید.",
+    holdGone:
+      "یکی از آثار کیسه دیگر برای شما نگه داشته نمی‌شود. به کیسه برگردید و آن را بردارید.",
     backToBag: "بازگشت به کیسه",
     submit: "ادامه و پرداخت",
     submitting: "در حال ثبت سفارش…",
@@ -74,7 +76,8 @@ export const checkoutCopy = {
     trackingError: "شماره‌ی پیگیری را درست بنویسید (دست‌کم ۴ رقم).",
     submitReceipt: "ثبت رسید و تکمیل سفارش",
     submittingReceipt: "در حال فرستادن رسید…",
-    receiptFailed: "رسید فرستاده نشد. دوباره بزنید؛ تصویر انتخاب‌شده سر جایش می‌ماند.",
+    receiptFailed:
+      "رسید فرستاده نشد. دوباره بزنید؛ تصویر انتخاب‌شده سر جایش می‌ماند.",
 
     cancel: "لغو سفارش",
     cancelAsk: "سفارش لغو شود؟ اثر به فروشگاه برمی‌گردد.",
@@ -131,8 +134,10 @@ export const checkoutCopy = {
     fixFields: "Some delivery details are missing.",
     holdTitle: "This work is one of one.",
     holdBody: "It stays held for you until this timer runs out.",
-    holdAfter: "Once you place the order, you have {minutes} minutes to transfer and send the receipt.",
-    holdGone: "One of the works is no longer held for you. Go back to the bag and remove it.",
+    holdAfter:
+      "Once you place the order, you have {minutes} minutes to transfer and send the receipt.",
+    holdGone:
+      "One of the works is no longer held for you. Go back to the bag and remove it.",
     backToBag: "Back to bag",
     submit: "Continue to payment",
     submitting: "Placing order…",
@@ -182,7 +187,8 @@ export const checkoutCopy = {
     trackingError: "Enter the tracking number correctly (at least 4 digits).",
     submitReceipt: "Send receipt and complete order",
     submittingReceipt: "Sending receipt…",
-    receiptFailed: "The receipt didn't send. Try again; your chosen image stays put.",
+    receiptFailed:
+      "The receipt didn't send. Try again; your chosen image stays put.",
 
     cancel: "Cancel order",
     cancelAsk: "Cancel this order? The work goes back to the shop.",
@@ -211,13 +217,15 @@ export const checkoutCopy = {
     closedCancelledBody: "The work went back to the shop.",
 
     missingTitle: "This order wasn't found.",
-    missingBody: "It may have been placed from another account. Check your orders.",
+    missingBody:
+      "It may have been placed from another account. Check your orders.",
     ordersLink: "My orders",
   },
 } as const;
 
-export type CheckoutCopy = (typeof checkoutCopy)[keyof typeof checkoutCopy];
-
 export function fillCopy(template: string, vars: Record<string, string>) {
-  return template.replace(/\{(\w+)\}/g, (match, key: string) => vars[key] ?? match);
+  return template.replace(
+    /\{(\w+)\}/g,
+    (match, key: string) => vars[key] ?? match,
+  );
 }

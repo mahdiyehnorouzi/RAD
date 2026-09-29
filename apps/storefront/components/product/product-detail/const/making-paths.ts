@@ -1,7 +1,7 @@
 import type { ProductCategory } from "@rad/types";
 import type { LocaleCopy } from "@/types/locale";
 
-export type MakingStep = {
+type MakingStep = {
   id: string;
   label: LocaleCopy;
   /** Shown only when the work's materials name this stage. */

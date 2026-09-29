@@ -17,7 +17,6 @@
   "dependencies": {
     "@rad/artworks": "1.5.0",
     "@rad/i18n": "1.5.0",
-    "@rad/state": "1.5.0",
     "@rad/types": "1.5.0",
     "@rad/ui": "1.5.0",
     "lucide-react": "^1.33.0",
@@ -25,6 +24,7 @@
     "qrcode": "^1.5.4",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
+    "server-only": "^0.0.1",
     "zustand": "^5.0.15"
   },
   "devDependencies": {

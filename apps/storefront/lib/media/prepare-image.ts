@@ -1,11 +1,11 @@
-export const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
+const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
 const ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/webp"];
 /** Commission briefs drop data-URLs above 120k chars; stay safely under it. */
 const MAX_DATA_URL_CHARS = 110_000;
 const EDGES = [1600, 1280, 1024, 800, 640, 480];
 const QUALITIES = [0.82, 0.7, 0.6];
 
-export type PrepareImageResult =
+type PrepareImageResult =
   | { ok: true; dataUrl: string }
   | { ok: false; reason: "type" | "size" | "corrupt" | "failed" };
 

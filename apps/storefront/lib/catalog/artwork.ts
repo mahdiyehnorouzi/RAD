@@ -1,12 +1,6 @@
-import type {
-  Locale,
-  Product,
-  ProductVisual,
-} from "@rad/types";
+import type { Locale, Product, ProductVisual } from "@rad/types";
 import { visualForCategory } from "@rad/types";
 import type { ArtworkCategory } from "@/types/artwork";
-
-export type { ArtworkCategory };
 
 const sizeField = {
   key: "size",
@@ -217,25 +211,6 @@ export const artworkCategories: ArtworkCategory[] = [
     ],
   },
 ];
-
-export const featuredProductSlugs = [
-  "red-vessel-27",
-  "blue-window",
-  "woven-garden",
-  "walnut-tide",
-  "silver-orbit",
-  "red-garden-print",
-];
-
-export const designDirections = {
-  fa: ["آرام و متعادل", "خام و نامتقارن", "جسور و پیکره‌وار"],
-  en: ["Quiet balance", "Raw asymmetry", "Bold statement"],
-};
-
-export const designPresets = {
-  fa: ["رنگ‌های خاکی", "خطوط آزاد", "بافت طبیعی", "هندسه ساده"],
-  en: ["Earth tones", "Free lines", "Natural texture", "Simple geometry"],
-};
 
 const extraLabels: Record<string, { fa: string; en: string }> = {
   vases: { fa: "گلدان", en: "Vases" },

@@ -13,13 +13,16 @@ const KEEP = new Set(["rad-logo.png"]);
 
 const args = process.argv.slice(2);
 const dryRun = args.includes("--dry-run");
-const root = path.resolve(args.find((a) => !a.startsWith("--")) ?? "apps/storefront/public");
+const root = path.resolve(
+  args.find((a) => !a.startsWith("--")) ?? "apps/storefront/public",
+);
 
 async function* images(dir) {
   for (const entry of await readdir(dir, { withFileTypes: true })) {
     const file = path.join(dir, entry.name);
     if (entry.isDirectory()) yield* images(file);
-    else if (/\.(png|jpe?g)$/i.test(entry.name) && !KEEP.has(entry.name)) yield file;
+    else if (/\.(png|jpe?g)$/i.test(entry.name) && !KEEP.has(entry.name))
+      yield file;
   }
 }
 
@@ -35,15 +38,24 @@ for await (const file of images(root)) {
     input.resize({ width: MAX_SIDE, height: MAX_SIDE, fit: "inside" });
   }
   const output = await input
-    .webp({ quality: hasAlpha ? 82 : 80, alphaQuality: 90, effort: 6, smartSubsample: true })
+    .webp({
+      quality: hasAlpha ? 82 : 80,
+      alphaQuality: 90,
+      effort: 6,
+      smartSubsample: true,
+    })
     .toBuffer();
   const original = (await stat(file)).size;
   before += original;
   after += output.length;
-  console.log(`${kb(original).padStart(8)} -> ${kb(output.length).padStart(7)}  ${path.relative(root, target)}`);
+  console.log(
+    `${kb(original).padStart(8)} -> ${kb(output.length).padStart(7)}  ${path.relative(root, target)}`,
+  );
   if (dryRun) continue;
   await writeFile(target, output);
   await unlink(file);
 }
 
-console.log(`\n${(before / 1048576).toFixed(1)} MB -> ${(after / 1048576).toFixed(1)} MB`);
+console.log(
+  `\n${(before / 1048576).toFixed(1)} MB -> ${(after / 1048576).toFixed(1)} MB`,
+);

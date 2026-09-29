@@ -3,16 +3,19 @@
 import { useId, useRef, useState, type CSSProperties } from "react";
 import { useLocale } from "@/components/i18n";
 import { BEFORE_RAD_STAGE_KEY } from "./const";
-import { BEFORE_RAD_STAGES, type BeforeRadFrame, type BeforeRadStageId } from "./type";
+import {
+  BEFORE_RAD_STAGES,
+  type BeforeRadFrame,
+  type BeforeRadStageId,
+} from "./type";
 import "./before-rad.css";
 
 function nearestStage(progress: number): BeforeRadStageId {
-  const index = Math.min(BEFORE_RAD_STAGES.length - 1, Math.round(progress * (BEFORE_RAD_STAGES.length - 1)));
+  const index = Math.min(
+    BEFORE_RAD_STAGES.length - 1,
+    Math.round(progress * (BEFORE_RAD_STAGES.length - 1)),
+  );
   return BEFORE_RAD_STAGES[index];
-}
-
-export function stageFromProgress(progress: number) {
-  return nearestStage(progress);
 }
 
 export function BeforeRad({
@@ -30,7 +33,8 @@ export function BeforeRad({
   const [internal, setInternal] = useState(1);
   const progress = value ?? internal;
   const stage = nearestStage(progress);
-  const active = frames.find((frame) => frame.id === stage) ?? frames[frames.length - 1];
+  const active =
+    frames.find((frame) => frame.id === stage) ?? frames[frames.length - 1];
 
   function setProgress(next: number) {
     const clamped = Math.min(1, Math.max(0, next));
@@ -94,7 +98,10 @@ export function BeforeRad({
       >
         {frames.map((frame, index) => {
           const point = index / Math.max(1, frames.length - 1);
-          const opacity = Math.max(0, 1 - Math.abs(progress - point) * (frames.length - 1));
+          const opacity = Math.max(
+            0,
+            1 - Math.abs(progress - point) * (frames.length - 1),
+          );
           return (
             <figure
               key={frame.id}
@@ -130,7 +137,9 @@ export function BeforeRad({
             <button
               type="button"
               aria-pressed={id === stage}
-              onClick={() => setProgress(index / (BEFORE_RAD_STAGES.length - 1))}
+              onClick={() =>
+                setProgress(index / (BEFORE_RAD_STAGES.length - 1))
+              }
             >
               <span className="before-rad-dot" aria-hidden="true" />
               {t(BEFORE_RAD_STAGE_KEY[id])}
