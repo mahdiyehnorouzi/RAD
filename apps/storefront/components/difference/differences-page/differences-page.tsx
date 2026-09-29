@@ -6,12 +6,15 @@ import { useLocale } from "@/components/i18n";
 import { ButtonLink } from "@/components/ui/button-link";
 import { differenceMedia, differencePageCopy } from "../const";
 import { TraceHero, TraceQuote, TraceTimeline } from "../trace";
-import type { TraceIconName, TraceStep } from "../type";
+import type { DifferencePortrait, TraceIconName, TraceStep } from "../type";
 import { DifferencesCompare } from "./differences-compare";
 import { DifferencesMuseum } from "./differences-museum";
 import { DifferencesTraces } from "./differences-traces";
 
-const journeyIcons: Record<keyof typeof differenceMedia.journey, TraceIconName> = {
+const journeyIcons: Record<
+  keyof typeof differenceMedia.journey,
+  TraceIconName
+> = {
   clay: "clay",
   shape: "hand",
   glaze: "brush",
@@ -19,7 +22,11 @@ const journeyIcons: Record<keyof typeof differenceMedia.journey, TraceIconName> 
   rad: "bowl",
 };
 
-export function DifferencesPage() {
+export function DifferencesPage({
+  portraits,
+}: {
+  portraits: DifferencePortrait[];
+}) {
   const { locale, t, href } = useLocale();
   const c = differencePageCopy[locale];
   const journey: TraceStep[] = (
@@ -44,7 +51,10 @@ export function DifferencesPage() {
 
       <DifferencesTraces />
 
-      <section className="differences-journey" aria-labelledby="differences-journey-title">
+      <section
+        className="differences-journey"
+        aria-labelledby="differences-journey-title"
+      >
         <header className="trace-section-head">
           <h2 id="differences-journey-title">{c.journeyTitle}</h2>
           <p>{c.journeyLede}</p>
@@ -54,9 +64,12 @@ export function DifferencesPage() {
 
       <DifferencesCompare />
 
-      <DifferencesMuseum />
+      <DifferencesMuseum portraits={portraits} />
 
-      <section className="differences-close" aria-labelledby="differences-close-title">
+      <section
+        className="differences-close"
+        aria-labelledby="differences-close-title"
+      >
         <TraceQuote lines={c.quoteLines} />
         <div className="differences-close-copy">
           <h2 id="differences-close-title">{t("impossibleTitle")}</h2>

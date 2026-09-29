@@ -15,10 +15,13 @@ import { FavoritesModule } from "./favorites/favorites.module";
 import { ReviewsModule } from "./reviews/reviews.module";
 import { OrdersModule } from "./orders/orders.module";
 import { NoticesModule } from "./notices/notices.module";
+import { SessionModule } from "./session/session.module";
 import { DesignModule } from "./design/design.module";
 import { CommissionsModule } from "./commissions/commissions.module";
 import { AdminModule } from "./admin/admin.module";
 import { ContentModule } from "./content/content.module";
+import { HelpModule } from "./help/help.module";
+import { ShapeModule } from "./shape/shape.module";
 import { ContactModule } from "./contact/contact.module";
 import { DamageReportsModule } from "./damage/damage-reports.module";
 import { MailModule } from "./mail/mail.module";
@@ -48,11 +51,14 @@ import { HealthController } from "./health/health.controller";
     FavoritesModule,
     ReviewsModule,
     NoticesModule,
+    SessionModule,
     OrdersModule,
     DesignModule,
     CommissionsModule,
     AdminModule,
     ContentModule,
+    HelpModule,
+    ShapeModule,
     ContactModule,
     DamageReportsModule,
   ],

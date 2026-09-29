@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { productCopy } from "@/lib/catalog/products";
 import { useLocale } from "@/components/i18n";
 import { Search, X } from "lucide-react";
 import { useSearchWorks } from "@/hooks/use-search-works";
@@ -16,8 +15,8 @@ export function SiteSearch() {
   const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
-  const { locale, t, href } = useLocale();
-  const { normalizedQuery, results } = useSearchWorks(query);
+  const { t, href } = useLocale();
+  const { normalizedQuery, results, searching } = useSearchWorks(query);
   const allResultsHref = href(
     `/products?q=${encodeURIComponent(query.trim())}`,
   );
@@ -102,22 +101,19 @@ export function SiteSearch() {
               <b>{t("searchResults")}</b>
               {results.length ? (
                 <ul>
-                  {results.map((product) => {
-                    const copy = productCopy(product, locale);
-                    return (
-                      <li key={product.slug}>
-                        <Link
-                          href={href(`/products/${product.slug}`)}
-                          onClick={() => setOpen(false)}
-                        >
-                          <span>{copy.name}</span>
-                          <small>{copy.subtitle}</small>
-                        </Link>
-                      </li>
-                    );
-                  })}
+                  {results.map((hit) => (
+                    <li key={hit.slug}>
+                      <Link
+                        href={href(`/products/${hit.slug}`)}
+                        onClick={() => setOpen(false)}
+                      >
+                        <span>{hit.name}</span>
+                        <small>{hit.subtitle}</small>
+                      </Link>
+                    </li>
+                  ))}
                 </ul>
-              ) : (
+              ) : searching ? null : (
                 <p>{t("searchEmpty")}</p>
               )}
               <Link

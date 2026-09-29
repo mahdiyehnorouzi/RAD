@@ -17,7 +17,7 @@ export function CatalogPage({
     <PageSection className="plp">
       <Catalog
         products={products}
-        seededLive={live}
+        live={live}
         initialFilters={filters}
         intro={<CatalogIntro />}
       />

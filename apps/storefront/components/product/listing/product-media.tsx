@@ -9,8 +9,8 @@ import {
 } from "@/lib/catalog/category-defaults";
 import {
   catalogLifestylePhotoSrc,
-  catalogLifestylePhotoSlugs,
   catalogPhotoSrc,
+  hasStudioPhotos,
 } from "@/lib/catalog/photo-works";
 import { ArtworkVisual } from "../artwork-visual";
 import { useProductStatus } from "@/hooks/use-product-status";
@@ -22,7 +22,7 @@ function ownPhotoSrc(
   src?: string,
   preserveTransparentBackground = false,
 ) {
-  if (catalogLifestylePhotoSlugs.has(product.slug)) {
+  if (hasStudioPhotos(product)) {
     return preserveTransparentBackground
       ? catalogPhotoSrc(product.slug, imageIndex)
       : catalogLifestylePhotoSrc(product.slug, imageIndex);

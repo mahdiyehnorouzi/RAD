@@ -1,4 +1,5 @@
-import { artworkFamilies, careFor } from "@rad/artworks";
+import { careFor } from "@rad/artworks/copy";
+import { artworkFamilies } from "@rad/artworks/families";
 import {
   formatRadCode,
   parseRadNumber,
@@ -7,7 +8,6 @@ import {
   type ProductStatus,
 } from "@rad/types";
 import type { RadPassport } from "@/components/passport/type";
-import { fallbackArtworks } from "@/lib/artworks";
 import type { LocaleCopy } from "@/types/locale";
 
 function copy(fa: string, en: string): LocaleCopy {
@@ -217,9 +217,6 @@ export function passportsFrom(artworks: Artwork[]): RadPassport[] {
     .filter((item): item is RadPassport => Boolean(item))
     .sort((a, b) => a.radNumber - b.radNumber);
 }
-
-/** Registry passports for static params and metadata; client views read live artworks. */
-export const radPassports: RadPassport[] = passportsFrom(fallbackArtworks);
 
 export function findPassport(
   passports: RadPassport[],

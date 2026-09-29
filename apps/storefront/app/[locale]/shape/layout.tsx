@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
+import { CatalogScope } from "@/components/catalog/catalog-scope";
 import { pageMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = pageMetadata({
   title: "رَد من چه شکلیه؟",
-  description: "پنج سؤال کوتاه؛ بعد سه رَد واقعی از آرشیو.",
+  description: "چند سؤال کوتاه؛ بعد سه رَد واقعی از آرشیو.",
   path: "/shape",
 });
 
@@ -12,5 +13,5 @@ export default function ShapeLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return children;
+  return <CatalogScope withArtworks>{children}</CatalogScope>;
 }

@@ -1,5 +1,5 @@
 import type { Review } from "../database/entities";
-import type { ReviewView } from "./type";
+import type { AdminReviewView, ReviewView } from "./type";
 
 export function toReview(review: Review): ReviewView {
   return {
@@ -10,5 +10,13 @@ export function toReview(review: Review): ReviewView {
     comment: review.comment,
     image: review.image ?? undefined,
     createdAt: review.createdAt.getTime(),
+  };
+}
+
+export function toAdminReview(review: Review): AdminReviewView {
+  return {
+    ...toReview(review),
+    hidden: review.hidden,
+    productName: review.product?.name,
   };
 }

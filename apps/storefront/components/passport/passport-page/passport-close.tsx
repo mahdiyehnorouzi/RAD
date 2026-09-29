@@ -5,23 +5,23 @@ import Link from "next/link";
 import { ArrowLeft, ArrowRight, Check, Copy } from "lucide-react";
 import { useLocale } from "@/components/i18n";
 import { RadFingerprint } from "@/components/identity";
-import { formatPassportName, relatedByFeeling } from "@/lib/passport";
+import { formatPassportName } from "@/lib/passport";
 import type { RadPassport } from "../type";
 
 /** The sign-off: related works when this one is gone, then the ways onward. */
 export function PassportClose({
   passport,
-  passports,
+  related,
   sold,
 }: {
   passport: RadPassport;
-  passports: RadPassport[];
+  /** Works closest in feeling, offered once this one is gone. */
+  related: RadPassport[];
   sold: boolean;
 }) {
   const { locale, t, number, href } = useLocale();
   const [copied, setCopied] = useState(false);
   const Arrow = locale === "fa" ? ArrowLeft : ArrowRight;
-  const related = sold ? relatedByFeeling(passports, passport.code) : [];
   const onSale = passport.productSlug && passport.status && !sold;
 
   async function copyLink() {
@@ -39,7 +39,10 @@ export function PassportClose({
   return (
     <footer className="passport-close">
       {related.length ? (
-        <section className="passport-related" aria-labelledby="passport-related-title">
+        <section
+          className="passport-related"
+          aria-labelledby="passport-related-title"
+        >
           <h2 id="passport-related-title">{t("sameFeeling")}</h2>
           <ul>
             {related.map((item) => (
@@ -58,13 +61,19 @@ export function PassportClose({
       ) : null}
 
       <div className="passport-sign">
-        <RadFingerprint radNumber={passport.radNumber} className="passport-sign-print" />
+        <RadFingerprint
+          radNumber={passport.radNumber}
+          className="passport-sign-print"
+        />
         <p>{t("passportOnce")}</p>
       </div>
 
       <nav className="passport-actions" aria-label={t("passportEyebrow")}>
         {onSale ? (
-          <Link className="passport-action is-solid" href={href(`/products/${passport.productSlug}`)}>
+          <Link
+            className="passport-action is-solid"
+            href={href(`/products/${passport.productSlug}`)}
+          >
             <span>{t("passportViewWork")}</span>
             <Arrow aria-hidden="true" />
           </Link>
@@ -80,7 +89,9 @@ export function PassportClose({
         ) : null}
         <button type="button" className="passport-action" onClick={copyLink}>
           {copied ? <Check aria-hidden="true" /> : <Copy aria-hidden="true" />}
-          <span aria-live="polite">{copied ? t("passportCopied") : t("passportCopyLink")}</span>
+          <span aria-live="polite">
+            {copied ? t("passportCopied") : t("passportCopyLink")}
+          </span>
         </button>
         <Link className="passport-link" href={href("/products")}>
           {t("allWorks")}

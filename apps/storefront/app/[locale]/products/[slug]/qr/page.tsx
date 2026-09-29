@@ -4,8 +4,9 @@ import { cache } from "react";
 import QRCode from "qrcode";
 import { formatRadCode } from "@rad/types";
 import { ProductQr } from "@/components/product";
-import { productFromArtwork, resolveArtwork } from "@/lib/artworks";
-import { displayWorks } from "@/lib/catalog/get-catalog-works";
+import { productFromArtwork } from "@/lib/artworks";
+import { resolveArtwork } from "@/lib/artworks/server";
+import { registryProducts } from "@/lib/catalog/get-catalog-works";
 import { passportFromArtwork } from "@/lib/passport";
 import { absoluteUrl } from "@/lib/seo";
 
@@ -38,7 +39,7 @@ export async function generateMetadata({
 }
 
 export function generateStaticParams() {
-  return displayWorks.map((product) => ({ slug: product.slug }));
+  return registryProducts().map((product) => ({ slug: product.slug }));
 }
 
 export default async function ProductQrPage({

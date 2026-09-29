@@ -1,14 +1,11 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { useCatalog } from "@/components/catalog/catalog-provider";
+import { useCatalogIndex } from "@/components/catalog";
 import { formatPolicyDate, policyDocument } from "@/components/help";
 import { useLocale } from "@/components/i18n";
-import { usePortraits } from "@/hooks/use-artworks";
 import { useCommissionLookup } from "@/hooks/use-making-workspace";
 import { categoryLabel } from "@/lib/catalog/artwork";
-import { productCopy } from "@/lib/catalog/products";
-import { museumPortraits, portraitById } from "@/lib/difference";
 import { copy } from "@/lib/making";
 import { TRAIL_HIDDEN_PATHS, trailCopy } from "../const";
 import type { Crumb } from "../type";
@@ -29,9 +26,8 @@ function humanize(segment: string) {
 export function useRouteTrail() {
   const pathname = usePathname();
   const { locale } = useLocale();
-  const { getProduct, getArtwork } = useCatalog();
+  const { find } = useCatalogIndex();
   const findCommission = useCommissionLookup();
-  const portraits = usePortraits();
   const c = trailCopy[locale];
 
   const crumbs: Crumb[] = [{ label: c.home, path: "/" }];
@@ -42,7 +38,9 @@ export function useRouteTrail() {
     case "products": {
       add(c.works, "/products");
       if (!second) break;
-      const product = getProduct(second);
+      const entry = find(second);
+      const product =
+        entry?.inShop && entry.slug === second ? entry : undefined;
       if (product) {
         add(
           categoryLabel(product.category, locale),
@@ -50,7 +48,7 @@ export function useRouteTrail() {
         );
       }
       add(
-        product ? productCopy(product, locale).name : humanize(second),
+        product ? product.title[locale] : humanize(second),
         `/products/${second}`,
       );
       if (third === "qr") add(c.qr, `/products/${second}/qr`);
@@ -121,13 +119,11 @@ export function useRouteTrail() {
     case "differences": {
       add(c.differences, "/differences");
       if (!second) break;
+      const entry = find(second);
       const portrait =
-        portraitById(portraits, second) ??
-        portraitById(museumPortraits, second);
+        entry?.hasDifference && entry.slug === second ? entry : undefined;
       add(
-        portrait
-          ? (portrait.title?.[locale] ?? portrait.code)
-          : humanize(second),
+        portrait ? portrait.title[locale] : humanize(second),
         `/differences/${second}`,
       );
       break;
@@ -139,7 +135,7 @@ export function useRouteTrail() {
         first === "now" ? "/now" : "/products",
       );
       if (!second) break;
-      const artwork = getArtwork(second);
+      const artwork = find(second);
       add(
         artwork ? artwork.title[locale] : humanize(second),
         `/${first}/${second}`,

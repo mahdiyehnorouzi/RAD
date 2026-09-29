@@ -1,17 +1,15 @@
-"use client";
-
-import { useParams } from "next/navigation";
 import { DifferencePortraitView } from "@/components/difference";
 import { NotFoundState } from "@/components/states";
-import { usePortraits } from "@/hooks/use-artworks";
-import { museumPortraits, portraitById } from "@/lib/difference";
+import { resolveDifference } from "@/lib/difference/resolve";
 
-export default function DifferenceDetail() {
-  const params = useParams<{ id: string }>();
-  const id = String(params.id ?? "");
-  const portrait =
-    portraitById(usePortraits(), id) ?? portraitById(museumPortraits, id);
-  if (!portrait) {
+export default async function DifferenceDetail({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+  const work = await resolveDifference(id);
+  if (!work) {
     return (
       <NotFoundState
         title="museumMissing"
@@ -21,5 +19,10 @@ export default function DifferenceDetail() {
       />
     );
   }
-  return <DifferencePortraitView portrait={portrait} />;
+  return (
+    <DifferencePortraitView
+      portrait={work.portrait}
+      passportCode={work.passportCode}
+    />
+  );
 }

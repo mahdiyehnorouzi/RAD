@@ -5,7 +5,7 @@ import Link from "next/link";
 import { PackageCheck, Truck } from "lucide-react";
 import { productCopy } from "@/lib/catalog/products";
 import { formatTotal } from "@/lib/money";
-import { useCommerce } from "@/components/commerce";
+import { useOrders } from "@/components/commerce";
 import { useLocale } from "@/components/i18n";
 import { ButtonLink } from "@/components/ui/button-link";
 import { ProductMedia } from "@/components/product";
@@ -16,15 +16,19 @@ import { StateScreen } from "@/components/states";
 import { STORE_ORDER_STATUS_KEY, radArtworkNumber } from "../const";
 
 export function OrdersPage() {
-  const { orders } = useCommerce();
+  const { orders, ready } = useOrders();
   const { locale, t, href, number } = useLocale();
   const { products, getProduct } = useCatalog();
 
   return (
     <AccountShell requireAuth>
       <section className="orders-page section">
-        <AccountHeading icon={Truck} title={t("ordersTitle")} body={t("ordersShopNote")} />
-        {orders.length ? (
+        <AccountHeading
+          icon={Truck}
+          title={t("ordersTitle")}
+          body={t("ordersShopNote")}
+        />
+        {!ready ? null : orders.length ? (
           <div className="orders-list">
             {orders.map((order) => {
               const product = getProduct(order.slugs[0] ?? "");
@@ -49,8 +53,14 @@ export function OrdersPage() {
                   <p className="order-type-label">{t("collectionPurchase")}</p>
                   {product ? (
                     <div className="order-artwork">
-                      <Link href={href(`/products/${product.slug}`)} className="order-art">
-                        <ProductMedia product={product} showStatusBadge={false} />
+                      <Link
+                        href={href(`/products/${product.slug}`)}
+                        className="order-art"
+                      >
+                        <ProductMedia
+                          product={product}
+                          showStatusBadge={false}
+                        />
                       </Link>
                       <div>
                         <h2>
@@ -59,7 +69,8 @@ export function OrdersPage() {
                           </Link>
                         </h2>
                         <p>
-                          {t("artworkNumber")}: {radArtworkNumber(product.slug, products)}
+                          {t("artworkNumber")}:{" "}
+                          {radArtworkNumber(product.slug, products)}
                         </p>
                       </div>
                     </div>
@@ -80,7 +91,10 @@ export function OrdersPage() {
                     </div>
                   </dl>
                   <strong>
-                    {formatTotal(locale === "fa" ? order.total : usdTotal, locale)}
+                    {formatTotal(
+                      locale === "fa" ? order.total : usdTotal,
+                      locale,
+                    )}
                   </strong>
                   <ButtonLink href={`/orders/${order.id}`}>
                     {t("trackOrder")}
@@ -94,7 +108,11 @@ export function OrdersPage() {
             art="empty-bag"
             className="account-state"
             title={t("noOrders")}
-            actions={<ButtonLink href="/products">{t("viewAvailableWorks")}</ButtonLink>}
+            actions={
+              <ButtonLink href="/products">
+                {t("viewAvailableWorks")}
+              </ButtonLink>
+            }
           />
         )}
       </section>

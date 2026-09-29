@@ -2,8 +2,15 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { cache } from "react";
 import { PassportPage } from "@/components/passport";
-import { resolveArtwork } from "@/lib/artworks";
-import { passportFromArtwork, radPassports } from "@/lib/passport";
+import { fallbackArtworks, resolveArtwork } from "@/lib/artworks/server";
+import { getCatalog } from "@/lib/catalog/get-catalog-works";
+import { isGoneStatus } from "@/lib/catalog/product-status";
+import {
+  familyMembers,
+  passportFromArtwork,
+  passportsFrom,
+  relatedByFeeling,
+} from "@/lib/passport";
 import { absoluteUrl, pageMetadata, safeJsonLd } from "@/lib/seo";
 
 const resolvePassport = cache(async (code: string) => {
@@ -12,7 +19,9 @@ const resolvePassport = cache(async (code: string) => {
 });
 
 export function generateStaticParams() {
-  return radPassports.map((passport) => ({ code: passport.code }));
+  return passportsFrom(fallbackArtworks).map((passport) => ({
+    code: passport.code,
+  }));
 }
 
 export async function generateMetadata({
@@ -43,8 +52,12 @@ export default async function PassportDetail({
   params: Promise<{ code: string }>;
 }) {
   const { code } = await params;
-  const passport = await resolvePassport(code);
+  const [passport, { artworks }] = await Promise.all([
+    resolvePassport(code),
+    getCatalog(),
+  ]);
   if (!passport) notFound();
+  const passports = passportsFrom(artworks);
 
   const path = `/passport/${passport.code}`;
   const image = passport.finalPhotos[0]?.src;
@@ -68,7 +81,15 @@ export default async function PassportDetail({
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }}
       />
-      <PassportPage passport={passport} />
+      <PassportPage
+        passport={passport}
+        family={familyMembers(passports, passport.code)}
+        related={
+          isGoneStatus(passport.status)
+            ? relatedByFeeling(passports, passport.code)
+            : []
+        }
+      />
     </>
   );
 }

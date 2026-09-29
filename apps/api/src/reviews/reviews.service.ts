@@ -3,8 +3,8 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { Not, Repository } from "typeorm";
 import { Product, Review } from "../database/entities";
 import type { Actor } from "../common/identity";
-import { REVIEW_FEED_LIMIT } from "./const";
-import { toReview } from "./reviews.mapper";
+import { ADMIN_REVIEW_LIMIT, REVIEW_FEED_LIMIT } from "./const";
+import { toAdminReview, toReview } from "./reviews.mapper";
 
 const allowedImage = /^data:image\/(jpeg|png|webp);base64,/i;
 const maxImageBytes = 1024 * 1024;
@@ -36,7 +36,7 @@ export class ReviewsService {
       throw new NotFoundException("اثر پیدا نشد.");
     }
     const reviews = await this.reviews.find({
-      where: { productSlug: slug },
+      where: { productSlug: slug, hidden: false },
       order: { createdAt: "DESC" },
     });
     return reviews.map(toReview);
@@ -45,11 +45,35 @@ export class ReviewsService {
   async feed() {
     const reviews = await this.reviews.find({
       relations: { product: true },
-      where: { product: { status: Not("draft") } },
+      where: { hidden: false, product: { status: Not("draft") } },
       order: { createdAt: "DESC" },
       take: REVIEW_FEED_LIMIT,
     });
     return reviews.map(toReview);
+  }
+
+  async listAll() {
+    const reviews = await this.reviews.find({
+      relations: { product: true },
+      order: { createdAt: "DESC" },
+      take: ADMIN_REVIEW_LIMIT,
+    });
+    return reviews.map(toAdminReview);
+  }
+
+  async setHidden(id: string, hidden: boolean) {
+    const review = await this.reviews.findOne({ where: { id } });
+    if (!review) throw new NotFoundException("نظر پیدا نشد.");
+    await this.reviews.update({ id }, { hidden });
+    return toAdminReview(
+      await this.reviews.findOneOrFail({ where: { id }, relations: { product: true } }),
+    );
+  }
+
+  async remove(id: string) {
+    const result = await this.reviews.delete({ id });
+    if (!result.affected) throw new NotFoundException("نظر پیدا نشد.");
+    return { ok: true };
   }
 
   async create(actor: Actor, slug: string, input: { rating: number; comment: string; image?: string }) {

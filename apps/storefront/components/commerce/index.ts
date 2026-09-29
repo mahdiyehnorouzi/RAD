@@ -1,6 +1,7 @@
 export {
   CommerceProvider,
   useCommerce,
+  useOrders,
   FavoriteButton,
   NotificationCenter,
   AccountLink,

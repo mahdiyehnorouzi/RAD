@@ -1,4 +1,4 @@
-import { artworkFamilies } from "@rad/artworks";
+import { artworkFamilies } from "@rad/artworks/families";
 import { formatRadCode } from "@rad/types";
 import type { PassportTraits, RadPassport } from "@/components/passport/type";
 import { findPassport } from "./passports";

@@ -1,8 +1,6 @@
 "use client";
 
-import { findPassport } from "@/lib/passport";
 import { isGoneStatus } from "@/lib/catalog/product-status";
-import { usePassports } from "@/hooks/use-artworks";
 import { BeforeRad } from "../before-rad";
 import type { RadPassport } from "../type";
 import { WorkMarks } from "../work-marks";
@@ -14,10 +12,17 @@ import { PassportLife } from "./passport-life";
 import { PassportWhere } from "./passport-where";
 import "./passport-page.css";
 
-export function PassportPage({ passport: source }: { passport: RadPassport }) {
-  const passports = usePassports();
-  const live = findPassport(passports, source.radNumber);
-  const passport = live?.status ? live : source;
+export function PassportPage({
+  passport,
+  family,
+  related,
+}: {
+  passport: RadPassport;
+  /** The family in the order it grew, this work included. */
+  family: RadPassport[];
+  /** Works closest in feeling, offered once this one is gone. */
+  related: RadPassport[];
+}) {
   const sold = isGoneStatus(passport.status);
 
   return (
@@ -30,10 +35,14 @@ export function PassportPage({ passport: source }: { passport: RadPassport }) {
       ) : null}
       <PassportWhere passport={passport} />
       <div className="passport-keep">
-        <PassportFamily passport={passport} passports={passports} />
+        <PassportFamily passport={passport} members={family} />
         <PassportCare passport={passport} />
       </div>
-      <PassportClose passport={passport} passports={passports} sold={sold} />
+      <PassportClose
+        passport={passport}
+        related={sold ? related : []}
+        sold={sold}
+      />
     </article>
   );
 }

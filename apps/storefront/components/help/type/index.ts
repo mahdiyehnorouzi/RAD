@@ -1,5 +1,4 @@
 export type {
-  HelpQuestion,
   PolicyBlock,
   PolicyDocument,
   PolicyIcon,

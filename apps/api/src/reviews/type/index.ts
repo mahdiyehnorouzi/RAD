@@ -1,1 +1,1 @@
-export type { ReviewView } from "./review";
+export type { AdminReviewView, ReviewView } from "./review";

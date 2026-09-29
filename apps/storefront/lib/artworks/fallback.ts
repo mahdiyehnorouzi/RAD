@@ -1,3 +1,4 @@
+import "server-only";
 import { artistById, artworkRecords, type ArtworkRecord } from "@rad/artworks";
 import type { Artwork } from "@rad/types";
 

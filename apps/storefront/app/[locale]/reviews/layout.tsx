@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { CatalogScope } from "@/components/catalog/catalog-scope";
 import { pageMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = pageMetadata({
@@ -13,5 +14,5 @@ export default function ReviewsLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return children;
+  return <CatalogScope>{children}</CatalogScope>;
 }

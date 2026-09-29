@@ -1,8 +1,10 @@
 import type { Artwork } from "@rad/types";
 import { api, ApiError } from "./client";
 
-export async function fetchArtworks(): Promise<Artwork[]> {
-  return api<Artwork[]>("/artworks");
+export async function fetchArtworks(
+  init?: Parameters<typeof api>[1],
+): Promise<Artwork[]> {
+  return api<Artwork[]>("/artworks", init);
 }
 
 /** `key` is a RAD number or a slug; `null` when the API answers 404. */
