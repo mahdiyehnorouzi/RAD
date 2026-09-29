@@ -77,7 +77,7 @@ function PolicyDocumentView({
       <header className="policy-opening">
         <div className="policy-opening-media" aria-hidden="true">
           <Image
-            src="/help/policy-stone.jpg"
+            src="/help/policy-stone.webp"
             alt=""
             width={560}
             height={640}

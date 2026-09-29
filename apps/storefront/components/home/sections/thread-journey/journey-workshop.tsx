@@ -42,7 +42,7 @@ export function JourneyWorkshop({
       <div className="journey-workshop-photo">
         {piece.image ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={piece.image} alt="" />
+          <img src={piece.image} alt="" loading="lazy" decoding="async" />
         ) : null}
         <JourneySpark className="journey-workshop-spark" />
         <span

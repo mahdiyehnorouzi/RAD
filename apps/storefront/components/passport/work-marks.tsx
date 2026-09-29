@@ -21,7 +21,7 @@ export function WorkMarks({
       <p>{t("marksBody")}</p>
       <div className="work-marks-stage">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={src} alt="" />
+        <img src={src} alt="" loading="lazy" decoding="async" />
         {marks.map((mark, index) => (
           <button
             key={`${mark.x}-${mark.y}`}

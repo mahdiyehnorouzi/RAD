@@ -29,7 +29,7 @@ export function heroCards(locale: Locale): HeroCard[] {
 
   return [
     {
-      src: "/home/hero/work-01-wall-textile.png",
+      src: "/home/hero/work-01-wall-textile.webp",
       alt: isFa
         ? "بافته دیواری دست‌باف با نقش توپوگرافیک"
         : "Handwoven wall textile with a topographic composition",
@@ -37,11 +37,11 @@ export function heroCards(locale: Locale): HeroCard[] {
       note: isFa
         ? "ردِ کوه، میان تار و پود، آرام جا مانده است."
         : "A mountain’s trace, left quietly in the weave.",
-      noteArt: isFa ? "/home/hero/notes/note-01-wall-textile.png" : undefined,
+      noteArt: isFa ? "/home/hero/notes/note-01-wall-textile.webp" : undefined,
       tone: "textile",
     },
     {
-      src: "/home/hero/work-02-stone-lamp.png",
+      src: "/home/hero/work-02-stone-lamp.webp",
       alt: isFa
         ? "چراغ سنگی دست‌تراش با پایه چوب گردو"
         : "Hand-carved alabaster lamp with a walnut base",
@@ -49,11 +49,11 @@ export function heroCards(locale: Locale): HeroCard[] {
       note: isFa
         ? "نور، آهسته از دلِ سنگ رد می‌شود."
         : "Light passes slowly through the stone.",
-      noteArt: isFa ? "/home/hero/notes/note-02-stone-lamp.png" : undefined,
+      noteArt: isFa ? "/home/hero/notes/note-02-stone-lamp.webp" : undefined,
       tone: "stone",
     },
     {
-      src: "/home/hero/work-03-brass-incense-holder.png",
+      src: "/home/hero/work-03-brass-incense-holder.webp",
       alt: isFa
         ? "عودسوز مجسمه‌گون از برنج سیاه‌کاری‌شده"
         : "Sculptural incense holder in blackened brass",
@@ -61,11 +61,11 @@ export function heroCards(locale: Locale): HeroCard[] {
       note: isFa
         ? "دود، شکلِ ناپیدای این اثر است."
         : "Smoke is this work’s unseen form.",
-      noteArt: isFa ? "/home/hero/notes/note-03-brass-incense-holder.png" : undefined,
+      noteArt: isFa ? "/home/hero/notes/note-03-brass-incense-holder.webp" : undefined,
       tone: "metal",
     },
     {
-      src: "/home/hero/work-04-ceramic-mug.jpg",
+      src: "/home/hero/work-04-ceramic-mug.webp",
       alt: isFa
         ? "ماگ سفالی دست‌ساز با قطره‌های لعاب آبی که از لبه‌اش آویزان‌اند"
         : "Handmade ceramic mug with blue glaze drops hanging from its rim",
@@ -73,11 +73,11 @@ export function heroCards(locale: Locale): HeroCard[] {
       note: isFa
         ? "قطره‌ها، پیش از افتادن در لعاب ماندند."
         : "The drops stayed in the glaze, just before they fell.",
-      noteArt: isFa ? "/home/hero/notes/note-04-ceramic-mug.png" : undefined,
+      noteArt: isFa ? "/home/hero/notes/note-04-ceramic-mug.webp" : undefined,
       tone: "ceramic",
     },
     {
-      src: "/home/hero/work-05-ceramic-teapot.jpg",
+      src: "/home/hero/work-05-ceramic-teapot.webp",
       alt: isFa
         ? "قوری سفالی دوطبقه با ضربه‌های قلم‌موی سبز"
         : "Stacked ceramic teapot with green brushstrokes",
@@ -85,7 +85,7 @@ export function heroCards(locale: Locale): HeroCard[] {
       note: isFa
         ? "دو بدنه، روی هم؛ برای یک چایِ آرام."
         : "Two bodies, stacked for one slow pot of tea.",
-      noteArt: isFa ? "/home/hero/notes/note-05-ceramic-teapot.png" : undefined,
+      noteArt: isFa ? "/home/hero/notes/note-05-ceramic-teapot.webp" : undefined,
       tone: "ceramic",
     },
   ];

@@ -30,7 +30,7 @@ export const catalogArtworks: ArtworkRecord[] = [
     shape: "tall",
     images: [
       {
-        src: "/catalog/photos/transparent/blue-pedestal-tray.png",
+        src: "/catalog/photos/transparent/blue-pedestal-tray.webp",
         alt: "سینی پایه‌دار آبی",
         enAlt: "Blue speckled pedestal tray",
       },
@@ -66,7 +66,7 @@ export const catalogArtworks: ArtworkRecord[] = [
     shape: "round",
     images: [
       {
-        src: "/catalog/photos/transparent/blue-pink-jar.png",
+        src: "/catalog/photos/transparent/blue-pink-jar.webp",
         alt: "قوطی آبی و صورتی",
         enAlt: "Blue and pink abstract jar",
       },
@@ -105,7 +105,7 @@ export const catalogArtworks: ArtworkRecord[] = [
     shape: "round",
     images: [
       {
-        src: "/catalog/photos/transparent/cat-cup.png",
+        src: "/catalog/photos/transparent/cat-cup.webp",
         alt: "فنجان گربه",
         enAlt: "Cat mug with tail handle",
       },
@@ -141,7 +141,7 @@ export const catalogArtworks: ArtworkRecord[] = [
     shape: "round",
     images: [
       {
-        src: "/catalog/photos/transparent/contour-jar.png",
+        src: "/catalog/photos/transparent/contour-jar.webp",
         alt: "قوطی خط‌کُنتور",
         enAlt: "Sage green contour jar",
       },
@@ -177,7 +177,7 @@ export const catalogArtworks: ArtworkRecord[] = [
     shape: "wide",
     images: [
       {
-        src: "/catalog/photos/transparent/dachshund-sculpture.png",
+        src: "/catalog/photos/transparent/dachshund-sculpture.webp",
         alt: "مجسمه داشهوند",
         enAlt: "Ceramic dachshund figurine",
       },
@@ -213,7 +213,7 @@ export const catalogArtworks: ArtworkRecord[] = [
     shape: "tall",
     images: [
       {
-        src: "/catalog/photos/transparent/olive-loop-vessel.png",
+        src: "/catalog/photos/transparent/olive-loop-vessel.webp",
         alt: "ظرف حلقه‌ای زیتونی",
         enAlt: "Olive green ring-handle vessel",
       },
@@ -249,7 +249,7 @@ export const catalogArtworks: ArtworkRecord[] = [
     shape: "tall",
     images: [
       {
-        src: "/catalog/photos/transparent/blue-flower-portrait.png",
+        src: "/catalog/photos/transparent/blue-flower-portrait.webp",
         alt: "گلدان پرتره گل‌دار",
         enAlt: "Floral crown head vase",
       },
@@ -285,7 +285,7 @@ export const catalogArtworks: ArtworkRecord[] = [
     shape: "round",
     images: [
       {
-        src: "/catalog/photos/transparent/mint-angular-cup.png",
+        src: "/catalog/photos/transparent/mint-angular-cup.webp",
         alt: "فنجان مرمری نعنایی",
         enAlt: "Organic marbled mint cup",
       },
@@ -321,7 +321,7 @@ export const catalogArtworks: ArtworkRecord[] = [
     shape: "wide",
     images: [
       {
-        src: "/catalog/photos/transparent/orange-boat-sculpture.png",
+        src: "/catalog/photos/transparent/orange-boat-sculpture.webp",
         alt: "مجسمه قایق نارنجی",
         enAlt: "Orange ceramic tugboat sculpture",
       },
@@ -357,7 +357,7 @@ export const catalogArtworks: ArtworkRecord[] = [
     shape: "round",
     images: [
       {
-        src: "/catalog/photos/transparent/spotted-loop-teapot.png",
+        src: "/catalog/photos/transparent/spotted-loop-teapot.webp",
         alt: "قوری حلقه‌ای خال‌دار",
         enAlt: "Pastel spotted loop teapot",
       },
@@ -393,7 +393,7 @@ export const catalogArtworks: ArtworkRecord[] = [
     shape: "tall",
     images: [
       {
-        src: "/catalog/photos/transparent/mint-loop-vessel.png",
+        src: "/catalog/photos/transparent/mint-loop-vessel.webp",
         alt: "ظرف حلقه‌ای نعنایی",
         enAlt: "Speckled sage loop vessel",
       },
@@ -429,7 +429,7 @@ export const catalogArtworks: ArtworkRecord[] = [
     shape: "round",
     images: [
       {
-        src: "/catalog/photos/transparent/speckled-cup.png",
+        src: "/catalog/photos/transparent/speckled-cup.webp",
         alt: "لیوان خال‌دار آبی",
         enAlt: "Speckled blue tumbler",
       },
@@ -465,7 +465,7 @@ export const catalogArtworks: ArtworkRecord[] = [
     shape: "round",
     images: [
       {
-        src: "/catalog/photos/transparent/speckled-sculpted-mug.png",
+        src: "/catalog/photos/transparent/speckled-sculpted-mug.webp",
         alt: "ماگ کدو خال‌دار",
         enAlt: "Speckled pumpkin mug",
       },
@@ -501,7 +501,7 @@ export const catalogArtworks: ArtworkRecord[] = [
     shape: "tall",
     images: [
       {
-        src: "/catalog/photos/transparent/yellow-graphic-pitcher.png",
+        src: "/catalog/photos/transparent/yellow-graphic-pitcher.webp",
         alt: "پارچ زرد هندسی",
         enAlt: "Yellow geometric ceramic pitcher",
       },
@@ -540,12 +540,12 @@ export const catalogArtworks: ArtworkRecord[] = [
     shape: "wide",
     images: [
       {
-        src: "/catalog/photos/transparent/cobalt-ripple-tray.png",
+        src: "/catalog/photos/transparent/cobalt-ripple-tray.webp",
         alt: "نمای روبه‌روی سینی موج کبالت",
         enAlt: "Front view of the Cobalt Ripple Tray",
       },
       {
-        src: "/catalog/photos/transparent/cobalt-ripple-tray-2.png",
+        src: "/catalog/photos/transparent/cobalt-ripple-tray-2.webp",
         alt: "نمای بالا از سینی موج کبالت",
         enAlt: "Top view of the Cobalt Ripple Tray",
       },
@@ -584,7 +584,7 @@ export const catalogArtworks: ArtworkRecord[] = [
     shape: "round",
     images: [
       {
-        src: "/catalog/photos/transparent/pink-petal-cup.png",
+        src: "/catalog/photos/transparent/pink-petal-cup.webp",
         alt: "فنجان گلبرگ صورتی با دسته زیتونی",
         enAlt: "Pink Petal Cup with olive loop handle",
       },
@@ -623,7 +623,7 @@ export const catalogArtworks: ArtworkRecord[] = [
     shape: "wide",
     images: [
       {
-        src: "/catalog/photos/transparent/cobalt-fold-bowl.png",
+        src: "/catalog/photos/transparent/cobalt-fold-bowl.webp",
         alt: "نمای روبه‌روی کاسه چین کبالت",
         enAlt: "Front view of the Cobalt Fold Bowl",
         spots: [
@@ -657,7 +657,7 @@ export const catalogArtworks: ArtworkRecord[] = [
         ],
       },
       {
-        src: "/catalog/photos/transparent/cobalt-fold-bowl-2.png",
+        src: "/catalog/photos/transparent/cobalt-fold-bowl-2.webp",
         alt: "نمای بالا از کاسه چین کبالت",
         enAlt: "Top view of the Cobalt Fold Bowl",
         spots: [
@@ -918,7 +918,7 @@ export const catalogArtworks: ArtworkRecord[] = [
     shape: "wide",
     images: [
       {
-        src: "/catalog/photos/transparent/blue-window.png",
+        src: "/catalog/photos/transparent/blue-window.webp",
         alt: "نقاشی انتزاعی پنجره آبی در نور استودیو",
         enAlt: "Blue Window abstract painting in studio light",
       },
@@ -957,7 +957,7 @@ export const catalogArtworks: ArtworkRecord[] = [
     shape: "tall",
     images: [
       {
-        src: "/catalog/photos/transparent/woven-garden.png",
+        src: "/catalog/photos/transparent/woven-garden.webp",
         alt: "دیوارکوب کتانی باغ بافته با دوخت دست",
         enAlt: "Woven Garden hand-embroidered linen wall hanging",
       },
@@ -993,7 +993,7 @@ export const catalogArtworks: ArtworkRecord[] = [
     shape: "round",
     images: [
       {
-        src: "/catalog/photos/transparent/walnut-tide.png",
+        src: "/catalog/photos/transparent/walnut-tide.webp",
         alt: "کاسه گردوی دست‌تراش موج گردو",
         enAlt: "Walnut Tide hand-carved walnut bowl",
       },
@@ -1032,7 +1032,7 @@ export const catalogArtworks: ArtworkRecord[] = [
     shape: "round",
     images: [
       {
-        src: "/catalog/photos/transparent/silver-orbit.png",
+        src: "/catalog/photos/transparent/silver-orbit.webp",
         alt: "انگشتر نقره دست‌ساز مدار نقره‌ای با عقیق سبز",
         enAlt: "Silver Orbit handmade silver ring with green agate",
       },
@@ -1068,7 +1068,7 @@ export const catalogArtworks: ArtworkRecord[] = [
     shape: "wide",
     images: [
       {
-        src: "/catalog/photos/transparent/red-garden-print.png",
+        src: "/catalog/photos/transparent/red-garden-print.webp",
         alt: "چاپ دستی لینوکات باغ سرخ روی کاغذ پنبه‌ای",
         enAlt: "Red Garden hand-pulled linocut on cotton paper",
       },

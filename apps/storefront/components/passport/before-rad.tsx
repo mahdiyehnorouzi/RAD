@@ -109,7 +109,7 @@ export function BeforeRad({
             >
               {frame.src ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={frame.src} alt="" />
+                <img src={frame.src} alt="" loading="lazy" decoding="async" />
               ) : (
                 <div className="before-rad-field" />
               )}

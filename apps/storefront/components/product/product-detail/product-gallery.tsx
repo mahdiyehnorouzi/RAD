@@ -37,6 +37,7 @@ export function ProductGallery({ product }: { product: Product }) {
         product={product}
         imageIndex={slide.index}
         showStatusBadge={false}
+        priority={slide === slides[0]}
       />
     ) : (
       <ProductMedia
@@ -44,6 +45,7 @@ export function ProductGallery({ product }: { product: Product }) {
         imageIndex={0}
         showStatusBadge={false}
         preserveTransparentBackground
+        priority={slide === slides[0]}
       />
     );
 

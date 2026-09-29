@@ -11,31 +11,31 @@ export const FORM_OPTIONS: FormOption[] = [
     id: "container",
     label: { fa: "ظرف و کاربردی", en: "Tableware" },
     category: "tableware",
-    image: "/catalog/photos/transparent/speckled-sculpted-mug.png",
+    image: "/catalog/photos/transparent/speckled-sculpted-mug.webp",
   },
   {
     id: "sculpture",
     label: { fa: "مجسمه", en: "Sculpture" },
     category: "sculpture",
-    image: "/catalog/photos/transparent/orange-boat-sculpture.png",
+    image: "/catalog/photos/transparent/orange-boat-sculpture.webp",
   },
   {
     id: "open",
     label: { fa: "ایده‌ی آزاد", en: "Open idea" },
     category: "ceramics",
-    image: "/catalog/photos/transparent/olive-loop-vessel.png",
+    image: "/catalog/photos/transparent/olive-loop-vessel.webp",
   },
   {
     id: "accessory",
     label: { fa: "اکسسوری", en: "Accessory" },
     category: "jewelry",
-    image: "/catalog/photos/transparent/silver-orbit.png",
+    image: "/catalog/photos/transparent/silver-orbit.webp",
   },
   {
     id: "light",
     label: { fa: "نور", en: "Lighting" },
     category: "ceramics",
-    image: "/catalog/graphic/orbit-sculpture-lamp.png",
+    image: "/catalog/graphic/orbit-sculpture-lamp.webp",
   },
 ];
 

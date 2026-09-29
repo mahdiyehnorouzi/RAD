@@ -1,3 +1,5 @@
+import { withCurrentAssetPaths } from "@/lib/media/legacy-assets";
+
 export const API_BASE =
   typeof window === "undefined"
     ? process.env.API_URL || "http://localhost:4000"
@@ -80,7 +82,7 @@ export async function api<T>(path: string, init?: RequestInit & { timeoutMs?: nu
         firstString(data.code),
       );
     }
-    return data;
+    return withCurrentAssetPaths(data);
   } catch (err) {
     if (err instanceof ApiError) throw err;
     if (err instanceof DOMException && err.name === "AbortError") {

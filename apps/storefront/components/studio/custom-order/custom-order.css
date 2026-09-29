@@ -445,13 +445,13 @@ html[dir="rtl"] .cs-how-thread {
 .cs-band.is-leaf {
   background-image:
     linear-gradient(rgb(244 239 231 / 0.25), rgb(244 239 231 / 0.25)),
-    url("/studio/leaf.jpg");
+    url("/studio/leaf.webp");
 }
 
 .cs-band.is-plaster {
   background-image:
     linear-gradient(rgb(244 239 231 / 0.45), rgb(244 239 231 / 0.45)),
-    url("/studio/plaster.jpg");
+    url("/studio/plaster.webp");
 }
 
 .cs-tear-top {
@@ -905,7 +905,7 @@ html[dir="ltr"] .cs-make:hover .cs-round {
     padding: clamp(2.5rem, 4vw, 4rem) max(var(--page), calc((100% - 76rem) / 2)) 0;
     background:
       linear-gradient(rgb(244 239 231 / 0.3), rgb(244 239 231 / 0.3)),
-      url("/studio/window.jpg") center / cover #ece2d4;
+      url("/studio/window.webp") center / cover #ece2d4;
   }
 
   .cs-hero-arch {

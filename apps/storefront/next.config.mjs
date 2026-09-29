@@ -9,6 +9,14 @@ const nextConfig = {
   async redirects() { return [
     { source: "/passport", destination: "/reviews", permanent: true },
     { source: "/archive", destination: "/products", permanent: true },
+    // Public images are WebP now; the database and shared links still hold .png/.jpg paths.
+    // vinext rejects looser patterns (e.g. `.+` inside a group) as ReDoS risks.
+    {
+      source: "/:dir(about|catalog|contact|difference|help|home|making|now|shape|states|studio)/:file([\\w/-]+).:ext(png|jpg|jpeg)",
+      destination: "/:dir/:file.webp",
+      permanent: true,
+    },
+    { source: "/rad-mark.png", destination: "/rad-mark.webp", permanent: true },
   ]; },
   async headers() { return [
     { source: "/(.*)", headers: [{ key: "X-Content-Type-Options", value: "nosniff" }, { key: "X-Frame-Options", value: "DENY" }, { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" }] },

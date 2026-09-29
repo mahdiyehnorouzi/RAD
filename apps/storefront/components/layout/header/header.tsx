@@ -34,7 +34,7 @@ export function Header() {
         aria-label={t("home")}
         onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
       >
-        <Image src="/rad-mark.png" alt="" width={224} height={224} priority />
+        <Image src="/rad-mark.webp" alt="" width={224} height={224} priority />
       </Link>
       <nav className={open ? "nav open" : "nav"} aria-label={t("navAria")}>
         <Link href={href("/products")} onClick={() => setOpen(false)}>

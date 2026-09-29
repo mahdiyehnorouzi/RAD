@@ -61,6 +61,8 @@ export function ProductAnatomy({
         >
           <figure className="pdp-anatomy-figure">
             <img
+              loading="lazy"
+              decoding="async"
               src={anatomy.src}
               alt={
                 locale === "fa"

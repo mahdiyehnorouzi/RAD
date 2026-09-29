@@ -34,7 +34,7 @@ export function WorkStroke({
           : undefined
       }
     >
-      {sample ? <img src={sample.src} alt="" decoding="async" /> : null}
+      {sample ? <img src={sample.src} alt="" loading="lazy" decoding="async" /> : null}
     </span>
   );
 }

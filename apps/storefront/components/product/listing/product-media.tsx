@@ -38,12 +38,15 @@ export function ProductMedia({
   forceCategoryArtwork = false,
   showStatusBadge = true,
   preserveTransparentBackground = false,
+  priority = false,
 }: {
   product: Product;
   imageIndex?: number;
   forceCategoryArtwork?: boolean;
   showStatusBadge?: boolean;
   preserveTransparentBackground?: boolean;
+  /** The first image on screen: load it immediately instead of lazily. */
+  priority?: boolean;
 }) {
   const { locale } = useLocale();
   const { badge } = useProductStatus(product);
@@ -90,6 +93,9 @@ export function ProductMedia({
         className="product-photo"
         src={src}
         alt={label}
+        loading={priority ? "eager" : "lazy"}
+        fetchPriority={priority ? "high" : undefined}
+        decoding="async"
         onError={() => setFailedSrc(src)}
       />
       {soldBadge}

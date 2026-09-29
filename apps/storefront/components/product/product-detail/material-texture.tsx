@@ -32,7 +32,7 @@ export function MaterialTexture({
           } as CSSProperties
         }
       >
-        <img src={texture.src} alt="" decoding="async" />
+        <img src={texture.src} alt="" loading="lazy" decoding="async" />
       </span>
     ) : null;
 

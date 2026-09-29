@@ -35,7 +35,8 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "format:changed": "node scripts/prettier-changed.mjs --write",
-    "format:changed:check": "node scripts/prettier-changed.mjs --check"
+    "format:changed:check": "node scripts/prettier-changed.mjs --check",
+    "images:optimize": "node scripts/optimize-images.mjs"
   },
   "dependencies": {
     "@nestjs/typeorm": "^12.0.1",

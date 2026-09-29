@@ -176,7 +176,7 @@ export function AdminShapeQuestionDialog({
                     }
                   />
                 </Field>
-                <Field label="آدرس عکس (مثل /shape/q1-straight.jpg)">
+                <Field label="آدرس عکس (مثل /shape/q1-straight.webp)">
                   <input
                     dir="ltr"
                     value={choice.photo.src}

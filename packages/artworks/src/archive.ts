@@ -52,12 +52,12 @@ export const archiveArtworks: ArtworkRecord[] = [
     shape: "round",
     images: [
       {
-        src: catalogPhoto("croissant-handle-mug.png"),
+        src: catalogPhoto("croissant-handle-mug.webp"),
         alt: "کج‌دسته پس از کوره، نور کارگاه",
         enAlt: "Crooked Handle after the kiln, workshop light",
       },
       {
-        src: catalogPhoto("croissant-handle-mug-2.png"),
+        src: catalogPhoto("croissant-handle-mug-2.webp"),
         alt: "نمای دوم کج‌دسته؛ نوشته روی بدنه",
         enAlt: "Crooked Handle, second view with lettering on the body",
       },
@@ -68,7 +68,7 @@ export const archiveArtworks: ArtworkRecord[] = [
       dateCreated: t("اردیبهشت ۱۴۰۵", "April 2026"),
       city: t("تهران", "Tehran"),
       firstSketch: {
-        src: making("forming.png"),
+        src: making("forming.webp"),
         note: t(
           "اولین فرم روی چرخ؛ دسته هنوز جدا بود.",
           "First form on the wheel; the handle was still separate.",
@@ -76,18 +76,18 @@ export const archiveArtworks: ArtworkRecord[] = [
       },
       construction: [
         {
-          src: making("forming.png"),
+          src: making("forming.webp"),
           note: t(
             "بدنه پیش از اتصال دسته",
             "Body before the handle was joined",
           ),
         },
         {
-          src: making("cleaned.png"),
+          src: making("cleaned.webp"),
           note: t("تراش و پاک‌کردن درز دسته", "Cleaning the handle join"),
         },
         {
-          src: making("glaze-tile.png"),
+          src: making("glaze-tile.webp"),
           note: t(
             "نمونه لعاب شکلاتی روی تایل",
             "Chocolate glaze test on a tile",
@@ -149,7 +149,7 @@ export const archiveArtworks: ArtworkRecord[] = [
       beforeRad: [
         {
           id: "idea",
-          src: making("forming.png"),
+          src: making("forming.webp"),
           color: "#eee3cf",
           accent: "#9d5d2d",
           caption: t(
@@ -159,7 +159,7 @@ export const archiveArtworks: ArtworkRecord[] = [
         },
         {
           id: "hand",
-          src: making("cleaned.png"),
+          src: making("cleaned.webp"),
           color: "#ead9bd",
           accent: "#8a4938",
           caption: t(
@@ -169,14 +169,14 @@ export const archiveArtworks: ArtworkRecord[] = [
         },
         {
           id: "material",
-          src: making("glaze-tile.png"),
+          src: making("glaze-tile.webp"),
           color: "#cbb892",
           accent: "#9d5d2d",
           caption: t("لعاب از لبه سرازیر شد", "The glaze ran from the rim"),
         },
         {
           id: "rad",
-          src: catalogPhoto("croissant-handle-mug.png"),
+          src: catalogPhoto("croissant-handle-mug.webp"),
           color: "#eee3cf",
           accent: "#9d5d2d",
           caption: t("آنچه از کوره بیرون آمد", "What came out of the kiln"),
@@ -214,7 +214,7 @@ export const archiveArtworks: ArtworkRecord[] = [
     shape: "round",
     images: [
       {
-        src: making("cleaned.png"),
+        src: making("cleaned.webp"),
         alt: "کج‌دستهٔ اول پس از تراش",
         enAlt: "First Crooked Handle after cleaning",
       },
@@ -225,7 +225,7 @@ export const archiveArtworks: ArtworkRecord[] = [
       dateCreated: t("اسفند ۱۴۰۴", "March 2026"),
       city: t("تهران", "Tehran"),
       construction: [
-        { src: making("forming.png"), note: t("اولین فرم", "The first form") },
+        { src: making("forming.webp"), note: t("اولین فرم", "The first form") },
       ],
       unexpectedChanges: t(
         "دسته در خشک شدن خم شد. همان را نگه داشتیم.",
@@ -250,28 +250,28 @@ export const archiveArtworks: ArtworkRecord[] = [
       beforeRad: [
         {
           id: "idea",
-          src: making("forming.png"),
+          src: making("forming.webp"),
           color: "#eee3cf",
           accent: "#8a4938",
           caption: t("میل به کجی", "The wish to lean"),
         },
         {
           id: "hand",
-          src: making("cleaned.png"),
+          src: making("cleaned.webp"),
           color: "#ead9bd",
           accent: "#8a4938",
           caption: t("دست دسته را رها کرد", "The hand let the handle go"),
         },
         {
           id: "material",
-          src: making("cleaned.png"),
+          src: making("cleaned.webp"),
           color: "#cbb892",
           accent: "#8a4938",
           caption: t("خشک شدن مسیر را عوض کرد", "Drying changed the path"),
         },
         {
           id: "rad",
-          src: making("cleaned.png"),
+          src: making("cleaned.webp"),
           color: "#eee3cf",
           accent: "#8a4938",
           caption: t("کج‌دستهٔ اول", "The first crooked handle"),
@@ -312,7 +312,7 @@ export const archiveArtworks: ArtworkRecord[] = [
     shape: "round",
     images: [
       {
-        src: difference("homesickness-bowl", "material-v2.png"),
+        src: difference("homesickness-bowl", "material-v2.webp"),
         alt: "هاله بعد از آتش",
         enAlt: "Halo after the fire",
       },
@@ -324,7 +324,7 @@ export const archiveArtworks: ArtworkRecord[] = [
       city: t("تهران", "Tehran"),
       construction: [
         {
-          src: difference("homesickness-bowl", "artist-v2.png"),
+          src: difference("homesickness-bowl", "artist-v2.webp"),
           note: t("فرم پیش از هاله", "The form before the halo"),
         },
       ],
@@ -364,7 +364,7 @@ export const archiveArtworks: ArtworkRecord[] = [
         },
         {
           id: "hand",
-          src: difference("homesickness-bowl", "artist-v2.png"),
+          src: difference("homesickness-bowl", "artist-v2.webp"),
           color: "#87382c",
           accent: "#d8c4a0",
           caption: t(
@@ -380,7 +380,7 @@ export const archiveArtworks: ArtworkRecord[] = [
         },
         {
           id: "rad",
-          src: difference("homesickness-bowl", "material-v2.png"),
+          src: difference("homesickness-bowl", "material-v2.webp"),
           color: "#4b513c",
           accent: "#dbc7a5",
           caption: t("هاله", "Halo"),
@@ -421,7 +421,7 @@ export const archiveArtworks: ArtworkRecord[] = [
     shape: "round",
     images: [
       {
-        src: making("glaze-tile.png"),
+        src: making("glaze-tile.webp"),
         alt: "نسخه آزمایش رنگ",
         enAlt: "The colour-trial version",
       },
@@ -432,7 +432,7 @@ export const archiveArtworks: ArtworkRecord[] = [
       dateCreated: t("خرداد ۱۴۰۵", "May 2026"),
       city: t("تهران", "Tehran"),
       construction: [
-        { src: making("glaze-tile.png"), note: t("نمونه رنگ", "Colour test") },
+        { src: making("glaze-tile.webp"), note: t("نمونه رنگ", "Colour test") },
       ],
       unexpectedChanges: t(
         "لعاب از دسته پایین آمد و یک خط تیره ساخت.",
@@ -462,28 +462,28 @@ export const archiveArtworks: ArtworkRecord[] = [
       beforeRad: [
         {
           id: "idea",
-          src: catalogPhoto("croissant-handle-mug.png"),
+          src: catalogPhoto("croissant-handle-mug.webp"),
           color: "#eee3cf",
           accent: "#9d5d2d",
           caption: t("همان دسته، رنگ دیگر", "The same handle, another colour"),
         },
         {
           id: "hand",
-          src: making("cleaned.png"),
+          src: making("cleaned.webp"),
           color: "#ead9bd",
           accent: "#9d5d2d",
           caption: t("دست همان کجی را تکرار کرد", "The hand repeated the lean"),
         },
         {
           id: "material",
-          src: making("glaze-tile.png"),
+          src: making("glaze-tile.webp"),
           color: "#cbb892",
           accent: "#9d5d2d",
           caption: t("لعاب غلیظ‌تر خزید", "The thicker glaze crawled"),
         },
         {
           id: "rad",
-          src: making("glaze-tile.png"),
+          src: making("glaze-tile.webp"),
           color: "#eee3cf",
           accent: "#9d5d2d",
           caption: t("آزمایش رنگ", "Colour trial"),
@@ -536,7 +536,7 @@ export const archiveArtworks: ArtworkRecord[] = [
     shape: "round",
     images: [
       {
-        src: difference("homesickness-bowl", "material-v3.jpg"),
+        src: difference("homesickness-bowl", "material-v3.webp"),
         alt: "کاسه دلتنگی پس از آتش",
         enAlt: "Homesickness Bowl after the fire",
       },
@@ -546,19 +546,19 @@ export const archiveArtworks: ArtworkRecord[] = [
       dateCreated: t("فروردین ۱۴۰۵", "March 2026"),
       city: t("اصفهان", "Isfahan"),
       firstSketch: {
-        src: difference("homesickness-bowl", "described-v3.jpg"),
+        src: difference("homesickness-bowl", "described-v3.webp"),
         note: t("توصیف اول، پیش از گل", "The first description, before clay"),
       },
       construction: [
         {
-          src: difference("homesickness-bowl", "artist-v3.jpg"),
+          src: difference("homesickness-bowl", "artist-v3.webp"),
           note: t(
             "بازخوانی دست روی چرخ",
             "The hand rereading the form on the wheel",
           ),
         },
         {
-          src: making("glaze-tile.png"),
+          src: making("glaze-tile.webp"),
           note: t("نمونه خزیدن لعاب", "Glaze-crawl test"),
         },
       ],
@@ -624,10 +624,10 @@ export const archiveArtworks: ArtworkRecord[] = [
         material: { color: "#4b513c", accent: "#dbc7a5" },
       },
       stageImages: {
-        described: difference("homesickness-bowl", "described-v3.jpg"),
-        imagined: difference("homesickness-bowl", "imagined-v3.jpg"),
-        artist: difference("homesickness-bowl", "artist-v3.jpg"),
-        material: difference("homesickness-bowl", "material-v3.jpg"),
+        described: difference("homesickness-bowl", "described-v3.webp"),
+        imagined: difference("homesickness-bowl", "imagined-v3.webp"),
+        artist: difference("homesickness-bowl", "artist-v3.webp"),
+        material: difference("homesickness-bowl", "material-v3.webp"),
       },
     },
   },
@@ -667,7 +667,7 @@ export const archiveArtworks: ArtworkRecord[] = [
     shape: "tall",
     images: [
       {
-        src: difference("tehran-alley-vase", "material.png"),
+        src: difference("tehran-alley-vase", "material.webp"),
         alt: "گلدان کوچه، فرم تمام‌شده",
         enAlt: "Alley Vase, the finished form",
       },
@@ -677,12 +677,12 @@ export const archiveArtworks: ArtworkRecord[] = [
       dateCreated: t("خرداد ۱۴۰۵", "May 2026"),
       city: t("تهران", "Tehran"),
       firstSketch: {
-        src: difference("tehran-alley-vase", "described.png"),
+        src: difference("tehran-alley-vase", "described.webp"),
         note: t("یادداشت کوچه، پیش از گل", "Alley note, before clay"),
       },
       construction: [
         {
-          src: difference("tehran-alley-vase", "artist.png"),
+          src: difference("tehran-alley-vase", "artist.webp"),
           note: t(
             "فرورفتگی عمودی برای نور ظهر",
             "A vertical recess for noon light",
@@ -752,10 +752,10 @@ export const archiveArtworks: ArtworkRecord[] = [
         material: { color: "#18231f", accent: "#8a4938" },
       },
       stageImages: {
-        described: difference("tehran-alley-vase", "described.png"),
-        imagined: difference("tehran-alley-vase", "imagined.png"),
-        artist: difference("tehran-alley-vase", "artist.png"),
-        material: difference("tehran-alley-vase", "material.png"),
+        described: difference("tehran-alley-vase", "described.webp"),
+        imagined: difference("tehran-alley-vase", "imagined.webp"),
+        artist: difference("tehran-alley-vase", "artist.webp"),
+        material: difference("tehran-alley-vase", "material.webp"),
       },
     },
   },
@@ -792,7 +792,7 @@ export const archiveArtworks: ArtworkRecord[] = [
     shape: "wide",
     images: [
       {
-        src: difference("quiet-cloth", "material.png"),
+        src: difference("quiet-cloth", "material.webp"),
         alt: "پارچه آرام، تمام‌شده",
         enAlt: "Quiet Cloth, finished",
       },
@@ -802,12 +802,12 @@ export const archiveArtworks: ArtworkRecord[] = [
       dateCreated: t("تیر ۱۴۰۵", "June 2026"),
       city: t("تهران", "Tehran"),
       firstSketch: {
-        src: difference("quiet-cloth", "described.png"),
+        src: difference("quiet-cloth", "described.webp"),
         note: t("نقشه اولیه بافت", "The first weave map"),
       },
       construction: [
         {
-          src: difference("quiet-cloth", "artist.png"),
+          src: difference("quiet-cloth", "artist.webp"),
           note: t("جابه‌جایی تراکم پود", "A shift in weft density"),
         },
       ],
@@ -854,10 +854,10 @@ export const archiveArtworks: ArtworkRecord[] = [
         material: { color: "#76523b", accent: "#ead9bd" },
       },
       stageImages: {
-        described: difference("quiet-cloth", "described.png"),
-        imagined: difference("quiet-cloth", "imagined.png"),
-        artist: difference("quiet-cloth", "artist.png"),
-        material: difference("quiet-cloth", "material.png"),
+        described: difference("quiet-cloth", "described.webp"),
+        imagined: difference("quiet-cloth", "imagined.webp"),
+        artist: difference("quiet-cloth", "artist.webp"),
+        material: difference("quiet-cloth", "material.webp"),
       },
     },
   },

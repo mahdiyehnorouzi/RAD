@@ -35,7 +35,7 @@ export const workshopArtworks: ArtworkRecord[] = [
     shape: "round",
     images: [
       {
-        src: making("glaze-tile.png"),
+        src: making("glaze-tile.webp"),
         alt: "کاسه هاله در مرحلهٔ لعاب",
         enAlt: "Halo Bowl at the glaze stage",
       },
@@ -74,7 +74,7 @@ export const workshopArtworks: ArtworkRecord[] = [
     shape: "round",
     images: [
       {
-        src: making("cleaned.png"),
+        src: making("cleaned.webp"),
         alt: "کاسه صبح پس از تراش",
         enAlt: "Morning Bowl after cleaning",
       },

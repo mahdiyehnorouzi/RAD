@@ -1,4 +1,4 @@
 export const journeyMedia = {
-  ready: "/home/journey/ready.jpg",
-  custom: "/home/journey/custom.jpg",
+  ready: "/home/journey/ready.webp",
+  custom: "/home/journey/custom.webp",
 } as const;

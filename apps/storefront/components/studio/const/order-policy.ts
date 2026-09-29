@@ -65,7 +65,7 @@ export const ORDER_PRICE_TIERS: OrderPriceTier[] = [
       en: "Jewellery, pendants, small desk objects",
     },
     price: { fa: "از ۲ میلیون تومان", en: "from $25" },
-    image: "/catalog/photos/transparent/croissant-handle-mug.png",
+    image: "/catalog/photos/transparent/croissant-handle-mug.webp",
   },
   {
     id: "vessel",
@@ -75,7 +75,7 @@ export const ORDER_PRICE_TIERS: OrderPriceTier[] = [
       en: "Mugs, plates, trays, vases",
     },
     price: { fa: "از ۳ میلیون تومان", en: "from $35" },
-    image: "/catalog/photos/transparent/cobalt-fold-bowl.png",
+    image: "/catalog/photos/transparent/cobalt-fold-bowl.webp",
   },
   {
     id: "complex",
@@ -85,7 +85,7 @@ export const ORDER_PRICE_TIERS: OrderPriceTier[] = [
       en: "Sculptures, lamps, detailed forms",
     },
     price: { fa: "از ۵ میلیون تومان", en: "from $60" },
-    image: "/catalog/photos/transparent/dachshund-sculpture.png",
+    image: "/catalog/photos/transparent/dachshund-sculpture.webp",
   },
   {
     id: "large",
@@ -95,7 +95,7 @@ export const ORDER_PRICE_TIERS: OrderPriceTier[] = [
       en: "Sets, pieces larger than 50 cm",
     },
     price: { fa: "بعد از بررسی", en: "after review" },
-    image: "/catalog/photos/transparent/spotted-loop-teapot.png",
+    image: "/catalog/photos/transparent/spotted-loop-teapot.webp",
   },
 ];
 
