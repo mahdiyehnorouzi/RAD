@@ -3,7 +3,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { useCart } from "@/components/cart";
+import { useCart } from "@/features/cart";
 import { useLocale } from "@/components/i18n";
 import { useHeaderMotion } from "./hooks";
 import { Heart, Menu as MenuIcon, ShoppingBag, X } from "lucide-react";

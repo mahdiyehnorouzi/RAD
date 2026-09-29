@@ -5,6 +5,7 @@ import { useLocale } from "@/components/i18n";
 import { formatCountdown } from "@/lib/catalog/product-status";
 import { useCountdown } from "@/hooks/use-countdown";
 import { cartCopy } from "../const";
+import styles from "./cart-hold.module.css";
 
 /** How long the bag stays reserved, counting down to the earliest hold. */
 export function CartHold({
@@ -21,13 +22,13 @@ export function CartHold({
   const [before, after] = c.holdBody.split("{time}");
 
   return (
-    <div className="cart-hold" role="status" aria-live="off">
-      <Clock className="cart-hold-icon" aria-hidden="true" />
+    <div className={styles.hold} role="status" aria-live="off">
+      <Clock className={styles.icon} aria-hidden="true" />
       <div>
         <b>{count > 1 ? c.holdTitleMany : c.holdTitleOne}</b>
         <p>
           {before}
-          <span className="cart-hold-time" dir="ltr">
+          <span className={styles.time} dir="ltr">
             {formatCountdown(remaining, locale, number)}
           </span>
           {after}

@@ -10,6 +10,7 @@ import { formatTotal, priceToNumber, productPrice } from "@/lib/money";
 import { formatCountdown } from "@/lib/catalog/product-status";
 import { useCountdown } from "@/hooks/use-countdown";
 import { cartCopy, fillCartCopy } from "../const";
+import styles from "./cart-line.module.css";
 
 export type CartLineIssue =
   "withdrawn" | "sold" | "reserved" | "unavailable" | null;
@@ -46,12 +47,12 @@ export function CartLine({
   );
   const name = product ? productCopy(product, locale).name : slug;
   const quantity = (
-    <div className="cart-line-qty">
+    <div className={styles.qty}>
       <span>{c.quantity}</span>
       <b>{number(1)}</b>
       <button
         type="button"
-        className="cart-line-remove"
+        className={styles.remove}
         onClick={onRemove}
         disabled={removing}
         aria-label={fillCartCopy(c.remove, { name })}
@@ -64,11 +65,17 @@ export function CartLine({
 
   if (!product) {
     return (
-      <article className="cart-line is-blocked" aria-busy={removing}>
-        <span className="cart-line-art cart-line-art--missing" aria-hidden="true" />
-        <div className="cart-line-copy">
+      <article
+        className={`${styles.line} ${styles.blocked}`}
+        aria-busy={removing}
+      >
+        <span
+          className={`${styles.art} ${styles.missing}`}
+          aria-hidden="true"
+        />
+        <div className={styles.copy}>
           <h2 dir="ltr">{slug}</h2>
-          <p className="cart-line-issue" role="status">
+          <p className={styles.notice} role="status">
             {issue === "withdrawn"
               ? t("cartItemWithdrawn")
               : t("catalogStaleNotice")}
@@ -100,33 +107,33 @@ export function CartLine({
 
   return (
     <article
-      className={`cart-line${issue ? " is-blocked" : ""}`}
+      className={issue ? `${styles.line} ${styles.blocked}` : styles.line}
       aria-busy={removing}
     >
       <Link
         href={href(`/products/${product.slug}`)}
-        className="cart-line-art"
+        className={styles.art}
         tabIndex={-1}
         aria-hidden="true"
       >
         <ProductMedia product={product} showStatusBadge={false} />
         <LinkPending />
       </Link>
-      <div className="cart-line-copy">
+      <div className={styles.copy}>
         <h2>
           <Link href={href(`/products/${product.slug}`)}>{copy.name}</Link>
         </h2>
         <p>{copy.subtitle}</p>
-        <strong className={issue ? "is-struck" : undefined}>
+        <strong className={issue ? styles.struck : undefined}>
           {productPrice(product, locale)}
         </strong>
         {issueText ? (
-          <p className="cart-line-issue" role="status">
+          <p className={styles.notice} role="status">
             {issueText}
           </p>
         ) : null}
         {changed && !issue ? (
-          <p className="cart-line-changed" role="status">
+          <p className={styles.notice} role="status">
             {t("cartPriceChanged", {
               from: formatTotal(from, locale),
               to: formatTotal(to, locale),

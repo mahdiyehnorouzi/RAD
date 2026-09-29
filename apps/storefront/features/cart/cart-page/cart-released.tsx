@@ -10,6 +10,7 @@ import { useLocale } from "@/components/i18n";
 import { productCopy } from "@/lib/catalog/products";
 import { isGoneStatus, isReserved } from "@/lib/catalog/product-status";
 import { isNetworkError } from "@/lib/api";
+import styles from "./cart-released.module.css";
 
 /** Works whose hold ran out since the visitor last saw the bag, and where each went. */
 export function CartReleased({
@@ -48,13 +49,13 @@ export function CartReleased({
   };
 
   return (
-    <section className="cart-released" aria-labelledby={titleId}>
-      <WatercolorWash shape="corner" className="cart-released-wash" />
-      <header className="cart-released-head">
+    <section className={styles.released} aria-labelledby={titleId}>
+      <WatercolorWash shape="corner" className={styles.wash} />
+      <header className={styles.head}>
         <h2 id={titleId}>{t("cartReleasedTitle")}</h2>
         <button
           type="button"
-          className="cart-released-dismiss"
+          className={styles.dismiss}
           onClick={onDismiss}
           aria-label={t("dismiss")}
           title={t("dismiss")}
@@ -67,7 +68,7 @@ export function CartReleased({
           const product = getProduct(slug);
           if (!product) {
             return (
-              <li key={slug} className="cart-released-item">
+              <li key={slug} className={styles.item}>
                 <p>
                   <b dir="ltr">{slug}</b> — {t("cartReleasedGone")}
                 </p>
@@ -84,15 +85,16 @@ export function CartReleased({
                 ? t("cartReleasedSold")
                 : t("statusUnavailable");
           return (
-            <li key={slug} className="cart-released-item">
-              <div className="cart-released-copy">
+            <li key={slug} className={styles.item}>
+              <div>
                 <p>
-                  <Link href={href(`/products/${slug}`)}>{name}</Link> — {reason}
+                  <Link href={href(`/products/${slug}`)}>{name}</Link> —{" "}
+                  {reason}
                 </p>
                 {available ? (
                   <button
                     type="button"
-                    className="cart-released-add"
+                    className={styles.add}
                     disabled={busy === slug}
                     onClick={() => void addAgain(product)}
                   >
@@ -106,7 +108,7 @@ export function CartReleased({
               </div>
               <Link
                 href={href(`/products/${slug}`)}
-                className="cart-released-art"
+                className={styles.art}
                 tabIndex={-1}
                 aria-hidden="true"
               >

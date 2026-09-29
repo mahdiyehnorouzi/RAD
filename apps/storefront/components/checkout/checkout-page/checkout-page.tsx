@@ -11,13 +11,12 @@ import {
   currentPolicyVersions,
   type Product,
 } from "@rad/types";
-import { useCart } from "@/components/cart";
+import { CartEmpty, useCart } from "@/features/cart";
 import { useCatalog } from "@/components/catalog";
 import { useCommerce } from "@/components/commerce";
 import { HelpPanel } from "@/components/contact";
 import { CheckoutAgreement } from "@/components/help";
 import { useLocale } from "@/components/i18n";
-import { EmptyBagState } from "@/components/states";
 import { ButtonLink } from "@/components/ui/button-link";
 import { CardListSkeleton } from "@/components/ui/skeleton";
 import { useCountdown } from "@/hooks/use-countdown";
@@ -166,11 +165,7 @@ export function CheckoutPage() {
   }
 
   if (!slugs.length) {
-    return (
-      <section className="cart-empty section">
-        <EmptyBagState suggestions={availableWorks(products)} />
-      </section>
-    );
+    return <CartEmpty suggestions={availableWorks(products)} />;
   }
 
   if (!items.length) {

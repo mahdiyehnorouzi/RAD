@@ -11,22 +11,18 @@ import { StateNotice } from "@/components/ui/state-panel";
 import { useLocale } from "@/components/i18n";
 import { useCatalog } from "@/components/catalog";
 import { CartPolicyNote } from "@/components/help";
-import {
-  EmptyBagState,
-  ErrorState,
-  StateScreen,
-  StateWorks,
-} from "@/components/states";
+import { ErrorState, StateScreen, StateWorks } from "@/components/states";
 import {
   availableWorks,
   isGoneStatus,
   isReserved,
 } from "@/lib/catalog/product-status";
 import { cartCopy, fillCartCopy } from "../const";
+import { CartEmpty } from "../cart-empty";
 import { CartHold } from "./cart-hold";
 import { CartLine, priceChange, type CartLineIssue } from "./cart-line";
 import { CartReleased } from "./cart-released";
-import "./cart-page.css";
+import styles from "./cart-page.module.css";
 
 export function CartPage() {
   const { locale, t, number, href } = useLocale();
@@ -104,11 +100,11 @@ export function CartPage() {
 
   if (!ready) {
     return (
-      <section className="cart-page section" aria-busy="true">
-        <div className="cart-bag-body">
+      <section className={`${styles.page} section`} aria-busy="true">
+        <div className={styles.body}>
           <CardListSkeleton
             count={Math.max(1, Math.min(slugs.length, 3))}
-            className="cart-skeleton"
+            className={styles.skeleton}
           />
         </div>
       </section>
@@ -117,7 +113,7 @@ export function CartPage() {
 
   if (loadError && !loaded) {
     return (
-      <section className="cart-page section">
+      <section className={`${styles.page} section`}>
         <ErrorState
           layout="stack"
           as="h1"
@@ -142,16 +138,10 @@ export function CartPage() {
 
   if (!slugs.length)
     return (
-      <section className="cart-empty section">
-        <EmptyBagState
-          suggestions={availableWorks(products, released)}
-          notice={
-            released.length ? (
-              <div className="cart-empty-released">{releasedNotice}</div>
-            ) : null
-          }
-        />
-      </section>
+      <CartEmpty
+        suggestions={availableWorks(products, released)}
+        released={released.length ? releasedNotice : null}
+      />
     );
 
   const ArrowIcon = locale === "fa" ? ArrowLeft : ArrowRight;
@@ -163,16 +153,16 @@ export function CartPage() {
       : c.addedTitle;
 
   return (
-    <section className="cart-page section">
+    <section className={`${styles.page} section`}>
       <StateScreen
         art="empty-bag"
         as="h1"
-        className="cart-bag"
+        className={styles.bag}
         title={title}
         body={<p>{blocked ? c.blockedBody : c.addedBody}</p>}
         badge={blocked ? undefined : <Check aria-hidden="true" />}
       >
-        <div className="cart-bag-body">
+        <div className={styles.body}>
           {loadError ? (
             <StateNotice tone="error" action={retryButton}>
               <p>{t("cartErrorBody")}</p>
@@ -190,7 +180,7 @@ export function CartPage() {
           ) : null}
           {releasedNotice}
 
-          <ul className="cart-lines" aria-label={c.listLabel}>
+          <ul className={styles.lines} aria-label={c.listLabel}>
             {lines.map((line) => (
               <li key={line.slug}>
                 <CartLine
@@ -210,7 +200,7 @@ export function CartPage() {
           </ul>
 
           {many ? (
-            <div className="cart-bag-total">
+            <div className={styles.total}>
               <div>
                 <span>{t("finalTotal")}</span>
                 <small>{c.shipping}</small>
@@ -223,7 +213,7 @@ export function CartPage() {
             <CartHold endsAt={holdEndsAt} count={slugs.length} />
           )}
 
-          <div className="cart-bag-actions">
+          <div className={styles.actions}>
             {blocked || loadError ? (
               <Button disabled>
                 {c.checkout}
@@ -241,7 +231,7 @@ export function CartPage() {
           {many ? (
             <button
               type="button"
-              className="cart-bag-clear"
+              className={styles.clear}
               disabled={clearing}
               onClick={async () => {
                 setClearing(true);

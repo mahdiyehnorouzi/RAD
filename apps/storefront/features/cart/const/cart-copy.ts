@@ -12,8 +12,7 @@ export const cartCopy = {
     remove: "حذف {name} از کیسه",
     holdTitleOne: "این اثر برای شما رزرو شده است.",
     holdTitleMany: "این آثار برای شما رزرو شده‌اند.",
-    holdBody:
-      "اگر پرداخت را تکمیل نکنید، بعد از {time} به فروشگاه برمی‌گردد.",
+    holdBody: "اگر پرداخت را تکمیل نکنید، بعد از {time} به فروشگاه برمی‌گردد.",
     shipping: "ارسال بیمه‌شده رایگان",
     checkout: "ادامه و ثبت سفارش",
     browse: "ادامه‌ی دیدن آثار",
@@ -38,5 +37,8 @@ export const cartCopy = {
 } as const;
 
 export function fillCartCopy(template: string, vars: Record<string, string>) {
-  return template.replace(/\{(\w+)\}/g, (match, key: string) => vars[key] ?? match);
+  return template.replace(
+    /\{(\w+)\}/g,
+    (match, key: string) => vars[key] ?? match,
+  );
 }

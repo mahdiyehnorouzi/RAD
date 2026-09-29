@@ -12,7 +12,7 @@ import {
   RouteScrollReset,
   RouteTrail,
 } from "@/components/layout";
-import { CartProvider } from "@/components/cart";
+import { CartProvider } from "@/features/cart";
 import { LocaleProvider } from "@/components/i18n";
 import { CommerceProvider } from "@/components/commerce";
 import { CatalogIndexProvider } from "@/components/catalog";
