@@ -19,12 +19,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
       - run: npm ci
       - run: npm run lint
+      # Only files this PR touches, so formatting lands gradually instead of one repo-wide rewrite.
+      - name: Prettier (changed files)
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_REF: origin/${{ github.base_ref }}
+        run: npm run format:changed:check
 
   typecheck:
     name: Typecheck

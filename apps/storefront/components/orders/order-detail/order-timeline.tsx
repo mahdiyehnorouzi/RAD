@@ -1,10 +1,5 @@
-"use client";
-
 import type { StoreOrderStatus } from "@rad/types";
-import {
-  STORE_ORDER_PROGRESS,
-  isTerminalStoreStatus,
-} from "../const";
+import { STORE_ORDER_PROGRESS, isTerminalStoreStatus } from "../const";
 
 export function OrderTimeline({
   status,

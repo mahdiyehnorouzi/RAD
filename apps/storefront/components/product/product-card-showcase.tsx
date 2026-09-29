@@ -1,10 +1,12 @@
-"use client";
-
 import type { Product } from "@rad/types";
 import { ProductCard, ProductCarousel } from "./listing";
 import "./product-card-showcase.css";
 
-const PREFERRED = ["cobalt-fold-bowl", "spotted-loop-teapot", "cobalt-ripple-tray"];
+const PREFERRED = [
+  "cobalt-fold-bowl",
+  "spotted-loop-teapot",
+  "cobalt-ripple-tray",
+];
 
 /** Development reference: every card variant and badge state on real works. */
 export function ProductCardShowcase({ products }: { products: Product[] }) {
@@ -65,7 +67,10 @@ export function ProductCardShowcase({ products }: { products: Product[] }) {
           <figcaption>neutral · in the workshop</figcaption>
         </figure>
         <figure>
-          <ProductCard product={{ ...third, status: "available" }} variant="compact" />
+          <ProductCard
+            product={{ ...third, status: "available" }}
+            variant="compact"
+          />
           <figcaption>none · add it to the bag to see “in bag”</figcaption>
         </figure>
       </div>

@@ -1,6 +1,7 @@
 import { defineConfig, globalIgnores } from "eslint/config";
 import nextVitals from "eslint-config-next/core-web-vitals";
 import nextTs from "eslint-config-next/typescript";
+import prettier from "eslint-config-prettier/flat";
 import globals from "globals";
 
 export default defineConfig([
@@ -20,9 +21,15 @@ export default defineConfig([
     },
   },
   {
-    files: ["apps/api/**/*.ts", "scripts/**/*.{js,mjs}", "apps/*/scripts/**/*.{js,mjs}"],
+    files: [
+      "apps/api/**/*.ts",
+      "scripts/**/*.{js,mjs}",
+      "apps/*/scripts/**/*.{js,mjs}",
+    ],
     languageOptions: { globals: globals.node },
   },
+  // Formatting belongs to Prettier; must stay after every config that can enable style rules.
+  prettier,
   globalIgnores([
     "**/node_modules/**",
     "**/.next/**",

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { MakingProvider } from "@/hooks/use-making-workspace";
 import { pageMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = pageMetadata({
@@ -8,6 +9,10 @@ export const metadata: Metadata = pageMetadata({
   path: "/studio",
 });
 
-export default function StudioLayout({ children }: { children: React.ReactNode }) {
-  return children;
+export default function StudioLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return <MakingProvider>{children}</MakingProvider>;
 }

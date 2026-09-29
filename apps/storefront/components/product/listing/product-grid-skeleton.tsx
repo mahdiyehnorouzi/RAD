@@ -1,5 +1,3 @@
-"use client";
-
 import { Skeleton, SkeletonScreen } from "@/components/ui/skeleton";
 import "./product-grid.css";
 

@@ -1,5 +1,3 @@
-"use client";
-
 import type { CSSProperties } from "react";
 import type { Product } from "@rad/types";
 import { hasRealProductImage } from "@/lib/catalog/category-defaults";
