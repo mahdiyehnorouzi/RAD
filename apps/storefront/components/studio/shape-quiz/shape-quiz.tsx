@@ -1,107 +1,104 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
 import { useLocale } from "@/components/i18n";
-import { usePassports } from "@/hooks/use-artworks";
-import { formatPassportName, traitDistance } from "@/lib/passport";
-import type { PassportTraits } from "@/components/passport/type";
-import { SHAPE_QUESTIONS } from "./const";
+import { SHAPE_QUESTIONS, quizCopy } from "./const";
+import { useShapeMatches } from "./hooks";
+import { QuizFoot } from "./quiz-foot";
+import { QuizQuestion } from "./quiz-question";
+import { QuizResult } from "./quiz-result";
+import { QuizSteps } from "./quiz-steps";
 import "./shape-quiz.css";
 
-const empty: PassportTraits = {
-  crooked: 0.5,
-  quiet: 0.5,
-  worn: 0.5,
-  surprise: 0.5,
-  strange: 0.5,
-};
-
 export function ShapeQuiz() {
-  const { locale, t, number, href } = useLocale();
+  const { locale } = useLocale();
+  const c = quizCopy[locale];
   const [step, setStep] = useState(0);
-  const [answers, setAnswers] = useState<number[]>([]);
-  const passports = usePassports();
-  const done = answers.length === SHAPE_QUESTIONS.length;
-  const traits = useMemo(() => {
-    const next = { ...empty };
-    SHAPE_QUESTIONS.forEach((question, index) => {
-      const value = answers[index];
-      if (value === undefined) return;
-      next[question.trait] = value;
-    });
-    return next;
-  }, [answers]);
-  const matches = done
-    ? passports
-        .filter((item) => item.traits)
-        .map((item) => ({ item, distance: traitDistance(traits, item.traits) }))
-        .sort((a, b) => a.distance - b.distance)
-        .slice(0, 3)
-        .map((entry) => entry.item)
-    : [];
+  const [way, setWay] = useState<"forward" | "back">("forward");
+  const [answers, setAnswers] = useState<Array<number | undefined>>([]);
+  const [done, setDone] = useState(false);
+  const matches = useShapeMatches(answers, done);
+  const total = SHAPE_QUESTIONS.length;
   const question = SHAPE_QUESTIONS[step];
+  const reached = Math.min(answers.filter((value) => value !== undefined).length, total - 1);
+
+  const layoutRef = useRef<HTMLDivElement>(null);
+  const sheetRef = useRef<HTMLDivElement>(null);
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  const moved = useRef(false);
+
+  useEffect(() => {
+    if (!moved.current) return;
+    headingRef.current?.focus({ preventScroll: true });
+    const anchor = done ? layoutRef.current : sheetRef.current;
+    if (anchor && anchor.getBoundingClientRect().top < 0) {
+      const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      anchor.scrollIntoView({ block: "start", behavior: still ? "auto" : "smooth" });
+    }
+  }, [step, done]);
+
+  const goTo = (next: number) => {
+    moved.current = true;
+    setWay(next < step ? "back" : "forward");
+    setStep(next);
+  };
+
+  const pick = (value: number) =>
+    setAnswers((current) => {
+      const next = [...current];
+      next[step] = value;
+      return next;
+    });
+
+  const advance = () => {
+    if (answers[step] === undefined) return;
+    if (step < total - 1) goTo(step + 1);
+    else {
+      moved.current = true;
+      setDone(true);
+    }
+  };
+
+  const restart = () => {
+    moved.current = true;
+    setAnswers([]);
+    setWay("forward");
+    setStep(0);
+    setDone(false);
+  };
 
   return (
-    <section className="shape-quiz">
-      <header>
-        <span className="eyebrow">{t("shapeEyebrow")}</span>
-        <h1>{t("shapeTitle")}</h1>
-        <p>{t("shapeBody")}</p>
-      </header>
-
-      {!done && question ? (
-        <div className="shape-question">
-          <small>
-            {t("stageOf", {
-              current: number(step + 1),
-              total: number(SHAPE_QUESTIONS.length),
-            })}
-          </small>
-          <h2>{question.prompt[locale]}</h2>
-          <div>
-            {question.choices.map((choice) => (
-              <button
-                key={choice.label.en}
-                type="button"
-                className="button outline"
-                onClick={() => {
-                  setAnswers((current) => [
-                    ...current.slice(0, step),
-                    choice.value,
-                  ]);
-                  setStep((current) => current + 1);
-                }}
-              >
-                {choice.label[locale]}
-              </button>
-            ))}
-          </div>
-        </div>
-      ) : (
-        <div className="shape-result">
-          <p>{t("shapeResult")}</p>
-          <ol>
-            {matches.map((passport) => (
-              <li key={passport.code}>
-                <Link href={href(`/passport/${passport.code}`)}>
-                  {formatPassportName(passport, locale, number)}
-                </Link>
-              </li>
-            ))}
-          </ol>
-          <button
-            type="button"
-            className="button outline"
-            onClick={() => {
-              setAnswers([]);
-              setStep(0);
-            }}
-          >
-            {t("shapeAgain")}
-          </button>
-        </div>
-      )}
-    </section>
+    <div className="shape-quiz">
+      <div ref={layoutRef} className={`sq-layout${done ? " is-result" : ""}`}>
+        {done ? (
+          <QuizResult matches={matches} headingRef={headingRef} onRestart={restart} />
+        ) : (
+          <>
+            <header className="sq-head">
+              <h1>{c.title}</h1>
+              <p>{c.lede}</p>
+              <QuizSteps total={total} current={step} reached={reached} onSelect={goTo} />
+            </header>
+            <div ref={sheetRef} className="sq-sheet">
+              {question ? (
+                <QuizQuestion
+                  key={step}
+                  question={question}
+                  index={step}
+                  total={total}
+                  way={way}
+                  picked={answers[step]}
+                  headingRef={headingRef}
+                  onPick={pick}
+                  onNext={advance}
+                  onBack={() => goTo(step - 1)}
+                />
+              ) : null}
+            </div>
+          </>
+        )}
+      </div>
+      <QuizFoot />
+    </div>
   );
 }

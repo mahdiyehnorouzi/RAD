@@ -1,122 +1,102 @@
 "use client";
 import "./portrait-view.css";
 
-import { useState } from "react";
 import Link from "next/link";
 import { useLocale } from "@/components/i18n";
-import {
-  BeforeRad,
-  stageFromProgress,
-  type BeforeRadFrame,
-  type BeforeRadStageId,
-} from "@/components/passport";
-import { surprisePermissions } from "../const";
-import type { DifferencePortrait } from "../type";
+import { ButtonLink } from "@/components/ui/button-link";
 import { usePassports } from "@/hooks/use-artworks";
 import { findPassport } from "@/lib/passport";
+import { differencePageCopy, differenceStages, surprisePermissions } from "../const";
+import { TraceHero, TraceQuote, TraceTimeline } from "../trace";
+import type { DifferencePortrait, DifferenceStageId, TraceStep } from "../type";
 import { PortraitCertificate } from "./portrait-certificate";
 
-const stageNotes: Record<
-  BeforeRadStageId,
-  (portrait: DifferencePortrait) => DifferencePortrait["described"][]
-> = {
-  idea: (portrait) => [portrait.described],
-  hand: (portrait) => portrait.artistNotes,
-  material: (portrait) => [portrait.imaginedNote],
-  rad: (portrait) => portrait.materialNotes,
-};
+type Locale = "fa" | "en";
 
-function framesFromPortrait(
-  portrait: DifferencePortrait,
-  image?: string,
-): BeforeRadFrame[] {
-  const images = portrait.stageImages;
-  return [
-    {
-      id: "idea",
-      src: images?.described,
-      color: portrait.palette.described.color,
-      accent: portrait.palette.described.accent,
-      caption: portrait.described,
-    },
-    {
-      id: "hand",
-      src: images?.artist,
-      color: portrait.palette.artist.color,
-      accent: portrait.palette.artist.accent,
-      caption: portrait.artistNotes[0],
-    },
-    {
-      id: "material",
-      src: images?.imagined,
-      color: portrait.palette.imagined.color,
-      accent: portrait.palette.imagined.accent,
-      caption: portrait.imaginedNote,
-    },
-    {
-      id: "rad",
-      src: image ?? images?.material,
-      color: portrait.palette.material.color,
-      accent: portrait.palette.material.accent,
-      caption: portrait.materialNotes[0],
-    },
-  ];
+function stageNotes(portrait: DifferencePortrait, stage: DifferenceStageId, locale: Locale, permissionLabel: string) {
+  const permission = surprisePermissions.find((item) => item.id === portrait.permission);
+  switch (stage) {
+    case "described":
+      return permission
+        ? [`${permissionLabel} ${permission.title[locale]}`, permission.body[locale]]
+        : [portrait.described[locale]];
+    case "imagined":
+      return [portrait.imaginedNote[locale]];
+    case "artist":
+      return portrait.artistNotes.map((note) => note[locale]);
+    case "material":
+      return portrait.materialNotes.map((note) => note[locale]);
+  }
 }
 
 export function DifferencePortraitView({
   portrait,
   image,
-  privateReveal = false,
 }: {
   portrait: DifferencePortrait;
   image?: string;
-  privateReveal?: boolean;
 }) {
   const { locale, t, href } = useLocale();
-  const [progress, setProgress] = useState(privateReveal ? 0 : 1);
-  const stage = stageFromProgress(progress);
-  const permission = surprisePermissions.find(
-    (item) => item.id === portrait.permission,
-  );
-  const notes = stageNotes[stage](portrait);
+  const c = differencePageCopy[locale];
   const passports = usePassports();
-  const passport =
-    findPassport(passports, portrait.id) ??
-    findPassport(passports, portrait.code);
+  const passport = findPassport(passports, portrait.id) ?? findPassport(passports, portrait.code);
+  const title = portrait.title?.[locale] ?? t("differenceTitle");
+  const heroImage = image ?? portrait.stageImages?.material;
+
+  const steps: TraceStep[] = differenceStages.map((stage) => {
+    const src = portrait.stageImages?.[stage.id];
+    const palette = portrait.palette[stage.id];
+    return {
+      id: stage.id,
+      title: stage.title[locale],
+      notes: stageNotes(portrait, stage.id, locale, c.permissionLabel),
+      image: src ? { src, alt: `${stage.label[locale]}: ${title}` } : undefined,
+      swatch: { ...palette, label: c.portraitNoImage },
+    };
+  });
 
   return (
-    <article className="difference-portrait">
-      <header className="difference-portrait-head">
-        <span className="eyebrow">{t("differenceEyebrow")}</span>
-        <h1>{t("differenceTitle")}</h1>
-        <p>{t("differenceBody")}</p>
-        <div className="difference-meta">
-          <b dir="ltr">{portrait.code}</b>
-          <span>{portrait.maker[locale]}</span>
-          {permission ? <span>{permission.title[locale]}</span> : null}
-        </div>
-      </header>
-
-      <BeforeRad
-        frames={framesFromPortrait(portrait, image)}
-        value={progress}
-        onChange={setProgress}
-      />
-
-      <div className="difference-annotations">
-        <ul>
-          {notes.map((note) => (
-            <li key={note.en}>{note[locale]}</li>
-          ))}
+    <article className="trace-world difference-portrait">
+      <TraceHero
+        titleId="difference-title"
+        title={title}
+        lede={portrait.described[locale]}
+        image={heroImage ? { src: heroImage, alt: title } : undefined}
+        swatch={portrait.palette.material}
+      >
+        <ul className="trace-hero-meta">
+          <li>
+            <b dir="ltr">{portrait.code}</b>
+          </li>
+          <li>{portrait.maker[locale]}</li>
         </ul>
+      </TraceHero>
+
+      <section className="difference-portrait-journey" aria-labelledby="difference-journey-title">
+        <header className="trace-section-head">
+          <h2 id="difference-journey-title">{c.portraitJourneyTitle}</h2>
+          <p>{c.portraitJourneyLede}</p>
+        </header>
+        <TraceTimeline steps={steps} labelledBy="difference-journey-title" />
         {passport ? (
-          <Link href={href(`/passport/${passport.code}`)}>
+          <Link className="difference-portrait-passport" href={href(`/passport/${passport.code}`)}>
             {t("pdpPassportLink")}
           </Link>
         ) : null}
-      </div>
+      </section>
 
-      <PortraitCertificate portrait={portrait} />
+      <div className="difference-portrait-end">
+        <PortraitCertificate portrait={portrait} />
+        <TraceQuote lines={c.quoteLines} />
+        <nav className="difference-portrait-actions" aria-label={t("museumTitle")}>
+          <ButtonLink href="/differences" className="difference-portrait-back">
+            {t("museumBack")}
+          </ButtonLink>
+          <ButtonLink href="/studio" outline>
+            {t("designMine")}
+          </ButtonLink>
+        </nav>
+      </div>
     </article>
   );
 }

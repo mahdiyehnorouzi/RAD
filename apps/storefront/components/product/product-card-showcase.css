@@ -1,0 +1,74 @@
+.card-showcase {
+  display: grid;
+  gap: 2.5rem;
+}
+
+.card-showcase h1,
+.card-showcase h2 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.card-showcase figure {
+  display: grid;
+  min-width: 0;
+  align-content: start;
+  gap: 0.75rem;
+  margin: 0;
+}
+
+.card-showcase figure > .rad-card {
+  height: 100%;
+}
+
+.card-showcase figcaption {
+  color: var(--muted);
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+}
+
+.card-showcase-row {
+  display: grid;
+  gap: clamp(1rem, 2.5vw, 2rem);
+}
+
+.card-showcase-row.is-hero {
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+}
+
+.card-showcase-row.is-split {
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+}
+
+.card-showcase-row.is-split .product-carousel {
+  --carousel-per-view: 2;
+}
+
+.card-showcase-row.is-badges {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.card-showcase-pair {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+@media (max-width: 900px) {
+  .card-showcase-row.is-hero,
+  .card-showcase-row.is-split {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .card-showcase-row.is-badges {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  .card-showcase-pair {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .card-showcase-row.is-split .product-carousel {
+    --carousel-per-view: 1.2;
+  }
+}

@@ -14,7 +14,6 @@ import { useLiveProduct } from "./hooks";
 import { MaterialTexture } from "./material-texture";
 import { ProductAnatomy } from "./product-anatomy";
 import { ProductCare } from "./product-care";
-import { ProductCrumbs } from "./product-crumbs";
 import { ProductGallery } from "./product-gallery";
 import { ProductMaking } from "./product-making";
 import { ProductQuestions } from "./product-questions";
@@ -23,6 +22,14 @@ import { ProductSummary } from "./product-summary";
 import { RelatedWorks } from "./related-works";
 import type { PurchaseState } from "./type";
 import "./product-detail.css";
+
+/** A glaze named anywhere in the work's recorded materials. */
+function isGlazed(artwork?: Artwork) {
+  const materials = artwork?.materials;
+  return [materials?.body, materials?.surface, materials?.process].some(
+    (text) => text && /لعاب|glaz/i.test(`${text.fa} ${text.en}`),
+  );
+}
 
 export function ProductDetail({
   product,
@@ -83,7 +90,6 @@ export function ProductDetail({
   return (
     <article className="pdp">
       <div className="pdp-top">
-        <ProductCrumbs product={resolved} />
         <ProductGallery product={resolved} />
         <ProductSummary
           product={resolved}
@@ -95,18 +101,37 @@ export function ProductDetail({
           textures={textures}
         />
         <div className="pdp-rest">
-          <ProductStory product={resolved} textures={textures} />
-          <ProductAnatomy product={resolved} artwork={artwork} />
+          <ProductStory
+            product={resolved}
+            artwork={artwork}
+            textures={textures}
+            index={1}
+          />
+          <ProductAnatomy
+            product={resolved}
+            artwork={artwork}
+            textures={textures}
+            index={2}
+          />
           <ProductMaking
             product={resolved}
             artwork={artwork}
             passport={passport}
+            textures={textures}
+            index={3}
           />
-          <ProductCare text={(artwork?.care ?? passport?.care)?.[locale]} />
+          <ProductCare
+            text={(artwork?.care ?? passport?.care)?.[locale]}
+            glazed={isGlazed(artwork)}
+            textures={textures}
+            index={4}
+          />
           <div className="pdp-fold-list">
             <ProductQuestions
               faq={faq}
               showShipping={!state.sold && !state.withdrawn}
+              textures={textures}
+              index={5}
             />
           </div>
           <MaterialTexture

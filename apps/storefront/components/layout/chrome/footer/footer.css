@@ -1,0 +1,395 @@
+.footer {
+  --footer-ground: #17251f;
+  --footer-thread: #ad5f3d;
+  --footer-ink: color-mix(in srgb, var(--paper) 86%, transparent);
+  --footer-soft: color-mix(in srgb, var(--paper) 60%, transparent);
+  --footer-rule: rgb(247 242 233 / 0.12);
+  --footer-gutter: var(--page);
+  --footer-top: clamp(3.5rem, 7vw, 6rem);
+  --footer-tear: clamp(1.75rem, 4.2vw, 3.25rem);
+  --footer-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .96 0 0 0 0 .93 0 0 0 0 .86 0 0 0 .14 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  --edge-rim: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 40' preserveAspectRatio='none'%3E%3Cpath d='M0 40V20.7L0 20.7L9 19.7L13 21.1L21 20.6L28 20.0L35 20.0L40 22.6L44 22.3L49 20.0L55 21.6L63 21.1L68 20.2L73 21.3L77 22.1L84 22.6L90 21.5L96 20.7L105 22.6L111 21.3L120 20.7L124 19.1L130 19.0L134 22.4L142 20.4L148 19.1L155 19.8L159 21.2L168 16.8L174 19.0L181 17.0L190 16.8L196 15.6L200 15.5L209 15.1L216 13.8L224 14.1L231 16.2L238 16.3L245 15.6L250 11.7L254 12.9L260 11.6L268 11.4L273 12.4L281 11.7L288 12.3L297 11.2L304 9.0L311 7.1L316 8.5L324 8.7L328 10.0L332 9.4L337 8.1L345 6.5L352 9.0L359 5.6L368 5.4L377 9.2L385 4.9L389 6.6L398 6.8L404 5.2L410 6.2L418 4.1L423 6.2L432 6.1L439 6.2L445 4.6L453 6.8L462 7.0L468 3.0L475 3.7L483 7.3L487 5.1L496 3.6L503 6.8L510 7.4L519 5.2L528 5.8L532 7.3L537 4.4L544 8.1L552 9.1L558 5.6L562 5.1L571 5.8L576 7.4L581 5.8L589 7.0L595 8.5L599 10.2L606 9.3L614 8.5L622 7.4L630 7.1L635 9.8L640 8.0L649 7.9L658 9.8L662 11.4L667 8.8L675 14.4L679 9.7L687 10.4L693 9.8L700 10.0L708 11.7L714 11.9L719 11.5L723 9.5L732 8.8L741 9.0L746 11.7L752 8.1L759 8.4L766 11.2L775 10.9L782 11.5L789 7.9L798 8.5L805 11.7L813 8.0L817 11.0L821 7.0L826 7.7L833 10.2L839 8.2L847 8.8L851 7.5L856 8.1L860 9.0L864 8.9L870 10.0L876 10.6L882 9.0L891 7.3L896 7.5L902 9.2L907 7.7L912 7.7L918 10.3L923 9.0L930 7.4L937 10.0L944 11.5L949 11.8L958 11.0L964 12.3L968 8.5L974 10.3L983 12.5L992 13.5L1001 11.0L1006 14.3L1012 14.6L1017 10.8L1022 15.7L1029 12.6L1034 16.7L1038 12.6L1045 12.5L1050 13.1L1055 16.0L1063 15.4L1070 14.8L1079 15.4L1088 19.3L1097 19.1L1105 19.9L1109 20.5L1118 20.4L1123 18.1L1132 19.9L1139 21.2L1148 21.6L1154 19.6L1163 24.1L1167 23.1L1176 22.7L1182 22.0L1187 24.4L1194 25.1L1200 25.1V40Z'/%3E%3C/svg%3E");
+  --edge-base: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 40' preserveAspectRatio='none'%3E%3Cpath d='M0 40V30.3L0 30.3L8 27.7L14 31.4L19 29.4L26 28.0L30 29.9L34 28.8L38 30.2L45 27.6L49 27.6L58 27.3L65 28.0L73 28.5L80 25.6L89 24.7L94 24.6L98 26.3L105 27.7L113 25.5L119 25.2L124 27.1L128 25.1L137 26.0L142 24.9L148 26.0L154 24.0L158 23.6L165 23.1L173 24.6L178 24.6L182 23.2L189 26.4L196 26.7L200 24.8L205 23.0L214 24.4L218 25.7L224 24.3L228 23.6L233 23.9L240 27.1L246 27.5L254 28.0L260 27.1L266 27.3L273 28.8L278 25.5L282 27.1L288 28.2L297 26.6L304 29.1L313 25.9L321 27.5L327 26.0L334 28.2L340 26.7L345 27.3L350 27.6L354 28.6L358 28.0L367 25.8L375 28.2L381 25.7L385 27.3L389 27.6L396 26.8L400 27.0L406 25.7L414 25.2L422 26.5L427 25.2L434 24.3L441 21.7L449 21.8L454 20.9L463 20.3L468 21.3L475 19.1L482 20.7L486 21.0L490 18.5L499 18.8L506 20.1L513 18.9L520 18.8L525 15.7L533 20.0L542 16.4L549 17.2L558 14.0L564 12.7L572 11.3L577 11.3L583 11.6L587 12.7L595 10.9L601 13.1L605 10.6L609 9.7L616 10.4L621 10.2L626 12.5L631 10.4L638 11.6L643 11.7L651 11.3L657 11.8L665 13.9L669 12.9L678 12.0L687 14.4L696 12.7L704 14.0L712 12.9L721 14.8L728 16.7L736 14.6L744 17.9L749 14.2L757 15.5L761 18.1L770 16.0L779 16.4L786 16.6L790 20.7L796 19.1L802 17.8L808 18.9L814 22.2L821 21.1L829 21.8L834 18.8L842 19.1L846 20.7L853 22.1L860 21.5L864 19.9L870 23.1L876 20.4L882 22.1L887 21.3L895 20.0L901 22.7L910 20.2L916 22.0L924 22.3L929 22.1L936 23.2L945 23.7L954 22.9L961 27.6L970 22.5L976 22.9L984 20.2L989 20.2L994 22.6L1002 19.2L1006 19.8L1012 21.7L1021 19.2L1029 20.8L1038 20.5L1045 19.5L1051 21.0L1056 20.5L1060 22.0L1069 21.8L1075 23.3L1082 21.3L1089 22.4L1093 21.5L1099 23.6L1108 21.3L1116 23.3L1121 25.2L1128 24.0L1132 24.4L1141 23.2L1150 26.6L1158 27.9L1162 28.3L1167 28.5L1173 28.0L1179 29.4L1184 26.4L1192 28.1L1200 28.1V40Z'/%3E%3C/svg%3E");
+
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  row-gap: 2.25rem;
+  padding: var(--footer-top) var(--footer-gutter) 1.25rem;
+  overflow-x: clip;
+  background: var(--footer-grain) 0 0 / 160px 160px, var(--footer-ground);
+  color: var(--paper);
+}
+
+.footer ::selection {
+  background: var(--sand);
+  color: var(--footer-ground);
+}
+
+/* Whatever sits above tears off into the green, with a pale fibre along the tear */
+.footer-tear {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% - 1px);
+  left: 0;
+  z-index: 2;
+  height: var(--footer-tear);
+  filter: drop-shadow(0 -3px 5px rgb(46 32 18 / 0.22));
+  pointer-events: none;
+}
+
+.footer-tear::before,
+.footer-tear::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+
+.footer-tear::before {
+  background: color-mix(in srgb, var(--paper) 70%, white);
+  -webkit-mask: var(--edge-rim) 0 0 / 100% 100% no-repeat;
+  mask: var(--edge-rim) 0 0 / 100% 100% no-repeat;
+}
+
+.footer-tear::after {
+  background: var(--footer-grain) 0 0 / 160px 160px, var(--footer-ground);
+  -webkit-mask:
+    var(--edge-base) 0 0 / 100% 100% no-repeat,
+    linear-gradient(#000 0 0) bottom / 100% 4px no-repeat;
+  mask:
+    var(--edge-base) 0 0 / 100% 100% no-repeat,
+    linear-gradient(#000 0 0) bottom / 100% 4px no-repeat;
+}
+
+/* The hand-lettered line the thread ties off under */
+.footer-sign {
+  --tie-h: clamp(1.7rem, 4.2vw, 2.4rem);
+  --tie-reach: clamp(2.5rem, 7.5vw, 4rem);
+  --drop-w: 1.25rem;
+
+  position: relative;
+  justify-self: start;
+  padding-bottom: calc(var(--tie-h) * 0.3);
+}
+
+.footer-tagline {
+  margin: 0;
+  color: var(--sand);
+  font-family: var(--font-hand);
+  font-size: clamp(2.75rem, 12vw, 4.25rem);
+  font-weight: 400;
+  line-height: 1.35;
+  white-space: nowrap;
+}
+
+/* The hand face's Latin runs much wider than its Persian */
+html[dir="ltr"] .footer-tagline {
+  font-size: clamp(1.9rem, 7.6vw, 3.25rem);
+}
+
+.footer-thread {
+  position: absolute;
+  z-index: 3;
+  overflow: visible;
+  pointer-events: none;
+}
+
+html[dir="rtl"] .footer-thread {
+  scale: -1 1;
+}
+
+.footer-thread-tie {
+  bottom: 0;
+  inset-inline-start: -0.4rem;
+  width: calc(100% + var(--tie-reach));
+  height: var(--tie-h);
+}
+
+/* Lands on the tie's first point, 8/240 in from the tie's far end */
+.footer-thread-drop {
+  top: calc(-1 * (var(--footer-top) + var(--footer-tear) * 0.8));
+  bottom: calc(var(--tie-h) - 2px);
+  inset-inline-end: calc((100% + var(--tie-reach)) / 30 - var(--tie-reach) + 0.4rem - var(--drop-w) / 2);
+  width: var(--drop-w);
+  -webkit-mask: linear-gradient(to bottom, transparent, #000 1.1rem);
+  mask: linear-gradient(to bottom, transparent, #000 1.1rem);
+}
+
+.footer-thread path {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.footer-thread-line {
+  stroke: var(--footer-thread);
+  stroke-width: 1.6;
+}
+
+.footer-thread-fray {
+  stroke-width: 1;
+}
+
+.footer-thread-shade {
+  stroke: rgb(0 0 0 / 0.38);
+  stroke-width: 2.4;
+  translate: 1px 2.5px;
+  filter: blur(1.2px);
+}
+
+/* Link index */
+.footer-index {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 2rem 1.5rem;
+}
+
+.footer-group-title {
+  margin: 0 0 0.6rem;
+  color: var(--sand);
+  font-size: 0.82rem;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+.footer-group-links {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.93rem;
+  line-height: 1.45;
+}
+
+.footer-group-links li {
+  display: flex;
+}
+
+.footer-group-links a,
+.footer-icon-link.is-pending {
+  padding-block: 0.3rem;
+}
+
+.footer-group-links a,
+.footer-legal a {
+  color: var(--footer-ink);
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.45em;
+  transition:
+    color 160ms ease,
+    text-decoration-color 160ms ease;
+}
+
+.footer-group-links a:hover,
+.footer-legal a:hover {
+  color: var(--paper);
+  text-decoration-color: var(--footer-thread);
+}
+
+.footer-group-links a:focus-visible,
+.footer-legal a:focus-visible,
+.footer-mark:focus-visible,
+.footer-enamad:focus-visible {
+  outline: 2px solid var(--sand);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+/* On phones Connect runs the full width, on the same two columns */
+.footer-group:last-child {
+  grid-column: 1 / -1;
+}
+
+.footer-group:last-child .footer-group-links {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 1.5rem;
+}
+
+.footer-icon-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.footer-icon-link svg {
+  flex: none;
+  color: var(--sand);
+}
+
+.footer-icon-link.is-pending {
+  color: var(--footer-soft);
+}
+
+/* The maker's stamp, the year and the official texts */
+.footer-bottom {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-areas:
+    "mark copy seal"
+    "mark legal seal";
+  align-items: center;
+  column-gap: 1rem;
+  row-gap: 0.15rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--footer-rule);
+  color: var(--footer-soft);
+  font-size: 0.8rem;
+  line-height: 1.6;
+}
+
+.footer-mark {
+  grid-area: mark;
+  display: block;
+  width: 2.5rem;
+  aspect-ratio: 360 / 356;
+}
+
+.footer-mark span {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: var(--sand);
+  -webkit-mask: url("/marks/rad-stamp.webp") center / contain no-repeat;
+  mask: url("/marks/rad-stamp.webp") center / contain no-repeat;
+  rotate: -6deg;
+  transition:
+    rotate 320ms cubic-bezier(0.22, 1, 0.36, 1),
+    background-color 160ms ease;
+}
+
+.footer-mark:hover span {
+  rotate: 0deg;
+  background: var(--paper);
+}
+
+.footer-copyright {
+  grid-area: copy;
+  font-size: inherit;
+}
+
+.footer-legal {
+  grid-area: legal;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: 1rem;
+}
+
+.footer-legal a {
+  color: inherit;
+}
+
+.footer-enamad {
+  grid-area: seal;
+  display: inline-flex;
+  flex: none;
+}
+
+.footer-enamad img {
+  display: block;
+  width: 3.75rem;
+  height: auto;
+}
+
+/* Arrival: the line is written, then the thread comes down, loops and runs back under it */
+.footer-sign[data-motion="live"] .footer-tagline {
+  clip-path: inset(-40% -12% -40% 112%);
+  transition: clip-path 1.2s cubic-bezier(0.45, 0.05, 0.35, 1) 0.1s;
+}
+
+.footer-sign[data-motion="live"] .footer-tagline:dir(ltr) {
+  clip-path: inset(-40% 112% -40% -12%);
+}
+
+.footer-sign[data-motion="live"] .footer-thread-drop {
+  clip-path: inset(-10% -100% 100% -100%);
+  transition: clip-path 0.6s cubic-bezier(0.5, 0, 0.3, 1) 0.95s;
+}
+
+.footer-sign[data-motion="live"] .footer-thread-tie {
+  clip-path: inset(-80% -4% -80% 100%);
+  transition: clip-path 1s cubic-bezier(0.45, 0, 0.2, 1) 1.45s;
+}
+
+.footer-sign[data-motion="live"].is-in .footer-tagline {
+  clip-path: inset(-40% -12%);
+}
+
+.footer-sign[data-motion="live"].is-in .footer-thread-drop {
+  clip-path: inset(-10% -100%);
+}
+
+.footer-sign[data-motion="live"].is-in .footer-thread-tie {
+  clip-path: inset(-80% -4%);
+}
+
+@media (min-width: 640px) {
+  .footer-index {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .footer-group:last-child {
+    grid-column: auto;
+  }
+
+  .footer-group:last-child .footer-group-links {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .footer-bottom {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    column-gap: 1.5rem;
+    row-gap: 0.75rem;
+    font-size: 0.84rem;
+  }
+
+  .footer-enamad {
+    margin-inline-start: auto;
+  }
+}
+
+@media (min-width: 1024px) {
+  .footer {
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    column-gap: clamp(3rem, 6vw, 7rem);
+    row-gap: clamp(3.5rem, 6vw, 5rem);
+  }
+
+  .footer-sign {
+    align-self: start;
+  }
+
+  .footer-index {
+    gap: 2rem;
+  }
+
+  .footer-group-title {
+    margin-bottom: 0.85rem;
+  }
+
+  .footer-bottom {
+    grid-column: 1 / -1;
+  }
+
+  .footer-mark {
+    width: 2.75rem;
+  }
+}
+
+@media (max-width: 900px) {
+  .footer {
+    --footer-gutter: clamp(1.25rem, 6vw, 2.5rem);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .footer-mark span {
+    transition: none;
+  }
+}

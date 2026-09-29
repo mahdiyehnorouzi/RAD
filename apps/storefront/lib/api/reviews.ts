@@ -5,6 +5,10 @@ export async function fetchProductReviews(slug: string) {
   return api<Review[]>(`/products/${slug}/reviews`);
 }
 
+export async function fetchReviewFeed() {
+  return api<Review[]>("/reviews");
+}
+
 export async function createProductReview(
   slug: string,
   input: { rating: number; comment: string; image?: string },

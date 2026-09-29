@@ -64,6 +64,66 @@ html[dir="ltr"] .help-contact-action:hover svg {
   transform: translateX(3px);
 }
 
+/* The same ask, laid in one row at the foot of a guide. */
+
+.help-contact.is-bar {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 0.85rem 1.1rem;
+  align-items: center;
+  padding: clamp(0.95rem, 2.4vw, 1.35rem) clamp(1rem, 3vw, 1.75rem);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--moss) 8%, var(--canvas));
+}
+
+.help-contact-icon {
+  display: grid;
+  place-items: center;
+  color: var(--moss);
+}
+
+.help-contact.is-bar h2 {
+  font-size: clamp(1rem, 1.6vw, 1.15rem);
+  font-weight: 700;
+}
+
+.help-contact.is-bar p {
+  margin: 0.15rem 0 0;
+  font-size: 0.86rem;
+  line-height: 1.8;
+}
+
+.help-contact.is-bar .help-contact-action {
+  gap: 1.6rem;
+  min-height: 48px;
+  padding-inline: 1.2rem 1rem;
+  border: 0;
+  border-radius: 10px;
+  background: var(--moss);
+  color: #fff;
+  white-space: nowrap;
+}
+
+.help-contact.is-bar .help-contact-action:hover {
+  background: color-mix(in srgb, var(--moss) 84%, #000);
+  color: #fff;
+}
+
+.help-contact-action:focus-visible {
+  outline: 2px solid var(--moss);
+  outline-offset: 3px;
+}
+
+@media (max-width: 440px) {
+  .help-contact.is-bar {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .help-contact.is-bar .help-contact-action {
+    grid-column: 1 / -1;
+  }
+}
+
 /* Official texts: quiet rows, each dated. */
 
 .legal-texts {
@@ -71,6 +131,9 @@ html[dir="ltr"] .help-contact-action:hover svg {
 }
 
 .legal-texts h2 {
+  display: flex;
+  gap: 0.45rem;
+  align-items: center;
   margin: 0 0 0.6rem;
   color: var(--muted);
   font-size: 0.82rem;

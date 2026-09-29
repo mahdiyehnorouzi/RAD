@@ -1,0 +1,167 @@
+/* One trail for every non-home route: each step of the path. */
+.route-trail {
+  --trail-thread: #8a4938;
+  --trail-quiet: color-mix(in srgb, var(--muted) 72%, var(--ink));
+  --trail-ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --trail-shift: -8px;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  max-width: 1600px;
+  margin-inline: auto;
+  padding: 1rem var(--page) 0.25rem;
+  color: var(--ink);
+}
+
+.route-trail[dir="rtl"] {
+  --trail-shift: 8px;
+}
+
+.route-trail-list {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  margin: 0;
+  padding: 0.35rem 0.2rem;
+  list-style: none;
+  white-space: nowrap;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+}
+
+.route-trail-list::-webkit-scrollbar {
+  display: none;
+}
+
+.route-trail[dir="rtl"] .route-trail-list[data-overflow="true"] {
+  mask-image: linear-gradient(to left, transparent, var(--ink) 1.75rem);
+}
+
+.route-trail[dir="ltr"] .route-trail-list[data-overflow="true"] {
+  mask-image: linear-gradient(to right, transparent, var(--ink) 1.75rem);
+}
+
+.route-trail-list li {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  animation: route-trail-in 0.55s var(--trail-ease) both;
+  animation-delay: calc(var(--i, 0) * 55ms);
+}
+
+.route-trail-list li + li::before {
+  content: "";
+  width: 1px;
+  height: 0.95em;
+  margin-inline: 0.75rem;
+  background: var(--trail-quiet);
+  opacity: 0.45;
+  transform: rotate(18deg);
+}
+
+.route-trail-link {
+  position: relative;
+  display: inline-block;
+  padding: 0.3rem 0.1rem;
+  color: var(--trail-quiet);
+  font-size: 0.9rem;
+  text-decoration: none;
+  transition:
+    color 0.25s var(--trail-ease),
+    opacity 0.25s var(--trail-ease),
+    transform 0.2s var(--trail-ease);
+}
+
+.route-trail-link::after {
+  content: "";
+  position: absolute;
+  inset-inline: 0.1rem;
+  bottom: 0.12rem;
+  height: 1.5px;
+  border-radius: 2px;
+  background: var(--trail-thread);
+  transform: scaleX(0);
+  transition: transform 0.45s var(--trail-ease);
+}
+
+.route-trail[dir="rtl"] .route-trail-link::after {
+  transform-origin: right;
+}
+
+.route-trail[dir="ltr"] .route-trail-link::after {
+  transform-origin: left;
+}
+
+.route-trail-link:hover,
+.route-trail-link:focus-visible {
+  color: var(--ink);
+}
+
+.route-trail-link:hover::after,
+.route-trail-link:focus-visible::after {
+  transform: scaleX(1);
+}
+
+.route-trail-list:has(.route-trail-link:hover) .route-trail-link:not(:hover) {
+  opacity: 0.55;
+}
+
+.route-trail-link:active {
+  transform: translateY(1px);
+}
+
+.route-trail-link:focus-visible {
+  outline: 2px solid var(--trail-thread);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+.route-trail-current {
+  display: inline-block;
+  max-width: min(42ch, 62vw);
+  overflow: hidden;
+  padding: 0.3rem 0.1rem;
+  color: var(--ink);
+  font-size: 0.95rem;
+  font-weight: 700;
+  text-overflow: ellipsis;
+}
+
+@keyframes route-trail-in {
+  from {
+    opacity: 0;
+    transform: translateX(var(--trail-shift));
+    filter: blur(3px);
+  }
+}
+
+@media (max-width: 600px) {
+  .route-trail {
+    padding-top: 0.6rem;
+  }
+
+  .route-trail-list li + li::before {
+    margin-inline: 0.55rem;
+  }
+
+  .route-trail-link {
+    font-size: 0.8rem;
+  }
+
+  .route-trail-current {
+    max-width: 58vw;
+    font-size: 0.85rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .route-trail-list li {
+    animation: none;
+  }
+
+  .route-trail-link,
+  .route-trail-link::after {
+    transition-duration: 0s;
+  }
+}

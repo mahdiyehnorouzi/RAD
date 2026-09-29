@@ -40,6 +40,7 @@ export function ProductRecordCards({
               radNumber={passport.radNumber}
               density="field"
               className="pdp-passport-print"
+              animate
             />
             <strong>{t("pdpPassportLink")}</strong>
             <span className="pdp-record-body">{c.passportCardBody}</span>
@@ -91,6 +92,7 @@ export function ProductRecordCards({
           <RadFingerprint
             radNumber={product.radNumber}
             className="pdp-record-qr-print"
+            animate
           />
         ) : null}
       </Link>

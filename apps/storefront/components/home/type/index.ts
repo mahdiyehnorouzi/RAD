@@ -1,1 +1,1 @@
-export type { PolaroidFrame } from "./polaroid";
+export type { HeroCard } from "./hero-card";

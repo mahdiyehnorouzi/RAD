@@ -16,11 +16,13 @@ export const PRIVACY_POLICY: PolicyDocument = {
       points: [
         {
           id: "sell",
+          icon: "ban",
           label: { fa: "فروش اطلاعات", en: "Selling your data" },
           value: { fa: "هرگز", en: "Never" },
         },
         {
           id: "card",
+          icon: "card",
           label: { fa: "اطلاعات کارت", en: "Card details" },
           value: {
             fa: "شماره‌ی کامل کارت یا رمز آن را نمی‌خواهیم",
@@ -29,6 +31,7 @@ export const PRIVACY_POLICY: PolicyDocument = {
         },
         {
           id: "courier",
+          icon: "truck",
           label: { fa: "پست یا پیک", en: "Couriers" },
           value: {
             fa: "فقط نام، نشانی و شماره‌ی تماس",

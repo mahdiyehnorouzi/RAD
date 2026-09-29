@@ -62,6 +62,17 @@ export function productCardPriceParts(product: Product, locale: Locale) {
   return formatTomanMillionsParts(priceToNumber(product.price));
 }
 
+/** Whole price with its unit apart: `۴٬۵۰۰٬۰۰۰` + `تومان`, or `$1,200` alone. */
+export function productFullPriceParts(product: Product, locale: Locale) {
+  if (locale !== "fa") {
+    return { amount: productPrice(product, locale), unit: null };
+  }
+  return {
+    amount: new Intl.NumberFormat("fa-IR").format(priceToNumber(product.price)),
+    unit: "تومان",
+  };
+}
+
 export function cartTotal(products: Product[], locale: Locale) {
   return products.reduce(
     (sum, product) =>

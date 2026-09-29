@@ -1,7 +1,8 @@
 "use client";
 
-import { DESIGNER_STEP_LABEL, DESIGNER_STEPS, type DesignerStep } from "./const";
 import { useLocale } from "@/components/i18n";
+import { StudioIcon } from "../studio-icon";
+import { DESIGNER_STEP_LABEL, DESIGNER_STEPS, designerCopy, type DesignerStep } from "./const";
 
 export function DesignerNav({
   step,
@@ -12,35 +13,34 @@ export function DesignerNav({
   reachedIndex: number;
   onSelect: (step: DesignerStep) => void;
 }) {
-  const { t, locale, number } = useLocale();
+  const { locale, number } = useLocale();
   const currentIndex = DESIGNER_STEPS.indexOf(step);
+
   return (
-    <div className="designer-nav">
-      <p>
-        {t("stageOf", {
-          current: number(currentIndex + 1),
-          total: number(DESIGNER_STEPS.length),
-        })}
-      </p>
-      <ol className="designer-steps" aria-label={t("titleStudio")}>
+    <nav className="cd-stepper" aria-label={designerCopy[locale].stepsLabel}>
+      <ol>
         {DESIGNER_STEPS.map((id, index) => {
           const current = id === step;
-          const reached = index <= reachedIndex;
+          const done = index < currentIndex;
+          const state = current ? "is-current" : done ? "is-done" : "";
           return (
-            <li key={id} className={current ? "current" : reached ? "done" : ""}>
+            <li key={id} className={state}>
               <button
                 type="button"
                 disabled={index > reachedIndex}
                 aria-current={current ? "step" : undefined}
                 onClick={() => onSelect(id)}
               >
-                <i>{number(index + 1)}</i>
-                <span>{DESIGNER_STEP_LABEL[id][locale]}</span>
+                <i aria-hidden="true">{done ? <StudioIcon name="check" size={11} /> : null}</i>
+                <span>
+                  <span className="sr-only">{number(index + 1)} </span>
+                  {DESIGNER_STEP_LABEL[id][locale]}
+                </span>
               </button>
             </li>
           );
         })}
       </ol>
-    </div>
+    </nav>
   );
 }

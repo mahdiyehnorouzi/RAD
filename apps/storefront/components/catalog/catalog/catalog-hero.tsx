@@ -1,40 +1,37 @@
-"use client";
+import { bannerTear, shopBannerSrc } from "../const";
+import { CatalogTear } from "./catalog-tear";
 
-import { useLocale } from "@/components/i18n";
-import { heroWorkSrc } from "../const";
-
-export function CatalogHero({
-  intro,
-  search,
-}: {
-  intro: React.ReactNode;
-  search: React.ReactNode;
-}) {
-  const { t } = useLocale();
+/** Full-bleed plaster banner: the mug on the reading side, title beside it, a red thread under the line. */
+export function CatalogHero({ intro }: { intro: React.ReactNode }) {
   return (
-    <header className="plp-hero">
-      <div className="plp-hero-copy">
+    <header className="plp-banner">
+      <img
+        className="plp-banner-photo"
+        src={shopBannerSrc}
+        alt=""
+        fetchPriority="high"
+        decoding="async"
+      />
+      <div className="plp-banner-copy">
         {intro}
-        {search}
-      </div>
-      <figure className="plp-hero-art" aria-hidden="true">
         <svg
-          className="plp-hero-blob"
-          viewBox="0 0 520 420"
+          className="plp-banner-thread"
+          viewBox="0 0 340 124"
           preserveAspectRatio="none"
+          aria-hidden="true"
+          focusable="false"
         >
-          <path d="M118 44C196 4 318 6 392 52c62 39 86 116 70 196-15 78-63 134-150 150-94 17-192-6-243-72C22 262 26 168 52 110c14-31 37-52 66-66Z" />
-        </svg>
-        <svg className="plp-hero-line" viewBox="0 0 520 420">
           <path
             pathLength={1}
-            d="M-12 330c58-4 104-30 142-58 52-38 118-44 176-18 50 22 96 40 132 12 38-30 38-92 6-126-26-28-66-26-82 2-12 22 2 46 26 44"
+            d="M-6 111c22-5 44-6 70-3 30 3 56 2 82-3 16-3 30-2 42 1"
+          />
+          <path
+            pathLength={1}
+            d="M204 132c8-22 26-36 52-48 24-11 50-18 64-34 5-6 9-12 12-18"
           />
         </svg>
-        <span className="plp-hero-plinth" />
-        <img className="plp-hero-work" src={heroWorkSrc} alt="" />
-        <span className="plp-hero-note">{t("shopHeroNote")}</span>
-      </figure>
+      </div>
+      <CatalogTear shape={bannerTear} className="plp-banner-edge" />
     </header>
   );
 }

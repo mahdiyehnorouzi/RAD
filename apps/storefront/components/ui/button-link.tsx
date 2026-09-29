@@ -10,17 +10,19 @@ export function ButtonLink({
   children,
   light = false,
   outline = false,
+  className = "",
 }: {
   href: string;
   children: React.ReactNode;
   light?: boolean;
   outline?: boolean;
+  className?: string;
 }) {
   const { href: localizedHref, locale } = useLocale();
   const ArrowIcon = locale === "fa" ? ArrowLeft : ArrowRight;
   return (
     <Link
-      className={`button ${light ? "light" : ""} ${outline ? "outline" : ""}`}
+      className={`button ${light ? "light" : ""} ${outline ? "outline" : ""} ${className}`}
       href={localizedHref(href)}
     >
       <span>{children}</span>

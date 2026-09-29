@@ -20,6 +20,7 @@ export const CUSTOM_POLICY: PolicyDocument = {
       points: [
         {
           id: "price",
+          icon: "receipt",
           label: { fa: "قیمت", en: "Price" },
           value: {
             fa: "بعد از بررسی ایده و پیش از هر پرداخت اعلام می‌شود",
@@ -28,6 +29,7 @@ export const CUSTOM_POLICY: PolicyDocument = {
         },
         {
           id: "time",
+          icon: "clock",
           label: { fa: "زمان ساخت", en: "Making time" },
           value: {
             fa: "معمولاً ۲ تا ۳ هفته از پرداخت بیعانه",
@@ -36,6 +38,7 @@ export const CUSTOM_POLICY: PolicyDocument = {
         },
         {
           id: "revisions",
+          icon: "pen",
           label: { fa: "اصلاح طرح", en: "Revisions" },
           value: {
             fa: "تا ۲ بار پیش از شروع ساخت",
@@ -44,6 +47,7 @@ export const CUSTOM_POLICY: PolicyDocument = {
         },
         {
           id: "cancel",
+          icon: "cancel",
           label: { fa: "لغو", en: "Cancelling" },
           value: {
             fa: "تا پیش از تأیید و بیعانه، بدون هزینه",

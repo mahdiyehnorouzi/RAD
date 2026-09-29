@@ -11,6 +11,7 @@ import { useMaking } from "@/hooks/use-making-workspace";
 import { useOnline } from "@/hooks/use-online";
 import { StateNotice } from "@/components/ui/state-panel";
 import { isNetworkError, isSessionExpired } from "@/lib/api";
+import { StudioIcon, readingArrow } from "../studio-icon";
 import { DesignerNav } from "./designer-nav";
 import { IdeaStep } from "./idea-step";
 import { FormStep } from "./form-step";
@@ -18,14 +19,14 @@ import { DetailsStep } from "./details-step";
 import { PlanStep } from "./plan-step";
 import { ReviewStep } from "./review-step";
 import { SentNotice } from "./sent-notice";
-import { IdeaCard } from "./idea-card";
-import { freedomToPermission, useDesigner, useDesignerDraft } from "./hooks";
+import { freedomToPermission, useDesignerDraft, type Designer } from "./hooks";
 import {
   BUDGET_OPTIONS,
   DATED_TIMELINE,
   FORM_OPTIONS,
   SIZE_OPTIONS,
   TIMELINE_OPTIONS,
+  USE_OPTIONS,
   colorLabel,
   designerCopy,
   fidelityKey,
@@ -35,13 +36,12 @@ import {
 
 type SubmitFailure = "session" | "network" | "failed" | null;
 
-export function CustomDesigner({ title }: { title: string }) {
+export function CustomDesigner({ designer }: { designer: Designer }) {
   const { t, locale, href } = useLocale();
   const c = designerCopy[locale];
   const router = useRouter();
   const { user } = useCommerce();
   const { submitDesign } = useMaking();
-  const designer = useDesigner();
   const online = useOnline();
   const draftStore = useDesignerDraft(designer.draft, designer.restoreDraft);
   const [submitting, setSubmitting] = useState(false);
@@ -79,41 +79,48 @@ export function CustomDesigner({ title }: { title: string }) {
 
   function buildBrief() {
     const separator = locale === "fa" ? "، " : ", ";
-    const forms = designer.forms.map((id) =>
-      optionLabel(FORM_OPTIONS, id, locale),
-    );
-    const size = SIZE_OPTIONS[designer.sizeIndex];
+    const form = optionLabel(FORM_OPTIONS, designer.form, locale);
+    const uses = designer.uses.map((id) => optionLabel(USE_OPTIONS, id, locale));
+    const size = SIZE_OPTIONS.find((option) => option.id === designer.size);
     const sizeText = size ? `${size.label[locale]} (${size.hint[locale]})` : "";
+    const exact = [
+      [c.length, designer.length],
+      [c.width, designer.width],
+      [c.height, designer.height],
+    ]
+      .filter(([, value]) => value.trim())
+      .map(([label, value]) => `${label} ${value.trim()} ${c.unit}`)
+      .join(" × ");
+    const dimensions = [sizeText, exact].filter(Boolean).join(" — ");
     const time =
       designer.timeline === DATED_TIMELINE && designer.needBy.trim()
         ? `${optionLabel(TIMELINE_OPTIONS, designer.timeline, locale)}: ${designer.needBy.trim()}`
         : optionLabel(TIMELINE_OPTIONS, designer.timeline, locale);
+    const colors = [
+      ...designer.colors.map((color) => {
+        const name = colorLabel(color, locale);
+        return name === color ? color : `${name} (${color})`;
+      }),
+      designer.colorNote.trim(),
+    ].filter(Boolean);
     const concept = [
       designer.prompt.trim(),
-      forms.length ? `${c.conceptForm}: ${forms.join(separator)}` : "",
-      `${c.conceptSize}: ${[sizeText, designer.dimensions.trim()].filter(Boolean).join(" — ")}`,
-      designer.colors.length
-        ? `${c.conceptColors}: ${designer.colors
-            .map((color) => {
-              const name = colorLabel(color, locale);
-              return name === color ? color : `${name} (${color})`;
-            })
-            .join(" / ")}`
-        : "",
+      form ? `${c.conceptForm}: ${form}` : "",
+      uses.length ? `${c.conceptUse}: ${uses.join(separator)}` : "",
+      dimensions ? `${c.conceptSize}: ${dimensions}` : "",
+      colors.length ? `${c.conceptColors}: ${colors.join(" / ")}` : "",
       `${c.conceptFidelity}: ${c[fidelityKey(designer.freedom)]}`,
       time ? `${c.conceptTime}: ${time}` : "",
       designer.hasVoice ? c.conceptVoice : "",
     ].filter(Boolean);
     const category =
-      FORM_OPTIONS.find((option) => option.id === designer.forms[0])
-        ?.category ?? "ceramics";
+      FORM_OPTIONS.find((option) => option.id === designer.form)?.category ??
+      "ceramics";
     return {
       concept: concept.join("\n"),
-      dimensions: [sizeText, designer.dimensions.trim()]
-        .filter(Boolean)
-        .join(" — "),
+      dimensions,
       material: "",
-      intendedUse: forms.join(separator),
+      intendedUse: [form, ...uses].filter(Boolean).join(separator),
       budget: optionLabel(BUDGET_OPTIONS, designer.budget, locale),
       permission: freedomToPermission(designer.freedom),
       category,
@@ -123,7 +130,7 @@ export function CustomDesigner({ title }: { title: string }) {
       freedom: designer.freedom,
       sketch: designer.sketch || undefined,
       hasVoice: designer.hasVoice,
-      forms: designer.forms,
+      forms: designer.form ? [designer.form] : [],
       size: size?.id,
       timeline: time,
     };
@@ -186,52 +193,50 @@ export function CustomDesigner({ title }: { title: string }) {
 
   if (sentId) {
     return (
-      <div className="designer-shell" ref={shell}>
-        <h2 className="designer-title">{title}</h2>
+      <div className="cd-shell" ref={shell}>
         <SentNotice commissionId={sentId} onAnother={startAnother} />
       </div>
     );
   }
 
   return (
-    <div className="designer-shell" ref={shell}>
-      <h2 className="designer-title">{title}</h2>
+    <div className="cd-shell" ref={shell}>
       <DesignerNav
         step={step}
         reachedIndex={designer.reachedIndex}
         onSelect={moveTo}
       />
-      <div className="designer-grid">
-        <form
-          className="designer-form"
-          onSubmit={(event) => event.preventDefault()}
-          noValidate
-        >
-          {!online || draftStore.restored ? (
-            <div className="designer-notices">
-              {!online ? (
-                <StateNotice tone="error">
-                  <p>{t("designerOffline")}</p>
-                </StateNotice>
-              ) : null}
-              {draftStore.restored ? (
-                <StateNotice
-                  action={
-                    <button
-                      type="button"
-                      className="state-action"
-                      onClick={draftStore.discard}
-                    >
-                      {t("designerDraftDiscard")}
-                    </button>
-                  }
-                >
-                  <p>{t("designerDraftRestored")}</p>
-                </StateNotice>
-              ) : null}
-            </div>
-          ) : null}
+      <form
+        className="cd-form"
+        onSubmit={(event) => event.preventDefault()}
+        noValidate
+      >
+        {!online || draftStore.restored ? (
+          <div className="cd-notices">
+            {!online ? (
+              <StateNotice tone="error">
+                <p>{t("designerOffline")}</p>
+              </StateNotice>
+            ) : null}
+            {draftStore.restored ? (
+              <StateNotice
+                action={
+                  <button
+                    type="button"
+                    className="state-action"
+                    onClick={draftStore.discard}
+                  >
+                    {t("designerDraftDiscard")}
+                  </button>
+                }
+              >
+                <p>{t("designerDraftRestored")}</p>
+              </StateNotice>
+            ) : null}
+          </div>
+        ) : null}
 
+        <div className="cd-step-body" key={step}>
           {step === "idea" ? <IdeaStep designer={designer} /> : null}
           {step === "form" ? <FormStep designer={designer} /> : null}
           {step === "details" ? <DetailsStep designer={designer} /> : null}
@@ -250,37 +255,33 @@ export function CustomDesigner({ title }: { title: string }) {
               }
             />
           ) : null}
+        </div>
 
-          <div className="designer-step-actions">
+        {step !== "review" ? (
+          <div className={`cd-actions${step === "idea" ? " is-single" : ""}`}>
             {step !== "idea" ? (
               <button
                 type="button"
-                className="button outline designer-back"
+                className="cd-back"
                 onClick={retreat}
                 disabled={submitting}
               >
-                {t("designerBack")}
-              </button>
-            ) : (
-              <span />
-            )}
-            {step !== "review" ? (
-              <button
-                type="button"
-                className="button"
-                disabled={!canAdvance}
-                onClick={advance}
-              >
-                {t("designerNext")}
+                <StudioIcon name={readingArrow(locale, "back")} size={18} />
+                <span>{c.back}</span>
               </button>
             ) : null}
+            <button
+              type="button"
+              className="cs-btn cs-btn-solid cd-next"
+              disabled={!canAdvance}
+              onClick={advance}
+            >
+              <span>{c.next}</span>
+              <StudioIcon name={readingArrow(locale, "forward")} size={20} />
+            </button>
           </div>
-        </form>
-
-        <aside className="designer-preview idea-preview" aria-live="polite">
-          <IdeaCard designer={designer} />
-        </aside>
-      </div>
+        ) : null}
+      </form>
     </div>
   );
 }

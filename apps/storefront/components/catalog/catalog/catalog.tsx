@@ -1,5 +1,7 @@
 "use client";
 import { useEffect, useId, useState } from "react";
+import Link from "next/link";
+import { Check } from "lucide-react";
 import type { Product } from "@rad/types";
 import { useCart } from "@/components/cart";
 import { useLocale } from "@/components/i18n";
@@ -20,7 +22,7 @@ import { CatalogBar } from "./catalog-bar";
 import { CatalogCategories } from "./catalog-categories";
 import { CatalogFilterPanel } from "./catalog-filters";
 import { CatalogHero } from "./catalog-hero";
-import { CatalogSearch } from "./catalog-search";
+import { CatalogQuery } from "./catalog-query";
 import { CatalogResults } from "./catalog-results";
 import { useCatalogFilters } from "./hooks";
 import "./catalog.css";
@@ -55,7 +57,7 @@ export function Catalog({
   /** Whether the server render reached the API; false means `products` are fixtures. */
   seededLive?: boolean;
   initialFilters?: CatalogFilters;
-  /** Page title block; the search box joins it inside the hero. */
+  /** Page title block shown on the banner. */
   intro?: React.ReactNode;
 }) {
   const { locale } = useLocale();
@@ -93,15 +95,7 @@ export function Catalog({
 
   return (
     <>
-      <CatalogHero
-        intro={intro}
-        search={
-          <CatalogSearch
-            value={state.query}
-            onChange={(query) => update({ query })}
-          />
-        }
-      />
+      <CatalogHero intro={intro} />
       <CatalogCategories
         products={shopProducts}
         active={state.category}
@@ -116,6 +110,12 @@ export function Catalog({
         panelId={panelId}
         onToggleFilters={() => setFiltersOpen((open) => !open)}
       />
+      {state.query.trim() ? (
+        <CatalogQuery
+          query={state.query.trim()}
+          onClear={() => update({ query: "" })}
+        />
+      ) : null}
       <CatalogFilterPanel
         id={panelId}
         open={filtersOpen}
@@ -158,7 +158,7 @@ export function AddToBag({
   icon?: React.ReactNode;
 }) {
   const { add } = useCart();
-  const { t } = useLocale();
+  const { t, href } = useLocale();
   const { addNotice } = useCommerce();
   const { refresh, getProduct } = useCatalog();
   const [error, setError] = useState("");
@@ -214,7 +214,7 @@ export function AddToBag({
         disabled={added || unavailable || busy}
         aria-live="polite"
       >
-        {icon}
+        {added ? <Check aria-hidden="true" /> : icon}
         {added
           ? t("inBag")
           : unavailable
@@ -223,6 +223,11 @@ export function AddToBag({
               ? t("submitting")
               : t("addBag")}
       </button>
+      {added ? (
+        <Link className="add-to-bag-next" href={href("/cart")}>
+          {t("goToBag")}
+        </Link>
+      ) : null}
       {error ? (
         <p className="form-error" role="alert">
           {error}

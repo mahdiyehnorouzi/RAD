@@ -1,8 +1,10 @@
 "use client";
 
+import { LogOut, Mail, UserRound } from "lucide-react";
 import { useCommerce } from "@/components/commerce";
 import { useLocale } from "@/components/i18n";
 import { AccountShell } from "./account-shell";
+import { AccountHeading } from "./account-heading";
 import "./account-info.css";
 
 export function AccountInfoPage() {
@@ -13,22 +15,27 @@ export function AccountInfoPage() {
     <AccountShell requireAuth>
       {user ? (
         <section className="account-info section">
-          <header>
-            <span className="eyebrow">{t("accountInfoEyebrow")}</span>
-            <h1>{t("accountInfo")}</h1>
-            <p>{t("accountInfoBody")}</p>
-          </header>
-          <dl className="account-info-fields">
+          <AccountHeading icon={UserRound} title={t("accountInfo")} body={t("accountInfoBody")} />
+          <dl className="account-list account-info-fields">
             <div>
-              <dt>{t("nameLabel")}</dt>
-              <dd>{user.name}</dd>
+              <UserRound className="account-info-icon" aria-hidden="true" strokeWidth={1.6} />
+              <div>
+                <dt>{t("nameLabel")}</dt>
+                <dd>{user.name}</dd>
+              </div>
             </div>
             <div>
-              <dt>{t("emailLabel")}</dt>
-              <dd dir="ltr">{user.email}</dd>
+              <Mail className="account-info-icon" aria-hidden="true" strokeWidth={1.6} />
+              <div>
+                <dt>{t("emailLabel")}</dt>
+                <dd>
+                  <span dir="ltr">{user.email}</span>
+                </dd>
+              </div>
             </div>
           </dl>
-          <button type="button" className="button outline" onClick={logout}>
+          <button type="button" className="account-button account-button--oxide account-info-logout" onClick={logout}>
+            <LogOut aria-hidden="true" strokeWidth={1.6} />
             {t("logout")}
           </button>
         </section>

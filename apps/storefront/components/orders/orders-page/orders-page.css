@@ -275,6 +275,22 @@
   }
 }
 
+.orders-page .orders-list {
+  padding-top: 0;
+  gap: 1.25rem !important;
+}
+
+.orders-page .order-card {
+  border: 1px solid var(--account-line);
+  border-radius: var(--account-radius);
+  background: var(--account-paper);
+  box-shadow: var(--account-shadow);
+}
+
+.orders-page .order-card .button {
+  border-radius: 12px;
+}
+
 html[dir="rtl"] .orders-page, html[dir="rtl"] .orders-heading, html[dir="rtl"] .order-card, html[dir="rtl"] .order-card>header, html[dir="rtl"] .order-card dl, html[dir="rtl"] .order-card ul {direction:rtl!important;text-align:right!important}
 
 html[dir="rtl"] .order-card>header, html[dir="rtl"] .order-card dl {align-items:flex-start!important}

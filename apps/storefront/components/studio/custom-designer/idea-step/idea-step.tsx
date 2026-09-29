@@ -1,93 +1,124 @@
 "use client";
 
-import { useState } from "react";
-import { Check, ImagePlus, Mic, PenLine } from "lucide-react";
+import { useRef, useState } from "react";
 import { useLocale } from "@/components/i18n";
+import { StudioIcon } from "../../studio-icon";
 import { designerCopy } from "../const";
-import type { Designer } from "../hooks";
+import { MAX_PROMPT, type Designer } from "../hooks";
 import { DesignerImages } from "./designer-images";
+import { IdeaCard } from "./idea-card";
 import { SparkDraw } from "./spark-draw";
 import { SparkVoice } from "./spark-voice";
 import "./idea-step.css";
 
-type Attachment = "photo" | "draw" | "voice";
+type Panel = "draw" | "voice";
 
 export function IdeaStep({ designer }: { designer: Designer }) {
-  const { t, locale } = useLocale();
+  const { locale, number } = useLocale();
   const c = designerCopy[locale];
-  const [open, setOpen] = useState<Attachment | null>(null);
-  const attachments: Array<{
-    id: Attachment;
-    label: string;
-    Icon: typeof ImagePlus;
-    filled: boolean;
-  }> = [
-    { id: "photo", label: c.addPhoto, Icon: ImagePlus, filled: designer.uploads.length > 0 },
-    { id: "draw", label: c.addDrawing, Icon: PenLine, filled: Boolean(designer.sketch) },
-    { id: "voice", label: c.addVoice, Icon: Mic, filled: designer.hasVoice },
+  const [open, setOpen] = useState<Panel | null>(null);
+  const photoInput = useRef<HTMLInputElement>(null);
+
+  const tiles = [
+    {
+      id: "draw" as const,
+      label: c.addDrawing,
+      icon: "edit" as const,
+      filled: Boolean(designer.sketch),
+    },
+    {
+      id: "voice" as const,
+      label: c.addVoice,
+      icon: "microphone" as const,
+      filled: designer.hasVoice,
+    },
   ];
 
   return (
-    <div className="designer-step idea-step">
-      <header className="designer-step-head">
+    <div className="cd-step idea-step">
+      <header className="cd-step-head">
         <h3>{c.ideaTitle}</h3>
         <p>{c.ideaHelp}</p>
       </header>
 
-      <label className="sr-only" htmlFor="artwork-prompt">
-        {c.ideaLabel}
-      </label>
-      <textarea
-        id="artwork-prompt"
-        className="resize-none designer-prompt"
-        value={designer.prompt}
-        onChange={(event) => designer.setPrompt(event.target.value)}
-        placeholder={t("designerSparkPlaceholder")}
+      {designer.uploads.length === 0 ? (
+        <button
+          type="button"
+          className="idea-drop"
+          onClick={() => photoInput.current?.click()}
+        >
+          <span className="idea-drop-icon" aria-hidden="true">
+            <StudioIcon name="upload" size={24} />
+          </span>
+          <strong>{c.uploadTitle}</strong>
+          <small>{c.uploadHint}</small>
+        </button>
+      ) : null}
+
+      <DesignerImages
+        inputRef={photoInput}
+        uploads={designer.uploads}
+        maxImages={designer.maxImages}
+        error={designer.error}
+        onError={designer.setError}
+        onAdd={designer.addUploads}
+        onRemove={designer.removeUpload}
       />
 
-      <div className="idea-attach" role="group" aria-label={c.ideaLabel}>
-        {attachments.map(({ id, label, Icon, filled }) => (
+      <div className="idea-tiles" role="group" aria-label={c.ideaAttachLabel}>
+        {tiles.map(({ id, label, icon, filled }) => (
           <button
             key={id}
             type="button"
-            className={`${open === id ? "is-open" : ""}${filled ? " is-filled" : ""}`}
+            className={`idea-tile${open === id ? " is-open" : ""}${filled ? " is-filled" : ""}`}
             aria-expanded={open === id}
-            aria-controls={`idea-attach-${id}`}
+            aria-controls={`idea-panel-${id}`}
             onClick={() => setOpen((current) => (current === id ? null : id))}
           >
-            {filled ? (
-              <Check aria-hidden="true" size={16} strokeWidth={1.6} />
-            ) : (
-              <Icon aria-hidden="true" size={16} strokeWidth={1.6} />
-            )}
+            <StudioIcon name={icon} size={20} />
             <span>{label}</span>
+            {filled ? (
+              <i className="idea-tile-check" aria-hidden="true">
+                <StudioIcon name="check" size={11} />
+              </i>
+            ) : null}
             {filled ? <span className="sr-only">— {c.attached}</span> : null}
           </button>
         ))}
       </div>
 
-      {open === "photo" ? (
-        <div id="idea-attach-photo" className="idea-attach-panel">
-          <DesignerImages
-            uploads={designer.uploads}
-            maxImages={designer.maxImages}
-            error={designer.error}
-            onError={designer.setError}
-            onAdd={designer.addUploads}
-            onRemove={designer.removeUpload}
-          />
-        </div>
-      ) : null}
       {open === "draw" ? (
-        <div id="idea-attach-draw" className="idea-attach-panel">
+        <div id="idea-panel-draw" className="idea-panel">
           <SparkDraw sketch={designer.sketch} onChange={designer.setSketch} />
         </div>
       ) : null}
       {open === "voice" ? (
-        <div id="idea-attach-voice" className="idea-attach-panel">
+        <div id="idea-panel-voice" className="idea-panel">
           <SparkVoice hasVoice={designer.hasVoice} onChange={designer.setHasVoice} />
         </div>
       ) : null}
+
+      <div className="idea-prompt">
+        <label className="cd-sublabel" htmlFor="artwork-prompt">
+          {c.ideaLabel}
+        </label>
+        <div className="idea-prompt-box">
+          <textarea
+            id="artwork-prompt"
+            className="resize-none"
+            value={designer.prompt}
+            maxLength={MAX_PROMPT}
+            onChange={(event) => designer.setPrompt(event.target.value)}
+            placeholder={c.ideaPlaceholder}
+            aria-describedby="artwork-prompt-count"
+          />
+          <span id="artwork-prompt-count" className="idea-count">
+            {number(designer.prompt.length)}/{number(MAX_PROMPT)}
+          </span>
+        </div>
+      </div>
+
+      <IdeaCard designer={designer} />
     </div>
   );
 }

@@ -16,6 +16,8 @@ export type LiveMilestoneId = (typeof LIVE_MILESTONES)[number];
 export type LiveMilestone = {
   id: LiveMilestoneId;
   title: LocaleCopy;
+  /** What happens to a work at this stage. */
+  summary: LocaleCopy;
   done: boolean;
   current: boolean;
   media?: string;

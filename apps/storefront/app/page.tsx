@@ -1,13 +1,10 @@
 import {
   ArchiveSection,
-  DifferenceStory,
-  AboutRadPreview,
   HomeHero,
   featuredHomeWorks,
   CertificateSection,
-  TodayInWorkshop,
+  ThreadJourney,
 } from "@/components/home";
-import { EntryPaths } from "@/components/home/sections";
 import { getCatalogWorks } from "@/lib/catalog/get-catalog-works";
 import { productListJsonLd, safeJsonLd } from "@/lib/seo";
 
@@ -23,13 +20,12 @@ export default async function Home() {
           __html: safeJsonLd(productListJsonLd(featured, "/")),
         }}
       />
-      <HomeHero />
-      <EntryPaths />
-      <TodayInWorkshop />
-      <AboutRadPreview />
-      <ArchiveSection products={featured} />
-      <DifferenceStory />
-      <CertificateSection />
+      {/* Keyed: ThreadJourney renders these slots side by side, and React checks server-made elements there for keys. */}
+      <ThreadJourney
+        hero={<HomeHero key="hero" />}
+        works={<ArchiveSection key="works" products={featured} />}
+        closing={<CertificateSection key="closing" />}
+      />
     </>
   );
 }

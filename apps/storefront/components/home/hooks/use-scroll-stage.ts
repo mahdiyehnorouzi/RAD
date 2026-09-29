@@ -42,5 +42,5 @@ export function useScrollStage(count: number) {
     };
   }, [count, node]);
 
-  return { ref, stage, progress };
+  return { ref, node, stage, progress };
 }

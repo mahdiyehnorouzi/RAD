@@ -10,6 +10,8 @@ import { ButtonLink } from "@/components/ui/button-link";
 import { useLocale, type Locale } from "@/components/i18n";
 import { usePortraits } from "@/hooks/use-artworks";
 import { useInView, useScrollStage } from "../../hooks";
+import { StoryCard } from "./story-card";
+import { StoryStepper } from "./story-stepper";
 import "../../motion/reveal.css";
 import "./difference-story.css";
 
@@ -50,21 +52,61 @@ function stageTransition(progress: number, count: number) {
   };
 }
 
+function StagePhoto({
+  portrait,
+  stageId,
+  priority = false,
+}: {
+  portrait: DifferencePortrait;
+  stageId: DifferenceStageId;
+  priority?: boolean;
+}) {
+  const photo = portrait.stageImages?.[stageId];
+  if (!photo) {
+    return (
+      <div
+        className="story-photo"
+        style={{ background: portrait.palette[stageId].color }}
+      />
+    );
+  }
+  return (
+    <Image
+      className="story-photo"
+      src={photo}
+      alt=""
+      fill
+      sizes="(max-width: 900px) 100vw, 56vw"
+      priority={priority}
+    />
+  );
+}
+
 export function DifferenceStory() {
   const { locale, t } = useLocale();
   const { ref: revealRef, inView } = useInView<HTMLElement>({
     threshold: 0.06,
   });
-  const { ref: scrollerRef, progress } = useScrollStage(
-    differenceStages.length,
-  );
+  const {
+    ref: scrollerRef,
+    node: scroller,
+    progress,
+  } = useScrollStage(differenceStages.length);
   const storyPortrait = usePortraits()[0];
   if (!storyPortrait) return null;
 
   const transition = stageTransition(progress, differenceStages.length);
   const stage = transition.active;
-  const active = differenceStages[stage] ?? differenceStages[0];
-  const copy = stageCopy(storyPortrait, active.id, locale);
+  const copyAt = (index: number) =>
+    stageCopy(storyPortrait, differenceStages[index].id, locale);
+
+  const goToStage = (index: number) => {
+    if (!scroller) return;
+    const range = scroller.offsetHeight - window.innerHeight;
+    const start = scroller.getBoundingClientRect().top + window.scrollY;
+    const last = differenceStages.length - 1;
+    window.scrollTo({ top: start + (range * index) / last, behavior: "smooth" });
+  };
 
   return (
     <section
@@ -75,125 +117,73 @@ export function DifferenceStory() {
     >
       <div
         ref={scrollerRef}
-        className="difference-scroll"
+        className="story-scroll"
         style={{ ["--story-progress" as string]: String(progress) }}
       >
-        <div className="difference-scroll-sticky">
-          <div className="difference-scroll-frame">
+        <div className="story-sticky">
+          <div className="story-frame">
             {differenceStages.map((item, index) => {
-              const photo = storyPortrait.stageImages?.[item.id];
               const amount = transition.opacity(index);
               return (
                 <figure
                   key={item.id}
-                  className={index === stage ? "is-active" : ""}
-                  aria-hidden={index !== stage}
+                  aria-hidden="true"
                   style={{
                     opacity: amount,
                     zIndex: index === stage ? 1 : 0,
+                    transform: `scale(${1.06 - 0.06 * amount})`,
                   }}
                 >
-                  {photo ? (
-                    <Image
-                      className="difference-scroll-photo"
-                      src={photo}
-                      alt=""
-                      fill
-                      sizes="(max-width: 900px) 100vw, 52vw"
-                      priority={index === 0}
-                      style={{ transform: `scale(${1.08 - 0.08 * amount})` }}
-                    />
-                  ) : (
-                    <div
-                      className={`stage-${item.id}`}
-                      style={{ transform: `scale(${1.08 - 0.08 * amount})` }}
-                    />
-                  )}
+                  <StagePhoto
+                    portrait={storyPortrait}
+                    stageId={item.id}
+                    priority={index === 0}
+                  />
                 </figure>
               );
             })}
           </div>
-          <div className="difference-scroll-panel">
-            <div className="difference-scroll-progress">
-              <header className="difference-story-heading">
-                <h2
-                  id="difference-story-title"
-                  className="reveal-item"
-                  data-reveal="heading"
-                >
-                  {t("homeDifferenceTitle")}
-                </h2>
-                <p
-                  className="difference-story-maker reveal-item"
-                  data-reveal="body"
-                >
-                  {byline(storyPortrait, locale)}
-                </p>
-              </header>
-              <ol aria-hidden="true">
-                {differenceStages.map((item, index) => (
-                  <li
-                    key={item.id}
-                    className={
-                      index === stage
-                        ? "is-active"
-                        : index < stage
-                          ? "is-done"
-                          : ""
-                    }
-                  >
-                    {item.index[locale]}
-                  </li>
-                ))}
-              </ol>
-            </div>
-            <div className="difference-scroll-copy" aria-live="polite">
-              <div key={active.id} className="difference-scroll-copy-inner">
-                <h3>{active.title[locale]}</h3>
-                <p>{copy}</p>
-              </div>
-            </div>
-            <div
-              className="difference-story-actions reveal-item"
-              data-reveal="cta"
-            >
-              <ButtonLink href={`/differences/${storyPortrait.id}`} outline>
-                {t("differenceOpen")}
-              </ButtonLink>
-              <ButtonLink href="/differences" outline>
-                {t("museumTitle")}
-              </ButtonLink>
-            </div>
+          <header className="story-head reveal-item" data-reveal="heading">
+            <h2 id="difference-story-title">{t("homeDifferenceTitle")}</h2>
+            <p className="story-byline">{byline(storyPortrait, locale)}</p>
+            <StoryStepper active={stage} onSelect={goToStage} />
+          </header>
+          <div className="story-card-slot reveal-item" data-reveal="body">
+            <StoryCard
+              active={stage}
+              copy={copyAt}
+              portraitId={storyPortrait.id}
+            />
           </div>
         </div>
       </div>
-      <div className="difference-scroll-static">
-        <header className="difference-story-heading">
+
+      <div className="story-static">
+        <header className="story-head">
           <h2>{t("homeDifferenceTitle")}</h2>
-          <p className="difference-story-maker">
-            {byline(storyPortrait, locale)}
-          </p>
+          <p className="story-byline">{byline(storyPortrait, locale)}</p>
         </header>
-        {differenceStages.map((item) => {
-          const photo = storyPortrait.stageImages?.[item.id];
-          return (
-            <article key={item.id}>
+        <ol className="story-static-list">
+          {differenceStages.map((item, index) => (
+            <li key={item.id}>
               <figure>
-                {photo ? (
-                  <img src={photo} alt="" />
-                ) : (
-                  <div className={`stage-${item.id}`} />
-                )}
+                <StagePhoto portrait={storyPortrait} stageId={item.id} />
               </figure>
-              <div className="difference-scroll-copy">
-                <span>{item.index[locale]}</span>
+              <div className="story-static-copy">
+                <span className="story-tag">
+                  {item.index[locale]}
+                  <span className="story-tag-rule" aria-hidden="true">
+                    /
+                  </span>
+                  {item.label[locale]}
+                </span>
                 <h3>{item.title[locale]}</h3>
-                <p>{stageCopy(storyPortrait, item.id, locale)}</p>
+                <p>{copyAt(index)}</p>
               </div>
-            </article>
-          );
-        })}
-        <div className="difference-story-actions">
+            </li>
+          ))}
+        </ol>
+        <div className="story-actions">
           <ButtonLink href={`/differences/${storyPortrait.id}`} outline>
             {t("differenceOpen")}
           </ButtonLink>

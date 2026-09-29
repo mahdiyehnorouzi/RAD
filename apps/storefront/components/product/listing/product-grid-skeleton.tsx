@@ -1,7 +1,7 @@
 "use client";
 
 import { Skeleton, SkeletonScreen } from "@/components/ui/skeleton";
-import "./product-card.css";
+import "./product-grid.css";
 
 export function ProductGridSkeleton({
   count = 6,
@@ -13,7 +13,7 @@ export function ProductGridSkeleton({
   return (
     <SkeletonScreen className={`product-grid-skeleton ${className}`}>
       {Array.from({ length: count }, (_, index) => (
-        <article className="product-card skeleton-product" key={index}>
+        <article className="skeleton-product" key={index}>
           <Skeleton className="skeleton-media" />
           <Skeleton className="skeleton-line" />
           <Skeleton className="skeleton-line short" />

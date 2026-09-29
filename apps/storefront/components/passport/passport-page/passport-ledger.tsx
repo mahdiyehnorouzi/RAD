@@ -4,10 +4,12 @@ import { useLocale } from "@/components/i18n";
 import type { MessageKey } from "@/i18n/fa";
 import type { RadPassport } from "../type";
 
-const rows: Array<[MessageKey, keyof Pick<
+type LedgerField = keyof Pick<
   RadPassport,
   "maker" | "dateCreated" | "clay" | "glaze" | "dimensions" | "firing" | "inspiration" | "owner" | "city"
->]> = [
+>;
+
+const rows: Array<[MessageKey, LedgerField]> = [
   ["passportMaker", "maker"],
   ["passportDate", "dateCreated"],
   ["passportClay", "clay"],
@@ -22,16 +24,13 @@ const rows: Array<[MessageKey, keyof Pick<
 export function PassportLedger({ passport }: { passport: RadPassport }) {
   const { locale, t } = useLocale();
   return (
-    <section className="passport-ledger" aria-labelledby="passport-ledger-title">
-      <h2 id="passport-ledger-title">{t("passportLedger")}</h2>
-      <dl>
-        {rows.map(([key, field]) => (
-          <div key={key}>
-            <dt>{t(key)}</dt>
-            <dd>{passport[field][locale]}</dd>
-          </div>
-        ))}
-      </dl>
-    </section>
+    <dl className="passport-ledger" aria-label={t("passportLedger")}>
+      {rows.map(([key, field]) => (
+        <div key={key} className={field === "inspiration" ? "is-quote" : undefined}>
+          <dt>{t(key)}</dt>
+          <dd>{passport[field][locale]}</dd>
+        </div>
+      ))}
+    </dl>
   );
 }

@@ -1,0 +1,308 @@
+/* ——— Shop-floor card: photograph, pencilled number, torn paper label ——— */
+
+.plp-card {
+  --plp-label: color-mix(in srgb, var(--paper) 58%, #fff);
+  --plp-oxide: #9c3f2c;
+  --plp-ease: cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--ink) 7%, transparent);
+  border-radius: 14px;
+  background: var(--plp-label);
+  box-shadow:
+    0 1px 2px color-mix(in srgb, #5a3c22 7%, transparent),
+    0 18px 34px -24px color-mix(in srgb, #5a3c22 40%, transparent);
+  color: var(--ink);
+  container: plp-card / inline-size;
+  transition:
+    box-shadow 500ms var(--plp-ease),
+    transform 500ms var(--plp-ease);
+}
+
+.plp-card-stage {
+  position: relative;
+  aspect-ratio: 7 / 6;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--sand) 34%, var(--paper));
+  isolation: isolate;
+}
+
+.plp-card-art {
+  position: absolute;
+  inset: 0;
+  display: block;
+}
+
+/* The maker's pencilled number, written straight onto the photograph. */
+.plp-card-mark {
+  position: absolute;
+  z-index: 6;
+  top: clamp(0.75rem, 7cqi, 1.3rem);
+  inset-inline-end: clamp(0.85rem, 9cqi, 1.6rem);
+  display: grid;
+  justify-items: center;
+  color: color-mix(in srgb, var(--ink) 80%, transparent);
+  line-height: 1;
+  pointer-events: none;
+  transform: rotate(-7deg);
+  filter: drop-shadow(0 0 8px color-mix(in srgb, var(--paper) 70%, transparent));
+}
+
+.plp-card-mark b {
+  font-size: clamp(1.1rem, 10.5cqi, 1.95rem);
+  font-weight: 200;
+  letter-spacing: 0.08em;
+  direction: ltr;
+}
+
+.plp-card-mark svg {
+  width: 165%;
+  height: 0.55rem;
+  margin-top: 0.05rem;
+  overflow: visible;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1;
+  stroke-linecap: round;
+  opacity: 0.75;
+}
+
+.plp-card-mark svg path {
+  stroke-dasharray: 72;
+  stroke-dashoffset: 0;
+}
+
+.plp-card-mark small {
+  margin-top: 0.22rem;
+  padding-inline-start: 0.36em;
+  font-size: clamp(0.5rem, 3.6cqi, 0.68rem);
+  font-weight: 400;
+  letter-spacing: 0.36em;
+  direction: ltr;
+}
+
+/* Heart on top, the one status badge hung below it. */
+.plp-card-flags {
+  position: absolute;
+  z-index: 8;
+  top: clamp(0.6rem, 5.5cqi, 0.95rem);
+  inset-inline-start: clamp(0.6rem, 5.5cqi, 0.95rem);
+  display: flex;
+  max-width: calc(100% - 1.2rem);
+  flex-direction: column;
+  align-items: flex-start;
+  gap: clamp(0.9rem, 10cqi, 1.6rem);
+}
+
+.plp-card-flags .favorite-button.compact {
+  position: relative;
+  inset: auto;
+  z-index: 1;
+  display: grid;
+  flex: 0 0 auto;
+  width: clamp(1.9rem, 18cqi, 2.5rem);
+  min-height: clamp(1.9rem, 18cqi, 2.5rem);
+  padding: 0;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--plp-label) 94%, transparent);
+  box-shadow: 0 6px 14px -8px color-mix(in srgb, #3b2616 55%, transparent);
+  color: var(--ink);
+  transition:
+    background-color 250ms ease,
+    transform 250ms var(--plp-ease);
+}
+
+.plp-card-flags .favorite-button.compact svg {
+  width: 0.95rem;
+  height: 0.95rem;
+  stroke-width: 1.6;
+}
+
+.plp-card-flags .favorite-button.compact.active {
+  color: var(--plp-oxide);
+}
+
+.plp-card-flags .rad-badge {
+  max-width: 100%;
+  min-height: clamp(1.65rem, 15cqi, 2rem);
+  padding-inline: 0.7rem;
+  font-size: clamp(0.68rem, 6.4cqi, 0.78rem);
+}
+
+.plp-card-flags .rad-badge svg {
+  width: 0.85rem;
+  height: 0.85rem;
+}
+
+/* ——— Label ——— */
+
+.plp-card-body {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  flex: 1;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "name name"
+    "meta qr";
+  align-content: start;
+  align-items: end;
+  gap: 0.15rem 0.5rem;
+  padding: 0.35rem clamp(0.8rem, 7.5cqi, 1.15rem) clamp(0.8rem, 7cqi, 1.1rem);
+  background: var(--plp-label);
+  text-align: start;
+}
+
+.plp-card-tear {
+  position: absolute;
+  bottom: calc(100% - 1px);
+  left: 0;
+  width: 100%;
+  height: clamp(0.8rem, 7.5cqi, 1.2rem);
+  filter: drop-shadow(0 -2px 3px color-mix(in srgb, #3b2616 12%, transparent));
+  pointer-events: none;
+}
+
+.plp-card-tear .plp-tear-rim {
+  fill: #fffdf8;
+}
+
+.plp-card-tear .plp-tear-edge {
+  fill: var(--plp-label);
+}
+
+.plp .plp-card-name {
+  grid-area: name;
+  display: -webkit-box;
+  margin: 0;
+  overflow: hidden;
+  font-size: clamp(0.82rem, 6.6cqi, 1.12rem);
+  font-weight: var(--font-weight-semibold, 600);
+  line-height: 1.55;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.plp-card-name a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.plp-card-meta {
+  display: grid;
+  grid-area: meta;
+  min-width: 0;
+  gap: 0.25rem;
+}
+
+.plp .plp-card-maker {
+  margin: 0;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: clamp(0.66rem, 5.4cqi, 0.8rem);
+  line-height: 1.6;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.plp .plp-card-price {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.25rem;
+  margin: 0;
+  line-height: 1.3;
+}
+
+.plp-card-price b {
+  font-size: clamp(0.76rem, 6cqi, 1rem);
+  font-weight: var(--font-weight-semibold, 600);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
+}
+
+.plp-card-price span {
+  color: color-mix(in srgb, var(--ink) 72%, var(--muted));
+  font-size: clamp(0.62rem, 5cqi, 0.76rem);
+}
+
+.plp-card .rad-card-qr {
+  --qr-size: clamp(1.65rem, 15cqi, 2.5rem);
+  grid-area: qr;
+  align-self: end;
+}
+
+.plp-card .rad-card-qr-frame {
+  padding: 0.1rem;
+  border-radius: 3px;
+  background: transparent;
+  box-shadow: none;
+}
+
+.plp-card .rad-card-qr-code {
+  fill: color-mix(in srgb, var(--ink) 88%, #000);
+}
+
+/* ——— States and interaction ——— */
+
+.plp-card.is-unavailable .product-artwork-cutout {
+  filter: saturate(0.72);
+}
+
+.plp-card.is-unavailable .plp-card-price b {
+  color: var(--muted);
+}
+
+.plp-card-name a:focus-visible {
+  border-radius: 4px;
+  outline: 2px solid var(--plp-oxide);
+  outline-offset: 3px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .plp-card:hover {
+    box-shadow:
+      0 1px 2px color-mix(in srgb, #5a3c22 8%, transparent),
+      0 28px 46px -28px color-mix(in srgb, #5a3c22 50%, transparent);
+    transform: translateY(-3px);
+  }
+
+  .plp-card:hover .product-artwork-cutout {
+    transform: scale(1.035);
+  }
+
+  .plp-card:hover .plp-card-mark svg path {
+    animation: plp-card-mark-draw 900ms var(--plp-ease);
+  }
+
+  .plp-card-flags .favorite-button.compact:hover {
+    transform: scale(1.06);
+  }
+}
+
+@keyframes plp-card-mark-draw {
+  from {
+    stroke-dashoffset: 72;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .plp-card,
+  .plp-card * {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  .plp-card:hover,
+  .plp-card:hover .product-artwork-cutout {
+    transform: none;
+  }
+}

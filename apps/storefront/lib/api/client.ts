@@ -41,6 +41,16 @@ export function errorMessage(err: unknown, fallback = "Request failed"): string 
   return firstString(err) ?? fallback;
 }
 
+/**
+ * The API writes its own refusals in Persian; anything else (validator
+ * output, stack text, network codes) is swapped for `fallback`.
+ */
+export function readableErrorMessage(err: unknown, fallback: string): string {
+  if (isNetworkError(err)) return fallback;
+  const message = errorMessage(err, fallback);
+  return /[\u0600-\u06FF]/.test(message) ? message : fallback;
+}
+
 export async function api<T>(path: string, init?: RequestInit & { timeoutMs?: number }): Promise<T> {
   const headers = new Headers(init?.headers);
   if (init?.body && !headers.has("Content-Type")) {

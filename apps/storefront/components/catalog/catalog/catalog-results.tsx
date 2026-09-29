@@ -1,7 +1,7 @@
 "use client";
 
 import type { Product } from "@rad/types";
-import { ProductCard, ProductGridSkeleton } from "@/components/product/listing";
+import { ProductGridSkeleton } from "@/components/product/listing";
 import { StateNotice } from "@/components/ui/state-panel";
 import { Button, ButtonLink } from "@/components/ui/button-link";
 import { useLocale } from "@/components/i18n";
@@ -13,6 +13,7 @@ import {
 import { artworkCategories, categoryLabel } from "@/lib/catalog/artwork";
 import { hasRefinements, type CatalogFilters } from "@/lib/catalog/filters";
 import { categoryChipLabels } from "../const";
+import { CatalogCard } from "./catalog-card";
 
 export function CatalogResults({
   visible,
@@ -77,7 +78,6 @@ export function CatalogResults({
         retrying={retrying}
         title="catalogErrorTitle"
         body="catalogErrorBody"
-        back={{ href: "/archive", label: "viewArchive" }}
       />
     );
   }
@@ -89,9 +89,9 @@ export function CatalogResults({
         body={t("catalogEmptyBody")}
         actions={
           <>
-            <ButtonLink href="/archive">{t("viewArchive")}</ButtonLink>
-            <ButtonLink href="/studio" outline>
-              {t("commissionOwn")}
+            <ButtonLink href="/studio">{t("commissionOwn")}</ButtonLink>
+            <ButtonLink href="/now" outline>
+              {t("footerNow")}
             </ButtonLink>
           </>
         }
@@ -111,11 +111,7 @@ export function CatalogResults({
         {staleNotice}
         <div className="product-grid product-grid--catalog">
           {visible.map((product) => (
-            <ProductCard
-              product={product}
-              key={product.slug}
-              variant="catalog"
-            />
+            <CatalogCard product={product} key={product.slug} />
           ))}
         </div>
       </>

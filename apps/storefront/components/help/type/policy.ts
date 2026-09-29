@@ -4,7 +4,28 @@ import type { LocaleCopy } from "@/types/locale";
 export type PolicyKind = "guide" | "legal";
 
 export type PolicyIcon =
-  "bag" | "palette" | "truck" | "package" | "scale" | "lock";
+  | "bag"
+  | "palette"
+  | "truck"
+  | "package"
+  | "scale"
+  | "lock"
+  | "ban"
+  | "card"
+  | "fingerprint"
+  | "clock"
+  | "receipt"
+  | "shield"
+  | "pin"
+  | "map"
+  | "route"
+  | "undo"
+  | "camera"
+  | "hammer"
+  | "pen"
+  | "cancel"
+  | "check"
+  | "history";
 
 export type PolicyBlock =
   | { kind: "p"; text: LocaleCopy }
@@ -29,7 +50,12 @@ export type PolicySection = {
  * One line of the "in short" summary at the top of a document. The product
  * page, bag and checkout quote these by id, so they always match the text.
  */
-export type PolicyPoint = { id: string; label: LocaleCopy; value: LocaleCopy };
+export type PolicyPoint = {
+  id: string;
+  icon: PolicyIcon;
+  label: LocaleCopy;
+  value: LocaleCopy;
+};
 
 export type PolicyVersion = {
   /** Publication date `YYYY-MM-DD`; also the id orders store. */

@@ -8,8 +8,8 @@ import {
   Footer,
   GoogleAnalytics,
   Header,
-  PageBackNavigation,
   RouteScrollReset,
+  RouteTrail,
 } from "@/components/layout";
 import { CartProvider } from "@/components/cart";
 import { LocaleProvider } from "@/components/i18n";
@@ -150,7 +150,7 @@ export default function RootLayout({
                   <HomeBanner />
                   <Header />
                   {/* <PwaRegistrar /> */}
-                  <PageBackNavigation />
+                  <RouteTrail />
                   <main>{children}</main>
                   <Footer />
                 </CartProvider>

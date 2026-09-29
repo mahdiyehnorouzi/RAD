@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   BUDGET_OPTIONS,
-  DEFAULT_SIZE_INDEX,
+  DEFAULT_SIZE,
   DESIGNER_STEPS,
   FORM_OPTIONS,
+  LEGACY_FORM_IDS,
   SIZE_OPTIONS,
   TIMELINE_OPTIONS,
+  USE_OPTIONS,
 } from "../const";
 import type { DesignerDraft } from "../type";
 
@@ -19,10 +21,14 @@ const emptyDesignerDraft: DesignerDraft = {
   uploads: [],
   sketch: "",
   hasVoice: false,
-  forms: [],
-  sizeIndex: DEFAULT_SIZE_INDEX,
-  dimensions: "",
+  form: "",
+  uses: [],
+  size: DEFAULT_SIZE,
+  length: "",
+  width: "",
+  height: "",
   colors: [],
+  colorNote: "",
   freedom: 70,
   budget: "",
   timeline: "",
@@ -35,12 +41,32 @@ function hasContent(draft: DesignerDraft) {
     draft.uploads.length ||
     draft.sketch ||
     draft.hasVoice ||
-    draft.forms.length ||
-    draft.dimensions.trim() ||
+    draft.form ||
+    draft.uses.length ||
+    draft.length.trim() ||
+    draft.width.trim() ||
+    draft.height.trim() ||
     draft.colors.length ||
+    draft.colorNote.trim() ||
     draft.budget ||
     draft.timeline,
   );
+}
+
+/** Drafts saved before the single-category studio kept `forms[]` and a five-stop `sizeIndex`. */
+function legacyForm(value: unknown) {
+  for (const id of strings(value)) {
+    const mapped = LEGACY_FORM_IDS[id] ?? id;
+    if (FORM_OPTIONS.some((option) => option.id === mapped)) return mapped;
+  }
+  return "";
+}
+
+function legacySize(value: unknown) {
+  if (typeof value !== "number") return "";
+  if (value <= 1) return "small";
+  if (value <= 2) return "medium";
+  return "large";
 }
 
 function strings(value: unknown) {
@@ -57,7 +83,7 @@ function readDraft(): DesignerDraft | null {
   try {
     const parsed = JSON.parse(
       window.localStorage.getItem(storageKey) ?? "null",
-    ) as Partial<DesignerDraft> | null;
+    ) as (Partial<DesignerDraft> & { forms?: unknown; sizeIndex?: unknown }) | null;
     if (!parsed || typeof parsed !== "object") return null;
     const step = DESIGNER_STEPS.includes(parsed.step as never)
       ? parsed.step!
@@ -65,12 +91,6 @@ function readDraft(): DesignerDraft | null {
     const reached = DESIGNER_STEPS.includes(parsed.reached as never)
       ? parsed.reached!
       : step;
-    const sizeIndex =
-      typeof parsed.sizeIndex === "number" &&
-      parsed.sizeIndex >= 0 &&
-      parsed.sizeIndex < SIZE_OPTIONS.length
-        ? Math.round(parsed.sizeIndex)
-        : DEFAULT_SIZE_INDEX;
     const draft: DesignerDraft = {
       step,
       reached,
@@ -78,12 +98,19 @@ function readDraft(): DesignerDraft | null {
       uploads: strings(parsed.uploads),
       sketch: String(parsed.sketch ?? ""),
       hasVoice: Boolean(parsed.hasVoice),
-      forms: strings(parsed.forms).filter((id) =>
-        FORM_OPTIONS.some((option) => option.id === id),
+      form: known(parsed.form, FORM_OPTIONS) || legacyForm(parsed.forms),
+      uses: strings(parsed.uses).filter((id) =>
+        USE_OPTIONS.some((option) => option.id === id),
       ),
-      sizeIndex,
-      dimensions: String(parsed.dimensions ?? ""),
+      size:
+        known(parsed.size, SIZE_OPTIONS) ||
+        legacySize(parsed.sizeIndex) ||
+        DEFAULT_SIZE,
+      length: String(parsed.length ?? ""),
+      width: String(parsed.width ?? ""),
+      height: String(parsed.height ?? ""),
       colors: strings(parsed.colors),
+      colorNote: String(parsed.colorNote ?? ""),
       freedom: typeof parsed.freedom === "number" ? parsed.freedom : 70,
       budget: known(parsed.budget, BUDGET_OPTIONS),
       timeline: known(parsed.timeline, TIMELINE_OPTIONS),

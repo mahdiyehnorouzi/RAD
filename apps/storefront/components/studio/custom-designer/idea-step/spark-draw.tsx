@@ -24,9 +24,9 @@ export function SparkDraw({
     canvas.width = box.width * ratio;
     canvas.height = box.height * ratio;
     context.scale(ratio, ratio);
-    context.fillStyle = "#f7f2e9";
+    context.fillStyle = "#faf7f1";
     context.fillRect(0, 0, box.width, box.height);
-    context.strokeStyle = "#18231f";
+    context.strokeStyle = "#1f2a25";
     context.lineWidth = 2.4;
     context.lineCap = "round";
     if (sketch) {
@@ -79,7 +79,7 @@ export function SparkDraw({
       />
       <button
         type="button"
-        className="button outline"
+        className="cs-btn cs-btn-paper"
         onClick={() => onChange("")}
       >
         {t("designerDrawClear")}

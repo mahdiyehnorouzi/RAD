@@ -1,6 +1,7 @@
 "use client";
 
 import { useLocale } from "@/components/i18n";
+import { StudioIcon } from "../studio-icon";
 import {
   BUDGET_OPTIONS,
   DATED_TIMELINE,
@@ -9,7 +10,7 @@ import {
 } from "./const";
 import type { Designer } from "./hooks";
 
-function RadioList({
+function RadioRows({
   name,
   options,
   value,
@@ -22,11 +23,11 @@ function RadioList({
 }) {
   const { locale } = useLocale();
   return (
-    <div className="designer-radios">
+    <div className="plan-rows">
       {options.map((option) => (
         <label
           key={option.id}
-          className={`designer-radio${value === option.id ? " is-checked" : ""}`}
+          className={`cd-choice plan-row${value === option.id ? " is-checked" : ""}`}
         >
           <input
             type="radio"
@@ -35,8 +36,8 @@ function RadioList({
             checked={value === option.id}
             onChange={() => onChange(option.id)}
           />
-          <span className="designer-radio-dot" aria-hidden="true" />
           <span>{option.label[locale]}</span>
+          <span className="cd-radio" aria-hidden="true" />
         </label>
       ))}
     </div>
@@ -48,15 +49,15 @@ export function PlanStep({ designer }: { designer: Designer }) {
   const c = designerCopy[locale];
 
   return (
-    <div className="designer-step plan-step">
-      <header className="designer-step-head">
+    <div className="cd-step plan-step">
+      <header className="cd-step-head">
         <h3>{c.planTitle}</h3>
+        <p>{c.planHelp}</p>
       </header>
 
-      <fieldset className="details-field">
+      <fieldset className="cd-field">
         <legend>{c.budgetLabel}</legend>
-        <small className="details-help">{c.budgetHelp}</small>
-        <RadioList
+        <RadioRows
           name="order-budget"
           options={BUDGET_OPTIONS}
           value={designer.budget}
@@ -64,9 +65,9 @@ export function PlanStep({ designer }: { designer: Designer }) {
         />
       </fieldset>
 
-      <fieldset className="details-field">
+      <fieldset className="cd-field">
         <legend>{c.timelineLabel}</legend>
-        <RadioList
+        <RadioRows
           name="order-timeline"
           options={TIMELINE_OPTIONS}
           value={designer.timeline}
@@ -74,17 +75,19 @@ export function PlanStep({ designer }: { designer: Designer }) {
         />
         {designer.timeline === DATED_TIMELINE ? (
           <>
-            <label className="details-exact" htmlFor="order-need-by">
+            <label className="cd-sublabel" htmlFor="order-need-by">
               {c.dateLabel}
             </label>
-            <input
-              id="order-need-by"
-              className="details-input"
-              value={designer.needBy}
-              onChange={(event) => designer.setNeedBy(event.target.value)}
-              placeholder={c.datePlaceholder}
-              autoFocus
-            />
+            <span className="cd-box cd-icon-input">
+              <StudioIcon name="calendar" size={20} />
+              <input
+                id="order-need-by"
+                value={designer.needBy}
+                onChange={(event) => designer.setNeedBy(event.target.value)}
+                placeholder={c.datePlaceholder}
+                autoFocus
+              />
+            </span>
           </>
         ) : null}
       </fieldset>

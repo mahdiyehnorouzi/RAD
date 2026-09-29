@@ -1,0 +1,1040 @@
+/* ——— RAD product card: photograph, pencilled number, specimen label ——— */
+
+.rad-card {
+  --rc-radius: 14px;
+  --rc-label: color-mix(in srgb, var(--paper) 62%, #fff);
+  --rc-oxide: #9c3f2c;
+  --rc-ease: cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--ink) 8%, transparent);
+  border-radius: var(--rc-radius);
+  background: var(--rc-label);
+  box-shadow:
+    0 1px 2px color-mix(in srgb, #5a3c22 8%, transparent),
+    0 22px 40px -26px color-mix(in srgb, #5a3c22 42%, transparent);
+  color: var(--ink);
+  container: rad-card / inline-size;
+  transition:
+    box-shadow 500ms var(--rc-ease),
+    transform 500ms var(--rc-ease);
+}
+
+/* ——— Artwork (shared by every variant and the view rail) ——— */
+
+.product-card-artwork {
+  position: absolute;
+  inset: 0;
+  display: block;
+}
+
+.product-art-backdrop {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background-color: color-mix(in srgb, var(--card-art-color) 52%, var(--sand));
+  background-image:
+    radial-gradient(
+      120% 80% at 50% 0%,
+      color-mix(in srgb, var(--paper) 36%, transparent),
+      transparent 58%
+    ),
+    radial-gradient(
+      92% 46% at 50% 112%,
+      color-mix(in srgb, var(--ink) 24%, var(--sand)),
+      transparent 62%
+    ),
+    linear-gradient(
+      168deg,
+      color-mix(in srgb, var(--card-art-color) 70%, var(--paper)) 0%,
+      color-mix(in srgb, var(--card-art-accent) 38%, var(--sand)) 100%
+    );
+}
+
+.product-art-backdrop::before {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E");
+  mix-blend-mode: multiply;
+  opacity: 0.22;
+  pointer-events: none;
+}
+
+.product-art-backdrop > .product-photo,
+.product-art-backdrop > .product-photo-default,
+.product-art-backdrop > .vessel,
+.product-art-backdrop > .mock-artwork {
+  position: absolute;
+  inset: -48%;
+  width: 196%;
+  height: 196%;
+  max-width: none;
+  object-fit: cover;
+  object-position: center 40%;
+  filter: blur(42px) saturate(1.45) contrast(1.12);
+  opacity: 0.9;
+  mix-blend-mode: multiply;
+}
+
+.product-artwork-cutout {
+  position: absolute;
+  z-index: 3;
+  inset: 4% 6% 10%;
+  display: grid;
+  grid-template: 100% / 100%;
+  place-items: center;
+  transform-origin: center bottom;
+  transition:
+    transform 900ms var(--rc-ease),
+    filter 400ms ease;
+}
+
+.product-artwork-cutout.has-photo {
+  inset: 0;
+}
+
+.product-artwork-cutout > .product-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(
+    0 14px 12px color-mix(in srgb, var(--ink) 18%, transparent)
+  );
+}
+
+.product-artwork-cutout.has-photo > .product-photo {
+  object-fit: cover;
+  object-position: center 58%;
+  filter: none;
+}
+
+.product-artwork-cutout > .product-photo-default,
+.product-artwork-cutout > .vessel,
+.product-artwork-cutout > .mock-artwork {
+  width: 100%;
+  height: 100%;
+}
+
+.product-card-artwork.is-plate .product-artwork-cutout {
+  inset: 10% 12% 14%;
+}
+
+/* ——— Stage ——— */
+
+.rad-card-stage {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--sand) 34%, var(--paper));
+  isolation: isolate;
+}
+
+.rad-card-art {
+  position: absolute;
+  inset: 0;
+  display: block;
+}
+
+/* The maker's pencilled number, not a sticker. */
+.rad-card-mark {
+  position: absolute;
+  z-index: 6;
+  top: clamp(0.7rem, 5cqi, 1.15rem);
+  inset-inline-end: clamp(0.8rem, 6cqi, 1.35rem);
+  display: grid;
+  justify-items: center;
+  color: color-mix(in srgb, var(--ink) 82%, transparent);
+  line-height: 1;
+  pointer-events: none;
+  transform: rotate(-6deg);
+  transform-origin: center;
+  filter: drop-shadow(0 0 10px color-mix(in srgb, var(--paper) 75%, transparent));
+}
+
+.rad-card-mark b {
+  font-size: clamp(1.45rem, 11cqi, 2.35rem);
+  font-weight: 200;
+  letter-spacing: 0.08em;
+  direction: ltr;
+}
+
+.rad-card-mark svg {
+  width: 112%;
+  height: 0.5rem;
+  margin-top: 0.1rem;
+  overflow: visible;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.1;
+  stroke-linecap: round;
+  opacity: 0.7;
+}
+
+.rad-card-mark svg path {
+  stroke-dasharray: 70;
+  stroke-dashoffset: 0;
+  transition: stroke-dashoffset 900ms var(--rc-ease);
+}
+
+.rad-card-mark small {
+  margin-top: 0.2rem;
+  font-size: clamp(0.56rem, 3.4cqi, 0.7rem);
+  font-weight: 400;
+  letter-spacing: 0.34em;
+  padding-inline-start: 0.34em;
+  direction: ltr;
+}
+
+.rad-card-flags {
+  position: absolute;
+  z-index: 8;
+  top: clamp(0.65rem, 4.5cqi, 0.95rem);
+  inset-inline-start: clamp(0.65rem, 4.5cqi, 0.95rem);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  max-width: calc(100% - 5.5rem);
+}
+
+.rad-card-flags .favorite-button.compact {
+  position: relative;
+  inset: auto;
+  z-index: 1;
+  display: grid;
+  flex: 0 0 auto;
+  width: 2.6rem;
+  min-height: 2.6rem;
+  padding: 0;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--rc-label) 94%, transparent);
+  box-shadow: 0 6px 14px -8px color-mix(in srgb, #3b2616 55%, transparent);
+  color: var(--ink);
+  transition:
+    background-color 250ms ease,
+    transform 250ms var(--rc-ease);
+}
+
+.rad-card-flags .favorite-button.compact svg {
+  width: 1.15rem;
+  height: 1.15rem;
+  stroke-width: 1.6;
+}
+
+.rad-card-flags .favorite-button.compact.active {
+  color: var(--rc-oxide);
+}
+
+/* ——— Badges ——— */
+
+.rad-badge {
+  display: inline-flex;
+  min-width: 0;
+  min-height: 2rem;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.85rem 0.3rem 0.8rem;
+  overflow: hidden;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: var(--font-weight-medium, 500);
+  line-height: 1;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  pointer-events: none;
+}
+
+.rad-badge svg {
+  flex: 0 0 auto;
+  width: 0.95rem;
+  height: 0.95rem;
+  stroke-width: 1.7;
+}
+
+.rad-badge[data-tone="sold"] {
+  background: color-mix(in srgb, #5e4b41 74%, transparent);
+  color: #fbf6ee;
+  -webkit-backdrop-filter: blur(6px) saturate(1.2);
+  backdrop-filter: blur(6px) saturate(1.2);
+}
+
+.rad-badge[data-tone="bag"] {
+  background: var(--moss);
+  color: #f5f1e8;
+}
+
+.rad-badge[data-tone="popular"] {
+  overflow: visible;
+  background: #a2492b;
+  color: #fff7ef;
+  animation: rad-badge-glow 2.8s ease-in-out infinite;
+}
+
+.rad-badge[data-tone="popular"] svg {
+  fill: color-mix(in srgb, #ffd2a8 55%, transparent);
+  transform-origin: 50% 85%;
+  animation: rad-flame 1.3s ease-in-out infinite;
+}
+
+.rad-badge[data-tone="neutral"] {
+  border: 1px solid color-mix(in srgb, var(--ink) 12%, transparent);
+  background: color-mix(in srgb, var(--rc-label) 92%, transparent);
+  color: var(--ink);
+}
+
+@keyframes rad-badge-glow {
+  0%,
+  100% {
+    box-shadow:
+      0 4px 10px -6px color-mix(in srgb, #7a2a16 70%, transparent),
+      0 0 0 0 color-mix(in srgb, #e0563a 0%, transparent);
+  }
+  50% {
+    box-shadow:
+      0 4px 10px -6px color-mix(in srgb, #7a2a16 70%, transparent),
+      0 0 22px 5px color-mix(in srgb, #e0563a 42%, transparent);
+  }
+}
+
+@keyframes rad-flame {
+  0%,
+  100% {
+    transform: rotate(-4deg) scale(1);
+  }
+  35% {
+    transform: rotate(3deg) scale(1.08, 1.16);
+  }
+  70% {
+    transform: rotate(-1deg) scale(0.96, 1.04);
+  }
+}
+
+/* ——— Label ——— */
+
+.rad-card-body {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  flex: 1;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: "info qr";
+  align-content: start;
+  align-items: start;
+  gap: 0.9rem 0.85rem;
+  margin-top: -1.1rem;
+  padding: 1.05rem 1.05rem 1.05rem;
+  border-radius: var(--rc-radius) var(--rc-radius) 0 0;
+  background: var(--rc-label);
+}
+
+.rad-card-info {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-area: info;
+  min-width: 0;
+  gap: 0.2rem;
+  text-align: start;
+}
+
+.rad-card .rad-card-name {
+  margin: 0;
+  font-size: clamp(1rem, 6.2cqi, 1.2rem);
+  font-weight: var(--font-weight-semibold, 600);
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.rad-card-name a {
+  text-decoration: none;
+}
+
+.rad-card-maker {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.rad-card-maker b {
+  color: var(--rc-oxide);
+  font-weight: var(--font-weight-medium, 500);
+}
+
+.rad-card-no {
+  justify-self: start;
+  color: var(--muted);
+  font-size: 0.74rem;
+  letter-spacing: 0.1em;
+  line-height: 1.6;
+  white-space: nowrap;
+}
+
+.rad-card-price {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem;
+  margin: 0.35rem 0 0;
+  line-height: 1.3;
+}
+
+.rad-card-price b {
+  font-size: clamp(1rem, 6cqi, 1.15rem);
+  font-weight: var(--font-weight-semibold, 600);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
+}
+
+.rad-card-price span {
+  color: color-mix(in srgb, var(--ink) 78%, var(--muted));
+  font-size: 0.82rem;
+  font-weight: var(--font-weight-medium, 500);
+}
+
+.rad-card .rad-card-print.rad-fingerprint {
+  position: absolute;
+  z-index: 0;
+  bottom: -2.8rem;
+  inset-inline-end: -2.2rem;
+  width: 9.5rem;
+  height: 9.5rem;
+  color: color-mix(in srgb, var(--sand) 78%, var(--ink));
+  stroke-width: 0.9;
+  opacity: 0.42;
+  pointer-events: none;
+}
+
+.rad-card:hover .rad-card-print.is-pressed path {
+  animation-name: rad-print-repress, rad-print-ink;
+}
+
+/* ——— QR label code and its scan ——— */
+
+.rad-card-qr {
+  --qr-size: 3.2rem;
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-area: qr;
+  justify-items: center;
+  gap: 0.3rem;
+  color: var(--ink);
+}
+
+.rad-card-qr-frame {
+  position: relative;
+  display: block;
+  width: var(--qr-size);
+  height: var(--qr-size);
+  padding: 0.2rem;
+  border-radius: 6px;
+  background: #fff;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--ink) 8%, transparent);
+}
+
+.rad-card-qr-code {
+  display: block;
+  width: 100%;
+  height: 100%;
+  fill: #1a1714;
+  transition:
+    opacity 300ms ease,
+    transform 300ms var(--rc-ease);
+}
+
+.rad-card-qr-corners {
+  position: absolute;
+  inset: -0.32rem;
+  width: calc(100% + 0.64rem);
+  height: calc(100% + 0.64rem);
+  overflow: visible;
+  fill: none;
+  stroke: var(--rc-oxide);
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0;
+}
+
+.rad-card-qr-beam {
+  position: absolute;
+  inset-inline: 0.1rem;
+  top: 0;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--rc-oxide);
+  box-shadow: 0 0 8px 1px color-mix(in srgb, #e0563a 55%, transparent);
+  opacity: 0;
+}
+
+.rad-card-qr-check {
+  position: absolute;
+  inset: 12%;
+  width: 76%;
+  height: 76%;
+  overflow: visible;
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0;
+}
+
+.rad-card-qr-check circle,
+.rad-card-qr-check path {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+}
+
+.rad-card-qr small {
+  color: color-mix(in srgb, var(--ink) 70%, var(--muted));
+  font-size: 0.5rem;
+  font-weight: var(--font-weight-medium, 500);
+  letter-spacing: 0.22em;
+  line-height: 1;
+  white-space: nowrap;
+  padding-inline-start: 0.22em;
+}
+
+.rad-card-qr:focus-visible {
+  outline: 0;
+}
+
+.rad-card-qr:focus-visible .rad-card-qr-frame {
+  outline: 2px solid var(--rc-oxide);
+  outline-offset: 5px;
+}
+
+.rad-card-qr.is-scanned .rad-card-qr-corners,
+.rad-card-qr:focus-visible .rad-card-qr-corners {
+  animation: rad-qr-corners 1.2s var(--rc-ease) forwards;
+}
+.rad-card-qr.is-scanned .rad-card-qr-beam,
+.rad-card-qr:focus-visible .rad-card-qr-beam {
+  animation: rad-qr-beam 1.2s linear forwards;
+}
+.rad-card-qr.is-scanned .rad-card-qr-code,
+.rad-card-qr:focus-visible .rad-card-qr-code {
+  animation: rad-qr-code 1.2s ease forwards;
+}
+.rad-card-qr.is-scanned .rad-card-qr-check,
+.rad-card-qr:focus-visible .rad-card-qr-check {
+  animation: rad-qr-check-in 1.2s linear forwards;
+}
+.rad-card-qr.is-scanned .rad-card-qr-check :is(circle, path),
+.rad-card-qr:focus-visible .rad-card-qr-check :is(circle, path) {
+  animation: rad-qr-check-draw 1.2s var(--rc-ease) forwards;
+}
+.rad-card-qr.is-scanned .rad-card-qr-check path,
+.rad-card-qr:focus-visible .rad-card-qr-check path {
+  animation-name: rad-qr-tick-draw;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .rad-card-qr:hover .rad-card-qr-corners {
+    animation: rad-qr-corners 1.2s var(--rc-ease) forwards;
+  }
+  .rad-card-qr:hover .rad-card-qr-beam {
+    animation: rad-qr-beam 1.2s linear forwards;
+  }
+  .rad-card-qr:hover .rad-card-qr-code {
+    animation: rad-qr-code 1.2s ease forwards;
+  }
+  .rad-card-qr:hover .rad-card-qr-check {
+    animation: rad-qr-check-in 1.2s linear forwards;
+  }
+  .rad-card-qr:hover .rad-card-qr-check circle {
+    animation: rad-qr-check-draw 1.2s var(--rc-ease) forwards;
+  }
+  .rad-card-qr:hover .rad-card-qr-check path {
+    animation: rad-qr-tick-draw 1.2s var(--rc-ease) forwards;
+  }
+}
+
+/* 0–0.36s corners close in · 0.3–0.8s beam passes · 0.8–1.2s check draws */
+@keyframes rad-qr-corners {
+  0% {
+    opacity: 0;
+    transform: scale(1.28);
+  }
+  28% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  62% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  76%,
+  100% {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+}
+
+@keyframes rad-qr-beam {
+  0%,
+  25% {
+    opacity: 0;
+    top: 0.1rem;
+  }
+  30% {
+    opacity: 1;
+  }
+  62% {
+    opacity: 1;
+    top: calc(100% - 0.2rem);
+  }
+  68%,
+  100% {
+    opacity: 0;
+    top: calc(100% - 0.2rem);
+  }
+}
+
+@keyframes rad-qr-code {
+  0%,
+  62% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  76%,
+  100% {
+    opacity: 0;
+    transform: scale(0.86);
+  }
+}
+
+@keyframes rad-qr-check-in {
+  0%,
+  64% {
+    opacity: 0;
+  }
+  70%,
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes rad-qr-check-draw {
+  0%,
+  64% {
+    stroke-dashoffset: 1;
+  }
+  90%,
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes rad-qr-tick-draw {
+  0%,
+  76% {
+    stroke-dashoffset: 1;
+  }
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* ——— Standard: upright card for home and favourites ——— */
+
+.rad-card--standard .rad-card-stage {
+  aspect-ratio: 1 / 1.02;
+}
+
+/* ——— Compact: shop floor and carousel ——— */
+
+.rad-card--compact .rad-card-stage,
+.rad-card--suggest .rad-card-stage {
+  aspect-ratio: 4 / 3;
+}
+
+.rad-card--compact .rad-card-body,
+.rad-card--suggest .rad-card-body {
+  grid-template-areas: "info qr";
+  align-items: center;
+  margin-top: -0.9rem;
+  padding: 0.85rem 0.9rem 0.95rem;
+}
+
+.rad-card--compact .rad-card-qr,
+.rad-card--suggest .rad-card-qr {
+  --qr-size: 2.7rem;
+}
+
+.rad-card--compact .rad-card-name,
+.rad-card--suggest .rad-card-name {
+  font-size: clamp(0.95rem, 5.8cqi, 1.05rem);
+}
+
+.rad-card--compact .rad-card-price,
+.rad-card--suggest .rad-card-price {
+  margin-top: 0.15rem;
+}
+
+.rad-card--compact .rad-card-price b,
+.rad-card--suggest .rad-card-price b {
+  font-size: clamp(0.92rem, 5.6cqi, 1.02rem);
+}
+
+.rad-card--compact .rad-card-mark b,
+.rad-card--suggest .rad-card-mark b {
+  font-size: clamp(1.3rem, 9cqi, 1.9rem);
+}
+
+/* ——— Suggest: a way forward under empty and error states ——— */
+
+.rad-card--suggest .rad-card-body {
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-areas: "info qr go";
+}
+
+.rad-card-go {
+  display: grid;
+  grid-area: go;
+  width: 2.5rem;
+  height: 2.5rem;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--ink) 12%, transparent);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--sand) 26%, var(--rc-label));
+  color: var(--ink);
+  transition:
+    background-color 300ms ease,
+    color 300ms ease,
+    border-color 300ms ease;
+}
+
+.rad-card-go svg {
+  width: 1rem;
+  height: 1rem;
+  stroke-width: 1.7;
+  transition: transform 450ms var(--rc-ease);
+}
+
+@container rad-card (max-width: 14rem) {
+  .rad-card--compact .rad-card-body,
+  .rad-card--suggest .rad-card-body {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: "info go";
+    padding-inline: 0.8rem;
+  }
+
+  .rad-card--compact .rad-card-qr,
+  .rad-card--suggest .rad-card-qr {
+    display: none;
+  }
+
+  .rad-card-flags {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.4rem;
+    max-width: calc(100% - 1.3rem);
+  }
+
+  .rad-card-flags .favorite-button.compact {
+    width: 2.3rem;
+    min-height: 2.3rem;
+  }
+
+  .rad-badge {
+    min-height: 1.75rem;
+    padding-inline: 0.65rem;
+    font-size: 0.72rem;
+  }
+
+  .rad-card-go {
+    width: 2.2rem;
+    height: 2.2rem;
+  }
+}
+
+/* ——— Featured: wide home plate with its view rail ——— */
+
+.rad-card--featured {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas: "main";
+  gap: 0.75rem;
+  padding: 0.75rem;
+}
+
+.rad-card--featured.has-rail {
+  grid-template-columns: minmax(0, 1fr) clamp(3.75rem, 7cqi, 4.75rem);
+  grid-template-areas: "main rail";
+}
+
+.rad-card-main {
+  position: relative;
+  display: grid;
+  grid-area: main;
+  grid-template-rows: minmax(0, 1fr) auto;
+  min-width: 0;
+  min-height: clamp(28rem, 72cqi, 36rem);
+  overflow: hidden;
+  border-radius: calc(var(--rc-radius) - 3px);
+  container: rad-card-main / inline-size;
+}
+
+.rad-card--featured .rad-card-stage {
+  aspect-ratio: auto;
+  min-height: 16rem;
+  margin-bottom: -1.25rem;
+}
+
+.rad-card--featured .rad-card-art .product-artwork-cutout.has-photo > .product-photo {
+  object-position: center 66%;
+}
+
+.rad-card--featured .rad-card-body {
+  flex: none;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-areas: "info lede qr";
+  align-items: center;
+  gap: 0.75rem clamp(1rem, 3cqi, 1.75rem);
+  margin: 0;
+  padding: 1.15rem clamp(1rem, 3cqi, 1.5rem) 1.1rem;
+}
+
+.rad-card--featured .rad-card-name {
+  font-size: clamp(1.15rem, 3.2cqi, 1.5rem);
+}
+
+.rad-card--featured .rad-card-price b {
+  font-size: clamp(1.05rem, 2.8cqi, 1.3rem);
+}
+
+.rad-card--featured .rad-card-mark b {
+  font-size: clamp(2rem, 6.4cqi, 3rem);
+}
+
+.rad-card-lede {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-area: lede;
+  min-width: 0;
+  justify-items: start;
+  gap: 0.75rem;
+  padding-inline-start: clamp(0.75rem, 2.4cqi, 1.5rem);
+  border-inline-start: 1px solid color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+.rad-card-lede p {
+  display: -webkit-box;
+  max-width: 34ch;
+  margin: 0;
+  overflow: hidden;
+  color: color-mix(in srgb, var(--ink) 74%, var(--muted));
+  font-size: 0.82rem;
+  line-height: 1.85;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.rad-card--featured .rad-card-qr {
+  --qr-size: 3.6rem;
+}
+
+.rad-card-thumbs {
+  display: flex;
+  grid-area: rail;
+  min-width: 0;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.6rem;
+}
+
+.rad-card-thumb {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--sand) 34%, var(--paper));
+  cursor: pointer;
+  opacity: 0.72;
+  transition:
+    opacity 250ms ease,
+    box-shadow 250ms ease;
+}
+
+.rad-card-thumb[aria-pressed="true"] {
+  box-shadow:
+    0 0 0 2px var(--rc-label),
+    0 0 0 3.5px var(--ink);
+  opacity: 1;
+}
+
+.rad-card-thumb:focus-visible {
+  box-shadow:
+    0 0 0 2px var(--rc-label),
+    0 0 0 3.5px var(--rc-oxide) !important;
+  opacity: 1;
+}
+
+.rad-card-thumb .product-artwork-cutout.has-photo > .product-photo {
+  object-position: center;
+}
+
+.rad-card-thumb-more {
+  display: grid;
+  width: 78%;
+  aspect-ratio: 1 / 1;
+  margin: 0.2rem auto 0;
+  place-items: center;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--sand) 30%, var(--rc-label));
+  color: var(--ink);
+  font-size: 0.85rem;
+  font-weight: var(--font-weight-medium, 500);
+  transition: background-color 250ms ease;
+}
+
+@container rad-card-main (max-width: 600px) {
+  .rad-card--featured .rad-card-body {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "info qr"
+      "lede lede";
+  }
+  .rad-card-lede {
+    grid-template-columns: minmax(0, 1fr);
+    padding-inline-start: 0;
+    padding-top: 0.75rem;
+    border-inline-start: 0;
+    border-top: 1px solid color-mix(in srgb, var(--ink) 10%, transparent);
+  }
+}
+
+/* On phones the featured plate sheds its rail and lede and reads like a standard card. */
+@media (max-width: 640px) {
+  .rad-card--featured.has-rail {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "main";
+  }
+  .rad-card-thumbs,
+  .rad-card-lede {
+    display: none;
+  }
+  .rad-card-main {
+    min-height: 0;
+  }
+  .rad-card--featured .rad-card-stage {
+    min-height: 0;
+    aspect-ratio: 1 / 1.02;
+  }
+  .rad-card--featured .rad-card-body {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: "info qr";
+    align-items: start;
+  }
+  .rad-card--featured .rad-card-qr {
+    --qr-size: 3.2rem;
+  }
+}
+
+/* ——— Unavailable ——— */
+
+.rad-card.is-unavailable .rad-card-art .product-artwork-cutout {
+  filter: saturate(0.72);
+}
+
+.rad-card.is-unavailable .rad-card-price b {
+  color: var(--muted);
+}
+
+/* ——— Interaction ——— */
+
+.rad-card-name a:focus-visible,
+.rad-card-go:focus-visible,
+.rad-card-thumb-more:focus-visible {
+  outline: 2px solid var(--rc-oxide);
+  outline-offset: 3px;
+}
+
+.rad-card-name a:focus-visible {
+  border-radius: 4px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .rad-card:hover {
+    box-shadow:
+      0 1px 2px color-mix(in srgb, #5a3c22 8%, transparent),
+      0 30px 50px -28px color-mix(in srgb, #5a3c22 52%, transparent);
+    transform: translateY(-3px);
+  }
+
+  .rad-card:hover .rad-card-art .product-artwork-cutout.has-photo,
+  .rad-card:hover .rad-card-art .product-artwork-cutout:not(.has-photo) {
+    transform: scale(1.035);
+  }
+
+  .rad-card:hover .rad-card-mark svg path {
+    animation: rad-mark-draw 900ms var(--rc-ease);
+  }
+
+  .rad-card-go:hover {
+    border-color: var(--moss);
+    background: var(--moss);
+    color: #f5f1e8;
+  }
+
+  .rad-card-go:hover svg {
+    transform: translateX(-4px);
+  }
+
+  html[dir="ltr"] .rad-card-go:hover svg {
+    transform: translateX(4px);
+  }
+
+  .rad-card-thumb:hover {
+    opacity: 1;
+  }
+
+  .rad-card-thumb-more:hover {
+    background: color-mix(in srgb, var(--sand) 55%, var(--rc-label));
+  }
+
+  .rad-card-flags .favorite-button.compact:hover {
+    transform: scale(1.06);
+  }
+}
+
+@keyframes rad-mark-draw {
+  from {
+    stroke-dashoffset: 70;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rad-card,
+  .rad-card *,
+  .rad-card *::before,
+  .rad-card *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+  .rad-card:hover {
+    transform: none;
+  }
+  .rad-card:hover .rad-card-art .product-artwork-cutout {
+    transform: none;
+  }
+}

@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import { Plus, X } from "lucide-react";
+import Image from "next/image";
 import { useLocale } from "@/components/i18n";
+import { StudioIcon } from "../../studio-icon";
 import {
   DESIGNER_COLORS,
+  FORM_OPTIONS,
   MAX_DESIGNER_COLORS,
   SIZE_OPTIONS,
   designerCopy,
@@ -13,117 +14,127 @@ import type { Designer } from "../hooks";
 import { FreedomSlider } from "./freedom-slider";
 import "./details-step.css";
 
-const presetValues: string[] = DESIGNER_COLORS.map((color) => color.value);
+const LIGHT_SWATCHES = new Set(["sand", "cream"]);
 
 export function DetailsStep({ designer }: { designer: Designer }) {
   const { locale } = useLocale();
   const c = designerCopy[locale];
-  const size = SIZE_OPTIONS[designer.sizeIndex] ?? SIZE_OPTIONS[0];
-  const sizeText = `${size.label[locale]} — ${size.hint[locale]}`;
-  const customColors = designer.colors.filter((value) => !presetValues.includes(value));
+  const art =
+    FORM_OPTIONS.find((option) => option.id === designer.form)?.image ??
+    FORM_OPTIONS[0].image;
+  const size = SIZE_OPTIONS.find((option) => option.id === designer.size) ?? SIZE_OPTIONS[1];
   const full = designer.colors.length >= MAX_DESIGNER_COLORS;
-  const picker = useRef<HTMLInputElement>(null);
-  const { toggleColor } = designer;
-
-  // The native "change" fires once when the picker closes; React's onChange fires on every drag.
-  useEffect(() => {
-    const input = picker.current;
-    if (!input) return undefined;
-    const commit = () => toggleColor(input.value);
-    input.addEventListener("change", commit);
-    return () => input.removeEventListener("change", commit);
-  }, [toggleColor]);
+  const dims = [
+    { id: "length", label: c.length, value: designer.length, set: designer.setLength },
+    { id: "width", label: c.width, value: designer.width, set: designer.setWidth },
+    { id: "height", label: c.height, value: designer.height, set: designer.setHeight },
+  ];
 
   return (
-    <div className="designer-step details-step">
-      <header className="designer-step-head">
+    <div className="cd-step details-step">
+      <header className="cd-step-head">
         <h3>{c.detailsTitle}</h3>
         <p>{c.detailsHelp}</p>
       </header>
 
-      <fieldset className="details-field">
+      <fieldset className="cd-field">
         <legend>{c.sizeLabel}</legend>
-        <output className="details-readout" htmlFor="size-range">
-          {size.label[locale]} <small>{size.hint[locale]}</small>
-        </output>
-        <div className="details-scale">
-          <div className="details-stops" aria-hidden="true">
-            {SIZE_OPTIONS.map((option, index) => (
-              <i key={option.id} className={index <= designer.sizeIndex ? "is-past" : ""} />
-            ))}
+        <div className="size-stage">
+          <span className="size-preview" aria-hidden="true">
+            <span style={{ transform: `scale(${size.scale})` }}>
+              <Image src={art} alt="" fill sizes="15rem" />
+            </span>
+          </span>
+          <div className="size-track">
+            {SIZE_OPTIONS.map((option) => {
+              const checked = designer.size === option.id;
+              return (
+                <label
+                  key={option.id}
+                  className={`cd-choice size-stop${checked ? " is-checked" : ""}`}
+                >
+                  <input
+                    type="radio"
+                    name="order-size"
+                    value={option.id}
+                    checked={checked}
+                    onChange={() => designer.setSize(option.id)}
+                  />
+                  <i className="size-dot" aria-hidden="true" />
+                  <span>{option.label[locale]}</span>
+                </label>
+              );
+            })}
           </div>
-          <input
-            id="size-range"
-            className="details-range"
-            type="range"
-            min={0}
-            max={SIZE_OPTIONS.length - 1}
-            step={1}
-            value={designer.sizeIndex}
-            aria-label={c.sizeLabel}
-            aria-valuetext={sizeText}
-            onChange={(event) => designer.setSizeIndex(Number(event.target.value))}
-          />
+          <p className="size-readout" aria-live="polite">
+            <StudioIcon name="ruler" size={18} />
+            <b>{size.label[locale]}</b>
+            <span>{size.hint[locale]}</span>
+          </p>
         </div>
-        <div className="details-ends" aria-hidden="true">
-          <span>{c.sizeSmall}</span>
-          <span>{c.sizeLarge}</span>
-        </div>
-        <label className="details-exact" htmlFor="making-dimensions">
-          {c.exactSizeLabel}
-        </label>
-        <input
-          id="making-dimensions"
-          className="details-input"
-          value={designer.dimensions}
-          onChange={(event) => designer.setDimensions(event.target.value)}
-          placeholder={c.exactSizePlaceholder}
-        />
       </fieldset>
 
-      <fieldset className="details-field details-colors">
-        <legend>{c.colorsLabel}</legend>
-        <small>{c.colorsHelp}</small>
-        <div>
-          {DESIGNER_COLORS.map((color) => {
-            const active = designer.colors.includes(color.value);
-            return (
-              <button
-                key={color.id}
-                type="button"
-                className={active ? "active" : ""}
-                style={{ background: color.value }}
-                aria-pressed={active}
-                aria-label={color.label[locale]}
-                disabled={full && !active}
-                onClick={() => designer.toggleColor(color.value)}
+      <fieldset className="cd-field">
+        <legend>{c.exactLabel}</legend>
+        <div className="dims">
+          {dims.map((dim) => (
+            <label key={dim.id} className="cd-box dim-box">
+              <span>{dim.label}</span>
+              <input
+                inputMode="decimal"
+                value={dim.value}
+                onChange={(event) => dim.set(event.target.value.slice(0, 8))}
+                aria-label={`${dim.label} (${c.unit})`}
               />
+              <small aria-hidden="true">{c.unit}</small>
+            </label>
+          ))}
+        </div>
+      </fieldset>
+
+      <fieldset className="cd-field">
+        <legend>
+          {c.colorsLabel} <small className="cd-legend-hint">{c.colorsHint}</small>
+        </legend>
+        <div className="swatches">
+          {DESIGNER_COLORS.map((color) => {
+            const checked = designer.colors.includes(color.value);
+            return (
+              <label
+                key={color.id}
+                className={`swatch${checked ? " is-checked" : ""}${full && !checked ? " is-disabled" : ""}${LIGHT_SWATCHES.has(color.id) ? " is-light" : ""}`}
+                style={{ "--swatch": color.value } as React.CSSProperties}
+              >
+                <input
+                  type="checkbox"
+                  checked={checked}
+                  disabled={full && !checked}
+                  onChange={() => designer.toggleColor(color.value)}
+                  aria-label={color.label[locale]}
+                />
+                <span className="swatch-chip" aria-hidden="true">
+                  {checked ? <StudioIcon name="check" size={16} /> : null}
+                </span>
+                <span className="swatch-name" aria-hidden="true">
+                  {color.label[locale]}
+                </span>
+              </label>
             );
           })}
-          {customColors.map((value) => (
-            <button
-              key={value}
-              type="button"
-              className="active is-custom"
-              style={{ background: value }}
-              aria-label={`${c.removeColor} ${value}`}
-              onClick={() => designer.toggleColor(value)}
-            >
-              <X aria-hidden="true" size={12} strokeWidth={2} />
-            </button>
-          ))}
-          <label className={`details-color-picker${full ? " is-disabled" : ""}`}>
-            <input
-              ref={picker}
-              type="color"
-              defaultValue="#8a4938"
-              disabled={full}
-              aria-label={c.customColor}
-            />
-            <Plus aria-hidden="true" size={14} strokeWidth={1.8} />
-            <span>{c.customColor}</span>
-          </label>
         </div>
+        <label className="cd-sublabel" htmlFor="color-note">
+          {c.colorNoteLabel}
+        </label>
+        <span className="cd-box cd-icon-input">
+          <StudioIcon name="palette" size={20} />
+          <input
+            id="color-note"
+            value={designer.colorNote}
+            maxLength={120}
+            onChange={(event) => designer.setColorNote(event.target.value)}
+            placeholder={c.colorNotePlaceholder}
+          />
+        </span>
       </fieldset>
 
       <FreedomSlider value={designer.freedom} onChange={designer.setFreedom} />

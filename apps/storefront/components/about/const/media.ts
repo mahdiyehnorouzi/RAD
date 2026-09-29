@@ -1,8 +1,11 @@
 export const aboutMedia = {
-  workbench: "/about/about-workbench.webp",
-  working: "/studio-process.jpg",
-  intermediate: "/making/RAD-M-1405-17/forming.png",
-  trace: "/difference/homesickness-bowl/material-v3.jpg",
-  founder: "/difference/homesickness-bowl/material-v3.jpg",
-  workshopVideo: "/about/about-process-live.mp4",
+  hero: "/about/about-hero-mug.jpg",
+  why: "/about/about-why-wheel.jpg",
+  founderFilm: "/about/about-process-live.mp4",
+  founderPoster: "/about/about-process-poster.jpg",
+  passage: "/about/about-passage-wedging.jpg",
+  not: "/about/about-not-bowl.jpg",
+  clay: "/about/about-clay-disc.jpg",
+  stamp: "/marks/rad-stamp.webp",
+  once: "/about/about-once-cup.jpg",
 } as const;

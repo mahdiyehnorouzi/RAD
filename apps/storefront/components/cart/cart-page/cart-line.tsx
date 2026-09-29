@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { Trash2 } from "lucide-react";
 import type { CartPriceAtAdd, Product } from "@rad/types";
 import { LinkPending, ProductMedia } from "@/components/product";
 import { useLocale } from "@/components/i18n";
@@ -8,6 +9,7 @@ import { productCopy } from "@/lib/catalog/products";
 import { formatTotal, priceToNumber, productPrice } from "@/lib/money";
 import { formatCountdown } from "@/lib/catalog/product-status";
 import { useCountdown } from "@/hooks/use-countdown";
+import { cartCopy, fillCartCopy } from "../const";
 
 export type CartLineIssue =
   "withdrawn" | "sold" | "reserved" | "unavailable" | null;
@@ -38,29 +40,41 @@ export function CartLine({
   onRemove: () => void;
 }) {
   const { locale, t, href, number } = useLocale();
+  const c = cartCopy[locale];
   const reservedLeft = useCountdown(
     issue === "reserved" ? product?.reservedUntil : null,
   );
-  const removeButton = (
-    <button type="button" onClick={onRemove} disabled={removing}>
-      {removing ? t("removing") : t("removeBag")}
-    </button>
+  const name = product ? productCopy(product, locale).name : slug;
+  const quantity = (
+    <div className="cart-line-qty">
+      <span>{c.quantity}</span>
+      <b>{number(1)}</b>
+      <button
+        type="button"
+        className="cart-line-remove"
+        onClick={onRemove}
+        disabled={removing}
+        aria-label={fillCartCopy(c.remove, { name })}
+        title={removing ? t("removing") : t("removeBag")}
+      >
+        <Trash2 aria-hidden="true" />
+      </button>
+    </div>
   );
 
   if (!product) {
     return (
-      <article className="cart-item is-blocked">
-        <span className="cart-art cart-art--missing" aria-hidden="true" />
-        <div className="cart-item-copy">
-          <span>{t("uniquePiece")}</span>
+      <article className="cart-line is-blocked" aria-busy={removing}>
+        <span className="cart-line-art cart-line-art--missing" aria-hidden="true" />
+        <div className="cart-line-copy">
           <h2 dir="ltr">{slug}</h2>
-          <p className="cart-unavailable" role="status">
+          <p className="cart-line-issue" role="status">
             {issue === "withdrawn"
               ? t("cartItemWithdrawn")
               : t("catalogStaleNotice")}
           </p>
-          {removeButton}
         </div>
+        {quantity}
       </article>
     );
   }
@@ -85,37 +99,42 @@ export function CartLine({
     : [0, 0];
 
   return (
-    <article className={`cart-item${issue ? " is-blocked" : ""}`}>
-      <Link href={href(`/products/${product.slug}`)} className="cart-art">
-        <span className="cart-media">
-          <ProductMedia product={product} />
-        </span>
+    <article
+      className={`cart-line${issue ? " is-blocked" : ""}`}
+      aria-busy={removing}
+    >
+      <Link
+        href={href(`/products/${product.slug}`)}
+        className="cart-line-art"
+        tabIndex={-1}
+        aria-hidden="true"
+      >
+        <ProductMedia product={product} showStatusBadge={false} />
         <LinkPending />
       </Link>
-      <div className="cart-item-copy">
-        <span>{t("uniquePiece")}</span>
+      <div className="cart-line-copy">
         <h2>
           <Link href={href(`/products/${product.slug}`)}>{copy.name}</Link>
         </h2>
         <p>{copy.subtitle}</p>
+        <strong className={issue ? "is-struck" : undefined}>
+          {productPrice(product, locale)}
+        </strong>
         {issueText ? (
-          <p className="cart-unavailable" role="status">
+          <p className="cart-line-issue" role="status">
             {issueText}
           </p>
         ) : null}
         {changed && !issue ? (
-          <p className="cart-price-changed" role="status">
+          <p className="cart-line-changed" role="status">
             {t("cartPriceChanged", {
               from: formatTotal(from, locale),
               to: formatTotal(to, locale),
             })}
           </p>
         ) : null}
-        {removeButton}
       </div>
-      <strong className={issue ? "is-struck" : undefined}>
-        {productPrice(product, locale)}
-      </strong>
+      {quantity}
     </article>
   );
 }

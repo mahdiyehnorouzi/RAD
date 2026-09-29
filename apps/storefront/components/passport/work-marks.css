@@ -1,41 +1,80 @@
+/* Marks of the hand: the finished photograph with the maker's marks as
+   oxide rings; the open mark's note sits on a paper slip beneath. */
+
 .work-marks {
-  margin-top: clamp(2.5rem, 6vw, 4.5rem);
+  display: grid;
+  gap: 1.1rem;
+  width: min(100% - 2 * var(--pp-pad, 1.25rem), 42rem);
+  margin: clamp(3.5rem, 12vw, 7rem) auto 0;
 }
 
 .work-marks h2 {
-  font-size: clamp(1.4rem, 3vw, 2rem);
-  font-weight: 500;
-  margin: 0 0 0.5rem;
+  font-size: clamp(1.4rem, 6vw, 2rem);
+  font-weight: 700;
+  line-height: 1.55;
 }
 
 .work-marks > p {
-  max-width: 34rem;
-  margin: 0 0 1.2rem;
-  color: var(--muted);
+  max-width: 52ch;
+  color: var(--pp-muted, var(--muted));
+  font-size: 0.93rem;
+  line-height: 1.9;
 }
 
 .work-marks-stage {
   position: relative;
-  max-width: 36rem;
+  overflow: hidden;
+  border-radius: 4px;
+  background: var(--pp-sand, var(--sand));
+  box-shadow: 0 18px 32px -26px rgb(60 44 30 / 0.75);
 }
 
 .work-marks-stage img {
+  display: block;
   width: 100%;
   aspect-ratio: 4 / 3;
-  object-fit: contain;
-  background: color-mix(in srgb, var(--sand) 40%, var(--paper));
+  object-fit: cover;
 }
 
 .work-marks-stage button {
   position: absolute;
-  width: 18px;
-  height: 18px;
-  transform: translate(-50%, -50%);
-  border: 1px solid var(--ink);
-  border-radius: 50%;
-  background: var(--paper);
-  cursor: pointer;
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
   padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  transform: translate(-50%, -50%);
+  cursor: pointer;
+}
+
+.work-marks-stage button::before {
+  width: 1.1rem;
+  height: 1.1rem;
+  border: 1.5px solid var(--pp-rim, #fff);
+  border-radius: 50%;
+  background: rgb(173 95 61 / 0.35);
+  box-shadow: 0 2px 6px rgb(30 20 10 / 0.35);
+  content: "";
+  transition:
+    background-color 200ms ease,
+    scale 200ms ease;
+}
+
+.work-marks-stage button:hover::before {
+  scale: 1.15;
+}
+
+.work-marks-stage .is-open::before {
+  background: var(--pp-thread, var(--clay));
+  scale: 1.2;
+}
+
+.work-marks-stage button:focus-visible {
+  outline: 2px solid var(--pp-rim, #fff);
+  outline-offset: -4px;
 }
 
 .work-marks-stage button span {
@@ -43,20 +82,31 @@
   width: 1px;
   height: 1px;
   overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-}
-
-.work-marks-stage .is-open {
-  background: var(--clay);
-  border-color: var(--clay);
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
 .work-marks aside {
-  max-width: 32rem;
-  margin-top: 1rem;
+  display: grid;
+  gap: 0.3rem;
+  padding: 1rem 1.2rem;
+  border-radius: 4px;
+  background: var(--pp-sheet, var(--paper));
+  box-shadow: 0 14px 24px -20px rgb(60 44 30 / 0.6);
+}
+
+.work-marks aside b {
+  font-size: 1rem;
 }
 
 .work-marks aside p {
-  margin: 0.4rem 0 0;
-  line-height: 1.75;
+  color: var(--pp-body, var(--ink));
+  font-size: 0.92rem;
+  line-height: 1.85;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .work-marks-stage button::before {
+    transition: none;
+  }
 }

@@ -6,39 +6,44 @@ import type { LocaleCopy } from "@/types/locale";
  * the wizard and the review step all read from this file.
  */
 
-export type OrderFact = { id: string; value: LocaleCopy; note: LocaleCopy };
+export type OrderOverviewStep = {
+  id: "idea" | "review" | "quote" | "making";
+  title: LocaleCopy;
+  note: LocaleCopy;
+};
 
-export const ORDER_FACTS: OrderFact[] = [
+/** The four-beat "how it works" timeline; notes restate `ORDER_PATH`, never new promises. */
+export const ORDER_OVERVIEW: OrderOverviewStep[] = [
   {
-    id: "price",
-    value: { fa: "از حدود ۲ میلیون تومان", en: "From around $25" },
+    id: "idea",
+    title: { fa: "ایده‌ی شما", en: "Your idea" },
     note: {
-      fa: "قیمت نهایی بعد از بررسی ایده مشخص می‌شود.",
-      en: "The final price is set after we review the idea.",
+      fa: "عکس، طرح دستی، یادداشت صوتی یا چند خط توضیح؛ هرچه داری بفرست.",
+      en: "A photo, a sketch, a voice note or a few lines; send whatever you have.",
     },
   },
   {
-    id: "time",
-    value: { fa: "۲ تا ۳ هفته", en: "2–3 weeks" },
+    id: "review",
+    title: { fa: "بررسی ایده", en: "We review it" },
     note: {
-      fa: "زمان تقریبی ساخت، از تأیید نهایی و پرداخت بیعانه.",
-      en: "Estimated making time, counted from approval and deposit.",
+      fa: "می‌بینیم ایده ساختنی است یا نه.",
+      en: "We check whether the idea can be made.",
     },
   },
   {
-    id: "revisions",
-    value: { fa: "۱ تا ۲ مرحله اصلاح", en: "1–2 refinement rounds" },
+    id: "quote",
+    title: { fa: "تأیید و پیشنهاد قیمت", en: "Quote and approval" },
     note: {
-      fa: "پیش از ساخت، روی فرم، رنگ و جزئیات به توافق می‌رسیم.",
-      en: "Before making, we agree on form, colour and details.",
+      fa: "قیمت، زمان و جزئیات اجرا را پیشنهاد می‌دهیم؛ تا ۲ بار اصلاح طرح.",
+      en: "We propose price, timing and approach; up to 2 design revisions.",
     },
   },
   {
-    id: "deposit",
-    value: { fa: "شروع با بیعانه", en: "Deposit to start" },
+    id: "making",
+    title: { fa: "ساخت و ارسال", en: "Making and shipping" },
     note: {
-      fa: "ساخت بعد از تأیید نهایی و پرداخت بیعانه شروع می‌شود.",
-      en: "Making starts after final approval and the deposit.",
+      fa: "با بیعانه ساخت شروع می‌شود؛ معمولاً ۲ تا ۳ هفته، بعد ارسال بیمه‌شده.",
+      en: "Making starts with the deposit; usually 2–3 weeks, then insured shipping.",
     },
   },
 ];
@@ -48,6 +53,7 @@ export type OrderPriceTier = {
   label: LocaleCopy;
   examples: LocaleCopy;
   price: LocaleCopy;
+  image: string;
 };
 
 export const ORDER_PRICE_TIERS: OrderPriceTier[] = [
@@ -59,15 +65,17 @@ export const ORDER_PRICE_TIERS: OrderPriceTier[] = [
       en: "Jewellery, pendants, small desk objects",
     },
     price: { fa: "از ۲ میلیون تومان", en: "from $25" },
+    image: "/catalog/photos/transparent/croissant-handle-mug.png",
   },
   {
     id: "vessel",
-    label: { fa: "ظرف، ماگ یا شیء متوسط", en: "Vessel, mug or mid-size object" },
+    label: { fa: "ظرف یا شیء متوسط", en: "Vessel or mid-size object" },
     examples: {
       fa: "ماگ، بشقاب، سینی، گلدان",
       en: "Mugs, plates, trays, vases",
     },
     price: { fa: "از ۳ میلیون تومان", en: "from $35" },
+    image: "/catalog/photos/transparent/cobalt-fold-bowl.png",
   },
   {
     id: "complex",
@@ -77,6 +85,7 @@ export const ORDER_PRICE_TIERS: OrderPriceTier[] = [
       en: "Sculptures, lamps, detailed forms",
     },
     price: { fa: "از ۵ میلیون تومان", en: "from $60" },
+    image: "/catalog/photos/transparent/dachshund-sculpture.png",
   },
   {
     id: "large",
@@ -86,94 +95,58 @@ export const ORDER_PRICE_TIERS: OrderPriceTier[] = [
       en: "Sets, pieces larger than 50 cm",
     },
     price: { fa: "بعد از بررسی", en: "after review" },
+    image: "/catalog/photos/transparent/spotted-loop-teapot.png",
   },
 ];
 
-export type OrderPathStep = { id: string; title: LocaleCopy; body: LocaleCopy };
+export type OrderPathStep = { id: string; title: LocaleCopy; short: LocaleCopy };
 
 export const ORDER_PATH: OrderPathStep[] = [
   {
     id: "review",
     title: { fa: "بررسی ایده", en: "Idea review" },
-    body: {
-      fa: "ایده، مرجع‌ها و جزئیات را می‌خوانیم و می‌بینیم ساختنی است یا نه.",
-      en: "We read the idea, references and details, and check it can be made.",
-    },
+    short: { fa: "می‌بینیم ساختنی است یا نه", en: "We check it can be made" },
   },
   {
     id: "proposal",
     title: { fa: "پیشنهاد رَد", en: "RAD proposal" },
-    body: {
-      fa: "قیمت، زمان ساخت و جزئیات اجرا را برایت می‌فرستیم.",
-      en: "We send you the price, making time and how it will be made.",
-    },
+    short: { fa: "قیمت، زمان و جزئیات اجرا", en: "Price, timing and approach" },
   },
   {
     id: "approval",
     title: { fa: "تأیید تو", en: "Your approval" },
-    body: {
-      fa: "اگر همه‌چیز را پذیرفتی، سفارش نهایی می‌شود.",
-      en: "If everything works for you, the order is confirmed.",
-    },
+    short: { fa: "تا ۲ بار اصلاح طرح", en: "Up to 2 design revisions" },
   },
   {
     id: "deposit",
     title: { fa: "بیعانه", en: "Deposit" },
-    body: {
-      fa: "با پرداخت بیعانه، ساخت شروع می‌شود.",
-      en: "Once the deposit is paid, making begins.",
-    },
+    short: { fa: "با بیعانه، ساخت شروع می‌شود", en: "Making starts with the deposit" },
   },
   {
     id: "making",
     title: { fa: "ساخت", en: "Making" },
-    body: {
-      fa: "روند ساخت و زمان تقریبی را با تو به اشتراک می‌گذاریم.",
-      en: "We share the making process and timing with you as it goes.",
-    },
+    short: { fa: "معمولاً ۲ تا ۳ هفته", en: "Usually 2–3 weeks" },
   },
   {
     id: "result",
     title: { fa: "نتیجه و ارسال", en: "Result and shipping" },
-    body: {
-      fa: "اثر ساخته، بررسی و برای ارسال آماده می‌شود.",
-      en: "The piece is finished, checked and prepared for shipping.",
-    },
+    short: { fa: "ارسال بیمه‌شده به سراسر ایران", en: "Insured shipping across Iran" },
   },
 ];
 
 export type OrderRule = {
-  id: string;
+  id: "changes" | "kiln" | "cancel";
   title: LocaleCopy;
+  brief: LocaleCopy;
   body: LocaleCopy[];
-  /** Shown again, shortened, right before the visitor sends the idea. */
-  brief?: LocaleCopy;
 };
 
+/** The notes repeated, folded, right before the visitor sends the idea. */
 export const ORDER_RULES: OrderRule[] = [
-  {
-    id: "price",
-    title: { fa: "قیمت", en: "Price" },
-    body: [
-      {
-        fa: "قیمت‌های اعلام‌شده نقطه‌ی شروع‌اند. قیمت نهایی به ابعاد، ماده، جزئیات و پیچیدگی بستگی دارد و پیش از شروع ساخت با تو تأیید می‌شود.",
-        en: "Listed prices are starting points. The final price depends on size, material, detail and complexity, and is confirmed with you before making starts.",
-      },
-    ],
-  },
-  {
-    id: "time",
-    title: { fa: "زمان", en: "Time" },
-    body: [
-      {
-        fa: "ساخت معمولاً ۲ تا ۳ هفته از تأیید نهایی و پرداخت بیعانه طول می‌کشد. زمان دقیق هر سفارش در پیشنهاد رَد می‌آید.",
-        en: "Making usually takes 2–3 weeks from final approval and deposit. The exact time for your piece comes with the RAD proposal.",
-      },
-    ],
-  },
   {
     id: "changes",
     title: { fa: "درباره‌ی تغییرات", en: "About changes" },
+    brief: { fa: "تا ۲ بار اصلاح، پیش از ساخت", en: "Up to 2 revisions before making" },
     body: [
       {
         fa: "جزئیات سفارش پیش از شروع ساخت با تو نهایی می‌شود. تا ۲ بار اصلاح طرح در این مرحله جزو سفارش است.",
@@ -184,14 +157,11 @@ export const ORDER_RULES: OrderRule[] = [
         en: "Once making has started, major changes may not be possible or may cost extra.",
       },
     ],
-    brief: {
-      fa: "تا ۲ بار اصلاح طرح پیش از ساخت؛ بعد از شروع ساخت، تغییر اساسی ممکن است شدنی نباشد.",
-      en: "Up to 2 revisions before making; after making starts, major changes may not be possible.",
-    },
   },
   {
     id: "kiln",
     title: { fa: "نکته‌ای درباره‌ی سرامیک", en: "A note about ceramics" },
+    brief: { fa: "رنگ و لعاب بعد از کوره کمی فرق می‌کند", en: "Glaze shifts slightly in the kiln" },
     body: [
       {
         fa: "نتیجه‌ی نهایی به‌خاطر فرایند ساخت و پخت در کوره ممکن است کمی با تصویر یا مرجع اولیه فرق داشته باشد؛ مخصوصاً در رنگ، لعاب و بافت.",
@@ -202,14 +172,11 @@ export const ORDER_RULES: OrderRule[] = [
         en: "We talk these differences through with you before making starts.",
       },
     ],
-    brief: {
-      fa: "رنگ، لعاب و بافت بعد از کوره ممکن است کمی با مرجع فرق کند.",
-      en: "Colour, glaze and texture may shift slightly in the kiln.",
-    },
   },
   {
     id: "cancel",
     title: { fa: "اگر نظرم عوض شد؟", en: "What if I change my mind?" },
+    brief: { fa: "تا پیش از بیعانه، لغو آزاد است", en: "Free to cancel until the deposit" },
     body: [
       {
         fa: "تا پیش از تأیید نهایی و پرداخت بیعانه، درخواست را می‌توانی لغو کنی.",
@@ -222,20 +189,6 @@ export const ORDER_RULES: OrderRule[] = [
       {
         fa: "بعد از پایان ساخت، چون اثر فقط برای تو ساخته شده، لغو ممکن نیست.",
         en: "Once the piece is finished, it was made only for you, so it can't be cancelled.",
-      },
-    ],
-    brief: {
-      fa: "تا پیش از تأیید و بیعانه، لغو آزاد است.",
-      en: "Cancelling is free until approval and deposit.",
-    },
-  },
-  {
-    id: "shipping",
-    title: { fa: "ارسال", en: "Shipping" },
-    body: [
-      {
-        fa: "اثر بعد از بررسی نهایی، با بسته‌بندی امن و بیمه به سراسر ایران ارسال می‌شود. مانده‌ی حساب پیش از ارسال پرداخت می‌شود.",
-        en: "After a final check, the piece ships insured and carefully packed across Iran. The remaining balance is paid before shipping.",
       },
     ],
   },

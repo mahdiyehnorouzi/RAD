@@ -50,12 +50,12 @@ export default async function LiveMaking({
   };
 
   return (
-    <section className="section">
+    <>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }}
       />
       <LivePage piece={piece} />
-    </section>
+    </>
   );
 }

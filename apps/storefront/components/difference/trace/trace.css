@@ -1,0 +1,651 @@
+/* The difference pages' shared world: a cream sheet, one oxide thread,
+   torn paper edges, and warm low-sun ceramics photographs. */
+
+.trace-world {
+  --trace-ink: #1f2f28;
+  --trace-body: #4f4942;
+  --trace-muted: #6b635a;
+  --trace-cream: #f5f1ea;
+  --trace-card: #eee8df;
+  --trace-sand: #e9dfd0;
+  --trace-hair: #e1d9cd;
+  --trace-thread: #ad5f3d;
+  --trace-pad: 1.5rem;
+  --trace-wide: 76rem;
+  --trace-ease: cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  overflow: clip;
+  background: var(--trace-cream);
+  color: var(--trace-ink);
+}
+
+.trace-world ::selection {
+  background: var(--moss);
+  color: var(--trace-cream);
+}
+
+.trace-world :where(h1, h2, h3) {
+  margin: 0;
+  color: var(--trace-ink);
+  font-weight: 700;
+  letter-spacing: 0;
+  text-wrap: balance;
+}
+
+.trace-world :where(p, figure, ul) {
+  margin: 0;
+}
+
+.trace-world :where(a):focus-visible {
+  outline: 2px solid var(--trace-thread);
+  outline-offset: 3px;
+}
+
+.trace-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.trace-tear {
+  position: absolute;
+  z-index: 1;
+  pointer-events: none;
+  fill: var(--trace-cream);
+}
+
+.trace-section-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.35rem;
+}
+
+.trace-section-head h2 {
+  font-size: clamp(1.35rem, 6vw, 1.6rem);
+  line-height: 1.6;
+}
+
+.trace-section-head p {
+  color: var(--trace-muted);
+  font-size: 0.92rem;
+  line-height: 1.9;
+}
+
+/* Hero */
+
+.trace-hero {
+  position: relative;
+  isolation: isolate;
+}
+
+.trace-hero-copy {
+  position: relative;
+  z-index: 2;
+  container-type: inline-size;
+  padding: clamp(2rem, 9vw, 3rem) var(--trace-pad) 1.5rem;
+}
+
+.trace-hero h1 {
+  font-size: min(3.4rem, 15cqi);
+  line-height: 1.3;
+}
+
+html[dir="ltr"] .trace-hero h1 {
+  font-size: min(3.4rem, 12.5cqi);
+  line-height: 1.08;
+  letter-spacing: -0.025em;
+}
+
+.trace-hero-loop {
+  display: block;
+  width: calc(100% + var(--trace-pad));
+  max-width: 24rem;
+  height: 2.4rem;
+  margin: -0.35rem 0 0.4rem;
+  overflow: visible;
+  fill: none;
+  stroke: var(--trace-thread);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+}
+
+.trace-hero-loop path,
+.trace-hero-thread path,
+.trace-step-thread path,
+.trace-quote-pen path {
+  vector-effect: non-scaling-stroke;
+}
+
+html[dir="ltr"] .trace-hero-loop {
+  scale: -1 1;
+}
+
+.trace-hero-lede {
+  max-width: 34ch;
+  color: var(--trace-body);
+  font-size: clamp(0.95rem, 4.2vw, 1.05rem);
+  font-weight: 500;
+  line-height: 2.05;
+}
+
+.trace-hero-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1rem;
+  margin: 1.1rem 0 0;
+  padding: 0;
+  list-style: none;
+  color: var(--trace-muted);
+  font-size: 0.82rem;
+  line-height: 1.7;
+}
+
+.trace-hero-meta li + li::before {
+  display: inline-block;
+  width: 0.3rem;
+  height: 0.3rem;
+  margin-inline-end: 1rem;
+  border-radius: 50%;
+  background: var(--trace-thread);
+  vertical-align: 0.2em;
+  content: "";
+}
+
+.trace-hero-meta b {
+  color: var(--trace-ink);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.trace-hero-media {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  margin-inline-start: 6%;
+  overflow: hidden;
+  background: #e6dccd;
+}
+
+.trace-hero-media img {
+  object-fit: cover;
+  object-position: 20% 55%;
+}
+
+html[dir="ltr"] .trace-hero.is-mirrored .trace-hero-media img {
+  scale: -1 1;
+}
+
+.trace-hero-thread {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  fill: none;
+  stroke: var(--trace-thread);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 0.5px rgb(255 244 230 / 0.8));
+}
+
+html[dir="ltr"] .trace-hero-thread {
+  scale: -1 1;
+}
+
+.trace-hero-tear {
+  bottom: -1px;
+  left: 0;
+  width: 100%;
+  height: 1.6rem;
+}
+
+/* Thread timeline */
+
+.trace-line {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.trace-step {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 2.9rem minmax(0, 1fr);
+  grid-template-areas: "copy rail media";
+  align-items: center;
+  column-gap: 0.4rem;
+  padding-block: 0.7rem;
+}
+
+.trace-step-copy {
+  grid-area: copy;
+  display: grid;
+  gap: 0.25rem;
+}
+
+.trace-step-copy h3 {
+  font-size: 1.05rem;
+  line-height: 1.6;
+}
+
+.trace-step-copy p {
+  color: var(--trace-muted);
+  font-size: 0.84rem;
+  line-height: 1.85;
+}
+
+.trace-step-rail {
+  position: relative;
+  grid-area: rail;
+  align-self: stretch;
+  display: grid;
+  place-items: center;
+  margin-block: -0.7rem;
+}
+
+.trace-step:first-child .trace-step-rail {
+  margin-top: 0;
+}
+
+.trace-step:last-child .trace-step-rail {
+  margin-bottom: 0;
+}
+
+.trace-step-thread {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  fill: none;
+  stroke: var(--trace-thread);
+  stroke-width: 1.4;
+  stroke-linecap: round;
+}
+
+.trace-step-node {
+  position: relative;
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 50%;
+  background: var(--trace-thread);
+  box-shadow: 0 0 0 5px var(--trace-cream);
+}
+
+.trace-step-node.has-icon {
+  display: grid;
+  place-items: center;
+  width: 2.7rem;
+  height: 2.7rem;
+  border: 1px solid color-mix(in srgb, var(--trace-thread) 40%, transparent);
+  background: var(--trace-cream);
+}
+
+.trace-step-node .trace-icon {
+  width: 1.85rem;
+  height: 1.85rem;
+}
+
+.trace-step-media {
+  position: relative;
+  grid-area: media;
+  justify-self: stretch;
+  width: 100%;
+  aspect-ratio: 5 / 4;
+  overflow: hidden;
+  border-radius: 4px;
+  background: #e6dccd;
+  box-shadow: 0 16px 28px -24px rgb(60 44 30 / 0.7);
+}
+
+.trace-step-media img {
+  object-fit: cover;
+}
+
+.trace-step-swatch {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 70% 30%, color-mix(in srgb, var(--swatch-accent) 70%, transparent) 0 18%, transparent 19%),
+    linear-gradient(160deg, var(--swatch) 0 62%, var(--swatch-accent) 63%);
+}
+
+/* Icons */
+
+.trace-icon {
+  display: block;
+  overflow: visible;
+  fill: none;
+  stroke: var(--moss);
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.trace-icon-fill {
+  fill: #dcc6a6;
+}
+
+.trace-icon-accent {
+  stroke: var(--trace-thread);
+}
+
+.trace-icon-ink {
+  fill: var(--moss);
+}
+
+.trace-icon-flame {
+  fill: var(--trace-thread);
+  stroke: none;
+}
+
+.trace-icon-spots circle {
+  fill: var(--moss);
+  stroke: none;
+}
+
+/* Quote slip */
+
+.trace-quote {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 36%;
+  grid-template-rows: auto auto;
+  align-content: center;
+  min-height: 10rem;
+  overflow: hidden;
+  border-radius: 4px;
+  background: var(--trace-card);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.55),
+    0 16px 30px -26px rgb(60 44 30 / 0.6);
+}
+
+.trace-quote-text {
+  grid-column: 1;
+  display: grid;
+  padding: 1.6rem var(--trace-pad) 0.1rem;
+  font-family: var(--font-hand);
+  font-size: clamp(1.7rem, 7.6vw, 2.1rem);
+  font-weight: 400;
+  line-height: 1.45;
+}
+
+.trace-quote-pen {
+  grid-column: 1;
+  width: 8.5rem;
+  height: 0.9rem;
+  margin: 0 var(--trace-pad) 1.6rem;
+  overflow: visible;
+  fill: none;
+  stroke: var(--trace-thread);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+}
+
+html[dir="ltr"] .trace-quote-pen {
+  scale: -1 1;
+}
+
+.trace-quote-media {
+  position: relative;
+  grid-row: 1 / span 2;
+  grid-column: 2;
+}
+
+.trace-quote-media img {
+  object-fit: cover;
+}
+
+.trace-quote-tear {
+  top: 0;
+  inset-inline-start: -1px;
+  width: 1.1rem;
+  height: 100%;
+  fill: var(--trace-card);
+}
+
+html[dir="ltr"] .trace-quote-tear {
+  scale: -1 1;
+}
+
+@media (min-width: 960px) {
+  .trace-world {
+    --trace-pad: var(--page);
+  }
+
+  .trace-section-head h2 {
+    font-size: 2rem;
+  }
+
+  .trace-section-head p {
+    font-size: 1rem;
+  }
+
+  .trace-hero {
+    display: grid;
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    align-items: center;
+    min-height: clamp(30rem, 42vw, 40rem);
+  }
+
+  .trace-hero-copy {
+    padding-block: 3rem 4rem;
+    padding-inline: max(var(--page), calc((100vw - var(--trace-wide)) / 2 + var(--page)))
+      clamp(1.5rem, 4vw, 4rem);
+  }
+
+  .trace-hero h1 {
+    font-size: min(5rem, 17cqi);
+  }
+
+  html[dir="ltr"] .trace-hero h1 {
+    font-size: min(4.75rem, 12.5cqi);
+  }
+
+  .trace-hero-loop {
+    width: 120%;
+    max-width: 30rem;
+    height: 3rem;
+  }
+
+  .trace-hero-lede {
+    font-size: 1.12rem;
+  }
+
+  .trace-hero-meta {
+    font-size: 0.9rem;
+  }
+
+  .trace-hero-media {
+    align-self: stretch;
+    aspect-ratio: auto;
+    margin: 0;
+  }
+
+  .trace-hero-tear {
+    height: 2.5rem;
+  }
+
+  .trace-line {
+    width: 100%;
+    max-width: 62rem;
+    margin-inline: auto;
+  }
+
+  .trace-step {
+    grid-template-columns: minmax(0, 1fr) 6rem minmax(0, 1fr);
+    column-gap: 1.5rem;
+    padding-block: 1.25rem;
+  }
+
+  .trace-step:nth-child(odd) .trace-step-copy {
+    text-align: end;
+  }
+
+  .trace-step:nth-child(even) {
+    grid-template-areas: "media rail copy";
+  }
+
+  .trace-step-rail {
+    margin-block: -1.25rem;
+  }
+
+  .trace-step-copy h3 {
+    font-size: 1.3rem;
+  }
+
+  .trace-step-copy p {
+    font-size: 0.98rem;
+  }
+
+  .trace-step-node.has-icon {
+    width: 3.6rem;
+    height: 3.6rem;
+  }
+
+  .trace-step-node .trace-icon {
+    width: 2.4rem;
+    height: 2.4rem;
+  }
+
+  .trace-step-media {
+    justify-self: start;
+    max-width: 25rem;
+    aspect-ratio: 4 / 3;
+  }
+
+  .trace-step:nth-child(even) .trace-step-media {
+    justify-self: end;
+  }
+
+  .trace-quote {
+    grid-template-columns: minmax(0, 1fr) 40%;
+    min-height: 15rem;
+  }
+
+  .trace-quote-text {
+    padding: 2.5rem 3rem 0.2rem;
+    font-size: 3rem;
+  }
+
+  .trace-quote-pen {
+    width: 12rem;
+    height: 1.2rem;
+    margin: 0 3rem 2.5rem;
+  }
+}
+
+/* Motion: the thread draws once in the hero, then pays out down the
+   timeline as it scrolls. Everything is visible without it. */
+
+@media (prefers-reduced-motion: no-preference) {
+  .trace-hero-media img {
+    animation: traceSettle 1500ms var(--trace-ease) both;
+  }
+
+  .trace-hero-loop path,
+  .trace-hero-thread path {
+    stroke-dasharray: 1;
+    animation: traceDraw 1600ms 250ms cubic-bezier(0.65, 0, 0.35, 1) both;
+  }
+
+  .trace-hero-thread path {
+    animation-delay: 900ms;
+  }
+
+  .trace-hero-copy > :is(h1, p, ul) {
+    animation: traceRise 900ms var(--trace-ease) both;
+  }
+
+  .trace-hero-copy > p {
+    animation-delay: 160ms;
+  }
+
+  .trace-hero-copy > ul {
+    animation-delay: 260ms;
+  }
+
+  @supports (animation-timeline: view()) {
+    .trace-step-thread path,
+    .trace-quote-pen path {
+      stroke-dasharray: 1;
+      animation: traceDraw linear both;
+      animation-timeline: view();
+      animation-range: entry 40% cover 55%;
+    }
+
+    .trace-step-node {
+      animation: traceNode linear both;
+      animation-timeline: view();
+      animation-range: entry 55% cover 45%;
+    }
+
+    .trace-step-media,
+    .trace-step-copy {
+      animation: traceScrollIn linear both;
+      animation-timeline: view();
+      animation-range: entry 5% entry 75%;
+    }
+  }
+}
+
+@keyframes traceSettle {
+  from {
+    transform: scale(1.06);
+    filter: saturate(0.85) brightness(1.04);
+  }
+  to {
+    transform: none;
+    filter: none;
+  }
+}
+
+@keyframes traceDraw {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes traceRise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+    filter: blur(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+}
+
+@keyframes traceNode {
+  from {
+    opacity: 0.2;
+    scale: 0.6;
+  }
+  to {
+    opacity: 1;
+    scale: 1;
+  }
+}
+
+@keyframes traceScrollIn {
+  from {
+    opacity: 0;
+    transform: translateY(22px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}

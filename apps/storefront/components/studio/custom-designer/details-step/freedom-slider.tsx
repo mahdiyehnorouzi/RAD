@@ -15,25 +15,29 @@ export function FreedomSlider({
   const phrase = c[fidelityKey(value)];
 
   return (
-    <fieldset className="details-field freedom-slider">
+    <fieldset className="cd-field freedom">
       <legend>{c.fidelityLabel}</legend>
-      <output className="details-readout" htmlFor="fidelity-range">
-        {phrase}
-      </output>
       <input
         id="fidelity-range"
-        className="details-range"
+        className="freedom-range"
         type="range"
         min={0}
         max={100}
         value={value}
+        style={{ "--fill": `${value}%` } as React.CSSProperties}
         aria-label={c.fidelityLabel}
         aria-valuetext={phrase}
         onChange={(event) => onChange(Number(event.target.value))}
       />
-      <div className="details-ends" aria-hidden="true">
-        <span>{c.fidelityLow}</span>
-        <span>{c.fidelityHigh}</span>
+      <div className="freedom-ends" aria-hidden="true">
+        <span>
+          <b>{c.fidelityLow}</b>
+          <small>{c.fidelityLowHint}</small>
+        </span>
+        <span>
+          <b>{c.fidelityHigh}</b>
+          <small>{c.fidelityHighHint}</small>
+        </span>
       </div>
     </fieldset>
   );

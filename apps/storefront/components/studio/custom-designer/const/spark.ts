@@ -1,12 +1,10 @@
 export const DESIGNER_COLORS = [
-  { id: "moss", value: "#263d34", label: { fa: "سبز کوره", en: "Kiln green" } },
-  { id: "clay", value: "#8a4938", label: { fa: "اکسید", en: "Oxide" } },
-  { id: "sand", value: "#cbb892", label: { fa: "شنی", en: "Sand" } },
-  { id: "cream", value: "#eee7dc", label: { fa: "کرم", en: "Cream" } },
-  { id: "blue", value: "#6ba3c4", label: { fa: "آبی", en: "Blue" } },
-  { id: "ink", value: "#18231f", label: { fa: "جوهری", en: "Ink" } },
-  { id: "oxide", value: "#d87855", label: { fa: "نارنجی سوخته", en: "Burnt orange" } },
-  { id: "olive", value: "#4b513c", label: { fa: "زیتونی", en: "Olive" } },
+  { id: "charcoal", value: "#2b2a27", label: { fa: "ذغالی", en: "Charcoal" } },
+  { id: "cobalt", value: "#3d6b9c", label: { fa: "آبی لاجوردی", en: "Cobalt" } },
+  { id: "olive", value: "#66703f", label: { fa: "زیتونی", en: "Olive" } },
+  { id: "brown", value: "#7a4a2c", label: { fa: "قهوه‌ای", en: "Brown" } },
+  { id: "sand", value: "#cfa981", label: { fa: "شنی", en: "Sand" } },
+  { id: "cream", value: "#efe7da", label: { fa: "کرم", en: "Cream" } },
 ] as const;
 
 export const MAX_DESIGNER_COLORS = 3;

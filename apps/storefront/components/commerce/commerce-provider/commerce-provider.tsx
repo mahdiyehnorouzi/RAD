@@ -3,7 +3,14 @@ import "./commerce-provider.css";
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type CSSProperties,
+} from "react";
 import type { AuthUser, Notice, NoticeKind, Order, Review } from "@rad/types";
 import type { PaymentReceiptInput, PlaceOrderInput } from "@/types/api";
 import { productCopy } from "@/lib/catalog/products";
@@ -254,6 +261,8 @@ export function useCommerce() {
   return value;
 }
 
+const FAVORITE_RAYS = [0, 1, 2, 3, 4, 5, 6, 7];
+
 export function FavoriteButton({
   slug,
   compact = false,
@@ -263,16 +272,30 @@ export function FavoriteButton({
 }) {
   const { isFavorite, toggleFavorite } = useCommerce();
   const { t } = useLocale();
-  const active = isFavorite(slug);
+  const [pending, setPending] = useState<boolean | null>(null);
+  const active = pending ?? isFavorite(slug);
+  const [burst, setBurst] = useState(0);
+  const bursting = active && burst > 0;
   return (
     <button
       type="button"
-      className={`favorite-button ${compact ? "compact" : ""} ${active ? "active" : ""}`}
-      onClick={() => toggleFavorite(slug)}
+      className={`favorite-button ${compact ? "compact" : ""} ${active ? "active" : ""} ${bursting ? "is-bursting" : ""}`}
+      onClick={() => {
+        if (!active) setBurst((count) => count + 1);
+        setPending(!active);
+        toggleFavorite(slug).finally(() => setPending(null));
+      }}
       aria-pressed={active}
       aria-label={active ? t("removeFavorite") : t("addFavorite")}
     >
       <Heart aria-hidden="true" fill={active ? "currentColor" : "none"} />
+      {bursting ? (
+        <span key={burst} className="favorite-burst" aria-hidden="true">
+          {FAVORITE_RAYS.map((ray) => (
+            <i key={ray} style={{ "--ray": ray } as CSSProperties} />
+          ))}
+        </span>
+      ) : null}
       {!compact && <b>{active ? t("savedFavorite") : t("saveFavorite")}</b>}
     </button>
   );

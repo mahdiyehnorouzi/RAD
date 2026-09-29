@@ -1,105 +1,540 @@
-.live-page {
-  padding-block: clamp(2.5rem, 6vw, 5rem) clamp(5rem, 10vw, 9rem);
+/* One work being made — built from the phone mockup: the wheel photo in an
+   organic frame circled by a thread, then each stage on a dashed wavy line. */
+
+/* Hero */
+
+.live-hero {
+  display: grid;
+  grid-template-areas: "media copy";
+  grid-template-columns: 51% minmax(0, 1fr);
+  align-items: start;
+  padding-top: 1.25rem;
 }
 
-.live-page header h1 {
-  font-size: clamp(2.2rem, 5.5vw, 4rem);
+.live-hero-copy {
+  grid-area: copy;
+  display: grid;
+  justify-items: start;
+  padding-top: 1.6rem;
+  padding-inline: 0.7rem 1.25rem;
+}
+
+.live-eyebrow {
+  color: var(--live-oxide);
+  font-size: 0.8rem;
   font-weight: 500;
-  line-height: 1.2;
-  margin: 0.4rem 0 0.8rem;
+  line-height: 1.6;
 }
 
-.live-now {
+html[dir="ltr"] .live-eyebrow {
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.live-hero h1 {
+  margin-top: 0.9rem;
+  font-size: clamp(1.65rem, 7.6vw, 2.2rem);
+  line-height: 1.42;
+}
+
+.live-hero h1 span {
+  display: block;
+}
+
+html[dir="ltr"] .live-hero h1 {
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.live-byline {
+  margin-top: 1rem;
+  font-size: clamp(0.8rem, 3.5vw, 0.98rem);
+  font-weight: 600;
+  line-height: 1.7;
+}
+
+.live-lede {
+  margin-top: 1.1rem;
+  color: var(--live-muted);
+  font-size: clamp(0.8rem, 3.5vw, 0.9rem);
+  line-height: 2.05;
+}
+
+.live-hero-media {
+  position: relative;
+  grid-area: media;
+}
+
+/* The frame bleeds off the reading-start edge; only its inner side is rounded. */
+.live-hero-frame {
+  position: relative;
+  aspect-ratio: 4 / 5.1;
+  overflow: hidden;
+  border-start-end-radius: 62% 36%;
+  border-end-end-radius: 34% 22%;
+  background: #e2d6c5;
+}
+
+.live-hero-frame img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 42% 60%;
+}
+
+.live-hero-thread {
+  position: absolute;
+  z-index: 1;
+  top: -9%;
+  inset-inline-end: -9%;
+  width: 104%;
+  height: 117%;
+}
+
+html[dir="ltr"] .live-hero-thread {
+  scale: -1 1;
+}
+
+/* Stages */
+
+.live-stages {
+  max-width: var(--live-wide);
+  margin-inline: auto;
+  padding: 2.4rem var(--live-pad) 0;
+}
+
+.live-stages ol {
   display: grid;
-  gap: 0.35rem;
-  margin: 1.4rem 0 0;
-  font-size: clamp(1.25rem, 2.4vw, 1.7rem);
-  line-height: 1.5;
-}
-
-.live-now span {
-  color: var(--muted);
-  font-size: 1rem;
-}
-
-.live-rail {
-  display: grid;
-  gap: 0;
-  margin: clamp(2.5rem, 6vw, 4rem) 0 0;
+  gap: 1.4rem;
+  margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.live-rail li {
+.live-stage {
+  position: relative;
   display: grid;
-  grid-template-columns: 4.5rem 1fr;
-  gap: 0.4rem 1rem;
-  padding: 1.1rem 0;
-  border-top: 1px solid var(--line);
-  color: var(--muted);
+  grid-template-areas: "media copy num";
+  grid-template-columns: 47% minmax(0, 1fr) 2.6rem;
+  gap: 0 0.8rem;
+  align-items: start;
 }
 
-.live-rail .is-done,
-.live-rail .is-current {
-  color: var(--ink);
+.live-stage-num {
+  position: relative;
+  grid-area: num;
+  align-self: stretch;
+  color: var(--live-oxide);
+  font-size: 2.55rem;
+  font-weight: 300;
+  line-height: 1;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
 }
 
-.live-rail .is-current strong {
-  color: var(--clay);
+.live-stage:not(:last-child) .live-stage-num::after {
+  position: absolute;
+  top: 3.3rem;
+  bottom: -1.2rem;
+  left: 50%;
+  width: 14px;
+  translate: -50% 0;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 40'%3E%3Cpath d='M7 0C12 10 12 10 7 20S2 30 7 40' fill='none' stroke='%23b3a090' stroke-width='1.1' stroke-dasharray='3 3'/%3E%3C/svg%3E")
+    center top / 14px 40px repeat-y;
+  content: "";
 }
 
-.live-rail p {
-  grid-column: 2;
-  margin: 0.35rem 0 0;
-  line-height: 1.75;
+.live-stage-copy {
+  grid-area: copy;
+  display: grid;
+  gap: 0.45rem;
+  padding-top: 0.55rem;
 }
 
-.live-rail img {
-  grid-column: 2;
-  width: min(100%, 22rem);
-  margin-top: 0.7rem;
+.live-stage h3 {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.2rem 0.5rem;
+  font-size: clamp(0.98rem, 4.3vw, 1.1rem);
+  line-height: 1.6;
+}
+
+.live-stage h3 small {
+  padding: 0.05rem 0.5rem;
+  border: 1px dashed color-mix(in srgb, var(--live-muted) 55%, transparent);
+  border-radius: 999px;
+  color: var(--live-muted);
+  font-size: 0.68rem;
+  font-weight: 500;
+  line-height: 1.7;
+}
+
+.live-stage-copy > p {
+  color: var(--live-body);
+  font-size: clamp(0.76rem, 3.3vw, 0.86rem);
+  line-height: 1.95;
+}
+
+.live-stage-copy > .live-stage-now {
+  display: grid;
+  gap: 0.1rem;
+  margin-top: 0.15rem;
+  color: var(--live-muted);
+  font-size: 0.78rem;
+}
+
+.live-stage-now span {
+  color: var(--live-oxide);
+  font-family: var(--font-hand);
+  font-size: 1.3rem;
+  line-height: 1.35;
+}
+
+.live-stage-copy > .live-stage-note {
+  margin-top: 0.2rem;
+  padding-inline-start: 0.7rem;
+  border-inline-start: 1px solid color-mix(in srgb, var(--live-thread) 55%, transparent);
+  color: var(--live-ink);
+  font-family: var(--font-hand);
+  font-size: 1.02rem;
+  line-height: 1.7;
+}
+
+.live-stage-media {
+  grid-area: media;
+  overflow: hidden;
+  border-radius: 10px;
+  background: #e2d6c5;
+  box-shadow: 0 14px 26px -22px rgb(60 44 30 / 0.6);
+}
+
+.live-stage-media img {
+  display: block;
+  width: 100%;
+  height: auto;
   aspect-ratio: 4 / 3;
   object-fit: cover;
-  border-radius: 2px;
 }
 
+.live-stage[data-state="current"] .live-stage-media {
+  outline: 1.5px solid var(--live-thread);
+  outline-offset: 4px;
+}
+
+.live-stage[data-state="next"] .live-stage-num {
+  color: color-mix(in srgb, var(--live-oxide) 45%, var(--live-cream));
+}
+
+.live-stage[data-state="next"] h3 {
+  color: var(--live-muted);
+}
+
+.live-stage[data-state="next"] .live-stage-media img {
+  opacity: 0.62;
+  filter: grayscale(0.65) sepia(0.12);
+}
+
+/* Workshop notes */
+
 .live-notes {
-  margin-top: clamp(3rem, 7vw, 5.5rem);
+  max-width: 44rem;
+  margin: 3rem auto 0;
+  padding: 0 var(--live-pad);
 }
 
 .live-notes h2 {
-  font-size: clamp(1.4rem, 3vw, 2rem);
-  font-weight: 500;
-  margin: 0 0 1.2rem;
+  font-size: clamp(1.2rem, 5.4vw, 1.45rem);
+  line-height: 1.6;
 }
 
 .live-notes ul {
   display: grid;
-  gap: 1.5rem;
-  margin: 0 0 2.5rem;
+  gap: 0.8rem;
+  margin: 1rem 0 0;
   padding: 0;
   list-style: none;
 }
 
 .live-notes li {
-  max-width: 36rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 1rem;
+  align-items: center;
+  padding: 1rem 1.1rem;
+  border-radius: 14px;
+  background: var(--live-sheet);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.55),
+    0 12px 26px -22px rgb(60 44 30 / 0.55);
 }
 
-.live-notes p {
-  margin: 0.35rem 0 0;
+.live-note-copy small {
+  display: block;
+  color: var(--live-oxide);
+  font-family: var(--font-hand);
   font-size: 1.15rem;
-  line-height: 1.8;
+  line-height: 1.4;
 }
 
-.live-notes img {
-  width: min(100%, 22rem);
-  margin-top: 0.8rem;
-  aspect-ratio: 4 / 3;
+.live-note-copy p {
+  margin-top: 0.25rem;
+  font-size: clamp(0.88rem, 3.9vw, 1rem);
+  line-height: 1.95;
+}
+
+.live-note-media {
+  position: relative;
+  width: 5rem;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  border-radius: 8px;
+}
+
+.live-note-media img {
   object-fit: cover;
 }
 
-@media (max-width: 700px) {
-  .live-rail li {
-    grid-template-columns: 3.2rem 1fr;
+/* Close */
+
+.live-close {
+  display: grid;
+  justify-items: center;
+  max-width: 34rem;
+  margin: 3.5rem auto 0;
+  padding: 0 var(--live-pad) 4.5rem;
+  text-align: center;
+}
+
+.live-close-thread {
+  width: 7.5rem;
+  height: 0.9rem;
+  margin-bottom: 1.1rem;
+}
+
+.live-close h2 {
+  font-size: clamp(1.3rem, 5.8vw, 1.6rem);
+  line-height: 1.6;
+}
+
+.live-close p {
+  margin-top: 0.5rem;
+  color: var(--live-muted);
+  font-size: clamp(0.86rem, 3.8vw, 0.98rem);
+  line-height: 2;
+}
+
+.live-close-actions {
+  display: grid;
+  gap: 0.7rem;
+  width: 100%;
+  margin-top: 1.6rem;
+}
+
+/* Tablet: keep the phone composition, give it room. */
+
+@media (min-width: 600px) and (max-width: 959px) {
+  .live-hero {
+    grid-template-columns: 50% minmax(0, 1fr);
+  }
+
+  .live-hero-copy {
+    padding-top: 3rem;
+    padding-inline-start: 2rem;
+  }
+
+  .live-stages,
+  .live-notes {
+    max-width: 44rem;
+  }
+
+  .live-stage {
+    grid-template-columns: 44% minmax(0, 1fr) 3.4rem;
+    gap: 0 1.4rem;
+  }
+
+  .live-stages ol {
+    gap: 2rem;
+  }
+
+  .live-stage:not(:last-child) .live-stage-num::after {
+    bottom: -2rem;
+  }
+}
+
+/* Desktop: the same parts, spread wide. */
+
+@media (min-width: 960px) {
+  .live-hero {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: center;
+    padding-top: 2rem;
+  }
+
+  .live-hero-copy {
+    padding-top: 0;
+    padding-inline: clamp(2.5rem, 6vw, 6rem)
+      max(var(--page), calc((100vw - var(--live-wide)) / 2 + var(--page)));
+  }
+
+  .live-eyebrow {
+    font-size: 0.95rem;
+  }
+
+  .live-hero h1 {
+    margin-top: 1.1rem;
+    font-size: clamp(2.9rem, 4.4vw, 4rem);
+    line-height: 1.3;
+  }
+
+  .live-byline {
+    margin-top: 1.4rem;
+    font-size: 1.15rem;
+  }
+
+  .live-lede {
+    max-width: 30rem;
+    font-size: 1.05rem;
+  }
+
+  .live-hero-frame {
+    aspect-ratio: auto;
+    height: clamp(30rem, 44vw, 42rem);
+  }
+
+  .live-stages {
+    max-width: 64rem;
+    padding-top: clamp(4.5rem, 7vw, 6.5rem);
+  }
+
+  .live-stages ol {
+    gap: 3.5rem;
+  }
+
+  .live-stage {
+    grid-template-columns: minmax(0, 26rem) minmax(0, 1fr) 5.5rem;
+    gap: 0 clamp(2rem, 4vw, 3.5rem);
+  }
+
+  .live-stage-num {
+    font-size: 4.25rem;
+  }
+
+  .live-stage:not(:last-child) .live-stage-num::after {
+    top: 5.2rem;
+    bottom: -3.5rem;
+  }
+
+  .live-stage-copy {
+    gap: 0.6rem;
+    padding-top: 1.2rem;
+  }
+
+  .live-stage h3 {
+    font-size: 1.45rem;
+  }
+
+  .live-stage h3 small {
+    font-size: 0.76rem;
+  }
+
+  .live-stage-copy > p {
+    max-width: 30rem;
+    font-size: 1rem;
+  }
+
+  .live-stage-copy > .live-stage-now {
+    font-size: 0.9rem;
+  }
+
+  .live-stage-now span {
+    font-size: 1.6rem;
+  }
+
+  .live-stage-copy > .live-stage-note {
+    font-size: 1.2rem;
+  }
+
+  .live-notes {
+    margin-top: 5.5rem;
+  }
+
+  .live-notes h2 {
+    font-size: 1.75rem;
+  }
+
+  .live-notes li {
+    padding: 1.3rem 1.5rem;
+  }
+
+  .live-note-media {
+    width: 6.5rem;
+  }
+
+  .live-close {
+    margin-top: 5.5rem;
+    padding-bottom: 7rem;
+  }
+
+  .live-close h2 {
+    font-size: 2rem;
+  }
+
+  .live-close-actions {
+    display: flex;
+    justify-content: center;
+    gap: 0.9rem;
+  }
+}
+
+/* Motion: the photo settles and the thread draws round it once; stages rise
+   as they scroll in. Everything is visible without it. */
+
+@media (prefers-reduced-motion: no-preference) {
+  .live-hero-frame img {
+    animation: liveSettle 1500ms var(--live-ease) both;
+  }
+
+  .live-hero-thread path {
+    stroke-dasharray: 1;
+    animation: liveDraw 1900ms 250ms cubic-bezier(0.65, 0, 0.35, 1) both;
+  }
+
+  .live-eyebrow,
+  .live-hero h1,
+  .live-byline,
+  .live-lede {
+    animation: liveRise 900ms var(--live-ease) both;
+  }
+
+  .live-hero h1 {
+    animation-delay: 100ms;
+  }
+
+  .live-byline {
+    animation-delay: 260ms;
+  }
+
+  .live-lede {
+    animation-delay: 360ms;
+  }
+
+  @supports (animation-timeline: view()) {
+    .live-stage,
+    .live-notes li {
+      animation: liveScrollIn linear both;
+      animation-timeline: view();
+      animation-range: entry 5% entry 65%;
+    }
+
+    .live-close-thread path {
+      stroke-dasharray: 1;
+      animation: liveDraw linear both;
+      animation-timeline: view();
+      animation-range: entry 20% cover 40%;
+    }
   }
 }

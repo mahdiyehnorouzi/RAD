@@ -47,14 +47,14 @@ export function SparkVoice({
     <div className="spark-voice">
       <button
         type="button"
-        className="button"
+        className={`cs-btn ${recording ? "cs-btn-paper is-recording" : "cs-btn-solid"}`}
         onClick={recording ? stop : start}
       >
         {recording ? t("designerVoiceStop") : t("designerVoiceStart")}
       </button>
       {hasVoice ? <p>{t("designerVoiceRecorded")}</p> : null}
       {error ? (
-        <p className="form-error" role="alert">
+        <p className="cd-error" role="alert">
           {error}
         </p>
       ) : null}

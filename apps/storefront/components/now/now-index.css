@@ -1,52 +1,196 @@
+/* Everything on the workshop table right now, one paper card per work. */
+
 .now-index {
-  padding-block: clamp(2.5rem, 6vw, 5rem) clamp(5rem, 10vw, 9rem);
+  padding: 2.5rem var(--live-pad) 4.5rem;
 }
 
-.now-index header {
-  max-width: 38rem;
-  margin-bottom: clamp(2.5rem, 6vw, 4rem);
+.now-index-head,
+.now-index-list,
+.now-index-empty {
+  max-width: var(--live-wide);
+  margin-inline: auto;
 }
 
-.now-index h1 {
-  font-size: clamp(2.4rem, 6vw, 4.4rem);
-  font-weight: 500;
-  line-height: 1.15;
-  margin: 0.4rem 0 1rem;
-}
-
-.now-index header p {
-  margin: 0;
-  color: var(--muted);
-  line-height: 1.8;
-}
-
-.now-index ol {
+.now-index-head {
   display: grid;
-  margin: 0;
+  justify-items: start;
+}
+
+.now-index-head h1 {
+  font-size: clamp(2rem, 9vw, 2.5rem);
+  line-height: 1.4;
+}
+
+html[dir="ltr"] .now-index-head h1 {
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.now-index-head p {
+  max-width: 34rem;
+  margin-top: 1rem;
+  color: var(--live-muted);
+  font-size: clamp(0.88rem, 3.9vw, 1rem);
+  line-height: 2;
+}
+
+.now-index-list {
+  display: grid;
+  gap: 1.1rem;
+  margin-top: 2rem;
   padding: 0;
   list-style: none;
 }
 
-.now-index a {
+.now-card {
   display: grid;
-  grid-template-columns: 5.5rem 1fr auto;
-  gap: 1rem;
-  align-items: baseline;
-  padding: 1.15rem 0;
-  border-top: 1px solid var(--line);
+  gap: 0.35rem;
+  padding: 0.7rem 0.7rem 1rem;
+  border-radius: 14px;
+  background: var(--live-sheet);
+  color: var(--live-ink);
+  text-decoration: none;
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.55),
+    0 12px 26px -22px rgb(60 44 30 / 0.55);
+  transition:
+    transform 320ms var(--live-ease),
+    box-shadow 320ms var(--live-ease);
 }
 
-.now-index a small {
-  color: var(--clay);
+.now-card:hover {
+  transform: translateY(-3px);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.55),
+    0 18px 30px -22px rgb(60 44 30 / 0.6);
 }
 
-.now-index a span {
-  color: var(--muted);
-  font-size: 0.9rem;
+.now-card:focus-visible {
+  outline: 2px solid var(--live-thread);
+  outline-offset: 3px;
 }
 
-@media (max-width: 800px) {
-  .now-index a {
-    grid-template-columns: 1fr;
+.now-card-media {
+  display: block;
+  margin-bottom: 0.6rem;
+  overflow: hidden;
+  border-radius: 10px;
+  background: #e2d6c5;
+}
+
+.now-card-media img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  transition: transform 600ms var(--live-ease);
+}
+
+.now-card:hover .now-card-media img {
+  transform: scale(1.04);
+}
+
+.now-card-code,
+.now-card h2,
+.now-card-stage,
+.now-card-rail {
+  margin-inline: 0.4rem;
+}
+
+.now-card-code {
+  color: var(--live-oxide);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.now-card h2 {
+  font-size: clamp(1.05rem, 4.6vw, 1.2rem);
+  line-height: 1.6;
+}
+
+.now-card h2 span {
+  color: var(--live-muted);
+  font-weight: 500;
+}
+
+.now-card-stage {
+  color: var(--live-muted);
+  font-size: 0.86rem;
+}
+
+.now-card-stage b {
+  color: var(--live-ink);
+  font-weight: 600;
+}
+
+.now-card-rail {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.45rem;
+}
+
+.now-card-rail i {
+  width: 0.55rem;
+  height: 0.55rem;
+  border: 1px solid color-mix(in srgb, var(--live-oxide) 55%, transparent);
+  border-radius: 999px;
+}
+
+.now-card-rail i[data-state="done"] {
+  border-color: var(--live-oxide);
+  background: var(--live-oxide);
+}
+
+.now-card-rail i[data-state="current"] {
+  width: 0.8rem;
+  height: 0.8rem;
+  border: 2px solid var(--live-oxide);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--live-oxide) 16%, transparent);
+}
+
+.now-index-empty {
+  display: grid;
+  justify-items: start;
+  gap: 1.2rem;
+  margin-top: 2rem;
+  color: var(--live-body);
+}
+
+@media (min-width: 600px) {
+  .now-index-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 960px) {
+  .now-index {
+    padding-block: 4.5rem 7rem;
+  }
+
+  .now-index-head h1 {
+    font-size: clamp(2.9rem, 4.4vw, 4rem);
+    line-height: 1.3;
+  }
+
+  .now-index-head p {
+    font-size: 1.1rem;
+  }
+
+  .now-index-list {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1.5rem;
+    margin-top: 3rem;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .now-index-list li {
+      animation: liveScrollIn linear both;
+      animation-timeline: view();
+      animation-range: entry 5% entry 65%;
+    }
   }
 }

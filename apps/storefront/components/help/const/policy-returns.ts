@@ -27,6 +27,7 @@ export const RETURNS_POLICY: PolicyDocument = {
       points: [
         {
           id: "window",
+          icon: "undo",
           label: { fa: "بازگشت اثر آماده", en: "Returning a ready work" },
           value: {
             fa: "درخواست تا ۴۸ ساعت پس از تحویل",
@@ -35,6 +36,7 @@ export const RETURNS_POLICY: PolicyDocument = {
         },
         {
           id: "damage",
+          icon: "camera",
           label: { fa: "گزارش آسیب", en: "Reporting damage" },
           value: {
             fa: "تا ۲۴ ساعت پس از تحویل، با عکس",
@@ -43,6 +45,7 @@ export const RETURNS_POLICY: PolicyDocument = {
         },
         {
           id: "compensation",
+          icon: "hammer",
           label: { fa: "جبران آسیب", en: "If it was damaged" },
           value: {
             fa: "مرمت یا بازگشت کامل وجه",
@@ -51,6 +54,7 @@ export const RETURNS_POLICY: PolicyDocument = {
         },
         {
           id: "custom",
+          icon: "palette",
           label: { fa: "سفارش اختصاصی", en: "Custom pieces" },
           value: {
             fa: "بازگشت ندارد، مگر آسیب یا فرق اساسی",

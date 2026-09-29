@@ -7,7 +7,7 @@ export function ProductNotFound() {
     <NotFoundState
       title="productNotFoundTitle"
       body="productNotFoundBody"
-      secondary={{ href: "/archive", label: "viewArchive" }}
+      secondary={{ href: "/products", label: "allWorks" }}
     />
   );
 }

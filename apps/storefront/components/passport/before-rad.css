@@ -1,33 +1,27 @@
+/* RAD before RAD: one print that crossfades from the idea to the finished
+   work as it is dragged, with the four stages as dots on the thread. */
+
 .before-rad {
   display: grid;
   gap: 1.25rem;
-  margin-top: clamp(3.5rem, 8vw, 6.5rem);
-}
-
-.before-rad header h2 {
-  font-size: clamp(2rem, 4.4vw, 3.4rem);
-  font-weight: 500;
-  line-height: 1.2;
-  margin: 0.35rem 0 0.75rem;
-}
-
-.before-rad header p {
-  max-width: 36rem;
-  margin: 0;
-  color: var(--muted);
-  font-size: 1.05rem;
-  line-height: 1.8;
 }
 
 .before-rad-surface {
   position: relative;
-  min-height: min(72vw, 520px);
+  aspect-ratio: 4 / 3;
   overflow: hidden;
-  border-radius: 2px;
-  background: color-mix(in srgb, var(--sand) 55%, var(--paper));
+  border: 0.45rem solid var(--pp-rim);
+  border-radius: 4px;
+  background: var(--pp-sand);
+  box-shadow: 0 18px 32px -26px rgb(60 44 30 / 0.75);
   cursor: ew-resize;
-  touch-action: none;
+  touch-action: pan-y;
   user-select: none;
+}
+
+.before-rad-surface:focus-visible {
+  outline: 2px solid var(--pp-thread);
+  outline-offset: 4px;
 }
 
 .before-rad-surface figure {
@@ -52,77 +46,117 @@
 
 .before-rad-hint {
   position: absolute;
-  inset-inline-start: 1rem;
-  bottom: 1rem;
+  inset-inline-end: 0.9rem;
+  bottom: 0.8rem;
   z-index: 2;
-  color: var(--paper);
+  padding: 0.2rem 0.7rem;
+  border-radius: 999px;
+  background: rgb(248 244 236 / 0.86);
+  color: var(--pp-ink);
   font-size: 0.78rem;
-  letter-spacing: 0.04em;
-  mix-blend-mode: difference;
+  font-weight: 600;
 }
 
-.before-rad-slider input {
-  width: 100%;
-  margin: 0.4rem 0 0.9rem;
-  accent-color: var(--clay);
-  cursor: pointer;
-}
-
-.before-rad-slider ol {
+.before-rad-rail {
+  position: relative;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 0.35rem;
-  margin: 0;
+  margin: 0.4rem 0 0;
   padding: 0;
   list-style: none;
 }
 
-.before-rad-slider button {
+.before-rad-rail::before,
+.before-rad-rail::after {
+  position: absolute;
+  top: 0.55rem;
+  inset-inline-start: 12.5%;
+  height: 1px;
+  content: "";
+}
+
+.before-rad-rail::before {
+  width: 75%;
+  background: repeating-linear-gradient(
+    to right,
+    var(--pp-hair-strong) 0 5px,
+    transparent 5px 9px
+  );
+}
+
+.before-rad-rail::after {
+  width: 75%;
+  height: 1.5px;
+  background: var(--pp-thread);
+  scale: var(--before-progress, 1) 1;
+  transform-origin: right;
+  transition: scale 200ms var(--pp-ease);
+}
+
+html[dir="ltr"] .before-rad-rail::after {
+  transform-origin: left;
+}
+
+.before-rad-rail button {
+  display: grid;
+  justify-items: center;
+  gap: 0.5rem;
   width: 100%;
-  padding: 0.45rem 0.2rem;
+  padding: 0 0.2rem 0.3rem;
   border: 0;
-  border-bottom: 1px solid var(--line);
-  background: transparent;
-  color: var(--muted);
+  background: none;
+  color: var(--pp-muted);
+  font: inherit;
+  font-size: 0.86rem;
   cursor: pointer;
 }
 
-.before-rad-slider .is-active button {
-  color: var(--ink);
-  border-bottom-color: var(--clay);
+.before-rad-rail button:focus-visible {
+  outline: 2px solid var(--pp-thread);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.before-rad-dot {
+  position: relative;
+  z-index: 1;
+  width: 1.1rem;
+  height: 1.1rem;
+  border: 1.5px solid var(--pp-thread);
+  border-radius: 50%;
+  background: var(--pp-cream);
+  transition:
+    background-color 200ms var(--pp-ease),
+    scale 200ms var(--pp-ease);
+}
+
+.before-rad-rail .is-active button {
+  color: var(--pp-ink);
+  font-weight: 700;
+}
+
+.before-rad-rail .is-active .before-rad-dot {
+  background: var(--pp-thread);
+  scale: 1.15;
 }
 
 .before-rad-caption {
-  max-width: 34rem;
-  margin: 0;
-  font-size: 1.05rem;
-  line-height: 1.8;
+  justify-self: center;
+  max-width: 30ch;
+  color: var(--pp-ink);
+  font-family: var(--font-hand);
+  font-size: clamp(1.45rem, 5.6vw, 1.9rem);
+  line-height: 1.5;
+  text-align: center;
 }
 
-.before-rad .visually-hidden {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
+html[dir="ltr"] .before-rad-caption {
+  font-family: var(--font-pen), var(--font-hand);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .before-rad-surface figure {
+  .before-rad-rail::after,
+  .before-rad-dot {
     transition: none;
-  }
-}
-
-@media (max-width: 700px) {
-  .before-rad-surface {
-    min-height: 72vw;
-  }
-
-  .before-rad-slider button {
-    font-size: 0.78rem;
   }
 }

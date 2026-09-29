@@ -2,7 +2,7 @@
 import "./orders-page.css";
 
 import Link from "next/link";
-import { PackageCheck } from "lucide-react";
+import { PackageCheck, Truck } from "lucide-react";
 import { productCopy } from "@/lib/catalog/products";
 import { formatTotal } from "@/lib/money";
 import { useCommerce } from "@/components/commerce";
@@ -11,6 +11,8 @@ import { ButtonLink } from "@/components/ui/button-link";
 import { ProductMedia } from "@/components/product";
 import { useCatalog } from "@/components/catalog";
 import { AccountShell } from "../../account/account-shell";
+import { AccountHeading } from "../../account/account-heading";
+import { StateScreen } from "@/components/states";
 import { STORE_ORDER_STATUS_KEY, radArtworkNumber } from "../const";
 
 export function OrdersPage() {
@@ -21,11 +23,7 @@ export function OrdersPage() {
   return (
     <AccountShell requireAuth>
       <section className="orders-page section">
-        <header className="orders-heading">
-          <span className="eyebrow">{t("ordersEyebrow")}</span>
-          <h1>{t("ordersTitle")}</h1>
-          <p>{t("ordersShopNote")}</p>
-        </header>
+        <AccountHeading icon={Truck} title={t("ordersTitle")} body={t("ordersShopNote")} />
         {orders.length ? (
           <div className="orders-list">
             {orders.map((order) => {
@@ -92,10 +90,12 @@ export function OrdersPage() {
             })}
           </div>
         ) : (
-          <div className="empty-state">
-            <h2>{t("noOrders")}</h2>
-            <ButtonLink href="/products">{t("viewAvailableWorks")}</ButtonLink>
-          </div>
+          <StateScreen
+            art="empty-bag"
+            className="account-state"
+            title={t("noOrders")}
+            actions={<ButtonLink href="/products">{t("viewAvailableWorks")}</ButtonLink>}
+          />
         )}
       </section>
     </AccountShell>

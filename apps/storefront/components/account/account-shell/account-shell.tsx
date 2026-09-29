@@ -4,8 +4,10 @@ import type { ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import { useCommerce } from "@/components/commerce";
 import { AccountLogin } from "../account-page/account-login";
+import { ACCOUNT_HUB } from "../const";
 import { AccountNav } from "./account-nav";
 import { CardListSkeleton, Skeleton, SkeletonScreen } from "@/components/ui/skeleton";
+import "../account-heading.css";
 import "./account-shell.css";
 
 export function AccountShell({
@@ -38,7 +40,7 @@ export function AccountShell({
     return children;
   }
   return (
-    <div className="account-shell">
+    <div className="account-shell" data-hub={pathname === ACCOUNT_HUB ? "" : undefined}>
       <AccountNav />
       <div className="account-shell-main">{children}</div>
     </div>

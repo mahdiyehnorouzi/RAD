@@ -2,6 +2,10 @@
 
 import { useEffect, useRef, useState } from "react";
 
+/**
+ * `pinned` is true on small screens while the heading has scrolled up under
+ * the header and the rest of its section is still on screen.
+ */
 export function useStickyPin(
   topCssVar = "--header-height",
   maxWidth = 900,
@@ -9,7 +13,6 @@ export function useStickyPin(
   const containerRef = useRef<HTMLElement>(null);
   const headingRef = useRef<HTMLElement>(null);
   const [pinned, setPinned] = useState(false);
-  const [barHeight, setBarHeight] = useState(0);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -28,17 +31,13 @@ export function useStickyPin(
     const update = () => {
       if (!query.matches) {
         setPinned(false);
-        setBarHeight(0);
         return;
       }
       const top = topOffset();
-      const headingBox = heading.getBoundingClientRect();
-      const containerBox = container.getBoundingClientRect();
-      const stillInSection = containerBox.bottom > top + headingBox.height - 1;
-      const reachedPin = headingBox.top <= top + 1;
-      const next = reachedPin && stillInSection;
+      const passedHeading = heading.getBoundingClientRect().bottom <= top + 1;
+      const stillInSection = container.getBoundingClientRect().bottom > top + 120;
+      const next = passedHeading && stillInSection;
       setPinned((current) => (current === next ? current : next));
-      setBarHeight(headingBox.height);
     };
 
     const onScroll = () => {
@@ -58,5 +57,5 @@ export function useStickyPin(
     };
   }, [maxWidth, topCssVar]);
 
-  return { containerRef, headingRef, pinned, barHeight };
+  return { containerRef, headingRef, pinned };
 }
