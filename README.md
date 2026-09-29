@@ -134,12 +134,12 @@ Seed data loads catalog products, vendors, sample commerce data, and staff accou
 
 ## Default accounts
 
-Created by `ensure-staff` (runs on seed and production boot):
+Created by `ensure-staff` (runs on seed and production boot). The fallback passwords below work **locally only**: with `NODE_ENV=production` an unset password leaves that account untouched, and any staff account still on a fallback password is locked (use password reset).
 
 | Role | Email | Password |
 | --- | --- | --- |
-| Owner (admin) | Value of `ADMIN_EMAIL` in `apps/api/.env` (example: `mahdiyeh.norozi77@gmail.com`) | Value of `ADMIN_PASSWORD` (set in `.env`; fallback in code: `rad-studio-owner`) |
-| Editor | `sahar@rad.studio` | `rad-editor-2026` |
+| Owner (admin) | `ADMIN_EMAIL` (local fallback: `mahdiyeh.norozi77@gmail.com`) | `ADMIN_PASSWORD` (local fallback: `rad-studio-owner`) |
+| Editor | `EDITOR_EMAIL` (local fallback: `sahar@rad.studio`) | `EDITOR_PASSWORD` (local fallback: `rad-editor-2026`) |
 
 **Storefront customers** register at http://localhost:3000/account (sign-up tab). They are stored as `User` rows with `role: "customer"` and appear in admin under **مشتریان** (Customers).
 
@@ -156,13 +156,15 @@ Copy from `apps/api/.env.example`:
 | Variable | Required | Description |
 | --- | --- | --- |
 | `DATABASE_URL` | Yes | PostgreSQL connection string |
-| `JWT_SECRET` | Yes | Secret for session JWT cookies |
+| `JWT_SECRET` | Yes | Secret for session JWT cookies; production refuses to start unless it is 32+ random characters (`openssl rand -base64 48`) |
 | `PORT` | No | API port (default `4000`) |
 | `STOREFRONT_ORIGIN` | Yes (prod) | CORS origin for storefront (local: `http://localhost:3000`) |
 | `ADMIN_ORIGIN` | Yes (prod) | CORS origin for admin (local: `http://localhost:3002`) |
 | `CORS_ORIGINS` | No | Extra exact CORS origins, comma-separated (no wildcards) |
 | `ADMIN_EMAIL` | No | Owner account email (seed / boot) |
 | `ADMIN_PASSWORD` | No | Owner account password |
+| `EDITOR_EMAIL` | No | Editor account email (seed / boot) |
+| `EDITOR_PASSWORD` | No | Editor account password |
 | `OPENAI_API_KEY` | No | AI design generation (`POST /design`) |
 | `PAYMENT_MODE` | No | `manual_card` or `gateway` |
 | `PAYMENT_CARD_*` | No | Bank card details for manual transfer checkout |

@@ -1,11 +1,20 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { LivePage } from "@/components/now";
-import { findLivePiece, livePieces } from "@/lib/now";
+import { fallbackArtworks } from "@/lib/artworks/server";
+import { getCatalog } from "@/lib/catalog/get-catalog-works";
+import { findLivePiece, livePiecesFrom } from "@/lib/now";
 import { absoluteUrl, pageMetadata, safeJsonLd } from "@/lib/seo";
 
 export function generateStaticParams() {
-  return livePieces.map((piece) => ({ code: piece.code }));
+  return livePiecesFrom(fallbackArtworks).map((piece) => ({
+    code: piece.code,
+  }));
+}
+
+async function findPiece(code: string) {
+  const { artworks } = await getCatalog();
+  return findLivePiece(livePiecesFrom(artworks), code);
 }
 
 export async function generateMetadata({
@@ -14,9 +23,12 @@ export async function generateMetadata({
   params: Promise<{ code: string }>;
 }): Promise<Metadata> {
   const { code } = await params;
-  const piece = findLivePiece(livePieces, code);
+  const piece = await findPiece(code);
   if (!piece) {
-    return { title: "این رَد پیدا نشد", robots: { index: false, follow: false } };
+    return {
+      title: "این رَد پیدا نشد",
+      robots: { index: false, follow: false },
+    };
   }
   return pageMetadata({
     title: `رَد ${piece.code} دارد ساخته می‌شود`,
@@ -31,7 +43,7 @@ export default async function LiveMaking({
   params: Promise<{ code: string }>;
 }) {
   const { code } = await params;
-  const piece = findLivePiece(livePieces, code);
+  const piece = await findPiece(code);
   if (!piece) notFound();
 
   const path = `/now/${piece.code}`;

@@ -32,6 +32,9 @@
       "@rad/artworks": [
         "../../packages/artworks/src/index.ts"
       ],
+      "@rad/artworks/*": [
+        "../../packages/artworks/src/*"
+      ],
       "@rad/ui": [
         "../../packages/ui/src/index.ts"
       ],

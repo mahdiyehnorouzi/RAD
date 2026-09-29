@@ -14,7 +14,8 @@ import {
 import { CartProvider } from "@/components/cart";
 import { LocaleProvider } from "@/components/i18n";
 import { CommerceProvider } from "@/components/commerce";
-import { CatalogProvider } from "@/components/catalog/catalog-provider";
+import { CatalogIndexProvider } from "@/components/catalog";
+import { getCatalogIndex } from "@/lib/catalog/get-catalog-works";
 import { HomeBanner } from "@/components/home/home-banner";
 import {
   absoluteUrl,
@@ -95,11 +96,12 @@ export const metadata: Metadata = {
     : {}),
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const catalogIndex = await getCatalogIndex();
   const gaMeasurementId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
   const gaEnabled = Boolean(
     gaMeasurementId && /^G-[A-Z0-9]+$/i.test(gaMeasurementId),
@@ -141,7 +143,7 @@ export default function RootLayout({
           }}
         />
         <LocaleProvider>
-          <CatalogProvider>
+          <CatalogIndexProvider entries={catalogIndex}>
             <CommerceProvider>
               <CartProvider>
                 {gaEnabled && gaMeasurementId ? (
@@ -156,7 +158,7 @@ export default function RootLayout({
                 <Footer />
               </CartProvider>
             </CommerceProvider>
-          </CatalogProvider>
+          </CatalogIndexProvider>
         </LocaleProvider>
       </body>
     </html>

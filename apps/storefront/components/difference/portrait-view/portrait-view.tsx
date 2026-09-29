@@ -4,21 +4,33 @@ import "./portrait-view.css";
 import Link from "next/link";
 import { useLocale } from "@/components/i18n";
 import { ButtonLink } from "@/components/ui/button-link";
-import { usePassports } from "@/hooks/use-artworks";
-import { findPassport } from "@/lib/passport";
-import { differencePageCopy, differenceStages, surprisePermissions } from "../const";
+import {
+  differencePageCopy,
+  differenceStages,
+  surprisePermissions,
+} from "../const";
 import { TraceHero, TraceQuote, TraceTimeline } from "../trace";
 import type { DifferencePortrait, DifferenceStageId, TraceStep } from "../type";
 import { PortraitCertificate } from "./portrait-certificate";
 
 type Locale = "fa" | "en";
 
-function stageNotes(portrait: DifferencePortrait, stage: DifferenceStageId, locale: Locale, permissionLabel: string) {
-  const permission = surprisePermissions.find((item) => item.id === portrait.permission);
+function stageNotes(
+  portrait: DifferencePortrait,
+  stage: DifferenceStageId,
+  locale: Locale,
+  permissionLabel: string,
+) {
+  const permission = surprisePermissions.find(
+    (item) => item.id === portrait.permission,
+  );
   switch (stage) {
     case "described":
       return permission
-        ? [`${permissionLabel} ${permission.title[locale]}`, permission.body[locale]]
+        ? [
+            `${permissionLabel} ${permission.title[locale]}`,
+            permission.body[locale],
+          ]
         : [portrait.described[locale]];
     case "imagined":
       return [portrait.imaginedNote[locale]];
@@ -31,15 +43,15 @@ function stageNotes(portrait: DifferencePortrait, stage: DifferenceStageId, loca
 
 export function DifferencePortraitView({
   portrait,
+  passportCode,
   image,
 }: {
   portrait: DifferencePortrait;
+  passportCode?: string;
   image?: string;
 }) {
   const { locale, t, href } = useLocale();
   const c = differencePageCopy[locale];
-  const passports = usePassports();
-  const passport = findPassport(passports, portrait.id) ?? findPassport(passports, portrait.code);
   const title = portrait.title?.[locale] ?? t("differenceTitle");
   const heroImage = image ?? portrait.stageImages?.material;
 
@@ -72,14 +84,20 @@ export function DifferencePortraitView({
         </ul>
       </TraceHero>
 
-      <section className="difference-portrait-journey" aria-labelledby="difference-journey-title">
+      <section
+        className="difference-portrait-journey"
+        aria-labelledby="difference-journey-title"
+      >
         <header className="trace-section-head">
           <h2 id="difference-journey-title">{c.portraitJourneyTitle}</h2>
           <p>{c.portraitJourneyLede}</p>
         </header>
         <TraceTimeline steps={steps} labelledBy="difference-journey-title" />
-        {passport ? (
-          <Link className="difference-portrait-passport" href={href(`/passport/${passport.code}`)}>
+        {passportCode ? (
+          <Link
+            className="difference-portrait-passport"
+            href={href(`/passport/${passportCode}`)}
+          >
             {t("pdpPassportLink")}
           </Link>
         ) : null}
@@ -88,7 +106,10 @@ export function DifferencePortraitView({
       <div className="difference-portrait-end">
         <PortraitCertificate portrait={portrait} />
         <TraceQuote lines={c.quoteLines} />
-        <nav className="difference-portrait-actions" aria-label={t("museumTitle")}>
+        <nav
+          className="difference-portrait-actions"
+          aria-label={t("museumTitle")}
+        >
           <ButtonLink href="/differences" className="difference-portrait-back">
             {t("museumBack")}
           </ButtonLink>

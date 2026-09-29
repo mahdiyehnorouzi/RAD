@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, type ReactNode } from "react";
+import type { LivePiece } from "@/components/now/type";
 import { useLocale } from "@/components/i18n";
 import { journeyCopy } from "./const";
 import { JourneyAbout } from "./journey-about";
@@ -21,10 +22,13 @@ export function ThreadJourney({
   hero,
   works,
   closing,
+  workshop,
 }: {
   hero: ReactNode;
   works: ReactNode;
   closing: ReactNode;
+  /** Today's piece on the workbench, if any work is being made. */
+  workshop?: Pick<LivePiece, "code" | "image">;
 }) {
   const { locale } = useLocale();
   const ref = useRef<HTMLDivElement>(null);
@@ -34,7 +38,7 @@ export function ThreadJourney({
     <div ref={ref} className="thread-home">
       {hero}
       <section className="journey" aria-label={journeyCopy[locale].aria}>
-        <JourneyWorkshop />
+        <JourneyWorkshop piece={workshop} />
         <JourneyReady />
         <JourneyCustom />
       </section>

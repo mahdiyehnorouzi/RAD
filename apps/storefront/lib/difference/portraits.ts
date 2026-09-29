@@ -1,7 +1,5 @@
 import { formatRadCode, visualForCategory, type Artwork } from "@rad/types";
 import type { DifferencePortrait } from "@/components/difference/type";
-import { fallbackArtworks } from "@/lib/artworks";
-
 /** Difference-museum view of an `Artwork`; `null` when the work has no difference record. */
 export function portraitFromArtwork(
   artwork: Artwork,
@@ -40,10 +38,6 @@ export function portraitsFrom(artworks: Artwork[]): DifferencePortrait[] {
     .map(portraitFromArtwork)
     .filter((item): item is DifferencePortrait => Boolean(item));
 }
-
-/** Registry portraits for static params and metadata; client views read live artworks. */
-export const museumPortraits: DifferencePortrait[] =
-  portraitsFrom(fallbackArtworks);
 
 export function portraitById(portraits: DifferencePortrait[], id: string) {
   return portraits.find((item) => item.id === id);

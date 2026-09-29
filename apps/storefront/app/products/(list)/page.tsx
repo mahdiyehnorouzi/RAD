@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { CatalogPage } from "@/components/catalog";
-import { loadCatalogWorks } from "@/lib/catalog/get-catalog-works";
+import { getCatalog } from "@/lib/catalog/get-catalog-works";
 import { catalogMetadata } from "@/lib/catalog/catalog-metadata";
 import { catalogHref, parseCatalogFilters } from "@/lib/catalog/filters";
 import {
@@ -16,7 +16,7 @@ type Props = {
 
 async function loadCatalogView(searchParams: Props["searchParams"]) {
   const [{ products, live }, params] = await Promise.all([
-    loadCatalogWorks(),
+    getCatalog(),
     searchParams,
   ]);
   const filters = resolveCatalogFilters(parseCatalogFilters(params), products);
@@ -43,7 +43,12 @@ export default async function Products({ searchParams }: Props) {
           __html: safeJsonLd(productListJsonLd(listed, href)),
         }}
       />
-      <CatalogPage key={href} products={products} live={live} filters={filters} />
+      <CatalogPage
+        key={href}
+        products={products}
+        live={live}
+        filters={filters}
+      />
     </>
   );
 }

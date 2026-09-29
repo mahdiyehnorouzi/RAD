@@ -2,6 +2,7 @@
 import "./purchase-path.css";
 
 import Link from "next/link";
+import { FileText } from "lucide-react";
 import type { PolicyAcceptance, PolicySlug } from "@rad/types";
 import { useLocale } from "@/components/i18n";
 import {
@@ -40,7 +41,8 @@ export function OrderPolicies({
           return (
             <li key={slug}>
               <Link href={href(policyVersionPath(slug, version))}>
-                {doc.title[locale]}
+                <FileText aria-hidden="true" />
+                <span>{doc.title[locale]}</span>
               </Link>
               <time dateTime={version}>
                 {formatPolicyDate(version, locale)}

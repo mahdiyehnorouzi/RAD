@@ -418,7 +418,8 @@ html[lang="en"] .account-banner-line {
   }
 
   .account-page.section {
+    --page: 1rem;
     padding-block: 2rem !important;
-    padding-inline: 1rem !important;
+    padding-inline: var(--page) !important;
   }
 }

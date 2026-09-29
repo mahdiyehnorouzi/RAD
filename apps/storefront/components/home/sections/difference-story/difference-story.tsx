@@ -8,7 +8,6 @@ import type {
 } from "@/components/difference/type";
 import { ButtonLink } from "@/components/ui/button-link";
 import { useLocale, type Locale } from "@/components/i18n";
-import { usePortraits } from "@/hooks/use-artworks";
 import { useInView, useScrollStage } from "../../hooks";
 import { StoryCard } from "./story-card";
 import { StoryStepper } from "./story-stepper";
@@ -82,7 +81,11 @@ function StagePhoto({
   );
 }
 
-export function DifferenceStory() {
+export function DifferenceStory({
+  portrait: storyPortrait,
+}: {
+  portrait?: DifferencePortrait;
+}) {
   const { locale, t } = useLocale();
   const { ref: revealRef, inView } = useInView<HTMLElement>({
     threshold: 0.06,
@@ -92,7 +95,6 @@ export function DifferenceStory() {
     node: scroller,
     progress,
   } = useScrollStage(differenceStages.length);
-  const storyPortrait = usePortraits()[0];
   if (!storyPortrait) return null;
 
   const transition = stageTransition(progress, differenceStages.length);
@@ -105,7 +107,10 @@ export function DifferenceStory() {
     const range = scroller.offsetHeight - window.innerHeight;
     const start = scroller.getBoundingClientRect().top + window.scrollY;
     const last = differenceStages.length - 1;
-    window.scrollTo({ top: start + (range * index) / last, behavior: "smooth" });
+    window.scrollTo({
+      top: start + (range * index) / last,
+      behavior: "smooth",
+    });
   };
 
   return (
