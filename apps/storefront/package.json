@@ -1,6 +1,6 @@
 {
   "name": "@rad/storefront",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -15,11 +15,11 @@
     "deploy:vinext": "npm run deploy:cloudflare"
   },
   "dependencies": {
-    "@rad/artworks": "1.4.0",
-    "@rad/i18n": "1.4.0",
-    "@rad/state": "1.4.0",
-    "@rad/types": "1.4.0",
-    "@rad/ui": "1.4.0",
+    "@rad/artworks": "1.5.0",
+    "@rad/i18n": "1.5.0",
+    "@rad/state": "1.5.0",
+    "@rad/types": "1.5.0",
+    "@rad/ui": "1.5.0",
     "lucide-react": "^1.33.0",
     "next": "16.3.2",
     "qrcode": "^1.5.4",

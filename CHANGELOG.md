@@ -2,6 +2,21 @@
 
 All notable product releases are tracked here. Version numbers follow [SemVer](https://semver.org/). Production deploys run from matching git tags (`vX.Y.Z`).
 
+## 1.5.0 - 2026-09-29
+
+### Added
+
+- Shape quiz questions and help-page questions served by the API (`/shape/questions`, `/help/questions`) and editable from admin.
+- Admin review moderation, shared admin dialogs, and row actions.
+
+### Changed
+
+- The storefront shape quiz and help hub load their questions from the API, with loading and error states.
+
+### Removed
+
+- `apps/api/.env` is untracked again.
+
 ## 1.4.0 - 2026-09-29
 
 ### Added

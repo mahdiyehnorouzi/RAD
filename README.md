@@ -2,7 +2,7 @@
 
 RAD is a bilingual (Persian / English) ceramic studio platform: a customer storefront, an artist workshop, and an admin operations panel, backed by a NestJS API and PostgreSQL.
 
-The repo is an **npm workspaces monorepo** (version `1.4.0`). Three apps run independently in development; shared code lives in `packages/`.
+The repo is an **npm workspaces monorepo** (version `1.5.0`). Three apps run independently in development; shared code lives in `packages/`.
 
 | App | Package | Default URL | Purpose |
 | --- | --- | --- | --- |
@@ -313,7 +313,7 @@ RAD/
 ├── Dockerfile.api        # Production API image
 ├── render.yaml           # Render.com blueprint (API + Postgres)
 ├── ARCHITECTURE.md       # High-level design notes
-└── VERSION               # Monorepo version (1.4.0)
+└── VERSION               # Monorepo version (1.5.0)
 ```
 
 ---
