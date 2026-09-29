@@ -2,6 +2,7 @@
 import type { CSSProperties } from "react";
 import type { WorkTexture } from "@/lib/catalog/material-texture";
 import { useWorkPalette } from "./hooks";
+import styles from "./work-stroke.module.css";
 
 /**
  * A dry brush stroke painted with one of the work's own surfaces. Strokes in
@@ -18,11 +19,11 @@ export function WorkStroke({
 }) {
   const palette = useWorkPalette(textures);
   const sample = palette.length ? palette[index % palette.length] : undefined;
-  const brush = index % 2 ? "is-b" : "is-a";
+  const brush = index % 2 ? styles.b : "";
 
   return (
     <span
-      className={`work-stroke ${brush} ${sample ? "" : "is-plain"} ${className}`}
+      className={`${styles.workStroke} ${brush} ${sample ? "" : styles.plain} ${className}`}
       aria-hidden="true"
       style={
         sample

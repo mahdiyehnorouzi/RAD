@@ -1,0 +1,271 @@
+.gallery {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.gallery.hasThumbs {
+  grid-template-columns: minmax(0, 1fr) 5.25rem;
+}
+
+.stage {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  max-height: var(--pdp-stage-max);
+  overflow: hidden;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--plate-color) 22%, var(--canvas));
+}
+
+.stageTrack {
+  display: flex;
+  height: 100%;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+}
+
+.stageTrack::-webkit-scrollbar {
+  display: none;
+}
+
+.stageTrack:focus-visible {
+  outline: 2px solid var(--pdp-oxide);
+  outline-offset: -6px;
+}
+
+.slide {
+  position: relative;
+  flex: 0 0 100%;
+  height: 100%;
+  overflow: hidden;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+}
+
+.slide > :global(.product-photo),
+.thumb :global(.product-photo) {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.gallery.photographed .photo :global(.product-photo) {
+  object-fit: cover;
+}
+
+.slide > :global(.product-photo-default),
+.thumb :global(.product-photo-default) {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.slide.plate,
+.thumb.plate {
+  background: color-mix(in srgb, var(--plate-color) 58%, var(--paper));
+}
+
+.slide.plate > :global(.product-photo) {
+  padding: 14% 12% 12%;
+  filter: drop-shadow(
+    0 26px 24px color-mix(in srgb, var(--ink) 22%, transparent)
+  );
+}
+
+.thumb.plate :global(.product-photo) {
+  padding: 12%;
+}
+
+.plateMark {
+  position: absolute;
+  top: 1.25rem;
+  inset-inline-end: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--ink);
+  font-size: var(--text-identifier);
+  letter-spacing: var(--tracking-index);
+}
+
+.plateMark b {
+  font-weight: var(--font-weight-medium);
+}
+
+.plateMark i {
+  display: grid;
+  width: 2.6rem;
+  height: 2.6rem;
+  place-items: center;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  font-size: 0.7rem;
+  font-style: normal;
+  letter-spacing: 0;
+}
+
+.stage :global(.favorite-button):global(.compact) {
+  top: 1rem;
+  inset-inline: 1rem auto;
+  width: 44px;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--paper) 90%, transparent);
+  color: var(--ink);
+  box-shadow: 0 6px 18px color-mix(in srgb, var(--ink) 12%, transparent);
+  transition:
+    color 200ms ease-out,
+    transform 200ms var(--pdp-ease);
+}
+
+.stage :global(.favorite-button):global(.compact):hover {
+  transform: scale(1.06);
+}
+
+.stage :global(.favorite-button):global(.active) {
+  color: var(--pdp-oxide);
+}
+
+.stage :global(.favorite-button) svg {
+  width: 20px;
+  height: 20px;
+  stroke-width: 1.6;
+}
+
+.stageNav {
+  position: absolute;
+  bottom: 1rem;
+  inset-inline-start: 1rem;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.stageNav button {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--paper) 90%, transparent);
+  color: var(--ink);
+  box-shadow: 0 6px 18px color-mix(in srgb, var(--ink) 12%, transparent);
+  cursor: pointer;
+  transition:
+    opacity 200ms ease-out,
+    background 200ms ease-out;
+}
+
+.stageNav button:hover:not(:disabled) {
+  background: var(--paper);
+}
+
+.stageNav button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.stageNav svg {
+  width: 18px;
+  height: 18px;
+  stroke-width: 1.6;
+}
+
+.stageCount {
+  position: absolute;
+  bottom: 1rem;
+  inset-inline-end: 1rem;
+  padding: 0.3rem 0.8rem;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--paper) 90%, transparent);
+  color: var(--ink);
+  font-size: 0.78rem;
+  line-height: 1.6;
+}
+
+.thumbs {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  max-height: var(--pdp-stage-max);
+  padding: 4px;
+  margin: -4px;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.thumbs::-webkit-scrollbar {
+  display: none;
+}
+
+.thumb {
+  position: relative;
+  flex: 0 0 auto;
+  width: 100%;
+  aspect-ratio: 1;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--plate-color) 22%, var(--canvas));
+  cursor: pointer;
+  opacity: 0.6;
+  transition:
+    opacity 220ms ease-out,
+    box-shadow 220ms ease-out;
+}
+
+.thumb:hover {
+  opacity: 0.9;
+}
+
+.thumb.active {
+  opacity: 1;
+  box-shadow:
+    0 0 0 2px var(--paper),
+    0 0 0 3.5px var(--ink);
+}
+
+.thumb > span {
+  position: absolute;
+  inset: 0;
+}
+
+@media (max-width: 1100px) {
+  .gallery.hasThumbs {
+    grid-template-columns: minmax(0, 1fr) 4.25rem;
+  }
+}
+
+@media (--tablet) {
+  .gallery.hasThumbs {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .thumbs {
+    flex-direction: row;
+    max-height: none;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-snap-type: x proximity;
+  }
+  .thumb {
+    width: 4.25rem;
+    scroll-snap-align: start;
+  }
+  .thumb:first-child {
+    margin-inline-start: auto;
+  }
+  .stage {
+    max-height: none;
+  }
+}

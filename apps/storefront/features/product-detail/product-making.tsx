@@ -6,10 +6,11 @@ import { RadFingerprint } from "@/components/identity";
 import type { RadPassport } from "@/components/passport/type";
 import type { WorkTexture } from "@/lib/catalog/material-texture";
 import { passportYear } from "@/lib/passport";
-import { formatArtworkNumber } from "../listing";
+import { formatArtworkNumber } from "@/components/product/listing";
 import { MAKING_PATHS, pdpCopy } from "./const";
 import { PdpSection } from "./pdp-section";
 import { WorkStroke } from "./work-stroke";
+import styles from "./product-making.module.css";
 
 export function ProductMaking({
   product,
@@ -47,22 +48,21 @@ export function ProductMaking({
       title={c.makingTitle}
       lede={c.makingLede}
       mark={<WorkStroke textures={textures} index={index} />}
-      className="pdp-making"
     >
       <ol
-        className="pdp-making-path"
+        className={styles.makingPath}
         style={{ "--steps": steps.length + 1 } as CSSProperties}
       >
         {steps.map((step) => (
           <li key={step.id}>
-            <i className="pdp-making-node" aria-hidden="true" />
+            <i className={styles.makingNode} aria-hidden="true" />
             <span>{step.label[locale]}</span>
           </li>
         ))}
-        <li className="is-work">
+        <li className={styles.work}>
           <RadFingerprint
             radNumber={product.radNumber}
-            className="pdp-making-print"
+            className={styles.makingPrint}
             animate
           />
           <span dir="ltr">{recordNumber}</span>

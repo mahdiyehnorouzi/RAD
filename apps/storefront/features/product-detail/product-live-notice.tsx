@@ -8,6 +8,7 @@ import { useLocale } from "@/components/i18n";
 import { useCountdown } from "@/hooks/use-countdown";
 import { formatCountdown, isGoneStatus } from "@/lib/catalog/product-status";
 import type { LiveProduct } from "./hooks";
+import styles from "./product-live-notice.module.css";
 
 /**
  * Tells the visitor what changed while they were on the page: withdrawn,
@@ -95,7 +96,7 @@ export function ProductLiveNotice({
 
   if (!change && !connection) return null;
   return (
-    <div className="pdp-live-notices">
+    <div className={styles.liveNotices}>
       {change}
       {connection}
     </div>

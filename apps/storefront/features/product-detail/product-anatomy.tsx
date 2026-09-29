@@ -11,6 +11,7 @@ import { pdpCopy } from "./const";
 import type { WorkTexture } from "@/lib/catalog/material-texture";
 import { PdpSection } from "./pdp-section";
 import { WorkStroke } from "./work-stroke";
+import styles from "./product-anatomy.module.css";
 
 /** Marks drawn on one of the work's photos, else the passport's marks on its first. */
 function anatomyOf(product: Product, artwork?: Artwork) {
@@ -52,14 +53,13 @@ export function ProductAnatomy({
       title={c.anatomyTitle}
       lede={c.anatomyLede}
       mark={<WorkStroke textures={textures} index={index} />}
-      className="pdp-anatomy"
     >
-      <div className="pdp-anatomy-body">
+      <div className={styles.anatomyBody}>
         <div
-          className="pdp-anatomy-plate"
+          className={styles.anatomyPlate}
           style={{ "--plate-color": product.color } as CSSProperties}
         >
-          <figure className="pdp-anatomy-figure">
+          <figure className={styles.anatomyFigure}>
             <img
               loading="lazy"
               decoding="async"
@@ -73,7 +73,7 @@ export function ProductAnatomy({
             {anatomy.marks.map((mark, index) => (
               <span
                 key={`${mark.x}-${mark.y}`}
-                className={`pdp-anatomy-mark ${mark.x < 50 ? "is-left" : "is-right"}`}
+                className={`${styles.anatomyMark} ${mark.x < 50 ? styles.left : styles.right}`}
                 style={
                   {
                     "--mark-x": `${mark.x}%`,
@@ -82,9 +82,9 @@ export function ProductAnatomy({
                 }
                 aria-hidden="true"
               >
-                <i className="pdp-anatomy-leader" />
-                <b className="pdp-anatomy-dot">{numeral(index + 1)}</b>
-                <span className="pdp-anatomy-label">
+                <i className={styles.anatomyLeader} />
+                <b className={styles.anatomyDot}>{numeral(index + 1)}</b>
+                <span className={styles.anatomyLabel}>
                   <b>{mark.title[locale]}</b>
                   <span>{mark.note[locale]}</span>
                 </span>
@@ -92,7 +92,7 @@ export function ProductAnatomy({
             ))}
           </figure>
         </div>
-        <ol className="pdp-anatomy-list">
+        <ol className={styles.anatomyList}>
           {anatomy.marks.map((mark, index) => (
             <li key={`${mark.x}-${mark.y}`}>
               <i aria-hidden="true">{numeral(index + 1)}</i>

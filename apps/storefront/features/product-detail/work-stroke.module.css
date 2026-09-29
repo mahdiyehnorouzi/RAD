@@ -1,0 +1,41 @@
+/* A dry brush stroke loaded with one of the work's own surfaces. */
+.workStroke {
+  position: relative;
+  display: block;
+  width: var(--stroke-width, 5.5rem);
+  height: var(--stroke-height, 2.4rem);
+  flex: none;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--sand) 70%, var(--paper));
+  -webkit-mask: url("/marks/brush-a.svg") center / 100% 100% no-repeat;
+  mask: url("/marks/brush-a.svg") center / 100% 100% no-repeat;
+}
+
+.workStroke img {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: calc(100% / var(--texture-span));
+  max-width: none;
+  height: auto;
+  transform: translate(
+    calc(var(--texture-x) * -1),
+    calc(var(--texture-y) * -1)
+  );
+  animation: textureIn 700ms var(--pdp-ease) both;
+}
+
+.workStroke.b {
+  -webkit-mask-image: url("/marks/brush-b.svg");
+  mask-image: url("/marks/brush-b.svg");
+}
+
+.workStroke:not(.plain) {
+  background: transparent;
+}
+
+@keyframes textureIn {
+  from {
+    opacity: 0;
+  }
+}

@@ -6,8 +6,9 @@ import { useLocale } from "@/components/i18n";
 import { ObjectStamp, RadFingerprint } from "@/components/identity";
 import type { RadPassport } from "@/components/passport/type";
 import { formatPassportCode, passportYear } from "@/lib/passport";
-import { ProductMedia } from "../listing";
+import { ProductMedia } from "@/components/product/listing";
 import { pdpCopy } from "./const";
+import styles from "./product-record-cards.module.css";
 
 export function ProductRecordCards({
   product,
@@ -29,28 +30,28 @@ export function ProductRecordCards({
   const oneOfOne = locale === "fa" ? "تنها یک نسخه" : "one of one";
 
   return (
-    <div className="pdp-records">
+    <div className={styles.records}>
       {passport && code ? (
-        <div className="pdp-passport">
+        <div className={styles.passport}>
           <Link
-            className="pdp-record is-passport"
+            className={`${styles.record} ${styles.passportCard}`}
             href={href(`/passport/${passport.code}`)}
           >
             <RadFingerprint
               radNumber={passport.radNumber}
               density="field"
-              className="pdp-passport-print"
+              className={styles.passportPrint}
               animate
             />
             <strong>{t("pdpPassportLink")}</strong>
-            <span className="pdp-record-body">{c.passportCardBody}</span>
-            <span className="pdp-record-go">
+            <span className={styles.recordBody}>{c.passportCardBody}</span>
+            <span className={styles.recordGo}>
               <i aria-hidden="true">
                 <Arrow />
               </i>
               {c.passportAction}
             </span>
-            <span className="pdp-record-media" aria-hidden="true">
+            <span className={styles.recordMedia} aria-hidden="true">
               <ProductMedia
                 product={product}
                 imageIndex={0}
@@ -59,7 +60,7 @@ export function ProductRecordCards({
             </span>
           </Link>
           <ObjectStamp
-            className="pdp-stamp"
+            className={styles.stamp}
             radNumber={passport.radNumber}
             code={code}
             year={year}
@@ -70,28 +71,28 @@ export function ProductRecordCards({
         </div>
       ) : null}
       <Link
-        className="pdp-record is-qr"
+        className={`${styles.record} ${styles.qr}`}
         href={href(`/products/${product.slug}/qr`)}
       >
         {qrSvg ? (
           <span
-            className="pdp-record-qr"
+            className={styles.recordQr}
             aria-hidden="true"
             dangerouslySetInnerHTML={{ __html: qrSvg }}
           />
         ) : (
-          <span className="pdp-record-qr" aria-hidden="true">
+          <span className={styles.recordQr} aria-hidden="true">
             <QrCode />
           </span>
         )}
-        <span className="pdp-record-text">
+        <span className={styles.recordText}>
           <strong>{t("pdpQrLink")}</strong>
-          <span className="pdp-record-body">{c.qrCardBody}</span>
+          <span className={styles.recordBody}>{c.qrCardBody}</span>
         </span>
         {product.radNumber ? (
           <RadFingerprint
             radNumber={product.radNumber}
-            className="pdp-record-qr-print"
+            className={styles.recordQrPrint}
             animate
           />
         ) : null}

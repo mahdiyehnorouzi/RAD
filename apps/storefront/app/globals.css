@@ -103,6 +103,12 @@
     }
   }
 
+  /* Two-digit Persian numerals for counters. Kept global: Turbopack renames it inside modules. */
+  @counter-style rad-persian {
+    system: extends persian;
+    pad: 2 "۰";
+  }
+
   @media (--reduced-motion) {
     *,
     *::before,

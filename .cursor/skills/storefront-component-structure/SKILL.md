@@ -65,6 +65,8 @@ features/cart/
 6. **Check what the shared `.section` rules already set.** `.section h2`, `.section h3` and `.section p` set font size (and paragraph line height) for everything inside a section. Don't redeclare them in a module unless the change is meant to be visible.
 7. **Avoid `!important`.** Only use it to beat a shared rule that is itself `!important`, and say which rule in a one-line comment.
 8. **No new global stylesheets for features.** `globals.css` layers are `reset`, `defaults` and `helpers`; component styles stay unlayered, so they win over those.
+9. **`@counter-style` rules go in `app/globals.css`.** Turbopack renames them inside a module but not the `counter()` calls that use them. Keyframes are fine in a module when the animation that uses them is in the same file.
+10. **A parent sizing a child component uses a custom property the child reads** (`--stroke-width`, `--swatch-size`), or passes a `className`. Don't rely on which module's CSS loads first.
 
 ## Checklist
 

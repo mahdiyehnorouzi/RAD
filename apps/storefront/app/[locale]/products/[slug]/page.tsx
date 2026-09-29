@@ -3,7 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { cache } from "react";
 import QRCode from "qrcode";
 import { formatRadCode, type Artwork, type Product } from "@rad/types";
-import { ProductDetail } from "@/components/product";
+import { ProductDetail } from "@/features/product-detail";
 import { fetchFaq, fetchProductReviews } from "@/lib/api";
 import type { RadPassport } from "@/components/passport/type";
 import { productFromArtwork } from "@/lib/artworks";

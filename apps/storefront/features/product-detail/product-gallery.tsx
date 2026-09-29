@@ -5,13 +5,23 @@ import type { Product } from "@rad/types";
 import { FavoriteButton } from "@/components/commerce";
 import { useLocale } from "@/components/i18n";
 import { hasStudioPhotos } from "@/lib/catalog/photo-works";
-import { formatArtworkNumber, ProductMedia } from "../listing";
+import {
+  formatArtworkNumber,
+  ProductMedia,
+} from "@/components/product/listing";
 import { pdpCopy } from "./const";
 import { useGalleryTrack } from "./hooks";
+import styles from "./product-gallery.module.css";
 
 type Slide = { kind: "photo"; index: number } | { kind: "plate" };
 
-export function ProductGallery({ product }: { product: Product }) {
+export function ProductGallery({
+  product,
+  className,
+}: {
+  product: Product;
+  className: string;
+}) {
   const { locale, number } = useLocale();
   const c = pdpCopy[locale];
   const photographed = hasStudioPhotos(product);
@@ -51,7 +61,7 @@ export function ProductGallery({ product }: { product: Product }) {
 
   return (
     <div
-      className={`pdp-gallery${photographed ? " is-photographed" : ""}${count > 1 ? " has-thumbs" : ""}`}
+      className={`${className} ${styles.gallery}${photographed ? ` ${styles.photographed}` : ""}${count > 1 ? ` ${styles.hasThumbs}` : ""}`}
       style={
         {
           "--plate-color": product.color,
@@ -60,14 +70,14 @@ export function ProductGallery({ product }: { product: Product }) {
       }
     >
       <div
-        className="pdp-stage"
+        className={styles.stage}
         role="region"
         aria-roledescription={locale === "fa" ? "گالری" : "carousel"}
         aria-label={c.gallery}
       >
         <div
           ref={trackRef}
-          className="pdp-stage-track"
+          className={styles.stageTrack}
           onScroll={onScroll}
           onKeyDown={onKeyDown}
           tabIndex={count > 1 ? 0 : -1}
@@ -75,7 +85,7 @@ export function ProductGallery({ product }: { product: Product }) {
           {slides.map((slide, index) => (
             <div
               key={slide.kind === "photo" ? slide.index : "plate"}
-              className={`pdp-slide is-${slide.kind}`}
+              className={`${styles.slide} ${styles[slide.kind]}`}
               role="group"
               aria-roledescription={locale === "fa" ? "نما" : "slide"}
               aria-label={`${format(index + 1)} / ${format(count)}`}
@@ -83,7 +93,7 @@ export function ProductGallery({ product }: { product: Product }) {
             >
               {renderSlide(slide)}
               {slide.kind === "plate" && recordNumber ? (
-                <span className="pdp-plate-mark" aria-hidden="true">
+                <span className={styles.plateMark} aria-hidden="true">
                   <b dir="ltr">{recordNumber}</b>
                   <i dir="ltr">{c.oneOfOne}</i>
                 </span>
@@ -94,7 +104,7 @@ export function ProductGallery({ product }: { product: Product }) {
         <FavoriteButton slug={product.slug} compact />
         {count > 1 ? (
           <>
-            <div className="pdp-stage-nav">
+            <div className={styles.stageNav}>
               <button
                 type="button"
                 onClick={() => goTo(active - 1)}
@@ -112,7 +122,7 @@ export function ProductGallery({ product }: { product: Product }) {
                 <NextIcon aria-hidden="true" />
               </button>
             </div>
-            <span className="pdp-stage-count" aria-live="polite">
+            <span className={styles.stageCount} aria-live="polite">
               <bdi dir="ltr">
                 {format(active + 1)} / {format(count)}
               </bdi>
@@ -121,12 +131,12 @@ export function ProductGallery({ product }: { product: Product }) {
         ) : null}
       </div>
       {count > 1 ? (
-        <div className="pdp-thumbs" role="group" aria-label={c.views}>
+        <div className={styles.thumbs} role="group" aria-label={c.views}>
           {slides.map((slide, index) => (
             <button
               key={slide.kind === "photo" ? slide.index : "plate"}
               type="button"
-              className={`pdp-thumb is-${slide.kind}${index === active ? " is-active" : ""}`}
+              className={`${styles.thumb} ${styles[slide.kind]}${index === active ? ` ${styles.active}` : ""}`}
               onClick={() => goTo(index)}
               aria-pressed={index === active}
               aria-label={

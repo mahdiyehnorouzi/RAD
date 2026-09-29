@@ -1,0 +1,142 @@
+.section:not(.fold) > h2 {
+  margin-bottom: 1rem;
+  font-size: clamp(1.25rem, 1.7vw, 1.5rem);
+}
+
+.section.fold {
+  border-top: 1px solid var(--line);
+}
+
+.section.fold:last-child {
+  border-bottom: 1px solid var(--line);
+}
+
+.section > summary {
+  display: flex;
+  min-height: 3.5rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  cursor: pointer;
+  list-style: none;
+}
+
+.section > summary::-webkit-details-marker {
+  display: none;
+}
+
+.section > summary h2 {
+  font-size: 1.02rem;
+  font-weight: var(--font-weight-medium);
+  transition: color 180ms ease-out;
+}
+
+.section > summary:hover h2 {
+  color: var(--pdp-oxide);
+}
+
+.sectionIcon {
+  width: 20px;
+  height: 20px;
+  flex: none;
+  color: var(--muted);
+  stroke-width: 1.4;
+}
+
+.section .sectionIcon.minus,
+.section[open] .sectionIcon.plus {
+  display: none;
+}
+
+.section[open] .sectionIcon.minus {
+  display: block;
+}
+
+.sectionBody {
+  padding-bottom: 1.25rem;
+}
+
+@media (--tablet) {
+  .sectionBody {
+    padding: 1.1rem 0 0.5rem;
+  }
+
+  /* Each section folds into a numbered paper card. */
+  .section.card,
+  .section.card:last-child {
+    border: 0;
+    counter-increment: pdp-fold;
+  }
+  .section.card > summary {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto auto;
+    align-items: center;
+    gap: 0.85rem;
+    min-height: 4.6rem;
+    padding: 0.85rem 1rem;
+    border: 1px solid color-mix(in srgb, var(--line) 80%, transparent);
+    border-radius: 14px;
+    background: color-mix(in srgb, var(--paper) 55%, #fff);
+    box-shadow: 0 6px 16px -12px rgb(24 35 31 / 0.22);
+    transition:
+      border-color 200ms ease-out,
+      box-shadow 260ms var(--pdp-ease);
+  }
+  .section.card > summary:active {
+    box-shadow: 0 2px 8px -6px rgb(24 35 31 / 0.2);
+  }
+  .section.card[open] > summary {
+    border-color: color-mix(in srgb, var(--pdp-oxide) 22%, var(--line));
+  }
+  .section.card .sectionIcon {
+    width: 1.75rem;
+    height: 1.75rem;
+    color: var(--pdp-oxide);
+    stroke-width: 1.2;
+  }
+  .sectionHead {
+    display: grid;
+    gap: 0.1rem;
+    min-width: 0;
+  }
+  .section.card > summary h2 {
+    font-size: 1.02rem;
+  }
+  .section.card > summary:hover h2 {
+    color: var(--ink);
+  }
+  .sectionLede {
+    overflow: hidden;
+    color: var(--muted);
+    font-size: 0.76rem;
+    line-height: 1.6;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .sectionMark {
+    --stroke-width: 4.75rem;
+    --stroke-height: 2.1rem;
+  }
+  .sectionIndex {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    color: var(--ink);
+    font-size: 0.95rem;
+    font-weight: var(--font-weight-medium);
+    letter-spacing: 0.04em;
+  }
+  .sectionIndex::before {
+    width: 1px;
+    height: 1.9rem;
+    background: color-mix(in srgb, var(--pdp-oxide) 45%, var(--line));
+    content: "";
+  }
+  /* Fold cards count in reading order, in the page's own numerals. */
+  .sectionIndex::after {
+    content: counter(pdp-fold, decimal-leading-zero);
+  }
+  .sectionIndex:lang(fa)::after {
+    content: counter(pdp-fold, rad-persian);
+  }
+}

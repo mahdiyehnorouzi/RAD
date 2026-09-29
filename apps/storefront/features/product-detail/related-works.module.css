@@ -1,0 +1,14 @@
+.related {
+  min-width: 0;
+}
+
+section.related > h2 {
+  margin-bottom: 1rem;
+  font-size: clamp(1.25rem, 1.7vw, 1.5rem);
+}
+
+@media (--tablet) {
+  .related {
+    margin-top: 2rem;
+  }
+}

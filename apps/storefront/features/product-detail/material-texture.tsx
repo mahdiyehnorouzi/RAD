@@ -2,6 +2,7 @@
 import type { CSSProperties } from "react";
 import type { WorkTexture } from "@/lib/catalog/material-texture";
 import { useTextureFocus } from "./hooks";
+import styles from "./material-texture.module.css";
 
 /**
  * A crop of the work's own photograph: a short glaze tab that leads a
@@ -22,7 +23,7 @@ export function MaterialTexture({
   const crop =
     texture && point ? (
       <span
-        className={`material-texture is-${shape === "strip" ? "tab" : "swatch"}`}
+        className={`${styles.materialTexture} ${shape === "strip" ? styles.tab : styles.swatch}`}
         aria-hidden="true"
         style={
           {
@@ -38,7 +39,7 @@ export function MaterialTexture({
 
   if (shape === "swatch") return crop;
   return (
-    <span className={`material-rule ${className}`} aria-hidden="true">
+    <span className={`${styles.materialRule} ${className}`} aria-hidden="true">
       {crop}
     </span>
   );

@@ -16,11 +16,12 @@ import type { RadPassport } from "@/components/passport/type";
 import { categoryLabel } from "@/lib/catalog/artwork";
 import type { WorkTexture } from "@/lib/catalog/material-texture";
 import { productCopy } from "@/lib/catalog/products";
-import { formatArtworkNumber } from "../listing";
+import { formatArtworkNumber } from "@/components/product/listing";
 import { CATEGORY_ICONS, pdpCopy } from "./const";
 import { MaterialTexture } from "./material-texture";
 import { PdpSection } from "./pdp-section";
 import { WorkStroke } from "./work-stroke";
+import styles from "./product-specs.module.css";
 
 type SpecRow = {
   key: string;
@@ -35,7 +36,7 @@ function NamedMaterials({ textures }: { textures: WorkTexture[] }) {
   const named = textures.filter((texture) => texture.spot);
   if (named.length < 2) return null;
   return (
-    <ul className="pdp-spec-materials">
+    <ul className={styles.specMaterials}>
       {named.map((texture) => (
         <li key={texture.spot!.material.en}>
           <MaterialTexture texture={texture} shape="swatch" />
@@ -135,7 +136,7 @@ function specRows(
       key: "edition",
       label: c.specEdition,
       value: recordNumber ? (
-        <span className="pdp-spec-edition">
+        <span className={styles.specEdition}>
           <span>{recordNumber}</span>
           <span>{c.oneOfOne}</span>
         </span>
@@ -177,12 +178,12 @@ export function ProductSpecs({
       lede={c.specsLede}
       mark={<WorkStroke textures={textures} index={index} />}
       desktop="open"
-      className="pdp-specs"
+      className={styles.specs}
     >
       <dl>
         {rows.map((row) => (
-          <div key={row.key} className={`is-${row.key}`}>
-            <span className="pdp-spec-icon" aria-hidden="true">
+          <div key={row.key}>
+            <span className={styles.specIcon} aria-hidden="true">
               {row.icon}
             </span>
             <dt>{row.label}</dt>

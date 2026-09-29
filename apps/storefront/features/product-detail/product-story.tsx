@@ -3,11 +3,12 @@ import type { Artwork, Product } from "@rad/types";
 import { useLocale } from "@/components/i18n";
 import type { WorkTexture } from "@/lib/catalog/material-texture";
 import { productCopy } from "@/lib/catalog/products";
-import { formatRadDigits, ProductMedia } from "../listing";
+import { formatRadDigits, ProductMedia } from "@/components/product/listing";
 import { pdpCopy } from "./const";
 import { MaterialTexture } from "./material-texture";
 import { PdpSection } from "./pdp-section";
 import { WorkStroke } from "./work-stroke";
+import styles from "./product-story.module.css";
 
 export function ProductStory({
   product,
@@ -34,21 +35,22 @@ export function ProductStory({
       title={c.aboutTitle}
       lede={c.aboutLede}
       mark={<WorkStroke textures={textures} index={index} />}
-      className="pdp-story"
+      className={styles.story}
+      bodyClassName={styles.storyBody}
     >
       {product.radNumber ? (
-        <span className="pdp-story-number" aria-hidden="true">
+        <span className={styles.storyNumber} aria-hidden="true">
           {formatRadDigits(product.radNumber, number, locale)}
         </span>
       ) : null}
       <MaterialTexture
         texture={textures[0]}
         shape="strip"
-        className="pdp-story-strip"
+        className={styles.storyStrip}
       />
       {story ? <p>{story}</p> : null}
       {hasFigure ? (
-        <figure className="pdp-story-figure">
+        <figure className={styles.storyFigure}>
           <ProductMedia
             product={product}
             imageIndex={1}
@@ -57,7 +59,7 @@ export function ProductStory({
         </figure>
       ) : null}
       {note && artwork ? (
-        <figure className="pdp-story-note">
+        <figure className={styles.storyNote}>
           <blockquote aria-label={c.makerNote}>
             <p>{note}</p>
           </blockquote>

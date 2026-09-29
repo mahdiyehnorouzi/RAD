@@ -6,6 +6,7 @@ import type { WorkTexture } from "@/lib/catalog/material-texture";
 import { CARE_CUES, CARE_FALLBACK, pdpCopy } from "./const";
 import { PdpSection } from "./pdp-section";
 import { WorkStroke } from "./work-stroke";
+import styles from "./product-care.module.css";
 
 /** Each sentence of the work's care text becomes one titled step. */
 function careSteps(text: string, locale: Locale) {
@@ -47,7 +48,7 @@ export function ProductCare({
       title={c.careTitle}
       lede={c.careLede}
       mark={<WorkStroke textures={textures} index={index} />}
-      className="pdp-care"
+      className={styles.care}
     >
       <ul>
         {steps.map(({ step, title, icon: Icon }) => (
@@ -61,7 +62,7 @@ export function ProductCare({
         ))}
       </ul>
       {glazed ? (
-        <p className="pdp-care-note">
+        <p className={styles.careNote}>
           <Sprout aria-hidden="true" />
           <span>{c.glazeNote}</span>
         </p>

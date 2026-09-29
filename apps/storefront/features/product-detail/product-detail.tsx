@@ -19,7 +19,7 @@ import { ProductStory } from "./product-story";
 import { ProductSummary } from "./product-summary";
 import { RelatedWorks } from "./related-works";
 import type { PurchaseState } from "./type";
-import "./product-detail.css";
+import styles from "./product-detail.module.css";
 
 /** A glaze named anywhere in the work's recorded materials. */
 function isGlazed(artwork?: Artwork) {
@@ -78,10 +78,11 @@ export function ProductDetail({
   };
 
   return (
-    <article className="pdp">
-      <div className="pdp-top">
-        <ProductGallery product={resolved} />
+    <article className={styles.pdp}>
+      <div className={styles.top}>
+        <ProductGallery product={resolved} className={styles.gallery} />
         <ProductSummary
+          className={styles.summary}
           product={resolved}
           artwork={artwork}
           state={state}
@@ -90,7 +91,7 @@ export function ProductDetail({
           qrSvg={qrSvg}
           textures={textures}
         />
-        <div className="pdp-rest">
+        <div className={styles.rest}>
           <ProductStory
             product={resolved}
             artwork={artwork}
@@ -116,7 +117,7 @@ export function ProductDetail({
             textures={textures}
             index={4}
           />
-          <div className="pdp-fold-list">
+          <div className={styles.foldList}>
             <ProductQuestions
               faq={faq}
               showShipping={!state.sold && !state.withdrawn}
@@ -127,7 +128,7 @@ export function ProductDetail({
           <MaterialTexture
             texture={textures[0]}
             shape="strip"
-            className="pdp-rest-strip"
+            className={styles.restStrip}
           />
           <RelatedWorks works={related} />
         </div>

@@ -2,6 +2,7 @@
 import type { ReactNode } from "react";
 import { CircleMinus, CirclePlus } from "lucide-react";
 import { useMediaQuery } from "./hooks";
+import styles from "./pdp-section.module.css";
 
 /**
  * One column of page, one list of folds: on narrow screens every section
@@ -15,6 +16,7 @@ export function PdpSection({
   mark,
   desktop = "plain",
   className = "",
+  bodyClassName = "",
   children,
 }: {
   id: string;
@@ -23,19 +25,29 @@ export function PdpSection({
   mark?: ReactNode;
   desktop?: "plain" | "open" | "closed";
   className?: string;
+  bodyClassName?: string;
   children: ReactNode;
 }) {
   const compact = useMediaQuery("(max-width: 900px)");
   const icons = (
     <>
-      <CirclePlus className="pdp-section-icon is-plus" aria-hidden="true" />
-      <CircleMinus className="pdp-section-icon is-minus" aria-hidden="true" />
+      <CirclePlus
+        className={`${styles.sectionIcon} ${styles.plus}`}
+        aria-hidden="true"
+      />
+      <CircleMinus
+        className={`${styles.sectionIcon} ${styles.minus}`}
+        aria-hidden="true"
+      />
     </>
   );
 
   if (!compact && desktop === "plain") {
     return (
-      <section className={`pdp-section ${className}`} aria-labelledby={id}>
+      <section
+        className={`${styles.section} ${className}`}
+        aria-labelledby={id}
+      >
         <h2 id={id}>{title}</h2>
         {children}
       </section>
@@ -45,18 +57,18 @@ export function PdpSection({
   return (
     <details
       key={compact ? "compact" : "wide"}
-      className={`pdp-section is-fold ${compact ? "is-card" : ""} ${className}`}
+      className={`${styles.section} ${styles.fold} ${compact ? styles.card : ""} ${className}`}
       open={!compact && desktop === "open"}
     >
       {compact ? (
         <summary>
           {icons}
-          <span className="pdp-section-head">
+          <span className={styles.sectionHead}>
             <h2 id={id}>{title}</h2>
-            {lede ? <span className="pdp-section-lede">{lede}</span> : null}
+            {lede ? <span className={styles.sectionLede}>{lede}</span> : null}
           </span>
-          {mark ? <span className="pdp-section-mark">{mark}</span> : null}
-          <span className="pdp-section-index" aria-hidden="true" />
+          {mark ? <span className={styles.sectionMark}>{mark}</span> : null}
+          <span className={styles.sectionIndex} aria-hidden="true" />
         </summary>
       ) : (
         <summary>
@@ -64,7 +76,7 @@ export function PdpSection({
           {icons}
         </summary>
       )}
-      <div className="pdp-section-body">{children}</div>
+      <div className={`${styles.sectionBody} ${bodyClassName}`}>{children}</div>
     </details>
   );
 }

@@ -8,8 +8,11 @@ import type { RadPassport } from "@/components/passport/type";
 import type { WorkTexture } from "@/lib/catalog/material-texture";
 import { productCopy } from "@/lib/catalog/products";
 import { productPrice } from "@/lib/money";
-import { AddToBag } from "../../catalog/catalog/catalog";
-import { formatArtworkNumber, formatRadDigits } from "../listing";
+import { AddToBag } from "@/components/catalog/catalog/catalog";
+import {
+  formatArtworkNumber,
+  formatRadDigits,
+} from "@/components/product/listing";
 import { PDP_ASSURANCES, pdpCopy } from "./const";
 import type { LiveProduct } from "./hooks";
 import { ProductHandmadeNote } from "./product-handmade-note";
@@ -17,8 +20,10 @@ import { ProductLiveNotice } from "./product-live-notice";
 import { ProductRecordCards } from "./product-record-cards";
 import { ProductSpecs } from "./product-specs";
 import type { PurchaseState } from "./type";
+import styles from "./product-summary.module.css";
 
 export function ProductSummary({
+  className,
   product,
   artwork,
   state,
@@ -27,6 +32,7 @@ export function ProductSummary({
   qrSvg,
   textures,
 }: {
+  className: string;
   product: Product;
   artwork?: Artwork;
   state: PurchaseState;
@@ -54,14 +60,14 @@ export function ProductSummary({
   const change = artwork?.passport?.unexpectedChanges?.[locale];
 
   return (
-    <div className="pdp-summary">
-      <header className="pdp-heading">
+    <div className={`${className} ${styles.summary}`}>
+      <header className={styles.heading}>
         {recordNumber ? (
-          <p className="pdp-record-no">
+          <p className={styles.recordNo}>
             {product.radNumber ? (
               <RadFingerprint
                 radNumber={product.radNumber}
-                className="pdp-record-print"
+                className={styles.recordPrint}
                 animate
               />
             ) : null}
@@ -71,19 +77,21 @@ export function ProductSummary({
           </p>
         ) : null}
         <h1>{copy.name}</h1>
-        <p className="pdp-lede">{copy.subtitle}</p>
-        <p className="pdp-maker">
+        <p className={styles.lede}>{copy.subtitle}</p>
+        <p className={styles.maker}>
           {c.byLine} <b>{maker}</b>
         </p>
       </header>
 
-      <div className="pdp-price-line">
+      <div className={styles.priceLine}>
         {availability ? (
-          <span className={`pdp-availability${open ? " is-open" : ""}`}>
+          <span
+            className={`${styles.availability}${open ? ` ${styles.open}` : ""}`}
+          >
             {availability}
           </span>
         ) : null}
-        <p className="pdp-price">{productPrice(product, locale)}</p>
+        <p className={styles.price}>{productPrice(product, locale)}</p>
       </div>
 
       <ProductLiveNotice
@@ -93,7 +101,7 @@ export function ProductSummary({
         reserved={state.reserved}
       />
 
-      <div className="pdp-buy">
+      <div className={styles.buy}>
         {closed ? (
           <div className="add-to-bag">
             <button
@@ -114,7 +122,7 @@ export function ProductSummary({
           />
         )}
         {state.sold ? (
-          <p id={noteId} className="pdp-buy-note">
+          <p id={noteId} className={styles.buyNote}>
             <Info aria-hidden="true" />
             {c.soldNote}
           </p>
@@ -122,7 +130,7 @@ export function ProductSummary({
       </div>
 
       {state.withdrawn ? null : (
-        <ul className="pdp-assurances">
+        <ul className={styles.assurances}>
           {PDP_ASSURANCES.map(({ icon: Icon, title, detail }) => (
             <li key={title.en}>
               <Icon aria-hidden="true" />

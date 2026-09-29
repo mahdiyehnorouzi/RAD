@@ -17,6 +17,7 @@ import type { WorkTexture } from "@/lib/catalog/material-texture";
 import { pdpCopy } from "./const";
 import { PdpSection } from "./pdp-section";
 import { WorkStroke } from "./work-stroke";
+import styles from "./product-questions.module.css";
 
 const FAQ_ICONS: Record<FaqIcon, typeof ShieldCheck> = {
   "shield-check": ShieldCheck,
@@ -47,44 +48,43 @@ export function ProductQuestions({
       lede={c.questionsLede}
       mark={<WorkStroke textures={textures} index={index} />}
       desktop="closed"
-      className="pdp-questions"
     >
       {showShipping ? (
-        <ShippingReturnsDisclosure className="pdp-shipping" />
+        <ShippingReturnsDisclosure className={styles.shipping} />
       ) : null}
-      <div className="pdp-folds">
+      <div>
         {faq?.items.map((item) => {
           const Icon = FAQ_ICONS[item.icon];
           return (
-            <details key={item.id} className="pdp-fold">
+            <details key={item.id} className={styles.fold}>
               <summary>
                 <CirclePlus
-                  className="pdp-fold-toggle is-plus"
+                  className={`${styles.foldToggle} ${styles.plus}`}
                   aria-hidden="true"
                 />
                 <CircleMinus
-                  className="pdp-fold-toggle is-minus"
+                  className={`${styles.foldToggle} ${styles.minus}`}
                   aria-hidden="true"
                 />
-                <span className="pdp-fold-title">{item.question}</span>
-                <Icon className="pdp-fold-icon" aria-hidden="true" />
+                <span className={styles.foldTitle}>{item.question}</span>
+                <Icon className={styles.foldIcon} aria-hidden="true" />
               </summary>
               <p>{item.answer}</p>
             </details>
           );
         })}
       </div>
-      <Link className="pdp-ask" href={href("/contact")}>
-        <span className="pdp-ask-text">
+      <Link className={styles.ask} href={href("/contact")}>
+        <span className={styles.askText}>
           <strong>{c.ask}</strong>
           <span>{c.askLede}</span>
         </span>
         <WorkStroke
           textures={textures}
           index={index + 1}
-          className="pdp-ask-stroke"
+          className={styles.askStroke}
         />
-        <Arrow className="pdp-ask-arrow" aria-hidden="true" />
+        <Arrow className={styles.askArrow} aria-hidden="true" />
       </Link>
     </PdpSection>
   );
