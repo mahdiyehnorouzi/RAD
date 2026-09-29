@@ -7,6 +7,7 @@ import { DatabaseModule } from "./database/database.module";
 import { CommonModule } from "./common/common.module";
 import { InventoryModule } from "./inventory/inventory.module";
 import { SessionMiddleware } from "./common/session.middleware";
+import { jwtSecret } from "./common/jwt-secret";
 import { ApiExceptionFilter } from "./common/http-exception.filter";
 import { AuthModule } from "./auth/auth.module";
 import { CatalogModule } from "./catalog/catalog.module";
@@ -34,7 +35,10 @@ import { HealthController } from "./health/health.controller";
       global: true,
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
-        secret: config.get<string>("JWT_SECRET") ?? "rad-dev-secret-change-me",
+        secret: jwtSecret(
+          config.get<string>("JWT_SECRET"),
+          config.get<string>("NODE_ENV") ?? process.env.NODE_ENV,
+        ),
         signOptions: { expiresIn: "7d" },
       }),
     }),
