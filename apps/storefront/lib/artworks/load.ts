@@ -9,9 +9,11 @@ export type ArtworksLoad = {
   live: boolean;
 };
 
-export async function loadArtworks(): Promise<ArtworksLoad> {
+export async function loadArtworks(
+  init?: Parameters<typeof fetchArtworks>[0],
+): Promise<ArtworksLoad> {
   try {
-    const remote = await fetchArtworks();
+    const remote = await fetchArtworks(init);
     const list = Array.isArray(remote) ? remote : [];
     return {
       artworks: list.length

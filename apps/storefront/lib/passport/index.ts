@@ -6,7 +6,6 @@ export {
   passportFromArtwork,
   passportsFrom,
   passportYear,
-  radPassports,
 } from "./passports";
 export {
   familyForCode,

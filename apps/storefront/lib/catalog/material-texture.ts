@@ -3,10 +3,7 @@ import {
   isFileProductImage,
   productPhotoSrc,
 } from "@/lib/catalog/category-defaults";
-import {
-  catalogLifestylePhotoSlugs,
-  catalogPhotoSrc,
-} from "@/lib/catalog/photo-works";
+import { catalogPhotoSrc, hasStudioPhotos } from "@/lib/catalog/photo-works";
 
 /**
  * One of the work's own photographs, optionally pinned to an authored spot.
@@ -37,8 +34,7 @@ const STROKE_SPANS = [STROKE_SPAN, 0.15, 0.11];
 const PALETTE_SIZE = 4;
 
 function texturePhotoSrc(product: Product, index: number, src?: string) {
-  if (catalogLifestylePhotoSlugs.has(product.slug))
-    return catalogPhotoSrc(product.slug, index);
+  if (hasStudioPhotos(product)) return catalogPhotoSrc(product.slug, index);
   return isFileProductImage(src) ? productPhotoSrc(src) : null;
 }
 

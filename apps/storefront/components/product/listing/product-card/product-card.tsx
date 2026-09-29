@@ -6,10 +6,14 @@ import { ArrowLeft, ArrowRight } from "lucide-react";
 import type { Product } from "@rad/types";
 import { useLocale } from "@/components/i18n";
 import { useProductStatus } from "@/hooks/use-product-status";
-import { catalogLifestylePhotoSlugs } from "@/lib/catalog/photo-works";
+import { hasStudioPhotos } from "@/lib/catalog/photo-works";
 import { productCopy } from "@/lib/catalog/products";
 import { productFullPriceParts } from "@/lib/money";
-import { formatArtworkNumber, formatRadDigits, productCardCopy } from "../const";
+import {
+  formatArtworkNumber,
+  formatRadDigits,
+  productCardCopy,
+} from "../const";
 import type {
   ProductBadgeTone,
   ProductCardSlide,
@@ -73,9 +77,7 @@ export function ProductCard({
             { length: Math.max(product.images?.length ?? 0, 1) },
             (_, index): ProductCardSlide => ({ kind: "photo", index }),
           ),
-          ...(catalogLifestylePhotoSlugs.has(product.slug)
-            ? [{ kind: "plate" } as const]
-            : []),
+          ...(hasStudioPhotos(product) ? [{ kind: "plate" } as const] : []),
         ]
       : [{ kind: "photo", index: 0 }];
   const railSlides = slides.slice(0, RAIL_LIMIT);
@@ -119,7 +121,9 @@ export function ProductCard({
 
   if (variant === "featured") {
     return (
-      <article className={`${className}${railSlides.length > 1 ? " has-rail" : ""}`}>
+      <article
+        className={`${className}${railSlides.length > 1 ? " has-rail" : ""}`}
+      >
         {railSlides.length > 1 ? (
           <ProductCardThumbs
             product={product}

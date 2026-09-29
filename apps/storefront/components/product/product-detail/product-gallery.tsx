@@ -4,7 +4,7 @@ import { ArrowLeft, ArrowRight } from "lucide-react";
 import type { Product } from "@rad/types";
 import { FavoriteButton } from "@/components/commerce";
 import { useLocale } from "@/components/i18n";
-import { catalogLifestylePhotoSlugs } from "@/lib/catalog/photo-works";
+import { hasStudioPhotos } from "@/lib/catalog/photo-works";
 import { formatArtworkNumber, ProductMedia } from "../listing";
 import { pdpCopy } from "./const";
 import { useGalleryTrack } from "./hooks";
@@ -14,7 +14,7 @@ type Slide = { kind: "photo"; index: number } | { kind: "plate" };
 export function ProductGallery({ product }: { product: Product }) {
   const { locale, number } = useLocale();
   const c = pdpCopy[locale];
-  const photographed = catalogLifestylePhotoSlugs.has(product.slug);
+  const photographed = hasStudioPhotos(product);
   const slides: Slide[] = [
     ...Array.from(
       { length: Math.max(product.images?.length ?? 0, 1) },

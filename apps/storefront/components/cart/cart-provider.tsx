@@ -12,7 +12,7 @@ import {
 import type { CartPriceAtAdd, CartSnapshot, Product } from "@rad/types";
 import { isPurchasableStatus } from "@rad/types";
 import { api } from "@/lib/api";
-import { useCatalog } from "@/components/catalog/catalog-provider";
+import { useCatalogRefresh } from "@/hooks/use-catalog-refresh";
 
 type CartContextValue = {
   slugs: string[];
@@ -67,7 +67,7 @@ function writeList(key: string, value: string[] | null) {
 }
 
 export function CartProvider({ children }: { children: ReactNode }) {
-  const { refresh: refreshCatalog } = useCatalog();
+  const refreshCatalog = useCatalogRefresh();
   const [cart, setCart] = useState<CartSnapshot>(emptyCart);
   const [ready, setReady] = useState(false);
   const [loaded, setLoaded] = useState(false);

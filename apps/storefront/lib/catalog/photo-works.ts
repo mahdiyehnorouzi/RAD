@@ -1,5 +1,3 @@
-import { artworkRecords } from "@rad/artworks";
-
 const TRANSPARENT_PREFIX = "/catalog/photos/transparent/";
 
 export function catalogPhotoSrc(slug: string, imageIndex = 0) {
@@ -21,11 +19,11 @@ export function catalogLifestylePhotoSrc(slug: string, imageIndex = 0) {
   return `/catalog/photos/${slug}${suffix}.${extension}`;
 }
 
-/** Works photographed in the studio: a transparent cut-out plus a lifestyle photo. */
-export const catalogLifestylePhotoSlugs = new Set(
-  artworkRecords
-    .filter((record) =>
-      record.images.some((image) => image.src?.startsWith(TRANSPARENT_PREFIX)),
-    )
-    .map((record) => record.slug),
-);
+/** Photographed in the studio: a transparent cut-out plus a lifestyle photo. */
+export function hasStudioPhotos(work: {
+  images?: readonly { src?: string }[];
+}) {
+  return Boolean(
+    work.images?.some((image) => image.src?.startsWith(TRANSPARENT_PREFIX)),
+  );
+}

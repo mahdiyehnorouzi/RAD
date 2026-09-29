@@ -4,7 +4,7 @@ import type {
   LiveMilestone,
   LivePiece,
 } from "@/components/now/type";
-import { fallbackArtworks, findArtwork } from "@/lib/artworks";
+import { findArtwork } from "@/lib/artworks";
 import type { LocaleCopy } from "@/types/locale";
 
 function copy(fa: string, en: string): LocaleCopy {
@@ -176,9 +176,6 @@ export function livePiecesFrom(artworks: Artwork[]): LivePiece[] {
     ];
   });
 }
-
-/** Registry pieces for static params and metadata; client views read live artworks. */
-export const livePieces: LivePiece[] = livePiecesFrom(fallbackArtworks);
 
 export function findLivePiece(pieces: LivePiece[], code: string) {
   const digits = code.replace(/\D/g, "").padStart(3, "0");

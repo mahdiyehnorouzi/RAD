@@ -7,7 +7,7 @@ import {
 import { isGoneStatus } from "@/lib/catalog/product-status";
 import {
   catalogLifestylePhotoSrc,
-  catalogLifestylePhotoSlugs,
+  hasStudioPhotos,
 } from "@/lib/catalog/photo-works";
 
 /** One wide featured plate beside a card, then a full row of three. */
@@ -26,7 +26,7 @@ export function featuredHomeWorks(products: Product[]): Product[] {
 }
 
 export function featuredWorkPhoto(product?: Product) {
-  if (product && catalogLifestylePhotoSlugs.has(product.slug)) {
+  if (product && hasStudioPhotos(product)) {
     return catalogLifestylePhotoSrc(product.slug);
   }
   const src = product?.images?.[0]?.src;

@@ -2,8 +2,6 @@
 
 import Link from "next/link";
 import { useLocale } from "@/components/i18n";
-import { useLivePieces } from "@/hooks/use-artworks";
-import { findLivePiece } from "@/lib/now";
 import { nowCopy } from "../const";
 import type { LivePiece } from "../type";
 import { LiveHero } from "./live-hero";
@@ -12,10 +10,9 @@ import { LiveStages } from "./live-stages";
 import "../now.css";
 import "./live-page.css";
 
-export function LivePage({ piece: source }: { piece: LivePiece }) {
+export function LivePage({ piece }: { piece: LivePiece }) {
   const { locale, t, href } = useLocale();
   const c = nowCopy[locale];
-  const piece = findLivePiece(useLivePieces(), source.code) ?? source;
 
   return (
     <article className="live-page">
@@ -30,7 +27,10 @@ export function LivePage({ piece: source }: { piece: LivePiece }) {
           aria-hidden="true"
           focusable="false"
         >
-          <path pathLength={1} d="M2 6C24 3 44 4 66 9C90 14 116 14 136 9C146 6 152 4 158 3" />
+          <path
+            pathLength={1}
+            d="M2 6C24 3 44 4 66 9C90 14 116 14 136 9C146 6 152 4 158 3"
+          />
         </svg>
         <h2>{c.closeTitle}</h2>
         <p>{c.closeBody}</p>

@@ -5,12 +5,14 @@ import {
   CertificateSection,
   ThreadJourney,
 } from "@/components/home";
-import { getCatalogWorks } from "@/lib/catalog/get-catalog-works";
+import { getCatalog } from "@/lib/catalog/get-catalog-works";
+import { livePiecesFrom, workshopToday } from "@/lib/now";
 import { productListJsonLd, safeJsonLd } from "@/lib/seo";
 
 export default async function Home() {
-  const products = await getCatalogWorks();
+  const { artworks, products } = await getCatalog();
   const featured = featuredHomeWorks(products);
+  const today = workshopToday(livePiecesFrom(artworks));
 
   return (
     <>
@@ -25,6 +27,7 @@ export default async function Home() {
         hero={<HomeHero key="hero" />}
         works={<ArchiveSection key="works" products={featured} />}
         closing={<CertificateSection key="closing" />}
+        workshop={today && { code: today.code, image: today.image }}
       />
     </>
   );

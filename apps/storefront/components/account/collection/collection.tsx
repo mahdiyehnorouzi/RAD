@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useMemo } from "react";
 import { ChevronLeft, ChevronRight, ShoppingBag } from "lucide-react";
-import { useCommerce } from "@/components/commerce";
+import { useOrders } from "@/components/commerce";
 import { useLocale } from "@/components/i18n";
 import { usePassports } from "@/hooks/use-artworks";
 import {
@@ -19,7 +19,7 @@ const OWNED_STATUSES = new Set(["delivered"]);
 
 export function Collection() {
   const { locale, t, number, href } = useLocale();
-  const { orders, ready } = useCommerce();
+  const { orders, ready } = useOrders();
   const passports = usePassports();
   const Chevron = locale === "fa" ? ChevronLeft : ChevronRight;
 
@@ -51,11 +51,17 @@ export function Collection() {
             <li key={passport.code}>
               <Link href={href(`/passport/${passport.code}`)}>
                 <span className="my-rads-copy">
-                  <small>{formatPassportCode(passport.code, locale, number)}</small>
+                  <small>
+                    {formatPassportCode(passport.code, locale, number)}
+                  </small>
                   <b>{formatPassportName(passport, locale, number)}</b>
                   <span>{t("collectionOwnedHint")}</span>
                 </span>
-                <Chevron className="account-list-chevron" aria-hidden="true" strokeWidth={1.6} />
+                <Chevron
+                  className="account-list-chevron"
+                  aria-hidden="true"
+                  strokeWidth={1.6}
+                />
               </Link>
             </li>
           ))}
@@ -63,7 +69,10 @@ export function Collection() {
       ) : (
         <div className="account-empty" role="status">
           <p>{t("myRadsEmpty")}</p>
-          <Link className="account-button account-button--quiet" href={href("/products")}>
+          <Link
+            className="account-button account-button--quiet"
+            href={href("/products")}
+          >
             {t("viewAvailableWorks")}
           </Link>
         </div>

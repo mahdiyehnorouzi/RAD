@@ -5,8 +5,11 @@ import QRCode from "qrcode";
 import { formatRadCode, type Artwork, type Product } from "@rad/types";
 import { ProductDetail } from "@/components/product";
 import { fetchFaq, fetchProductReviews } from "@/lib/api";
-import { productFromArtwork, resolveArtwork } from "@/lib/artworks";
-import { displayWorks } from "@/lib/catalog/get-catalog-works";
+import type { RadPassport } from "@/components/passport/type";
+import { productFromArtwork } from "@/lib/artworks";
+import { resolveArtwork } from "@/lib/artworks/server";
+import { getCatalog, registryProducts } from "@/lib/catalog/get-catalog-works";
+import { relatedWorks } from "@/lib/catalog/related";
 import {
   PRODUCT_SEO,
   productSeoDescription,
@@ -31,6 +34,7 @@ type Work =
       product: Product;
       artwork: Artwork;
       priceToman: number;
+      passport?: RadPassport;
       passportPath?: string;
     };
 
@@ -53,6 +57,7 @@ const resolveWork = cache(async (slug: string): Promise<Work | null> => {
     product: productFromArtwork(artwork),
     artwork,
     priceToman: artwork.price,
+    passport: passport ?? undefined,
     passportPath,
   };
 });
@@ -109,7 +114,7 @@ export async function generateMetadata({
 }
 
 export function generateStaticParams() {
-  return displayWorks.map((product) => ({ slug: product.slug }));
+  return registryProducts().map((product) => ({ slug: product.slug }));
 }
 
 export default async function PDP({
@@ -122,13 +127,13 @@ export default async function PDP({
   if (!work) notFound();
   if (work.kind === "moved") redirect(work.to);
 
-  const { product, artwork, priceToman, passportPath } = work;
+  const { product, artwork, priceToman, passport, passportPath } = work;
   const qrTarget = absoluteUrl(
     product.radNumber
       ? `/r/${formatRadCode(product.radNumber)}`
       : `/products/${product.slug}`,
   );
-  const [faq, reviews, qrSvg] = await Promise.all([
+  const [faq, reviews, qrSvg, catalog] = await Promise.all([
     fetchFaq("fa"),
     fetchProductReviews(product.slug).catch(() => []),
     QRCode.toString(qrTarget, {
@@ -137,6 +142,7 @@ export default async function PDP({
       errorCorrectionLevel: "M",
       color: { dark: "#1a1714", light: "#00000000" },
     }).catch(() => undefined),
+    getCatalog(),
   ]);
 
   const productSchema = productJsonLd(product, {
@@ -168,6 +174,8 @@ export default async function PDP({
       <ProductDetail
         product={product}
         artwork={artwork}
+        passport={passport}
+        related={relatedWorks(product, catalog.products)}
         initialFaq={faq}
         qrSvg={qrSvg}
       />

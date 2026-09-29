@@ -6,17 +6,13 @@ import type { Product } from "@rad/types";
 import { useCart } from "@/components/cart";
 import { useLocale } from "@/components/i18n";
 import { useCommerce } from "@/components/commerce";
-import { useCatalog } from "../catalog-provider";
+import { useCatalogRefresh } from "@/hooks/use-catalog-refresh";
 import { ApiError, isNetworkError } from "@/lib/api";
 import {
   defaultCatalogFilters,
   type CatalogFilters,
 } from "@/lib/catalog/filters";
-import {
-  catalogArtists,
-  refineCatalog,
-  shopFloor,
-} from "@/lib/catalog/refine";
+import { catalogArtists, refineCatalog, shopFloor } from "@/lib/catalog/refine";
 import { useProductStatus } from "@/hooks/use-product-status";
 import { CatalogBar } from "./catalog-bar";
 import { CatalogCategories } from "./catalog-categories";
@@ -48,23 +44,21 @@ function panelRefinements(filters: CatalogFilters) {
 }
 
 export function Catalog({
-  products: seeded = [],
-  seededLive = true,
+  products,
+  live,
   initialFilters = defaultCatalogFilters,
   intro,
 }: {
-  products?: Product[];
+  products: Product[];
   /** Whether the server render reached the API; false means `products` are fixtures. */
-  seededLive?: boolean;
+  live: boolean;
   initialFilters?: CatalogFilters;
   /** Page title block shown on the banner. */
   intro?: React.ReactNode;
 }) {
   const { locale } = useLocale();
-  const { products: liveProducts, loading, status, refresh } = useCatalog();
-  const products = loading ? seeded : liveProducts;
-  const pending = loading && products.length === 0;
-  const failed = status === "error" || (loading && !seededLive);
+  const refresh = useCatalogRefresh();
+  const failed = !live;
   const { filters: state, update } = useCatalogFilters(initialFilters);
   const panelId = useId();
   const [filtersOpen, setFiltersOpen] = useState(
@@ -128,7 +122,7 @@ export function Catalog({
       <CatalogResults
         visible={visible}
         shopCount={shopProducts.length}
-        pending={pending}
+        pending={false}
         failed={failed}
         retrying={retrying}
         filters={state}
@@ -160,21 +154,19 @@ export function AddToBag({
   const { add } = useCart();
   const { t, href } = useLocale();
   const { addNotice } = useCommerce();
-  const { refresh, getProduct } = useCatalog();
+  const refresh = useCatalogRefresh();
   const [error, setError] = useState("");
   const [blocked, setBlocked] = useState(false);
   const [busy, setBusy] = useState(false);
-  const catalogProduct = getProduct(product.slug);
-  const live = product.status ? product : (catalogProduct ?? product);
-  const { inBag: added, purchasable, label } = useProductStatus(live);
+  const { inBag: added, purchasable, label } = useProductStatus(product);
   const unavailable = blocked || (!added && !purchasable);
   const unavailableLabel = label && !purchasable ? label : t("soldOut");
 
   useEffect(() => {
-    if (live.status !== "available") return;
+    if (product.status !== "available") return;
     setBlocked(false);
     setError("");
-  }, [live.status, live.reservedUntil]);
+  }, [product.status, product.reservedUntil]);
   return (
     <div className="add-to-bag">
       <button
@@ -185,12 +177,12 @@ export function AddToBag({
           try {
             setBusy(true);
             setError("");
-            const addPromise = add(live);
+            const addPromise = add(product);
             // Optimistic cart update flips `added` immediately; clear busy so UI isn't frozen.
             setBusy(false);
             const addedToBag = await addPromise;
             if (addedToBag) {
-              void addNotice("cart", live.slug).catch(() => {});
+              void addNotice("cart", product.slug).catch(() => {});
             }
           } catch (err) {
             setBusy(false);

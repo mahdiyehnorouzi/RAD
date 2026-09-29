@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { CatalogScope } from "@/components/catalog/catalog-scope";
 import { pageMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = pageMetadata({
@@ -8,6 +9,10 @@ export const metadata: Metadata = pageMetadata({
   path: "/reviews",
 });
 
-export default function ReviewsLayout({ children }: { children: React.ReactNode }) {
-  return children;
+export default function ReviewsLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return <CatalogScope>{children}</CatalogScope>;
 }

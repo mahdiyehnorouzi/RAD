@@ -1,7 +1,7 @@
 import { productCopy } from "@/lib/catalog/products";
 import { copy, STAGE_LABEL } from "@/lib/making";
 import { useCatalog } from "@/components/catalog";
-import { useCommerce } from "@/components/commerce";
+import { useOrders } from "@/components/commerce";
 import { useLocale } from "@/components/i18n";
 import { useMaking } from "@/hooks/use-making-workspace";
 import { STORE_ORDER_STATUS_KEY } from "../../orders/const";
@@ -13,7 +13,7 @@ function artistReviewStage(stage: MakingStageId) {
 }
 
 export function useAccountActivity(limit = 8): AccountActivityItem[] {
-  const { orders } = useCommerce();
+  const { orders } = useOrders();
   const { commissions } = useMaking();
   const { getProduct } = useCatalog();
   const { locale, t } = useLocale();
@@ -23,9 +23,7 @@ export function useAccountActivity(limit = 8): AccountActivityItem[] {
     return {
       id: `shop-${order.id}`,
       kind: "collection",
-      title: product
-        ? productCopy(product, locale).name
-        : order.id,
+      title: product ? productCopy(product, locale).name : order.id,
       status: t(STORE_ORDER_STATUS_KEY[order.status]),
       href: `/orders/${order.id}`,
       at: order.createdAt,
@@ -43,7 +41,5 @@ export function useAccountActivity(limit = 8): AccountActivityItem[] {
     at: commission.updatedAt || commission.createdAt,
   }));
 
-  return [...shop, ...custom]
-    .sort((a, b) => b.at - a.at)
-    .slice(0, limit);
+  return [...shop, ...custom].sort((a, b) => b.at - a.at).slice(0, limit);
 }

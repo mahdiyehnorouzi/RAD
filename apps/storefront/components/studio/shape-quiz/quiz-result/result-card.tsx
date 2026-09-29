@@ -7,7 +7,10 @@ import { useProductStatus } from "@/hooks/use-product-status";
 import { ProductMedia } from "@/components/product/listing";
 import type { RadPassport } from "@/components/passport/type";
 import { productFromArtwork } from "@/lib/artworks";
-import { catalogLifestylePhotoSlugs, catalogLifestylePhotoSrc } from "@/lib/catalog/photo-works";
+import {
+  catalogLifestylePhotoSrc,
+  hasStudioPhotos,
+} from "@/lib/catalog/photo-works";
 import { formatPassportCode } from "@/lib/passport";
 import { StudioIcon, readingChevron } from "../../studio-icon";
 import { fill, quizCopy } from "../const";
@@ -27,7 +30,7 @@ export function ResultCard({
     ? `/products/${passport.productSlug}`
     : `/passport/${passport.code}`;
   const line = artwork?.description[locale];
-  const photo = catalogLifestylePhotoSlugs.has(passport.slug)
+  const photo = hasStudioPhotos(artwork ?? { images: passport.finalPhotos })
     ? catalogLifestylePhotoSrc(passport.slug)
     : passport.finalPhotos[0]?.src;
   const { badge } = useProductStatus({
@@ -41,7 +44,9 @@ export function ResultCard({
       <Link href={href(target)}>
         <span className="sq-card-copy">
           <span className="sq-card-code">
-            {fill(c.code, { code: formatPassportCode(passport.code, locale, number) })}
+            {fill(c.code, {
+              code: formatPassportCode(passport.code, locale, number),
+            })}
           </span>
           <strong className="sq-card-name">{passport.name[locale]}</strong>
           {line ? <span className="sq-card-line">{line}</span> : null}
@@ -54,10 +59,19 @@ export function ResultCard({
         </span>
         <span className="sq-card-photo">
           {photo ? (
-            <img src={photo} alt={passport.finalPhotos[0]?.note[locale] ?? passport.name[locale]} loading="lazy" />
+            <img
+              src={photo}
+              alt={
+                passport.finalPhotos[0]?.note[locale] ?? passport.name[locale]
+              }
+              loading="lazy"
+            />
           ) : artwork ? (
             <span className="sq-card-drawn">
-              <ProductMedia product={productFromArtwork(artwork)} showStatusBadge={false} />
+              <ProductMedia
+                product={productFromArtwork(artwork)}
+                showStatusBadge={false}
+              />
             </span>
           ) : null}
           {badge ? <span className="sold-media-badge">{badge}</span> : null}

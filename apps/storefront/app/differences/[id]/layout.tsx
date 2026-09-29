@@ -1,24 +1,19 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { cache } from "react";
-import { resolveArtwork } from "@/lib/artworks";
-import {
-  museumPortraits,
-  portraitById,
-  portraitFromArtwork,
-} from "@/lib/difference";
+import { fallbackArtworks } from "@/lib/artworks/server";
+import { portraitsFrom } from "@/lib/difference";
+import { resolveDifference } from "@/lib/difference/resolve";
 import { absoluteUrl, pageMetadata, safeJsonLd } from "@/lib/seo";
 
-/** `null` = the API has no such portrait; `undefined` = API unreachable and not in the registry. */
-const resolvePortrait = cache(async (id: string) => {
-  const artwork = await resolveArtwork(id).catch(() => undefined);
-  if (artwork === undefined) return portraitById(museumPortraits, id);
-  const portrait = artwork && portraitFromArtwork(artwork);
-  return portrait && portrait.id === id ? portrait : null;
-});
+async function resolvePortrait(id: string) {
+  const work = await resolveDifference(id);
+  return work && work.portrait;
+}
 
 export function generateStaticParams() {
-  return museumPortraits.map((portrait) => ({ id: portrait.id }));
+  return portraitsFrom(fallbackArtworks).map((portrait) => ({
+    id: portrait.id,
+  }));
 }
 
 export async function generateMetadata({

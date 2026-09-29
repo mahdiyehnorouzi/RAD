@@ -17,7 +17,11 @@ import {
   StateScreen,
   StateWorks,
 } from "@/components/states";
-import { availableWorks, isGoneStatus, isReserved } from "@/lib/catalog/product-status";
+import {
+  availableWorks,
+  isGoneStatus,
+  isReserved,
+} from "@/lib/catalog/product-status";
 import { cartCopy, fillCartCopy } from "../const";
 import { CartHold } from "./cart-hold";
 import { CartLine, priceChange, type CartLineIssue } from "./cart-line";
@@ -42,17 +46,11 @@ export function CartPage() {
     remove,
     clear,
   } = useCart();
-  const {
-    products,
-    getProduct,
-    loading: catalogLoading,
-    status: catalogStatus,
-  } = useCatalog();
+  const { products, getProduct, live: catalogLive } = useCatalog();
   const [removing, setRemoving] = useState<string | null>(null);
   const [clearing, setClearing] = useState(false);
   const [retrying, setRetrying] = useState(false);
   const [actionError, setActionError] = useState("");
-  const catalogLive = catalogStatus === "live";
 
   const lines = slugs.map((slug) => {
     const product = getProduct(slug);
@@ -104,7 +102,7 @@ export function CartPage() {
     }
   };
 
-  if (!ready || (slugs.length > 0 && catalogLoading)) {
+  if (!ready) {
     return (
       <section className="cart-page section" aria-busy="true">
         <div className="cart-bag-body">
@@ -221,7 +219,9 @@ export function CartPage() {
             </div>
           ) : null}
 
-          {blocked ? null : <CartHold endsAt={holdEndsAt} count={slugs.length} />}
+          {blocked ? null : (
+            <CartHold endsAt={holdEndsAt} count={slugs.length} />
+          )}
 
           <div className="cart-bag-actions">
             {blocked || loadError ? (

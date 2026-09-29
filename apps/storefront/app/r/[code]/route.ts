@@ -1,5 +1,5 @@
 import { parseRadNumber } from "@rad/types";
-import { resolveArtwork } from "@/lib/artworks";
+import { resolveArtwork } from "@/lib/artworks/server";
 import { passportFromArtwork } from "@/lib/passport";
 
 type RouteContext = { params: Promise<{ code: string }> };
