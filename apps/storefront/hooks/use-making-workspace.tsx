@@ -10,6 +10,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { create } from "zustand";
 import type { AuthUser } from "@rad/types";
 import type { MakingCommission } from "@/components/making/type";
 import { isDemoCommission, seedCommissions } from "@/lib/making";
@@ -41,6 +42,17 @@ type MakingContextValue = Omit<MakingActions, "submitDesign"> & {
 };
 
 const MakingContext = createContext<MakingContextValue | null>(null);
+
+type CommissionLookup = (id: string) => MakingCommission | undefined;
+const noCommission: CommissionLookup = () => undefined;
+
+/**
+ * MakingProvider only wraps the routes that need it; the route trail renders
+ * in the root layout, outside it, and reads commission titles from here.
+ */
+const useCommissionIndex = create<{ get: CommissionLookup }>(() => ({
+  get: noCommission,
+}));
 
 function isMaker(user: AuthUser | null) {
   if (!user) return false;
@@ -193,6 +205,11 @@ export function MakingProvider({ children }: { children: ReactNode }) {
     [actions, commissions, maker, ready, submitDesign],
   );
 
+  useEffect(() => {
+    useCommissionIndex.setState({ get: value.get });
+    return () => useCommissionIndex.setState({ get: noCommission });
+  }, [value.get]);
+
   return (
     <MakingContext.Provider value={value}>{children}</MakingContext.Provider>
   );
@@ -202,6 +219,11 @@ export function useMaking() {
   const value = useContext(MakingContext);
   if (!value) throw new Error("useMaking must be used inside MakingProvider");
   return value;
+}
+
+/** Finds a loaded commission from anywhere; `undefined` outside the making routes. */
+export function useCommissionLookup() {
+  return useCommissionIndex((state) => state.get);
 }
 
 function readLocal(): MakingCommission[] {

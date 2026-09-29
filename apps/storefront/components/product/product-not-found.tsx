@@ -1,5 +1,3 @@
-"use client";
-
 import { NotFoundState } from "@/components/states";
 
 export function ProductNotFound() {

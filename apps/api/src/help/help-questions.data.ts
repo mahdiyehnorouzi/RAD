@@ -1,7 +1,7 @@
-import type { HelpQuestion } from "../type";
+import type { HelpQuestionView } from "./type";
 
-/** Questions customers ask before paying; each answer points to its full rule. */
-export const HELP_QUESTIONS: HelpQuestion[] = [
+/** Help-page questions inserted once on an empty database; staff edit them in the admin. */
+export const defaultHelpQuestions: HelpQuestionView[] = [
   {
     id: "confirm",
     question: {

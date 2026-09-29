@@ -3,7 +3,7 @@ import { pageMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = pageMetadata({
   title: "رَد من چه شکلیه؟",
-  description: "پنج سؤال کوتاه؛ بعد سه رَد واقعی از آرشیو.",
+  description: "چند سؤال کوتاه؛ بعد سه رَد واقعی از آرشیو.",
   path: "/shape",
 });
 

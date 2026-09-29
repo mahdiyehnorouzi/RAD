@@ -1,5 +1,3 @@
-"use client";
-
 import Link from "next/link";
 import type { Product } from "@rad/types";
 import { FavoriteButton } from "@/components/commerce";
@@ -50,7 +48,9 @@ export function ProductCardStage({
       ) : null}
       <div className="rad-card-flags">
         <FavoriteButton slug={product.slug} compact />
-        {badge ? <ProductCardBadge tone={badge.tone} label={badge.label} /> : null}
+        {badge ? (
+          <ProductCardBadge tone={badge.tone} label={badge.label} />
+        ) : null}
       </div>
     </div>
   );

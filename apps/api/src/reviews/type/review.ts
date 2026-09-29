@@ -11,3 +11,9 @@ export interface ReviewView {
   image?: string;
   createdAt: number;
 }
+
+/** Mirrors `AdminReview` in `@rad/types`. */
+export interface AdminReviewView extends ReviewView {
+  hidden: boolean;
+  productName?: string;
+}

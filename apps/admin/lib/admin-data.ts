@@ -10,6 +10,17 @@ import {
   type PolicyAcceptance,
   type PolicySlug,
   type ProductStatus,
+  type ShapeTrait,
+} from "@rad/types";
+
+export type {
+  AdminReview,
+  HelpQuestion,
+  HelpQuestionInput,
+  ShapeChoice,
+  ShapeQuestion,
+  ShapeQuestionInput,
+  ShapeTrait,
 } from "@rad/types";
 
 export type AdminRole = "owner" | "manager" | "editor" | "viewer";
@@ -20,6 +31,9 @@ export type AdminSection =
   | "messages"
   | "damage"
   | "commissions"
+  | "reviews"
+  | "shape"
+  | "help"
   | "users"
   | "members"
   | "account";
@@ -332,11 +346,21 @@ export function productStatusOptions(current?: AdminProductStatus) {
 }
 
 export const permissions = {
-  owner: ["product.write", "product.delete", "order.write", "member.write"],
-  manager: ["product.write", "order.write", "member.write"],
-  editor: ["product.write"],
+  owner: ["product.write", "product.delete", "order.write", "member.write", "content.write"],
+  manager: ["product.write", "order.write", "member.write", "content.write"],
+  editor: ["product.write", "content.write"],
   viewer: [],
 } as const;
+
+export type AdminPermission = (typeof permissions)[AdminRole][number];
+
+export const shapeTraitLabels: Record<ShapeTrait, string> = {
+  crooked: "صاف یا کج",
+  quiet: "ساکت یا شلوغ",
+  worn: "تمیز یا دست‌خورده",
+  surprise: "آشنا یا غافلگیرکننده",
+  strange: "کاربردی یا عجیب",
+};
 
 export const seedMembers: AdminMember[] = [
   {

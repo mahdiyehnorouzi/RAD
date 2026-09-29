@@ -1,11 +1,11 @@
 "use client";
 
 import { useMemo } from "react";
+import type { ShapeQuestion } from "@rad/types";
 import { useCatalog } from "@/components/catalog/catalog-provider";
 import { usePassports } from "@/hooks/use-artworks";
 import { traitDistance } from "@/lib/passport";
 import type { PassportTraits } from "@/components/passport/type";
-import { SHAPE_QUESTIONS } from "../const";
 
 const NEUTRAL: PassportTraits = {
   crooked: 0.5,
@@ -16,14 +16,18 @@ const NEUTRAL: PassportTraits = {
 };
 
 /** The three archive works whose recorded traits sit closest to the answers. */
-export function useShapeMatches(answers: Array<number | undefined>, done: boolean) {
+export function useShapeMatches(
+  questions: ShapeQuestion[],
+  answers: Array<number | undefined>,
+  done: boolean,
+) {
   const passports = usePassports();
   const { getArtwork } = useCatalog();
 
   return useMemo(() => {
     if (!done) return [];
     const traits = { ...NEUTRAL };
-    SHAPE_QUESTIONS.forEach((question, index) => {
+    questions.forEach((question, index) => {
       const value = answers[index];
       if (value !== undefined) traits[question.trait] = value;
     });
@@ -33,5 +37,5 @@ export function useShapeMatches(answers: Array<number | undefined>, done: boolea
       .sort((a, b) => a.distance - b.distance)
       .slice(0, 3)
       .map(({ passport }) => ({ passport, artwork: getArtwork(passport.slug) }));
-  }, [answers, done, passports, getArtwork]);
+  }, [questions, answers, done, passports, getArtwork]);
 }

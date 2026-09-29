@@ -5,6 +5,9 @@ import {
   Archive,
   ChevronLeft,
   CircleGauge,
+  CircleHelp,
+  MessageSquareQuote,
+  Shapes,
   ImagePlus,
   Inbox,
   KeyRound,
@@ -57,6 +60,10 @@ import { AdminDamageReports } from "./admin-damage-reports";
 import { AdminOrderDamage } from "./admin-order-damage";
 import { AdminOrderPolicies } from "./admin-order-policies";
 import type { DamageReview } from "./admin-damage-report";
+import { ConfirmDialog, DialogShell, Field } from "./admin-dialog";
+import { AdminReviews } from "./admin-reviews";
+import { AdminShapeQuestions } from "./admin-shape-questions";
+import { AdminHelpQuestions } from "./admin-help-questions";
 import { StageMeter } from "@rad/ui";
 
 const navItems: { id: AdminSection; label: string; icon: typeof Package }[] = [
@@ -66,6 +73,9 @@ const navItems: { id: AdminSection; label: string; icon: typeof Package }[] = [
   { id: "messages", label: "پیام‌ها", icon: Inbox },
   { id: "damage", label: "گزارش‌های آسیب", icon: PackageX },
   { id: "commissions", label: "سفارش اختصاصی", icon: ScrollText },
+  { id: "reviews", label: "نظر مشتریان", icon: MessageSquareQuote },
+  { id: "shape", label: "پرسشنامه‌ی شکل", icon: Shapes },
+  { id: "help", label: "پرسش‌های راهنما", icon: CircleHelp },
   { id: "users", label: "مشتریان", icon: UserRound },
   { id: "members", label: "افراد و دسترسی", icon: Users },
   { id: "account", label: "حساب کاربری", icon: KeyRound },
@@ -374,6 +384,96 @@ export function AdminDashboard() {
               try {
                 await workspace.messageCommission(id, body, internal);
                 announce("پیام برای مشتری ارسال شد.");
+              } catch (error) {
+                announce((error as Error).message);
+              }
+            }}
+          />
+        )}
+        {section === "reviews" && (
+          <AdminReviews
+            reviews={workspace.reviews}
+            canWrite={workspace.can("content.write")}
+            onSetHidden={async (id, hidden) => {
+              try {
+                await workspace.setReviewHidden(id, hidden);
+                announce(hidden ? "نظر از فروشگاه پنهان شد." : "نظر دوباره در فروشگاه دیده می‌شود.");
+              } catch (error) {
+                announce((error as Error).message);
+              }
+            }}
+            onDelete={async (id) => {
+              try {
+                await workspace.deleteReview(id);
+                announce("نظر حذف شد.");
+                return true;
+              } catch (error) {
+                announce((error as Error).message);
+                return false;
+              }
+            }}
+          />
+        )}
+        {section === "shape" && (
+          <AdminShapeQuestions
+            questions={workspace.shapeQuestions}
+            canWrite={workspace.can("content.write")}
+            onSave={async (input, id) => {
+              try {
+                await workspace.saveShapeQuestion(input, id);
+                announce(id ? "سؤال ذخیره شد." : "سؤال تازه به پرسشنامه اضافه شد.");
+                return true;
+              } catch (error) {
+                announce((error as Error).message);
+                return false;
+              }
+            }}
+            onDelete={async (id) => {
+              try {
+                await workspace.deleteShapeQuestion(id);
+                announce("سؤال از پرسشنامه حذف شد.");
+                return true;
+              } catch (error) {
+                announce((error as Error).message);
+                return false;
+              }
+            }}
+            onReorder={async (ids) => {
+              try {
+                await workspace.reorderShapeQuestions(ids);
+              } catch (error) {
+                announce((error as Error).message);
+              }
+            }}
+          />
+        )}
+        {section === "help" && (
+          <AdminHelpQuestions
+            questions={workspace.helpQuestions}
+            canWrite={workspace.can("content.write")}
+            onSave={async (input, id) => {
+              try {
+                await workspace.saveHelpQuestion(input, id);
+                announce(id ? "سؤال ذخیره شد." : "سؤال تازه به صفحه‌ی راهنما اضافه شد.");
+                return true;
+              } catch (error) {
+                announce((error as Error).message);
+                return false;
+              }
+            }}
+            onDelete={async (id) => {
+              try {
+                await workspace.deleteHelpQuestion(id);
+                announce("سؤال از صفحه‌ی راهنما حذف شد.");
+                return true;
+              } catch (error) {
+                announce((error as Error).message);
+                return false;
+              }
+            }}
+            onReorder={async (ids) => {
+              try {
+                await workspace.reorderHelpQuestions(ids);
               } catch (error) {
                 announce((error as Error).message);
               }
@@ -1366,100 +1466,6 @@ function InviteDialog({
   );
 }
 
-function ConfirmDialog({
-  title,
-  description,
-  onCancel,
-  onConfirm,
-}: {
-  title: string;
-  description: string;
-  onCancel: () => void;
-  onConfirm: () => void | Promise<void>;
-}) {
-  return (
-    <DialogShell
-      title={title}
-      description={description}
-      onClose={onCancel}
-      compact
-    >
-      <div className="dialog-actions">
-        <button className="secondary-action" type="button" onClick={onCancel}>
-          انصراف
-        </button>
-        <button className="danger-action" type="button" onClick={onConfirm}>
-          حذف محصول
-        </button>
-      </div>
-    </DialogShell>
-  );
-}
-
-function DialogShell({
-  title,
-  description,
-  onClose,
-  children,
-  compact = false,
-}: {
-  title: string;
-  description: string;
-  onClose: () => void;
-  children: React.ReactNode;
-  compact?: boolean;
-}) {
-  return (
-    <div
-      className="dialog-backdrop"
-      role="presentation"
-      onMouseDown={(event) => {
-        if (event.target === event.currentTarget) onClose();
-      }}
-    >
-      <section
-        className={`dialog ${compact ? "compact" : ""}`}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="dialog-title"
-        aria-describedby="dialog-description"
-      >
-        <header>
-          <div>
-            <span className="eyebrow">دفتر رَد</span>
-            <h2 id="dialog-title">{title}</h2>
-            <p id="dialog-description">{description}</p>
-          </div>
-          <button type="button" onClick={onClose} aria-label="بستن">
-            <X />
-          </button>
-        </header>
-        {children}
-      </section>
-    </div>
-  );
-}
-function Field({
-  label,
-  error,
-  children,
-}: {
-  label: string;
-  error?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <label className="field">
-      <span>{label}</span>
-      {children}
-      {error && (
-        <small className="field-error" role="alert">
-          {error}
-        </small>
-      )}
-    </label>
-  );
-}
 function StatusBadge({
   label,
   tone,

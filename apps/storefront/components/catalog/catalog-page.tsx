@@ -1,5 +1,3 @@
-"use client";
-
 import type { Product } from "@rad/types";
 import { Catalog } from "./catalog";
 import { CatalogIntro } from "./catalog-intro";

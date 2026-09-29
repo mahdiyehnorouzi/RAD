@@ -2,8 +2,7 @@
 
 import { CURRENT_POLICY_VERSIONS, type PolicySlug } from "@rad/types";
 import { policyTitleLabels, type AdminOrder } from "../lib/admin-data";
-
-const STOREFRONT_URL = process.env.NEXT_PUBLIC_STOREFRONT_URL || "https://www.rad-object.com";
+import { storefrontUrl } from "../lib/storefront-url";
 
 const day = (id: string) =>
   new Intl.DateTimeFormat("fa-IR", { dateStyle: "medium", timeZone: "UTC" }).format(
@@ -14,7 +13,7 @@ const dateTime = (value: number) =>
 
 function policyUrl(slug: PolicySlug, version: string) {
   const path = CURRENT_POLICY_VERSIONS[slug] === version ? `/help/${slug}` : `/help/${slug}/v/${version}`;
-  return new URL(path, STOREFRONT_URL).toString();
+  return storefrontUrl(path);
 }
 
 /** Which rule versions this order was placed under, and when they were accepted. */

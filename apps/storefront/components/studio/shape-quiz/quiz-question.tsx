@@ -2,9 +2,10 @@
 
 import type { Ref } from "react";
 import Link from "next/link";
+import type { ShapeQuestion } from "@rad/types";
 import { useLocale } from "@/components/i18n";
 import { StudioIcon, readingChevron } from "../studio-icon";
-import { fill, quizCopy, type ShapeQuestion } from "./const";
+import { fill, quizCopy } from "./const";
 
 export function QuizQuestion({
   question,

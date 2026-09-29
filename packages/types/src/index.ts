@@ -1,5 +1,6 @@
 export * from "./artwork";
 export * from "./contact";
+export * from "./content";
 export * from "./damage-report";
 export * from "./policy";
 

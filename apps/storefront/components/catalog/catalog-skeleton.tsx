@@ -1,5 +1,3 @@
-"use client";
-
 import { ProductGridSkeleton } from "@/components/product/listing";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PageSection } from "@/components/ui/section";

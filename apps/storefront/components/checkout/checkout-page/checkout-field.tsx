@@ -1,4 +1,3 @@
-"use client";
 import type { ReactNode } from "react";
 
 export function CheckoutField({
@@ -20,7 +19,9 @@ export function CheckoutField({
   children: ReactNode;
 }) {
   return (
-    <div className={`checkout-field${wide ? " is-wide" : ""}${error ? " is-invalid" : ""}`}>
+    <div
+      className={`checkout-field${wide ? " is-wide" : ""}${error ? " is-invalid" : ""}`}
+    >
       <label htmlFor={id}>
         {label}
         {optional ? <small> ({optional})</small> : null}

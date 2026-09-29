@@ -1,4 +1,5 @@
 import { HelpHub } from "@/components/help";
+import { fetchHelpQuestions } from "@/lib/api";
 import { pageMetadata } from "@/lib/seo";
 
 export const metadata = pageMetadata({
@@ -8,6 +9,7 @@ export const metadata = pageMetadata({
   path: "/help",
 });
 
-export default function HelpRoute() {
-  return <HelpHub />;
+export default async function HelpRoute() {
+  const questions = await fetchHelpQuestions().catch(() => []);
+  return <HelpHub questions={questions} />;
 }
