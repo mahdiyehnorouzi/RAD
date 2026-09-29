@@ -1,7 +1,5 @@
 export const pdpCopy = {
   fa: {
-    breadcrumb: "مسیر صفحه",
-    home: "خانه",
     byLine: "اثری از",
     studio: "استودیوی رَد",
     available: "موجود",
@@ -51,8 +49,6 @@ export const pdpCopy = {
     makerNote: "یادداشت سازنده",
   },
   en: {
-    breadcrumb: "Breadcrumb",
-    home: "Home",
     byLine: "A work by",
     studio: "RAD Studio",
     available: "Available",

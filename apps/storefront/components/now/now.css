@@ -1,0 +1,177 @@
+/* Shared by the workshop index and a single work being made. */
+
+.live-page,
+.now-index {
+  --live-ink: #1f2f28;
+  --live-body: #4f4942;
+  --live-muted: #6b635a;
+  --live-cream: #f3eee6;
+  --live-sheet: #ebe3d7;
+  --live-thread: #ad5f3d;
+  --live-oxide: #9c4f33;
+  --live-pad: 1.5rem;
+  --live-wide: 76rem;
+  --live-ease: cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  overflow: clip;
+  background: var(--live-cream);
+  color: var(--live-ink);
+}
+
+.live-page ::selection,
+.now-index ::selection {
+  background: var(--moss);
+  color: var(--live-cream);
+}
+
+.live-page :where(h1, h2, h3, p),
+.now-index :where(h1, h2, h3, p) {
+  margin: 0;
+  letter-spacing: 0;
+}
+
+.live-page :where(h1, h2, h3),
+.now-index :where(h1, h2, h3) {
+  color: var(--live-ink);
+  font-weight: 700;
+  text-wrap: balance;
+}
+
+.live-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.live-thread {
+  overflow: visible;
+  pointer-events: none;
+  fill: none;
+  stroke: var(--live-thread);
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.live-thread path {
+  vector-effect: non-scaling-stroke;
+}
+
+.live-stroke {
+  width: 3.6rem;
+  height: 0.7rem;
+  margin-top: 0.55rem;
+  fill: none;
+  stroke: var(--live-oxide);
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+
+.live-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 3rem;
+  padding: 0.6rem 1.4rem;
+  border: 1px solid var(--moss);
+  border-radius: 999px;
+  background: var(--moss);
+  color: var(--live-cream);
+  font-size: 0.92rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition:
+    background-color 220ms ease-out,
+    border-color 220ms ease-out,
+    color 220ms ease-out,
+    transform 320ms var(--live-ease);
+}
+
+.live-pill:hover {
+  background: #1d3129;
+  transform: translateY(-2px);
+}
+
+.live-pill.is-ghost {
+  border-color: color-mix(in srgb, var(--live-ink) 30%, transparent);
+  background: transparent;
+  color: var(--live-ink);
+}
+
+.live-pill.is-ghost:hover {
+  border-color: var(--moss);
+  background: color-mix(in srgb, var(--moss) 7%, transparent);
+}
+
+.live-pill:focus-visible {
+  outline: 2px solid var(--live-thread);
+  outline-offset: 3px;
+}
+
+@media (min-width: 960px) {
+  .live-page,
+  .now-index {
+    --live-pad: var(--page);
+  }
+
+  .live-stroke {
+    width: 5.5rem;
+    height: 1rem;
+    margin-top: 0.8rem;
+    stroke-width: 3.5;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .live-stroke path {
+    stroke-dasharray: 1;
+    animation: liveDraw 700ms 700ms cubic-bezier(0.65, 0, 0.35, 1) both;
+  }
+}
+
+@keyframes liveSettle {
+  from {
+    transform: scale(1.07);
+    filter: saturate(0.85) brightness(1.04);
+  }
+  to {
+    transform: none;
+    filter: none;
+  }
+}
+
+@keyframes liveDraw {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes liveRise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+    filter: blur(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+}
+
+@keyframes liveScrollIn {
+  from {
+    opacity: 0;
+    transform: translateY(22px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}

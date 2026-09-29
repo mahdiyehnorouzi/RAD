@@ -1,12 +1,20 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
+import { ArrowUpLeft, ArrowUpRight, Check, Copy, Printer } from "lucide-react";
 import { useLocale } from "@/components/i18n";
-import { Button } from "@/components/ui/button-link";
 
-export function ProductQrActions({ targetUrl }: { targetUrl: string }) {
-  const { t } = useLocale();
+export function ProductQrActions({
+  targetUrl,
+  productHref,
+}: {
+  targetUrl: string;
+  productHref: string;
+}) {
+  const { locale, t, href } = useLocale();
   const [copied, setCopied] = useState(false);
+  const Arrow = locale === "fa" ? ArrowUpLeft : ArrowUpRight;
 
   async function copyLink() {
     try {
@@ -20,12 +28,18 @@ export function ProductQrActions({ targetUrl }: { targetUrl: string }) {
 
   return (
     <div className="product-qr-actions">
-      <Button type="button" onClick={() => window.print()}>
-        {t("productQrPrint")}
-      </Button>
-      <Button type="button" outline onClick={copyLink}>
-        {copied ? t("productQrCopied") : t("productQrCopyLink")}
-      </Button>
+      <button type="button" className="product-qr-action is-solid" onClick={() => window.print()}>
+        <Printer aria-hidden="true" />
+        <span>{t("productQrPrint")}</span>
+      </button>
+      <button type="button" className="product-qr-action" onClick={copyLink}>
+        {copied ? <Check aria-hidden="true" /> : <Copy aria-hidden="true" />}
+        <span aria-live="polite">{copied ? t("productQrCopied") : t("productQrCopyLink")}</span>
+      </button>
+      <Link className="product-qr-action" href={href(productHref)}>
+        <Arrow aria-hidden="true" />
+        <span>{t("productQrViewProduct")}</span>
+      </Link>
     </div>
   );
 }

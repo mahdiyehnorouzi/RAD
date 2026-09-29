@@ -4,6 +4,7 @@ export { ProductNotFound } from "./product-not-found";
 export { ProductQr } from "./product-qr";
 export {
   formatArtworkNumber,
+  formatRadDigits,
   LinkPending,
   ProductCard,
   ProductCarousel,

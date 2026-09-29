@@ -6,7 +6,6 @@ import {
   familyForCode,
   familyMembers,
   formatPassportCode,
-  formatPassportName,
 } from "@/lib/passport";
 import type { RadPassport } from "../type";
 
@@ -24,23 +23,38 @@ export function PassportFamily({
   const codes = new Set(members.map((member) => member.code));
 
   return (
-    <section className="passport-family">
-      <span className="eyebrow">{t("familyEyebrow")}</span>
-      <h2>{family.name[locale]}</h2>
-      <p>{t("familyBody")}</p>
+    <section className="passport-family" aria-labelledby="passport-family-title">
+      <header className="passport-head">
+        <h2 id="passport-family-title">{family.name[locale]}</h2>
+        <p>{t("familyBody")}</p>
+      </header>
       <ol>
         {members.map((member, index) => {
           const note =
-            member.inspiredBy && codes.has(member.inspiredBy)
+            index > 0 && member.inspiredBy && codes.has(member.inspiredBy)
               ? member.inspiredNote
               : undefined;
+          const self = member.code === passport.code;
+          const body = (
+            <>
+              <span className="passport-family-code">
+                {formatPassportCode(member.code, locale, number)}
+              </span>
+              <b>{member.name[locale]}</b>
+              {note ? <small>{note[locale]}</small> : null}
+            </>
+          );
           return (
             <li key={member.code}>
-              {index > 0 && note ? <small>{note[locale]}</small> : null}
-              <Link href={href(`/passport/${member.code}`)}>
-                <b>{formatPassportName(member, locale, number)}</b>
-                <span>{formatPassportCode(member.code, locale, number)}</span>
-              </Link>
+              {self ? (
+                <span className="passport-family-tag is-self" aria-current="page">
+                  {body}
+                </span>
+              ) : (
+                <Link className="passport-family-tag" href={href(`/passport/${member.code}`)}>
+                  {body}
+                </Link>
+              )}
             </li>
           );
         })}

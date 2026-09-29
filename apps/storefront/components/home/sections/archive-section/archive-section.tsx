@@ -29,6 +29,8 @@ export function ArchiveSection({
       ref={setSectionRef}
       className={`section collection archive-section home-reveal${inView ? " is-visible" : ""}`}
     >
+      <span className="archive-thread is-top" data-thread-anchor aria-hidden="true" />
+      <span className="archive-thread is-bottom" data-thread-anchor aria-hidden="true" />
       <span className="eyebrow reveal-item" data-reveal="eyebrow">
         {t("archiveEyebrow")}
       </span>

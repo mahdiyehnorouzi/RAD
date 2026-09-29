@@ -17,7 +17,7 @@
   --page: clamp(1.25rem, 5vw, 5rem);
   --section: clamp(4rem, 9vw, 8rem);
   --radius: 1.5rem;
-  --header-height: 104px;
+  --header-height: 68px;
   scrollbar-color: var(--clay) var(--canvas);
   scrollbar-width: thin;
 }
@@ -237,6 +237,6 @@ html[dir="rtl"] input[dir="ltr"] {
 
 @media (max-width: 600px) {
   :root {
-    --header-height: 86px;
+    --header-height: 60px;
   }
 }

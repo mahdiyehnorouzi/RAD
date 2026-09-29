@@ -1,8 +1,10 @@
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
+import { Not, Repository } from "typeorm";
 import { Product, Review } from "../database/entities";
 import type { Actor } from "../common/identity";
+import { REVIEW_FEED_LIMIT } from "./const";
+import { toReview } from "./reviews.mapper";
 
 const allowedImage = /^data:image\/(jpeg|png|webp);base64,/i;
 const maxImageBytes = 1024 * 1024;
@@ -37,7 +39,17 @@ export class ReviewsService {
       where: { productSlug: slug },
       order: { createdAt: "DESC" },
     });
-    return reviews.map((review) => this.toReview(review));
+    return reviews.map(toReview);
+  }
+
+  async feed() {
+    const reviews = await this.reviews.find({
+      relations: { product: true },
+      where: { product: { status: Not("draft") } },
+      order: { createdAt: "DESC" },
+      take: REVIEW_FEED_LIMIT,
+    });
+    return reviews.map(toReview);
   }
 
   async create(actor: Actor, slug: string, input: { rating: number; comment: string; image?: string }) {
@@ -57,26 +69,6 @@ export class ReviewsService {
         image: input.image ?? null,
       }),
     );
-    return this.toReview(review);
-  }
-
-  private toReview(review: {
-    id: string;
-    productSlug: string;
-    author: string;
-    rating: number;
-    comment: string;
-    image: string | null;
-    createdAt: Date;
-  }) {
-    return {
-      id: review.id,
-      productSlug: review.productSlug,
-      author: review.author,
-      rating: review.rating,
-      comment: review.comment,
-      image: review.image ?? undefined,
-      createdAt: review.createdAt.getTime(),
-    };
+    return toReview(review);
   }
 }

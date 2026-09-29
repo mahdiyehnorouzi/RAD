@@ -34,5 +34,5 @@ export function featuredWorkPhoto(product?: Product) {
     const photo = productPhotoSrc(src);
     if (photo) return photo;
   }
-  return "/home/polaroid/alabaster-walnut-lamp.png";
+  return "/home/hero/work-02-stone-lamp.png";
 }

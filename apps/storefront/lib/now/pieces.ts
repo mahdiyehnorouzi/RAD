@@ -26,25 +26,79 @@ function rail(
     "last_kiln",
     "ready",
   ];
-  const titles: Record<LivePiece["current"], LocaleCopy> = {
-    idea: copy("ایده رسید", "The idea arrived"),
-    form: copy("فرم پیدا شد", "The form was found"),
-    drying: copy("خشک شدن", "Drying"),
-    first_kiln: copy("کوره اول", "First kiln"),
-    glaze: copy("لعاب", "Glaze"),
-    last_kiln: copy("کوره آخر", "Last kiln"),
-    ready: copy("آماده رفتن", "Ready to leave"),
-  };
   const index = order.indexOf(current);
   return order.map((id, item) => ({
     id,
-    title: titles[id],
+    title: stages[id].title,
+    summary: stages[id].summary,
     done: item < index,
     current: item === index,
-    media: extras[id]?.media,
+    media: extras[id]?.media ?? stages[id].media,
     note: extras[id]?.note,
   }));
 }
+
+const stages: Record<
+  LivePiece["current"],
+  { title: LocaleCopy; summary: LocaleCopy; media: string }
+> = {
+  idea: {
+    title: copy("ایده رسید", "The idea arrived"),
+    summary: copy(
+      "همه‌چیز از یک حس و تصویر شروع می‌شود. طرح اولیه روی کاغذ شکل می‌گیرد.",
+      "It starts from a feeling and an image. The first sketch takes shape on paper.",
+    ),
+    media: "/now/now-idea.jpg",
+  },
+  form: {
+    title: copy("فرم پیدا شد", "The form was found"),
+    summary: copy(
+      "گل ورز داده می‌شود و فرم روی چرخ شکل می‌گیرد. در این مرحله ابعاد و تناسبات کار مشخص می‌شود.",
+      "The clay is wedged and the form rises on the wheel. Its size and proportions are settled here.",
+    ),
+    media: "/now/now-form.jpg",
+  },
+  drying: {
+    title: copy("خشک شدن", "Drying"),
+    summary: copy(
+      "کار به آرامی در دمای محیط خشک می‌شود تا برای اولین پخت آماده شود.",
+      "The piece dries slowly at room temperature until it is ready for its first firing.",
+    ),
+    media: "/now/now-drying.jpg",
+  },
+  first_kiln: {
+    title: copy("کوره اول", "First kiln"),
+    summary: copy(
+      "اولین پخت بدنه را محکم می‌کند و آن را برای لعاب آماده می‌کند.",
+      "The first firing hardens the body and readies it for glaze.",
+    ),
+    media: "/now/now-first-kiln.jpg",
+  },
+  glaze: {
+    title: copy("لعاب", "Glaze"),
+    summary: copy(
+      "لعاب با دست روی بدنه می‌نشیند. رنگ نهایی تا بعد از کوره معلوم نیست.",
+      "Glaze goes on by hand. The final colour stays unknown until after the kiln.",
+    ),
+    media: "/now/now-glaze.jpg",
+  },
+  last_kiln: {
+    title: copy("کوره آخر", "Last kiln"),
+    summary: copy(
+      "پخت دوم لعاب را به شیشه تبدیل می‌کند؛ اینجا چیزهایی اتفاق می‌افتد که تکرار نمی‌شوند.",
+      "The second firing turns glaze to glass; things happen here that will not happen again.",
+    ),
+    media: "/now/now-last-kiln.jpg",
+  },
+  ready: {
+    title: copy("آماده رفتن", "Ready to leave"),
+    summary: copy(
+      "کار از کوره بیرون می‌آید، شماره‌اش را می‌گیرد و آماده‌ی رفتن می‌شود.",
+      "The work leaves the kiln, receives its number and is ready to go.",
+    ),
+    media: "/now/now-ready.jpg",
+  },
+};
 
 const journals: LiveJournal[] = [
   {
@@ -52,10 +106,7 @@ const journals: LiveJournal[] = [
     startedDaysAgo: 4,
     current: "drying",
     image: "/making/RAD-M-1405-17/cleaned.png",
-    milestones: rail("drying", {
-      idea: { media: "/making/RAD-M-1405-17/forming.png" },
-      form: { media: "/making/RAD-M-1405-17/cleaned.png" },
-    }),
+    milestones: rail("drying"),
     notes: [
       {
         at: copy("امروز", "Today"),
@@ -63,7 +114,7 @@ const journals: LiveJournal[] = [
           "حالا باید صبر کند. چهار روز از شروعش گذشته.",
           "Now it has to wait. Four days have passed since it began.",
         ),
-        media: "/making/RAD-M-1405-17/cleaned.png",
+        media: "/now/now-drying.jpg",
       },
     ],
   },
@@ -73,17 +124,13 @@ const journals: LiveJournal[] = [
     current: "glaze",
     image: "/making/RAD-M-1405-17/glaze-tile.png",
     milestones: rail("glaze", {
-      idea: { media: "/making/RAD-M-1405-17/forming.png" },
-      form: { media: "/making/RAD-M-1405-17/cleaned.png" },
       first_kiln: {
-        media: "/making/RAD-M-1405-17/cleaned.png",
         note: copy(
           "امروز رَد تو برای اولین‌بار رفت توی کوره.",
           "Today your RAD went into the kiln for the first time.",
         ),
       },
       glaze: {
-        media: "/making/RAD-M-1405-17/glaze-tile.png",
         note: copy(
           "یه اتفاق افتاد. لعاب این قسمت دقیقاً اون چیزی نشد که فکر می‌کردیم. نگهش داشتیم.",
           "Something happened. The glaze on this part did not become what we thought. We kept it.",
@@ -97,7 +144,7 @@ const journals: LiveJournal[] = [
           "امروز رَد تو برای اولین‌بار رفت توی کوره.",
           "Today your RAD went into the kiln for the first time.",
         ),
-        media: "/making/RAD-M-1405-17/cleaned.png",
+        media: "/now/now-first-kiln.jpg",
       },
       {
         at: copy("امروز", "Today"),
@@ -105,7 +152,7 @@ const journals: LiveJournal[] = [
           "یه اتفاق افتاد. لعاب این قسمت دقیقاً اون چیزی نشد که فکر می‌کردیم. نگهش داشتیم.",
           "Something happened. The glaze on this part did not become what we thought. We kept it.",
         ),
-        media: "/making/RAD-M-1405-17/glaze-tile.png",
+        media: "/now/now-glaze.jpg",
       },
     ],
   },

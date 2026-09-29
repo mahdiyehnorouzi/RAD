@@ -11,10 +11,7 @@ import "./catalog/catalog.css";
 export function CatalogSkeleton() {
   return (
     <PageSection className="plp">
-      <CatalogHero
-        intro={<CatalogIntro />}
-        search={<Skeleton className="catalog-search-skeleton" />}
-      />
+      <CatalogHero intro={<CatalogIntro />} />
       <div className="plp-categories" aria-hidden="true">
         <div className="plp-chip-rail">
           {Array.from({ length: 8 }, (_, index) => (

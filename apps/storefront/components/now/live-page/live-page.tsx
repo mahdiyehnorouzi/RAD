@@ -4,73 +4,45 @@ import Link from "next/link";
 import { useLocale } from "@/components/i18n";
 import { useLivePieces } from "@/hooks/use-artworks";
 import { findLivePiece } from "@/lib/now";
-import { formatPassportCode } from "@/lib/passport";
+import { nowCopy } from "../const";
 import type { LivePiece } from "../type";
+import { LiveHero } from "./live-hero";
+import { LiveNotes } from "./live-notes";
+import { LiveStages } from "./live-stages";
+import "../now.css";
 import "./live-page.css";
 
 export function LivePage({ piece: source }: { piece: LivePiece }) {
-  const { locale, t, number, href } = useLocale();
+  const { locale, t, href } = useLocale();
+  const c = nowCopy[locale];
   const piece = findLivePiece(useLivePieces(), source.code) ?? source;
-  const code = formatPassportCode(piece.code, locale, number);
-  const current = piece.milestones.find((item) => item.current);
 
   return (
     <article className="live-page">
-      <header>
-        <span className="eyebrow">{t("liveEyebrow")}</span>
-        <h1>{t("liveHeadline", { code })}</h1>
-        <p>
-          {piece.name[locale]} · {piece.maker[locale]}
-        </p>
-        <p className="live-now">
-          {t("liveNow")}: {current?.title[locale]}
-          <span>
-            {t("liveDaysAgo", { days: number(piece.startedDaysAgo) })}
-          </span>
-        </p>
-      </header>
+      <LiveHero piece={piece} />
+      <LiveStages piece={piece} />
+      <LiveNotes piece={piece} />
 
-      <ol className="live-rail">
-        {piece.milestones.map((milestone, index) => (
-          <li
-            key={milestone.id}
-            className={
-              milestone.current ? "is-current" : milestone.done ? "is-done" : ""
-            }
-          >
-            <b>
-              {number(index + 1)}
-              {milestone.done ? " ✓" : milestone.current ? " …" : ""}
-            </b>
-            <strong>{milestone.title[locale]}</strong>
-            {milestone.note ? <p>{milestone.note[locale]}</p> : null}
-            {milestone.media ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={milestone.media} alt="" />
-            ) : null}
-          </li>
-        ))}
-      </ol>
-
-      <section className="live-notes">
-        <h2>{t("liveNotes")}</h2>
-        <ul>
-          {piece.notes.map((note) => (
-            <li key={note.body.en}>
-              <small>{note.at[locale]}</small>
-              <p>{note.body[locale]}</p>
-              {note.media ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={note.media} alt="" />
-              ) : null}
-            </li>
-          ))}
-        </ul>
-      </section>
-
-      <Link href={href("/archive")} className="button outline">
-        {t("archiveBack")}
-      </Link>
+      <footer className="live-close">
+        <svg
+          className="live-thread live-close-thread"
+          viewBox="0 0 160 16"
+          aria-hidden="true"
+          focusable="false"
+        >
+          <path pathLength={1} d="M2 6C24 3 44 4 66 9C90 14 116 14 136 9C146 6 152 4 158 3" />
+        </svg>
+        <h2>{c.closeTitle}</h2>
+        <p>{c.closeBody}</p>
+        <div className="live-close-actions">
+          <Link className="live-pill" href={href("/studio")}>
+            {c.closeCta}
+          </Link>
+          <Link className="live-pill is-ghost" href={href("/products")}>
+            {t("allWorks")}
+          </Link>
+        </div>
+      </footer>
     </article>
   );
 }

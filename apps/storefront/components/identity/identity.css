@@ -136,6 +136,15 @@
   letter-spacing: 0.04em;
 }
 
+.object-stamp-sprig path,
+.object-stamp-sprig circle:not(.object-stamp-dot) {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
 .object-stamp-year {
   font-size: 8.5px;
   letter-spacing: 0.18em;

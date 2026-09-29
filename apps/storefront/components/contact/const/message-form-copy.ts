@@ -1,6 +1,9 @@
 export const messageFormCopy = {
   fa: {
     topicLegend: "درباره‌ی چی می‌خوای حرف بزنیم؟",
+    topicLabel: "موضوع پیام",
+    nameLabel: "نام (اختیاری)",
+    nameLine: "نام: {name}",
     orderLabel: "شماره‌ی سفارش",
     orderHint: "اختیاری؛ همون شماره‌ای که بالای صفحه‌ی سفارش می‌بینی.",
     orderAttached: "این پیام به سفارش {id} وصل می‌شه.",
@@ -11,6 +14,7 @@ export const messageFormCopy = {
     contactOrderHint: "اختیاری؛ اگه خالی بمونه، به شماره‌ی ثبت‌شده در همین سفارش جواب می‌دیم.",
     bodyLabel: "پیامت",
     bodyPlaceholder: "هرچی می‌خوای بگو…",
+    bodyPagePlaceholder: "پیامت رو این‌جا بنویس…",
     submit: "فرستادن پیام",
     sending: "در حال فرستادن…",
     replyNote: "در اولین فرصت جواب می‌دیم؛ ولی قول جواب فوری نمی‌دیم.",
@@ -26,6 +30,9 @@ export const messageFormCopy = {
   },
   en: {
     topicLegend: "What would you like to talk about?",
+    topicLabel: "Subject",
+    nameLabel: "Name (optional)",
+    nameLine: "Name: {name}",
     orderLabel: "Order number",
     orderHint: "Optional — the number shown at the top of your order page.",
     orderAttached: "This message will be linked to order {id}.",
@@ -36,6 +43,7 @@ export const messageFormCopy = {
     contactOrderHint: "Optional — leave it empty and we'll reply to the phone number on this order.",
     bodyLabel: "Your message",
     bodyPlaceholder: "Say whatever you like…",
+    bodyPagePlaceholder: "Write your message here…",
     submit: "Send message",
     sending: "Sending…",
     replyNote: "We reply as soon as we can, but we don't promise an instant answer.",

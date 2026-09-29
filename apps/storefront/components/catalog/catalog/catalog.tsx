@@ -20,7 +20,7 @@ import { CatalogBar } from "./catalog-bar";
 import { CatalogCategories } from "./catalog-categories";
 import { CatalogFilterPanel } from "./catalog-filters";
 import { CatalogHero } from "./catalog-hero";
-import { CatalogSearch } from "./catalog-search";
+import { CatalogQuery } from "./catalog-query";
 import { CatalogResults } from "./catalog-results";
 import { useCatalogFilters } from "./hooks";
 import "./catalog.css";
@@ -55,7 +55,7 @@ export function Catalog({
   /** Whether the server render reached the API; false means `products` are fixtures. */
   seededLive?: boolean;
   initialFilters?: CatalogFilters;
-  /** Page title block; the search box joins it inside the hero. */
+  /** Page title block shown on the banner. */
   intro?: React.ReactNode;
 }) {
   const { locale } = useLocale();
@@ -93,15 +93,7 @@ export function Catalog({
 
   return (
     <>
-      <CatalogHero
-        intro={intro}
-        search={
-          <CatalogSearch
-            value={state.query}
-            onChange={(query) => update({ query })}
-          />
-        }
-      />
+      <CatalogHero intro={intro} />
       <CatalogCategories
         products={shopProducts}
         active={state.category}
@@ -116,6 +108,12 @@ export function Catalog({
         panelId={panelId}
         onToggleFilters={() => setFiltersOpen((open) => !open)}
       />
+      {state.query.trim() ? (
+        <CatalogQuery
+          query={state.query.trim()}
+          onClear={() => update({ query: "" })}
+        />
+      ) : null}
       <CatalogFilterPanel
         id={panelId}
         open={filtersOpen}

@@ -10,20 +10,6 @@
   text-wrap: balance;
 }
 
-.policy-back {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  min-height: 44px;
-  color: var(--muted);
-  font-size: 0.86rem;
-  transition: color 180ms ease-out;
-}
-
-.policy-back:hover {
-  color: var(--moss);
-}
-
 /* Archived versions say so before anything else. */
 
 .policy-archived {

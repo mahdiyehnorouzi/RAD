@@ -19,17 +19,12 @@ export function DifferenceTrailStrip({
         const palette = portrait.palette[item.id];
         const photo = portrait.stageImages?.[item.id];
         return (
-          <li key={item.id}>
-            <span>{item.index[locale]}</span>
+          <li key={item.id} title={item.title[locale]}>
             {photo ? (
-              <img
-                className="difference-strip-swatch"
-                src={photo}
-                alt=""
-              />
+              <img className="difference-strip-swatch" src={photo} alt="" loading="lazy" />
             ) : (
-              <div
-                className={`difference-strip-swatch stage-${item.id}`}
+              <span
+                className="difference-strip-swatch"
                 style={
                   {
                     "--swatch": palette.color,
@@ -39,7 +34,7 @@ export function DifferenceTrailStrip({
                 aria-hidden="true"
               />
             )}
-            <b>{item.title[locale]}</b>
+            <span className="difference-strip-label">{item.label[locale]}</span>
           </li>
         );
       })}

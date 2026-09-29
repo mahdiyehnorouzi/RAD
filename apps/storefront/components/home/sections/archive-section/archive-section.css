@@ -1,7 +1,34 @@
 .archive-section {
   --archive-gutter: var(--page);
+  position: relative;
   overflow: visible;
   background: color-mix(in srgb, var(--sand) 24%, var(--canvas));
+}
+
+/*
+ * On narrow screens the home's red thread runs down the margin at the reading
+ * start, clear of the heading; on wide ones it passes straight behind the works.
+ */
+.archive-thread {
+  position: absolute;
+  inset-inline-start: 0.5rem;
+  display: none;
+  width: 1px;
+  height: 1px;
+}
+
+.archive-thread.is-top {
+  top: 0.75rem;
+}
+
+.archive-thread.is-bottom {
+  bottom: 0.75rem;
+}
+
+@media (max-width: 900px) {
+  .archive-thread {
+    display: block;
+  }
 }
 
 .archive-section > .eyebrow {
@@ -33,18 +60,17 @@
   width: 100%;
 }
 
-/* A strip of paper torn off under the header, with the red thread's bead hanging into it */
+/* A flat strip under the header, with the red thread's bead hanging into it */
 .archive-pinbar {
   --oxide: #8a4938;
-  --pinbar-edge: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 16' preserveAspectRatio='none'%3E%3Cpath d='M0 0H600V7.8L600 7.8L598 7.8L595 9.0L592 7.8L586 7.6L582 9.2L577 8.0L574 8.7L570 7.4L565 8.6L562 7.9L556 8.2L553 8.3L548 8.1L543 8.4L540 7.5L537 7.6L531 8.4L525 7.9L519 9.1L514 8.1L511 9.0L506 8.8L503 8.3L499 7.7L494 7.8L488 9.2L484 9.0L478 7.7L473 7.9L469 8.2L463 8.4L458 8.0L454 8.2L450 7.4L447 7.1L441 7.4L438 8.2L434 7.0L431 6.5L428 6.8L425 6.5L419 7.2L413 6.4L407 6.7L404 4.5L401 5.5L398 4.8L392 5.0L389 5.4L386 5.4L380 5.0L374 3.5L369 4.3L365 4.0L360 2.4L357 2.8L352 3.1L349 2.0L346 3.5L341 3.0L338 3.2L334 3.4L329 3.9L325 2.2L321 3.3L316 2.6L313 2.9L307 3.1L304 4.3L300 3.5L297 4.2L291 3.6L288 5.5L284 4.3L278 4.6L272 4.9L267 4.9L264 5.8L261 7.0L255 6.9L251 7.2L247 7.4L243 8.0L238 7.7L234 8.4L230 8.5L224 7.2L218 7.9L213 7.3L209 7.8L206 7.5L200 9.3L195 7.5L190 8.0L186 7.6L183 9.7L177 8.0L174 9.7L169 8.1L166 9.6L160 7.6L154 8.2L150 9.4L146 8.2L142 8.7L138 8.9L132 7.1L129 7.3L126 8.7L120 7.7L115 7.7L110 8.7L106 7.9L100 8.1L97 7.5L94 9.0L91 8.0L86 8.1L83 7.3L78 9.0L73 9.0L70 8.4L65 8.7L62 8.8L57 9.0L53 8.9L48 9.8L45 10.1L41 8.4L38 9.7L34 10.5L28 9.8L25 8.9L20 8.8L16 10.1L10 9.1L6 9.7L0 9.6Z'/%3E%3C/svg%3E");
   --pinbar-face: color-mix(in srgb, var(--paper) 88%, var(--canvas));
   position: fixed;
   top: var(--header-height, 104px);
   right: 0;
   left: 0;
   z-index: 45;
+  border-bottom: 1px solid var(--line);
   background: var(--pinbar-face);
-  filter: drop-shadow(0 5px 6px rgb(58 40 20 / 0.14));
   opacity: 0;
   translate: 0 -110%;
   visibility: hidden;
@@ -62,29 +88,6 @@
     translate 420ms cubic-bezier(0.22, 1, 0.36, 1),
     opacity 200ms ease,
     visibility 0s;
-}
-
-/* The tear hangs below the bar; the lighter layer peeks out under it as the paper's torn fibre. */
-.archive-pinbar::before,
-.archive-pinbar::after {
-  content: "";
-  position: absolute;
-  top: calc(100% - 1px);
-  right: 0;
-  left: 0;
-  height: 0.95rem;
-  -webkit-mask: var(--pinbar-edge) 0 0 / 100% 100% no-repeat;
-  mask: var(--pinbar-edge) 0 0 / 100% 100% no-repeat;
-  pointer-events: none;
-}
-
-.archive-pinbar::before {
-  translate: 0 2px;
-  background: color-mix(in srgb, var(--paper) 45%, #fff);
-}
-
-.archive-pinbar::after {
-  background: var(--pinbar-face);
 }
 
 .archive-pinbar-row {
@@ -217,6 +220,12 @@ html[dir="ltr"] .archive-pinbar-link:hover svg {
 
 .home-products > .rad-card--featured {
   grid-column: span 2;
+}
+
+/* Above the home's red thread, which runs on behind the works */
+.archive-section .home-products {
+  position: relative;
+  z-index: 6;
 }
 
 /* home gallery motion */

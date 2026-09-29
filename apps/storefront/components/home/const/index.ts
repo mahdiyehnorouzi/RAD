@@ -4,7 +4,6 @@ export {
   HERO_CARD_SWIPE_PX,
   heroCardCopy,
   heroCards,
-  heroScene,
 } from "./hero-cards";
 export { featuredHomeWorks, featuredWorkPhoto } from "./featured-works";
 export { certificateScene, homeMedia } from "./home-media";

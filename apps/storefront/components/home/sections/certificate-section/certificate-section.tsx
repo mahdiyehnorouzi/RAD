@@ -2,7 +2,6 @@
 
 import { useLocale } from "@/components/i18n";
 import { useInView } from "../../hooks";
-import { ButtonLink } from "@/components/ui/button-link";
 import { CertificateScene } from "./certificate-scene";
 import { CertificateSeal } from "./certificate-seal";
 import { CertificateThread } from "./certificate-thread";
@@ -28,7 +27,6 @@ export function CertificateSection() {
       aria-labelledby="certificate-title"
     >
       <CertificateScene alt={t("certificatePhotoAlt")} />
-      <span className="certificate-tear" aria-hidden="true" />
       <p className="certificate-edition" aria-hidden="true">
         <span className="certificate-edition-number">{t("editionMark")}</span>
         <svg className="certificate-edition-rule" viewBox="0 0 120 8" preserveAspectRatio="none">
@@ -51,10 +49,8 @@ export function CertificateSection() {
             <li key={fact}>{fact}</li>
           ))}
         </ul>
-        <ButtonLink href="/passport/007">{t("pdpPassportLink")}</ButtonLink>
         <CertificateSeal />
       </aside>
-      <span className="certificate-edge" aria-hidden="true" />
     </section>
   );
 }

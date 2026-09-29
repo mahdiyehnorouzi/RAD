@@ -1,11 +1,10 @@
 export type HeroCard = {
-  href: string;
   src: string;
   alt: string;
   title: string;
-  material: string;
-  /** Concept pieces are not archive works, so they never carry a RAD number. */
-  conceptLabel: string;
+  /** Written by hand on the back of the card. */
   note: string;
-  tone: "stone" | "textile" | "metal";
+  /** The note in the maker's own handwriting, as transparent ink; the text is set in a pen font without it. */
+  noteArt?: string;
+  tone: "stone" | "textile" | "metal" | "ceramic";
 };

@@ -1,67 +1,44 @@
 "use client";
 
-import type { CSSProperties } from "react";
 import Link from "next/link";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 import { useLocale } from "@/components/i18n";
 import { useLivePieces } from "@/hooks/use-artworks";
-import { formatPassportCode } from "@/lib/passport";
 import { workshopToday } from "@/lib/now";
 import { journeyCopy } from "./const";
+import { JourneySpark } from "./journey-spark";
 import "./journey-workshop.css";
 
+/**
+ * Today in the workshop: a torn paper sheet beside a torn photograph of the
+ * work on the bench. The thread comes out from under the photograph's foot.
+ */
 export function JourneyWorkshop() {
-  const { locale, t, number, href } = useLocale();
+  const { locale, t, href } = useLocale();
   const piece = workshopToday(useLivePieces());
   if (!piece) return null;
 
   const copy = journeyCopy[locale];
-  const currentIndex = Math.max(0, piece.milestones.findIndex((item) => item.current));
-  const current = piece.milestones[currentIndex];
-  const code = formatPassportCode(piece.code, locale, number);
-  const progress = currentIndex / Math.max(1, piece.milestones.length - 1);
+  const Arrow = locale === "fa" ? ArrowLeft : ArrowRight;
 
   return (
-    <article className="journey-band journey-workshop">
-      <span className="journey-paper" aria-hidden="true" />
-      <Link href={href(`/now/${piece.code}`)} className="journey-workshop-panel">
-        <div className="journey-workshop-copy">
-          <h2>{t("todayWorkshop")}</h2>
-          <p className="journey-workshop-code">
-            {locale === "fa" ? `رَد ${code}` : `RAD ${code}`}
-          </p>
-          <p className="journey-workshop-stage">
-            {t("liveNow")}
-            {locale === "fa" ? "، " : ": "}
-            <b>{current?.title[locale]}</b>
-          </p>
-          <p className="journey-workshop-days">
-            {t("liveDaysAgo", { days: number(piece.startedDaysAgo) })}
-          </p>
-        </div>
+    <article className="journey-workshop" aria-labelledby="journey-workshop-title">
+      <div className="journey-workshop-sheet">
+        <h2 id="journey-workshop-title">{t("todayWorkshop")}</h2>
+        <p>{copy.workshopLine}</p>
+        <Link href={href(`/now/${piece.code}`)} className="journey-workshop-link">
+          {copy.workshopLink}
+          <Arrow aria-hidden="true" />
+        </Link>
+      </div>
+      <div className="journey-workshop-photo">
         {piece.image ? (
-          <span className="journey-workshop-photo">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={piece.image} alt="" />
-          </span>
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={piece.image} alt="" />
         ) : null}
-        <ol
-          className="journey-rail"
-          aria-label={copy.railLabel}
-          style={{ "--rail-progress": progress, "--rail-count": piece.milestones.length } as CSSProperties}
-        >
-          {piece.milestones.map((milestone) => (
-            <li
-              key={milestone.id}
-              data-state={milestone.current ? "current" : milestone.done ? "done" : "next"}
-              aria-current={milestone.current ? "step" : undefined}
-            >
-              <span className="journey-rail-dot" aria-hidden="true" />
-              <span className="journey-rail-label">{milestone.title[locale]}</span>
-            </li>
-          ))}
-        </ol>
-      </Link>
-      <span className="journey-pin journey-workshop-pin" data-thread-anchor aria-hidden="true" />
+        <JourneySpark className="journey-workshop-spark" />
+        <span className="journey-workshop-exit" data-thread-anchor aria-hidden="true" />
+      </div>
     </article>
   );
 }

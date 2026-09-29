@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, type FocusEvent } from "react";
-import { Pause, Play } from "lucide-react";
 import { heroCardCopy, heroCards } from "@/components/home/const";
 import { useInView } from "@/components/home/hooks";
 import { useLocale } from "@/components/i18n";
@@ -15,7 +14,7 @@ function signedOffset(index: number, active: number, count: number) {
 }
 
 /**
- * A fan of three works on the plinth. The centre photograph turns over to show
+ * A fan of works on the plinth. The centre photograph turns over to show
  * its record, then the next work steps forward, following the reading direction.
  */
 export function HeroCards() {
@@ -26,10 +25,9 @@ export function HeroCards() {
   const { ref, inView } = useInView<HTMLDivElement>({ threshold: 0.25, once: false });
   const [hovered, setHovered] = useState(false);
   const [focused, setFocused] = useState(false);
-  const [stopped, setStopped] = useState(false);
-  const { active, from, turned, autoplay, goTo, next, prev, turn } = useHeroCycle(
+  const { active, from, turned, goTo, next, prev, turn } = useHeroCycle(
     cards.length,
-    hovered || focused || stopped || !inView,
+    hovered || focused || !inView,
   );
   const swipe = useCardSwipe(isRtl ? prev : next, isRtl ? next : prev);
 
@@ -79,6 +77,7 @@ export function HeroCards() {
             <HeroCard
               key={card.src}
               card={card}
+              position={index + 1}
               offset={offset}
               wrapping={Math.abs(offset - previous) > 1}
               turned={turned}
@@ -88,16 +87,6 @@ export function HeroCards() {
           );
         })}
       </div>
-      {autoplay ? (
-        <button
-          type="button"
-          className="hero-cards-toggle"
-          aria-label={stopped ? copy.play : copy.pause}
-          onClick={() => setStopped((value) => !value)}
-        >
-          {stopped ? <Play aria-hidden="true" /> : <Pause aria-hidden="true" />}
-        </button>
-      ) : null}
     </div>
   );
 }

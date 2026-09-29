@@ -1,10 +1,13 @@
 "use client";
 
-import { ChangeEvent, useRef, useState } from "react";
+import { ChangeEvent, RefObject, useState } from "react";
 import { useLocale } from "@/components/i18n";
 import { prepareImage } from "@/lib/media/prepare-image";
+import { StudioIcon } from "../../studio-icon";
+import { designerCopy } from "../const";
 
 export function DesignerImages({
+  inputRef,
   uploads,
   maxImages,
   error,
@@ -12,6 +15,7 @@ export function DesignerImages({
   onAdd,
   onRemove,
 }: {
+  inputRef: RefObject<HTMLInputElement | null>;
   uploads: string[];
   maxImages: number;
   error: string;
@@ -19,8 +23,8 @@ export function DesignerImages({
   onAdd: (files: string[]) => void;
   onRemove: (index: number) => void;
 }) {
-  const { t, number } = useLocale();
-  const input = useRef<HTMLInputElement>(null);
+  const { t, number, locale } = useLocale();
+  const c = designerCopy[locale];
   const [processing, setProcessing] = useState(false);
 
   async function pick(event: ChangeEvent<HTMLInputElement>) {
@@ -61,45 +65,53 @@ export function DesignerImages({
   }
 
   return (
-    <fieldset className="designer-images" aria-busy={processing}>
-      <legend>{t("designerAddImages")}</legend>
-      <p>{t("designerImagesHelp")}</p>
+    <div className="idea-images" aria-busy={processing}>
       <input
-        ref={input}
+        ref={inputRef}
         type="file"
         accept="image/jpeg,image/png,image/webp"
         multiple
         hidden
         onChange={pick}
       />
-      <button
-        type="button"
-        className="button outline"
-        disabled={uploads.length >= maxImages || processing}
-        onClick={() => input.current?.click()}
-      >
-        {processing ? t("designerImageProcessing") : t("designerAddImages")}
-      </button>
-      {uploads.length ? (
-        <ul
-          className="designer-upload-grid"
-          aria-label={t("designerYourImages")}
-        >
+      {uploads.length || processing ? (
+        <ul className="idea-upload-grid" aria-label={t("designerYourImages")}>
           {uploads.map((src, index) => (
             <li key={`${index}-${src.slice(-12)}`}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={src} alt="" />
-              <button type="button" onClick={() => onRemove(index)}>
-                {t("designerRemoveImage")}
+              <button
+                type="button"
+                className="idea-upload-remove"
+                aria-label={c.removePhoto}
+                onClick={() => onRemove(index)}
+              >
+                <StudioIcon name="close" size={16} />
               </button>
             </li>
           ))}
+          {uploads.length < maxImages ? (
+            <li>
+              <button
+                type="button"
+                className="idea-upload-add"
+                disabled={processing}
+                onClick={() => inputRef.current?.click()}
+              >
+                <i aria-hidden="true">
+                  <StudioIcon name="plus" size={18} />
+                </i>
+                <span>{processing ? t("designerImageProcessing") : c.addAnotherPhoto}</span>
+              </button>
+            </li>
+          ) : null}
         </ul>
       ) : null}
       {error ? (
-        <p className="form-error designer-image-errors" role="alert">
+        <p className="cd-error idea-image-errors" role="alert">
           {error}
         </p>
       ) : null}
-    </fieldset>
+    </div>
   );
 }

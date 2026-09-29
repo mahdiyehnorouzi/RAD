@@ -45,4 +45,4 @@ export { fetchFaq } from "./content";
 export { createNotice, fetchNotices, markNoticesRead } from "./notices";
 export { cancelOrder, confirmDemoPayment, createOrder, fetchOrder, fetchOrders } from "./orders";
 export { proxyApiRequest } from "./proxy";
-export { createProductReview, fetchProductReviews } from "./reviews";
+export { createProductReview, fetchProductReviews, fetchReviewFeed } from "./reviews";

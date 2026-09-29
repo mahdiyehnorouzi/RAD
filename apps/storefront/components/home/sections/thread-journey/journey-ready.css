@@ -1,183 +1,180 @@
+/*
+ * A rounded photograph card; the card tag hangs over its reading start,
+ * tied through its brass eyelet onto the thread and swaying on it. The
+ * eyelet sits on the pivot, so the thread stays put while the tag moves.
+ */
 .journey-ready {
-  --ready-split: 44%;
-  --tag-w: 4.7rem;
-  --tag-h: 6.6rem;
-
-  display: grid;
-  grid-template-columns: minmax(0, var(--ready-split)) minmax(0, 1fr);
-  min-height: clamp(17rem, 72vw, 34rem);
+  position: relative;
+  min-height: clamp(17rem, 66vw, 35rem);
+  margin-inline: var(--journey-edge);
 }
 
 .journey-ready-photo {
-  position: relative;
-  grid-column: 2;
-  grid-row: 1;
-  margin: calc(var(--tear) - 5px) 0;
+  position: absolute;
+  inset: 0;
   overflow: hidden;
-  clip-path: inset(0);
-  transition: clip-path 1.1s var(--journey-ease);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--sand) 40%, var(--canvas));
+  box-shadow: 0 10px 22px -12px rgb(52 36 20 / 0.45);
 }
 
 .journey-ready-photo img {
   object-fit: cover;
-  object-position: 34% 55%;
-  transition: transform 1.6s var(--journey-ease);
+  object-position: 30% 55%;
 }
 
-.journey-ready-sheet {
-  position: relative;
-  z-index: 1;
-  grid-column: 1;
-  grid-row: 1;
-  display: grid;
-  align-content: center;
-  margin-inline-end: -1rem;
-  padding-block: 2.2rem;
-  padding-inline: var(--journey-gutter) 1.6rem;
+html[dir="ltr"] .journey-ready-photo img {
+  object-position: 70% 55%;
+  transform: scaleX(-1);
 }
 
-.journey-ready-copy {
-  position: relative;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  justify-items: start;
-  gap: 0.55rem;
-}
+/*
+ * A cream card tag: rounded clipped shoulders, fine fibres and grain, a brass
+ * grommet you can see through, hanging nearly straight.
+ */
+.journey-tag {
+  --tag-green: #1f3a31;
+  --tag-shape: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 118' preserveAspectRatio='none'%3E%3Cpath d='M31 0H69C72 0 74 1 76 3L97.5 22C99 23.5 100 25 100 28V113C100 116 98 118 95 118H5C2 118 0 116 0 113V28C0 25 1 23.5 2.5 22L24 3C26 1 28 0 31 0Z'/%3E%3C/svg%3E");
+  --tag-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .42 0 0 0 0 .33 0 0 0 0 .2 0 0 0 .13 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  --tilt: -3deg;
 
-.journey-ready-copy p {
-  margin-bottom: 0.55rem;
-  color: var(--muted);
-  font-size: clamp(0.88rem, 1.6vw, 1.15rem);
-  line-height: 1.8;
-}
-
-/* The tag is threaded on the line: in through its hole, out at its foot */
-.journey-tag-hang {
   position: absolute;
   z-index: 6;
-  top: 50%;
-  inset-inline-start: calc(var(--ready-split) + 0.35rem);
-  width: var(--tag-w);
-  height: var(--tag-h);
-  transform: translateY(-50%);
-  filter: drop-shadow(0 7px 9px rgb(58 40 22 / 0.28)) drop-shadow(0 1px 1px rgb(58 40 22 / 0.3));
-}
-
-.journey-tag-hole {
-  top: 1.05rem;
-  left: 50%;
-}
-
-.journey-tag-foot {
-  bottom: 0.1rem;
-  left: 50%;
-}
-
-.journey-tag {
-  position: absolute;
-  inset: 0;
+  top: 15%;
+  inset-inline-start: 5%;
   display: grid;
-  align-content: center;
   justify-items: center;
-  gap: 0.1rem;
-  padding-top: 1.35rem;
-  clip-path: polygon(24% 0, 76% 0, 100% 17%, 100% 100%, 0 100%, 0 17%);
-  transform-origin: 50% 1.05rem;
-  transform: rotate(-2deg);
-  background:
-    repeating-linear-gradient(97deg, rgb(120 84 44 / 0.05) 0 2px, transparent 2px 7px),
-    radial-gradient(120% 80% at 30% 20%, rgb(255 240 210 / 0.45), transparent 60%),
-    var(--kraft);
-  color: var(--kraft-ink);
-  font-family: var(--font-hand);
-  line-height: 1.05;
-  transition: transform 1.2s var(--journey-ease);
+  align-content: center;
+  gap: clamp(0.8rem, 2.8vw, 1.4rem);
+  width: clamp(10rem, 38%, 17.5rem);
+  aspect-ratio: 1 / 1.18;
+  padding: clamp(2.6rem, 8vw, 3.8rem) 0.9rem 1rem;
+  transform: rotate(calc(var(--tilt) + var(--swing, 0deg)));
+  transform-origin: 50% 1.375rem;
+  filter: drop-shadow(5px 12px 12px rgb(52 36 20 / 0.28)) drop-shadow(0 1px 1.5px rgb(52 36 20 / 0.3));
+  will-change: transform;
 }
 
-.journey-tag > span:first-child {
-  font-size: 1.75rem;
-}
-
-.journey-tag > span:last-child {
-  font-size: 1.3rem;
+html[dir="ltr"] .journey-tag {
+  --tilt: 3deg;
 }
 
 .journey-tag::before {
   content: "";
   position: absolute;
-  top: calc(1.05rem - 0.3rem);
-  left: 50%;
-  width: 0.6rem;
-  height: 0.6rem;
-  margin-left: -0.3rem;
-  border-radius: 50%;
-  background: color-mix(in srgb, var(--kraft-ink) 55%, var(--kraft));
-  box-shadow:
-    inset 0 1px 2px rgb(40 20 12 / 0.5),
-    0 0 0 2px rgb(255 240 215 / 0.55);
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(130% 90% at 30% 12%, rgb(255 252 242 / 0.6), transparent 60%),
+    radial-gradient(140% 120% at 50% 50%, transparent 62%, rgb(120 92 56 / 0.16)),
+    repeating-linear-gradient(90deg, rgb(110 86 52 / 0.04) 0 1px, transparent 1px 3px),
+    var(--tag-grain),
+    #e8dec8;
+  -webkit-mask: var(--tag-shape) center / 100% 100% no-repeat;
+  mask: var(--tag-shape) center / 100% 100% no-repeat;
 }
 
-.journey-tag::after {
-  content: "";
+/* A brass grommet; its hole shows a dim wall behind the tag */
+.journey-tag-eyelet {
   position: absolute;
-  top: 0;
+  top: 0.6rem;
   left: 50%;
-  width: 1.8px;
-  height: 1.05rem;
-  margin-left: -0.9px;
-  background: var(--oxide);
+  width: 1.55rem;
+  height: 1.55rem;
+  margin-left: -0.775rem;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 50% 58%, #cbb088 0 16%, #8a6a44 29%, #5c4020 32%, transparent 34%),
+    radial-gradient(circle at 34% 28%, #fbe9b4 0 9%, #d9b05c 32%, #a67b2f 62%, #6b4c1c 100%);
+  box-shadow:
+    0 1px 1px rgb(40 20 12 / 0.45),
+    0 3px 5px rgb(40 20 12 / 0.22);
 }
 
-[data-thread="live"] .journey-ready:not(:has(.journey-tag-hole.is-reached)) .journey-ready-photo {
-  clip-path: inset(0 0 100% 0);
+/* The thread doubled into a cord through the grommet, wrapped once above it; drawn once the thread arrives */
+.journey-tag-tie {
+  position: absolute;
+  top: -1.75rem;
+  left: calc(50% - 0.625rem);
+  width: 1.25rem;
+  height: 3.5rem;
+  overflow: visible;
 }
 
-[data-thread="live"] .journey-ready:not(:has(.journey-tag-hole.is-reached)) .journey-ready-photo img {
-  transform: scale(1.1);
+.journey-tag-tie path {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 1 1;
+  stroke-dashoffset: 0;
+  transition: stroke-dashoffset 0.6s var(--journey-ease) var(--tie-delay, 0s);
 }
 
-[data-thread="live"] .journey-tag-hole:not(.is-reached) ~ .journey-tag {
-  transform: rotate(10deg);
+.journey-tag-tie-line {
+  stroke: var(--oxide);
+  stroke-width: 1.6;
+}
+
+.journey-tag-tie-wrap {
+  stroke: var(--oxide-deep);
+  stroke-width: 1.9;
+  --tie-delay: 0.45s;
+}
+
+.journey-tag-tie-shade {
+  stroke: rgb(52 26 14 / 0.3);
+  stroke-width: 2.4;
+  transform: translate(0.8px, 1.8px);
+  filter: blur(0.8px);
+}
+
+[data-thread="live"] .journey-tag:not(:has(.journey-tag-eyelet.is-reached)) .journey-tag-tie path {
+  stroke-dashoffset: 1;
+  --tie-delay: 0s;
+}
+
+.journey .journey-tag h2 {
+  color: var(--tag-green);
+  font-size: clamp(1.25rem, 5vw, 2.1rem);
+  font-weight: 800;
+  line-height: 1.2;
+  text-align: center;
+}
+
+.journey .journey-tag .button {
+  gap: 0.55rem;
+  min-height: clamp(40px, 11vw, 50px);
+  padding-inline: clamp(1.1rem, 4vw, 1.6rem);
+  border-color: var(--tag-green);
+  border-radius: 999px;
+  background: var(--tag-green);
+  color: var(--paper);
+  font-size: clamp(0.82rem, 2.9vw, 1.02rem);
+}
+
+.journey .journey-tag .button:hover {
+  background: #152a23;
+}
+
+.journey-tag-spark {
+  top: -1.1rem;
+  inset-inline-end: calc(100% - 0.4rem);
 }
 
 @media (min-width: 900px) {
   .journey-ready {
-    --ready-split: 42%;
-    --tag-w: 6.2rem;
-    --tag-h: 8.7rem;
-    min-height: clamp(28rem, 40vw, 38rem);
-  }
-
-  .journey-tag-hole {
-    top: 1.25rem;
+    width: min(100% - 2 * var(--journey-edge), var(--journey-max));
+    margin-inline: auto;
   }
 
   .journey-tag {
-    padding-top: 1.6rem;
-    transform-origin: 50% 1.25rem;
-  }
-
-  .journey-tag::before {
-    top: calc(1.25rem - 0.3rem);
-  }
-
-  .journey-tag::after {
-    height: 1.25rem;
-  }
-
-  .journey-tag > span:first-child {
-    font-size: 2.3rem;
-  }
-
-  .journey-tag > span:last-child {
-    font-size: 1.6rem;
+    inset-inline-start: 7%;
+    width: 16.5rem;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .journey-ready-photo,
-  .journey-ready-photo img,
-  .journey-tag {
+  .journey-tag-tie path {
     transition: none;
   }
 }

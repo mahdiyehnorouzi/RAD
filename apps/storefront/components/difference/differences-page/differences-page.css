@@ -1,0 +1,539 @@
+/* Differences — built from the phone mockup: a torn still-life hero, three
+   traces, the thread from clay to RAD, a factory comparison, the museum, and
+   a hand-lettered close. */
+
+/* Three traces */
+
+.differences-traces {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 2.75rem;
+  max-width: var(--trace-wide);
+  margin: 2.25rem auto 0;
+  padding: 0 var(--trace-pad);
+}
+
+.differences-trace {
+  display: grid;
+  align-content: start;
+  gap: 0.55rem;
+}
+
+.differences-trace h3 {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: clamp(1.25rem, 5.6vw, 1.4rem);
+  line-height: 1.6;
+}
+
+.differences-trace h3::before {
+  flex: none;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--trace-thread);
+  content: "";
+}
+
+.differences-trace > p {
+  max-width: 44ch;
+  color: var(--trace-body);
+  font-size: 0.95rem;
+  line-height: 2;
+}
+
+.differences-trace-media {
+  position: relative;
+  margin-top: 0.9rem;
+  padding-bottom: 1.5rem;
+}
+
+.differences-trace-photo {
+  position: relative;
+  display: block;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  border-radius: 4px 4px 0 0;
+  background: #e6dccd;
+}
+
+.differences-trace-photo img {
+  object-fit: cover;
+}
+
+.differences-trace-tear {
+  bottom: -1px;
+  left: 0;
+  width: 100%;
+  height: 1.25rem;
+}
+
+.differences-trace-note {
+  position: absolute;
+  z-index: 2;
+  bottom: 0;
+  inset-inline-end: 0.9rem;
+  display: grid;
+  padding: 0.45rem 0.95rem 0.55rem;
+  background: var(--trace-cream);
+  color: var(--trace-ink);
+  font-family: var(--font-hand);
+  font-size: 1.2rem;
+  line-height: 1.45;
+  rotate: -3deg;
+  box-shadow: 0 10px 18px -14px rgb(60 44 30 / 0.65);
+}
+
+.differences-trace:nth-of-type(2) .differences-trace-note {
+  rotate: 2deg;
+}
+
+/* From material to RAD */
+
+.differences-journey {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1.6rem;
+  max-width: var(--trace-wide);
+  margin: 4rem auto 0;
+  padding: 2.5rem var(--trace-pad) 0;
+  border-top: 1px solid var(--trace-hair);
+}
+
+/* Factory comparison */
+
+.differences-compare {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1.5rem;
+  max-width: 58rem;
+  margin: 4rem auto 0;
+  padding: 0 var(--trace-pad);
+}
+
+.differences-compare-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+.differences-compare-side {
+  display: grid;
+  align-content: start;
+  gap: 0.75rem;
+}
+
+.differences-compare-photo {
+  position: relative;
+  aspect-ratio: 1;
+  overflow: hidden;
+  border-radius: 14px;
+  background: #f3efe8;
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.55),
+    0 14px 26px -22px rgb(60 44 30 / 0.55);
+}
+
+.differences-compare-photo img {
+  object-fit: cover;
+}
+
+.differences-compare-side h3 {
+  font-size: 1rem;
+  line-height: 1.6;
+  text-align: center;
+}
+
+.differences-compare-side ul {
+  display: grid;
+  gap: 0.55rem;
+  padding: 0;
+  list-style: none;
+  color: var(--trace-muted);
+  font-size: 0.8rem;
+  line-height: 1.7;
+}
+
+.differences-compare-side li {
+  display: grid;
+  grid-template-columns: 0.45rem minmax(0, 1fr);
+  align-items: baseline;
+  gap: 0.55rem;
+}
+
+.differences-compare-side li::before {
+  width: 0.42rem;
+  height: 0.42rem;
+  border-radius: 50%;
+  background: #bcb4a9;
+  content: "";
+}
+
+.differences-compare-side.is-rad li {
+  color: var(--trace-ink);
+  font-weight: 600;
+}
+
+.differences-compare-side.is-rad li::before {
+  background: var(--trace-thread);
+}
+
+.differences-compare-side.is-rad .differences-compare-photo {
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--trace-thread) 30%, transparent),
+    0 18px 30px -22px rgb(60 44 30 / 0.6);
+}
+
+/* Museum */
+
+.differences-museum {
+  margin-top: 4.5rem;
+}
+
+.differences-museum-band {
+  position: relative;
+  height: clamp(12rem, 56vw, 26rem);
+  overflow: hidden;
+  background: #e6dccd;
+}
+
+.differences-museum-band img {
+  object-fit: cover;
+  object-position: 50% 60%;
+}
+
+.differences-museum-tear.is-top {
+  top: -1px;
+  left: 0;
+  width: 100%;
+  height: 1rem;
+  scale: 1 -1;
+}
+
+.differences-museum-tear.is-bottom {
+  bottom: -1px;
+  left: 0;
+  width: 100%;
+  height: 1.6rem;
+}
+
+.differences-museum-head {
+  max-width: var(--trace-wide);
+  margin: 1.75rem auto 0;
+  padding: 0 var(--trace-pad);
+}
+
+.differences-museum-head p {
+  max-width: 52ch;
+}
+
+.differences-works {
+  display: grid;
+  gap: 1.25rem;
+  max-width: var(--trace-wide);
+  margin: 1.5rem auto 0;
+  padding: 0 var(--trace-pad);
+  list-style: none;
+}
+
+.differences-works > li {
+  display: flex;
+}
+
+.differences-work {
+  display: grid;
+  grid-template-areas:
+    "photo"
+    "copy"
+    "strip"
+    "open";
+  align-content: start;
+  gap: 1rem;
+  width: 100%;
+  padding: 0.8rem 0.8rem 1.15rem;
+  border-radius: 14px;
+  background: var(--trace-card);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.55),
+    0 14px 28px -24px rgb(60 44 30 / 0.6);
+}
+
+.differences-work-photo {
+  position: relative;
+  grid-area: photo;
+  display: block;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  border-radius: 8px;
+  background: #e6dccd;
+}
+
+.differences-work-photo img {
+  object-fit: cover;
+  transition: transform 600ms var(--trace-ease);
+}
+
+.differences-work:hover .differences-work-photo img {
+  transform: scale(1.04);
+}
+
+.differences-work-copy {
+  grid-area: copy;
+  display: grid;
+  gap: 0.3rem;
+  padding-inline: 0.3rem;
+}
+
+.differences-work-code {
+  justify-self: start;
+  color: var(--trace-thread);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+}
+
+.differences-work-copy h3 {
+  font-size: 1.15rem;
+  line-height: 1.6;
+}
+
+.differences-work-copy h3 a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.differences-work-copy h3 a:hover {
+  text-decoration: underline;
+  text-decoration-color: var(--trace-thread);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 6px;
+}
+
+.differences-work-copy p {
+  color: var(--trace-body);
+  font-size: 0.88rem;
+  line-height: 1.9;
+}
+
+.differences-work-copy .differences-work-meta {
+  color: var(--trace-muted);
+  font-size: 0.8rem;
+}
+
+.differences-work .difference-strip {
+  grid-area: strip;
+  margin-inline: 0.3rem;
+}
+
+.differences-work-open {
+  grid-area: open;
+  justify-self: start;
+  margin-inline: 0.3rem;
+}
+
+/* Close */
+
+.differences-close {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 2.25rem;
+  max-width: 64rem;
+  margin: 4.5rem auto 0;
+  padding: 0 var(--trace-pad) 4.5rem;
+}
+
+.differences-close-copy {
+  display: grid;
+  justify-items: start;
+  gap: 0.75rem;
+}
+
+.differences-close-copy h2 {
+  font-size: clamp(1.3rem, 5.6vw, 1.55rem);
+  line-height: 1.6;
+}
+
+.differences-close-copy p {
+  max-width: 44ch;
+  color: var(--trace-body);
+  font-size: 0.92rem;
+  line-height: 1.95;
+}
+
+.differences-close-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem 1.75rem;
+  margin-top: 0.6rem;
+}
+
+.differences-text-link {
+  color: var(--trace-ink);
+  font-size: 0.92rem;
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-color: var(--trace-thread);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 6px;
+  transition: text-underline-offset 200ms ease-out;
+}
+
+.differences-text-link:hover {
+  text-underline-offset: 9px;
+}
+
+@media (min-width: 600px) and (max-width: 959px) {
+  .differences-traces,
+  .differences-journey,
+  .differences-compare,
+  .differences-museum-head,
+  .differences-works,
+  .differences-close {
+    max-width: 40rem;
+  }
+}
+
+@media (min-width: 960px) {
+  .differences-traces {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: clamp(2rem, 4vw, 3.5rem);
+    margin-top: 4.5rem;
+  }
+
+  .differences-trace:nth-of-type(2) {
+    margin-top: 5rem;
+  }
+
+  .differences-trace:nth-of-type(3) {
+    margin-top: 2.25rem;
+  }
+
+  .differences-trace-note {
+    font-size: 1.35rem;
+  }
+
+  .differences-journey {
+    gap: 2.5rem;
+    margin-top: 6rem;
+    padding-top: 4.5rem;
+  }
+
+  .differences-journey .trace-section-head,
+  .differences-compare .trace-section-head {
+    justify-items: center;
+    text-align: center;
+  }
+
+  .differences-compare {
+    gap: 2.25rem;
+    margin-top: 6rem;
+  }
+
+  .differences-compare-grid {
+    gap: 2rem;
+  }
+
+  .differences-compare-side h3 {
+    font-size: 1.2rem;
+  }
+
+  .differences-compare-side ul {
+    justify-self: center;
+    font-size: 0.95rem;
+  }
+
+  .differences-museum {
+    margin-top: 6.5rem;
+  }
+
+  .differences-museum-head {
+    margin-top: 3rem;
+  }
+
+  .differences-works {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.75rem;
+    margin-top: 2.25rem;
+  }
+
+  .differences-works > li:first-child {
+    grid-column: 1 / -1;
+  }
+
+  .differences-works > li:first-child .differences-work {
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+    grid-template-areas:
+      "photo copy"
+      "photo strip"
+      "photo open";
+    grid-template-rows: auto auto 1fr;
+    column-gap: 2rem;
+    padding: 1rem;
+  }
+
+  .differences-works > li:first-child .differences-work-photo {
+    aspect-ratio: auto;
+    min-height: 26rem;
+  }
+
+  .differences-works > li:first-child .differences-work-copy {
+    padding-top: 1rem;
+  }
+
+  .differences-works > li:first-child .differences-work-copy h3 {
+    font-size: 1.6rem;
+  }
+
+  .differences-works > li:first-child .differences-work-open {
+    align-self: end;
+    margin-bottom: 0.5rem;
+  }
+
+  .differences-close {
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+    align-items: center;
+    gap: clamp(2.5rem, 5vw, 4.5rem);
+    margin-top: 6.5rem;
+    padding-bottom: 6.5rem;
+  }
+
+  .differences-close-copy h2 {
+    font-size: 1.85rem;
+  }
+
+  .differences-close-copy p {
+    font-size: 1rem;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .differences-trace-media,
+    .differences-compare-side,
+    .differences-work,
+    .differences-close .trace-quote {
+      animation: traceScrollIn linear both;
+      animation-timeline: view();
+      animation-range: entry 5% entry 70%;
+    }
+
+    .differences-trace-note {
+      animation: differencesNote linear both;
+      animation-timeline: view();
+      animation-range: entry 40% cover 45%;
+    }
+  }
+}
+
+@keyframes differencesNote {
+  from {
+    opacity: 0;
+    translate: 0 10px;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}

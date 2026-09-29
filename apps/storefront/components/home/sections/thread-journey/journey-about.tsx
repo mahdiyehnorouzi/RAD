@@ -1,31 +1,31 @@
 "use client";
 
 import { useId } from "react";
-import Image from "next/image";
+import Link from "next/link";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 import { useLocale } from "@/components/i18n";
-import { ButtonLink } from "@/components/ui/button-link";
-import { journeyCopy, journeyMedia, letterStrokes } from "./const";
+import { journeyCopy, letterStrokes } from "./const";
 import "./journey-about.css";
 
+/**
+ * What RAD is: the thread comes down past the works and writes رَد in brown
+ * ink, with the statement and a link to the story beneath it. It lifts off
+ * while writing and picks up again under the link, on to the certificate.
+ */
 export function JourneyAbout() {
-  const { locale } = useLocale();
+  const { locale, href } = useLocale();
   const copy = journeyCopy[locale];
+  const Arrow = locale === "fa" ? ArrowLeft : ArrowRight;
   const maskId = `journey-letter-${useId().replace(/[^a-zA-Z0-9_-]/g, "")}`;
   const ink = letterStrokes.map((stroke) => <path key={stroke.centre} d={stroke.fill} />);
 
   return (
-    <article className="journey-band journey-about" aria-labelledby="journey-about-title">
-      <span className="journey-about-photo" aria-hidden="true">
-        <Image src={journeyMedia.about} alt="" fill sizes="100vw" />
-      </span>
-      <div className="journey-card journey-about-card">
-        <span className="journey-paper is-card" aria-hidden="true" />
-        <h2 id="journey-about-title">{copy.aboutTitle}</h2>
-        <p>{copy.aboutStatement}</p>
-        <ButtonLink href="/about">{copy.aboutLink}</ButtonLink>
-      </div>
+    <section className="journey-about" aria-labelledby="journey-about-title">
+      <h2 id="journey-about-title" className="sr-only">
+        {copy.aboutLabel}
+      </h2>
       <div className="journey-letter" data-thread-letter-host aria-hidden="true">
-        <span className="journey-letter-entry" data-thread-anchor />
+        <span className="journey-letter-entry" data-thread-anchor data-thread-hide="start" />
         <svg viewBox="260 60 350 590" focusable="false">
           <defs>
             <mask id={maskId} maskUnits="userSpaceOnUse" x="240" y="40" width="390" height="630">
@@ -46,6 +46,12 @@ export function JourneyAbout() {
           </g>
         </svg>
       </div>
-    </article>
+      <p className="journey-about-statement">{copy.aboutStatement}</p>
+      <Link href={href("/about")} className="journey-about-link">
+        {copy.aboutLink}
+        <Arrow aria-hidden="true" />
+      </Link>
+      <span className="journey-about-exit" data-thread-anchor data-thread-hide="end" aria-hidden="true" />
+    </section>
   );
 }

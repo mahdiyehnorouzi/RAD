@@ -1,14 +1,14 @@
 export const aboutCopy = {
   fa: {
-    titleLines: ["همه چیز", "لازم نیست", "شبیه نسخه‌ی", "قبل باشد."],
+    titleLines: ["همه‌چیز", "لازم نیست", "شبیه نسخه‌ی", "قبل باشد."],
     ledeLines: [
       "یک استودیو برای ساخت",
       "اشیایی که قرار نیست",
       "دقیقاً تکرار شوند.",
     ],
-    heroAlt: "فنجان دست‌ساز با لعاب سبز روی سطح سنگی",
+    heroAlt: "ماگ دست‌ساز با لعاب سبزِ چکه‌کرده روی سنگ، در نور عصر",
     scrollHint: "ادامه",
-    whyTitle: "چرا رَد به‌وجود آمد؟",
+    whyTitleLines: ["چرا رَد", "به‌وجود آمد؟"],
     whyLines: [
       "از این فکر شروع شد",
       "که چیزهایی که دوستشان داریم،",
@@ -32,7 +32,7 @@ export const aboutCopy = {
       "مانده بود.",
     ],
     founderCta: "بیشتر درباره من",
-    founderAlt: "میز کارگاه با ابزار و فرم‌های گلی",
+    founderAlt: "فیلم کارگاه: دست‌هایی که روی میز کار گل را ورز می‌دهند",
     passageTitleLines: ["چیزی که از", "عبور باقی می‌ماند."],
     passageBodyLines: [
       "هر اثر، رَدِ یک ایده، است.",
@@ -47,7 +47,7 @@ export const aboutCopy = {
     ],
     passageMark: "رَد",
     passageAlt: "دست‌هایی در حال ورز دادن گل روی میز کار",
-    isNotLines: ["رَد", "…نیست"],
+    isNotLines: ["رَد", "نیست…"],
     notItems: [
       { lines: ["تولید انبوه"] },
       { lines: ["کنترل همه‌چیز", "تا آخرین میلی‌متر"] },
@@ -65,7 +65,7 @@ export const aboutCopy = {
     ],
     worksCta: "دیدن آثار",
     stampAlt: "مُهر رَد روی گل",
-    customTitleLines: ["رَدِّ خودت", "را بساز."],
+    customTitleLines: ["رَد خودت", "را بساز."],
     customBodyLines: [
       "با یک عکس، فرم، ایده.",
       "با حتی یک حس شروع کن.",
@@ -74,8 +74,8 @@ export const aboutCopy = {
     ],
     customCta: "سفارش اختصاصی",
     onceLines: ["هر اثر", "فقط یک‌بار."],
-    onceAlt: "کاسه‌ی دو دسته با گیاه در نور طبیعی",
-    closeTitleLines: ["رَدّی که باقی می‌ماند،", "داستان توست."],
+    onceAlt: "فنجان دو دسته‌ی دست‌ساز با شاخه‌ای سبز در نور طبیعی",
+    closeTitleLines: ["رَدی که باقی می‌ماند،", "داستان توست."],
     closeBodyLines: [
       "در رَد، هر اثر نتیجه‌ی یک مسیر",
       "منحصربه‌فرد است:",
@@ -90,9 +90,9 @@ export const aboutCopy = {
       "objects that are not meant",
       "to be repeated exactly.",
     ],
-    heroAlt: "Handmade cup with green glaze on stone",
+    heroAlt: "Handmade mug with a dripping green glaze on stone in late sun",
     scrollHint: "Continue",
-    whyTitle: "Why does RAD exist?",
+    whyTitleLines: ["Why does", "RAD exist?"],
     whyLines: [
       "It began with the thought",
       "that the things we love",
@@ -116,8 +116,8 @@ export const aboutCopy = {
       "stayed in my mind.",
     ],
     founderCta: "More about me",
-    founderAlt: "Workshop bench with tools and clay forms",
-    passageTitleLines: ["What remains", "after something passes."],
+    founderAlt: "Workshop film: hands wedging clay on the workbench",
+    passageTitleLines: ["What remains", "after something", "passes."],
     passageBodyLines: [
       "Every work is the trace of an idea,",
       "a hand and a material. What remains",
@@ -158,7 +158,7 @@ export const aboutCopy = {
     ],
     customCta: "Custom order",
     onceLines: ["Each work,", "only once."],
-    onceAlt: "Two-handled cup with a plant stem",
+    onceAlt: "Handmade two-handled cup with a green sprig in natural light",
     closeTitleLines: ["The RAD that remains", "is your story."],
     closeBodyLines: [
       "At RAD, every work is the result of",

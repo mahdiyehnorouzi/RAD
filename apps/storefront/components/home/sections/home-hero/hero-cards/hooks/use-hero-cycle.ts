@@ -89,7 +89,6 @@ export function useHeroCycle(count: number, paused: boolean) {
     active: state.active,
     from: state.from,
     turned: state.turned,
-    autoplay: count > 1 && !reduced,
     goTo,
     next: () => step(1),
     prev: () => step(-1),

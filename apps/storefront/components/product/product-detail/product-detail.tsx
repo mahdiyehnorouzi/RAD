@@ -14,7 +14,6 @@ import { useLiveProduct } from "./hooks";
 import { MaterialTexture } from "./material-texture";
 import { ProductAnatomy } from "./product-anatomy";
 import { ProductCare } from "./product-care";
-import { ProductCrumbs } from "./product-crumbs";
 import { ProductGallery } from "./product-gallery";
 import { ProductMaking } from "./product-making";
 import { ProductQuestions } from "./product-questions";
@@ -91,7 +90,6 @@ export function ProductDetail({
   return (
     <article className="pdp">
       <div className="pdp-top">
-        <ProductCrumbs product={resolved} />
         <ProductGallery product={resolved} />
         <ProductSummary
           product={resolved}

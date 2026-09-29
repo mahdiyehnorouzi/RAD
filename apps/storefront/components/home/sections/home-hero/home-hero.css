@@ -1,96 +1,60 @@
 /*
- * The scene photograph is anchored to the bottom edge and covers the hero, so
- * its rendered height is max(hero height, hero width × ratio). Everything that
- * has to sit on the plinth is placed as a fraction of that height, measured
- * from the bottom. These --scene-* values are only resolved inside the hero,
- * where the container units refer to it.
+ * One flat wall. The headline sits at the top, the fan of pinned cards fills
+ * the middle, the two actions sit under it, and a torn paper edge ends it.
+ * It stops short of the fold, so the tear and the workshop under it show on
+ * first load; the home banner above the header is 2.5rem tall.
  */
 .hero {
-  --scene-ratio: 0.5625;
-  --scene-h: max(100cqh, 100cqw * var(--scene-ratio));
-  --stand: 0.272;
-  --cta-line: 0.158;
-  --copy-room: clamp(12.25rem, 27cqh, 15.25rem);
-  --card-h: min(25.5rem, calc(100cqh - var(--stand) * var(--scene-h) - var(--copy-room)));
-  --card-w: calc(var(--card-h) * 0.76);
+  --hero-wall: #e4d4ba;
+  --hero-peek: clamp(1.5rem, 5svh, 3rem);
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   position: relative;
   isolation: isolate;
-  container-type: size;
-  height: clamp(38rem, calc(100svh - var(--header-height)), 60rem);
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  justify-items: center;
+  gap: clamp(1.25rem, 3.5vh, 2.25rem);
+  height: max(36rem, calc(100svh - var(--header-height) - 2.5rem - var(--hero-peek)));
+  padding: clamp(2rem, 6vh, 3.75rem) var(--page) calc(var(--hero-edge-h) + clamp(1.25rem, 4vh, 2.5rem));
   overflow: clip;
-  background: #e4d4ba;
-}
-
-.hero-scene {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-}
-
-.hero-scene img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: 50% 100%;
-  transform-origin: 50% 80%;
-  animation: hero-scene-settle 2.4s var(--ease-out) both;
+  background: var(--hero-wall);
 }
 
 /*
- * A torn print edge laid on the page below: a slow, uneven wave with a white
- * deckled rim, casting a soft shadow back onto the photograph.
+ * The white deckled rim of the torn edge, casting a soft shadow back onto the
+ * wall. The journey below is cut to the tear's wave and laid over it.
  */
 .hero-edge {
   --hero-rim: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 60' preserveAspectRatio='none'%3E%3Cpath d='M0 60V35.5L0 35.5L3 36.5L6 36.2L9 34.7L13 34.7L17 34.9L20 36.0L25 35.2L28 36.9L33 36.9L37 38.3L39 38.0L43 36.1L46 36.7L51 36.5L55 38.1L58 38.0L61 36.7L64 38.7L68 37.7L72 38.3L75 39.4L80 37.8L84 38.7L90 39.3L93 40.0L96 38.2L100 37.3L104 36.8L109 38.7L113 38.7L117 37.9L121 37.2L125 37.6L130 36.0L135 34.2L139 35.4L145 35.3L148 33.6L153 32.0L157 32.0L159 31.3L164 31.0L167 31.4L173 30.0L176 31.1L182 31.5L187 29.6L191 29.7L196 31.3L199 28.9L202 29.1L206 30.2L209 28.4L213 29.6L217 31.5L222 30.4L226 31.2L229 32.0L233 32.3L238 31.2L242 30.6L247 30.9L249 31.5L252 32.2L255 31.4L257 31.9L261 31.9L266 34.1L269 33.1L273 33.7L275 35.3L281 34.4L285 33.3L288 34.2L291 35.7L294 33.3L299 34.8L302 34.8L305 34.7L310 35.6L315 33.6L318 33.2L323 34.1L328 33.2L331 34.5L337 34.4L342 34.0L347 32.0L351 32.2L353 31.1L356 31.7L361 33.7L365 33.5L370 33.5L374 31.2L377 31.2L380 32.5L385 33.2L389 32.7L394 31.1L399 33.8L404 33.5L408 31.9L413 32.6L418 34.8L421 33.3L427 34.5L430 32.8L432 35.3L437 33.2L443 35.9L447 34.1L451 33.4L454 36.0L458 34.6L463 34.2L469 35.2L472 33.3L475 33.0L479 32.7L483 32.0L488 32.1L492 32.3L498 31.1L503 30.5L507 29.9L509 29.2L512 27.4L517 27.0L521 27.9L526 25.8L530 25.7L534 23.4L539 23.0L542 23.9L546 22.5L551 22.6L555 21.1L559 20.1L563 19.2L567 18.7L573 18.6L578 18.8L581 17.4L587 17.8L589 15.5L593 15.1L596 15.0L601 17.0L606 15.1L611 16.7L614 17.4L619 15.6L625 16.3L629 18.3L634 16.1L638 17.4L641 16.6L644 18.4L647 18.1L651 16.7L654 18.8L658 17.3L664 19.8L669 18.0L673 18.0L677 18.8L680 19.4L686 20.7L689 18.8L694 20.1L699 18.7L701 20.5L705 18.7L711 20.4L716 18.7L721 18.7L726 19.9L729 20.2L735 19.4L737 20.2L741 19.1L744 19.0L747 19.9L750 21.3L753 20.7L756 20.4L759 20.3L761 21.9L765 20.7L769 23.3L772 23.2L776 22.6L781 22.9L785 24.4L790 24.1L795 26.0L800 25.8L803 25.3L806 25.9L811 27.2L814 27.2L819 30.5L824 29.5L827 30.0L831 30.2L834 31.1L840 34.0L844 32.4L850 33.2L853 32.6L857 34.4L861 33.9L865 33.5L868 34.0L872 33.9L874 34.8L877 35.7L881 36.2L886 36.0L891 34.9L895 36.6L897 35.7L902 33.4L907 35.6L911 34.8L916 32.7L920 33.5L926 34.0L931 32.9L936 32.9L940 31.2L943 30.8L947 30.5L952 31.6L956 31.7L961 31.2L963 32.1L968 31.1L972 31.6L974 31.9L978 30.0L981 32.1L984 32.2L990 31.7L993 31.9L998 33.0L1002 32.9L1005 31.6L1008 33.7L1011 33.4L1014 32.1L1017 34.1L1022 34.5L1025 34.3L1029 34.4L1032 35.9L1035 36.3L1040 33.8L1044 36.4L1049 35.5L1053 34.9L1058 35.1L1062 34.9L1066 37.4L1069 37.0L1073 37.3L1078 35.3L1083 36.0L1086 34.5L1090 35.7L1093 34.8L1097 35.2L1102 34.2L1106 36.6L1109 36.8L1114 36.7L1117 35.1L1121 37.0L1125 35.2L1129 35.0L1132 34.5L1137 35.3L1142 35.5L1145 36.5L1148 36.3L1154 38.4L1159 38.1L1164 39.7L1168 39.6L1171 40.0L1175 40.7L1179 40.0L1182 42.3L1184 41.4L1188 41.5L1193 44.4L1196 44.0L1200 44.3V60Z'/%3E%3C/svg%3E");
-  --hero-edge: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 60' preserveAspectRatio='none'%3E%3Cpath d='M0 60V41.0L0 41.0L9 42.1L18 41.2L28 40.7L37 42.2L48 41.4L56 41.8L67 43.7L73 44.6L85 44.0L95 42.7L100 43.4L106 42.3L113 41.5L122 41.7L133 40.7L143 39.5L154 38.2L161 38.6L174 37.0L184 35.0L191 34.6L197 35.6L205 35.7L213 36.1L225 34.4L232 37.0L241 37.9L249 36.4L259 38.9L266 37.7L274 40.3L285 38.7L292 38.7L298 40.4L305 39.8L313 38.7L324 38.1L334 37.5L342 37.3L350 38.8L361 36.8L373 36.4L381 38.0L391 36.3L403 37.0L411 38.7L418 37.9L424 37.7L434 38.5L444 39.1L452 40.6L461 39.6L473 38.2L479 39.5L491 36.7L497 36.9L510 33.7L522 33.0L532 30.0L538 27.8L550 25.9L561 24.2L572 23.4L579 21.6L590 20.5L597 21.4L609 21.4L616 22.3L623 20.4L630 21.8L636 21.5L644 22.9L650 22.8L662 25.0L672 24.8L682 23.8L688 23.7L700 25.4L712 23.8L722 25.0L733 24.6L745 24.3L754 26.4L766 27.2L777 28.5L789 29.0L799 31.9L811 32.7L822 35.7L831 36.7L840 37.7L849 37.7L859 40.9L871 40.9L879 41.0L889 40.2L900 38.9L911 38.0L921 38.4L928 38.4L937 37.5L949 36.0L954 35.9L965 35.4L971 37.1L981 36.2L993 36.5L1003 36.9L1012 39.0L1024 40.1L1032 39.9L1040 39.3L1049 41.4L1060 41.5L1072 40.6L1079 40.9L1086 40.3L1095 41.1L1104 40.2L1115 41.7L1124 39.5L1130 41.6L1135 41.4L1145 41.0L1156 41.3L1162 43.1L1168 44.7L1175 44.1L1181 46.2L1189 47.7L1200 49.9V60Z'/%3E%3C/svg%3E");
 
   position: absolute;
   inset-inline: 0;
   bottom: -1px;
   z-index: 4;
-  height: clamp(2.6rem, 5.5vw, 4.75rem);
+  height: var(--hero-edge-h);
   pointer-events: none;
   filter: drop-shadow(0 -3px 5px rgb(58 40 20 / 0.2));
 }
 
-.hero-edge::before,
-.hero-edge::after {
+.hero-edge::before {
   content: "";
   position: absolute;
   inset: 0;
-  -webkit-mask: var(--edge-shape) var(--edge-at) / var(--edge-size) 100% no-repeat;
-  mask: var(--edge-shape) var(--edge-at) / var(--edge-size) 100% no-repeat;
-  --edge-at: 0 100%;
-  --edge-size: 100%;
-}
-
-.hero-edge::before {
-  --edge-shape: var(--hero-rim);
+  -webkit-mask: var(--hero-rim) var(--hero-edge-x) 100% / var(--hero-edge-size) 100% no-repeat;
+  mask: var(--hero-rim) var(--hero-edge-x) 100% / var(--hero-edge-size) 100% no-repeat;
   background: color-mix(in srgb, var(--paper) 55%, white);
 }
 
-.hero-edge::after {
-  --edge-shape: var(--hero-edge);
-  background: var(--canvas);
-}
-
 .hero-copy {
-  position: absolute;
-  inset-inline: var(--page);
-  top: clamp(2.25rem, 7cqh, 4rem);
+  position: relative;
   z-index: 2;
-  display: grid;
-  justify-items: center;
   text-align: center;
 }
 
 .hero-copy h1 {
   margin: 0;
   color: var(--moss);
-  font-size: clamp(2.2rem, min(4.6cqw, 8cqh), 4.2rem);
+  font-size: clamp(2.2rem, min(4.6vw, 7vh), 4rem);
   font-weight: 800;
   line-height: 1.25;
   letter-spacing: -0.025em;
@@ -116,7 +80,6 @@
 }
 
 .hero-stamp {
-  position: relative;
   display: inline-block;
   padding: 0.02em 0.2em 0.08em;
   border-radius: 2px;
@@ -133,161 +96,61 @@ html[dir="ltr"] .hero-stamp {
   background-position: left center;
 }
 
-.hero-thesis {
-  margin: 0.55rem 0 0;
-  color: color-mix(in srgb, var(--ink) 74%, var(--sand));
-  font-size: clamp(1rem, 1.5cqw, 1.3rem);
-  font-weight: 400;
-  line-height: 1.8;
-  animation: hero-fade 640ms var(--ease-out) 360ms both;
-}
-
 .hero-actions {
-  position: absolute;
-  left: 50%;
-  bottom: calc(var(--cta-line) * var(--scene-h));
+  position: relative;
   z-index: 2;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.85rem;
-  translate: -50% 50%;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  width: min(26rem, 100%);
   animation: hero-fade 640ms var(--ease-out) 900ms both;
 }
 
-.hero-stamp .hero-knot {
-  position: absolute;
-  top: -0.14em;
-  inset-inline-start: 26%;
-  width: 0;
-  height: 0;
-}
-
-.hero-line > span > .hero-knot {
-  display: inline-block;
-  width: 0;
-  height: 0;
-  vertical-align: text-top;
-  translate: 0 -0.14em;
-}
-
-.hero-thread-top {
-  position: absolute;
-  top: 0;
-  inset-inline-start: 44%;
-  width: 1px;
-  height: 1px;
-}
-
-.hero-thread-exit {
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  width: 1px;
-  height: 1px;
-}
-
-/*
- * Pressed-paper buttons: a kiln-green face and a paper face, each with an
- * inner hairline frame and a drawn olive sprig in the closing corner.
- */
-/* Inset shadows stack: a face-coloured band first, so the frame below it shows only as a hairline. */
 .hero .hero-actions .button {
-  --face: linear-gradient(180deg, #30493e, var(--moss) 70%);
-  --face-edge: #2c453a;
-  --frame: rgb(247 242 233 / 0.32);
-  --lift: 0 14px 22px -14px rgb(40 26 12 / 0.6), 0 2px 4px rgb(40 26 12 / 0.14);
-
-  position: relative;
-  isolation: isolate;
-  overflow: hidden;
-  gap: 0.7rem;
-  min-width: 15rem;
-  min-height: 52px !important;
-  padding: 0.7rem 3rem !important;
-  border: 0 !important;
-  border-radius: 10px !important;
-  background: var(--face) !important;
+  gap: 0.5rem;
+  min-width: 0;
+  min-height: 48px !important;
+  padding: 0.6rem 1rem !important;
+  border: 1px solid var(--moss) !important;
+  border-radius: 6px !important;
+  background: var(--moss) !important;
   color: var(--paper) !important;
   font-weight: 600;
   white-space: nowrap;
-  box-shadow:
-    inset 0 0 0 4px var(--face-edge),
-    inset 0 0 0 5px var(--frame),
-    var(--lift) !important;
-  transition:
-    translate 0.3s var(--ease-out),
-    box-shadow 0.3s var(--ease-out),
-    filter 0.3s var(--ease-out);
+  transition: background 0.2s ease-out, color 0.2s ease-out;
 }
 
 .hero .hero-actions .button.outline {
-  --face: color-mix(in srgb, var(--paper) 88%, white);
-  --face-edge: color-mix(in srgb, var(--paper) 88%, white);
-  --frame: color-mix(in srgb, var(--moss) 24%, transparent);
-  --lift: 0 12px 20px -14px rgb(40 26 12 / 0.45), 0 1px 3px rgb(40 26 12 / 0.1);
-
+  background: transparent !important;
   color: var(--moss) !important;
-  box-shadow:
-    inset 0 0 0 1px color-mix(in srgb, var(--moss) 75%, transparent),
-    inset 0 0 0 4px var(--face-edge),
-    inset 0 0 0 5px var(--frame),
-    var(--lift) !important;
 }
 
 .hero .hero-actions .button:hover {
-  translate: 0 -2px;
-  filter: brightness(1.08);
+  background: #1d3129 !important;
 }
 
 .hero .hero-actions .button.outline:hover {
-  filter: brightness(1.03);
+  background: color-mix(in srgb, var(--moss) 8%, transparent) !important;
 }
 
 .hero .hero-actions .button:focus-visible {
-  outline: 2px solid #8a4938 !important;
+  outline: 2px solid var(--clay) !important;
   outline-offset: 3px;
 }
 
 .hero-actions .button-arrow {
-  transition: translate 0.3s var(--ease-out);
+  width: 16px;
+  height: 16px;
+  flex-basis: 16px;
 }
 
-.hero-actions .button:hover .button-arrow {
-  translate: 0.2rem 0;
-}
-
-html[dir="rtl"] .hero-actions .button:hover .button-arrow {
-  translate: -0.2rem 0;
-}
-
-.hero-sprig {
+/* Where the red thread begins: on the white rim of the torn edge, below everything in the banner. */
+.hero-thread-start {
   position: absolute;
-  z-index: -1;
-  bottom: 0.15rem;
-  inset-inline-end: 0.55rem;
-  width: 2.35rem;
-  height: 2.35rem;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.1;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  opacity: 0.5;
-  pointer-events: none;
-}
-
-html[dir="ltr"] .hero-sprig {
-  scale: -1 1;
-}
-
-@keyframes hero-scene-settle {
-  from {
-    scale: 1.045;
-  }
-  to {
-    scale: 1;
-  }
+  bottom: calc(var(--hero-edge-h) * var(--hero-thread-at));
+  left: 50%;
+  width: 1px;
+  height: 1px;
 }
 
 @keyframes hero-mask {
@@ -325,55 +188,25 @@ html[dir="ltr"] .hero-sprig {
 
 @media (max-width: 700px) {
   .hero {
-    --scene-ratio: 1.7778;
-    --stand: 0.262;
-    --cta-line: 0.148;
-    --copy-room: 8.75rem;
-    --card-h: min(17.5rem, calc(100cqh - var(--stand) * var(--scene-h) - var(--copy-room)));
-    height: clamp(36rem, calc(100svh - var(--header-height) - 5rem), 44rem);
-  }
-
-  .hero-copy {
-    top: 2.1rem;
+    gap: 1.25rem;
+    height: max(34rem, calc(100svh - var(--header-height) - 2.5rem - var(--hero-peek)));
+    padding-top: 1.75rem;
   }
 
   .hero-copy h1 {
-    font-size: clamp(1.6rem, 7.8cqw, 2.15rem);
+    font-size: clamp(1.7rem, 8vw, 2.2rem);
     line-height: 1.35;
   }
 
-  .hero-thesis {
-    margin-top: 0.3rem;
-    font-size: 1rem;
-  }
-
-  .hero-actions {
-    flex-direction: column;
-    gap: 0.6rem;
-    width: min(16.5rem, calc(100% - 2 * var(--page)));
-  }
-
   .hero .hero-actions .button {
-    width: 100%;
-    min-width: 0;
-    min-height: 50px !important;
-  }
-
-  .hero-edge {
-    height: 3.4rem;
-  }
-
-  .hero-edge::before,
-  .hero-edge::after {
-    --edge-size: 190%;
-    --edge-at: 30% 100%;
+    min-height: 46px !important;
+    padding-inline: 0.75rem !important;
+    font-size: 0.9rem;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .hero-scene img,
   .hero-line > span,
-  .hero-thesis,
   .hero-actions {
     animation: none;
   }

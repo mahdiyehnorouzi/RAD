@@ -8,10 +8,14 @@ export type DesignerDraft = {
   uploads: string[];
   sketch: string;
   hasVoice: boolean;
-  forms: string[];
-  sizeIndex: number;
-  dimensions: string;
+  form: string;
+  uses: string[];
+  size: string;
+  length: string;
+  width: string;
+  height: string;
   colors: string[];
+  colorNote: string;
   freedom: number;
   budget: string;
   timeline: string;

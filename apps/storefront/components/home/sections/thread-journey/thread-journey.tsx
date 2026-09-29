@@ -5,7 +5,6 @@ import { useLocale } from "@/components/i18n";
 import { journeyCopy } from "./const";
 import { JourneyAbout } from "./journey-about";
 import { JourneyCustom } from "./journey-custom";
-import { JourneyHands } from "./journey-hands";
 import { JourneyReady } from "./journey-ready";
 import { JourneyWorkshop } from "./journey-workshop";
 import { RedThread } from "./red-thread";
@@ -13,25 +12,35 @@ import { useRedThread } from "./hooks";
 import "./thread-journey.css";
 
 /**
- * The home paths after the hero, strung on one red thread that is drawn as the
- * page scrolls and ends by writing رَد. `children` is the hero the thread hangs
- * from; its anchors join the same line.
+ * The home page strung on one red thread, drawn as the page scrolls: from the
+ * hero's torn edge through the paths, behind the `works`, on to write رَد,
+ * through the `closing` certificate and into the footer's thread. The hero,
+ * works and closing join the line by their own anchors.
  */
-export function ThreadJourney({ children }: { children?: ReactNode }) {
+export function ThreadJourney({
+  hero,
+  works,
+  closing,
+}: {
+  hero: ReactNode;
+  works: ReactNode;
+  closing: ReactNode;
+}) {
   const { locale } = useLocale();
   const ref = useRef<HTMLDivElement>(null);
   const { svgRef, geometry } = useRedThread(ref);
 
   return (
     <div ref={ref} className="thread-home">
-      {children}
+      {hero}
       <section className="journey" aria-label={journeyCopy[locale].aria}>
+        <JourneyWorkshop />
         <JourneyReady />
         <JourneyCustom />
-        <JourneyWorkshop />
-        <JourneyHands />
-        <JourneyAbout />
       </section>
+      {works}
+      <JourneyAbout />
+      {closing}
       <RedThread ref={svgRef} geometry={geometry} />
     </div>
   );

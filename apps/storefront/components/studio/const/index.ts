@@ -1,11 +1,13 @@
 export { orderCopy } from "./order-copy";
+export { orderMedia } from "./order-media";
+export { orderTears, type OrderTearShape } from "./order-tears";
 export { ORDER_MAKES, type OrderMake } from "./order-makes";
 export {
-  ORDER_FACTS,
+  ORDER_OVERVIEW,
   ORDER_PATH,
   ORDER_PRICE_TIERS,
   ORDER_RULES,
-  type OrderFact,
+  type OrderOverviewStep,
   type OrderPathStep,
   type OrderPriceTier,
   type OrderRule,

@@ -1,48 +1,24 @@
+/*
+ * A quiet close after the works: the letter the thread writes, one statement
+ * under it and an underlined link to the story, all on the bare page.
+ */
 .journey-about {
+  --about-ease: cubic-bezier(0.22, 1, 0.36, 1);
+
+  position: relative;
   display: grid;
-  grid-template-columns: minmax(0, 58fr) minmax(0, 42fr);
-  align-items: center;
-  gap: clamp(0.8rem, 4vw, 4rem);
-  min-height: clamp(21rem, 86vw, 36rem);
-  padding: clamp(3rem, 8vw, 5rem) var(--journey-gutter) clamp(2.5rem, 7vw, 5rem);
+  justify-items: center;
+  gap: clamp(1.25rem, 3vw, 1.75rem);
+  padding: clamp(3.5rem, 10vw, 6rem) var(--page) clamp(4rem, 11vw, 7rem);
+  background: var(--canvas);
+  color: var(--ink);
+  text-align: center;
 }
 
-.journey-about-photo {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  -webkit-mask:
-    var(--tear-top) top / 100% var(--tear) no-repeat,
-    linear-gradient(#000 0 0) bottom / 100% calc(100% - var(--tear) + 1px) no-repeat;
-  mask:
-    var(--tear-top) top / 100% var(--tear) no-repeat,
-    linear-gradient(#000 0 0) bottom / 100% calc(100% - var(--tear) + 1px) no-repeat;
-}
-
-.journey-about-photo img {
-  object-fit: cover;
-  object-position: 30% 60%;
-}
-
-.journey-about-card {
-  z-index: 2;
-  align-self: end;
-}
-
-.journey-about-card p {
-  margin-bottom: 0.4rem;
-  color: var(--muted);
-  font-size: clamp(0.84rem, 1.6vw, 1.12rem);
-  line-height: 1.8;
-}
-
-/* Written over the photograph and above the card */
 .journey-letter {
   position: relative;
   z-index: 6;
-  justify-self: center;
-  align-self: start;
-  width: min(100%, 9.5rem);
+  width: clamp(9.5rem, 30vw, 12.5rem);
   aspect-ratio: 350 / 590;
 }
 
@@ -71,13 +47,6 @@
     var(--write-delay, 0ms);
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .journey-letter-pen,
-  .journey-letter.is-written .journey-letter-pen {
-    transition: none;
-  }
-}
-
 .journey-letter-ink {
   fill: var(--oxide);
 }
@@ -97,16 +66,59 @@
   height: 1px;
 }
 
-@media (min-width: 900px) {
-  .journey-about {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  }
+.journey-about-exit {
+  position: absolute;
+  bottom: clamp(1.5rem, 4vw, 2.5rem);
+  left: 50%;
+  width: 1px;
+  height: 1px;
+}
 
-  .journey-about-card {
-    max-width: 30rem;
-  }
+.journey-about-statement {
+  max-width: 21rem;
+  margin: 0;
+  color: var(--ink);
+  font-size: clamp(1.05rem, 2.2vw, 1.4rem);
+  font-weight: 500;
+  line-height: 1.9;
+  text-wrap: balance;
+}
 
-  .journey-letter {
-    width: min(100%, 12rem);
+.journey-about-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 1.5px solid var(--oxide);
+  color: var(--oxide);
+  font-size: clamp(0.92rem, 1.6vw, 1.05rem);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.journey-about-link svg {
+  width: 1rem;
+  height: 1rem;
+  transition: transform 0.4s var(--about-ease);
+}
+
+.journey-about-link:hover svg {
+  transform: translateX(-0.2rem);
+}
+
+html[dir="ltr"] .journey-about-link:hover svg {
+  transform: translateX(0.2rem);
+}
+
+.journey-about-link:focus-visible {
+  outline: 2px solid var(--oxide);
+  outline-offset: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .journey-letter-pen,
+  .journey-letter.is-written .journey-letter-pen,
+  .journey-about-link svg {
+    transition: none;
   }
 }

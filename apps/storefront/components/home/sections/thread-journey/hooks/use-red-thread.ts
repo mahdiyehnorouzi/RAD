@@ -55,14 +55,19 @@ function sameGeometry(a: ThreadGeometry | null, b: ThreadGeometry) {
 }
 
 /**
- * Threads a path through every `[data-thread-anchor]` in the container, in
- * document order, and draws it down to the pen line as the page scrolls.
+ * Threads a path through every rendered `[data-thread-anchor]` in the
+ * container, in document order, and draws it down to the pen line as the page
+ * scrolls. An anchor hidden with `display: none` is left out of the path.
  * Anchors the pen has passed get `is-reached`, as do `[data-thread-mark]`
  * elements, which react to the pen without bending the path.
  *
  * An anchor with `data-thread-knot` ties a bead onto the thread. Between an
  * anchor marked `data-thread-hide="start"` and the next `data-thread-hide="end"`
  * the thread runs behind the page and is not drawn.
+ *
+ * A `[data-thread-join]` element outside the container, such as the footer's
+ * own thread, is where the line hands over: it ends at that element's top
+ * centre.
  *
  * Once the pen reaches `[data-thread-letter-host]` it gets `is-written`, and
  * its `[data-thread-letter]` pen paths are written out one after another,
@@ -80,7 +85,9 @@ export function useRedThread(containerRef: RefObject<HTMLElement | null>) {
     const measure = () => {
       frame = 0;
       const box = container.getBoundingClientRect();
-      const anchors = [...container.querySelectorAll<HTMLElement>("[data-thread-anchor]")];
+      const anchors = [...container.querySelectorAll<HTMLElement>("[data-thread-anchor]")].filter(
+        (anchor) => anchor.getClientRects().length > 0,
+      );
       const points = anchors.map((anchor) => centreWithin(anchor, box));
       const knots = anchors
         .map((anchor, index) => ("threadKnot" in anchor.dataset ? points[index] : null))
@@ -94,6 +101,10 @@ export function useRedThread(containerRef: RefObject<HTMLElement | null>) {
           open = null;
         }
       });
+      const join = document.querySelector("[data-thread-join]")?.getBoundingClientRect();
+      if (join && join.height > 0) {
+        points.push({ x: join.left + join.width / 2 - box.left, y: join.top - box.top });
+      }
       const next = { width: box.width, height: box.height, d: threadPath(points), knots, gaps };
       setGeometry((previous) => (sameGeometry(previous, next) ? previous : next));
     };

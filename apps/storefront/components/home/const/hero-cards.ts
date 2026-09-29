@@ -7,29 +7,20 @@ export const HERO_CARD_FRONT_MS = 3400;
 export const HERO_CARD_BACK_MS = 4200;
 export const HERO_CARD_SWIPE_PX = 36;
 
-export const heroScene = {
-  wide: { src: "/home/hero/scene-wide.jpg", width: 1280, height: 720 },
-  tall: { src: "/home/hero/scene-tall.jpg", width: 720, height: 1280 },
-} as const;
-
 export const heroCardCopy = {
   fa: {
     region: "آثار نمونه. برای عوض‌کردن بکشید یا از کلیدهای جهت استفاده کنید.",
     turnOver: (title: string) => `پشت کارت ${title}`,
     turnBack: "برگشت به عکس",
     bringForward: (title: string) => `نمایش ${title}`,
-    begin: "ساختن رَدِ خودت",
-    pause: "توقف چرخش کارت‌ها",
-    play: "ادامه چرخش کارت‌ها",
+    stamp: (digits: string) => `مُهر رَد ${digits}، تنها یک نسخه`,
   },
   en: {
     region: "Sample works. Swipe or use the arrow keys to change.",
     turnOver: (title: string) => `Turn over: ${title}`,
     turnBack: "Back to the photograph",
     bringForward: (title: string) => `Show ${title}`,
-    begin: "Begin your own RAD",
-    pause: "Pause the cards",
-    play: "Play the cards",
+    stamp: (digits: string) => `RĀD seal ${digits}, one of one`,
   },
 } as const;
 
@@ -38,46 +29,64 @@ export function heroCards(locale: Locale): HeroCard[] {
 
   return [
     {
-      href: "/studio",
-      src: "/home/polaroid/topographic-wall-textile.png",
+      src: "/home/hero/work-01-wall-textile.png",
       alt: isFa
         ? "بافته دیواری دست‌باف با نقش توپوگرافیک"
         : "Handwoven wall textile with a topographic composition",
       title: isFa ? "بافته توپوگرافیک" : "Topographic textile",
-      material: isFa ? "پشم دست‌باف" : "Handwoven wool",
-      conceptLabel: isFa ? "ایده ۰۲" : "CONCEPT 02",
       note: isFa
-        ? "رد کوه، میان تار و پود."
-        : "A mountain trace, held in the weave.",
+        ? "ردِ کوه، میان تار و پود، آرام جا مانده است."
+        : "A mountain’s trace, left quietly in the weave.",
+      noteArt: isFa ? "/home/hero/notes/note-01-wall-textile.png" : undefined,
       tone: "textile",
     },
     {
-      href: "/studio",
-      src: "/home/polaroid/alabaster-walnut-lamp.png",
+      src: "/home/hero/work-02-stone-lamp.png",
       alt: isFa
         ? "چراغ سنگی دست‌تراش با پایه چوب گردو"
         : "Hand-carved alabaster lamp with a walnut base",
       title: isFa ? "چراغ سنگ و گردو" : "Alabaster & walnut lamp",
-      material: isFa ? "سنگ مرمر · چوب گردو" : "Alabaster · walnut",
-      conceptLabel: isFa ? "ایده ۰۱" : "CONCEPT 01",
       note: isFa
-        ? "نور از دل سنگ رد می‌شود."
-        : "Light passes through the stone.",
+        ? "نور، آهسته از دلِ سنگ رد می‌شود."
+        : "Light passes slowly through the stone.",
+      noteArt: isFa ? "/home/hero/notes/note-02-stone-lamp.png" : undefined,
       tone: "stone",
     },
     {
-      href: "/studio",
-      src: "/home/polaroid/blackened-brass-incense.png",
+      src: "/home/hero/work-03-brass-incense-holder.png",
       alt: isFa
         ? "عودسوز مجسمه‌گون از برنج سیاه‌کاری‌شده"
         : "Sculptural incense holder in blackened brass",
       title: isFa ? "عودسوز برنجی هلال" : "Crescent brass incense holder",
-      material: isFa ? "برنج سیاه‌کاری‌شده" : "Blackened brass",
-      conceptLabel: isFa ? "ایده ۰۳" : "CONCEPT 03",
       note: isFa
-        ? "دود، شکل ناپیدای اثر است."
-        : "Smoke is the work’s unseen form.",
+        ? "دود، شکلِ ناپیدای این اثر است."
+        : "Smoke is this work’s unseen form.",
+      noteArt: isFa ? "/home/hero/notes/note-03-brass-incense-holder.png" : undefined,
       tone: "metal",
+    },
+    {
+      src: "/home/hero/work-04-ceramic-mug.jpg",
+      alt: isFa
+        ? "ماگ سفالی دست‌ساز با قطره‌های لعاب آبی که از لبه‌اش آویزان‌اند"
+        : "Handmade ceramic mug with blue glaze drops hanging from its rim",
+      title: isFa ? "ماگ قطره‌های آبی" : "Blue drop mug",
+      note: isFa
+        ? "قطره‌ها، پیش از افتادن در لعاب ماندند."
+        : "The drops stayed in the glaze, just before they fell.",
+      noteArt: isFa ? "/home/hero/notes/note-04-ceramic-mug.png" : undefined,
+      tone: "ceramic",
+    },
+    {
+      src: "/home/hero/work-05-ceramic-teapot.jpg",
+      alt: isFa
+        ? "قوری سفالی دوطبقه با ضربه‌های قلم‌موی سبز"
+        : "Stacked ceramic teapot with green brushstrokes",
+      title: isFa ? "قوری دوطبقه" : "Stacked teapot",
+      note: isFa
+        ? "دو بدنه، روی هم؛ برای یک چایِ آرام."
+        : "Two bodies, stacked for one slow pot of tea.",
+      noteArt: isFa ? "/home/hero/notes/note-05-ceramic-teapot.png" : undefined,
+      tone: "ceramic",
     },
   ];
 }

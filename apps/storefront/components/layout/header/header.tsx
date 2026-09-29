@@ -5,7 +5,6 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useCart } from "@/components/cart";
 import { useLocale } from "@/components/i18n";
-import { SiteSearch } from "./site-search";
 import { useHeaderMotion } from "./hooks";
 import { Heart, Menu as MenuIcon, ShoppingBag, X } from "lucide-react";
 import "./header.css";
@@ -35,16 +34,7 @@ export function Header() {
         aria-label={t("home")}
         onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
       >
-        <span className="logo-mark" aria-hidden="true">
-          <Image
-            src="/rad-logo.png"
-            alt=""
-            width={1254}
-            height={1254}
-            priority
-          />
-        </span>
-        <span>{t("logoSubtitle")}</span>
+        <Image src="/rad-mark.png" alt="" width={224} height={224} priority />
       </Link>
       <nav className={open ? "nav open" : "nav"} aria-label={t("navAria")}>
         <Link href={href("/products")} onClick={() => setOpen(false)}>
@@ -82,7 +72,25 @@ export function Header() {
         </Link>
       </nav>
       <div className="header-actions">
-        <SiteSearch />
+        <button
+          type="button"
+          className="language-switch"
+          dir="ltr"
+          onClick={() => {
+            queueMicrotask(() =>
+              window.dispatchEvent(
+                new CustomEvent("rad:header-overlay", { detail: "language" }),
+              ),
+            );
+            setLocale(locale === "fa" ? "en" : "fa");
+          }}
+          aria-label={
+            locale === "fa" ? "Switch to English" : "تغییر زبان به فارسی"
+          }
+        >
+          <span data-active={locale === "fa"}>FA</span>
+          <span data-active={locale === "en"}>EN</span>
+        </button>
         <Link
           href={href("/favorites")}
           className="utility-button header-favorites"
@@ -99,22 +107,7 @@ export function Header() {
           <i>{number(count)}</i>
         </Link>
         <button
-          className="language-switch"
-          onClick={() => {
-            queueMicrotask(() =>
-              window.dispatchEvent(
-                new CustomEvent("rad:header-overlay", { detail: "language" }),
-              ),
-            );
-            setLocale(locale === "fa" ? "en" : "fa");
-          }}
-          aria-label={
-            locale === "fa" ? "Switch to English" : "تغییر زبان به فارسی"
-          }
-        >
-          {locale === "fa" ? "انگلیسی" : "فارسی"}
-        </button>
-        <button
+          type="button"
           className="menu"
           onClick={() => {
             const next = !open;

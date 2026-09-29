@@ -1,6 +1,5 @@
 import {
   ArchiveSection,
-  DifferenceStory,
   HomeHero,
   featuredHomeWorks,
   CertificateSection,
@@ -21,12 +20,12 @@ export default async function Home() {
           __html: safeJsonLd(productListJsonLd(featured, "/")),
         }}
       />
-      <ThreadJourney>
-        <HomeHero />
-      </ThreadJourney>
-      <ArchiveSection products={featured} />
-      <DifferenceStory />
-      <CertificateSection />
+      {/* Keyed: ThreadJourney renders these slots side by side, and React checks server-made elements there for keys. */}
+      <ThreadJourney
+        hero={<HomeHero key="hero" />}
+        works={<ArchiveSection key="works" products={featured} />}
+        closing={<CertificateSection key="closing" />}
+      />
     </>
   );
 }

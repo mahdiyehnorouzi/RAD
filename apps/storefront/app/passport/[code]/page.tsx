@@ -60,12 +60,12 @@ export default async function PassportDetail({
   };
 
   return (
-    <section className="section">
+    <>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }}
       />
       <PassportPage passport={passport} />
-    </section>
+    </>
   );
 }

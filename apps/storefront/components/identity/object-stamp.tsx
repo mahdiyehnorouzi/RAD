@@ -11,12 +11,15 @@ export function ObjectStamp({
   code,
   year,
   label,
+  emblem,
   className = "",
 }: {
   radNumber: number;
   code: string;
   year?: string;
   label: string;
+  /** Draws the maker's sprig in the centre instead of the number. */
+  emblem?: "sprig";
   className?: string;
 }) {
   const id = `st${useId().replace(/[^\w-]/g, "")}`;
@@ -86,9 +89,22 @@ export function ObjectStamp({
         <text className="object-stamp-no" x="60" y="47" textAnchor="middle">
           №
         </text>
-        <text className="object-stamp-code" x="60" y="70" textAnchor="middle">
-          {code}
-        </text>
+        {emblem === "sprig" ? (
+          <g className="object-stamp-sprig">
+            <path d="M60 75c0-6 .2-12 1.2-18.5" />
+            <path d="M60.3 68.5c-4.2-.4-6.6-3-7-6.6 3.6.2 6.3 2.4 7 6.6Z" />
+            <path d="M60.8 62.6c4-.9 6.2-3.8 6.2-7.3-3.5.5-6 3-6.2 7.3Z" />
+            <path d="M61.3 56.3c-2.2-1.6-2.6-4.4-1-6.8 1.9 1.7 2.2 4.4 1 6.8Z" />
+            <circle cx="48.5" cy="70" r="3.7" />
+            <circle cx="71.5" cy="70" r="3.7" />
+            <circle className="object-stamp-dot" cx="48.5" cy="70" r="1.1" />
+            <circle className="object-stamp-dot" cx="71.5" cy="70" r="1.1" />
+          </g>
+        ) : (
+          <text className="object-stamp-code" x="60" y="70" textAnchor="middle">
+            {code}
+          </text>
+        )}
         {year ? (
           <>
             <path className="object-stamp-rule" d="M38 77.5h44" />

@@ -2,7 +2,7 @@
 import "./policy-page.css";
 
 import Link from "next/link";
-import { ArrowLeft, ArrowRight, History } from "lucide-react";
+import { History } from "lucide-react";
 import type { PolicySlug } from "@rad/types";
 import { useLocale } from "@/components/i18n";
 import {
@@ -37,15 +37,8 @@ export function PolicyPage({
   const shown = (version && policyVersion(doc, version)) || current;
   const archived = shown.id !== current.id;
   const numbered = doc.kind === "legal";
-  const Back = locale === "fa" ? ArrowRight : ArrowLeft;
-
   return (
     <div className={`policy-page is-${doc.kind}`}>
-      <Link className="policy-back" href={href("/help")}>
-        <Back size={16} strokeWidth={1.6} aria-hidden="true" />
-        {c.allGuides}
-      </Link>
-
       {archived ? (
         <aside className="policy-archived" role="note">
           <History size={18} strokeWidth={1.6} aria-hidden="true" />

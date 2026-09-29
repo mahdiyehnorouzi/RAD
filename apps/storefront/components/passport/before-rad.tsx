@@ -47,9 +47,8 @@ export function BeforeRad({
   }
 
   return (
-    <section className="before-rad" aria-labelledby={labelId}>
-      <header>
-        <span className="eyebrow">{t("beforeRadTitle")}</span>
+    <section className="before-rad passport-band" aria-labelledby={labelId}>
+      <header className="passport-head">
         <h2 id={labelId}>{t("beforeRadTitle")}</h2>
         <p>{t("beforeRadBody")}</p>
       </header>
@@ -122,28 +121,29 @@ export function BeforeRad({
         </span>
       </div>
 
-      <label className="before-rad-slider">
-        <span className="visually-hidden">{t("beforeRadTitle")}</span>
-        <input
-          type="range"
-          min={0}
-          max={100}
-          dir={locale === "fa" ? "rtl" : "ltr"}
-          value={Math.round(progress * 100)}
-          onChange={(event) => setProgress(Number(event.target.value) / 100)}
-        />
-        <ol>
-          {BEFORE_RAD_STAGES.map((id) => (
-            <li key={id} className={id === stage ? "is-active" : ""}>
-              <button type="button" onClick={() => setProgress(BEFORE_RAD_STAGES.indexOf(id) / 3)}>
-                {t(BEFORE_RAD_STAGE_KEY[id])}
-              </button>
-            </li>
-          ))}
-        </ol>
-      </label>
+      <ol
+        className="before-rad-rail"
+        style={{ "--before-progress": progress } as CSSProperties}
+      >
+        {BEFORE_RAD_STAGES.map((id, index) => (
+          <li key={id} className={id === stage ? "is-active" : ""}>
+            <button
+              type="button"
+              aria-pressed={id === stage}
+              onClick={() => setProgress(index / (BEFORE_RAD_STAGES.length - 1))}
+            >
+              <span className="before-rad-dot" aria-hidden="true" />
+              {t(BEFORE_RAD_STAGE_KEY[id])}
+            </button>
+          </li>
+        ))}
+      </ol>
 
-      {active ? <p className="before-rad-caption">{active.caption[locale]}</p> : null}
+      {active ? (
+        <p className="before-rad-caption" aria-live="polite">
+          {active.caption[locale]}
+        </p>
+      ) : null}
     </section>
   );
 }

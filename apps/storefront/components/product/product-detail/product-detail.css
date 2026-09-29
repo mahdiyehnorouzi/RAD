@@ -57,44 +57,12 @@
 .pdp-top {
   display: grid;
   grid-template-columns: minmax(20rem, 0.72fr) minmax(0, 1fr);
-  grid-template-rows: auto auto 1fr;
+  grid-template-rows: auto 1fr;
   grid-template-areas:
-    "crumbs crumbs"
     "summary gallery"
     "summary rest";
   align-items: start;
   gap: 1.25rem var(--pdp-gap);
-}
-
-.pdp-crumbs {
-  grid-area: crumbs;
-  color: var(--muted);
-  font-size: 0.82rem;
-}
-
-.pdp-crumbs ol {
-  display: flex;
-  flex-wrap: wrap;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.pdp-crumbs li + li::before {
-  margin-inline: 0.5rem;
-  color: color-mix(in srgb, var(--muted) 55%, transparent);
-  content: "/";
-}
-
-.pdp-crumbs a {
-  color: inherit;
-  text-decoration: none;
-  transition: color 180ms ease-out;
-}
-
-.pdp-crumbs a:hover,
-.pdp-crumbs [aria-current] {
-  color: var(--ink);
 }
 
 .pdp-gallery {
@@ -1675,7 +1643,6 @@ details.pdp-fold > p {
     grid-template-columns: minmax(0, 1fr);
     grid-template-rows: none;
     grid-template-areas:
-      "crumbs"
       "gallery"
       "summary"
       "rest";

@@ -7,12 +7,14 @@ export {
 export {
   BUDGET_OPTIONS,
   DATED_TIMELINE,
-  DEFAULT_SIZE_INDEX,
+  DEFAULT_SIZE,
   FORM_OPTIONS,
+  LEGACY_FORM_IDS,
   SIZE_OPTIONS,
   TIMELINE_OPTIONS,
-  UNSURE_FORM,
+  USE_OPTIONS,
   fidelityKey,
   optionLabel,
+  type FormOption,
 } from "./order-options";
 export { DESIGNER_COLORS, MAX_DESIGNER_COLORS, colorLabel } from "./spark";

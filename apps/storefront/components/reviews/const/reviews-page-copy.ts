@@ -1,0 +1,38 @@
+export const reviewsPageCopy = {
+  fa: {
+    title: "نظر کسانی که یک رَد به خانه برده‌اند",
+    lede: "این‌ها تجربهٔ واقعی کسانی است که اثری از رَد خریده یا سفارش داده‌اند.",
+    filters: "دسته‌بندی نظرها",
+    all: "همه",
+    rating: "{rating} از {max}",
+    ratingLabel: "امتیاز {rating} از {max}",
+    customerPhoto: "عکسی که {author} از {work} فرستاده",
+    cta: "شروع سفارش اختصاصی",
+    emptyTitle: "هنوز نظری ثبت نشده",
+    emptyBody:
+      "اولین نظرها را کسانی می‌نویسند که یک رَد به خانه برده‌اند. اگر اثری از رَد دارید، نظرتان را از صفحهٔ همان اثر بنویسید.",
+    emptyCta: "دیدن آثار",
+    errorTitle: "نظرها باز نشد",
+    errorBody: "اتصال به رَد برقرار نشد. کمی بعد دوباره امتحان کنید.",
+    retry: "دوباره امتحان کن",
+    retrying: "در حال تلاش…",
+  },
+  en: {
+    title: "From people who took a RAD home",
+    lede: "Real words from people who bought or commissioned a work from RAD.",
+    filters: "Filter reviews",
+    all: "All",
+    rating: "{rating} of {max}",
+    ratingLabel: "Rated {rating} of {max}",
+    customerPhoto: "Photo of {work} sent by {author}",
+    cta: "Start a custom order",
+    emptyTitle: "No reviews yet",
+    emptyBody:
+      "The first reviews will come from people who took a RAD home. If you own one, leave your review on that work's page.",
+    emptyCta: "Browse works",
+    errorTitle: "Reviews did not load",
+    errorBody: "We could not reach RAD. Please try again in a moment.",
+    retry: "Try again",
+    retrying: "Trying…",
+  },
+} as const;

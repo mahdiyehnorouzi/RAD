@@ -255,3 +255,129 @@
     width: 100%;
   }
 }
+
+/* Page form: labels live in the field, the topic is a menu, one wide send. */
+
+.message-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.message-form.is-page {
+  gap: 0.8rem;
+}
+
+.message-form.is-page .message-field input,
+.message-form.is-page .message-field textarea,
+.message-form.is-page .message-field select {
+  min-height: 3.35rem;
+  border-color: #e2dbd0;
+  border-radius: 10px;
+  background: #fcfaf6;
+  padding-inline: 1.1rem;
+  font-size: 0.95rem;
+}
+
+.message-form.is-page .message-field textarea {
+  min-height: 9rem;
+  padding-block: 0.95rem;
+}
+
+.message-form.is-page .message-field input::placeholder,
+.message-form.is-page .message-field textarea::placeholder {
+  color: #857d73;
+}
+
+.message-form.is-page .message-field input:focus,
+.message-form.is-page .message-field textarea:focus,
+.message-form.is-page .message-field select:focus {
+  border-color: var(--moss);
+  background: #fff;
+  outline: none;
+}
+
+.message-select {
+  position: relative;
+}
+
+.message-select select {
+  width: 100%;
+  appearance: none;
+  border: 1px solid var(--line);
+  padding-inline-end: 3rem !important;
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+  transition: border-color 180ms ease-out, background 180ms ease-out;
+}
+
+.message-select select.is-empty {
+  color: #857d73;
+}
+
+.message-select select:hover {
+  border-color: color-mix(in srgb, var(--ink) 30%, var(--line));
+}
+
+.message-select select:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--moss) 35%, transparent);
+  outline-offset: 1px;
+}
+
+.message-select-icon {
+  position: absolute;
+  inset-inline-end: 1.1rem;
+  top: 50%;
+  translate: 0 -50%;
+  color: #6b635a;
+  pointer-events: none;
+}
+
+.message-form.is-page .message-submit {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.9rem;
+  margin-top: 0.55rem;
+  text-align: center;
+}
+
+.message-form.is-page .message-submit .button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.7rem;
+  width: 100%;
+  min-height: 3.5rem;
+  border-radius: 10px;
+  background: var(--moss);
+  font-size: 1rem;
+  box-shadow: 0 10px 22px -16px rgb(24 35 31 / 0.7);
+  transition:
+    background-color 200ms ease-out,
+    box-shadow 200ms ease-out;
+}
+
+.message-form.is-page .message-submit .button:hover {
+  background: color-mix(in srgb, var(--moss) 88%, #fff);
+}
+
+.message-send-icon {
+  transition: transform 260ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.message-send-icon:dir(rtl) {
+  scale: -1 1;
+}
+
+.message-form.is-page .button:hover .message-send-icon {
+  transform: translate(3px, -2px);
+}
+
+.message-form.is-page .message-submit small {
+  flex: none;
+  font-size: 0.8rem;
+}

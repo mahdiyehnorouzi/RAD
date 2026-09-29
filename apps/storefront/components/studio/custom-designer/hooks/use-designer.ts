@@ -1,15 +1,15 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   DATED_TIMELINE,
-  DEFAULT_SIZE_INDEX,
+  DEFAULT_SIZE,
   DESIGNER_STEPS,
   MAX_DESIGNER_COLORS,
-  UNSURE_FORM,
   type DesignerStep,
 } from "../const";
 import type { DesignerDraft } from "../type";
 
 const maxImages = 4;
+export const MAX_PROMPT = 500;
 
 export function freedomToPermission(value: number) {
   if (value <= 33) return "faithful";
@@ -24,10 +24,14 @@ export function useDesigner() {
   const [uploads, setUploads] = useState<string[]>([]);
   const [sketch, setSketch] = useState("");
   const [hasVoice, setHasVoice] = useState(false);
-  const [forms, setForms] = useState<string[]>([]);
-  const [sizeIndex, setSizeIndex] = useState(DEFAULT_SIZE_INDEX);
-  const [dimensions, setDimensions] = useState("");
+  const [form, setForm] = useState("");
+  const [uses, setUses] = useState<string[]>([]);
+  const [size, setSize] = useState(DEFAULT_SIZE);
+  const [length, setLength] = useState("");
+  const [width, setWidth] = useState("");
+  const [height, setHeight] = useState("");
   const [colors, setColors] = useState<string[]>([]);
+  const [colorNote, setColorNote] = useState("");
   const [freedom, setFreedom] = useState(70);
   const [budget, setBudget] = useState("");
   const [timeline, setTimeline] = useState("");
@@ -44,12 +48,12 @@ export function useDesigner() {
 
   const canAdvance = useMemo(() => {
     if (step === "idea") return hasSpark;
-    if (step === "form") return forms.length > 0;
+    if (step === "form") return Boolean(form);
     if (step === "details") return true;
     if (step === "plan")
       return Boolean(budget && timeline && (timeline !== DATED_TIMELINE || needBy.trim()));
     return agreed;
-  }, [agreed, budget, forms.length, hasSpark, needBy, step, timeline]);
+  }, [agreed, budget, form, hasSpark, needBy, step, timeline]);
 
   function goTo(next: DesignerStep) {
     const nextIndex = DESIGNER_STEPS.indexOf(next);
@@ -69,13 +73,16 @@ export function useDesigner() {
     if (prev) setStep(prev);
   }
 
-  /** "I don't know" stands alone: picking it clears the rest, and vice versa. */
-  function toggleForm(id: string) {
-    setForms((current) => {
-      if (current.includes(id)) return current.filter((item) => item !== id);
-      if (id === UNSURE_FORM) return [UNSURE_FORM];
-      return [...current.filter((item) => item !== UNSURE_FORM), id];
-    });
+  /** A category card on the page picks the form (and maybe a use) before the flow starts. */
+  const preselect = useCallback((nextForm: string, use?: string) => {
+    setForm(nextForm);
+    if (use) setUses((current) => (current.includes(use) ? current : [...current, use]));
+  }, []);
+
+  function toggleUse(id: string) {
+    setUses((current) =>
+      current.includes(id) ? current.filter((item) => item !== id) : [...current, id],
+    );
   }
 
   function toggleColor(value: string) {
@@ -108,10 +115,14 @@ export function useDesigner() {
       uploads,
       sketch,
       hasVoice,
-      forms,
-      sizeIndex,
-      dimensions,
+      form,
+      uses,
+      size,
+      length,
+      width,
+      height,
       colors,
+      colorNote,
       freedom,
       budget,
       timeline,
@@ -124,10 +135,14 @@ export function useDesigner() {
       uploads,
       sketch,
       hasVoice,
-      forms,
-      sizeIndex,
-      dimensions,
+      form,
+      uses,
+      size,
+      length,
+      width,
+      height,
       colors,
+      colorNote,
       freedom,
       budget,
       timeline,
@@ -138,14 +153,18 @@ export function useDesigner() {
   const restoreDraft = useCallback((next: DesignerDraft) => {
     setStep(next.step);
     setReached(next.reached);
-    setPrompt(next.prompt);
+    setPrompt(next.prompt.slice(0, MAX_PROMPT));
     setUploads(next.uploads.slice(0, maxImages));
     setSketch(next.sketch);
     setHasVoice(next.hasVoice);
-    setForms(next.forms);
-    setSizeIndex(next.sizeIndex);
-    setDimensions(next.dimensions);
+    setForm(next.form);
+    setUses(next.uses);
+    setSize(next.size);
+    setLength(next.length);
+    setWidth(next.width);
+    setHeight(next.height);
     setColors(next.colors.slice(0, MAX_DESIGNER_COLORS));
+    setColorNote(next.colorNote);
     setFreedom(next.freedom);
     setBudget(next.budget);
     setTimeline(next.timeline);
@@ -162,39 +181,48 @@ export function useDesigner() {
     budget,
     canAdvance,
     chooseTimeline,
+    colorNote,
     colors,
-    dimensions,
     error,
-    forms,
+    form,
     freedom,
     goBack,
     goNext,
     goTo,
     hasVoice,
+    height,
     ideaNumber,
+    length,
     maxImages,
     needBy,
+    preselect,
     prompt,
     reachedIndex,
     removeUpload,
     setAgreed,
     setBudget,
-    setDimensions,
+    setColorNote,
     setError,
+    setForm,
     setFreedom,
     setHasVoice,
+    setHeight,
+    setLength,
     setNeedBy,
     setPrompt,
-    setSizeIndex,
+    setSize,
     setSketch,
-    sizeIndex,
+    setWidth,
+    size,
     sketch,
     step,
     stepIndex,
     timeline,
     toggleColor,
-    toggleForm,
+    toggleUse,
     uploads,
+    uses,
+    width,
   };
 }
 
