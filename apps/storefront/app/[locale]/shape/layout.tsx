@@ -7,6 +7,10 @@ export const metadata: Metadata = pageMetadata({
   path: "/shape",
 });
 
-export default function ShapeLayout({ children }: { children: React.ReactNode }) {
+export default function ShapeLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return children;
 }

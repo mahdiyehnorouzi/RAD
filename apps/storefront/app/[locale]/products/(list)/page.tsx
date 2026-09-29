@@ -43,7 +43,12 @@ export default async function Products({ searchParams }: Props) {
           __html: safeJsonLd(productListJsonLd(listed, href)),
         }}
       />
-      <CatalogPage key={href} products={products} live={live} filters={filters} />
+      <CatalogPage
+        key={href}
+        products={products}
+        live={live}
+        filters={filters}
+      />
     </>
   );
 }

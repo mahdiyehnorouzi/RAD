@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import "./globals.css";
+import "../globals.css";
 import "@/components/ui/button-link.css";
 import "@/components/ui/section.css";
 import "@/components/ui/skeleton.css";
@@ -16,6 +16,12 @@ import { LocaleProvider } from "@/components/i18n";
 import { CommerceProvider } from "@/components/commerce";
 import { CatalogProvider } from "@/components/catalog/catalog-provider";
 import { HomeBanner } from "@/components/home/home-banner";
+import {
+  DEFAULT_LOCALE,
+  LOCALES,
+  isLocale,
+  localeDirection,
+} from "@/lib/locale";
 import {
   absoluteUrl,
   defaultDescription,
@@ -95,18 +101,24 @@ export const metadata: Metadata = {
     : {}),
 };
 
-export default function RootLayout({
+export function generateStaticParams() {
+  return LOCALES.map((locale) => ({ locale }));
+}
+
+export default async function RootLayout({
   children,
-}: {
-  children: React.ReactNode;
-}) {
+  params,
+}: LayoutProps<"/[locale]">) {
+  const { locale: segment } = await params;
+  // The 404 page renders this layout without a `locale` param.
+  const locale = isLocale(segment) ? segment : DEFAULT_LOCALE;
   const gaMeasurementId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
   const gaEnabled = Boolean(
     gaMeasurementId && /^G-[A-Z0-9]+$/i.test(gaMeasurementId),
   );
 
   return (
-    <html lang="fa" dir="rtl">
+    <html lang={locale} dir={localeDirection(locale)} data-locale={locale}>
       <body>
         <script
           type="application/ld+json"
@@ -140,7 +152,7 @@ export default function RootLayout({
             }),
           }}
         />
-        <LocaleProvider>
+        <LocaleProvider locale={locale}>
           <CatalogProvider>
             <CommerceProvider>
               <CartProvider>

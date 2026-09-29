@@ -9,7 +9,8 @@ import { museumPortraits, portraitById } from "@/lib/difference";
 export default function DifferenceDetail() {
   const params = useParams<{ id: string }>();
   const id = String(params.id ?? "");
-  const portrait = portraitById(usePortraits(), id) ?? portraitById(museumPortraits, id);
+  const portrait =
+    portraitById(usePortraits(), id) ?? portraitById(museumPortraits, id);
   if (!portrait) {
     return (
       <NotFoundState

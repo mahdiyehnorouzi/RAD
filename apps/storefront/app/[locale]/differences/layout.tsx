@@ -8,6 +8,10 @@ export const metadata: Metadata = pageMetadata({
   path: "/differences",
 });
 
-export default function DifferencesLayout({ children }: { children: React.ReactNode }) {
+export default function DifferencesLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return children;
 }

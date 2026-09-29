@@ -23,7 +23,10 @@ export async function generateMetadata({
   const { code } = await params;
   const passport = await resolvePassport(code);
   if (!passport) {
-    return { title: "گذرنامه پیدا نشد", robots: { index: false, follow: false } };
+    return {
+      title: "گذرنامه پیدا نشد",
+      robots: { index: false, follow: false },
+    };
   }
   const image = passport.finalPhotos[0]?.src;
   return pageMetadata({

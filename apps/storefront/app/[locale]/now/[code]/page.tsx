@@ -16,7 +16,10 @@ export async function generateMetadata({
   const { code } = await params;
   const piece = findLivePiece(livePieces, code);
   if (!piece) {
-    return { title: "این رَد پیدا نشد", robots: { index: false, follow: false } };
+    return {
+      title: "این رَد پیدا نشد",
+      robots: { index: false, follow: false },
+    };
   }
   return pageMetadata({
     title: `رَد ${piece.code} دارد ساخته می‌شود`,

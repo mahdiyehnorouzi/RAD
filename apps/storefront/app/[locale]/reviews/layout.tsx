@@ -8,6 +8,10 @@ export const metadata: Metadata = pageMetadata({
   path: "/reviews",
 });
 
-export default function ReviewsLayout({ children }: { children: React.ReactNode }) {
+export default function ReviewsLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return children;
 }
