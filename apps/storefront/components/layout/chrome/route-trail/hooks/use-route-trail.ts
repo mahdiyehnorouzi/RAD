@@ -5,7 +5,7 @@ import { useCatalog } from "@/components/catalog/catalog-provider";
 import { formatPolicyDate, policyDocument } from "@/components/help";
 import { useLocale } from "@/components/i18n";
 import { usePortraits } from "@/hooks/use-artworks";
-import { useMaking } from "@/hooks/use-making-workspace";
+import { useCommissionLookup } from "@/hooks/use-making-workspace";
 import { categoryLabel } from "@/lib/catalog/artwork";
 import { productCopy } from "@/lib/catalog/products";
 import { museumPortraits, portraitById } from "@/lib/difference";
@@ -30,7 +30,7 @@ export function useRouteTrail() {
   const pathname = usePathname();
   const { locale } = useLocale();
   const { getProduct, getArtwork } = useCatalog();
-  const making = useMaking();
+  const findCommission = useCommissionLookup();
   const portraits = usePortraits();
   const c = trailCopy[locale];
 
@@ -91,7 +91,7 @@ export function useRouteTrail() {
       }
       add(c.account, "/account");
       add(c.customOrders, "/account/making");
-      const commission = making.get(second);
+      const commission = findCommission(second);
       add(
         commission ? copy(commission.title, locale) : c.commission,
         `/making/${second}`,
@@ -101,7 +101,7 @@ export function useRouteTrail() {
     case "workshop": {
       add(c.workshop, "/workshop");
       if (!second) break;
-      const commission = making.get(second);
+      const commission = findCommission(second);
       add(
         commission ? copy(commission.title, locale) : c.commission,
         `/workshop/${second}`,
@@ -122,9 +122,12 @@ export function useRouteTrail() {
       add(c.differences, "/differences");
       if (!second) break;
       const portrait =
-        portraitById(portraits, second) ?? portraitById(museumPortraits, second);
+        portraitById(portraits, second) ??
+        portraitById(museumPortraits, second);
       add(
-        portrait ? (portrait.title?.[locale] ?? portrait.code) : humanize(second),
+        portrait
+          ? (portrait.title?.[locale] ?? portrait.code)
+          : humanize(second),
         `/differences/${second}`,
       );
       break;
@@ -137,7 +140,10 @@ export function useRouteTrail() {
       );
       if (!second) break;
       const artwork = getArtwork(second);
-      add(artwork ? artwork.title[locale] : humanize(second), `/${first}/${second}`);
+      add(
+        artwork ? artwork.title[locale] : humanize(second),
+        `/${first}/${second}`,
+      );
       break;
     }
     case "reviews":

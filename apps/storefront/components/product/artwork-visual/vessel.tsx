@@ -1,4 +1,3 @@
-"use client";
 import type { Product } from "@rad/types";
 import "./artwork-visual.css";
 
@@ -12,7 +11,12 @@ export function Vessel({
   return (
     <div
       className={`vessel ${product.shape} ${className}`}
-      style={{ "--vessel": product.color, "--accent": product.accent } as React.CSSProperties}
+      style={
+        {
+          "--vessel": product.color,
+          "--accent": product.accent,
+        } as React.CSSProperties
+      }
     >
       <span className="vessel-neck" />
       <span className="vessel-line" />

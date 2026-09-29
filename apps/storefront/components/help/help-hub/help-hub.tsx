@@ -1,6 +1,7 @@
 "use client";
 import "./help-hub.css";
 
+import type { HelpQuestion } from "@rad/types";
 import { useLocale } from "@/components/i18n";
 import { helpCopy } from "../const";
 import { HelpContact, LegalTexts } from "../fine-print";
@@ -12,7 +13,7 @@ import { HelpTopics } from "./help-topics";
  * RAD's shopping guide: the four plain-language guides, the purchase path,
  * common questions, and the official texts they rest on.
  */
-export function HelpHub() {
+export function HelpHub({ questions }: { questions: HelpQuestion[] }) {
   const { locale } = useLocale();
   const c = helpCopy[locale];
 
@@ -37,7 +38,7 @@ export function HelpHub() {
       <HelpJourney />
 
       <div className="help-closing">
-        <HelpQuestions />
+        <HelpQuestions questions={questions} />
         <div className="help-closing-side">
           <HelpContact />
           <LegalTexts />

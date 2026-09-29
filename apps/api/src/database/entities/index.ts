@@ -3,6 +3,7 @@ import { Commission } from "./commission.entity";
 import { ContactMessage } from "./contact-message.entity";
 import { DamageReport } from "./damage-report.entity";
 import { Favorite } from "./favorite.entity";
+import { HelpQuestion } from "./help-question.entity";
 import { Notice } from "./notice.entity";
 import { Order } from "./order.entity";
 import { OrderItem } from "./order-item.entity";
@@ -11,6 +12,7 @@ import { PaymentIntent } from "./payment-intent.entity";
 import { Product } from "./product.entity";
 import { ProductImage } from "./product-image.entity";
 import { Review } from "./review.entity";
+import { ShapeQuestion } from "./shape-question.entity";
 import { User } from "./user.entity";
 import { Vendor } from "./vendor.entity";
 
@@ -30,6 +32,8 @@ export const entities = [
   PaymentIntent,
   ContactMessage,
   DamageReport,
+  ShapeQuestion,
+  HelpQuestion,
 ] as const;
 
 export type EntityClass = (typeof entities)[number];
@@ -40,6 +44,7 @@ export {
   ContactMessage,
   DamageReport,
   Favorite,
+  HelpQuestion,
   Notice,
   Order,
   OrderItem,
@@ -48,6 +53,7 @@ export {
   Product,
   ProductImage,
   Review,
+  ShapeQuestion,
   User,
   Vendor,
 };

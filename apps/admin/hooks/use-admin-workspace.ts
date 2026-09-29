@@ -10,9 +10,15 @@ import {
   type AdminDamageReport,
   type AdminMember,
   type AdminOrder,
+  type AdminPermission,
   type AdminProduct,
+  type AdminReview,
   type AdminRole,
   type AdminUser,
+  type HelpQuestion,
+  type HelpQuestionInput,
+  type ShapeQuestion,
+  type ShapeQuestionInput,
 } from "../lib/admin-data";
 
 export function useAdminWorkspace() {
@@ -24,6 +30,9 @@ export function useAdminWorkspace() {
   const [commissions, setCommissions] = useState<AdminCommission[]>([]);
   const [messages, setMessages] = useState<AdminContactMessage[]>([]);
   const [damageReports, setDamageReports] = useState<AdminDamageReport[]>([]);
+  const [reviews, setReviews] = useState<AdminReview[]>([]);
+  const [shapeQuestions, setShapeQuestions] = useState<ShapeQuestion[]>([]);
+  const [helpQuestions, setHelpQuestions] = useState<HelpQuestion[]>([]);
   const [ready, setReady] = useState(false);
   const [error, setError] = useState("");
   const currentRole: AdminRole = (user?.adminRole as AdminRole | undefined) ?? "viewer";
@@ -39,9 +48,23 @@ export function useAdminWorkspace() {
       setCommissions([]);
       setMessages([]);
       setDamageReports([]);
+      setReviews([]);
+      setShapeQuestions([]);
+      setHelpQuestions([]);
       return nextUser;
     }
-    const [productPayload, orderPayload, memberPayload, userPayload, commissionPayload, messagePayload, damagePayload] = await Promise.all([
+    const [
+      productPayload,
+      orderPayload,
+      memberPayload,
+      userPayload,
+      commissionPayload,
+      messagePayload,
+      damagePayload,
+      reviewPayload,
+      shapePayload,
+      helpPayload,
+    ] = await Promise.all([
       api<AdminProduct[]>("/admin/products"),
       api<AdminOrder[]>("/admin/orders"),
       api<AdminMember[]>("/admin/members"),
@@ -49,6 +72,9 @@ export function useAdminWorkspace() {
       api<AdminCommission[]>("/admin/commissions"),
       api<AdminContactMessage[]>("/admin/messages"),
       api<AdminDamageReport[]>("/admin/damage-reports"),
+      api<AdminReview[]>("/admin/reviews"),
+      api<ShapeQuestion[]>("/admin/shape-questions"),
+      api<HelpQuestion[]>("/admin/help-questions"),
     ]);
     setProducts(productPayload);
     setOrders(orderPayload);
@@ -57,6 +83,9 @@ export function useAdminWorkspace() {
     setCommissions(commissionPayload);
     setMessages(messagePayload);
     setDamageReports(damagePayload);
+    setReviews(reviewPayload);
+    setShapeQuestions(shapePayload);
+    setHelpQuestions(helpPayload);
     return nextUser;
   }, []);
 
@@ -66,7 +95,7 @@ export function useAdminWorkspace() {
       .finally(() => setReady(true));
   }, [refresh]);
 
-  const can = (permission: "product.write" | "product.delete" | "order.write" | "member.write") =>
+  const can = (permission: AdminPermission) =>
     (permissions[currentRole] as readonly string[]).includes(permission);
 
   return useMemo(() => ({
@@ -80,6 +109,9 @@ export function useAdminWorkspace() {
     commissions,
     messages,
     damageReports,
+    reviews,
+    shapeQuestions,
+    helpQuestions,
     currentRole,
     can,
     async login(input: { email: string; password: string; rememberMe?: boolean }) {
@@ -123,6 +155,65 @@ export function useAdminWorkspace() {
       setCommissions([]);
       setMessages([]);
       setDamageReports([]);
+      setReviews([]);
+      setShapeQuestions([]);
+      setHelpQuestions([]);
+    },
+    async setReviewHidden(id: string, hidden: boolean) {
+      const saved = await api<AdminReview>(`/admin/reviews/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ hidden }),
+      });
+      setReviews((items) => items.map((item) => (item.id === saved.id ? saved : item)));
+    },
+    async deleteReview(id: string) {
+      await api(`/admin/reviews/${id}`, { method: "DELETE" });
+      setReviews((items) => items.filter((item) => item.id !== id));
+    },
+    async saveShapeQuestion(input: ShapeQuestionInput, id?: string) {
+      const saved = await api<ShapeQuestion>(
+        id ? `/admin/shape-questions/${id}` : "/admin/shape-questions",
+        { method: id ? "PATCH" : "POST", body: JSON.stringify(input) },
+      );
+      setShapeQuestions((items) =>
+        id ? items.map((item) => (item.id === saved.id ? saved : item)) : [...items, saved],
+      );
+    },
+    async deleteShapeQuestion(id: string) {
+      await api(`/admin/shape-questions/${id}`, { method: "DELETE" });
+      setShapeQuestions((items) => items.filter((item) => item.id !== id));
+    },
+    async reorderShapeQuestions(ids: string[]) {
+      setShapeQuestions(
+        await api<ShapeQuestion[]>("/admin/shape-questions/order", {
+          method: "PUT",
+          body: JSON.stringify({ ids }),
+        }),
+      );
+    },
+    async saveHelpQuestion(input: HelpQuestionInput, id?: string) {
+      const saved = await api<HelpQuestion>(
+        id ? `/admin/help-questions/${id}` : "/admin/help-questions",
+        {
+          method: id ? "PATCH" : "POST",
+          body: JSON.stringify({ ...input, more: input.more ?? null }),
+        },
+      );
+      setHelpQuestions((items) =>
+        id ? items.map((item) => (item.id === saved.id ? saved : item)) : [...items, saved],
+      );
+    },
+    async deleteHelpQuestion(id: string) {
+      await api(`/admin/help-questions/${id}`, { method: "DELETE" });
+      setHelpQuestions((items) => items.filter((item) => item.id !== id));
+    },
+    async reorderHelpQuestions(ids: string[]) {
+      setHelpQuestions(
+        await api<HelpQuestion[]>("/admin/help-questions/order", {
+          method: "PUT",
+          body: JSON.stringify({ ids }),
+        }),
+      );
     },
     async saveProduct(product: AdminProduct) {
       const payload = {
@@ -250,5 +341,5 @@ export function useAdminWorkspace() {
       setCommissions((items) => items.map((item) => (item.id === saved.id ? saved : item)));
       return saved;
     },
-  }), [commissions, currentRole, damageReports, error, members, messages, orders, products, ready, refresh, user, users]);
+  }), [commissions, currentRole, damageReports, error, helpQuestions, members, messages, orders, products, ready, refresh, reviews, shapeQuestions, user, users]);
 }

@@ -14,7 +14,6 @@ import {
 import { CartProvider } from "@/components/cart";
 import { LocaleProvider } from "@/components/i18n";
 import { CommerceProvider } from "@/components/commerce";
-import { MakingProvider } from "@/hooks/use-making-workspace";
 import { CatalogProvider } from "@/components/catalog/catalog-provider";
 import { HomeBanner } from "@/components/home/home-banner";
 import {
@@ -84,7 +83,10 @@ export const metadata: Metadata = {
     },
   },
   icons: {
-    icon: [{ url: "/rad-logo.png", type: "image/png" }, { url: "/rad-icon.svg", type: "image/svg+xml" }],
+    icon: [
+      { url: "/rad-logo.png", type: "image/png" },
+      { url: "/rad-icon.svg", type: "image/svg+xml" },
+    ],
     apple: "/rad-logo.png",
     shortcut: "/rad-logo.png",
   },
@@ -141,20 +143,18 @@ export default function RootLayout({
         <LocaleProvider>
           <CatalogProvider>
             <CommerceProvider>
-              <MakingProvider>
-                <CartProvider>
-                  {gaEnabled && gaMeasurementId ? (
-                    <GoogleAnalytics measurementId={gaMeasurementId} />
-                  ) : null}
-                  <RouteScrollReset />
-                  <HomeBanner />
-                  <Header />
-                  {/* <PwaRegistrar /> */}
-                  <RouteTrail />
-                  <main>{children}</main>
-                  <Footer />
-                </CartProvider>
-              </MakingProvider>
+              <CartProvider>
+                {gaEnabled && gaMeasurementId ? (
+                  <GoogleAnalytics measurementId={gaMeasurementId} />
+                ) : null}
+                <RouteScrollReset />
+                <HomeBanner />
+                <Header />
+                {/* <PwaRegistrar /> */}
+                <RouteTrail />
+                <main>{children}</main>
+                <Footer />
+              </CartProvider>
             </CommerceProvider>
           </CatalogProvider>
         </LocaleProvider>

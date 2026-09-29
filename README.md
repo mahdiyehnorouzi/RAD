@@ -201,6 +201,8 @@ Copy from `apps/api/.env.example`:
 | `npm run build:all` | Build all workspaces |
 | `npm run typecheck:all` | Typecheck all workspaces |
 | `npm run lint` | ESLint across the monorepo (`eslint.config.mjs`) |
+| `npm run format:changed` | Prettier on files changed since `origin/main` (what CI checks) |
+| `npm run format` / `format:check` | Prettier across the whole repo (`.prettierignore` lists exclusions) |
 | `npm test` | Run every workspace's tests (API pricing + purchase flow) |
 | `npm run deploy:release` | Deploy storefront + admin (CI/release) |
 | `npm run deploy:storefront` | Deploy storefront to Cloudflare |
@@ -371,8 +373,10 @@ npm run typecheck --workspace @rad/api
 Run the same checks locally before pushing:
 
 ```bash
-npm run lint && npm run typecheck:all && npm test
+npm run format:changed && npm run lint && npm run typecheck:all && npm test
 ```
+
+Pull requests fail if a file they touch is not Prettier-formatted; untouched files are formatted as they get edited.
 
 ### Reset local database
 

@@ -42,6 +42,10 @@ export class Review {
   @Column("text", { nullable: true })
   image!: string | null;
 
+  /** Staff hid it; it stays in the admin list but leaves the storefront. */
+  @Column("boolean", { default: false })
+  hidden!: boolean;
+
   @CreateDateColumn({ type: "timestamptz" })
   createdAt!: Date;
 

@@ -1,5 +1,4 @@
 export { HELP_JOURNEY, helpCopy, type JourneyStep } from "./help-copy";
-export { HELP_QUESTIONS } from "./help-questions";
 export {
   GUIDE_DOCUMENTS,
   LEGAL_DOCUMENTS,

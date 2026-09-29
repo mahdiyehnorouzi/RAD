@@ -1,5 +1,3 @@
-"use client";
-
 import { ArtworkVisual } from "@/components/product/artwork-visual";
 import type { DifferencePortrait, DifferenceStageId } from "../type";
 
@@ -16,7 +14,9 @@ export function StageVisual({
 }) {
   const palette = portrait.palette[stage];
   const treatment = `difference-stage-art stage-${stage} permission-${portrait.permission}`;
-  const photo = portrait.stageImages?.[stage] ?? (stage === "described" ? undefined : image);
+  const photo =
+    portrait.stageImages?.[stage] ??
+    (stage === "described" ? undefined : image);
 
   if (photo) {
     return (
@@ -29,7 +29,9 @@ export function StageVisual({
   return (
     <div className={treatment}>
       {stage === "described" ? (
-        <p className="difference-described-text">{portrait.described[locale]}</p>
+        <p className="difference-described-text">
+          {portrait.described[locale]}
+        </p>
       ) : (
         <ArtworkVisual
           visual={portrait.visual}

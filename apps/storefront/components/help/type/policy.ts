@@ -76,11 +76,3 @@ export type PolicyDocument = {
   /** Newest first. Published versions are never edited in place. */
   versions: PolicyVersion[];
 };
-
-export type HelpQuestion = {
-  id: string;
-  question: LocaleCopy;
-  answer: LocaleCopy;
-  /** Where the full rule lives, e.g. `returns#window`. */
-  more?: { slug: PolicySlug; section?: string };
-};

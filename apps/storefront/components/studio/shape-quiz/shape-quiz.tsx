@@ -2,24 +2,27 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useLocale } from "@/components/i18n";
-import { SHAPE_QUESTIONS, quizCopy } from "./const";
-import { useShapeMatches } from "./hooks";
+import { fill, quizCopy } from "./const";
+import { useShapeMatches, useShapeQuestions } from "./hooks";
 import { QuizFoot } from "./quiz-foot";
 import { QuizQuestion } from "./quiz-question";
 import { QuizResult } from "./quiz-result";
+import { QuizStatus } from "./quiz-status";
 import { QuizSteps } from "./quiz-steps";
 import "./shape-quiz.css";
 
 export function ShapeQuiz() {
-  const { locale } = useLocale();
+  const { locale, number } = useLocale();
   const c = quizCopy[locale];
+  const { questions, status, retry } = useShapeQuestions();
   const [step, setStep] = useState(0);
   const [way, setWay] = useState<"forward" | "back">("forward");
   const [answers, setAnswers] = useState<Array<number | undefined>>([]);
   const [done, setDone] = useState(false);
-  const matches = useShapeMatches(answers, done);
-  const total = SHAPE_QUESTIONS.length;
-  const question = SHAPE_QUESTIONS[step];
+  const matches = useShapeMatches(questions, answers, done);
+  const total = questions.length;
+  const question = questions[step];
+  const playable = status === "ready" && total > 0;
   const reached = Math.min(answers.filter((value) => value !== undefined).length, total - 1);
 
   const layoutRef = useRef<HTMLDivElement>(null);
@@ -76,11 +79,17 @@ export function ShapeQuiz() {
           <>
             <header className="sq-head">
               <h1>{c.title}</h1>
-              <p>{c.lede}</p>
-              <QuizSteps total={total} current={step} reached={reached} onSelect={goTo} />
+              {playable ? (
+                <>
+                  <p>{fill(c.lede, { count: number(total) })}</p>
+                  <QuizSteps total={total} current={step} reached={reached} onSelect={goTo} />
+                </>
+              ) : null}
             </header>
             <div ref={sheetRef} className="sq-sheet">
-              {question ? (
+              {!playable ? (
+                <QuizStatus status={status} onRetry={retry} />
+              ) : question ? (
                 <QuizQuestion
                   key={step}
                   question={question}

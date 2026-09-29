@@ -1,0 +1,31 @@
+# Build output and generated files
+node_modules
+**/.next
+**/.next-qa
+**/.open-next
+**/.vinext
+**/.wrangler
+**/dist
+**/out
+**/next-env.d.ts
+*.tsbuildinfo
+package-lock.json
+# Next.js rewrites these in its own JSON style
+apps/storefront/tsconfig.json
+apps/admin/tsconfig.json
+
+# Static assets and data
+**/public
+apps/api/seed/seed-assets
+apps/api/data
+
+# Scratch, tooling and agent folders
+.tmp-mock
+.impeccable
+.agents
+.openai
+.cursor
+work
+
+# Prose docs are edited by hand
+*.md

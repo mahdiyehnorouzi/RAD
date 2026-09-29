@@ -6,6 +6,7 @@ import {
   Param,
   Patch,
   Post,
+  Put,
   Req,
   UseGuards,
 } from "@nestjs/common";
@@ -28,6 +29,13 @@ import { ContactService } from "../contact/contact.service";
 import { UpdateContactMessageDto } from "../contact/dto";
 import { DamageReportsService } from "../damage/damage-reports.service";
 import { ReviewDamageReportDto } from "../damage/dto";
+import { ReviewsService } from "../reviews/reviews.service";
+import { UpdateReviewDto } from "../reviews/dto/update-review.dto";
+import { ShapeService } from "../shape/shape.service";
+import { SaveShapeQuestionDto } from "../shape/dto";
+import { HelpService } from "../help/help.service";
+import { SaveHelpQuestionDto } from "../help/dto";
+import { ReorderDto } from "../common/dto";
 import type { AuthedRequest } from "../common/session.middleware";
 
 @Controller("admin")
@@ -38,6 +46,9 @@ export class AdminController {
     private readonly commissions: CommissionsService,
     private readonly contact: ContactService,
     private readonly damageReports: DamageReportsService,
+    private readonly reviews: ReviewsService,
+    private readonly shape: ShapeService,
+    private readonly help: HelpService,
   ) {}
 
   @Get("products")
@@ -129,6 +140,94 @@ export class AdminController {
   ) {
     this.admin.assert(request.adminRole, "order.write");
     return this.damageReports.review(id, body, request.userId ?? null);
+  }
+
+  @Get("reviews")
+  listReviews() {
+    return this.reviews.listAll();
+  }
+
+  /** Hidden reviews stay here but leave the product page and the review feed. */
+  @Patch("reviews/:id")
+  updateReview(
+    @Param("id") id: string,
+    @Body() body: UpdateReviewDto,
+    @Req() request: AuthedRequest,
+  ) {
+    this.admin.assert(request.adminRole, "content.write");
+    return this.reviews.setHidden(id, body.hidden);
+  }
+
+  @Delete("reviews/:id")
+  deleteReview(@Param("id") id: string, @Req() request: AuthedRequest) {
+    this.admin.assert(request.adminRole, "content.write");
+    return this.reviews.remove(id);
+  }
+
+  @Get("shape-questions")
+  listShapeQuestions() {
+    return this.shape.list();
+  }
+
+  @Post("shape-questions")
+  createShapeQuestion(@Body() body: SaveShapeQuestionDto, @Req() request: AuthedRequest) {
+    this.admin.assert(request.adminRole, "content.write");
+    return this.shape.create(body);
+  }
+
+  @Put("shape-questions/order")
+  reorderShapeQuestions(@Body() body: ReorderDto, @Req() request: AuthedRequest) {
+    this.admin.assert(request.adminRole, "content.write");
+    return this.shape.reorder(body.ids);
+  }
+
+  @Patch("shape-questions/:id")
+  updateShapeQuestion(
+    @Param("id") id: string,
+    @Body() body: SaveShapeQuestionDto,
+    @Req() request: AuthedRequest,
+  ) {
+    this.admin.assert(request.adminRole, "content.write");
+    return this.shape.update(id, body);
+  }
+
+  @Delete("shape-questions/:id")
+  deleteShapeQuestion(@Param("id") id: string, @Req() request: AuthedRequest) {
+    this.admin.assert(request.adminRole, "content.write");
+    return this.shape.remove(id);
+  }
+
+  @Get("help-questions")
+  listHelpQuestions() {
+    return this.help.list();
+  }
+
+  @Post("help-questions")
+  createHelpQuestion(@Body() body: SaveHelpQuestionDto, @Req() request: AuthedRequest) {
+    this.admin.assert(request.adminRole, "content.write");
+    return this.help.create(body);
+  }
+
+  @Put("help-questions/order")
+  reorderHelpQuestions(@Body() body: ReorderDto, @Req() request: AuthedRequest) {
+    this.admin.assert(request.adminRole, "content.write");
+    return this.help.reorder(body.ids);
+  }
+
+  @Patch("help-questions/:id")
+  updateHelpQuestion(
+    @Param("id") id: string,
+    @Body() body: SaveHelpQuestionDto,
+    @Req() request: AuthedRequest,
+  ) {
+    this.admin.assert(request.adminRole, "content.write");
+    return this.help.update(id, body);
+  }
+
+  @Delete("help-questions/:id")
+  deleteHelpQuestion(@Param("id") id: string, @Req() request: AuthedRequest) {
+    this.admin.assert(request.adminRole, "content.write");
+    return this.help.remove(id);
   }
 
   @Get("commissions")
