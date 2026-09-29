@@ -16,3 +16,9 @@ export function isLocale(value: unknown): value is Locale {
 export function localeDirection(locale: Locale) {
   return locale === "fa" ? "rtl" : "ltr";
 }
+
+/** `/fa/products/x` → `/products/x`; public paths pass through unchanged. */
+export function publicPathname(pathname: string) {
+  const [, first, ...rest] = pathname.split("/");
+  return isLocale(first) ? `/${rest.join("/")}` : pathname;
+}

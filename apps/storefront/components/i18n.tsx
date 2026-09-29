@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useMemo } from "react";
-import { usePathname } from "next/navigation";
+import { usePublicPathname } from "@/hooks/use-public-pathname";
 import type { Locale } from "@rad/types";
 import { mockStorefront } from "@/lib/catalog/mock-storefront";
 import { fa, type MessageKey } from "@/i18n/fa";
@@ -63,7 +63,7 @@ export function LocaleProvider({
   locale: Locale;
   children: React.ReactNode;
 }) {
-  const pathname = usePathname();
+  const pathname = usePublicPathname();
   useEffect(() => {
     // Preferences saved in localStorage before the cookie existed.
     let legacy: string | null = null;

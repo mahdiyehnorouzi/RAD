@@ -1,6 +1,6 @@
 "use client";
 
-import { usePathname } from "next/navigation";
+import { usePublicPathname } from "@/hooks/use-public-pathname";
 import { useCatalogIndex } from "@/components/catalog";
 import { formatPolicyDate, policyDocument } from "@/components/help";
 import { useLocale } from "@/components/i18n";
@@ -24,7 +24,7 @@ function humanize(segment: string) {
 
 /** The page path as clickable steps, ending at the current page. */
 export function useRouteTrail() {
-  const pathname = usePathname();
+  const pathname = usePublicPathname();
   const { locale } = useLocale();
   const { find } = useCatalogIndex();
   const findCommission = useCommissionLookup();
