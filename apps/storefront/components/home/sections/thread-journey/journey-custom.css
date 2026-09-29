@@ -9,7 +9,8 @@
   align-content: end;
   min-height: clamp(22rem, 84vw, 39rem);
   margin: clamp(0.75rem, 2.4vw, 1.25rem) var(--journey-edge) 0;
-  padding: clamp(0.9rem, 3vw, 2rem) clamp(0.6rem, 2.4vw, 1.5rem) clamp(0.6rem, 2.4vw, 1.5rem);
+  padding: clamp(0.9rem, 3vw, 2rem) clamp(0.6rem, 2.4vw, 1.5rem)
+    clamp(0.6rem, 2.4vw, 1.5rem);
 }
 
 .journey-custom-photo {
@@ -45,22 +46,31 @@ html[dir="ltr"] .journey-custom-photo img {
   gap: 0.55rem;
   width: min(48%, 18rem);
   padding: 1.5rem 1.2rem 2.6rem;
-  filter: drop-shadow(0 8px 12px rgb(40 26 12 / 0.24)) drop-shadow(0 1px 1px rgb(40 26 12 / 0.16));
+  filter: drop-shadow(0 8px 12px rgb(40 26 12 / 0.24))
+    drop-shadow(0 1px 1px rgb(40 26 12 / 0.16));
 }
 
 .journey-custom-card::before {
   --card-mask:
     var(--tear-top) top center / calc(100% - var(--tear)) var(--tear) no-repeat,
-    var(--tear-bottom) bottom center / calc(100% - var(--tear)) var(--tear) no-repeat,
-    var(--tear-left) left center / var(--tear) calc(100% - 2 * var(--tear) + 2px) no-repeat,
-    var(--tear-right) right center / var(--tear) calc(100% - 2 * var(--tear) + 2px) no-repeat,
-    linear-gradient(#000 0 0) center / calc(100% - 2 * var(--tear) + 2px) calc(100% - 2 * var(--tear) + 2px) no-repeat;
+    var(--tear-bottom) bottom center / calc(100% - var(--tear)) var(--tear)
+      no-repeat,
+    var(--tear-left) left center / var(--tear)
+      calc(100% - 2 * var(--tear) + 2px) no-repeat,
+    var(--tear-right) right center / var(--tear)
+      calc(100% - 2 * var(--tear) + 2px) no-repeat,
+    linear-gradient(#000 0 0) center / calc(100% - 2 * var(--tear) + 2px)
+      calc(100% - 2 * var(--tear) + 2px) no-repeat;
   content: "";
   position: absolute;
   inset: 0;
   z-index: -1;
   background:
-    radial-gradient(140% 100% at 0% 0%, rgb(255 255 255 / 0.65), transparent 55%),
+    radial-gradient(
+      140% 100% at 0% 0%,
+      rgb(255 255 255 / 0.65),
+      transparent 55%
+    ),
     color-mix(in srgb, var(--paper) 82%, white);
   -webkit-mask: var(--card-mask);
   mask: var(--card-mask);
@@ -177,23 +187,33 @@ html[dir="rtl"] .journey-custom-steps li::after {
   pointer-events: none;
 }
 
-.journey-custom-steps li:has(> .journey-custom-step-mark.is-reached) .journey-custom-step-number {
+.journey-custom-steps
+  li:has(> .journey-custom-step-mark.is-reached)
+  .journey-custom-step-number {
   border-color: var(--oxide);
   background: var(--oxide);
   color: var(--paper);
 }
 
-.journey-custom-steps li:has(+ li > .journey-custom-step-mark.is-reached)::after {
+.journey-custom-steps
+  li:has(+ li > .journey-custom-step-mark.is-reached)::after {
   transform: none;
 }
 
 /* The last step selected so far */
-.journey-custom-steps li:has(> .journey-custom-step-mark.is-reached):not(:has(+ li > .journey-custom-step-mark.is-reached)) {
+.journey-custom-steps
+  li:has(> .journey-custom-step-mark.is-reached):not(
+    :has(+ li > .journey-custom-step-mark.is-reached)
+  ) {
   color: var(--oxide);
   font-weight: 700;
 }
 
-.journey-custom-steps li:has(> .journey-custom-step-mark.is-reached):not(:has(+ li > .journey-custom-step-mark.is-reached)) .journey-custom-step-number {
+.journey-custom-steps
+  li:has(> .journey-custom-step-mark.is-reached):not(
+    :has(+ li > .journey-custom-step-mark.is-reached)
+  )
+  .journey-custom-step-number {
   box-shadow: 0 0 0 0.3rem color-mix(in srgb, var(--oxide) 18%, transparent);
 }
 
@@ -206,7 +226,11 @@ html[dir="rtl"] .journey-custom-steps li::after {
   opacity: 0;
 }
 
-.journey-custom-steps li:has(> .journey-custom-step-mark.is-reached):not(:has(+ li > .journey-custom-step-mark.is-reached)) .journey-custom-step-number::after {
+.journey-custom-steps
+  li:has(> .journey-custom-step-mark.is-reached):not(
+    :has(+ li > .journey-custom-step-mark.is-reached)
+  )
+  .journey-custom-step-number::after {
   animation: journey-step-pulse 2.4s ease-out 0.4s infinite;
 }
 
@@ -239,7 +263,7 @@ html[dir="rtl"] .journey-custom-steps li::after {
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
+@media (--reduced-motion) {
   .journey-custom-steps li,
   .journey-custom-steps li::after,
   .journey-custom-step-number {

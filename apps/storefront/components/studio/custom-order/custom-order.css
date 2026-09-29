@@ -680,7 +680,7 @@ html[dir="ltr"] .cs-make:hover .cs-round {
   display: flex;
   align-items: flex-start;
   gap: 0.65rem;
-  margin-top: 0.9rem !important;
+  margin-top: 0.9rem;
   padding: 0.9rem 1rem;
   border: 1px dashed #cbbfad;
   border-radius: 14px;
@@ -720,7 +720,7 @@ html[dir="ltr"] .cs-make:hover .cs-round {
 
 /* Motion: the hero settles and the threads draw once, then prints rise in view. */
 
-@media (prefers-reduced-motion: no-preference) {
+@media (--motion-ok) {
   .cs-hero-arch img {
     animation: csSettle 1.4s var(--cs-ease) both;
   }
@@ -901,7 +901,7 @@ html[dir="ltr"] .cs-make:hover .cs-round {
 
 /* Wide: copy beside an arched frame on the window-lit wall. */
 
-@media (min-width: 960px) {
+@media (--wide) {
   .cs-hero {
     grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
     grid-template-rows: 1fr auto;

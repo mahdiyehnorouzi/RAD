@@ -14,8 +14,12 @@
   grid-template-rows: auto minmax(0, 1fr) auto;
   justify-items: center;
   gap: clamp(1.25rem, 3.5vh, 2.25rem);
-  height: max(36rem, calc(100svh - var(--header-height) - 2.5rem - var(--hero-peek)));
-  padding: clamp(2rem, 6vh, 3.75rem) var(--page) calc(var(--hero-edge-h) + clamp(1.25rem, 4vh, 2.5rem));
+  height: max(
+    36rem,
+    calc(100svh - var(--header-height) - 2.5rem - var(--hero-peek))
+  );
+  padding: clamp(2rem, 6vh, 3.75rem) var(--page)
+    calc(var(--hero-edge-h) + clamp(1.25rem, 4vh, 2.5rem));
   overflow: clip;
   background: var(--hero-wall);
 }
@@ -40,8 +44,10 @@
   content: "";
   position: absolute;
   inset: 0;
-  -webkit-mask: var(--hero-rim) var(--hero-edge-x) 100% / var(--hero-edge-size) 100% no-repeat;
-  mask: var(--hero-rim) var(--hero-edge-x) 100% / var(--hero-edge-size) 100% no-repeat;
+  -webkit-mask: var(--hero-rim) var(--hero-edge-x) 100% / var(--hero-edge-size)
+    100% no-repeat;
+  mask: var(--hero-rim) var(--hero-edge-x) 100% / var(--hero-edge-size) 100%
+    no-repeat;
   background: color-mix(in srgb, var(--paper) 55%, white);
 }
 
@@ -117,7 +123,9 @@ html[dir="ltr"] .hero-stamp {
   color: var(--paper) !important;
   font-weight: 600;
   white-space: nowrap;
-  transition: background 0.2s ease-out, color 0.2s ease-out;
+  transition:
+    background 0.2s ease-out,
+    color 0.2s ease-out;
 }
 
 .hero .hero-actions .button.outline {
@@ -189,7 +197,10 @@ html[dir="ltr"] .hero-stamp {
 @media (max-width: 700px) {
   .hero {
     gap: 1.25rem;
-    height: max(34rem, calc(100svh - var(--header-height) - 2.5rem - var(--hero-peek)));
+    height: max(
+      34rem,
+      calc(100svh - var(--header-height) - 2.5rem - var(--hero-peek))
+    );
     padding-top: 1.75rem;
   }
 
@@ -205,7 +216,7 @@ html[dir="ltr"] .hero-stamp {
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
+@media (--reduced-motion) {
   .hero-line > span,
   .hero-actions {
     animation: none;

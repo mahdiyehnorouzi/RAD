@@ -311,7 +311,11 @@ html[dir="ltr"] .trace-hero-thread {
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(circle at 70% 30%, color-mix(in srgb, var(--swatch-accent) 70%, transparent) 0 18%, transparent 19%),
+    radial-gradient(
+      circle at 70% 30%,
+      color-mix(in srgb, var(--swatch-accent) 70%, transparent) 0 18%,
+      transparent 19%
+    ),
     linear-gradient(160deg, var(--swatch) 0 62%, var(--swatch-accent) 63%);
 }
 
@@ -414,7 +418,7 @@ html[dir="ltr"] .trace-quote-tear {
   scale: -1 1;
 }
 
-@media (min-width: 960px) {
+@media (--wide) {
   .trace-world {
     --trace-pad: var(--page);
   }
@@ -436,7 +440,10 @@ html[dir="ltr"] .trace-quote-tear {
 
   .trace-hero-copy {
     padding-block: 3rem 4rem;
-    padding-inline: max(var(--page), calc((100vw - var(--trace-wide)) / 2 + var(--page)))
+    padding-inline: max(
+        var(--page),
+        calc((100vw - var(--trace-wide)) / 2 + var(--page))
+      )
       clamp(1.5rem, 4vw, 4rem);
   }
 
@@ -544,7 +551,7 @@ html[dir="ltr"] .trace-quote-tear {
 /* Motion: the thread draws once in the hero, then pays out down the
    timeline as it scrolls. Everything is visible without it. */
 
-@media (prefers-reduced-motion: no-preference) {
+@media (--motion-ok) {
   .trace-hero-media img {
     animation: traceSettle 1500ms var(--trace-ease) both;
   }

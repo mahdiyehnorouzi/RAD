@@ -42,7 +42,7 @@
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
+@media (--reduced-motion) {
   .home-reveal .reveal-item,
   .home-reveal.is-visible .reveal-item {
     animation: none;

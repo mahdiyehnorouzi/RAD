@@ -217,17 +217,8 @@ html[dir="ltr"] .cd-step-head h3 {
   transition: border-color 0.2s ease;
 }
 
-.cd-box:focus-within,
-.cd-input:focus {
+.cd-box:focus-within {
   border-color: var(--cs-green);
-}
-
-.cd-input {
-  width: 100%;
-  min-height: 3rem;
-  padding: 0 1rem;
-  color: var(--cs-ink);
-  font-size: 0.92rem;
 }
 
 .cd-icon-input {
@@ -255,7 +246,6 @@ html[dir="ltr"] .cd-step-head h3 {
   font-size: 0.92rem;
 }
 
-.cd-input::placeholder,
 .cd-icon-input input::placeholder,
 .cd-form textarea::placeholder,
 .dim-box input::placeholder {
@@ -616,7 +606,7 @@ html[dir="ltr"] .sent-notice-photo img {
   color: var(--cs-green);
 }
 
-@media (prefers-reduced-motion: no-preference) {
+@media (--motion-ok) {
   .sent-notice-mark {
     animation: cd-mark-in 0.7s 0.15s var(--cs-ease) both;
   }

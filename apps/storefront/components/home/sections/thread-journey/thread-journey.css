@@ -37,8 +37,10 @@
   --tear-right: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 1200' preserveAspectRatio='none'%3E%3Cpath transform='matrix(-1 0 0 1 24 0)' d='M24 0H11l2 22 -4 19 3 27 -5 16 4 31 -2 18 5 24 -6 29 3 17 -2 26 4 21 -5 33 2 14 -3 28 5 23 -4 19 3 31 -2 16 4 27 -5 22 3 18 -3 35 4 21 -5 15 3 29 -2 24 4 19 -4 32 3 17 -5 26 4 20 -2 30 3 18 -4 25 5 21 -4 28 2 16 -3 33 4 19 -5 23 3 27 -2 17 4 31 -3 20 3 24 -4 18 5 29 -4 22 2 26 -3 15 4 30 -2 21 3 19H24Z'/%3E%3C/svg%3E");
 
   --torn-top:
-    var(--hero-edge) var(--hero-edge-x) 0 / var(--hero-edge-size) var(--hero-edge-h) no-repeat,
-    linear-gradient(#000 0 0) 0 calc(var(--hero-edge-h) - 1px) / 100% 100% no-repeat;
+    var(--hero-edge) var(--hero-edge-x) 0 / var(--hero-edge-size)
+      var(--hero-edge-h) no-repeat,
+    linear-gradient(#000 0 0) 0 calc(var(--hero-edge-h) - 1px) / 100% 100%
+      no-repeat;
 
   position: relative;
   display: grid;
@@ -152,7 +154,7 @@
   white-space: nowrap;
 }
 
-@media (prefers-reduced-motion: reduce) {
+@media (--reduced-motion) {
   .red-thread-bead {
     transition: none;
   }

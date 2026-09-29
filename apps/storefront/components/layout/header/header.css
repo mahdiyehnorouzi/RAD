@@ -186,7 +186,7 @@
   font-style: normal;
 }
 
-@media (max-width: 900px) {
+@media (--tablet) {
   .nav {
     position: absolute;
     inset: var(--header-height) 0 auto;
@@ -206,7 +206,7 @@
   }
 }
 
-@media (max-width: 600px) {
+@media (--phone) {
   .header {
     padding-inline: 0.75rem;
   }
@@ -233,7 +233,7 @@
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
+@media (--reduced-motion) {
   .header,
   .language-switch span {
     transition: none;

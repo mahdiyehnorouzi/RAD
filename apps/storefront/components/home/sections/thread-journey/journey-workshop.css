@@ -43,13 +43,19 @@ html[dir="rtl"] .journey-workshop {
   inset-inline: -2rem 0;
   z-index: -1;
   background:
-    radial-gradient(120% 90% at 20% 10%, rgb(255 255 255 / 0.6), transparent 60%),
+    radial-gradient(
+      120% 90% at 20% 10%,
+      rgb(255 255 255 / 0.6),
+      transparent 60%
+    ),
     color-mix(in srgb, var(--paper) 82%, white);
   -webkit-mask:
-    linear-gradient(#000 0 0) top / 100% calc(100% - var(--tear) + 1px) no-repeat,
+    linear-gradient(#000 0 0) top / 100% calc(100% - var(--tear) + 1px)
+      no-repeat,
     var(--tear-bottom) bottom / 100% var(--tear) no-repeat;
   mask:
-    linear-gradient(#000 0 0) top / 100% calc(100% - var(--tear) + 1px) no-repeat,
+    linear-gradient(#000 0 0) top / 100% calc(100% - var(--tear) + 1px)
+      no-repeat,
     var(--tear-bottom) bottom / 100% var(--tear) no-repeat;
 }
 
@@ -102,8 +108,10 @@ html[dir="ltr"] .journey-workshop-link:hover svg {
 
 .journey-workshop-photo img {
   --photo-mask:
-    var(--inner-tear) var(--inner-side) top / var(--tear) calc(100% - var(--tear) + 1px) no-repeat,
-    linear-gradient(#000 0 0) var(--outer-side) top / calc(100% - var(--tear) + 1px) calc(100% - var(--tear) + 1px) no-repeat,
+    var(--inner-tear) var(--inner-side) top / var(--tear)
+      calc(100% - var(--tear) + 1px) no-repeat,
+    linear-gradient(#000 0 0) var(--outer-side) top /
+      calc(100% - var(--tear) + 1px) calc(100% - var(--tear) + 1px) no-repeat,
     var(--tear-bottom) bottom / 100% var(--tear) no-repeat;
   position: absolute;
   inset: 0;
@@ -140,7 +148,7 @@ html[dir="ltr"] .journey-workshop-link:hover svg {
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
+@media (--reduced-motion) {
   .journey-workshop-link svg {
     transition: none;
   }

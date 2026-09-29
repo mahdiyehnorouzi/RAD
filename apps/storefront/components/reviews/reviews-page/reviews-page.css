@@ -348,7 +348,7 @@ html[dir="rtl"] .review-entry-quote svg {
 
 /* Motion: each card rises as it enters. */
 
-@media (prefers-reduced-motion: no-preference) {
+@media (--motion-ok) {
   @supports (animation-timeline: view()) {
     .reviews-page-list > li {
       animation: reviews-rise linear both;

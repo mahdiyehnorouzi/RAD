@@ -94,7 +94,11 @@
   aspect-ratio: 5 / 4;
   overflow: hidden;
   background:
-    radial-gradient(circle at 62% 42%, var(--cover-accent, #cbb892) 0 18%, transparent 19%),
+    radial-gradient(
+      circle at 62% 42%,
+      var(--cover-accent, #cbb892) 0 18%,
+      transparent 19%
+    ),
     var(--cover-color, var(--pp-sand));
 }
 
@@ -321,7 +325,12 @@ html[dir="ltr"] .passport-sheet-title h1 {
   width: 0.85rem;
   height: 0.85rem;
   border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, #d99272, var(--pp-thread) 55%, #6c3322);
+  background: radial-gradient(
+    circle at 35% 30%,
+    #d99272,
+    var(--pp-thread) 55%,
+    #6c3322
+  );
   box-shadow: 0 3px 4px -1px rgb(40 20 10 / 0.35);
   translate: -50% 0;
 }
@@ -788,7 +797,7 @@ html[dir="ltr"] .passport-sign p {
 /* Wide screens: the sheet at the reading start, the photograph bleeding off
    the reading end, a vertical tear between them. */
 
-@media (min-width: 960px) {
+@media (--wide) {
   .passport-page {
     --pp-pad: var(--page);
   }
@@ -944,7 +953,7 @@ html[dir="ltr"] .passport-sign p {
    pressed onto it. Further down, prints and stamps land as they scroll in.
    Everything is visible without it. */
 
-@media (prefers-reduced-motion: no-preference) {
+@media (--motion-ok) {
   .passport-cover-media img {
     animation: passportSettle 1400ms var(--pp-ease) both;
   }
@@ -995,7 +1004,7 @@ html[dir="ltr"] .passport-sign p {
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
+@media (--reduced-motion) {
   .passport-seal-stamp,
   .passport-family-tag,
   .passport-action,

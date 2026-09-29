@@ -51,7 +51,8 @@ html[dir="ltr"] .journey-ready-photo img {
   padding: clamp(2.6rem, 8vw, 3.8rem) 0.9rem 1rem;
   transform: rotate(calc(var(--tilt) + var(--swing, 0deg)));
   transform-origin: 50% 1.375rem;
-  filter: drop-shadow(5px 12px 12px rgb(52 36 20 / 0.28)) drop-shadow(0 1px 1.5px rgb(52 36 20 / 0.3));
+  filter: drop-shadow(5px 12px 12px rgb(52 36 20 / 0.28))
+    drop-shadow(0 1px 1.5px rgb(52 36 20 / 0.3));
   will-change: transform;
 }
 
@@ -65,11 +66,22 @@ html[dir="ltr"] .journey-tag {
   inset: 0;
   z-index: -1;
   background:
-    radial-gradient(130% 90% at 30% 12%, rgb(255 252 242 / 0.6), transparent 60%),
-    radial-gradient(140% 120% at 50% 50%, transparent 62%, rgb(120 92 56 / 0.16)),
-    repeating-linear-gradient(90deg, rgb(110 86 52 / 0.04) 0 1px, transparent 1px 3px),
-    var(--tag-grain),
-    #e8dec8;
+    radial-gradient(
+      130% 90% at 30% 12%,
+      rgb(255 252 242 / 0.6),
+      transparent 60%
+    ),
+    radial-gradient(
+      140% 120% at 50% 50%,
+      transparent 62%,
+      rgb(120 92 56 / 0.16)
+    ),
+    repeating-linear-gradient(
+      90deg,
+      rgb(110 86 52 / 0.04) 0 1px,
+      transparent 1px 3px
+    ),
+    var(--tag-grain), #e8dec8;
   -webkit-mask: var(--tag-shape) center / 100% 100% no-repeat;
   mask: var(--tag-shape) center / 100% 100% no-repeat;
 }
@@ -84,8 +96,20 @@ html[dir="ltr"] .journey-tag {
   margin-left: -0.775rem;
   border-radius: 50%;
   background:
-    radial-gradient(circle at 50% 58%, #cbb088 0 16%, #8a6a44 29%, #5c4020 32%, transparent 34%),
-    radial-gradient(circle at 34% 28%, #fbe9b4 0 9%, #d9b05c 32%, #a67b2f 62%, #6b4c1c 100%);
+    radial-gradient(
+      circle at 50% 58%,
+      #cbb088 0 16%,
+      #8a6a44 29%,
+      #5c4020 32%,
+      transparent 34%
+    ),
+    radial-gradient(
+      circle at 34% 28%,
+      #fbe9b4 0 9%,
+      #d9b05c 32%,
+      #a67b2f 62%,
+      #6b4c1c 100%
+    );
   box-shadow:
     0 1px 1px rgb(40 20 12 / 0.45),
     0 3px 5px rgb(40 20 12 / 0.22);
@@ -128,7 +152,10 @@ html[dir="ltr"] .journey-tag {
   filter: blur(0.8px);
 }
 
-[data-thread="live"] .journey-tag:not(:has(.journey-tag-eyelet.is-reached)) .journey-tag-tie path {
+[data-thread="live"]
+  .journey-tag:not(:has(.journey-tag-eyelet.is-reached))
+  .journey-tag-tie
+  path {
   stroke-dashoffset: 1;
   --tie-delay: 0s;
 }
@@ -173,7 +200,7 @@ html[dir="ltr"] .journey-tag {
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
+@media (--reduced-motion) {
   .journey-tag-tie path {
     transition: none;
   }

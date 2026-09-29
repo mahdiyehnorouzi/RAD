@@ -31,7 +31,11 @@
   position: absolute;
   inset: 0;
   z-index: 0;
-  background: linear-gradient(to bottom, rgb(46 32 18 / 0.26), rgb(46 32 18 / 0) 42%);
+  background: linear-gradient(
+    to bottom,
+    rgb(46 32 18 / 0.26),
+    rgb(46 32 18 / 0) 42%
+  );
   pointer-events: none;
 }
 
@@ -283,7 +287,7 @@ html[dir="rtl"] .certificate-eyebrow svg {
   }
 }
 
-@media (min-width: 901px) {
+@media (--desktop) {
   .certificate {
     --card-drop: clamp(4.5rem, 12dvh, 8rem);
   }
@@ -317,7 +321,7 @@ html[dir="rtl"] .certificate-eyebrow svg {
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
+@media (--reduced-motion) {
   .certificate.is-visible .certificate-visual img,
   .certificate.is-visible .certificate-edition,
   .certificate.is-visible .certificate-card {

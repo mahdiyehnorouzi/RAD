@@ -1,13 +1,35 @@
-html[dir="rtl"] .workshop-page {direction:rtl!important;text-align:right!important}
+html[dir="rtl"] .workshop-page {
+  direction: rtl !important;
+  text-align: right !important;
+}
 
-.workshop-page {background:var(--canvas);color:var(--ink)}
+.workshop-page {
+  background: var(--canvas);
+  color: var(--ink);
+}
 
-.workshop-page h1 {font-size:clamp(1.8rem,4.5vw,3.1rem);font-weight:400;line-height:1.2;margin:.4rem 0 1rem;max-width:18ch}
+.workshop-page h1 {
+  font-size: clamp(1.8rem, 4.5vw, 3.1rem);
+  font-weight: 400;
+  line-height: 1.2;
+  margin: 0.4rem 0 1rem;
+  max-width: 18ch;
+}
 
-.workshop-page>header p {max-width:42rem;color:#5c574f}
+.workshop-page > header p {
+  max-width: 42rem;
+  color: #5c574f;
+}
 
-.workshop-columns {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1.25rem;margin-top:2rem}
+.workshop-columns {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.25rem;
+  margin-top: 2rem;
+}
 
-@media(max-width:900px) {
-.workshop-columns {grid-template-columns:1fr!important}
+@media (--tablet) {
+  .workshop-columns {
+    grid-template-columns: 1fr !important;
+  }
 }

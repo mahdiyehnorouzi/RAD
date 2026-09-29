@@ -72,7 +72,8 @@
   position: absolute;
   inset: 0;
   transform-style: preserve-3d;
-  animation: hero-card-deal 1.25s var(--ease-out) calc(0.5s + var(--abs) * 0.16s) both;
+  animation: hero-card-deal 1.25s var(--ease-out)
+    calc(0.5s + var(--abs) * 0.16s) both;
 }
 
 .hero-card-sheet {
@@ -144,7 +145,12 @@
   aspect-ratio: 1;
   border-radius: 50%;
   translate: -50% 0;
-  background: radial-gradient(circle at 34% 30%, #f6e3b4, #b8904f 48%, #5d4322 100%);
+  background: radial-gradient(
+    circle at 34% 30%,
+    #f6e3b4,
+    #b8904f 48%,
+    #5d4322 100%
+  );
   box-shadow:
     -0.12rem 0.2rem 0.3rem rgba(58, 40, 20, 0.4),
     inset 0 -1px 1px rgba(40, 26, 10, 0.35);
@@ -159,15 +165,55 @@
   overflow: hidden;
   background: var(--ink);
   -webkit-mask:
-    radial-gradient(circle at 0 0, #0000 var(--notch), #000 calc(var(--notch) + 0.5px)) 0 0 / 51% 51% no-repeat,
-    radial-gradient(circle at 100% 0, #0000 var(--notch), #000 calc(var(--notch) + 0.5px)) 100% 0 / 51% 51% no-repeat,
-    radial-gradient(circle at 0 100%, #0000 var(--notch), #000 calc(var(--notch) + 0.5px)) 0 100% / 51% 51% no-repeat,
-    radial-gradient(circle at 100% 100%, #0000 var(--notch), #000 calc(var(--notch) + 0.5px)) 100% 100% / 51% 51% no-repeat;
+    radial-gradient(
+        circle at 0 0,
+        #0000 var(--notch),
+        #000 calc(var(--notch) + 0.5px)
+      )
+      0 0 / 51% 51% no-repeat,
+    radial-gradient(
+        circle at 100% 0,
+        #0000 var(--notch),
+        #000 calc(var(--notch) + 0.5px)
+      )
+      100% 0 / 51% 51% no-repeat,
+    radial-gradient(
+        circle at 0 100%,
+        #0000 var(--notch),
+        #000 calc(var(--notch) + 0.5px)
+      )
+      0 100% / 51% 51% no-repeat,
+    radial-gradient(
+        circle at 100% 100%,
+        #0000 var(--notch),
+        #000 calc(var(--notch) + 0.5px)
+      )
+      100% 100% / 51% 51% no-repeat;
   mask:
-    radial-gradient(circle at 0 0, #0000 var(--notch), #000 calc(var(--notch) + 0.5px)) 0 0 / 51% 51% no-repeat,
-    radial-gradient(circle at 100% 0, #0000 var(--notch), #000 calc(var(--notch) + 0.5px)) 100% 0 / 51% 51% no-repeat,
-    radial-gradient(circle at 0 100%, #0000 var(--notch), #000 calc(var(--notch) + 0.5px)) 0 100% / 51% 51% no-repeat,
-    radial-gradient(circle at 100% 100%, #0000 var(--notch), #000 calc(var(--notch) + 0.5px)) 100% 100% / 51% 51% no-repeat;
+    radial-gradient(
+        circle at 0 0,
+        #0000 var(--notch),
+        #000 calc(var(--notch) + 0.5px)
+      )
+      0 0 / 51% 51% no-repeat,
+    radial-gradient(
+        circle at 100% 0,
+        #0000 var(--notch),
+        #000 calc(var(--notch) + 0.5px)
+      )
+      100% 0 / 51% 51% no-repeat,
+    radial-gradient(
+        circle at 0 100%,
+        #0000 var(--notch),
+        #000 calc(var(--notch) + 0.5px)
+      )
+      0 100% / 51% 51% no-repeat,
+    radial-gradient(
+        circle at 100% 100%,
+        #0000 var(--notch),
+        #000 calc(var(--notch) + 0.5px)
+      )
+      100% 100% / 51% 51% no-repeat;
 }
 
 .hero-card-frame {
@@ -182,10 +228,34 @@
   --ink-line: color-mix(in srgb, #8a4938 72%, transparent);
   --edge: calc(100% - var(--notch) * 2);
   background:
-    radial-gradient(circle at 0 0, #0000 calc(var(--notch) - 1px), var(--ink-line) calc(var(--notch) - 1px) var(--notch), #0000 var(--notch)) 0 0 / var(--notch) var(--notch),
-    radial-gradient(circle at 100% 0, #0000 calc(var(--notch) - 1px), var(--ink-line) calc(var(--notch) - 1px) var(--notch), #0000 var(--notch)) 100% 0 / var(--notch) var(--notch),
-    radial-gradient(circle at 0 100%, #0000 calc(var(--notch) - 1px), var(--ink-line) calc(var(--notch) - 1px) var(--notch), #0000 var(--notch)) 0 100% / var(--notch) var(--notch),
-    radial-gradient(circle at 100% 100%, #0000 calc(var(--notch) - 1px), var(--ink-line) calc(var(--notch) - 1px) var(--notch), #0000 var(--notch)) 100% 100% / var(--notch) var(--notch),
+    radial-gradient(
+        circle at 0 0,
+        #0000 calc(var(--notch) - 1px),
+        var(--ink-line) calc(var(--notch) - 1px) var(--notch),
+        #0000 var(--notch)
+      )
+      0 0 / var(--notch) var(--notch),
+    radial-gradient(
+        circle at 100% 0,
+        #0000 calc(var(--notch) - 1px),
+        var(--ink-line) calc(var(--notch) - 1px) var(--notch),
+        #0000 var(--notch)
+      )
+      100% 0 / var(--notch) var(--notch),
+    radial-gradient(
+        circle at 0 100%,
+        #0000 calc(var(--notch) - 1px),
+        var(--ink-line) calc(var(--notch) - 1px) var(--notch),
+        #0000 var(--notch)
+      )
+      0 100% / var(--notch) var(--notch),
+    radial-gradient(
+        circle at 100% 100%,
+        #0000 calc(var(--notch) - 1px),
+        var(--ink-line) calc(var(--notch) - 1px) var(--notch),
+        #0000 var(--notch)
+      )
+      100% 100% / var(--notch) var(--notch),
     linear-gradient(var(--ink-line) 0 0) 50% 0 / var(--edge) 1px,
     linear-gradient(var(--ink-line) 0 0) 50% 100% / var(--edge) 1px,
     linear-gradient(var(--ink-line) 0 0) 0 50% / 1px var(--edge),
@@ -335,14 +405,17 @@
 
 @keyframes hero-card-wrap {
   from {
-    transform: translate3d(calc(var(--side) * var(--spread) * -1), 0, calc(var(--fan-depth) * -1))
+    transform: translate3d(
+        calc(var(--side) * var(--spread) * -1),
+        0,
+        calc(var(--fan-depth) * -1)
+      )
       rotateY(calc(var(--side) * var(--fan-turn)))
-      rotateZ(calc(var(--side) * var(--fan-tilt) * -1))
-      scale(0.88);
+      rotateZ(calc(var(--side) * var(--fan-tilt) * -1)) scale(0.88);
   }
   50% {
-    transform: translate3d(0, -0.5rem, calc(var(--fan-depth) * -2.6)) rotateY(0deg) rotateZ(0deg)
-      scale(0.8);
+    transform: translate3d(0, -0.5rem, calc(var(--fan-depth) * -2.6))
+      rotateY(0deg) rotateZ(0deg) scale(0.8);
   }
   to {
     transform: var(--card-transform);
@@ -376,7 +449,7 @@
 }
 
 /* Positions still change and the record still replaces the photograph, by crossfade instead of travel. */
-@media (prefers-reduced-motion: reduce) {
+@media (--reduced-motion) {
   .hero-card,
   .hero-card-sheet {
     transition: none;

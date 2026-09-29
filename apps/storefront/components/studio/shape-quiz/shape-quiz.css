@@ -13,7 +13,8 @@
   --sq-line-strong: #c9bcaa;
   --sq-oxide: #8a4938;
   --sq-sand: #dccab0;
-  --sq-shadow: 0 1px 2px rgb(74 54 34 / 0.05), 0 14px 28px -22px rgb(74 54 34 / 0.45);
+  --sq-shadow:
+    0 1px 2px rgb(74 54 34 / 0.05), 0 14px 28px -22px rgb(74 54 34 / 0.45);
   --sq-ease: cubic-bezier(0.22, 1, 0.36, 1);
   --sq-gutter: clamp(1.25rem, 5vw, 3rem);
   --icon-knock: var(--sq-paper);
@@ -533,7 +534,9 @@ html[dir="ltr"] .sq-result-head p {
 
 .sq-card a:hover {
   border-color: var(--sq-line-strong);
-  box-shadow: 0 2px 3px rgb(74 54 34 / 0.06), 0 20px 34px -22px rgb(74 54 34 / 0.55);
+  box-shadow:
+    0 2px 3px rgb(74 54 34 / 0.06),
+    0 20px 34px -22px rgb(74 54 34 / 0.55);
   transform: translateY(-2px);
 }
 
@@ -705,7 +708,7 @@ html[dir="ltr"] .sq-foot svg {
 
 /* Motion: the question slides in along the reading direction; results rise; the thread draws once */
 
-@media (prefers-reduced-motion: no-preference) {
+@media (--motion-ok) {
   .sq-body {
     --sq-from: -18px;
     animation: sq-step-in 0.5s var(--sq-ease) both;
@@ -767,7 +770,7 @@ html[dir="ltr"] .sq-foot svg {
 
 /* Wide: the head holds the reading-start column, the sheet or the results the other */
 
-@media (min-width: 960px) {
+@media (--wide) {
   .sq-layout {
     width: min(100%, 68rem);
     grid-template-columns: minmax(0, 23rem) minmax(0, 36rem);
