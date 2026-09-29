@@ -20,7 +20,12 @@ async function main() {
       artworkRecords.indexOf(record),
     );
     await backfillRadNumbers(dataSource);
-    await seedCommerce(dataSource);
+    // Demo orders carry fake customers and mark their works sold.
+    if (process.env.NODE_ENV === "production") {
+      console.log("Demo orders skipped in production.");
+    } else {
+      await seedCommerce(dataSource);
+    }
   } finally {
     await dataSource.destroy();
   }

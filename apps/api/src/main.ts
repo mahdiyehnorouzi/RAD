@@ -1,38 +1,10 @@
 import { NestFactory } from "@nestjs/core";
 import { ValidationPipe } from "@nestjs/common";
 import { NestExpressApplication } from "@nestjs/platform-express";
-import cookieParser = require("cookie-parser");
+import cookieParser from "cookie-parser";
 import { AppModule } from "./app.module";
+import { allowedOrigins, isAllowedOrigin } from "./common/cors-origins";
 import { setupSwagger } from "./swagger";
-
-function isAllowedOrigin(origin?: string) {
-  if (!origin) return true;
-  const allowed = [
-    process.env.STOREFRONT_ORIGIN,
-    process.env.ADMIN_ORIGIN,
-    "http://localhost:3000",
-    "http://localhost:3002",
-    "http://127.0.0.1:3000",
-    "https://rad-studio-ceramic.mahdiyeh-norozi77.chatgpt.site",
-    "https://rad-studio.rad-studio.workers.dev",
-    "https://rad-admin.rad-studio.workers.dev",
-    "https://rad-object.com",
-    "https://www.rad-object.com",
-    "https://admin.rad-object.com",
-  ].filter(Boolean) as string[];
-  if (allowed.includes(origin)) return true;
-  try {
-    const { hostname } = new URL(origin);
-    return (
-      hostname === "rad-object.com" ||
-      hostname.endsWith(".rad-object.com") ||
-      hostname.endsWith(".workers.dev") ||
-      hostname.endsWith(".chatgpt.site")
-    );
-  } catch {
-    return false;
-  }
-}
 
 async function bootstrap() {
   // Disable default parsers so we can raise the JSON limit for admin product images.
@@ -45,9 +17,10 @@ async function bootstrap() {
   app.useBodyParser("json", { limit: "12mb" });
   app.useBodyParser("urlencoded", { limit: "12mb", extended: true });
   app.use(cookieParser());
+  const corsOrigins = allowedOrigins();
   app.enableCors({
     origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
-      callback(null, isAllowedOrigin(origin));
+      callback(null, isAllowedOrigin(origin, corsOrigins));
     },
     credentials: true,
   });

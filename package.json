@@ -1,6 +1,6 @@
 {
   "name": "rad-monorepo",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "private": true,
   "workspaces": [
     "apps/*",
@@ -30,6 +30,8 @@
     "deploy:api:render": "echo 'Connect render.yaml in the Render dashboard, then set admin API_URL to the Render service URL.'",
     "build:all": "npm run build --workspaces --if-present",
     "typecheck:all": "npm run typecheck --workspaces --if-present",
+    "lint": "eslint .",
+    "test": "npm run test --workspaces --if-present",
     "format": "prettier --write \"apps/storefront/**/*.{ts,tsx,css,json,mjs}\"",
     "format:check": "prettier --check \"apps/storefront/**/*.{ts,tsx,css,json,mjs}\""
   },
@@ -55,10 +57,14 @@
     "@vitejs/plugin-react": "^6.1.0",
     "@vitejs/plugin-rsc": "^0.5.34",
     "autoprefixer": "^10.5.4",
+    "eslint": "^9.39.5",
+    "eslint-config-next": "^16.3.2",
+    "globals": "^17.12.0",
     "postcss": "^8.5.26",
     "prettier": "^3.9.6",
     "tailwindcss": "^3.4.19",
     "typescript": "^5.8",
+    "typescript-eslint": "^8.71.0",
     "vinext": "^1.0.0-beta.8",
     "vite": "^8.2.2",
     "wrangler": "^4.125.0"

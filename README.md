@@ -2,7 +2,7 @@
 
 RAD is a bilingual (Persian / English) ceramic studio platform: a customer storefront, an artist workshop, and an admin operations panel, backed by a NestJS API and PostgreSQL.
 
-The repo is an **npm workspaces monorepo** (version `1.3.0`). Three apps run independently in development; shared code lives in `packages/`.
+The repo is an **npm workspaces monorepo** (version `1.4.0`). Three apps run independently in development; shared code lives in `packages/`.
 
 | App | Package | Default URL | Purpose |
 | --- | --- | --- | --- |
@@ -160,13 +160,15 @@ Copy from `apps/api/.env.example`:
 | `PORT` | No | API port (default `4000`) |
 | `STOREFRONT_ORIGIN` | Yes (prod) | CORS origin for storefront (local: `http://localhost:3000`) |
 | `ADMIN_ORIGIN` | Yes (prod) | CORS origin for admin (local: `http://localhost:3002`) |
+| `CORS_ORIGINS` | No | Extra exact CORS origins, comma-separated (no wildcards) |
 | `ADMIN_EMAIL` | No | Owner account email (seed / boot) |
 | `ADMIN_PASSWORD` | No | Owner account password |
 | `OPENAI_API_KEY` | No | AI design generation (`POST /design`) |
 | `PAYMENT_MODE` | No | `manual_card` or `gateway` |
 | `PAYMENT_CARD_*` | No | Bank card details for manual transfer checkout |
 | `SMTP_*` | For password reset | Email delivery for forgot-password flow |
-| `RUN_SEED` | Prod only | Set `true` to run full seed on deploy boot |
+| `TYPEORM_SYNCHRONIZE` | No | Schema sync; defaults to on in development, off when `NODE_ENV=production` |
+| `RUN_SEED` | Prod only | Set `true` to run the registry seed on deploy boot (first boot on an empty database). Never resets a work's status; demo orders are skipped in production |
 
 ### `apps/storefront/.env` (optional locally)
 
@@ -198,6 +200,8 @@ Copy from `apps/api/.env.example`:
 | `npm run build:admin` | Build admin |
 | `npm run build:all` | Build all workspaces |
 | `npm run typecheck:all` | Typecheck all workspaces |
+| `npm run lint` | ESLint across the monorepo (`eslint.config.mjs`) |
+| `npm test` | Run every workspace's tests (API pricing + purchase flow) |
 | `npm run deploy:release` | Deploy storefront + admin (CI/release) |
 | `npm run deploy:storefront` | Deploy storefront to Cloudflare |
 | `npm run deploy:admin` | Deploy admin to Cloudflare |
@@ -307,7 +311,7 @@ RAD/
 ├── Dockerfile.api        # Production API image
 ├── render.yaml           # Render.com blueprint (API + Postgres)
 ├── ARCHITECTURE.md       # High-level design notes
-└── VERSION               # Monorepo version (1.3.0)
+└── VERSION               # Monorepo version (1.4.0)
 ```
 
 ---
@@ -335,9 +339,9 @@ npm run deploy:admin
 
 On API boot in production (`scripts/start-production.mjs`):
 
-1. TypeORM schema sync (`scripts/sync-schema.ts`)
+1. TypeORM schema sync (`scripts/sync-schema.ts`) only if `TYPEORM_SYNCHRONIZE=true`
 2. `ensure-staff` (owner/editor accounts)
-3. Full seed if `RUN_SEED=true`
+3. Registry seed if `RUN_SEED=true`
 4. Start HTTP server
 
 Set `STOREFRONT_ORIGIN`, `ADMIN_ORIGIN`, `JWT_SECRET`, `DATABASE_URL`, and SMTP vars in the hosting dashboard. Point storefront/admin `API_URL` at the deployed API URL.
@@ -358,6 +362,16 @@ Or per workspace:
 npm run typecheck --workspace @rad/storefront
 npm run typecheck --workspace @rad/admin
 npm run typecheck --workspace @rad/api
+```
+
+### Continuous integration
+
+`.github/workflows/ci.yml` runs on every pull request and on pushes to `main`: lint, typecheck, tests, and the production builds (API, and the vinext builds of admin and storefront that Cloudflare deploys). `release.yml` runs the same checks before deploying a tag. Protect `main` by requiring the **CI passed** status check.
+
+Run the same checks locally before pushing:
+
+```bash
+npm run lint && npm run typecheck:all && npm test
 ```
 
 ### Reset local database

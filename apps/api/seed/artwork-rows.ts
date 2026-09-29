@@ -80,7 +80,8 @@ export async function seedArtists(dataSource: DataSource) {
 
 /**
  * Upserts works by slug. Numbers held by other rows are released first so a
- * registry number always points at exactly one work.
+ * registry number always points at exactly one work. `status` is set only on
+ * insert: after that the API owns it, and re-seeding must not resell a sold work.
  */
 export async function seedArtworks(
   dataSource: DataSource,
@@ -97,9 +98,12 @@ export async function seedArtworks(
   for (const record of records) {
     const row = artworkRow(record, sortOrderFor(record));
     const existing = await products.findOne({ where: { slug: record.slug } });
-    await products.save(
-      existing ? products.merge(existing, row) : products.create(row),
-    );
+    if (existing) {
+      const { status: _status, ...content } = row;
+      await products.save(products.merge(existing, content));
+    } else {
+      await products.save(products.create(row));
+    }
 
     const imageRows = record.images.flatMap((image, sortOrder) => {
       const src = seedImageSrc(record.slug, sortOrder);

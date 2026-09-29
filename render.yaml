@@ -10,8 +10,12 @@ services:
         value: production
       - key: PORT
         value: 4000
-      - key: RUN_SEED
+      # No migrations yet: schema sync is the only way tables get created or updated.
+      - key: TYPEORM_SYNCHRONIZE
         value: "true"
+      # Re-seeding overwrites admin edits to registry works; set true only for the first boot on an empty database.
+      - key: RUN_SEED
+        value: "false"
       - key: ADMIN_ORIGIN
         value: https://rad-admin.rad-studio.workers.dev
       - key: STOREFRONT_ORIGIN

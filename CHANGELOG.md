@@ -2,6 +2,27 @@
 
 All notable product releases are tracked here. Version numbers follow [SemVer](https://semver.org/). Production deploys run from matching git tags (`vX.Y.Z`).
 
+## 1.4.0 - 2026-09-29
+
+### Added
+
+- Shared artworks catalog (`@rad/artworks`) with inventory status, manual card payment, receipt review, and product QR labels.
+- Help and policy pages, contact form, damage reports, product reviews, and a RAD story page.
+- Stepped checkout with payment and receipt, a cart hold timer, and an illustrated shape quiz with result cards.
+- Swagger docs, admin customers, FAQ API, Google Analytics 4, and storefront SEO metadata, sitemap, and robots rules.
+- CI workflow (lint, typecheck, tests, production builds) that also gates tagged releases.
+
+### Changed
+
+- Redesign home, About, catalog, account, cart, orders, favorites, and policy pages with torn-paper editorial layouts.
+- Migrate the API from Prisma to TypeORM; the API now deploys to its VPS separately from tagged releases.
+- Credentialed CORS matches exact origins only (extra origins via `CORS_ORIGINS`).
+- Production schema sync is opt-in through `TYPEORM_SYNCHRONIZE=true`; re-seeding never resets a work's status and skips demo orders in production.
+
+### Removed
+
+- `apps/api/.env` is no longer tracked.
+
 ## 1.3.0 - 2026-09-06
 
 ### Added

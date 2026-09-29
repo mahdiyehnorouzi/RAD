@@ -12,13 +12,24 @@ export function cleanDatabaseUrl(url = process.env.DATABASE_URL ?? "") {
   }
 }
 
+/**
+ * Schema sync can alter or drop production columns, so it is opt-in there:
+ * an explicit `TYPEORM_SYNCHRONIZE` wins, otherwise it runs only outside production.
+ */
+export function schemaSyncEnabled(
+  value = process.env.TYPEORM_SYNCHRONIZE,
+  nodeEnv = process.env.NODE_ENV,
+) {
+  if (value) return value !== "false";
+  return nodeEnv !== "production";
+}
+
 export function typeOrmOptions(overrides: Partial<DataSourceOptions> = {}): DataSourceOptions {
-  const synchronize = (process.env.TYPEORM_SYNCHRONIZE ?? "true") !== "false";
   return {
     type: "postgres",
     url: cleanDatabaseUrl(),
     entities: [...entities],
-    synchronize,
+    synchronize: schemaSyncEnabled(),
     logging: false,
     extra: {
       max: 5,

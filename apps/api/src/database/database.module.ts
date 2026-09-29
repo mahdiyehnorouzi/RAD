@@ -1,7 +1,7 @@
 import { Global, Module } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { TypeOrmModule } from "@nestjs/typeorm";
-import { cleanDatabaseUrl } from "./data-source";
+import { cleanDatabaseUrl, schemaSyncEnabled } from "./data-source";
 import { entities } from "./entities";
 
 @Global()
@@ -10,9 +10,10 @@ import { entities } from "./entities";
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (config: ConfigService) => {
-        const synchronize =
-          (config.get<string>("TYPEORM_SYNCHRONIZE") ?? process.env.TYPEORM_SYNCHRONIZE ?? "true") !==
-          "false";
+        const synchronize = schemaSyncEnabled(
+          config.get<string>("TYPEORM_SYNCHRONIZE") ?? process.env.TYPEORM_SYNCHRONIZE,
+          config.get<string>("NODE_ENV") ?? process.env.NODE_ENV,
+        );
         return {
           type: "postgres" as const,
           url: cleanDatabaseUrl(config.get<string>("DATABASE_URL") ?? process.env.DATABASE_URL),

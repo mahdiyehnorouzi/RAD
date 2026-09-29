@@ -23,6 +23,7 @@ const files = [
   'apps/storefront/package.json',
   'apps/admin/package.json',
   'apps/api/package.json',
+  'packages/artworks/package.json',
   'packages/i18n/package.json',
   'packages/state/package.json',
   'packages/types/package.json',

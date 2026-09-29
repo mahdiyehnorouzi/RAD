@@ -7,8 +7,12 @@ on:
   workflow_dispatch:
 
 jobs:
+  checks:
+    uses: ./.github/workflows/ci.yml
+
   deploy:
     name: Deploy tagged version
+    needs: checks
     runs-on: ubuntu-latest
     permissions:
       contents: read

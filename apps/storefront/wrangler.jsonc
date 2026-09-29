@@ -18,6 +18,6 @@
   "cache": { "enabled": true },
   "vars": {
     "API_URL": "https://api.rad-object.com",
-    "RAD_VERSION": "1.3.0"
+    "RAD_VERSION": "1.4.0"
   }
 }

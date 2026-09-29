@@ -18,6 +18,8 @@ export function GoogleAnalytics({ measurementId }: { measurementId: string }) {
 
     window.dataLayer = window.dataLayer || [];
     window.gtag = function gtag() {
+      // gtag.js only reads real `arguments` objects from dataLayer; a rest array is ignored.
+      // eslint-disable-next-line prefer-rest-params
       window.dataLayer!.push(arguments);
     };
     window.gtag("js", new Date());
