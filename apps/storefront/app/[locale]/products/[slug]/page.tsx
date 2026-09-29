@@ -26,6 +26,7 @@ import {
   safeJsonLd,
   siteName,
 } from "@/lib/seo";
+import { recover } from "@/lib/log";
 
 type Work =
   | { kind: "moved"; to: string }
@@ -68,7 +69,9 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const work = await resolveWork(slug).catch(() => undefined);
+  const work = await resolveWork(slug).catch(
+    recover(`product ${slug}`, undefined),
+  );
   if (work === undefined)
     return { title: siteName, robots: { index: false, follow: false } };
   if (!work)
@@ -135,13 +138,15 @@ export default async function PDP({
   );
   const [faq, reviews, qrSvg, catalog] = await Promise.all([
     fetchFaq("fa"),
-    fetchProductReviews(product.slug).catch(() => []),
+    fetchProductReviews(product.slug).catch(
+      recover(`reviews ${product.slug}`, []),
+    ),
     QRCode.toString(qrTarget, {
       type: "svg",
       margin: 0,
       errorCorrectionLevel: "M",
       color: { dark: "#1a1714", light: "#00000000" },
-    }).catch(() => undefined),
+    }).catch(recover("product qr svg", undefined)),
     getCatalog(),
   ]);
 

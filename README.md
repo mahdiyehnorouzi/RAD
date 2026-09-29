@@ -45,7 +45,13 @@ cp apps/api/.env.example apps/api/.env
 # Edit apps/api/.env — at minimum set ADMIN_PASSWORD and JWT_SECRET for local use
 ```
 
-Start each service in its own terminal:
+Start Postgres, the API and the storefront together (prefixed logs, Ctrl+C stops all):
+
+```bash
+npm run dev:all              # add -- --admin for the admin panel, -- --no-db to skip docker
+```
+
+Or start each service in its own terminal:
 
 ```bash
 # Terminal 1 — API (NestJS, port 4000)
@@ -75,6 +81,8 @@ Browser requests from storefront and admin go to **`/backend/*`**, which is prox
 - Admin: `apps/admin/app/backend/[...path]/route.ts`
 
 Server-side rendering uses `API_URL` (defaults to `http://localhost:4000`). No extra frontend env is required for basic local development if the API runs on port 4000.
+
+The storefront catalog source is set by `CATALOG_SOURCE`: `auto` (default) uses the API and falls back to the bundled artwork registry when it is unreachable, `api` fails loudly instead of falling back, and `registry` skips the API entirely. In `next dev` a badge in the bottom-left corner shows which source rendered the page, and recovered failures are logged as `[rad:<scope>]` warnings.
 
 Authentication uses an HTTP-only cookie (`rad.auth`). CORS is enabled for localhost and configured production origins in `apps/api/src/main.ts`.
 
@@ -177,6 +185,7 @@ Copy from `apps/api/.env.example`:
 | Variable | Description |
 | --- | --- |
 | `API_URL` | Upstream API for SSR and Cloudflare build (default `http://localhost:4000`) |
+| `CATALOG_SOURCE` | `auto` (default), `api` or `registry` — where catalog data comes from |
 | `NEXT_PUBLIC_SITE_URL` | Public site URL (production / SEO) |
 | `NEXT_PUBLIC_GA_MEASUREMENT_ID` | Google Analytics 4 ID |
 | `CLOUDFLARE_API_TOKEN` | Required for `deploy:cloudflare` |
@@ -193,6 +202,7 @@ Copy from `apps/api/.env.example`:
 
 | Script | Description |
 | --- | --- |
+| `npm run dev:all` | Postgres + API + storefront in one terminal (`-- --admin`, `-- --no-db`) |
 | `npm run dev` | Storefront dev server (:3000) |
 | `npm run dev:admin` | Admin dev server (:3002) |
 | `npm run dev:api` | API watch mode (:4000) |

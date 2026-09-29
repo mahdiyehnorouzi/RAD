@@ -5,6 +5,7 @@ import "@/components/ui/section.css";
 import "@/components/ui/skeleton.css";
 import { brand } from "@/lib/brand";
 import {
+  DevDataBadge,
   Footer,
   GoogleAnalytics,
   Header,
@@ -168,6 +169,9 @@ export default async function RootLayout({
                 <RouteTrail />
                 <main>{children}</main>
                 <Footer />
+                {process.env.NODE_ENV === "development" ? (
+                  <DevDataBadge />
+                ) : null}
               </CartProvider>
             </CommerceProvider>
           </CatalogIndexProvider>

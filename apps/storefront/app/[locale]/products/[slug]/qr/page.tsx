@@ -9,9 +9,12 @@ import { resolveArtwork } from "@/lib/artworks/server";
 import { registryProducts } from "@/lib/catalog/get-catalog-works";
 import { passportFromArtwork } from "@/lib/passport";
 import { absoluteUrl } from "@/lib/seo";
+import { recover } from "@/lib/log";
 
 const resolveWork = cache(async (slug: string) => {
-  const artwork = await resolveArtwork(slug).catch(() => null);
+  const artwork = await resolveArtwork(slug).catch(
+    recover(`product qr ${slug}`, null),
+  );
   if (!artwork || artwork.slug !== slug || artwork.price === null) return null;
   return {
     product: productFromArtwork(artwork),

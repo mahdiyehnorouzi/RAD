@@ -1,6 +1,7 @@
 import { HelpHub } from "@/components/help";
 import { fetchHelpQuestions } from "@/lib/api";
 import { pageMetadata } from "@/lib/seo";
+import { recover } from "@/lib/log";
 
 export const metadata = pageMetadata({
   title: "راهنمای خرید و قوانین",
@@ -10,6 +11,8 @@ export const metadata = pageMetadata({
 });
 
 export default async function HelpRoute() {
-  const questions = await fetchHelpQuestions().catch(() => []);
+  const questions = await fetchHelpQuestions().catch(
+    recover("help questions", []),
+  );
   return <HelpHub questions={questions} />;
 }

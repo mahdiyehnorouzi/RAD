@@ -2,7 +2,11 @@ import "server-only";
 import { cache } from "react";
 import type { Artwork, Product } from "@rad/types";
 import { shopProducts } from "@/lib/artworks";
-import { fallbackArtworks, loadArtworks } from "@/lib/artworks/server";
+import {
+  fallbackArtworks,
+  loadArtworks,
+  type ArtworksOrigin,
+} from "@/lib/artworks/server";
 import type { CatalogIndexEntry } from "./catalog-index";
 import { CATALOG_TAG } from "./catalog-tag";
 
@@ -10,8 +14,8 @@ type CatalogLoad = {
   artworks: Artwork[];
   /** The shop projection of `artworks`. */
   products: Product[];
-  /** False when the API could not be reached and everything is the registry fallback. */
-  live: boolean;
+  /** `registry` when the API was skipped or unreachable; see CATALOG_SOURCE. */
+  origin: ArtworksOrigin;
 };
 
 /** Registry shop works, for build-time static params only; pages render {@link getCatalog}. */
@@ -24,11 +28,11 @@ export function registryProducts(): Product[] {
  * within a render. Purchases and bag changes expire it through `refreshCatalog`.
  */
 export const getCatalog = cache(async (): Promise<CatalogLoad> => {
-  const { artworks, live } = await loadArtworks({
+  const { artworks, origin } = await loadArtworks({
     next: { revalidate: 30, tags: [CATALOG_TAG] },
     timeoutMs: 8_000,
   });
-  return { artworks, products: shopProducts(artworks), live };
+  return { artworks, products: shopProducts(artworks), origin };
 });
 
 /** Names and numbers only: enough for breadcrumbs, toasts and notices on every page. */

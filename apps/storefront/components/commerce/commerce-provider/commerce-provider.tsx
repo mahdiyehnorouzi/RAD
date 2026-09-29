@@ -25,6 +25,7 @@ import { useCatalogRefresh } from "@/hooks/use-catalog-refresh";
 import { useCatalogIndex } from "../../catalog/catalog-index-provider";
 import { useLocale } from "@/components/i18n";
 import { Heart, X } from "lucide-react";
+import { logRecovered } from "@/lib/log";
 
 type Toast = {
   id: number;
@@ -101,7 +102,8 @@ export function CommerceProvider({ children }: { children: React.ReactNode }) {
     ordersWanted.current = true;
     try {
       setOrders(await api<Order[]>("/orders"));
-    } catch {
+    } catch (error) {
+      logRecovered("orders", error);
       // Keep whatever is already shown; order pages fall back to fetching one order.
     } finally {
       setOrdersReady(true);
@@ -125,7 +127,7 @@ export function CommerceProvider({ children }: { children: React.ReactNode }) {
       .then((session) => {
         if (!cancelled) applySession(session);
       })
-      .catch(() => {})
+      .catch((error) => logRecovered("session", error))
       .finally(() => {
         if (!cancelled) setReady(true);
       });
@@ -139,7 +141,7 @@ export function CommerceProvider({ children }: { children: React.ReactNode }) {
       if (document.visibilityState !== "visible") return;
       api<{ notices: Notice[] }>("/notices")
         .then((payload) => setNotices(payload.notices))
-        .catch(() => {});
+        .catch((error) => logRecovered("notices", error));
     };
     const timer = window.setInterval(refreshNotices, NOTICE_POLL_MS);
     document.addEventListener("visibilitychange", refreshNotices);

@@ -8,6 +8,7 @@
   ],
   "scripts": {
     "dev": "npm run dev --workspace @rad/storefront",
+    "dev:all": "node scripts/dev-stack.mjs",
     "build": "npm run build --workspace @rad/storefront",
     "build:cloudflare": "npm run build:vinext --workspace @rad/storefront",
     "start": "npm run start --workspace @rad/storefront",
@@ -17,7 +18,7 @@
     "start:vinext": "npm run start:vinext --workspace @rad/storefront",
     "deploy:storefront": "bash scripts/deploy-storefront-cloudflare.sh",
     "deploy:vinext": "npm run deploy:cloudflare --workspace @rad/storefront",
-    "dev:api": "npm run dev --workspace @rad/api --port 4001",
+    "dev:api": "npm run dev --workspace @rad/api",
     "setup:api": "docker compose up -d --wait && npm run setup --workspace @rad/api",
     "db:up": "docker compose up -d --wait",
     "db:down": "docker compose down",

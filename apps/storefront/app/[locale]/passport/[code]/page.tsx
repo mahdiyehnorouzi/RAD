@@ -12,9 +12,12 @@ import {
   relatedByFeeling,
 } from "@/lib/passport";
 import { absoluteUrl, pageMetadata, safeJsonLd } from "@/lib/seo";
+import { recover } from "@/lib/log";
 
 const resolvePassport = cache(async (code: string) => {
-  const artwork = await resolveArtwork(code).catch(() => null);
+  const artwork = await resolveArtwork(code).catch(
+    recover(`passport ${code}`, null),
+  );
   return artwork ? passportFromArtwork(artwork) : null;
 });
 

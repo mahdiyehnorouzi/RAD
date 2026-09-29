@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { Product } from "@rad/types";
 import { fetchProduct } from "@/lib/api";
 import { useOnline } from "@/hooks/use-online";
+import { logRecovered } from "@/lib/log";
 
 const POLL_MS = 20_000;
 
@@ -35,7 +36,8 @@ export function useLiveProduct(slug: string): LiveProduct {
       setFailed(false);
       setWithdrawn(next === null);
       if (next) setProduct(next);
-    } catch {
+    } catch (error) {
+      logRecovered(`product ${slug}`, error);
       setFailed(true);
     } finally {
       inFlight.current = false;

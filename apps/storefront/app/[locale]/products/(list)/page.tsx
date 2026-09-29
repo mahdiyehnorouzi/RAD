@@ -15,12 +15,12 @@ type Props = {
 };
 
 async function loadCatalogView(searchParams: Props["searchParams"]) {
-  const [{ products, live }, params] = await Promise.all([
+  const [{ products, origin }, params] = await Promise.all([
     getCatalog(),
     searchParams,
   ]);
   const filters = resolveCatalogFilters(parseCatalogFilters(params), products);
-  return { products, live, filters };
+  return { products, live: origin === "api", filters };
 }
 
 export async function generateMetadata({

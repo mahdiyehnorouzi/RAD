@@ -4,6 +4,7 @@ import type { DifferencePortrait } from "@/components/difference/type";
 import { resolveArtwork } from "@/lib/artworks/server";
 import { passportFromArtwork } from "@/lib/passport";
 import { portraitFromArtwork } from "./portraits";
+import { recover } from "@/lib/log";
 
 type DifferenceWork = {
   portrait: DifferencePortrait;
@@ -17,7 +18,9 @@ type DifferenceWork = {
  */
 export const resolveDifference = cache(
   async (id: string): Promise<DifferenceWork | null | undefined> => {
-    const artwork = await resolveArtwork(id).catch(() => undefined);
+    const artwork = await resolveArtwork(id).catch(
+      recover(`difference ${id}`, undefined),
+    );
     if (artwork === undefined) return undefined;
     const portrait = artwork && portraitFromArtwork(artwork);
     if (!portrait || portrait.id !== id) return null;

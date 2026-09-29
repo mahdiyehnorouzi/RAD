@@ -1,9 +1,9 @@
 import { withCurrentAssetPaths } from "@/lib/media/legacy-assets";
 
-const API_BASE =
-  typeof window === "undefined"
-    ? process.env.API_URL || "http://localhost:4000"
-    : "/backend";
+/** Where server code reaches the API; browsers go through the /backend proxy. */
+export const SERVER_API_URL = process.env.API_URL || "http://localhost:4000";
+
+const API_BASE = typeof window === "undefined" ? SERVER_API_URL : "/backend";
 
 type ApiErrorBody = { error?: unknown; message?: unknown; code?: unknown };
 

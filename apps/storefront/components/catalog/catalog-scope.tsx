@@ -14,12 +14,12 @@ export async function CatalogScope({
   withArtworks?: boolean;
   children: React.ReactNode;
 }) {
-  const { products, artworks, live } = await getCatalog();
+  const { products, artworks, origin } = await getCatalog();
   return (
     <CatalogProvider
       products={products}
       artworks={withArtworks ? artworks : undefined}
-      live={live}
+      live={origin === "api"}
     >
       {children}
     </CatalogProvider>
