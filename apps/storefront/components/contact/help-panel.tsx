@@ -2,7 +2,7 @@
 import "./help-panel.css";
 
 import { useEffect, useId, useRef, useState } from "react";
-import { Check, Copy, MessageSquareText, X } from "lucide-react";
+import { Check, Copy, Info, MessageSquareText, Send, X } from "lucide-react";
 import { useLocale } from "@/components/i18n";
 import { InstagramIcon, MessageForm } from "./channels";
 import { RAD_INSTAGRAM, helpPanelCopy } from "./const";
@@ -74,6 +74,9 @@ export function HelpPanel({
       className={`help-panel is-${context}`}
       aria-labelledby={`${id}-title`}
     >
+      {context === "order" ? (
+        <span className="help-panel-eyebrow">{c.orderEyebrow}</span>
+      ) : null}
       <h2 id={`${id}-title`}>{title}</h2>
       <p className="help-panel-body">
         {context === "checkout" ? c.checkoutBody : c.orderBody}
@@ -87,7 +90,11 @@ export function HelpPanel({
           rel="noopener noreferrer"
           aria-label={c.directLabel}
         >
-          <InstagramIcon size={18} />
+          {context === "order" ? (
+            <Send size={18} strokeWidth={1.6} aria-hidden="true" />
+          ) : (
+            <InstagramIcon size={18} />
+          )}
           <span>{c.direct}</span>
         </a>
         <button type="button" className="help-action" onClick={copyText}>
@@ -124,7 +131,12 @@ export function HelpPanel({
           <output>{template}</output>
         </div>
       ) : copyNote ? (
-        <p className="help-panel-note">{copyNote}</p>
+        <p className="help-panel-note">
+          {context === "order" ? (
+            <Info size={18} strokeWidth={1.6} aria-hidden="true" />
+          ) : null}
+          <span>{copyNote}</span>
+        </p>
       ) : null}
 
       <div id={`${id}-form`} className="help-panel-form" hidden={!writing}>

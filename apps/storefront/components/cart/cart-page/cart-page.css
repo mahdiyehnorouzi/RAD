@@ -528,8 +528,9 @@ html[dir="ltr"] .cart-released-wash {
 @media (max-width: 600px) {
   .cart-empty.section,
   .cart-page.section {
+    --page: 1rem;
     padding-block: 1.5rem 2rem !important;
-    padding-inline: 1rem !important;
+    padding-inline: var(--page) !important;
   }
 
   .cart-line {

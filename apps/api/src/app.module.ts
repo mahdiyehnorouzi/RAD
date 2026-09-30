@@ -7,6 +7,7 @@ import { DatabaseModule } from "./database/database.module";
 import { CommonModule } from "./common/common.module";
 import { InventoryModule } from "./inventory/inventory.module";
 import { SessionMiddleware } from "./common/session.middleware";
+import { jwtSecret } from "./common/jwt-secret";
 import { ApiExceptionFilter } from "./common/http-exception.filter";
 import { AuthModule } from "./auth/auth.module";
 import { CatalogModule } from "./catalog/catalog.module";
@@ -15,6 +16,7 @@ import { FavoritesModule } from "./favorites/favorites.module";
 import { ReviewsModule } from "./reviews/reviews.module";
 import { OrdersModule } from "./orders/orders.module";
 import { NoticesModule } from "./notices/notices.module";
+import { SessionModule } from "./session/session.module";
 import { DesignModule } from "./design/design.module";
 import { CommissionsModule } from "./commissions/commissions.module";
 import { AdminModule } from "./admin/admin.module";
@@ -33,7 +35,10 @@ import { HealthController } from "./health/health.controller";
       global: true,
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
-        secret: config.get<string>("JWT_SECRET") ?? "rad-dev-secret-change-me",
+        secret: jwtSecret(
+          config.get<string>("JWT_SECRET"),
+          config.get<string>("NODE_ENV") ?? process.env.NODE_ENV,
+        ),
         signOptions: { expiresIn: "7d" },
       }),
     }),
@@ -50,6 +55,7 @@ import { HealthController } from "./health/health.controller";
     FavoritesModule,
     ReviewsModule,
     NoticesModule,
+    SessionModule,
     OrdersModule,
     DesignModule,
     CommissionsModule,

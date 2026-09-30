@@ -1,7 +1,14 @@
 "use client";
 
-import { useId, useRef, useState, type ChangeEvent, type ReactNode } from "react";
+import {
+  useId,
+  useRef,
+  useState,
+  type ChangeEvent,
+  type ReactNode,
+} from "react";
 import type { PaymentReceiptInput } from "@/types/api";
+import { ImageUp } from "lucide-react";
 import { useLocale } from "@/components/i18n";
 import { Button } from "@/components/ui/button-link";
 import {
@@ -83,6 +90,7 @@ export function ReceiptForm({
         <input
           ref={fileRef}
           id={`${id}-file`}
+          className="order-receipt-file"
           type="file"
           accept={RECEIPT_TYPES.join(",")}
           onChange={onReceiptChange}
@@ -90,7 +98,14 @@ export function ReceiptForm({
           aria-invalid={receiptError ? true : undefined}
           aria-describedby={receiptError ? `${id}-file-error` : undefined}
         />
-        {fileName ? <small>{fileName}</small> : null}
+        <label
+          className="order-receipt-drop"
+          htmlFor={`${id}-file`}
+          aria-hidden="true"
+        >
+          <ImageUp aria-hidden="true" />
+          <span>{fileName || t("receiptChoose")}</span>
+        </label>
         {receiptImage ? (
           <figure className="order-receipt-preview">
             <img src={receiptImage} alt={t("receiptPreviewAlt")} />

@@ -605,6 +605,7 @@ export const en = {
     "After transferring, upload a photo of your receipt so RAD can review and confirm payment.",
   confirmManualPayment: "Submit receipt",
   receiptUploadLabel: "Bank transfer receipt",
+  receiptChoose: "Choose the receipt image",
   receiptPreviewAlt: "Payment receipt preview",
   receiptImageError: "Only JPEG, PNG, or WebP images up to 1 MB are allowed.",
   receiptRequired: "Choose a receipt image to continue.",
@@ -634,7 +635,8 @@ export const en = {
   leaveReview: "Review this work",
   backToOrders: "Back to orders",
   nextActionBrowse: "Browse ready-made works",
-  waitingPacking: "Your payment was confirmed; the work will be packed shortly.",
+  waitingPacking:
+    "Your payment was confirmed; the work will be packed shortly.",
   waitingShip:
     "Packing is underway. A postal code will appear here after handover.",
   waitingDelivery: "The parcel has been handed to the post.",
@@ -730,7 +732,8 @@ export const en = {
   passportMissing: "This passport has not been written yet.",
   passportCoverLede: "This passport tells this work's whole story.",
   passportLogTitle: "The making log",
-  passportLogBody: "From the first line to the last look, as the workshop recorded it.",
+  passportLogBody:
+    "From the first line to the last look, as the workshop recorded it.",
   passportTagMaking: "While making",
   passportTagFinal: "Final",
   pdpPassportLink: "This RAD's passport",

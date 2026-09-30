@@ -343,6 +343,13 @@ export interface Notice {
   read: boolean;
   createdAt: number;
 }
+/** Everything the storefront shell needs about the visitor, in one request. */
+export interface SessionState {
+  user: AuthUser | null;
+  favorites: string[];
+  notices: Notice[];
+  unread: number;
+}
 export interface CartSnapshot {
   slugs: string[];
   /** Hold deadline per slug (epoch ms). Unpaid holds return to `available` after it. */

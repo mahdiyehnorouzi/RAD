@@ -6,10 +6,7 @@ import {
   isFileProductImage,
   productPhotoSrc,
 } from "@/lib/catalog/category-defaults";
-import {
-  catalogLifestylePhotoSlugs,
-  catalogPhotoSrc,
-} from "@/lib/catalog/photo-works";
+import { catalogPhotoSrc, hasStudioPhotos } from "@/lib/catalog/photo-works";
 import { pdpCopy } from "./const";
 import type { WorkTexture } from "@/lib/catalog/material-texture";
 import { PdpSection } from "./pdp-section";
@@ -23,7 +20,7 @@ function anatomyOf(product: Product, artwork?: Artwork) {
   const marks: WorkMark[] | undefined =
     found >= 0 ? images[found].marks : artwork?.passport?.marks;
   if (!marks?.length) return null;
-  const src = catalogLifestylePhotoSlugs.has(product.slug)
+  const src = hasStudioPhotos(product)
     ? catalogPhotoSrc(product.slug, index)
     : isFileProductImage(images[index]?.src)
       ? productPhotoSrc(images[index].src)

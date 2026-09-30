@@ -1,5 +1,5 @@
 import type { MetadataRoute } from "next";
-import { loadCatalogWorks } from "@/lib/catalog/get-catalog-works";
+import { getCatalog } from "@/lib/catalog/get-catalog-works";
 import { portraitsFrom } from "@/lib/difference";
 import { livePiecesFrom } from "@/lib/now";
 import { passportsFrom } from "@/lib/passport";
@@ -15,12 +15,14 @@ import { catalogArtists, shopFloor } from "@/lib/catalog/refine";
 import { PRODUCT_SEO, productSeoState } from "@/lib/catalog/product-seo";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const { artworks, products } = await loadCatalogWorks();
+  const { artworks, products } = await getCatalog();
   const lastModified = new Date();
   const shelf = shopFloor(products);
   const catalogLandings: CatalogFilters[] = [
     ...[...new Set(shelf.map((product) => product.category))]
-      .filter((category) => artworkCategories.some((item) => item.id === category))
+      .filter((category) =>
+        artworkCategories.some((item) => item.id === category),
+      )
       .map((category) => ({ ...defaultCatalogFilters, category })),
     ...catalogArtists(shelf).map((artist) => ({
       ...defaultCatalogFilters,
@@ -29,7 +31,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ];
 
   const staticRoutes: MetadataRoute.Sitemap = [
-    { url: absoluteUrl(), lastModified, changeFrequency: "weekly", priority: 1 },
+    {
+      url: absoluteUrl(),
+      lastModified,
+      changeFrequency: "weekly",
+      priority: 1,
+    },
     {
       url: absoluteUrl("/about"),
       lastModified,

@@ -1,15 +1,13 @@
 "use client";
 import { useEffect, useState } from "react";
 import type { Artwork, FaqContent, Product } from "@rad/types";
+import type { RadPassport } from "@/components/passport/type";
 import { useLocale } from "@/components/i18n";
-import { usePassports } from "@/hooks/use-artworks";
 import { useProductStatus } from "@/hooks/use-product-status";
 import { fetchFaq } from "@/lib/api";
 import { overlayLiveProduct } from "@/lib/catalog/category-defaults";
 import { workTextures } from "@/lib/catalog/material-texture";
 import { isGoneStatus } from "@/lib/catalog/product-status";
-import { passportForProduct } from "@/lib/passport";
-import { useCatalog } from "../../catalog/catalog-provider";
 import { useLiveProduct } from "./hooks";
 import { MaterialTexture } from "./material-texture";
 import { ProductAnatomy } from "./product-anatomy";
@@ -33,12 +31,17 @@ function isGlazed(artwork?: Artwork) {
 
 export function ProductDetail({
   product,
-  artwork: initialArtwork,
+  artwork,
+  passport,
+  related,
   initialFaq = null,
   qrSvg,
 }: {
   product: Product;
   artwork?: Artwork;
+  passport?: RadPassport;
+  /** Other works to suggest, already chosen and ordered by the server. */
+  related: Product[];
   initialFaq?: FaqContent | null;
   qrSvg?: string;
 }) {
@@ -59,21 +62,8 @@ export function ProductDetail({
     };
   }, [locale]);
 
-  const {
-    products,
-    artworks,
-    getProduct,
-    loading,
-    status: catalogStatus,
-  } = useCatalog();
   const live = useLiveProduct(product.slug);
-  const passports = usePassports();
-  const catalogProduct =
-    catalogStatus === "live" ? getProduct(product.slug) : undefined;
-  const resolved = overlayLiveProduct(catalogProduct ?? product, live.product);
-  const artwork =
-    artworks.find((item) => item.slug === resolved.slug) ?? initialArtwork;
-  const passport = passportForProduct(passports, resolved);
+  const resolved = overlayLiveProduct(product, live.product);
   const textures = workTextures(resolved);
 
   const { inBag, reserved, label, status } = useProductStatus(resolved);
@@ -139,11 +129,7 @@ export function ProductDetail({
             shape="strip"
             className="pdp-rest-strip"
           />
-          <RelatedWorks
-            current={resolved}
-            products={products}
-            loading={loading}
-          />
+          <RelatedWorks works={related} />
         </div>
       </div>
     </article>

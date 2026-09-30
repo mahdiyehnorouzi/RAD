@@ -5,17 +5,26 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type CSSProperties,
 } from "react";
-import type { AuthUser, Notice, NoticeKind, Order, Review } from "@rad/types";
+import type {
+  AuthUser,
+  Notice,
+  NoticeKind,
+  Order,
+  Review,
+  SessionState,
+} from "@rad/types";
 import type { PaymentReceiptInput, PlaceOrderInput } from "@/types/api";
-import { productCopy } from "@/lib/catalog/products";
 import { api } from "@/lib/api";
-import { useCatalog } from "../../catalog/catalog-provider";
+import { useCatalogRefresh } from "@/hooks/use-catalog-refresh";
+import { useCatalogIndex } from "../../catalog/catalog-index-provider";
 import { useLocale } from "@/components/i18n";
 import { Bell, Heart, UserRound, X } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -30,7 +39,11 @@ type CommerceContextValue = {
   user: AuthUser | null;
   ready: boolean;
   login: (input: { email: string; password: string }) => Promise<void>;
-  register: (input: { name: string; email: string; password: string }) => Promise<void>;
+  register: (input: {
+    name: string;
+    email: string;
+    password: string;
+  }) => Promise<void>;
   logout: () => Promise<void>;
   favorites: string[];
   toggleFavorite: (slug: string) => Promise<void>;
@@ -39,9 +52,15 @@ type CommerceContextValue = {
   unread: number;
   addNotice: (kind: NoticeKind, productSlug?: string) => Promise<void>;
   markAllRead: () => Promise<void>;
+  /** Empty until a page calls {@link useOrders}; single orders are upserted as they change. */
   orders: Order[];
+  ordersReady: boolean;
+  requestOrders: () => void;
   placeOrder: (order: PlaceOrderInput) => Promise<Order>;
-  confirmDemoPayment: (id: string, receipt: PaymentReceiptInput) => Promise<Order>;
+  confirmDemoPayment: (
+    id: string,
+    receipt: PaymentReceiptInput,
+  ) => Promise<Order>;
   cancelOrder: (id: string) => Promise<Order>;
   reviews: Review[];
   addReview: (review: Omit<Review, "id" | "createdAt">) => Promise<void>;
@@ -49,35 +68,65 @@ type CommerceContextValue = {
 
 const CommerceContext = createContext<CommerceContextValue | null>(null);
 
+const NOTICE_POLL_MS = 30_000;
+
+function upsertOrder(orders: Order[], order: Order) {
+  return orders.some((item) => item.id === order.id)
+    ? orders.map((item) => (item.id === order.id ? order : item))
+    : [order, ...orders];
+}
+
 export function CommerceProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [favorites, setFavorites] = useState<string[]>([]);
   const [notices, setNotices] = useState<Notice[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
+  const [ordersReady, setOrdersReady] = useState(false);
+  const ordersWanted = useRef(false);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [ready, setReady] = useState(false);
   const [toast, setToast] = useState<Toast | null>(null);
-  const { getProduct, refresh } = useCatalog();
+  const { nameOf } = useCatalogIndex();
+  const refresh = useCatalogRefresh();
   const { locale, t } = useLocale();
 
   const applyNotices = (payload: { notices: Notice[]; unread?: number }) => {
     setNotices(payload.notices);
   };
 
+  const applySession = useCallback((session: SessionState) => {
+    setUser(session.user);
+    setFavorites(session.favorites);
+    setNotices(session.notices);
+  }, []);
+
+  const loadOrders = useCallback(async () => {
+    ordersWanted.current = true;
+    try {
+      setOrders(await api<Order[]>("/orders"));
+    } catch {
+      // Keep whatever is already shown; order pages fall back to fetching one order.
+    } finally {
+      setOrdersReady(true);
+    }
+  }, []);
+
+  const requestOrders = useCallback(() => {
+    if (!ordersWanted.current) void loadOrders();
+  }, [loadOrders]);
+
+  const syncSession = async () => {
+    applySession(await api<SessionState>("/session"));
+    if (ordersWanted.current) await loadOrders();
+    else setOrders([]);
+    window.dispatchEvent(new Event("rad:session"));
+  };
+
   useEffect(() => {
     let cancelled = false;
-    Promise.all([
-      api<{ user: AuthUser | null }>("/auth/me"),
-      api<{ slugs: string[] }>("/favorites"),
-      api<{ notices: Notice[] }>("/notices"),
-      api<Order[]>("/orders"),
-    ])
-      .then(([session, favoritePayload, noticePayload, orderPayload]) => {
-        if (cancelled) return;
-        setUser(session.user);
-        setFavorites(favoritePayload.slugs);
-        setNotices(noticePayload.notices);
-        setOrders(orderPayload);
+    api<SessionState>("/session")
+      .then((session) => {
+        if (!cancelled) applySession(session);
       })
       .catch(() => {})
       .finally(() => {
@@ -86,19 +135,20 @@ export function CommerceProvider({ children }: { children: React.ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [applySession]);
 
   useEffect(() => {
     const refreshNotices = () => {
+      if (document.visibilityState !== "visible") return;
       api<{ notices: Notice[] }>("/notices")
         .then((payload) => setNotices(payload.notices))
         .catch(() => {});
     };
-    const timer = window.setInterval(refreshNotices, 8000);
-    window.addEventListener("focus", refreshNotices);
+    const timer = window.setInterval(refreshNotices, NOTICE_POLL_MS);
+    document.addEventListener("visibilitychange", refreshNotices);
     return () => {
       window.clearInterval(timer);
-      window.removeEventListener("focus", refreshNotices);
+      document.removeEventListener("visibilitychange", refreshNotices);
     };
   }, []);
 
@@ -114,20 +164,8 @@ export function CommerceProvider({ children }: { children: React.ReactNode }) {
       body: JSON.stringify({ kind, productSlug }),
     });
     applyNotices(payload);
-    if (kind === "cart") setToast({ id: Date.now(), kind: "cartAdded", productSlug });
-  };
-
-  const applySignedIn = async (user: AuthUser) => {
-    setUser(user);
-    const [favoritePayload, noticePayload, orderPayload] = await Promise.all([
-      api<{ slugs: string[] }>("/favorites"),
-      api<{ notices: Notice[] }>("/notices"),
-      api<Order[]>("/orders"),
-    ]);
-    setFavorites(favoritePayload.slugs);
-    setNotices(noticePayload.notices);
-    setOrders(orderPayload);
-    window.dispatchEvent(new Event("rad:session"));
+    if (kind === "cart")
+      setToast({ id: Date.now(), kind: "cartAdded", productSlug });
   };
 
   const value = useMemo<CommerceContextValue>(
@@ -135,31 +173,23 @@ export function CommerceProvider({ children }: { children: React.ReactNode }) {
       user,
       ready,
       login: async (input) => {
-        const payload = await api<{ user: AuthUser }>("/auth/session", {
+        await api<{ user: AuthUser }>("/auth/session", {
           method: "POST",
           body: JSON.stringify(input),
         });
-        await applySignedIn(payload.user);
+        await syncSession();
       },
       register: async (input) => {
-        const payload = await api<{ user: AuthUser }>("/auth/register", {
+        await api<{ user: AuthUser }>("/auth/register", {
           method: "POST",
           body: JSON.stringify(input),
         });
-        await applySignedIn(payload.user);
+        await syncSession();
       },
       logout: async () => {
         await api("/auth/logout", { method: "POST" });
         setUser(null);
-        const [favoritePayload, noticePayload, orderPayload] = await Promise.all([
-          api<{ slugs: string[] }>("/favorites"),
-          api<{ notices: Notice[] }>("/notices"),
-          api<Order[]>("/orders"),
-        ]);
-        setFavorites(favoritePayload.slugs);
-        setNotices(noticePayload.notices);
-        setOrders(orderPayload);
-        window.dispatchEvent(new Event("rad:session"));
+        await syncSession();
       },
       favorites,
       toggleFavorite: async (slug) => {
@@ -170,9 +200,17 @@ export function CommerceProvider({ children }: { children: React.ReactNode }) {
         setFavorites(payload.slugs);
         if (payload.added) {
           await addNotice("favorite", slug);
-          setToast({ id: Date.now(), kind: "favoriteAdded", productSlug: slug });
+          setToast({
+            id: Date.now(),
+            kind: "favoriteAdded",
+            productSlug: slug,
+          });
         } else {
-          setToast({ id: Date.now(), kind: "favoriteRemoved", productSlug: slug });
+          setToast({
+            id: Date.now(),
+            kind: "favoriteRemoved",
+            productSlug: slug,
+          });
         }
       },
       isFavorite: (slug) => favorites.includes(slug),
@@ -180,15 +218,19 @@ export function CommerceProvider({ children }: { children: React.ReactNode }) {
       unread: notices.filter((notice) => !notice.read).length,
       addNotice,
       markAllRead: async () => {
-        applyNotices(await api<{ notices: Notice[] }>("/notices/read", { method: "POST" }));
+        applyNotices(
+          await api<{ notices: Notice[] }>("/notices/read", { method: "POST" }),
+        );
       },
       orders,
+      ordersReady,
+      requestOrders,
       placeOrder: async (order) => {
         const created = await api<Order>("/orders", {
           method: "POST",
           body: JSON.stringify(order),
         });
-        setOrders((current) => [created, ...current]);
+        setOrders((current) => upsertOrder(current, created));
         await refresh();
         window.dispatchEvent(new Event("rad:session"));
         return created;
@@ -198,35 +240,53 @@ export function CommerceProvider({ children }: { children: React.ReactNode }) {
           method: "POST",
           body: JSON.stringify(receipt),
         });
-        setOrders((current) => current.map((item) => (item.id === id ? updated : item)));
+        setOrders((current) => upsertOrder(current, updated));
         await refresh();
         return updated;
       },
       cancelOrder: async (id) => {
-        const updated = await api<Order>(`/orders/${id}/cancel`, { method: "POST" });
-        setOrders((current) => current.map((item) => (item.id === id ? updated : item)));
+        const updated = await api<Order>(`/orders/${id}/cancel`, {
+          method: "POST",
+        });
+        setOrders((current) => upsertOrder(current, updated));
         await refresh();
         return updated;
       },
       reviews,
       addReview: async (review) => {
-        const created = await api<Review>(`/products/${review.productSlug}/reviews`, {
-          method: "POST",
-          body: JSON.stringify({
-            rating: review.rating,
-            comment: review.comment,
-            image: review.image,
-          }),
-        });
+        const created = await api<Review>(
+          `/products/${review.productSlug}/reviews`,
+          {
+            method: "POST",
+            body: JSON.stringify({
+              rating: review.rating,
+              comment: review.comment,
+              image: review.image,
+            }),
+          },
+        );
         setReviews((current) => [created, ...current]);
-        setToast({ id: Date.now(), kind: "reviewAdded", productSlug: review.productSlug });
+        setToast({
+          id: Date.now(),
+          kind: "reviewAdded",
+          productSlug: review.productSlug,
+        });
       },
     }),
-    [user, ready, favorites, notices, orders, reviews, refresh],
+    [
+      user,
+      ready,
+      favorites,
+      notices,
+      orders,
+      ordersReady,
+      requestOrders,
+      reviews,
+      refresh,
+    ],
   );
 
-  const toastProduct = getProduct(toast?.productSlug ?? "");
-  const toastName = toastProduct ? productCopy(toastProduct, locale).name : "";
+  const toastName = nameOf(toast?.productSlug, locale);
   const toastText =
     toast?.kind === "favoriteAdded"
       ? `${t("toastFavoriteAdded")} ${toastName}`
@@ -259,6 +319,13 @@ export function useCommerce() {
   if (!value)
     throw new Error("useCommerce must be used inside CommerceProvider");
   return value;
+}
+
+/** The visitor's order list, fetched the first time any page asks for it. */
+export function useOrders() {
+  const { orders, ordersReady, requestOrders } = useCommerce();
+  useEffect(() => requestOrders(), [requestOrders]);
+  return { orders, ready: ordersReady };
 }
 
 const FAVORITE_RAYS = [0, 1, 2, 3, 4, 5, 6, 7];
@@ -306,7 +373,7 @@ export function NotificationCenter() {
   const pathname = usePathname();
   const { notices, unread, markAllRead, ready } = useCommerce();
   const { locale, t, number, href } = useLocale();
-  const { getProduct } = useCatalog();
+  const { nameOf } = useCatalogIndex();
   useEffect(() => setOpen(false), [pathname]);
   useEffect(() => {
     const escape = (event: KeyboardEvent) => {
@@ -324,22 +391,27 @@ export function NotificationCenter() {
     };
   }, []);
   const noticeText = (notice: Notice) => {
-    const product = getProduct(notice.productSlug ?? "");
-    const name = product ? productCopy(product, locale).name : "";
+    const name = nameOf(notice.productSlug, locale);
     if (notice.kind === "favorite") return `${t("noticeFavorite")} ${name}`;
     if (notice.kind === "cart") return `${t("noticeCart")} ${name}`;
     if (notice.kind === "order") return t("noticeOrder");
     if (notice.kind === "order_confirmed") return t("noticeOrderConfirmed");
     if (notice.kind === "order_rejected") return t("noticeOrderRejected");
-    if (notice.kind === "commission_approved") return t("noticeCommissionApproved");
-    if (notice.kind === "commission_declined") return t("noticeCommissionDeclined");
+    if (notice.kind === "commission_approved")
+      return t("noticeCommissionApproved");
+    if (notice.kind === "commission_declined")
+      return t("noticeCommissionDeclined");
     if (notice.kind === "commission_change") return t("noticeCommissionChange");
-    if (notice.kind === "commission_message") return t("noticeCommissionMessage");
+    if (notice.kind === "commission_message")
+      return t("noticeCommissionMessage");
     if (notice.kind === "commission_quote") return t("noticeCommissionQuote");
-    if (notice.kind === "commission_pre_kiln") return t("noticeCommissionPreKiln");
+    if (notice.kind === "commission_pre_kiln")
+      return t("noticeCommissionPreKiln");
     if (notice.kind === "commission_firing") return t("noticeCommissionFiring");
-    if (notice.kind === "commission_balance") return t("noticeCommissionBalance");
-    if (notice.kind === "commission_shipped") return t("noticeCommissionShipped");
+    if (notice.kind === "commission_balance")
+      return t("noticeCommissionBalance");
+    if (notice.kind === "commission_shipped")
+      return t("noticeCommissionShipped");
     return t("noticeWelcome");
   };
   return (
@@ -392,27 +464,28 @@ export function NotificationCenter() {
                   notice.kind.startsWith("commission") && notice.productSlug
                     ? href(`/making/${notice.productSlug}`)
                     : null;
-                const orderHref = notice.kind === "order" ? href("/orders") : null;
+                const orderHref =
+                  notice.kind === "order" ? href("/orders") : null;
                 return (
-                <li key={notice.id} className={notice.read ? "" : "unread"}>
-                  {makingHref ? (
-                    <Link href={makingHref} onClick={() => setOpen(false)}>
-                      {noticeText(notice)}
-                    </Link>
-                  ) : orderHref ? (
-                    <Link href={orderHref} onClick={() => setOpen(false)}>
-                      {noticeText(notice)}
-                    </Link>
-                  ) : (
-                    <span>{noticeText(notice)}</span>
-                  )}
-                  <small>
-                    {new Intl.DateTimeFormat(
-                      locale === "fa" ? "fa-IR" : "en-US",
-                      { hour: "2-digit", minute: "2-digit" },
-                    ).format(notice.createdAt)}
-                  </small>
-                </li>
+                  <li key={notice.id} className={notice.read ? "" : "unread"}>
+                    {makingHref ? (
+                      <Link href={makingHref} onClick={() => setOpen(false)}>
+                        {noticeText(notice)}
+                      </Link>
+                    ) : orderHref ? (
+                      <Link href={orderHref} onClick={() => setOpen(false)}>
+                        {noticeText(notice)}
+                      </Link>
+                    ) : (
+                      <span>{noticeText(notice)}</span>
+                    )}
+                    <small>
+                      {new Intl.DateTimeFormat(
+                        locale === "fa" ? "fa-IR" : "en-US",
+                        { hour: "2-digit", minute: "2-digit" },
+                      ).format(notice.createdAt)}
+                    </small>
+                  </li>
                 );
               })}
             </ul>

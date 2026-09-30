@@ -41,7 +41,8 @@
 
 @media (max-width: 600px) {
   .favorites-page.section {
+    --page: 1rem;
     padding-block: 2rem !important;
-    padding-inline: 1rem !important;
+    padding-inline: var(--page) !important;
   }
 }

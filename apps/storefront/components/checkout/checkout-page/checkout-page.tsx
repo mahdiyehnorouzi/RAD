@@ -43,7 +43,7 @@ function normalizePhone(raw: string) {
 export function CheckoutPage() {
   const { slugs, holds, holdEndsAt, ready, clear } = useCart();
   const { user, placeOrder } = useCommerce();
-  const { products, getProduct, loading: catalogLoading } = useCatalog();
+  const { products, getProduct } = useCatalog();
   const { locale, href, number } = useLocale();
   const c = checkoutCopy[locale];
   const router = useRouter();
@@ -76,7 +76,8 @@ export function CheckoutPage() {
     const next: FieldErrors = {};
     if (value("name").length < 2) next.name = c.nameError;
     const phoneDigits = normalizePhone(value("phone")).replace(/\D/g, "");
-    if (phoneDigits.length < 10 || phoneDigits.length > 15) next.phone = c.phoneError;
+    if (phoneDigits.length < 10 || phoneDigits.length > 15)
+      next.phone = c.phoneError;
     if (!value("city")) next.city = c.cityError;
     if (value("address").length < 8) next.address = c.addressError;
     return next;
@@ -155,7 +156,7 @@ export function CheckoutPage() {
     );
   }
 
-  if (!ready || (slugs.length > 0 && catalogLoading)) {
+  if (!ready) {
     return (
       <section className="checkout-flow section" aria-busy="true">
         <CheckoutSteps current={0} />
@@ -212,7 +213,11 @@ export function CheckoutPage() {
           onSubmit={submit}
           noValidate
         >
-          <CheckoutField id="checkout-name" label={c.nameLabel} error={errors.name}>
+          <CheckoutField
+            id="checkout-name"
+            label={c.nameLabel}
+            error={errors.name}
+          >
             <input
               {...fieldProps("name")}
               type="text"
@@ -220,7 +225,11 @@ export function CheckoutPage() {
               autoComplete="name"
             />
           </CheckoutField>
-          <CheckoutField id="checkout-phone" label={c.phoneLabel} error={errors.phone}>
+          <CheckoutField
+            id="checkout-phone"
+            label={c.phoneLabel}
+            error={errors.phone}
+          >
             <input
               {...fieldProps("phone")}
               className="checkout-ltr-field"
@@ -231,7 +240,11 @@ export function CheckoutPage() {
               placeholder={c.phonePlaceholder}
             />
           </CheckoutField>
-          <CheckoutField id="checkout-city" label={c.cityLabel} error={errors.city}>
+          <CheckoutField
+            id="checkout-city"
+            label={c.cityLabel}
+            error={errors.city}
+          >
             <input
               {...fieldProps("city")}
               type="text"
@@ -252,7 +265,11 @@ export function CheckoutPage() {
               placeholder={c.addressPlaceholder}
             />
           </CheckoutField>
-          <CheckoutField id="checkout-postal" label={c.postalLabel} optional={c.optional}>
+          <CheckoutField
+            id="checkout-postal"
+            label={c.postalLabel}
+            optional={c.optional}
+          >
             <input
               id="checkout-postal"
               name="postalCode"
@@ -302,7 +319,12 @@ export function CheckoutPage() {
           />
 
           {error ? (
-            <p ref={errorRef} className="checkout-alert" role="alert" tabIndex={-1}>
+            <p
+              ref={errorRef}
+              className="checkout-alert"
+              role="alert"
+              tabIndex={-1}
+            >
               {error}
             </p>
           ) : Object.keys(errors).length ? (
