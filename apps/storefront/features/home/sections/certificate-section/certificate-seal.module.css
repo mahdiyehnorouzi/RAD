@@ -1,0 +1,20 @@
+/* Inked into the paper, so it darkens the sheet rather than sitting on it */
+
+.certificateSeal {
+  position: absolute;
+  inset-inline-end: 1.15rem;
+  bottom: 1.1rem;
+  z-index: -1;
+  width: clamp(4rem, 19vw, 5.25rem);
+  height: auto;
+  rotate: -7deg;
+  mix-blend-mode: multiply;
+  opacity: 0.9;
+  pointer-events: none;
+}
+
+@media (--desktop) {
+  .certificateSeal {
+    width: 5.5rem;
+  }
+}

@@ -4,7 +4,7 @@ import {
   featuredHomeWorks,
   CertificateSection,
   ThreadJourney,
-} from "@/components/home";
+} from "@/features/home";
 import { getCatalog } from "@/lib/catalog/get-catalog-works";
 import { livePiecesFrom, workshopToday } from "@/lib/now";
 import { productListJsonLd, safeJsonLd } from "@/lib/seo";

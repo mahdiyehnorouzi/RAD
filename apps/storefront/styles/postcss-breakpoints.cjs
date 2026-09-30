@@ -11,7 +11,7 @@ module.exports = ({ tokens }) => ({
   postcssPlugin: "rad-breakpoints",
   Once(root, { result }) {
     const definitions = postcss
-      .parse(readFileSync(tokens, "utf8"))
+      .parse(readFileSync(tokens, "utf8"), { from: tokens })
       .nodes.filter(
         (node) => node.type === "atrule" && node.name === "custom-media",
       );

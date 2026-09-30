@@ -1,0 +1,160 @@
+/* A flat strip under the header, with the red thread's bead hanging into it */
+
+.archivePinbar {
+  --oxide: #8a4938;
+  --pinbar-face: color-mix(in srgb, var(--paper) 88%, var(--canvas));
+  position: fixed;
+  top: var(--header-height, 104px);
+  right: 0;
+  left: 0;
+  z-index: 45;
+  border-bottom: 1px solid var(--line);
+  background: var(--pinbar-face);
+  opacity: 0;
+  translate: 0 -110%;
+  visibility: hidden;
+  transition:
+    translate 380ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 240ms ease,
+    visibility 0s linear 380ms;
+}
+
+.archivePinbar.shown {
+  opacity: 1;
+  translate: none;
+  visibility: visible;
+  transition:
+    translate 420ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 200ms ease,
+    visibility 0s;
+}
+
+.archivePinbarRow {
+  display: flex;
+  align-items: stretch;
+  gap: 1.35rem;
+  min-height: 3.35rem;
+  padding-inline: var(--archive-gutter);
+}
+
+.archivePinbarSection,
+.archivePinbarTitle {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.95rem;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.archivePinbarSection {
+  position: relative;
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.archivePinbarSection::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  bottom: 0.55rem;
+  left: 0;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--oxide);
+}
+
+.archivePinbarTitle {
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.archivePinbarLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-inline-start: auto;
+  color: var(--ink);
+  font-size: 0.88rem;
+  font-weight: 500;
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+.archivePinbarLink svg {
+  width: 1.05rem;
+  height: 1.05rem;
+  transition: translate 200ms ease;
+}
+
+.archivePinbarLink:hover svg {
+  translate: -3px 0;
+}
+
+.archivePinbarLink:focus-visible {
+  outline: 2px solid var(--oxide);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+html[dir="ltr"] .archivePinbarLink:hover svg {
+  translate: 3px 0;
+}
+
+/* Hangs out from behind the header, like the thread's bead on the hero */
+
+.archivePinbarThread {
+  position: absolute;
+  top: -0.9rem;
+  left: 54%;
+  width: 1.5rem;
+  height: 2.75rem;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.archivePinbarThreadLine,
+.archivePinbarThreadShade {
+  fill: none;
+  stroke-linecap: round;
+}
+
+.archivePinbarThreadLine {
+  stroke: var(--oxide);
+  stroke-width: 1.6;
+}
+
+.archivePinbarThreadShade {
+  stroke: rgb(52 26 14 / 0.18);
+  stroke-width: 2.4;
+  translate: 1px 2px;
+  filter: blur(1px);
+}
+
+.archivePinbarBead {
+  fill: var(--oxide);
+}
+
+.archivePinbarBeadShade {
+  fill: rgb(52 26 14 / 0.3);
+  filter: blur(1.5px);
+}
+
+.archivePinbarBeadShine {
+  fill: rgb(255 240 225 / 0.55);
+}
+
+@media (--reduced-motion) {
+  .archivePinbar,
+  .archivePinbar.shown {
+    translate: none;
+    transition:
+      opacity 120ms ease,
+      visibility 0s;
+  }
+}
+
+@media (--desktop) {
+  .archivePinbar {
+    display: none;
+  }
+}

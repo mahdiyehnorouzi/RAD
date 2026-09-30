@@ -1,0 +1,54 @@
+/* The thread */
+
+.redThread {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 5;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.redThread path {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 0 1000000;
+}
+
+.redThreadLine {
+  stroke: var(--oxide);
+  stroke-width: 1.8;
+}
+
+.redThreadShade {
+  stroke: rgb(52 26 14 / 0.22);
+  stroke-width: 2.6;
+  filter: blur(1.4px);
+  transform: translate(1.5px, 3.5px);
+}
+
+.redThreadBead {
+  fill: var(--oxide-deep);
+  opacity: 0;
+  transition: opacity 0.3s ease-out;
+}
+
+.redThreadKnot circle {
+  fill: var(--oxide);
+}
+
+.redThreadKnot .redThreadKnotShade {
+  fill: rgb(52 26 14 / 0.28);
+  filter: blur(1.4px);
+}
+
+.redThreadKnot .redThreadKnotShine {
+  fill: rgb(255 240 225 / 0.55);
+}
+
+@media (--reduced-motion) {
+  .redThreadBead {
+    transition: none;
+  }
+}

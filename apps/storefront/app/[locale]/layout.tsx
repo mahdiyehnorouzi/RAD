@@ -17,7 +17,7 @@ import { LocaleProvider } from "@/components/i18n";
 import { CommerceProvider } from "@/components/commerce";
 import { CatalogIndexProvider } from "@/components/catalog";
 import { getCatalogIndex } from "@/lib/catalog/get-catalog-works";
-import { HomeBanner } from "@/components/home/home-banner";
+import { HomeBanner } from "@/features/home/home-banner";
 import {
   DEFAULT_LOCALE,
   LOCALES,
