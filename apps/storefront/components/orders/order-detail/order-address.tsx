@@ -23,10 +23,16 @@ export function OrderAddress({
   const { locale, t } = useLocale();
   const c = orderDetailCopy[locale];
   const { name, city, address, phone } = order.delivery;
-  const place = [address, city].map((part) => part?.trim()).filter(Boolean).join("، ");
+  const place = [address, city]
+    .map((part) => part?.trim())
+    .filter(Boolean)
+    .join("، ");
 
   return (
-    <section className="track-card track-address" aria-labelledby="track-address-title">
+    <section
+      className="track-card track-address"
+      aria-labelledby="track-address-title"
+    >
       <OrderSprig />
       <h2 id="track-address-title" className="track-kicker">
         <MapPin aria-hidden="true" />

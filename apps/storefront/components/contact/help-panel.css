@@ -160,7 +160,9 @@
   border-color: #e4dbcc;
   border-radius: 14px;
   background: #fbf8f2;
-  box-shadow: 0 1px 2px rgb(38 61 52 / 0.05), 0 10px 26px -16px rgb(38 61 52 / 0.22);
+  box-shadow:
+    0 1px 2px rgb(38 61 52 / 0.05),
+    0 10px 26px -16px rgb(38 61 52 / 0.22);
 }
 
 .help-panel.is-order .help-panel-eyebrow,

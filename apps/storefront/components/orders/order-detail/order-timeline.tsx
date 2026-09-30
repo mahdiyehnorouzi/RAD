@@ -33,7 +33,11 @@ export function OrderTimeline({
   const times = stageTimes(order);
 
   return (
-    <section id={id} className="track-card track-progress" aria-labelledby={`${id}-title`}>
+    <section
+      id={id}
+      className="track-card track-progress"
+      aria-labelledby={`${id}-title`}
+    >
       <h2 id={`${id}-title`} className="track-eyebrow">
         {label}
       </h2>
@@ -41,7 +45,8 @@ export function OrderTimeline({
         {stages.map((stage, index) => {
           const done = index < activeStage;
           const current = index === activeStage;
-          const time = done || current ? times[STORE_ORDER_PROGRESS[index]] : undefined;
+          const time =
+            done || current ? times[STORE_ORDER_PROGRESS[index]] : undefined;
           return (
             <li
               key={stage}
@@ -55,7 +60,11 @@ export function OrderTimeline({
               <span className="track-step-copy">
                 <b>{stage}</b>
                 {current ? <em>{currentLabel}</em> : null}
-                {time && !current ? <time dateTime={new Date(time).toISOString()}>{formatTime(time)}</time> : null}
+                {time && !current ? (
+                  <time dateTime={new Date(time).toISOString()}>
+                    {formatTime(time)}
+                  </time>
+                ) : null}
               </span>
             </li>
           );

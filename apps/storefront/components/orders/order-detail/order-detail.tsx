@@ -99,10 +99,15 @@ export function OrderDetail({ id }: { id: string }) {
     );
   }
 
-  const stages = STORE_ORDER_PROGRESS.map((stage) => t(STORE_ORDER_STATUS_KEY[stage]));
+  const stages = STORE_ORDER_PROGRESS.map((stage) =>
+    t(STORE_ORDER_STATUS_KEY[stage]),
+  );
   const usdTotal =
     order.usdTotal ??
-    order.slugs.reduce((sum, slug) => sum + (getProduct(slug)?.usdPrice ?? 0), 0);
+    order.slugs.reduce(
+      (sum, slug) => sum + (getProduct(slug)?.usdPrice ?? 0),
+      0,
+    );
   const items = order.slugs
     .map((slug) => getProduct(slug))
     .filter((item): item is NonNullable<typeof item> => Boolean(item));
@@ -182,7 +187,11 @@ export function OrderDetail({ id }: { id: string }) {
               <HelpPanel
                 context="order"
                 orderId={order.id}
-                tone={PAYMENT_HELP_STATUSES.includes(order.status) ? "payment" : "general"}
+                tone={
+                  PAYMENT_HELP_STATUSES.includes(order.status)
+                    ? "payment"
+                    : "general"
+                }
               />
               <OrderSprig />
             </div>

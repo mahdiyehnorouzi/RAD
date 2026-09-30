@@ -41,7 +41,10 @@ function NextCard({
   children?: ReactNode;
 }) {
   return (
-    <section id={id} className={children ? "track-card track-next" : "track-next"}>
+    <section
+      id={id}
+      className={children ? "track-card track-next" : "track-next"}
+    >
       <div className={`track-notice is-${tone}`} role="status">
         <Icon aria-hidden="true" />
         <div>
@@ -103,7 +106,12 @@ export function OrderNextAction({
   if (order.status === "pending_payment") {
     if (redirectUrl) {
       return (
-        <NextCard id={id} icon={CreditCard} title={t("gatewayPaymentHint")} note={deadline}>
+        <NextCard
+          id={id}
+          icon={CreditCard}
+          title={t("gatewayPaymentHint")}
+          note={deadline}
+        >
           <div className="order-next-actions">
             <Button
               type="button"
@@ -123,7 +131,12 @@ export function OrderNextAction({
     }
 
     return (
-      <NextCard id={id} icon={WalletCards} title={t("manualPaymentHint")} note={deadline}>
+      <NextCard
+        id={id}
+        icon={WalletCards}
+        title={t("manualPaymentHint")}
+        note={deadline}
+      >
         {manualCard ? (
           <div className="order-pay-card">
             <span className="order-pay-card-label">
@@ -246,7 +259,12 @@ export function OrderNextAction({
 
   if (order.status === "expired") {
     return (
-      <NextCard id={id} icon={TimerOff} tone="stop" title={t("orderExpiredNote")}>
+      <NextCard
+        id={id}
+        icon={TimerOff}
+        tone="stop"
+        title={t("orderExpiredNote")}
+      >
         <div className="order-next-actions">
           <ButtonLink href={productHref} outline>
             {t("nextActionBrowse")}
@@ -257,11 +275,20 @@ export function OrderNextAction({
   }
 
   if (order.status === "confirmed") {
-    return <NextCard id={id} icon={CircleCheck} tone="go" title={t("waitingPacking")} />;
+    return (
+      <NextCard
+        id={id}
+        icon={CircleCheck}
+        tone="go"
+        title={t("waitingPacking")}
+      />
+    );
   }
 
   if (order.status === "packing") {
-    return <NextCard id={id} icon={Package} tone="go" title={t("waitingShip")} />;
+    return (
+      <NextCard id={id} icon={Package} tone="go" title={t("waitingShip")} />
+    );
   }
 
   if (order.status === "shipped") {

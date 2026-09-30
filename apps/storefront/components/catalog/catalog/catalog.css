@@ -166,7 +166,8 @@ button.add--in-bag:disabled,
   mask-image: linear-gradient(to right, #000 62%, transparent 98%);
   pointer-events: none;
   user-select: none;
-  animation: plp-banner-settle 1.6s var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) both;
+  animation: plp-banner-settle 1.6s
+    var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) both;
 }
 
 html[dir="rtl"] .plp-banner-photo {
