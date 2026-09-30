@@ -90,14 +90,6 @@ html[dir="rtl"] .making-brief {
   border-radius: 8px;
 }
 
-.making-concept-image {
-  width: min(100%, 22rem);
-  aspect-ratio: 4 / 5;
-  object-fit: cover;
-  margin: 0;
-  border-radius: 8px;
-}
-
 .making-changes,
 .making-kiln,
 .making-firing,
@@ -150,7 +142,7 @@ html[dir="rtl"] .making-brief {
   line-height: 1.6 !important;
 }
 
-@media (max-width: 900px) {
+@media (--tablet) {
   .making-layout {
     grid-template-columns: 1fr !important;
   }
@@ -161,7 +153,7 @@ html[dir="rtl"] .making-brief {
   }
 }
 
-@media (max-width: 600px) {
+@media (--phone) {
   .making-brief {
     grid-template-columns: 1fr;
   }

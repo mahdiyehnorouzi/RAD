@@ -1,0 +1,16 @@
+.csTear {
+  position: absolute;
+  inset-inline: 0;
+  z-index: 3;
+  display: block;
+  width: 100%;
+  pointer-events: none;
+}
+
+.csTearRim {
+  fill: #fffdf8;
+}
+
+.csTearEdge {
+  fill: var(--cs-bg);
+}

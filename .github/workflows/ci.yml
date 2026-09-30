@@ -35,6 +35,8 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run lint
+      - name: Unused files, exports and dependencies
+        run: npm run knip
       # Only files this PR touches, so formatting lands gradually instead of one repo-wide rewrite.
       - name: Prettier (changed files)
         if: github.event_name == 'pull_request'

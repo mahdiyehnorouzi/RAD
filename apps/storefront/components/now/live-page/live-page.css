@@ -197,7 +197,8 @@ html[dir="ltr"] .live-hero-thread {
 .live-stage-copy > .live-stage-note {
   margin-top: 0.2rem;
   padding-inline-start: 0.7rem;
-  border-inline-start: 1px solid color-mix(in srgb, var(--live-thread) 55%, transparent);
+  border-inline-start: 1px solid
+    color-mix(in srgb, var(--live-thread) 55%, transparent);
   color: var(--live-ink);
   font-family: var(--font-hand);
   font-size: 1.02rem;
@@ -367,7 +368,7 @@ html[dir="ltr"] .live-hero-thread {
 
 /* Desktop: the same parts, spread wide. */
 
-@media (min-width: 960px) {
+@media (--wide) {
   .live-hero {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     align-items: center;
@@ -493,7 +494,7 @@ html[dir="ltr"] .live-hero-thread {
 /* Motion: the photo settles and the thread draws round it once; stages rise
    as they scroll in. Everything is visible without it. */
 
-@media (prefers-reduced-motion: no-preference) {
+@media (--motion-ok) {
   .live-hero-frame img {
     animation: liveSettle 1500ms var(--live-ease) both;
   }

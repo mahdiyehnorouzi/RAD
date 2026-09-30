@@ -16,84 +16,66 @@
 
 .eyebrow {
   display: block;
-  color: var(--clay);
-  font-size: 0.73rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
   margin-bottom: 1.3rem;
 }
 
 .section-heading {
   display: flex;
   justify-content: space-between;
-  align-items: end;
-  margin-bottom: 3.5rem;
 }
 
 .section-heading h2 {
-  font-size: clamp(1.45rem, 4vw, 2.25rem);
-  line-height: 1.2;
   margin: 0.2rem 0;
-  font-weight: 400;
 }
 
 .section-heading p {
   margin: 0;
 }
 
-.empty-state {
-  padding: 5rem 1rem;
-  text-align: center;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  background: var(--paper);
-}
-
-.empty-state h2 {
-  margin: 0;
-  font-size: 2rem;
-}
-
-.empty-state p {
-  margin: 1rem auto 2rem;
-  max-width: 36rem;
-}
-
-@media (max-width: 600px) {
-.section {
+@media (--phone) {
+  .section {
     padding-inline: 1.25rem;
     padding-block: 3rem;
   }
-.section-heading {
+  .section-heading {
     align-items: baseline;
-    gap: 2rem;
-    flex-direction: column;
   }
 }
 
-.section h2 { font-size: var(--text-h2); }
-
-.section h3 { font-size: var(--text-h3); }
-
-.section p { font-size: var(--text-prose); line-height: var(--leading-prose); }
-
-.eyebrow { font-size: var(--text-eyebrow); font-weight: var(--font-weight-regular); }
-
-.section { padding-block: var(--section); }
-
-@media (max-width:600px) {
-.section {padding-block:var(--section)}
-.section h2 {font-size:var(--text-h2)}
-.section h3 {font-size:var(--text-h3)}
-.section p {font-size:var(--text-prose)}
+.section h2 {
+  font-size: var(--text-h2);
 }
 
-.section { padding-block: var(--section); }
+.section h3 {
+  font-size: var(--text-h3);
+}
 
-.section + .section { border-top: 1px solid color-mix(in srgb, var(--line) 72%, transparent); }
+.section p {
+  font-size: var(--text-prose);
+  line-height: var(--leading-prose);
+}
 
 .eyebrow {
-  color: #8a4938;
+  font-size: var(--text-eyebrow);
+}
+
+@media (--phone) {
+  .section {
+    padding-block: var(--section);
+  }
+  .section h2 {
+    font-size: var(--text-h2);
+  }
+  .section h3 {
+    font-size: var(--text-h3);
+  }
+  .section p {
+    font-size: var(--text-prose);
+  }
+}
+
+.section + .section {
+  border-top: 1px solid color-mix(in srgb, var(--line) 72%, transparent);
 }
 
 .section {
@@ -122,12 +104,12 @@
   max-width: 34rem;
 }
 
-@media (max-width: 600px) {
-.section-heading {
+@media (--phone) {
+  .section-heading {
     flex-direction: column;
     gap: 1.5rem;
   }
-.section-heading h2 {
+  .section-heading h2 {
     font-size: clamp(2.35rem, 10vw, 3.1rem);
   }
 }
@@ -136,50 +118,28 @@
   color: #8a4938;
 }
 
-@media(min-width:901px) {
-html[dir="rtl"] .section-heading {direction:rtl!important;text-align:right!important}
+@media (--desktop) {
+  html[dir="rtl"] .section-heading {
+    direction: rtl;
+    text-align: right;
+  }
 }
 
-@media(max-width:900px) {
-html[dir="rtl"] .section {direction:rtl!important;text-align:right!important}
-html[dir="rtl"] .section-heading {direction:rtl!important;text-align:right!important;align-items:start!important}
+@media (--tablet) {
+  html[dir="rtl"] .section {
+    direction: rtl;
+    text-align: right;
+  }
+  html[dir="rtl"] .section-heading {
+    direction: rtl;
+    text-align: right;
+    align-items: start;
+  }
 }
 
 .plp.section,
-.cart-page.section,
 .orders-page.section,
 .making-page.section,
-.account-page.section,
-.profile-page.section {
+.account-page.section {
   padding-block: clamp(2rem, 4vw, 3.25rem);
-}
-
-@media (min-width: 901px) {
-.difference-story.section,
-.archive-section.section,
-.studio-callout.section,
-.human-story.section,
-.story.section,
-.provenance.section,
-.process.section,
-.orders-entry.section {
-  padding-block: clamp(3.25rem, 5.5vw, 5rem) !important;
-}
-}
-
-.provenance.section header {
-  display: flex !important;
-  flex-direction: column !important;
-  align-items: flex-start !important;
-  gap: 0.75rem !important;
-}
-
-.provenance.section h2,
-.provenance.section h2.provenance-title {
-  font-size: 1.15rem !important;
-  font-weight: 400 !important;
-  line-height: 1.7 !important;
-  letter-spacing: 0 !important;
-  max-width: 36rem !important;
-  color: var(--ink) !important;
 }

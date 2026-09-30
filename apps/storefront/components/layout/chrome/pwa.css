@@ -65,15 +65,15 @@
   padding: 0.55rem 1rem;
 }
 
-@media (max-width: 600px) {
-.install-prompt {
+@media (--phone) {
+  .install-prompt {
     inset-inline: 1rem;
     bottom: 1rem;
     width: auto;
     align-items: flex-start;
     flex-direction: column;
   }
-.install-prompt > div:last-child {
+  .install-prompt > div:last-child {
     width: 100%;
     justify-content: space-between;
   }

@@ -1,0 +1,164 @@
+.page {
+  composes: palette from "../cart-palette.module.css";
+}
+
+.page:global(.section) {
+  padding-block: clamp(2rem, 4vw, 3.25rem);
+}
+
+.bag :global(.state-art-badge) {
+  top: 9%;
+  left: 12%;
+  width: 17%;
+  min-width: 2.4rem;
+  border-radius: 50%;
+}
+
+.body {
+  display: grid;
+  gap: 0.85rem;
+  width: min(100%, 36rem);
+  margin: 1.75rem auto 0;
+  text-align: start;
+}
+
+.body :global(.cart-policy-note) {
+  margin-top: 0.4rem;
+}
+
+.lines {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.total {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.85rem 1rem;
+  border-block: 1px solid var(--line);
+}
+
+.total span {
+  display: block;
+  font-weight: 500;
+}
+
+.total small {
+  color: var(--muted, #6f726b);
+  font-size: 0.8rem;
+}
+
+.total b {
+  font-size: 1.08rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.actions {
+  display: grid;
+  gap: 0.65rem;
+  margin-top: 0.4rem;
+}
+
+/* Beats the shared .button and .button.outline, which set these with !important. */
+.actions :global(.button),
+.actions :global(.button.outline) {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  width: 100%;
+  min-height: 3.4rem !important;
+  padding: 0 1.25rem !important;
+  border-radius: 10px !important;
+  font-size: 1rem;
+}
+
+.actions :global(.button:not(.outline)) {
+  background: var(--moss) !important;
+  color: var(--paper) !important;
+}
+
+.actions :global(.button:not(.outline)):hover {
+  background: color-mix(in srgb, var(--moss) 88%, black) !important;
+}
+
+.actions :global(.button.outline) {
+  border: 1px solid color-mix(in srgb, var(--ink) 70%, transparent) !important;
+  background: transparent !important;
+  color: var(--ink) !important;
+}
+
+.actions :global(.button.outline):hover {
+  border-color: var(--moss) !important;
+  background: var(--moss-wash) !important;
+  color: var(--moss) !important;
+}
+
+.actions :global(.button) svg {
+  width: 1.1rem;
+  height: 1.1rem;
+  flex: 0 0 1.1rem;
+  stroke-width: 1.6;
+  transition: transform 0.2s ease-out;
+}
+
+.actions :global(.button:not(.outline)):hover svg {
+  transform: translateX(-3px);
+}
+
+:global(html[dir="ltr"]) .actions :global(.button:not(.outline)):hover svg {
+  transform: translateX(3px);
+}
+
+.actions :global(.button):disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.clear {
+  justify-self: center;
+  padding: 0.35rem 0.25rem;
+  border: 0;
+  border-bottom: 1px solid currentColor;
+  background: transparent;
+  color: var(--muted, #6f726b);
+  font-size: 0.84rem;
+  cursor: pointer;
+}
+
+.clear:hover {
+  color: var(--oxide);
+}
+
+.clear:disabled {
+  opacity: 0.5;
+  cursor: progress;
+}
+
+.clear:focus-visible {
+  outline: 1px solid var(--oxide);
+  outline-offset: 2px;
+}
+
+.skeleton {
+  margin-top: 1.25rem;
+}
+
+@media (--reduced-motion) {
+  .actions :global(.button) svg {
+    transition: none;
+  }
+}
+
+@media (--phone) {
+  .page:global(.section) {
+    padding-block: 1.5rem 2rem !important;
+    padding-inline: 1rem !important;
+  }
+}

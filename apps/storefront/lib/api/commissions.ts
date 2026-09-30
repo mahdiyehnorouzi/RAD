@@ -7,9 +7,14 @@ import { api } from "./client";
 export const COMMISSION_UPLOAD_IMAGES = 5;
 
 /** Drop heavy data-URLs so commission POSTs finish before the API timeout. */
-export function slimCommissionBrief(brief: MakingBrief, maxImages = 2): MakingBrief {
+export function slimCommissionBrief(
+  brief: MakingBrief,
+  maxImages = 2,
+): MakingBrief {
   const slimImage = (value?: string) =>
-    value && value.startsWith("data:") && value.length > 120_000 ? undefined : value;
+    value && value.startsWith("data:") && value.length > 120_000
+      ? undefined
+      : value;
   const images = (brief.images ?? [])
     .map(slimImage)
     .filter((item): item is string => Boolean(item))
@@ -27,18 +32,13 @@ export async function fetchMyCommissions() {
 }
 
 export async function fetchWorkshopCommissions() {
-  return api<MakingCommission[]>("/commissions/workshop", { timeoutMs: 12_000 });
+  return api<MakingCommission[]>("/commissions/workshop", {
+    timeoutMs: 12_000,
+  });
 }
 
 export async function fetchCommission(id: string) {
   return api<MakingCommission>(`/commissions/${id}`);
-}
-
-export async function sendCommissionMessage(id: string, body: LocaleCopy) {
-  return api<MakingCommission>(`/commissions/${id}/messages`, {
-    method: "POST",
-    body: JSON.stringify({ body }),
-  });
 }
 
 export async function createCommission(input: {
@@ -64,7 +64,10 @@ export async function saveCommission(id: string, payload: MakingCommission) {
   });
 }
 
-export async function saveWorkshopCommission(id: string, payload: MakingCommission) {
+export async function saveWorkshopCommission(
+  id: string,
+  payload: MakingCommission,
+) {
   return api<MakingCommission>(`/commissions/workshop/${id}`, {
     method: "PUT",
     body: JSON.stringify({ payload }),

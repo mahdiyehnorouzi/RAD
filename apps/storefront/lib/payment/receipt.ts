@@ -1,5 +1,5 @@
 export const RECEIPT_TYPES = ["image/jpeg", "image/png", "image/webp"];
-export const RECEIPT_MAX_BYTES = 1024 * 1024;
+const RECEIPT_MAX_BYTES = 1024 * 1024;
 
 const PERSIAN_DIGITS = "۰۱۲۳۴۵۶۷۸۹";
 const ARABIC_DIGITS = "٠١٢٣٤٥٦٧٨٩";
@@ -41,5 +41,9 @@ export function readReceiptFile(file: File) {
 
 /** `6104337812345678` → `["6104", "3378", "1234", "5678"]`. */
 export function cardNumberGroups(raw: string) {
-  return toLatinDigits(raw).replace(/\D/g, "").match(/.{1,4}/g) ?? [];
+  return (
+    toLatinDigits(raw)
+      .replace(/\D/g, "")
+      .match(/.{1,4}/g) ?? []
+  );
 }

@@ -1,19 +1,18 @@
 ---
-description: RAD storefront component folder structure (nested parents, type/, named files). All storefront UI work must follow this.
-globs: apps/storefront/{components,app}/**/*.{ts,tsx}
+description: RAD storefront structure (features/<name>/, CSS Modules, nested parents, named files). All storefront UI work must follow this.
+globs: apps/storefront/{features,components,app,styles}/**/*.{ts,tsx,css}
 alwaysApply: false
 ---
 
 # Storefront component structure
 
-When creating or editing files under `apps/storefront/components` or `apps/storefront/app`, follow `.cursor/skills/storefront-component-structure/SKILL.md`.
+When creating or editing storefront UI, follow `.cursor/skills/storefront-component-structure/SKILL.md`.
 
-- Nest children inside the parent folder. Shared pieces used by two parents go in a named folder (`making/record/`), not the feature root.
-- A component with no children is a single file (`catalog/catalog-provider.tsx`). Do not wrap it in `name/name.tsx`.
-- When a folder is needed, the component file must match the folder name (`portrait-view/portrait-view.tsx`). Never use `index.tsx` for a component.
-- `index.ts` is a re-export barrel only. Feature folders expose a public `index.ts`.
-- Types used only by this feature live in `type/`. Constants live in `const/`. Hooks owned by a parent live in that parent’s `hooks/` folder.
-- Shared commerce types stay in `@rad/types`. Making types live in `@/components/making/type`.
-- `app/` imports feature barrels (`@/components/making`), not grandchildren.
-- Inside a parent folder, use relative imports.
-- `components/ui/` stays flat.
+- Features live in `features/<name>/` with a public `index.ts`. Folders still under `components/<name>/` are unmigrated; `components/ui/` stays flat.
+- Each styled component has a colocated `name.module.css` imported as `styles`, with camelCase classes.
+- Values come from `styles/tokens.css`; breakpoints use `@media (--phone)`, `(--tablet)`, `(--desktop)`, `(--wide)` and friends.
+- Classes owned by other components or shared helpers (`.section`, `.button`) are wrapped in `:global()`.
+- Feature-wide custom properties are shared with `composes` from a feature module.
+- Nest children inside the parent folder. A component with no children is a single file. Never use `index.tsx` for a component.
+- Types used only by a feature live in `type/`, constants in `const/`, hooks in the owning parent's `hooks/`.
+- `app/` imports feature barrels (`@/features/cart`), not grandchildren. Inside a feature, use relative imports.

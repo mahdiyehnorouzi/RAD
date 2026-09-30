@@ -1,0 +1,46 @@
+"use client";
+import type { CSSProperties } from "react";
+import type { WorkTexture } from "@/lib/catalog/material-texture";
+import { useTextureFocus } from "./hooks";
+import styles from "./material-texture.module.css";
+
+/**
+ * A crop of the work's own photograph: a short glaze tab that leads a
+ * hairline rule, or a round swatch beside a material. The rule stays a bare
+ * hairline until the picture is read, or when the work has no photo to lend.
+ */
+export function MaterialTexture({
+  texture,
+  shape,
+  className = "",
+}: {
+  texture?: WorkTexture;
+  shape: "strip" | "swatch";
+  className?: string;
+}) {
+  const focus = useTextureFocus(texture);
+  const point = shape === "strip" ? focus?.strip : focus?.swatch;
+  const crop =
+    texture && point ? (
+      <span
+        className={`${styles.materialTexture} ${shape === "strip" ? styles.tab : styles.swatch}`}
+        aria-hidden="true"
+        style={
+          {
+            "--texture-x": `${point.x}%`,
+            "--texture-y": `${point.y}%`,
+            "--texture-span": point.span,
+          } as CSSProperties
+        }
+      >
+        <img src={texture.src} alt="" loading="lazy" decoding="async" />
+      </span>
+    ) : null;
+
+  if (shape === "swatch") return crop;
+  return (
+    <span className={`${styles.materialRule} ${className}`} aria-hidden="true">
+      {crop}
+    </span>
+  );
+}

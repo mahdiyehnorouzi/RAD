@@ -2,7 +2,6 @@ export {
   findPassport,
   formatPassportCode,
   formatPassportName,
-  passportForProduct,
   passportFromArtwork,
   passportsFrom,
   passportYear,

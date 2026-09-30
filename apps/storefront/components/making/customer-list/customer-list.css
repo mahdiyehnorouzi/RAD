@@ -1,12 +1,27 @@
-html[dir="rtl"] .making-page, html[dir="rtl"] .making-heading {direction:rtl!important;text-align:right!important}
-
-@media(max-width:600px) {
-.making-page.section {padding-block:2rem!important;padding-inline:1rem!important}
+html[dir="rtl"] .making-page,
+html[dir="rtl"] .making-heading {
+  direction: rtl !important;
+  text-align: right !important;
 }
 
-.making-page {color:var(--ink)}
+@media (--phone) {
+  .making-page.section {
+    padding-block: 2rem !important;
+    padding-inline: 1rem !important;
+  }
+}
 
-.making-heading p {margin:0;max-width:42rem;color:var(--account-muted, var(--muted));font-size:.95rem;line-height:1.75}
+.making-page {
+  color: var(--ink);
+}
+
+.making-heading p {
+  margin: 0;
+  max-width: 42rem;
+  color: var(--account-muted, var(--muted));
+  font-size: 0.95rem;
+  line-height: 1.75;
+}
 
 /* The maker's note: a sand sheet with a pressed sprig at its reading end. */
 .making-note {
@@ -19,14 +34,18 @@ html[dir="rtl"] .making-page, html[dir="rtl"] .making-heading {direction:rtl!imp
   padding: 1.15rem 1.3rem;
   overflow: hidden;
   border-radius: var(--account-radius, 14px);
-  background: color-mix(in srgb, var(--sand) 26%, var(--account-paper, #fbf8f2));
+  background: color-mix(
+    in srgb,
+    var(--sand) 26%,
+    var(--account-paper, #fbf8f2)
+  );
 }
 
 .making-note p {
   flex: 1;
   margin: 0;
   color: var(--ink);
-  font-size: .92rem;
+  font-size: 0.92rem;
   line-height: 1.85;
 }
 
@@ -39,40 +58,115 @@ html[dir="rtl"] .making-page, html[dir="rtl"] .making-heading {direction:rtl!imp
   mix-blend-mode: multiply;
 }
 
-html[dir="ltr"] .making-note img {transform:scaleX(-1)}
+html[dir="ltr"] .making-note img {
+  transform: scaleX(-1);
+}
 
-.making-empty {margin-top:1.75rem}
+.making-empty {
+  margin-top: 1.75rem;
+}
 
-.making-empty h2 {margin:0;color:var(--account-green, var(--ink));font-size:clamp(1.15rem,2vw,1.35rem);font-weight:600;line-height:1.5}
+.making-empty h2 {
+  margin: 0;
+  color: var(--account-green, var(--ink));
+  font-size: clamp(1.15rem, 2vw, 1.35rem);
+  font-weight: 600;
+  line-height: 1.5;
+}
 
-.making-empty p {margin-top:-.5rem}
+.making-empty p {
+  margin-top: -0.5rem;
+}
 
-.making-empty .button {border-radius:12px}
+.making-empty .button {
+  border-radius: 12px;
+}
 
-.making-grid {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1.25rem;margin-top:1.75rem}
+.making-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.25rem;
+  margin-top: 1.75rem;
+}
 
-.making-sample {margin-top:3rem;padding-top:2rem;border-top:1px solid var(--account-line, var(--line))}
+.making-sample {
+  margin-top: 3rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--account-line, var(--line));
+}
 
-.making-sample h2 {color:var(--account-green, var(--ink));font-size:clamp(1.25rem,2.4vw,1.6rem);font-weight:600;margin:0 0 .5rem}
+.making-sample h2 {
+  color: var(--account-green, var(--ink));
+  font-size: clamp(1.25rem, 2.4vw, 1.6rem);
+  font-weight: 600;
+  margin: 0 0 0.5rem;
+}
 
-.making-demo-banner {margin:.85rem 0 0;padding:.75rem 1rem;border:1px solid var(--clay);border-radius:10px;background:color-mix(in srgb,var(--sand) 35%,var(--paper));color:var(--ink)}
+.making-demo-banner {
+  margin: 0.85rem 0 0;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--clay);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--sand) 35%, var(--paper));
+  color: var(--ink);
+}
 
-.making-card {display:grid;gap:1rem;padding:1.3rem 1.35rem 1.4rem;background:var(--account-paper, var(--paper));border:1px solid var(--account-line, var(--line));border-radius:var(--account-radius, 14px);box-shadow:var(--account-shadow, none);align-content:start}
+.making-card {
+  display: grid;
+  gap: 1rem;
+  padding: 1.3rem 1.35rem 1.4rem;
+  background: var(--account-paper, var(--paper));
+  border: 1px solid var(--account-line, var(--line));
+  border-radius: var(--account-radius, 14px);
+  box-shadow: var(--account-shadow, none);
+  align-content: start;
+}
 
-.making-card > header .eyebrow {color:var(--account-oxide, #8a4938);font-size:var(--text-identifier);letter-spacing:.04em;direction:ltr;unicode-bidi:isolate}
+.making-card > header .eyebrow {
+  color: var(--account-oxide, #8a4938);
+  font-size: var(--text-identifier);
+  letter-spacing: 0.04em;
+  direction: ltr;
+  unicode-bidi: isolate;
+}
 
-.making-card .stage-meter {padding:.15rem 0}
+.making-card .stage-meter {
+  padding: 0.15rem 0;
+}
 
-.making-card h2 {color:var(--account-green, var(--ink));font-weight:650;font-size:1.15rem;margin:0;line-height:1.4}
+.making-card h2 {
+  color: var(--account-green, var(--ink));
+  font-weight: 650;
+  font-size: 1.15rem;
+  margin: 0;
+  line-height: 1.4;
+}
 
-.making-card .order-type-label {margin:0;color:var(--account-muted, var(--muted));font-size:.86rem;font-weight:500}
+.making-card .order-type-label {
+  margin: 0;
+  color: var(--account-muted, var(--muted));
+  font-size: 0.86rem;
+  font-weight: 500;
+}
 
-.making-card > p {margin:0;padding:.75rem .9rem;background:color-mix(in srgb, var(--sand) 22%, var(--account-paper, var(--paper)));border-radius:10px;font-size:.88rem;line-height:1.6;color:var(--ink)}
+.making-card > p {
+  margin: 0;
+  padding: 0.75rem 0.9rem;
+  background: color-mix(
+    in srgb,
+    var(--sand) 22%,
+    var(--account-paper, var(--paper))
+  );
+  border-radius: 10px;
+  font-size: 0.88rem;
+  line-height: 1.6;
+  color: var(--ink);
+}
 
 .making-page .making-card .button.outline {
   justify-content: center;
   min-height: 48px !important;
-  padding: .6rem 1.2rem !important;
+  padding: 0.6rem 1.2rem !important;
   border: 1px solid var(--account-green, var(--moss)) !important;
   border-radius: 12px !important;
   background: var(--account-green, var(--moss)) !important;
@@ -85,6 +179,8 @@ html[dir="ltr"] .making-note img {transform:scaleX(-1)}
   color: var(--account-paper, var(--paper));
 }
 
-@media(max-width:900px) {
-.making-grid {grid-template-columns:1fr!important}
+@media (--tablet) {
+  .making-grid {
+    grid-template-columns: 1fr !important;
+  }
 }

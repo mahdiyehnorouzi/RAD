@@ -17,7 +17,7 @@ const baseDescription =
  * Category and artist are landing pages worth indexing. Status, price and sort
  * only narrow or reorder them, so they share the landing page's canonical URL.
  */
-export function catalogLandingFilters(filters: CatalogFilters): CatalogFilters {
+function catalogLandingFilters(filters: CatalogFilters): CatalogFilters {
   return {
     ...defaultCatalogFilters,
     category: filters.category,

@@ -1,6 +1,6 @@
 import type { Product } from "@rad/types";
 import { isPurchasableStatus } from "@rad/types";
-import { useCart } from "@/components/cart/cart-provider";
+import { useCart } from "@/features/cart";
 import { useLocale } from "@/components/i18n";
 import {
   isReserved,

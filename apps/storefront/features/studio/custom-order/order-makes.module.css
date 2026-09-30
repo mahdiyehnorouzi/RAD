@@ -1,0 +1,174 @@
+/* What we make */
+
+.csMakes {
+  padding-block: 3.75rem;
+}
+
+@media (min-width: 700px) {
+  .csMakes {
+    padding-block: clamp(3.5rem, 6vw, 5.5rem);
+  }
+}
+
+.csMakeGrid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 0.7rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.csMakeGrid li {
+  grid-column: span 3;
+}
+
+.csMakeGrid li:last-child:nth-child(odd) {
+  grid-column: 1 / -1;
+}
+
+.csMakeGrid li:last-child:nth-child(odd) .csMakeArt {
+  aspect-ratio: 2.4 / 1;
+}
+
+.csMakeGrid li:last-child:nth-child(odd) .csMakeArt img {
+  scale: 0.88;
+}
+
+.csMake {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 0.2rem 0.4rem;
+  width: 100%;
+  height: 100%;
+  padding: 0.55rem 0.7rem 0.75rem;
+  border: 1px solid rgb(255 255 255 / 0.6);
+  border-radius: 14px;
+  background: var(--cs-paper);
+  box-shadow: var(--cs-shadow);
+  color: var(--cs-ink);
+  text-align: start;
+  cursor: pointer;
+  transition:
+    transform 0.35s var(--cs-ease),
+    box-shadow 0.35s var(--cs-ease);
+}
+
+.csMake:hover {
+  transform: translateY(-3px);
+  box-shadow:
+    0 2px 3px rgb(74 54 34 / 0.06),
+    0 20px 30px -18px rgb(74 54 34 / 0.45);
+}
+
+.csMakeArt {
+  position: relative;
+  grid-column: 1 / -1;
+  aspect-ratio: 1 / 0.82;
+  margin-bottom: 0.35rem;
+  border-radius: 10px;
+  background: #f0e8dc;
+}
+
+.csMakeArt img {
+  object-fit: contain;
+  transform: scale(1.12);
+  transition: transform 0.5s var(--cs-ease);
+}
+
+.csMake:hover .csMakeArt img {
+  transform: scale(1.12) translateY(-4px);
+}
+
+.csMakeText {
+  display: grid;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.csMakeTitle {
+  font-size: 1.02rem;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.csMakeExamples {
+  color: var(--cs-muted);
+  font-size: 0.78rem;
+  line-height: 1.7;
+}
+
+@media (--motion-ok) {
+  @supports (animation-timeline: view()) {
+    .csMakeGrid li {
+      animation: csScrollIn linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 70%;
+    }
+  }
+}
+
+@media (min-width: 700px) {
+  .csMakeGrid {
+    gap: 1rem;
+  }
+
+  .csMakeGrid li,
+  .csMakeGrid li:last-child:nth-child(odd) {
+    grid-column: span 2;
+  }
+
+  .csMakeGrid li.wide {
+    grid-column: span 3;
+  }
+
+  .wide .csMakeArt {
+    aspect-ratio: 1.55 / 1;
+  }
+
+  .csMakeGrid li:last-child:nth-child(odd) .csMakeArt {
+    aspect-ratio: 1 / 0.82;
+  }
+
+  .csMakeGrid li:last-child:nth-child(odd) .csMakeArt img {
+    scale: 1;
+  }
+
+  .csMake {
+    padding: 0.8rem 1rem 1rem;
+  }
+
+  .csMakeTitle {
+    font-size: 1.15rem;
+  }
+
+  .csMakeExamples {
+    font-size: 0.86rem;
+  }
+}
+
+@media (max-width: 380px) {
+  .csMakeExamples {
+    font-size: 0.74rem;
+  }
+}
+
+@keyframes csScrollIn {
+  from {
+    opacity: 0;
+    translate: 0 22px;
+  }
+}
+
+.csMakes header p {
+  color: #4f4a42;
+}
+
+.csMake:hover .csMakeRound {
+  transform: translateX(-3px);
+}
+
+html[dir="ltr"] .csMake:hover .csMakeRound {
+  transform: translateX(3px);
+}

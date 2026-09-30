@@ -1,8 +1,6 @@
 "use client";
 import "./commerce-provider.css";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
 import {
   createContext,
   useCallback,
@@ -26,8 +24,8 @@ import { api } from "@/lib/api";
 import { useCatalogRefresh } from "@/hooks/use-catalog-refresh";
 import { useCatalogIndex } from "../../catalog/catalog-index-provider";
 import { useLocale } from "@/components/i18n";
-import { Bell, Heart, UserRound, X } from "lucide-react";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Heart, X } from "lucide-react";
+import { logRecovered } from "@/lib/log";
 
 type Toast = {
   id: number;
@@ -104,7 +102,8 @@ export function CommerceProvider({ children }: { children: React.ReactNode }) {
     ordersWanted.current = true;
     try {
       setOrders(await api<Order[]>("/orders"));
-    } catch {
+    } catch (error) {
+      logRecovered("orders", error);
       // Keep whatever is already shown; order pages fall back to fetching one order.
     } finally {
       setOrdersReady(true);
@@ -128,7 +127,7 @@ export function CommerceProvider({ children }: { children: React.ReactNode }) {
       .then((session) => {
         if (!cancelled) applySession(session);
       })
-      .catch(() => {})
+      .catch((error) => logRecovered("session", error))
       .finally(() => {
         if (!cancelled) setReady(true);
       });
@@ -142,7 +141,7 @@ export function CommerceProvider({ children }: { children: React.ReactNode }) {
       if (document.visibilityState !== "visible") return;
       api<{ notices: Notice[] }>("/notices")
         .then((payload) => setNotices(payload.notices))
-        .catch(() => {});
+        .catch((error) => logRecovered("notices", error));
     };
     const timer = window.setInterval(refreshNotices, NOTICE_POLL_MS);
     document.addEventListener("visibilitychange", refreshNotices);
@@ -365,149 +364,5 @@ export function FavoriteButton({
       ) : null}
       {!compact && <b>{active ? t("savedFavorite") : t("saveFavorite")}</b>}
     </button>
-  );
-}
-
-export function NotificationCenter() {
-  const [open, setOpen] = useState(false);
-  const pathname = usePathname();
-  const { notices, unread, markAllRead, ready } = useCommerce();
-  const { locale, t, number, href } = useLocale();
-  const { nameOf } = useCatalogIndex();
-  useEffect(() => setOpen(false), [pathname]);
-  useEffect(() => {
-    const escape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setOpen(false);
-    };
-    const close = (event: Event) => {
-      if ((event as CustomEvent<string>).detail !== "notifications")
-        setOpen(false);
-    };
-    window.addEventListener("keydown", escape);
-    window.addEventListener("rad:header-overlay", close);
-    return () => {
-      window.removeEventListener("keydown", escape);
-      window.removeEventListener("rad:header-overlay", close);
-    };
-  }, []);
-  const noticeText = (notice: Notice) => {
-    const name = nameOf(notice.productSlug, locale);
-    if (notice.kind === "favorite") return `${t("noticeFavorite")} ${name}`;
-    if (notice.kind === "cart") return `${t("noticeCart")} ${name}`;
-    if (notice.kind === "order") return t("noticeOrder");
-    if (notice.kind === "order_confirmed") return t("noticeOrderConfirmed");
-    if (notice.kind === "order_rejected") return t("noticeOrderRejected");
-    if (notice.kind === "commission_approved")
-      return t("noticeCommissionApproved");
-    if (notice.kind === "commission_declined")
-      return t("noticeCommissionDeclined");
-    if (notice.kind === "commission_change") return t("noticeCommissionChange");
-    if (notice.kind === "commission_message")
-      return t("noticeCommissionMessage");
-    if (notice.kind === "commission_quote") return t("noticeCommissionQuote");
-    if (notice.kind === "commission_pre_kiln")
-      return t("noticeCommissionPreKiln");
-    if (notice.kind === "commission_firing") return t("noticeCommissionFiring");
-    if (notice.kind === "commission_balance")
-      return t("noticeCommissionBalance");
-    if (notice.kind === "commission_shipped")
-      return t("noticeCommissionShipped");
-    return t("noticeWelcome");
-  };
-  return (
-    <div className="notification-center">
-      <button
-        className="utility-button"
-        type="button"
-        onClick={() =>
-          setOpen((value) => {
-            const next = !value;
-            if (next)
-              window.dispatchEvent(
-                new CustomEvent("rad:header-overlay", {
-                  detail: "notifications",
-                }),
-              );
-            return next;
-          })
-        }
-        aria-expanded={open}
-        aria-controls="notification-panel"
-        aria-label={t("notifications")}
-      >
-        <Bell aria-hidden="true" />
-        {unread > 0 && <i>{number(unread)}</i>}
-      </button>
-      {open && (
-        <aside id="notification-panel" className="notification-panel">
-          <header>
-            <div>
-              <span className="eyebrow">{t("notificationCenter")}</span>
-              <h2>{t("notifications")}</h2>
-            </div>
-            {unread > 0 && (
-              <button className="text-button" onClick={markAllRead}>
-                {t("markAllRead")}
-              </button>
-            )}
-          </header>
-          {!ready ? (
-            <div className="skeleton-screen">
-              <Skeleton className="skeleton-line" />
-              <Skeleton className="skeleton-line short" />
-              <Skeleton className="skeleton-line" />
-            </div>
-          ) : notices.length ? (
-            <ul>
-              {notices.map((notice) => {
-                const makingHref =
-                  notice.kind.startsWith("commission") && notice.productSlug
-                    ? href(`/making/${notice.productSlug}`)
-                    : null;
-                const orderHref =
-                  notice.kind === "order" ? href("/orders") : null;
-                return (
-                  <li key={notice.id} className={notice.read ? "" : "unread"}>
-                    {makingHref ? (
-                      <Link href={makingHref} onClick={() => setOpen(false)}>
-                        {noticeText(notice)}
-                      </Link>
-                    ) : orderHref ? (
-                      <Link href={orderHref} onClick={() => setOpen(false)}>
-                        {noticeText(notice)}
-                      </Link>
-                    ) : (
-                      <span>{noticeText(notice)}</span>
-                    )}
-                    <small>
-                      {new Intl.DateTimeFormat(
-                        locale === "fa" ? "fa-IR" : "en-US",
-                        { hour: "2-digit", minute: "2-digit" },
-                      ).format(notice.createdAt)}
-                    </small>
-                  </li>
-                );
-              })}
-            </ul>
-          ) : (
-            <p className="notice-empty">{t("noNotifications")}</p>
-          )}
-        </aside>
-      )}
-    </div>
-  );
-}
-
-export function AccountLink() {
-  const { user } = useCommerce();
-  const { t, href } = useLocale();
-  return (
-    <Link
-      className="utility-button account-link"
-      href={href("/account")}
-      aria-label={user ? t("profile") : t("login")}
-    >
-      <UserRound aria-hidden="true" />
-    </Link>
   );
 }

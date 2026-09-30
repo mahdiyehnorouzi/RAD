@@ -1,0 +1,6 @@
+.palette {
+  --oxide: #8a4938;
+  --oxide-wash: color-mix(in srgb, #8a4938 7%, var(--paper));
+  --moss-wash: color-mix(in srgb, var(--moss) 7%, var(--paper));
+  --card: color-mix(in srgb, var(--paper) 55%, white);
+}

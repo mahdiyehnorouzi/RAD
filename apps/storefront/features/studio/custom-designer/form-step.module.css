@@ -1,0 +1,111 @@
+/* Form step: photo tiles, the radio in the corner */
+
+.formCards {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 0.65rem;
+}
+
+.formCard {
+  display: grid;
+  grid-column: span 2;
+  overflow: hidden;
+  border: 1.5px solid var(--cs-line);
+  border-radius: 14px;
+  background: var(--cs-paper);
+  transition:
+    border-color 0.2s ease,
+    background-color 0.2s ease,
+    box-shadow 0.25s ease;
+}
+
+.formCard.wide {
+  grid-column: span 3;
+}
+
+.formCard:hover {
+  border-color: #c3b6a2;
+}
+
+.formCard.checked {
+  border-color: var(--cs-green);
+  box-shadow: 0 10px 22px -16px rgb(38 61 52 / 0.6);
+}
+
+.formCardArt {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  margin: 0.4rem 0.4rem 0;
+  border-radius: 10px;
+  background: #efe7db;
+}
+
+.formCard.wide .formCardArt {
+  aspect-ratio: 1.45 / 1;
+}
+
+.formCardArt img {
+  object-fit: contain;
+  transform: scale(1.12);
+  transition: transform 0.45s var(--cs-ease);
+}
+
+.formCard:hover .formCardArt img {
+  transform: scale(1.12) translateY(-3px);
+}
+
+.formCardFoot {
+  padding: 0.6rem 0.75rem 0.7rem;
+  font-size: 0.88rem;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.useChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.useChip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.6rem;
+  padding: 0 1.1rem;
+  border: 1px solid var(--cs-line);
+  border-radius: 999px;
+  background: var(--cs-paper);
+  color: var(--cs-ink);
+  font-size: 0.86rem;
+  font-weight: 600;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.useChip:hover {
+  border-color: #c3b6a2;
+}
+
+.useChip.checked {
+  border-color: var(--cs-green);
+  background: var(--cs-green);
+  color: var(--cs-paper);
+}
+
+@media (min-width: 700px) {
+  .formCards {
+    gap: 0.9rem;
+  }
+
+  .formCardFoot {
+    font-size: 0.95rem;
+  }
+}
+
+.formCardRadio {
+  position: absolute;
+  top: 0.5rem;
+  inset-inline-end: 0.5rem;
+}

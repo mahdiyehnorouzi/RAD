@@ -1,0 +1,146 @@
+/* Prices */
+
+.csPrices {
+  display: grid;
+  gap: 0.25rem;
+  padding-block: 3.25rem 3.75rem;
+}
+
+@media (min-width: 700px) {
+  .csPrices {
+    padding-block: clamp(3.5rem, 6vw, 5.5rem);
+  }
+}
+
+.csPricesIntro .olive {
+  display: none;
+}
+
+.csPriceList {
+  display: grid;
+  gap: 0.55rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.csPrice {
+  border: 1px solid transparent;
+  border-radius: 14px;
+  background: var(--cs-card);
+  transition:
+    background-color 0.25s ease,
+    border-color 0.25s ease;
+}
+
+.csPrice:hover {
+  background: var(--cs-card-hover);
+}
+
+.csPrice[open] {
+  border-color: var(--cs-line);
+  background: var(--cs-paper);
+}
+
+.csPrice summary {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.55rem 0.75rem;
+  border-radius: 14px;
+  list-style: none;
+  cursor: pointer;
+}
+
+.csPrice summary::-webkit-details-marker {
+  display: none;
+}
+
+.csPriceThumb {
+  position: relative;
+  flex: 0 0 auto;
+  width: 3.4rem;
+  height: 3.4rem;
+  overflow: hidden;
+  border-radius: 10px;
+  background: var(--cs-paper);
+}
+
+.csPrice[open] .csPriceThumb {
+  background: #f0e8dc;
+}
+
+.csPriceThumb img {
+  object-fit: contain;
+  transform: scale(1.3);
+}
+
+.csPriceText {
+  display: grid;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.csPriceLabel {
+  font-size: 0.98rem;
+  font-weight: 700;
+  line-height: 1.6;
+}
+
+.csPriceValue {
+  color: var(--cs-muted);
+  font-size: 0.86rem;
+  line-height: 1.6;
+  font-variant-numeric: tabular-nums;
+}
+
+.csPrice p {
+  padding: 0 0.75rem 0.9rem;
+  padding-inline-start: calc(0.75rem + 3.4rem + 0.85rem);
+  color: var(--cs-muted);
+  font-size: 0.88rem;
+  line-height: 1.85;
+}
+
+.csPriceNote {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  margin-top: 0.9rem;
+  padding: 0.9rem 1rem;
+  border: 1px dashed #cbbfad;
+  border-radius: 14px;
+  color: var(--cs-muted);
+  font-size: 0.86rem;
+  line-height: 1.9;
+}
+
+.csPriceNote svg {
+  flex: 0 0 auto;
+  margin-top: 0.2rem;
+  color: var(--cs-green);
+}
+
+@media (--wide) {
+  .csPrices {
+    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+    column-gap: clamp(3rem, 7vw, 7rem);
+    align-items: start;
+  }
+
+  .csPricesIntro {
+    display: grid;
+    gap: 1.25rem;
+  }
+
+  .csPricesIntro .olive {
+    display: block;
+    width: min(100%, 22rem);
+    margin-top: 0.75rem;
+    transform: rotate(-2deg);
+  }
+}
+
+.csPrice[open] .csPriceRound {
+  transform: rotate(180deg);
+}

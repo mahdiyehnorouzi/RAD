@@ -48,7 +48,9 @@
   line-height: 1;
   pointer-events: none;
   transform: rotate(-7deg);
-  filter: drop-shadow(0 0 8px color-mix(in srgb, var(--paper) 70%, transparent));
+  filter: drop-shadow(
+    0 0 8px color-mix(in srgb, var(--paper) 70%, transparent)
+  );
 }
 
 .plp-card-mark b {
@@ -264,7 +266,7 @@
   outline-offset: 3px;
 }
 
-@media (hover: hover) and (pointer: fine) {
+@media (--fine-pointer) {
   .plp-card:hover {
     box-shadow:
       0 1px 2px color-mix(in srgb, #5a3c22 8%, transparent),
@@ -294,7 +296,7 @@
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
+@media (--reduced-motion) {
   .plp-card,
   .plp-card * {
     animation: none !important;

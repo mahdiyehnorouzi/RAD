@@ -1,0 +1,81 @@
+.reviewRules {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.reviewRule {
+  border: 1px solid var(--cs-line);
+  border-radius: 12px;
+  background: var(--cs-paper);
+}
+
+.reviewRule summary {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.65rem 0.6rem;
+  border-radius: 12px;
+  list-style: none;
+  cursor: pointer;
+}
+
+.reviewRule summary::-webkit-details-marker {
+  display: none;
+}
+
+.reviewRuleIcon {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border: 1px solid var(--cs-line);
+  border-radius: 50%;
+  color: var(--cs-green);
+}
+
+.reviewRuleText {
+  display: grid;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.reviewRuleText strong {
+  font-size: 0.76rem;
+  font-weight: 700;
+  line-height: 1.55;
+}
+
+.reviewRuleText span {
+  color: var(--cs-muted);
+  font-size: 0.68rem;
+  line-height: 1.6;
+}
+
+.reviewRuleChevron {
+  flex: 0 0 auto;
+  color: var(--cs-muted);
+  transition: transform 0.25s var(--cs-ease);
+}
+
+.reviewRule[open] .reviewRuleChevron {
+  transform: rotate(180deg);
+}
+
+.reviewRule p {
+  margin: 0;
+  padding: 0 0.75rem 0.7rem;
+  color: var(--cs-muted);
+  font-size: 0.74rem;
+  line-height: 1.85;
+}
+
+@media (min-width: 700px) {
+  .reviewRuleText strong {
+    font-size: 0.84rem;
+  }
+
+  .reviewRuleText span {
+    font-size: 0.76rem;
+  }
+}

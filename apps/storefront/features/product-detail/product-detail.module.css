@@ -1,0 +1,114 @@
+.pdp {
+  --pdp-oxide: #8a4938;
+  --pdp-leaf: #4f8a5d;
+  --pdp-gap: clamp(1.5rem, 4.5vw, 5rem);
+  --pdp-band: clamp(4rem, 8vw, 7rem);
+  --pdp-ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --pdp-stage-max: max(30rem, calc(100svh - var(--header-height) - 9rem));
+  display: grid;
+  gap: var(--pdp-band);
+  padding: clamp(0.75rem, 2vw, 1.75rem) var(--page) clamp(3rem, 6vw, 5rem);
+  background: var(--paper);
+}
+
+.pdp > * {
+  width: 100%;
+  max-width: 86rem;
+  min-width: 0;
+  margin-inline: auto;
+}
+
+.pdp ::selection {
+  background: color-mix(in srgb, var(--sand) 62%, transparent);
+  color: var(--ink);
+}
+
+.pdp a:focus-visible,
+.pdp button:focus-visible,
+.pdp summary:focus-visible {
+  outline: 2px solid var(--pdp-oxide);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+.pdp h2 {
+  margin: 0;
+  font-size: clamp(1.35rem, 2vw, 1.75rem);
+  font-weight: var(--font-weight-regular);
+  line-height: 1.4;
+}
+
+[data-locale="en"] .pdp h2 {
+  letter-spacing: -0.02em;
+}
+
+.top {
+  display: grid;
+  grid-template-columns: minmax(20rem, 0.72fr) minmax(0, 1fr);
+  grid-template-rows: auto 1fr;
+  grid-template-areas:
+    "summary gallery"
+    "summary rest";
+  align-items: start;
+  gap: 1.25rem var(--pdp-gap);
+  counter-reset: pdp-fold;
+}
+
+.gallery {
+  grid-area: gallery;
+}
+
+.summary {
+  grid-area: summary;
+}
+
+.rest {
+  grid-area: rest;
+  display: grid;
+  gap: 2.25rem;
+  min-width: 0;
+  margin-top: 1.5rem;
+}
+
+/* The glaze rule takes the place of the fold list's closing hairline. */
+.foldList:has(+ .restStrip) > details:last-child {
+  border-bottom: 0;
+}
+
+.restStrip {
+  margin-top: calc(-2.25rem - 0.5rem);
+}
+
+@media (max-width: 1100px) {
+  .top {
+    grid-template-columns: minmax(18rem, 0.9fr) minmax(0, 1fr);
+  }
+}
+
+@media (--tablet) {
+  .top {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: none;
+    grid-template-areas:
+      "gallery"
+      "summary"
+      "rest";
+    gap: 1rem;
+  }
+  .rest {
+    gap: 0.75rem;
+    margin-top: -0.25rem;
+  }
+  /* The cards and their strokes carry the work's surface here. */
+  .restStrip {
+    display: none;
+  }
+}
+
+@media (--reduced-motion) {
+  .pdp *,
+  .pdp *::before {
+    transition: none !important;
+    animation: none !important;
+  }
+}

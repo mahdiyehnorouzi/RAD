@@ -32,8 +32,8 @@
   animation:
     rad-print-press 850ms cubic-bezier(0.22, 1, 0.36, 1)
       calc(var(--ridge) * var(--print-step)) forwards,
-    rad-print-ink 6.4s ease-in-out
-      calc(1.9s + var(--ridge) * var(--print-step)) infinite;
+    rad-print-ink 6.4s ease-in-out calc(1.9s + var(--ridge) * var(--print-step))
+      infinite;
 }
 
 :hover > .rad-fingerprint.is-pressed path,
@@ -80,7 +80,7 @@
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
+@media (--reduced-motion) {
   .rad-fingerprint.is-animated path {
     animation: none !important;
     stroke-dasharray: none;

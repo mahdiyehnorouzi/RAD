@@ -15,7 +15,7 @@ export const defaultShapeQuestions: ShapeQuestionView[] = [
         label: { fa: "صاف", en: "Straight" },
         note: { fa: "منظم، متعادل و ساده", en: "Even, balanced and simple" },
         photo: {
-          src: "/shape/q1-straight.jpg",
+          src: "/shape/q1-straight.webp",
           alt: {
             fa: "کاسه‌ی سفالی صاف و متقارن روی سنگ",
             en: "A smooth, symmetrical stoneware bowl on stone",
@@ -27,7 +27,7 @@ export const defaultShapeQuestions: ShapeQuestionView[] = [
         label: { fa: "کج", en: "Crooked" },
         note: { fa: "آزاد، نامتقارن و خاص", en: "Free, uneven and particular" },
         photo: {
-          src: "/shape/q1-crooked.jpg",
+          src: "/shape/q1-crooked.webp",
           alt: {
             fa: "کاسه‌ی سفالی کج با لبه‌ی ناهموار",
             en: "A crooked stoneware bowl with an uneven rim",
@@ -50,16 +50,22 @@ export const defaultShapeQuestions: ShapeQuestionView[] = [
         label: { fa: "ساکت", en: "Quiet" },
         note: { fa: "ساده، آرام و بی‌ادعا", en: "Plain, calm and unassuming" },
         photo: {
-          src: "/shape/q2-quiet.jpg",
-          alt: { fa: "کاسه‌ی سفید مات بدون نقش", en: "A plain matte white bowl" },
+          src: "/shape/q2-quiet.webp",
+          alt: {
+            fa: "کاسه‌ی سفید مات بدون نقش",
+            en: "A plain matte white bowl",
+          },
         },
         value: 0.9,
       },
       {
         label: { fa: "شلوغ", en: "Busy" },
-        note: { fa: "پرنقش، شاد و پرحرف", en: "Patterned, lively and talkative" },
+        note: {
+          fa: "پرنقش، شاد و پرحرف",
+          en: "Patterned, lively and talkative",
+        },
         photo: {
-          src: "/shape/q2-busy.jpg",
+          src: "/shape/q2-busy.webp",
           alt: {
             fa: "کاسه‌ی دست‌نقاش با نقش‌های رنگی",
             en: "A hand-painted bowl covered in colourful patterns",
@@ -72,7 +78,10 @@ export const defaultShapeQuestions: ShapeQuestionView[] = [
   {
     id: "worn",
     trait: "worn",
-    prompt: { fa: "لبه‌ی تمیز یا دست‌خورده؟", en: "A clean edge or a worn one?" },
+    prompt: {
+      fa: "لبه‌ی تمیز یا دست‌خورده؟",
+      en: "A clean edge or a worn one?",
+    },
     hint: {
       fa: "در لبه و جزئیات فرم‌ها، کدوم حس رو بیشتر دوست داری؟",
       en: "In the edges and details of a form, which feeling do you like more?",
@@ -82,7 +91,7 @@ export const defaultShapeQuestions: ShapeQuestionView[] = [
         label: { fa: "لبه‌ی تمیز", en: "Clean edge" },
         note: { fa: "دقیق، یکدست و مینیمال", en: "Precise, even and minimal" },
         photo: {
-          src: "/shape/q3-clean.jpg",
+          src: "/shape/q3-clean.webp",
           alt: {
             fa: "نمای نزدیک لبه‌ی صاف یک کاسه",
             en: "A close view of a bowl's clean rim",
@@ -97,7 +106,7 @@ export const defaultShapeQuestions: ShapeQuestionView[] = [
           en: "Natural, alive and full of detail",
         },
         photo: {
-          src: "/shape/q3-worn.jpg",
+          src: "/shape/q3-worn.webp",
           alt: {
             fa: "نمای نزدیک لبه‌ی زبر و دست‌ساز یک کاسه",
             en: "A close view of a bowl's rough, handmade rim",
@@ -123,7 +132,7 @@ export const defaultShapeQuestions: ShapeQuestionView[] = [
         label: { fa: "رنگی که دوست دارم", en: "A colour I like" },
         note: { fa: "آشنا، هماهنگ و آرام", en: "Familiar, in tune and calm" },
         photo: {
-          src: "/shape/q4-liked.jpg",
+          src: "/shape/q4-liked.webp",
           alt: {
             fa: "گلدان کوچک با لعاب سبز ملایم",
             en: "A small vase in a soft sage glaze",
@@ -132,10 +141,16 @@ export const defaultShapeQuestions: ShapeQuestionView[] = [
         value: 0.2,
       },
       {
-        label: { fa: "رنگی که غافلگیرم می‌کند", en: "A colour that surprises me" },
-        note: { fa: "پیش‌بینی‌نشده، جسور و زنده", en: "Unplanned, bold and alive" },
+        label: {
+          fa: "رنگی که غافلگیرم می‌کند",
+          en: "A colour that surprises me",
+        },
+        note: {
+          fa: "پیش‌بینی‌نشده، جسور و زنده",
+          en: "Unplanned, bold and alive",
+        },
         photo: {
-          src: "/shape/q4-surprise.jpg",
+          src: "/shape/q4-surprise.webp",
           alt: {
             fa: "گلدان کوچک با لعاب آبی و نارنجیِ شره‌کرده",
             en: "A small vase with blue glaze running over rust orange",
@@ -156,9 +171,12 @@ export const defaultShapeQuestions: ShapeQuestionView[] = [
     choices: [
       {
         label: { fa: "کاربردی", en: "Useful" },
-        note: { fa: "هر روز در دست، بی‌دردسر", en: "In the hand every day, no fuss" },
+        note: {
+          fa: "هر روز در دست، بی‌دردسر",
+          en: "In the hand every day, no fuss",
+        },
         photo: {
-          src: "/shape/q5-useful.jpg",
+          src: "/shape/q5-useful.webp",
           alt: {
             fa: "ماگ سفالی ساده با دسته",
             en: "A simple stoneware mug with a handle",
@@ -173,7 +191,7 @@ export const defaultShapeQuestions: ShapeQuestionView[] = [
           en: "Playful, puzzling and one of a kind",
         },
         photo: {
-          src: "/shape/q5-strange.jpg",
+          src: "/shape/q5-strange.webp",
           alt: {
             fa: "ظرف سفالی سه‌پایه با سوراخی در بدنه",
             en: "A three-legged clay vessel with a hole in its side",

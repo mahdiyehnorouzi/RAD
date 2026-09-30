@@ -1,4 +1,5 @@
-const API_BASE = process.env.API_URL || "http://localhost:4000";
+import { SERVER_API_URL } from "./client";
+import { logRecovered } from "@/lib/log";
 
 const HOP_BY_HOP = new Set([
   "connection",
@@ -23,7 +24,8 @@ function copyUpstreamHeaders(upstream: Response): Headers {
   });
 
   if (getSetCookie?.length) {
-    for (const cookie of getSetCookie) responseHeaders.append("set-cookie", cookie);
+    for (const cookie of getSetCookie)
+      responseHeaders.append("set-cookie", cookie);
   } else {
     const single = upstream.headers.get("set-cookie");
     if (single) responseHeaders.append("set-cookie", single);
@@ -37,7 +39,7 @@ export async function proxyApiRequest(
   pathSegments: string[],
 ): Promise<Response> {
   const path = pathSegments.map(encodeURIComponent).join("/");
-  const target = new URL(`/${path}`, API_BASE);
+  const target = new URL(`/${path}`, SERVER_API_URL);
   const incoming = new URL(request.url);
   target.search = incoming.search;
 
@@ -64,7 +66,8 @@ export async function proxyApiRequest(
       statusText: upstream.statusText,
       headers: copyUpstreamHeaders(upstream),
     });
-  } catch {
+  } catch (error) {
+    logRecovered("api proxy", error);
     return Response.json(
       { error: "API unavailable" },
       { status: 503, headers: { "content-type": "application/json" } },

@@ -44,7 +44,8 @@
   grid-template-columns: minmax(6.5rem, 0.8fr) minmax(0, 1.2fr);
   gap: 1rem;
   padding-block: 0.7rem;
-  border-top: 1px solid color-mix(in srgb, var(--trace-ink, #1f2f28) 12%, transparent);
+  border-top: 1px solid
+    color-mix(in srgb, var(--trace-ink, #1f2f28) 12%, transparent);
 }
 
 .material-fingerprint dt {
@@ -68,7 +69,7 @@
   text-align: end;
 }
 
-@media (min-width: 960px) {
+@media (--wide) {
   .difference-certificate {
     gap: 1.5rem;
     padding: 2rem 2.25rem 1.6rem;

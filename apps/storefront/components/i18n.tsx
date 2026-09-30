@@ -1,13 +1,19 @@
 "use client";
 
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { usePathname } from "next/navigation";
+import { createContext, useContext, useEffect, useMemo } from "react";
+import { usePublicPathname } from "@/hooks/use-public-pathname";
 import type { Locale } from "@rad/types";
-import { mockStorefront } from "@/lib/catalog/mock-storefront";
+import { brand } from "@/lib/brand";
 import { fa, type MessageKey } from "@/i18n/fa";
 import { en } from "@/i18n/en";
+import {
+  DEFAULT_LOCALE,
+  LOCALE_COOKIE,
+  LOCALE_QUERY,
+  isLocale,
+} from "@/lib/locale";
 
-export type { Locale, MessageKey };
+export type { MessageKey };
 
 const messages = { fa, en } as const;
 
@@ -20,7 +26,7 @@ type LocaleContextValue = {
   number: (value: number) => string;
 };
 const LocaleContext = createContext<LocaleContextValue | null>(null);
-const storageKey = "rad-locale";
+const oneYear = 60 * 60 * 24 * 365;
 
 function interpolate(template: string, vars?: Vars) {
   if (!vars) return template;
@@ -29,26 +35,57 @@ function interpolate(template: string, vars?: Vars) {
   );
 }
 
-export function LocaleProvider({ children }: { children: React.ReactNode }) {
-  const [locale, setLocaleState] = useState<Locale>("fa");
-  const pathname = usePathname();
+function saveLocale(locale: Locale) {
+  document.cookie = `${LOCALE_COOKIE}=${locale}; path=/; max-age=${oneYear}; samesite=lax`;
+}
+
+function savedLocale() {
+  const match = document.cookie.match(
+    new RegExp(`(?:^|; )${LOCALE_COOKIE}=([^;]*)`),
+  );
+  return match?.[1];
+}
+
+/** Switching language changes the root layout, so it is a full navigation. */
+function switchLocale(next: Locale) {
+  saveLocale(next);
+  const url = new URL(window.location.href);
+  if (next === DEFAULT_LOCALE) url.searchParams.delete(LOCALE_QUERY);
+  else url.searchParams.set(LOCALE_QUERY, next);
+  window.location.assign(url);
+}
+
+/** `locale` comes from the `app/[locale]` segment that `proxy.ts` rewrites to. */
+export function LocaleProvider({
+  locale,
+  children,
+}: {
+  locale: Locale;
+  children: React.ReactNode;
+}) {
+  const pathname = usePublicPathname();
   useEffect(() => {
-    const query = new URLSearchParams(window.location.search).get("lang");
-    let saved: string | null = null;
+    // Preferences saved in localStorage before the cookie existed.
+    let legacy: string | null = null;
     try {
-      saved = localStorage.getItem(storageKey);
+      legacy = localStorage.getItem(LOCALE_COOKIE);
+      localStorage.removeItem(LOCALE_COOKIE);
     } catch {}
-    const initial: Locale =
-      query === "en" || query === "fa" ? query : saved === "en" ? "en" : "fa";
-    setLocaleState(initial);
-  }, []);
+    const explicit = new URLSearchParams(window.location.search).get(
+      LOCALE_QUERY,
+    );
+    if (
+      !savedLocale() &&
+      !isLocale(explicit) &&
+      isLocale(legacy) &&
+      legacy !== locale
+    ) {
+      switchLocale(legacy);
+      return;
+    }
+    saveLocale(locale);
+  }, [locale]);
   useEffect(() => {
-    document.documentElement.lang = locale;
-    document.documentElement.dir = locale === "fa" ? "rtl" : "ltr";
-    document.documentElement.dataset.locale = locale;
-    try {
-      localStorage.setItem(storageKey, locale);
-    } catch {}
     // Keep generateMetadata / layout titles for public detail URLs (SEO).
     const keepsServerTitle =
       /^\/products\/[^/]+/.test(pathname) ||
@@ -90,19 +127,15 @@ export function LocaleProvider({ children }: { children: React.ReactNode }) {
     document.title = section
       ? `${catalog[section]} | ${catalog.brandName}`
       : locale === "fa"
-        ? mockStorefront.brand.title.fa
-        : mockStorefront.brand.title.en;
+        ? brand.title.fa
+        : brand.title.en;
   }, [locale, pathname]);
   const value = useMemo<LocaleContextValue>(
     () => ({
       locale,
       t: (key, vars) => interpolate(messages[locale][key], vars),
       setLocale: (next) => {
-        setLocaleState(next);
-        const url = new URL(window.location.href);
-        if (next === "en") url.searchParams.set("lang", "en");
-        else url.searchParams.delete("lang");
-        window.history.replaceState({}, "", url);
+        if (next !== locale) switchLocale(next);
       },
       href: (path) => {
         if (locale !== "en") return path;

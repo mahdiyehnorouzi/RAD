@@ -647,7 +647,7 @@
  * and the stamp is pressed into the clay. Each runs once, when its block
  * arrives; start states exist only while `data-motion="live"`.
  */
-@media (prefers-reduced-motion: no-preference) {
+@media (--motion-ok) {
   .about-page {
     --about-arrive: cubic-bezier(0.16, 1, 0.3, 1);
     --about-pen: cubic-bezier(0.65, 0, 0.35, 1);
@@ -724,15 +724,22 @@
   .about-page[data-motion="live"] [data-reveal] .about-balloon path {
     stroke-dasharray: 1;
     stroke-dashoffset: 1;
-    transition: stroke-dashoffset 1.8s var(--about-pen) var(--about-delay, 0.35s);
+    transition: stroke-dashoffset 1.8s var(--about-pen)
+      var(--about-delay, 0.35s);
   }
 
-  .about-page[data-motion="live"] [data-reveal] :is(.about-thread, .about-roots, .about-balloon) path:nth-child(2),
+  .about-page[data-motion="live"]
+    [data-reveal]
+    :is(.about-thread, .about-roots, .about-balloon)
+    path:nth-child(2),
   .about-page[data-motion="live"] .about-thread[data-reveal] path:nth-child(2) {
     --about-delay: 0.6s;
   }
 
-  .about-page[data-motion="live"] [data-reveal] :is(.about-thread, .about-roots, .about-balloon) path:nth-child(3) {
+  .about-page[data-motion="live"]
+    [data-reveal]
+    :is(.about-thread, .about-roots, .about-balloon)
+    path:nth-child(3) {
     --about-delay: 0.85s;
   }
 
@@ -740,13 +747,23 @@
     transition-duration: 1.2s;
   }
 
-  .about-page[data-motion="live"] [data-reveal].is-in :is(.about-thread, .about-roots, .about-balloon) path,
+  .about-page[data-motion="live"]
+    [data-reveal].is-in
+    :is(.about-thread, .about-roots, .about-balloon)
+    path,
   .about-page[data-motion="live"] .about-thread[data-reveal].is-in path {
     stroke-dashoffset: 0;
   }
 
   /* Photographs drift up into their frames while the picture settles inside. */
-  .about-page[data-motion="live"] [data-reveal] :is(.about-why-frame, .about-passage-frame, .about-not-frame, .about-once-frame) {
+  .about-page[data-motion="live"]
+    [data-reveal]
+    :is(
+      .about-why-frame,
+      .about-passage-frame,
+      .about-not-frame,
+      .about-once-frame
+    ) {
     opacity: 0;
     translate: 0 1.75rem;
     transition:
@@ -754,7 +771,15 @@
       translate 1.6s var(--about-arrive);
   }
 
-  .about-page[data-motion="live"] [data-reveal] :is(.about-why-frame, .about-passage-frame, .about-not-frame, .about-once-frame) img,
+  .about-page[data-motion="live"]
+    [data-reveal]
+    :is(
+      .about-why-frame,
+      .about-passage-frame,
+      .about-not-frame,
+      .about-once-frame
+    )
+    img,
   .about-page[data-motion="live"] [data-reveal] .about-founder-film {
     scale: 1.12;
     transition: scale 2.4s var(--about-arrive);
@@ -767,12 +792,27 @@
       scale 2.4s var(--about-arrive);
   }
 
-  .about-page[data-motion="live"] [data-reveal].is-in :is(.about-why-frame, .about-passage-frame, .about-not-frame, .about-once-frame) {
+  .about-page[data-motion="live"]
+    [data-reveal].is-in
+    :is(
+      .about-why-frame,
+      .about-passage-frame,
+      .about-not-frame,
+      .about-once-frame
+    ) {
     opacity: 1;
     translate: 0 0;
   }
 
-  .about-page[data-motion="live"] [data-reveal].is-in :is(.about-why-frame, .about-passage-frame, .about-not-frame, .about-once-frame) img,
+  .about-page[data-motion="live"]
+    [data-reveal].is-in
+    :is(
+      .about-why-frame,
+      .about-passage-frame,
+      .about-not-frame,
+      .about-once-frame
+    )
+    img,
   .about-page[data-motion="live"] [data-reveal].is-in .about-founder-film {
     opacity: 1;
     scale: 1;
@@ -791,7 +831,8 @@
   /* Hand-lettered notes are written in reading order. */
   .about-page[data-motion="live"] [data-reveal] .about-hand {
     clip-path: inset(-40% -12% -40% 112%);
-    transition: clip-path 1.5s cubic-bezier(0.45, 0.05, 0.35, 1) var(--about-delay, 0.2s);
+    transition: clip-path 1.5s cubic-bezier(0.45, 0.05, 0.35, 1)
+      var(--about-delay, 0.2s);
   }
 
   .about-page[data-motion="live"] [data-reveal] .about-hand:dir(ltr) {

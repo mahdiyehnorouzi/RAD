@@ -1,0 +1,91 @@
+.sqSteps {
+  margin-top: 0.9rem;
+}
+
+.sqSteps ol {
+  display: flex;
+  align-items: center;
+  max-width: 21rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sqSteps li {
+  display: flex;
+  flex: 1 1 0;
+  align-items: center;
+}
+
+.sqSteps li:last-child {
+  flex: 0 0 auto;
+}
+
+.sqSteps li:not(:last-child)::after {
+  content: "";
+  flex: 1 1 auto;
+  height: 1.5px;
+  margin-inline: 0.3rem;
+  border-radius: 2px;
+  background: #cfc4b3;
+  transition: background-color 0.4s ease;
+}
+
+.sqSteps li.done::after {
+  background: var(--sq-green);
+}
+
+.sqSteps button {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: 1.5px solid #b9ad9b;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--sq-muted);
+  font: inherit;
+  font-size: 0.86rem;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    background-color 0.3s ease,
+    border-color 0.3s ease,
+    color 0.3s ease,
+    transform 0.3s var(--sq-ease);
+}
+
+.sqSteps button:disabled {
+  cursor: default;
+}
+
+.sqSteps button:not(:disabled):hover {
+  border-color: var(--sq-green);
+  color: var(--sq-ink);
+}
+
+.sqSteps .current button,
+.sqSteps .done button {
+  border-color: var(--sq-green);
+  background: var(--sq-green);
+  color: var(--sq-paper);
+}
+
+.sqSteps .current button {
+  font-weight: 800;
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--sq-green) 12%, transparent);
+}
+
+@media (--motion-ok) {
+  .sqSteps .current button {
+    animation: sq-press 0.45s var(--sq-ease);
+  }
+}
+
+@keyframes sq-press {
+  from {
+    transform: scale(0.8);
+  }
+}

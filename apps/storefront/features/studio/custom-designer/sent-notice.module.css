@@ -1,0 +1,103 @@
+/* Sent: the arch photograph, a check, and the ways on */
+
+.sentNotice {
+  display: grid;
+  justify-items: center;
+  gap: 0.9rem;
+  margin-bottom: 1.25rem;
+  overflow: hidden;
+  border: 1px solid var(--cs-line);
+  border-radius: 14px;
+  background: var(--cs-paper);
+  text-align: center;
+}
+
+.sentNoticePhoto {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  margin: 0;
+  overflow: hidden;
+}
+
+.sentNoticePhoto img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 30% 70%;
+}
+
+html[dir="ltr"] .sentNoticePhoto img {
+  transform: scaleX(-1);
+}
+
+.sentNoticeMark {
+  display: grid;
+  place-items: center;
+  margin-top: -3rem;
+  padding: 0.3rem;
+  border-radius: 50%;
+  background: var(--cs-paper);
+  color: var(--cs-green);
+}
+
+.sentNotice h3 {
+  margin: 0;
+  padding-inline: 1.25rem;
+  font-size: clamp(1.45rem, 5vw, 1.95rem);
+  font-weight: 700;
+  line-height: 1.5;
+  text-wrap: balance;
+}
+
+.sentNotice h3:focus {
+  outline: 0;
+}
+
+.sentNotice p {
+  max-width: 30rem;
+  margin: 0;
+  padding-inline: 1.25rem;
+  color: var(--cs-muted);
+  line-height: 1.95;
+}
+
+.sentNoticeActions {
+  display: grid;
+  gap: 0.6rem;
+  width: min(100% - 2.5rem, 22rem);
+  margin: 0.6rem 0 1.5rem;
+}
+
+.sentNoticeHome {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 2.75rem;
+  color: var(--cs-ink);
+  font-size: 0.92rem;
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--cs-ink) 30%, transparent);
+  text-underline-offset: 0.4em;
+}
+
+.sentNoticeHome svg {
+  color: var(--cs-green);
+}
+
+@media (--motion-ok) {
+  .sentNoticeMark {
+    animation: cd-mark-in 0.7s 0.15s var(--cs-ease) both;
+  }
+}
+
+@keyframes cd-mark-in {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+}

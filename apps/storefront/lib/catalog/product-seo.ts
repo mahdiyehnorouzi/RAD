@@ -22,13 +22,8 @@ export type SchemaAvailability =
  *   but is `noindex, follow` and leaves the sitemap.
  * - `reserved` is a short cart hold, so it stays indexed like `available`.
  */
-export type ProductSeoState =
-  | "available"
-  | "reserved"
-  | "upcoming"
-  | "sold"
-  | "archived"
-  | "unlisted";
+type ProductSeoState =
+  "available" | "reserved" | "upcoming" | "sold" | "archived" | "unlisted";
 
 type ProductSeoStrategy = {
   availability: SchemaAvailability;
@@ -99,15 +94,17 @@ export function productSeoState(
 }
 
 /** `RĀD / 027`; Latin digits so titles match what people type. */
-export function radLabel(radNumber?: number) {
+function radLabel(radNumber?: number) {
   return radNumber ? `RĀD / ${formatRadCode(radNumber)}` : null;
 }
 
 export function productSeoTitle(product: Product, state: ProductSeoState) {
   const code = radLabel(product.radNumber);
   const note = PRODUCT_SEO[state].titleNote;
-  return [code, product.name].filter(Boolean).join(" — ") +
-    (note ? ` (${note})` : "");
+  return (
+    [code, product.name].filter(Boolean).join(" — ") +
+    (note ? ` (${note})` : "")
+  );
 }
 
 function clip(text: string, max: number) {

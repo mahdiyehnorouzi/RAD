@@ -124,7 +124,7 @@
   box-shadow: 0 0 0 3px color-mix(in srgb, #9c3f2c 45%, transparent);
 }
 
-@media (hover: hover) and (pointer: fine) {
+@media (--fine-pointer) {
   .product-carousel-arrow:hover {
     background: var(--moss);
     color: #f5f1e8;
@@ -137,7 +137,7 @@
   }
 }
 
-@media (max-width: 600px) {
+@media (--phone) {
   .product-carousel {
     --carousel-per-view: 1.35;
   }

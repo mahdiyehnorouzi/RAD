@@ -153,7 +153,9 @@
   pointer-events: none;
   transform: rotate(-6deg);
   transform-origin: center;
-  filter: drop-shadow(0 0 10px color-mix(in srgb, var(--paper) 75%, transparent));
+  filter: drop-shadow(
+    0 0 10px color-mix(in srgb, var(--paper) 75%, transparent)
+  );
 }
 
 .rad-card-mark b {
@@ -539,7 +541,7 @@
   animation-name: rad-qr-tick-draw;
 }
 
-@media (hover: hover) and (pointer: fine) {
+@media (--fine-pointer) {
   .rad-card-qr:hover .rad-card-qr-corners {
     animation: rad-qr-corners 1.2s var(--rc-ease) forwards;
   }
@@ -792,7 +794,10 @@
   margin-bottom: -1.25rem;
 }
 
-.rad-card--featured .rad-card-art .product-artwork-cutout.has-photo > .product-photo {
+.rad-card--featured
+  .rad-card-art
+  .product-artwork-cutout.has-photo
+  > .product-photo {
   object-position: center 66%;
 }
 
@@ -970,7 +975,7 @@
   border-radius: 4px;
 }
 
-@media (hover: hover) and (pointer: fine) {
+@media (--fine-pointer) {
   .rad-card:hover {
     box-shadow:
       0 1px 2px color-mix(in srgb, #5a3c22 8%, transparent),
@@ -1023,7 +1028,7 @@
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
+@media (--reduced-motion) {
   .rad-card,
   .rad-card *,
   .rad-card *::before,

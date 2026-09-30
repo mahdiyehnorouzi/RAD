@@ -38,9 +38,6 @@
       "@rad/ui": [
         "../../packages/ui/src/index.ts"
       ],
-      "@rad/state": [
-        "../../packages/state/src/index.ts"
-      ],
       "@rad/i18n/*": [
         "../../packages/i18n/src/*"
       ]

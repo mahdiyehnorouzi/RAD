@@ -1,4 +1,4 @@
-const trace = (name: string) => `/difference/trace/${name}.jpg`;
+const trace = (name: string) => `/difference/trace/${name}.webp`;
 
 export const differenceMedia = {
   hero: { src: trace("hero-bowl"), width: 1024, height: 768 },

@@ -568,7 +568,7 @@ div.checkout-alert p {
 
 /* ——— Small screens ——— */
 
-@media (max-width: 900px) {
+@media (--tablet) {
   .checkout-flow-body,
   .checkout-flow-body.is-result {
     grid-template-columns: minmax(0, 1fr);
@@ -586,7 +586,7 @@ div.checkout-alert p {
   }
 }
 
-@media (max-width: 600px) {
+@media (--phone) {
   .checkout-flow.section {
     padding-inline: 1.1rem;
   }

@@ -38,7 +38,7 @@ components:
 
 ## Colors
 
-Warm paper and plaster tones carry the gallery register. The new RAD mark defines the system: deep kiln green is the primary signature, while oxide red is secondary and rare. Runtime ownership is `app/globals.css` variables with exact mirrored values.
+Warm paper and plaster tones carry the gallery register. The new RAD mark defines the system: deep kiln green is the primary signature, while oxide red is secondary and rare. Runtime ownership is `apps/storefront/styles/tokens.css`: every color, spacing and type variable plus the named breakpoints (`@media (--phone)` and friends) live there, and Tailwind reads the same variables.
 
 ## Typography
 

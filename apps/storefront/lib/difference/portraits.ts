@@ -38,7 +38,3 @@ export function portraitsFrom(artworks: Artwork[]): DifferencePortrait[] {
     .map(portraitFromArtwork)
     .filter((item): item is DifferencePortrait => Boolean(item));
 }
-
-export function portraitById(portraits: DifferencePortrait[], id: string) {
-  return portraits.find((item) => item.id === id);
-}

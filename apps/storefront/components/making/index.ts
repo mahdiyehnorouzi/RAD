@@ -6,13 +6,10 @@ export {
   ProgressPhotographs,
   QuoteCard,
   SituationBanner,
-  StageMeter,
 } from "./record";
-export { CommissionCard } from "./customer-list/commission-card";
 export { CustomerMakingDetail } from "./customer-detail";
 export { CustomerMakingList } from "./customer-list";
 export { MakingProcess } from "./making-process";
 export { MessageComposer } from "./customer-detail/customer-sidebar/message-composer";
 export { PaymentHistory } from "./customer-detail/customer-sidebar/payment-history";
-export { RecordOfMaking } from "./customer-detail/record-of-making";
 export { StageMessages } from "./customer-detail/customer-sidebar/stage-messages";

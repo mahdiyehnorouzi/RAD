@@ -28,6 +28,7 @@ import {
   type MakingActions,
 } from "@/hooks/making-actions";
 import { useCommerce } from "@/components/commerce";
+import { logRecovered } from "@/lib/log";
 
 const storageKey = "rad-making-commissions-v2";
 
@@ -93,8 +94,8 @@ export function MakingProvider({ children }: { children: ReactNode }) {
         );
         return true;
       }
-    } catch {
-      /* keep local */
+    } catch (error) {
+      logRecovered("commissions", error);
     }
     return false;
   }, [maker]);

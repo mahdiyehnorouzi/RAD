@@ -1,11 +1,11 @@
 "use client";
 
 import { asCopy } from "@/lib/making";
-import type {MakingCommission, PhotoKind} from "@/components/making/type";
+import type { MakingCommission, PhotoKind } from "@/components/making/type";
 import { useMaking } from "@/hooks/use-making-workspace";
 import { useLocale } from "@/components/i18n";
 
-export function MakingUpdateForm({ commission }: { commission: MakingCommission }) {
+function MakingUpdateForm({ commission }: { commission: MakingCommission }) {
   const { artistPublishUpdate } = useMaking();
   const { locale } = useLocale();
   return (
@@ -28,13 +28,21 @@ export function MakingUpdateForm({ commission }: { commission: MakingCommission 
           ? "هر یادداشت نیاز به تأیید مشتری ندارد."
           : "Not every note needs customer approval."}
       </p>
-      <label htmlFor="photo">{locale === "fa" ? "گونه عکس" : "Photograph kind"}</label>
+      <label htmlFor="photo">
+        {locale === "fa" ? "گونه عکس" : "Photograph kind"}
+      </label>
       <select id="photo" name="photo" defaultValue="forming">
-        <option value="forming">{locale === "fa" ? "فرم‌دهی" : "Forming"}</option>
-        <option value="cleaned">{locale === "fa" ? "فرم پاک‌شده" : "Cleaned form"}</option>
+        <option value="forming">
+          {locale === "fa" ? "فرم‌دهی" : "Forming"}
+        </option>
+        <option value="cleaned">
+          {locale === "fa" ? "فرم پاک‌شده" : "Cleaned form"}
+        </option>
         <option value="glaze">{locale === "fa" ? "لعاب" : "Glaze"}</option>
       </select>
-      <label htmlFor="note">{locale === "fa" ? "یادداشت کوتاه" : "Short note"}</label>
+      <label htmlFor="note">
+        {locale === "fa" ? "یادداشت کوتاه" : "Short note"}
+      </label>
       <textarea id="note" name="note" className="resize-none" required />
       <button className="button" type="submit">
         {locale === "fa" ? "انتشار برای مشتری" : "Publish to the customer"}
@@ -43,7 +51,7 @@ export function MakingUpdateForm({ commission }: { commission: MakingCommission 
   );
 }
 
-export function OpenPreKilnForm({ commission }: { commission: MakingCommission }) {
+function OpenPreKilnForm({ commission }: { commission: MakingCommission }) {
   const { artistOpenPreKiln } = useMaking();
   const { locale } = useLocale();
   return (
@@ -63,16 +71,30 @@ export function OpenPreKilnForm({ commission }: { commission: MakingCommission }
         });
       }}
     >
-      <h2>{locale === "fa" ? "باز کردن ایستگاه پیش از کوره" : "Open pre-kiln checkpoint"}</h2>
-      <label htmlFor="dimensions">{locale === "fa" ? "ابعاد فرم" : "Form dimensions"}</label>
+      <h2>
+        {locale === "fa"
+          ? "باز کردن ایستگاه پیش از کوره"
+          : "Open pre-kiln checkpoint"}
+      </h2>
+      <label htmlFor="dimensions">
+        {locale === "fa" ? "ابعاد فرم" : "Form dimensions"}
+      </label>
       <input id="dimensions" name="dimensions" required />
-      <label htmlFor="glazeCode">{locale === "fa" ? "کد لعاب" : "Glaze code"}</label>
+      <label htmlFor="glazeCode">
+        {locale === "fa" ? "کد لعاب" : "Glaze code"}
+      </label>
       <input id="glazeCode" name="glazeCode" defaultValue="G-17" />
-      <label htmlFor="glazeName">{locale === "fa" ? "نام لعاب" : "Glaze name"}</label>
+      <label htmlFor="glazeName">
+        {locale === "fa" ? "نام لعاب" : "Glaze name"}
+      </label>
       <input id="glazeName" name="glazeName" />
-      <label htmlFor="colorRange">{locale === "fa" ? "بازه رنگ مورد انتظار" : "Expected colour range"}</label>
+      <label htmlFor="colorRange">
+        {locale === "fa" ? "بازه رنگ مورد انتظار" : "Expected colour range"}
+      </label>
       <textarea id="colorRange" name="colorRange" className="resize-none" />
-      <label htmlFor="tile">{locale === "fa" ? "یادداشت کاشی آزمایشی" : "Test-tile note"}</label>
+      <label htmlFor="tile">
+        {locale === "fa" ? "یادداشت کاشی آزمایشی" : "Test-tile note"}
+      </label>
       <textarea id="tile" name="tile" className="resize-none" />
       <button className="button" type="submit">
         {locale === "fa" ? "درخواست تأیید مشتری" : "Request customer approval"}

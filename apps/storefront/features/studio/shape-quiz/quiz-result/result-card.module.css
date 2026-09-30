@@ -1,0 +1,147 @@
+.sqCard a {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 44%);
+  min-height: 10.5rem;
+  overflow: hidden;
+  border: 1px solid var(--sq-line);
+  border-radius: 16px;
+  background: var(--sq-paper);
+  color: inherit;
+  text-decoration: none;
+  box-shadow: var(--sq-shadow);
+  transition:
+    border-color 0.25s ease,
+    box-shadow 0.3s ease,
+    transform 0.35s var(--sq-ease);
+}
+
+.sqCard a:hover {
+  border-color: var(--sq-line-strong);
+  box-shadow:
+    0 2px 3px rgb(74 54 34 / 0.06),
+    0 20px 34px -22px rgb(74 54 34 / 0.55);
+  transform: translateY(-2px);
+}
+
+.sqCardCopy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 1rem 1.1rem 0.95rem;
+}
+
+.sqCardCode {
+  color: var(--sq-oxide);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.sqCardName {
+  font-size: 1.06rem;
+  font-weight: 800;
+  line-height: 1.6;
+}
+
+.sqCardLine {
+  display: -webkit-box;
+  overflow: hidden;
+  color: var(--sq-muted);
+  font-size: 0.85rem;
+  line-height: 1.9;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+html[dir="ltr"] .sqCardName {
+  line-height: 1.3;
+}
+
+html[dir="ltr"] .sqCardLine {
+  line-height: 1.5;
+}
+
+.sqCardGo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: auto;
+  padding-top: 0.7rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.sqCardArrow {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 2.35rem;
+  height: 2.35rem;
+  border-radius: 50%;
+  background: var(--sq-green);
+  color: var(--sq-paper);
+  transition: transform 0.35s var(--sq-ease);
+}
+
+.sqCard a:hover .sqCardArrow {
+  transform: translateX(-3px);
+}
+
+html[dir="ltr"] .sqCard a:hover .sqCardArrow {
+  transform: translateX(3px);
+}
+
+.sqCardPhoto {
+  position: relative;
+  overflow: hidden;
+  background: var(--sq-photo);
+}
+
+.sqCardPhoto > img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.7s var(--sq-ease);
+}
+
+.sqCard a:hover .sqCardPhoto > img {
+  transform: scale(1.04);
+}
+
+.sqCardPhoto :global(.sold-media-badge) {
+  top: 0.6rem;
+  inset-inline-end: 0.6rem;
+}
+
+.sqCardDrawn {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@media (--motion-ok) {
+  .sqCard {
+    animation: sq-rise 0.6s var(--sq-ease) both;
+  }
+
+  .sqCard {
+    animation-delay: calc(0.12s + var(--i, 0) * 0.09s);
+  }
+}
+
+@media (--wide) {
+  .sqCard a {
+    min-height: 12rem;
+  }
+}
+
+@keyframes sq-rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+}

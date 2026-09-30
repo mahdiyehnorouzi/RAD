@@ -1,0 +1,186 @@
+/* Custom studio — built from the approved phone mockup, spread wide from 960px. */
+.customOrder {
+  --cs-bg: #f4efe7;
+  --cs-card: #ebe3d6;
+  --cs-card-hover: #e3d8c7;
+  --cs-paper: #fbf8f2;
+  --cs-ink: #1f2a25;
+  --cs-muted: #5d5850;
+  --cs-green: #263d34;
+  --cs-green-deep: #1b2c25;
+  --cs-line: #ddd3c3;
+  --cs-pick: #dccdb6;
+  --cs-oxide: #8a4938;
+  --cs-hand: #7a5238;
+  --cs-shadow:
+    0 1px 2px rgb(74 54 34 / 0.06), 0 12px 26px -16px rgb(74 54 34 / 0.34);
+  --cs-print-shadow:
+    0 2px 3px rgb(74 54 34 / 0.08), 0 18px 34px -20px rgb(74 54 34 / 0.5);
+  --cs-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --icon-knock: var(--cs-paper);
+  overflow: clip;
+  background: var(--cs-bg);
+  color: var(--cs-ink);
+}
+.customOrder ::selection {
+  background: var(--cs-green);
+  color: var(--cs-paper);
+}
+.customOrder :where(h1, h2, h3, p, figure) {
+  margin: 0;
+}
+.customOrder :where(h1, h2) {
+  color: var(--cs-ink);
+  font-weight: 700;
+  letter-spacing: 0;
+  text-wrap: balance;
+}
+.customOrder :where(input, textarea) {
+  caret-color: var(--cs-oxide);
+}
+.customOrder :where(a, button, summary, label):focus-visible,
+.customOrder :where(input, textarea):focus-visible {
+  outline: 2px solid var(--cs-oxide) !important;
+  outline-offset: 3px;
+} /* Buttons */
+.csRound {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border: 1px solid var(--cs-line);
+  border-radius: 50%;
+  background: var(--cs-paper);
+  color: var(--cs-ink);
+  transition: transform 0.3s var(--cs-ease);
+} /* Shared: prints, threads, tears */
+.csPrint {
+  position: relative;
+  display: block;
+  padding: 0.5rem;
+  border-radius: 4px;
+  background: var(--cs-paper);
+  box-shadow: var(--cs-print-shadow);
+}
+.csPrint img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 2px;
+}
+.csThread {
+  overflow: visible;
+  fill: none;
+  stroke: var(--cs-oxide);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+} /* Sections */
+.csSection {
+  position: relative;
+  max-width: 72rem;
+  margin-inline: auto;
+  padding: 2.75rem 1.25rem;
+}
+.csHead {
+  display: grid;
+  gap: 0.4rem;
+  margin-bottom: 1.4rem;
+}
+.csHead h2 {
+  font-size: clamp(1.55rem, 6.6vw, 2.3rem);
+  line-height: 1.5;
+}
+html[dir="ltr"] .csHead h2 {
+  line-height: 1.2;
+  letter-spacing: -0.015em;
+}
+.csHead p {
+  max-width: 34rem;
+  color: var(--cs-muted);
+  font-size: 0.97rem;
+  line-height: 1.95;
+}
+html[dir="ltr"] .csHead p {
+  line-height: 1.6;
+} /* Photographic bands */
+.csBand {
+  position: relative;
+  background-color: #e6dccd;
+  background-position: center;
+  background-size: cover;
+}
+.csBand.leaf {
+  background-image:
+    linear-gradient(rgb(244 239 231 / 0.25), rgb(244 239 231 / 0.25)),
+    url("/studio/leaf.webp");
+}
+.csBand.plaster {
+  background-image:
+    linear-gradient(rgb(244 239 231 / 0.45), rgb(244 239 231 / 0.45)),
+    url("/studio/plaster.webp");
+}
+.csTearTop {
+  top: -1px;
+  height: 1.5rem;
+  transform: scaleY(-1);
+}
+.csTearBottom {
+  bottom: -1px;
+  height: 1.5rem;
+} /* Order flow */
+.csFlow {
+  max-width: 48rem;
+  padding: 3.25rem 0.6rem 3.5rem;
+  scroll-margin-top: var(--header-height);
+}
+.csFlowSheet {
+  padding: 1.6rem 1rem 0.5rem;
+  border: 1px solid rgb(255 255 255 / 0.7);
+  border-radius: 14px;
+  background: var(--cs-paper);
+  box-shadow:
+    0 2px 4px rgb(74 54 34 / 0.08),
+    0 28px 50px -30px rgb(74 54 34 / 0.55);
+}
+.csFlowSheet > .csHead {
+  padding-bottom: 1.2rem;
+  border-bottom: 1px solid var(--cs-line);
+}
+@media (--motion-ok) {
+  .csThread path {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+  }
+}
+
+@media (min-width: 700px) {
+  .csSection {
+    padding: clamp(3.5rem, 6vw, 5.5rem) var(--page);
+  }
+
+  .csFlow {
+    padding-inline: var(--page);
+  }
+
+  .csFlowSheet {
+    padding: 2.25rem clamp(1.5rem, 5vw, 3rem) 0.75rem;
+  }
+
+  .csTearTop,
+  .csTearBottom {
+    height: 2rem;
+  }
+}
+
+@media (--wide) {
+  .csFlow {
+    max-width: 60rem;
+    padding-block: clamp(4.5rem, 7vw, 6.5rem);
+  }
+
+  .csFlowSheet {
+    padding: 2.75rem 3.5rem 1rem;
+  }
+}

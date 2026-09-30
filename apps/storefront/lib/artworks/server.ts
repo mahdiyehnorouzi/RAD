@@ -1,5 +1,6 @@
 import "server-only";
 
 export { fallbackArtworks } from "./fallback";
-export { loadArtworks, type ArtworksLoad } from "./load";
-export { ArtworkUnreachableError, resolveArtwork } from "./resolve";
+export { loadArtworks, type ArtworksOrigin } from "./load";
+export { resolveArtwork } from "./resolve";
+export { catalogSource } from "./source";

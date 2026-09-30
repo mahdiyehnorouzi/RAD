@@ -5,13 +5,7 @@ import { useLocale } from "@/components/i18n";
 import type { WorkMark } from "./type";
 import "./work-marks.css";
 
-export function WorkMarks({
-  src,
-  marks,
-}: {
-  src: string;
-  marks: WorkMark[];
-}) {
+export function WorkMarks({ src, marks }: { src: string; marks: WorkMark[] }) {
   const { locale, t } = useLocale();
   const [open, setOpen] = useState<number | null>(0);
 
@@ -21,7 +15,7 @@ export function WorkMarks({
       <p>{t("marksBody")}</p>
       <div className="work-marks-stage">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={src} alt="" />
+        <img src={src} alt="" loading="lazy" decoding="async" />
         {marks.map((mark, index) => (
           <button
             key={`${mark.x}-${mark.y}`}

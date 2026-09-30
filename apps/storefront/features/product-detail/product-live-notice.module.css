@@ -1,0 +1,6 @@
+.liveNotices {
+  display: grid;
+  gap: 0.6rem;
+  margin-top: 1.2rem;
+  font-size: 0.86rem;
+}

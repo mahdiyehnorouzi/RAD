@@ -45,7 +45,7 @@ html[dir="ltr"] .link-pending {
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
+@media (--reduced-motion) {
   .link-pending.is-pending::after {
     animation: none;
     transform: scaleX(1);

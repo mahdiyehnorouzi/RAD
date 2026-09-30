@@ -1,4 +1,4 @@
-import type {Review} from "@rad/types";
+import type { Review } from "@rad/types";
 import { api } from "./client";
 
 export async function fetchProductReviews(slug: string) {
@@ -7,14 +7,4 @@ export async function fetchProductReviews(slug: string) {
 
 export async function fetchReviewFeed() {
   return api<Review[]>("/reviews");
-}
-
-export async function createProductReview(
-  slug: string,
-  input: { rating: number; comment: string; image?: string },
-) {
-  return api<Review>(`/products/${slug}/reviews`, {
-    method: "POST",
-    body: JSON.stringify(input),
-  });
 }
