@@ -1,6 +1,12 @@
 "use client";
 
-import { useId, useRef, useState, type ChangeEvent, type ReactNode } from "react";
+import {
+  useId,
+  useRef,
+  useState,
+  type ChangeEvent,
+  type ReactNode,
+} from "react";
 import type { PaymentReceiptInput } from "@/types/api";
 import { ImageUp } from "lucide-react";
 import { useLocale } from "@/components/i18n";
@@ -92,7 +98,11 @@ export function ReceiptForm({
           aria-invalid={receiptError ? true : undefined}
           aria-describedby={receiptError ? `${id}-file-error` : undefined}
         />
-        <label className="order-receipt-drop" htmlFor={`${id}-file`} aria-hidden="true">
+        <label
+          className="order-receipt-drop"
+          htmlFor={`${id}-file`}
+          aria-hidden="true"
+        >
           <ImageUp aria-hidden="true" />
           <span>{fileName || t("receiptChoose")}</span>
         </label>

@@ -1,0 +1,118 @@
+/* IRANYekanX FaNum — local webfonts (Persian numerals) */
+@font-face {
+  font-family: IRANYekanX;
+  font-style: normal;
+  font-weight: 100;
+  font-display: swap;
+  src: url("/fonts/IRANYekanX/IRANYekanXFaNum-Thin.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: IRANYekanX;
+  font-style: normal;
+  font-weight: 200;
+  font-display: swap;
+  src: url("/fonts/IRANYekanX/IRANYekanXFaNum-UltraLight.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: IRANYekanX;
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+  src: url("/fonts/IRANYekanX/IRANYekanXFaNum-Light.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: IRANYekanX;
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/IRANYekanX/IRANYekanXFaNum-Regular.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: IRANYekanX;
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("/fonts/IRANYekanX/IRANYekanXFaNum-Medium.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: IRANYekanX;
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("/fonts/IRANYekanX/IRANYekanXFaNum-DemiBold.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: IRANYekanX;
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/fonts/IRANYekanX/IRANYekanXFaNum-Bold.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: IRANYekanX;
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url("/fonts/IRANYekanX/IRANYekanXFaNum-ExtraBold.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: IRANYekanX;
+  font-style: normal;
+  font-weight: 900;
+  font-display: swap;
+  src: url("/fonts/IRANYekanX/IRANYekanXFaNum-Black.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: IRANYekanX;
+  font-style: normal;
+  font-weight: 950;
+  font-display: swap;
+  src: url("/fonts/IRANYekanX/IRANYekanXFaNum-ExtraBlack.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: IRANYekanX;
+  font-style: normal;
+  font-weight: 1000;
+  font-display: swap;
+  src: url("/fonts/IRANYekanX/IRANYekanXFaNum-Heavy.woff2") format("woff2");
+}
+
+/* Aref Ruqaa (OFL) — everyday Ruqʿa handwriting, for hand-lettered notes and tags only */
+@font-face {
+  font-family: "Aref Ruqaa";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/ArefRuqaa/aref-ruqaa-arabic-400.woff2") format("woff2");
+  unicode-range:
+    U+0600-06FF, U+0750-077F, U+200C-200E, U+FB50-FDFF, U+FE70-FEFC;
+}
+
+@font-face {
+  font-family: "Aref Ruqaa";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/ArefRuqaa/aref-ruqaa-latin-400.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+2000-206F;
+}
+
+/* Caveat (OFL) — a Latin pen hand, for notes written on the back of cards */
+@font-face {
+  font-family: "Caveat";
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("/fonts/Caveat/caveat-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+2000-206F;
+}

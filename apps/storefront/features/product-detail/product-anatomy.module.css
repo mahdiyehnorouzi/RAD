@@ -1,0 +1,184 @@
+/* A small editorial diagram on the work's colour field. */
+.anatomyBody {
+  container: pdp-anatomy / inline-size;
+}
+
+.anatomyPlate {
+  display: grid;
+  place-items: center;
+  padding: clamp(0.5rem, 2cqi, 1.25rem) 0;
+  border-radius: 4px;
+  background: var(--canvas);
+}
+
+.anatomyFigure {
+  position: relative;
+  width: min(23rem, 46cqi);
+  margin: 0;
+}
+
+.anatomyFigure img {
+  display: block;
+  width: 100%;
+  height: auto;
+  filter: drop-shadow(
+    0 22px 20px color-mix(in srgb, var(--ink) 18%, transparent)
+  );
+}
+
+.anatomyMark {
+  display: contents;
+}
+
+.anatomyDot {
+  position: absolute;
+  top: var(--mark-y);
+  left: var(--mark-x);
+  z-index: 1;
+  display: grid;
+  width: 1.4rem;
+  height: 1.4rem;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 0.68rem;
+  font-weight: var(--font-weight-medium);
+  line-height: 1;
+  box-shadow:
+    0 0 0 1px var(--ink),
+    0 3px 8px color-mix(in srgb, var(--ink) 22%, transparent);
+  transform: translate(-50%, -50%);
+}
+
+.anatomyLeader {
+  position: absolute;
+  top: var(--mark-y);
+  height: 1px;
+  background: color-mix(in srgb, var(--ink) 70%, transparent);
+}
+
+.anatomyLeader::before {
+  position: absolute;
+  top: -2px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--ink);
+  content: "";
+}
+
+.left > .anatomyLeader {
+  left: -2.5rem;
+  width: calc(var(--mark-x) + 2.5rem);
+}
+
+.left > .anatomyLeader::before {
+  left: -2px;
+}
+
+.right > .anatomyLeader {
+  right: -2.5rem;
+  left: var(--mark-x);
+}
+
+.right > .anatomyLeader::before {
+  right: -2px;
+}
+
+.anatomyLabel {
+  position: absolute;
+  top: var(--mark-y);
+  display: grid;
+  gap: 0.15rem;
+  width: min(11rem, calc((100cqi - 100%) / 2 - 3.25rem));
+  transform: translateY(-50%);
+}
+
+.left > .anatomyLabel {
+  right: calc(100% + 3rem);
+  text-align: right;
+}
+
+.right > .anatomyLabel {
+  left: calc(100% + 3rem);
+  text-align: left;
+}
+
+.anatomyLabel b,
+.anatomyList b {
+  font-size: 0.9rem;
+  font-weight: var(--font-weight-medium);
+  line-height: 1.6;
+}
+
+.anatomyLabel span,
+.anatomyList span {
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.75;
+}
+
+.anatomyList {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@container pdp-anatomy (max-width: 38rem) {
+  .anatomyLeader,
+  .anatomyLabel {
+    display: none;
+  }
+  .anatomyPlate {
+    padding: 0;
+  }
+  .anatomyFigure {
+    width: min(20rem, 80cqi);
+  }
+  .anatomyList {
+    position: static;
+    display: grid;
+    width: auto;
+    height: auto;
+    grid-auto-columns: minmax(11.5rem, 68%);
+    grid-auto-flow: column;
+    gap: 1.25rem;
+    margin-top: 1rem;
+    overflow-x: auto;
+    clip-path: none;
+    list-style: none;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+    white-space: normal;
+  }
+  .anatomyList::-webkit-scrollbar {
+    display: none;
+  }
+  .anatomyList li {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-content: start;
+    column-gap: 0.65rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--line);
+    scroll-snap-align: start;
+  }
+  .anatomyList i {
+    display: grid;
+    grid-row: span 2;
+    width: 1.4rem;
+    height: 1.4rem;
+    place-items: center;
+    border-radius: 50%;
+    box-shadow: 0 0 0 1px var(--ink);
+    font-size: 0.68rem;
+    font-style: normal;
+    font-weight: var(--font-weight-medium);
+  }
+}

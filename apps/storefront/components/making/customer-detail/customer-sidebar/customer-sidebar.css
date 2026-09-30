@@ -146,7 +146,7 @@
   width: 100%;
 }
 
-@media (max-width: 600px) {
+@media (--phone) {
   .making-compose {
     grid-template-columns: minmax(0, 1fr) !important;
   }

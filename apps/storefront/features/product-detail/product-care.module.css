@@ -1,0 +1,66 @@
+/* Care: one titled step per sentence of the work's own care text. */
+.care ul {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.care li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 3.5rem;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.85rem 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.care li:last-child {
+  border-bottom: 0;
+}
+
+.care li > span {
+  display: grid;
+  gap: 0.15rem;
+  color: var(--muted);
+  font-size: 0.86rem;
+  line-height: 1.85;
+}
+
+.care li strong {
+  color: var(--ink);
+  font-size: 0.95rem;
+  font-weight: var(--font-weight-medium);
+}
+
+.care li > svg {
+  justify-self: center;
+  width: 1.9rem;
+  height: 1.9rem;
+  padding-inline-start: 1rem;
+  box-sizing: content-box;
+  border-inline-start: 1px solid var(--line);
+  color: var(--pdp-oxide);
+  stroke-width: 1.2;
+}
+
+.careNote {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin: 0.75rem 0 0;
+  padding: 1rem 1.15rem;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--sand) 30%, var(--paper));
+  color: color-mix(in srgb, var(--ink) 82%, var(--muted));
+  font-size: 0.86rem;
+  line-height: 1.9;
+}
+
+.careNote svg {
+  width: 1.8rem;
+  height: 1.8rem;
+  flex: none;
+  color: var(--pdp-oxide);
+  stroke-width: 1.2;
+}

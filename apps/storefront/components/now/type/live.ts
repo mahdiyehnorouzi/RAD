@@ -1,7 +1,7 @@
 import type { ProductStatus } from "@rad/types";
 import type { LocaleCopy } from "@/types/locale";
 
-export const LIVE_MILESTONES = [
+const LIVE_MILESTONES = [
   "idea",
   "form",
   "drying",

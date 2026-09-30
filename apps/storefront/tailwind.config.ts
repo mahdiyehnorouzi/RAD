@@ -1,10 +1,10 @@
-import type {Config} from "tailwindcss";
-import { colors, rounded, spacing } from "./lib/theme";
+import type { Config } from "tailwindcss";
 
 export default {
   content: [
     "./app/**/*.{ts,tsx}",
     "./components/**/*.{ts,tsx}",
+    "./features/**/*.{ts,tsx}",
     "./hooks/**/*.{ts,tsx}",
     "../../packages/ui/src/**/*.{ts,tsx}",
   ],
@@ -12,33 +12,17 @@ export default {
     extend: {
       colors: {
         rad: {
-          primary: colors.primary,
-          canvas: colors.canvas,
-          paper: colors.paper,
-          ink: colors.ink,
-          clay: colors.clay,
-          sand: colors.sand,
-          moss: colors.moss,
-          muted: colors.muted,
-          line: colors.line,
-          film: colors.film,
-          mineral: colors.moss,
-          oxide: colors.clay,
+          canvas: "var(--canvas)",
+          paper: "var(--paper)",
+          ink: "var(--ink)",
+          sand: "var(--sand)",
+          moss: "var(--moss)",
+          mineral: "var(--moss)",
+          muted: "var(--muted)",
+          line: "var(--line)",
         },
       },
-      borderRadius: {
-        control: rounded.control,
-        card: rounded.card,
-        artwork: rounded.artwork,
-      },
-      spacing: {
-        page: spacing.page,
-        section: spacing.section,
-      },
-      maxWidth: {
-        site: "1600px",
-      },
-      fontFamily: { sans: ["IRANYekanX", "Vazirmatn", "Tahoma", "sans-serif"] },
+      fontFamily: { sans: ["var(--font-sans)"] },
       fontSize: {
         label: [
           "var(--text-label)",

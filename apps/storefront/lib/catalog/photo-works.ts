@@ -1,22 +1,15 @@
 const TRANSPARENT_PREFIX = "/catalog/photos/transparent/";
 
-export function catalogPhotoSrc(slug: string, imageIndex = 0) {
-  const suffix = imageIndex === 0 ? "" : `-${imageIndex + 1}`;
-  return `${TRANSPARENT_PREFIX}${slug}${suffix}.png`;
+function imageSuffix(imageIndex: number) {
+  return imageIndex === 0 ? "" : `-${imageIndex + 1}`;
 }
 
-const PNG_LIFESTYLE_PHOTOS = new Set([
-  "blue-window",
-  "red-garden-print",
-  "silver-orbit",
-  "walnut-tide",
-  "woven-garden",
-]);
+export function catalogPhotoSrc(slug: string, imageIndex = 0) {
+  return `${TRANSPARENT_PREFIX}${slug}${imageSuffix(imageIndex)}.webp`;
+}
 
 export function catalogLifestylePhotoSrc(slug: string, imageIndex = 0) {
-  const suffix = imageIndex === 0 ? "" : `-${imageIndex + 1}`;
-  const extension = PNG_LIFESTYLE_PHOTOS.has(slug) ? "png" : "webp";
-  return `/catalog/photos/${slug}${suffix}.${extension}`;
+  return `/catalog/photos/${slug}${imageSuffix(imageIndex)}.webp`;
 }
 
 /** Photographed in the studio: a transparent cut-out plus a lifestyle photo. */

@@ -15,19 +15,9 @@
   width: 58%;
 }
 
-.skeleton-line.tight {
-  margin-block: 0.3rem;
-}
-
 .skeleton-media {
   width: 100%;
   aspect-ratio: 4 / 5;
-  border-radius: var(--radius, 12px);
-}
-
-.skeleton-hero {
-  width: 100%;
-  min-height: 18rem;
   border-radius: var(--radius, 12px);
 }
 
@@ -70,7 +60,7 @@
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
+@media (--reduced-motion) {
   .skeleton {
     animation: none;
   }

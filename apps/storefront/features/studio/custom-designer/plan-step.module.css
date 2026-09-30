@@ -1,0 +1,33 @@
+/* Plan step */
+
+.planRows {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.planRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  min-height: 3.2rem;
+  padding: 0.4rem 1rem;
+  border: 1px solid var(--cs-line);
+  border-radius: 12px;
+  background: var(--cs-paper);
+  color: var(--cs-ink);
+  font-size: 0.92rem;
+  transition:
+    border-color 0.2s ease,
+    background-color 0.2s ease;
+}
+
+.planRow:hover {
+  border-color: #c3b6a2;
+}
+
+.planRow.checked {
+  border-color: transparent;
+  background: var(--cs-pick);
+  font-weight: 700;
+}

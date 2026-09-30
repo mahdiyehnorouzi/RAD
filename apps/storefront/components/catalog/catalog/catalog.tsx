@@ -3,7 +3,7 @@ import { useEffect, useId, useState } from "react";
 import Link from "next/link";
 import { Check, ChevronLeft, ChevronRight, ShoppingBag } from "lucide-react";
 import type { Product } from "@rad/types";
-import { useCart } from "@/components/cart";
+import { useCart } from "@/features/cart";
 import { useLocale } from "@/components/i18n";
 import { useCommerce } from "@/components/commerce";
 import { useCatalogRefresh } from "@/hooks/use-catalog-refresh";

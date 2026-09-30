@@ -1,0 +1,266 @@
+/* Custom order flow — one question per screen on a paper sheet, as in the step mockups. */
+
+.cdShell {
+  display: grid;
+  gap: 1.6rem;
+  scroll-margin-top: calc(var(--header-height) + 1rem);
+}
+
+/* Step frame */
+
+.cdForm {
+  min-width: 0;
+}
+
+.cdNotices {
+  display: grid;
+  gap: 0.6rem;
+  margin-bottom: 1.25rem;
+}
+
+.cdStepBody {
+  animation: cd-step-in 0.45s var(--cs-ease) both;
+}
+
+.cdStep {
+  display: grid;
+  gap: 1.1rem;
+}
+
+.cdStepHead {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.cdStepHead h3 {
+  margin: 0;
+  color: var(--cs-ink);
+  font-size: clamp(1.4rem, 6vw, 1.85rem);
+  font-weight: 700;
+  line-height: 1.55;
+  text-wrap: balance;
+}
+
+html[dir="ltr"] .cdStepHead h3 {
+  line-height: 1.25;
+}
+
+.cdStepHead p {
+  max-width: 34rem;
+  margin: 0;
+  color: var(--cs-muted);
+  font-size: 0.92rem;
+  line-height: 1.95;
+}
+
+.cdField {
+  display: grid;
+  gap: 0.7rem;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.cdField legend {
+  float: inline-start;
+  width: 100%;
+  margin-bottom: 0.7rem;
+  padding: 0;
+  color: var(--cs-ink);
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1.6;
+}
+
+.cdField legend + * {
+  clear: both;
+}
+
+.cdSublabel {
+  margin-top: 0.3rem;
+  color: var(--cs-muted);
+  font-size: 0.82rem;
+}
+
+.cdBox {
+  border: 1px solid var(--cs-line);
+  border-radius: 12px;
+  background: var(--cs-paper);
+  transition: border-color 0.2s ease;
+}
+
+.cdBox:focus-within {
+  border-color: var(--cs-green);
+}
+
+.cdIconInput {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  min-height: 3rem;
+  padding: 0 0.9rem;
+  color: var(--cs-green);
+  cursor: text;
+}
+
+.cdIconInput svg {
+  flex: 0 0 auto;
+}
+
+.cdIconInput input {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 2.9rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--cs-ink);
+  font-size: 0.92rem;
+}
+
+.cdIconInput input::placeholder,
+.cdForm textarea::placeholder {
+  color: #7d776e;
+}
+
+.cdForm :where(input, textarea):focus-visible {
+  outline: 0 !important;
+}
+
+/* Choice cards (radio / checkbox wrapped in a label) */
+
+.cdChoice {
+  position: relative;
+  cursor: pointer;
+}
+
+.cdChoice > input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.cdChoice:has(> input:focus-visible) {
+  outline: 2px solid var(--cs-oxide);
+  outline-offset: 3px;
+}
+
+.cdRadio {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 1.2rem;
+  height: 1.2rem;
+  border: 1.5px solid #b3a794;
+  border-radius: 50%;
+  background: var(--cs-paper);
+  transition: border-color 0.2s ease;
+}
+
+.checked .cdRadio {
+  border-color: var(--cs-green);
+}
+
+.checked .cdRadio::after {
+  content: "";
+  width: 0.58rem;
+  height: 0.58rem;
+  border-radius: 50%;
+  background: var(--cs-green);
+}
+
+/* Footer actions: back at the reading start, continue at the reading end */
+
+.cdActions {
+  position: sticky;
+  bottom: 0;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 1.75rem;
+  padding: 1rem 0 max(0.85rem, env(safe-area-inset-bottom));
+  border-top: 1px solid var(--cs-line);
+  background: var(--cs-paper);
+  box-shadow:
+    -0.75rem 0 0 var(--cs-paper),
+    0.75rem 0 0 var(--cs-paper);
+}
+
+.cdActions.single {
+  justify-content: flex-end;
+}
+
+.cdNext {
+  min-width: 9.5rem;
+}
+
+.cdActions.single .cdNext {
+  flex: 1 1 auto;
+}
+
+.cdBack {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 3rem;
+  padding: 0 0.4rem;
+  border: 0;
+  background: transparent;
+  color: var(--cs-ink);
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.cdBack svg {
+  transition: transform 0.3s var(--cs-ease);
+}
+
+.cdBack:hover:not(:disabled) svg {
+  transform: translateX(3px);
+}
+
+html[dir="ltr"] .cdBack:hover:not(:disabled) svg {
+  transform: translateX(-3px);
+}
+
+/* Errors */
+
+.cdError {
+  margin: 0;
+  padding: 0.8rem 1rem;
+  border: 1px solid color-mix(in srgb, var(--cs-oxide) 45%, transparent);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--cs-oxide) 8%, var(--cs-paper));
+  color: #6e3423;
+  font-size: 0.86rem;
+  line-height: 1.8;
+}
+
+.cdError p {
+  margin: 0;
+}
+
+.cdError a {
+  display: inline-block;
+  margin-top: 0.4rem;
+  border-bottom: 1px solid currentColor;
+  font-weight: 700;
+}
+
+@media (min-width: 700px) {
+  .cdActions.single .cdNext {
+    flex: 0 0 auto;
+    min-width: 13rem;
+  }
+}
+
+@keyframes cd-step-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}

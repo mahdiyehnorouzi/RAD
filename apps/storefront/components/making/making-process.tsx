@@ -1,6 +1,6 @@
 "use client";
 
-import { ProcessSection } from "@/components/home";
+import { ProcessSection } from "@/features/home";
 import { ButtonLink } from "@/components/ui/button-link";
 import { useLocale } from "@/components/i18n";
 import "./making-process.css";

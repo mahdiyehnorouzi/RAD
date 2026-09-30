@@ -1,0 +1,15 @@
+.empty {
+  composes: palette from "./cart-palette.module.css";
+}
+
+.released {
+  width: min(100%, 36rem);
+  margin: 2rem auto 0;
+}
+
+@media (--phone) {
+  .empty:global(.section) {
+    padding-block: 1.5rem 2rem !important;
+    padding-inline: 1rem !important;
+  }
+}

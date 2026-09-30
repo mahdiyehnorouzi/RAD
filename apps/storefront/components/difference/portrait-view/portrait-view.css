@@ -52,7 +52,7 @@
   background: var(--trace-ink);
 }
 
-@media (min-width: 960px) {
+@media (--wide) {
   .difference-portrait-journey {
     gap: 2.5rem;
     margin-top: 5rem;

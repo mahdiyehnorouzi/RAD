@@ -164,7 +164,7 @@ html[dir="ltr"] .now-index-head h1 {
   }
 }
 
-@media (min-width: 960px) {
+@media (--wide) {
   .now-index {
     padding-block: 4.5rem 7rem;
   }
@@ -185,7 +185,7 @@ html[dir="ltr"] .now-index-head h1 {
   }
 }
 
-@media (prefers-reduced-motion: no-preference) {
+@media (--motion-ok) {
   @supports (animation-timeline: view()) {
     .now-index-list li {
       animation: liveScrollIn linear both;

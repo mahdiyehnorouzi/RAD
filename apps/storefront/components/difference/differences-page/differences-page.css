@@ -395,7 +395,7 @@
   }
 }
 
-@media (min-width: 960px) {
+@media (--wide) {
   .differences-traces {
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: clamp(2rem, 4vw, 3.5rem);
@@ -508,7 +508,7 @@
   }
 }
 
-@media (prefers-reduced-motion: no-preference) {
+@media (--motion-ok) {
   @supports (animation-timeline: view()) {
     .differences-trace-media,
     .differences-compare-side,

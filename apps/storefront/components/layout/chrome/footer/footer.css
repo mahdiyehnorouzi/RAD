@@ -18,7 +18,9 @@
   row-gap: 2.25rem;
   padding: var(--footer-top) var(--footer-gutter) 1.25rem;
   overflow-x: clip;
-  background: var(--footer-grain) 0 0 / 160px 160px, var(--footer-ground);
+  background:
+    var(--footer-grain) 0 0 / 160px 160px,
+    var(--footer-ground);
   color: var(--paper);
 }
 
@@ -53,7 +55,9 @@
 }
 
 .footer-tear::after {
-  background: var(--footer-grain) 0 0 / 160px 160px, var(--footer-ground);
+  background:
+    var(--footer-grain) 0 0 / 160px 160px,
+    var(--footer-ground);
   -webkit-mask:
     var(--edge-base) 0 0 / 100% 100% no-repeat,
     linear-gradient(#000 0 0) bottom / 100% 4px no-repeat;
@@ -110,7 +114,10 @@ html[dir="rtl"] .footer-thread {
 .footer-thread-drop {
   top: calc(-1 * (var(--footer-top) + var(--footer-tear) * 0.8));
   bottom: calc(var(--tie-h) - 2px);
-  inset-inline-end: calc((100% + var(--tie-reach)) / 30 - var(--tie-reach) + 0.4rem - var(--drop-w) / 2);
+  inset-inline-end: calc(
+    (100% + var(--tie-reach)) / 30 - var(--tie-reach) + 0.4rem - var(--drop-w) /
+      2
+  );
   width: var(--drop-w);
   -webkit-mask: linear-gradient(to bottom, transparent, #000 1.1rem);
   mask: linear-gradient(to bottom, transparent, #000 1.1rem);
@@ -382,13 +389,13 @@ html[dir="rtl"] .footer-thread {
   }
 }
 
-@media (max-width: 900px) {
+@media (--tablet) {
   .footer {
     --footer-gutter: clamp(1.25rem, 6vw, 2.5rem);
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
+@media (--reduced-motion) {
   .footer-mark span {
     transition: none;
   }

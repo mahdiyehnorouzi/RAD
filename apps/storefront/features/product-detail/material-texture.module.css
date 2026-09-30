@@ -1,0 +1,63 @@
+.materialTexture {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  background: var(--canvas);
+}
+
+.materialTexture img {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: calc(100% / var(--texture-span));
+  max-width: none;
+  height: auto;
+  transform: translate(
+    calc(var(--texture-x) * -1),
+    calc(var(--texture-y) * -1)
+  );
+  animation: textureIn 700ms var(--pdp-ease) both;
+}
+
+/* A glaze tab leads the hairline, like a test chip tied to the page's rule. */
+.materialRule {
+  display: flex;
+  min-height: 1rem;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.materialRule::after {
+  flex: 1;
+  height: 1px;
+  background: var(--line);
+  content: "";
+}
+
+.materialTexture.tab {
+  width: 8rem;
+  height: 1rem;
+  flex: none;
+  border-radius: 999px;
+}
+
+.materialTexture.swatch {
+  width: var(--swatch-size, 1.4rem);
+  height: var(--swatch-size, 1.4rem);
+  flex: none;
+  border-radius: 50%;
+}
+
+.materialTexture::after {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink) 16%, transparent);
+  content: "";
+}
+
+@keyframes textureIn {
+  from {
+    opacity: 0;
+  }
+}

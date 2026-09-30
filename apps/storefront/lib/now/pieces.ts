@@ -48,7 +48,7 @@ const stages: Record<
       "همه‌چیز از یک حس و تصویر شروع می‌شود. طرح اولیه روی کاغذ شکل می‌گیرد.",
       "It starts from a feeling and an image. The first sketch takes shape on paper.",
     ),
-    media: "/now/now-idea.jpg",
+    media: "/now/now-idea.webp",
   },
   form: {
     title: copy("فرم پیدا شد", "The form was found"),
@@ -56,7 +56,7 @@ const stages: Record<
       "گل ورز داده می‌شود و فرم روی چرخ شکل می‌گیرد. در این مرحله ابعاد و تناسبات کار مشخص می‌شود.",
       "The clay is wedged and the form rises on the wheel. Its size and proportions are settled here.",
     ),
-    media: "/now/now-form.jpg",
+    media: "/now/now-form.webp",
   },
   drying: {
     title: copy("خشک شدن", "Drying"),
@@ -64,7 +64,7 @@ const stages: Record<
       "کار به آرامی در دمای محیط خشک می‌شود تا برای اولین پخت آماده شود.",
       "The piece dries slowly at room temperature until it is ready for its first firing.",
     ),
-    media: "/now/now-drying.jpg",
+    media: "/now/now-drying.webp",
   },
   first_kiln: {
     title: copy("کوره اول", "First kiln"),
@@ -72,7 +72,7 @@ const stages: Record<
       "اولین پخت بدنه را محکم می‌کند و آن را برای لعاب آماده می‌کند.",
       "The first firing hardens the body and readies it for glaze.",
     ),
-    media: "/now/now-first-kiln.jpg",
+    media: "/now/now-first-kiln.webp",
   },
   glaze: {
     title: copy("لعاب", "Glaze"),
@@ -80,7 +80,7 @@ const stages: Record<
       "لعاب با دست روی بدنه می‌نشیند. رنگ نهایی تا بعد از کوره معلوم نیست.",
       "Glaze goes on by hand. The final colour stays unknown until after the kiln.",
     ),
-    media: "/now/now-glaze.jpg",
+    media: "/now/now-glaze.webp",
   },
   last_kiln: {
     title: copy("کوره آخر", "Last kiln"),
@@ -88,7 +88,7 @@ const stages: Record<
       "پخت دوم لعاب را به شیشه تبدیل می‌کند؛ اینجا چیزهایی اتفاق می‌افتد که تکرار نمی‌شوند.",
       "The second firing turns glaze to glass; things happen here that will not happen again.",
     ),
-    media: "/now/now-last-kiln.jpg",
+    media: "/now/now-last-kiln.webp",
   },
   ready: {
     title: copy("آماده رفتن", "Ready to leave"),
@@ -96,7 +96,7 @@ const stages: Record<
       "کار از کوره بیرون می‌آید، شماره‌اش را می‌گیرد و آماده‌ی رفتن می‌شود.",
       "The work leaves the kiln, receives its number and is ready to go.",
     ),
-    media: "/now/now-ready.jpg",
+    media: "/now/now-ready.webp",
   },
 };
 
@@ -105,7 +105,7 @@ const journals: LiveJournal[] = [
     radNumber: 21,
     startedDaysAgo: 4,
     current: "drying",
-    image: "/making/RAD-M-1405-17/cleaned.png",
+    image: "/making/RAD-M-1405-17/cleaned.webp",
     milestones: rail("drying"),
     notes: [
       {
@@ -114,7 +114,7 @@ const journals: LiveJournal[] = [
           "حالا باید صبر کند. چهار روز از شروعش گذشته.",
           "Now it has to wait. Four days have passed since it began.",
         ),
-        media: "/now/now-drying.jpg",
+        media: "/now/now-drying.webp",
       },
     ],
   },
@@ -122,7 +122,7 @@ const journals: LiveJournal[] = [
     radNumber: 14,
     startedDaysAgo: 11,
     current: "glaze",
-    image: "/making/RAD-M-1405-17/glaze-tile.png",
+    image: "/making/RAD-M-1405-17/glaze-tile.webp",
     milestones: rail("glaze", {
       first_kiln: {
         note: copy(
@@ -144,7 +144,7 @@ const journals: LiveJournal[] = [
           "امروز رَد تو برای اولین‌بار رفت توی کوره.",
           "Today your RAD went into the kiln for the first time.",
         ),
-        media: "/now/now-first-kiln.jpg",
+        media: "/now/now-first-kiln.webp",
       },
       {
         at: copy("امروز", "Today"),
@@ -152,7 +152,7 @@ const journals: LiveJournal[] = [
           "یه اتفاق افتاد. لعاب این قسمت دقیقاً اون چیزی نشد که فکر می‌کردیم. نگهش داشتیم.",
           "Something happened. The glaze on this part did not become what we thought. We kept it.",
         ),
-        media: "/now/now-glaze.jpg",
+        media: "/now/now-glaze.webp",
       },
     ],
   },

@@ -18,7 +18,7 @@ export type CatalogArtist = {
  * URL key for an artist. Built from the English name so links read well and
  * stay the same whether the list came from the API or the offline registry.
  */
-export function artistKey(vendor: Pick<Vendor, "id" | "displayNameEn">) {
+function artistKey(vendor: Pick<Vendor, "id" | "displayNameEn">) {
   const slug = vendor.displayNameEn
     .normalize("NFKD")
     .toLowerCase()

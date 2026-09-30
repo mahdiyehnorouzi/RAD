@@ -2,13 +2,13 @@
 
 import Link from "next/link";
 import { useEffect, useRef } from "react";
-import { usePathname } from "next/navigation";
+import { usePublicPathname } from "@/hooks/use-public-pathname";
 import { useCommerce } from "@/components/commerce";
 import { useLocale } from "@/components/i18n";
 import { ACCOUNT_NAV, isAccountNavActive } from "../const";
 
 export function AccountNav() {
-  const pathname = usePathname();
+  const pathname = usePublicPathname();
   const { t, href, number } = useLocale();
   const { unread } = useCommerce();
   const activeRef = useRef<HTMLAnchorElement>(null);
@@ -34,13 +34,20 @@ export function AccountNav() {
             className={active ? "active" : undefined}
             aria-current={active ? "page" : undefined}
           >
-            <Icon className="account-nav-icon" aria-hidden="true" strokeWidth={1.6} />
+            <Icon
+              className="account-nav-icon"
+              aria-hidden="true"
+              strokeWidth={1.6}
+            />
             <span className="account-nav-text">
               <b>{t(item.label)}</b>
               <small>{t(item.hint)}</small>
             </span>
             {count > 0 ? (
-              <span className="account-nav-count" aria-label={t("unreadCount", { count: number(count) })}>
+              <span
+                className="account-nav-count"
+                aria-label={t("unreadCount", { count: number(count) })}
+              >
                 {number(count)}
               </span>
             ) : null}

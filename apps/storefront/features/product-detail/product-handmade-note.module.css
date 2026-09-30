@@ -1,0 +1,73 @@
+/* A margin note in the maker's sketchbook, not a notice. */
+.note {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  column-gap: 0.9rem;
+  width: fit-content;
+  max-width: 100%;
+  margin-top: 1.75rem;
+  padding: 1.4rem 2.4rem 1.3rem 2.2rem;
+  isolation: isolate;
+}
+
+.noteLoop {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  fill: none;
+  stroke: color-mix(in srgb, var(--pdp-oxide) 48%, transparent);
+  stroke-width: 1.1;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.noteHand {
+  grid-row: span 3;
+  width: 28px;
+  height: 28px;
+  margin-top: 0.1rem;
+  color: var(--pdp-oxide);
+  stroke-width: 1.2;
+  transform: rotate(-14deg);
+}
+
+[data-locale="en"] .noteHand {
+  transform: rotate(14deg) scaleX(-1);
+}
+
+.noteTitle {
+  font-size: 1.08rem;
+  font-weight: var(--font-weight-medium);
+  line-height: 1.5;
+}
+
+.note p {
+  margin: 0.3rem 0 0;
+  color: color-mix(in srgb, var(--ink) 72%, var(--muted));
+  font-size: 0.88rem;
+  line-height: 1.9;
+}
+
+.note p span {
+  display: block;
+}
+
+.noteSign {
+  justify-self: end;
+  margin-top: 0.2rem;
+  color: var(--pdp-oxide);
+  font-size: 1rem;
+  letter-spacing: 0.08em;
+  transform: rotate(-5deg);
+}
+
+@media (--phone) {
+  .note {
+    padding-inline: 1.4rem;
+  }
+}

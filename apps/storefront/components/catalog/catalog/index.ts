@@ -1,2 +1,2 @@
-export { Catalog, AddToBag } from "./catalog";
+export { Catalog } from "./catalog";
 export { CatalogHero } from "./catalog-hero";

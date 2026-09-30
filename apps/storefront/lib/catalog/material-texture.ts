@@ -21,7 +21,7 @@ export type TextureFocus = {
 };
 
 /** A swatch shows this share of the photo's width: close enough to read as material. */
-export const SWATCH_SPAN = 0.16;
+const SWATCH_SPAN = 0.16;
 /** The strip is a short glaze tab this many times wider than tall, shown near natural scale. */
 const STRIP_ASPECT = 8;
 const STRIP_SPAN = 0.27;
@@ -70,7 +70,7 @@ export function spotFocus(spot: MaterialSpot): TextureFocus {
 }
 
 /** A coarse reading of a cut-out photo: opacity plus 0–1 RGB per cell. */
-export type PhotoCells = {
+type PhotoCells = {
   width: number;
   height: number;
   alpha: Uint8ClampedArray;

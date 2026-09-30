@@ -1,0 +1,65 @@
+/* Red thread through the card */
+
+.certificateThreadTie {
+  position: absolute;
+  z-index: 1;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.certificateThreadTie {
+  top: -1.2rem;
+  left: 46%;
+  width: 1.5rem;
+  height: 2.75rem;
+}
+
+/* Where the home's thread meets the tie's first point, and where it leaves from under the card */
+
+.certificateThreadIn,
+.certificateThreadOut {
+  position: absolute;
+  left: calc(46% + 0.5625rem);
+  width: 1px;
+  height: 1px;
+}
+
+.certificateThreadIn {
+  top: -1.2rem;
+}
+
+.certificateThreadOut {
+  top: calc(100% - 1px);
+}
+
+.certificateThreadLine,
+.certificateThreadShade {
+  fill: none;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.certificateThreadLine {
+  stroke: var(--oxide);
+  stroke-width: 1.6;
+}
+
+.certificateThreadShade {
+  stroke: rgb(46 26 14 / 0.22);
+  stroke-width: 2.6;
+  translate: 1.5px 3px;
+  filter: blur(1.2px);
+}
+
+.certificateBead {
+  fill: var(--oxide);
+}
+
+.certificateBeadShade {
+  fill: rgb(46 26 14 / 0.32);
+  filter: blur(1.5px);
+}
+
+.certificateBeadShine {
+  fill: rgb(255 240 225 / 0.55);
+}

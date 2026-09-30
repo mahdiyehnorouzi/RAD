@@ -1,0 +1,136 @@
+/* Questions: shipping and returns as a card, then plain fold rows. */
+.shipping:global(.purchase-disclosure) {
+  margin-bottom: 0.5rem;
+  padding: 0 1.1rem;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--sand) 18%, var(--paper));
+}
+
+.shipping :global(.purchase-disclosure-head) strong {
+  font-size: 0.95rem;
+}
+
+.fold {
+  display: block;
+  border-bottom: 1px solid var(--line);
+}
+
+.fold > summary {
+  display: flex;
+  min-height: 3.5rem;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.7rem 0;
+  color: var(--ink);
+  cursor: pointer;
+  list-style: none;
+}
+
+.fold > summary::-webkit-details-marker {
+  display: none;
+}
+
+.foldTitle {
+  flex: 1;
+  font-size: 0.92rem;
+  font-weight: var(--font-weight-medium);
+  transition: color 180ms ease-out;
+}
+
+.fold > summary:hover .foldTitle {
+  color: var(--pdp-oxide);
+}
+
+.foldToggle {
+  width: 1.3rem;
+  height: 1.3rem;
+  flex: none;
+  color: var(--pdp-oxide);
+  stroke-width: 1.3;
+}
+
+.fold .foldToggle.minus,
+.fold[open] .foldToggle.plus {
+  display: none;
+}
+
+.fold[open] .foldToggle.minus {
+  display: block;
+}
+
+.foldIcon {
+  width: 1.6rem;
+  height: 1.6rem;
+  flex: none;
+  color: var(--ink);
+  stroke-width: 1.2;
+}
+
+details.fold > p {
+  max-width: 62ch;
+  margin: 0;
+  padding: 0 0 1rem;
+  padding-inline-start: 2.05rem;
+  color: var(--muted);
+  font-size: 0.86rem;
+  line-height: 1.95;
+}
+
+/* The way out of the questions: a paper card carrying the work's stroke. */
+.ask {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 0.75rem;
+  padding: 1rem 1.15rem;
+  overflow: hidden;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--sand) 30%, var(--paper));
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.askText {
+  display: grid;
+  flex: 1;
+  gap: 0.15rem;
+}
+
+.askText strong {
+  font-size: 0.95rem;
+  font-weight: var(--font-weight-medium);
+  transition: color 180ms ease-out;
+}
+
+.askText span {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.askStroke {
+  --stroke-width: 4.5rem;
+  --stroke-height: 2rem;
+  opacity: 0.85;
+}
+
+.askArrow {
+  width: 1.2rem;
+  height: 1.2rem;
+  flex: none;
+  color: var(--pdp-oxide);
+  transition: transform 260ms var(--pdp-ease);
+}
+
+.ask:hover .askText strong {
+  color: var(--pdp-oxide);
+}
+
+.ask:hover .askArrow {
+  transform: translateX(-0.2rem);
+}
+
+.ask:lang(en):hover .askArrow {
+  transform: translateX(0.2rem);
+}

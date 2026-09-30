@@ -1,119 +1,112 @@
 ---
 name: storefront-component-structure
 description: >-
-  Enforces RAD storefront component folder structure: nested parent/child
-  folders, named component files (never index.tsx), colocated type/ and const/
-  folders for feature-local types, constants, and hooks, and index.ts barrels only. Use when
-  creating, moving, renaming, or reviewing storefront components, types, or
-  UI folders under apps/storefront/components.
+  Enforces RAD storefront structure: features live in apps/storefront/features/<name>/
+  with CSS Modules per component, nested parent/child folders, named component
+  files (never index.tsx), colocated type/, const/ and hooks/ folders, and
+  index.ts barrels only. Use when creating, moving, renaming, styling, or
+  reviewing storefront components, styles, types, or UI folders under
+  apps/storefront/features or apps/storefront/components.
 ---
 
 # Storefront component structure
 
-Every developer and agent must follow this when adding or changing anything under `apps/storefront/components`.
+Every developer and agent must follow this when adding or changing storefront UI.
 
-Canonical example: `apps/storefront/components/difference/`.
+Canonical example: `apps/storefront/features/cart/`.
+
+## Where code lives
+
+| Folder | Holds |
+| --- | --- |
+| `features/<name>/` | A product feature: its components, CSS Modules, `type/`, `const/`, `hooks/` |
+| `components/ui/` | Flat primitives with no feature parent |
+| `components/<name>/` | Features not migrated yet. Move one into `features/` when you next change it substantially, in its own pull request, converting its styles to modules at the same time |
+| `styles/` | `tokens.css` (design values and named breakpoints), `fonts.css` |
+| `app/globals.css` | Cascade layers, reset, element defaults, shared helpers |
+| `hooks/`, `lib/` | App-wide hooks; data, API and domain helpers (no UI types) |
 
 ## Layout
 
 ```
-feature/
-  type/                         # types owned by this feature
-    index.ts
-    permission.ts
-  const/                        # constants owned by this feature
-    index.ts
-    photo-label.ts
-  hooks/                        # hooks owned by this parent/feature
-    index.ts
-    use-designer.ts
-  record/                       # shared pieces used by more than one parent
-    index.ts
-    biography-rail.tsx
-  parent-name/                  # folder only because it has children
-    parent-name.tsx
-    index.ts                    # re-export only
-    child-a.tsx                 # leaf child — no extra folder
-    child-b/
-      child-b.tsx
-      grandchild.tsx
-      index.ts
-  leaf-sibling.tsx              # only if it is a true feature-level component
+features/cart/
   index.ts                      # public API of the feature
+  cart-provider.tsx             # leaf: no folder
+  cart-empty.tsx
+  cart-empty.module.css         # styles sit next to their component
+  cart-palette.module.css       # feature-wide custom properties, shared via composes
+  const/
+    index.ts
+    cart-copy.ts
+  cart-page/                    # folder only because it has children
+    index.ts                    # re-export only
+    cart-page.tsx
+    cart-page.module.css
+    cart-line.tsx               # leaf child: no extra folder
+    cart-line.module.css
 ```
-
-`@/components/feature/parent-name` still resolves when `parent-name/` has `index.ts`. Do not also keep `parent-name.tsx` next to that folder.
 
 ## Rules
 
-1. **Nest by ownership.** A file used only by one parent lives inside that parent's folder. Files used by two parents in the same feature go in a named shared folder, not the feature root (see `making/record/` for biography rail, quote card, and the other commission-record pieces reused by workshop).
-2. **Folder only when there are children.** A leaf component is `feature/name.tsx` (e.g. `catalog/catalog-provider.tsx`, `cart/cart-provider.tsx`). Create `name/name.tsx` only when `name/` also contains child files (e.g. `commerce/commerce-provider/` because it owns `commerce-toast.tsx`).
-3. **Never put a component in `index.tsx`.** When a folder is needed: `portrait-view/portrait-view.tsx`. `index.ts` only re-exports. Relative imports from `index.tsx` resolve as if they came from the parent folder and break.
-4. **Feature-local types go in `type/`.** Feature-local constants go in `const/`. Feature-local hooks go in `hooks/` (e.g. `useDesigner` in `studio/custom-designer/hooks/`). Do not dump them in `apps/storefront/types/` or `lib/`. App-wide hooks stay in `apps/storefront/hooks/`.
-5. **Shared types stay shared.** `Product`, `Order`, `AuthUser` → `@rad/types`. Bilingual copy helper → `@/types/locale`. API DTOs used across features → `@/types/api`. Making domain types live in `@/components/making/type` because making owns them; workshop imports from there.
-6. **Import from the feature public path.** `app/` pages import `@/components/making`, `@/components/home`, `@/components/commerce` — not grandchildren. Inside a parent folder, use relative imports (`./child`, `../sibling`).
-7. **`components/ui/` stays flat** (primitives with no feature parent).
-8. **`lib/` is not for UI types.** `lib/api/` HTTP, `lib/making/` domain helpers/seed, `lib/catalog/` fixtures.
+1. **Nest by ownership.** A file used only by one parent lives inside that parent's folder. Files used by two parents in the same feature go in a named shared folder (e.g. `making/record/`), not the feature root.
+2. **Folder only when there are children.** A leaf is `feature/name.tsx`. Create `name/name.tsx` only when `name/` also holds child files.
+3. **Never put a component in `index.tsx`.** `index.ts` only re-exports.
+4. **Feature-local types go in `type/`, constants in `const/`, hooks in the owning parent's `hooks/`.** App-wide hooks stay in `apps/storefront/hooks/`.
+5. **Shared types stay shared.** `Product`, `Order`, `AuthUser` come from `@rad/types`; the bilingual copy helper from `@/types/locale`; cross-feature API DTOs from `@/types/api`.
+6. **Import from the feature's public path.** `app/` and other features import `@/features/cart`, never a grandchild. Inside a feature, use relative imports.
 
-## Feature map
+## Styles
 
-| Folder | Role |
-| --- | --- |
-| `difference/` | `type/`, `const/`, `portrait-view/`, `trail-strip.tsx` |
-| `making/` | `customer-detail/`, `customer-list/`, `record/`, `type/`, `const/` |
-| `workshop/` | `workshop-board/`, `workshop-detail/` |
-| `studio/` | `custom-designer/` (includes `hooks/`), `type/` |
-| `catalog/` | `catalog/` + `catalog-provider.tsx` |
-| `commerce/` | `commerce-provider/`, `type/`, `notification-center.tsx` |
-| `cart/` | `cart-provider.tsx`, `cart-page/` |
-| `checkout/` | `checkout-page/` |
-| `account/` | `account-page/` |
-| `orders/` | `orders-page/` |
-| `favorites/` | `favorites-page.tsx` |
-| `reviews/` | `reviews/` |
-| `product/` | `listing/`, `artwork-visual/`, `product-detail/` |
-| `home/` | `sections/`, `home-banner.tsx` |
-| `layout/` | `header/`, `chrome/` |
-| `states/` | `state-screen/` (shared layout, chips, suggested works), named empty/error states, `type/`, `const/` |
-| `i18n.tsx` | Locale provider (must stay a file, not a folder) |
-| `ui/` | Flat primitives |
+1. **One `name.module.css` per component that has styles**, imported as `styles`. Class names are camelCase (`styles.line`, `styles.blocked`).
+2. **Design values come from `styles/tokens.css`** (`var(--ink)`, `var(--page)`, `var(--text-body)`). Add a token there instead of repeating a raw value across features.
+3. **Feature-only values** (a palette used by several components) go in a feature module and are shared with `composes: palette from "../cart-palette.module.css";`.
+4. **Breakpoints use the names from `tokens.css`:** `@media (--phone)`, `(--tablet)`, `(--desktop)`, `(--wide)`, `(--reduced-motion)`, `(--motion-ok)`, `(--fine-pointer)`. Never write raw pixel widths.
+5. **Classes owned by someone else are wrapped in `:global()`**: shared helpers (`.section`, `.button`) and other components' classes, e.g. `.actions :global(.button.outline)`. Modules are "pure": every selector needs at least one local class, so no bare element, `:root` or `html` selectors.
+6. **Check what the shared `.section` rules already set.** `.section h2`, `.section h3` and `.section p` set font size (and paragraph line height) for everything inside a section. Don't redeclare them in a module unless the change is meant to be visible.
+7. **Avoid `!important`.** Only use it to beat a shared rule that is itself `!important`, and say which rule in a one-line comment.
+8. **No new global stylesheets for features.** `globals.css` layers are `reset`, `defaults` and `helpers`; component styles stay unlayered, so they win over those.
+9. **`@counter-style` rules go in `app/globals.css`.** Turbopack renames them inside a module but not the `counter()` calls that use them. Keyframes are fine in a module when the animation that uses them is in the same file.
+10. **A parent sizing a child component uses a custom property the child reads** (`--stroke-width`, `--swatch-size`), or passes a `className`. Don't rely on which module's CSS loads first.
+11. **Classes reused by several components in a feature live in one shared module**, imported under a short name next to `styles`: `import btn from "../studio-btn.module.css"` gives `` className={`${btn.csBtn} ${btn.csBtnSolid}`} ``. Put the feature root's frame classes in the root module (`custom-designer.module.css` imported as `shell`) rather than copying them.
+12. **State set from JavaScript is a data attribute or a module class**, never a plain string like `"is-open"`, which a module can't match. Prefer `data-visible={inView || undefined}` styled as `.card[data-visible]`; use `styles.current` when the state is already a class.
+13. **One `@keyframes` per name per module.** A later definition with the same name silently replaces the first.
+14. **Module load order isn't the old global order.** When two modules set the same property with equal specificity, the winner can flip. Remove the dead declaration, or raise specificity on purpose (`.card.card h2`, `.field .hint`) with a one-line comment naming the rule it beats.
 
-## Checklist for a new component
+## Checklist
 
-- [ ] Leaf component is `feature/name.tsx` (no extra folder)
-- [ ] Parent with children: folder + `name/name.tsx` + `index.ts` barrel
-- [ ] Children nested under the parent; intra-folder imports are relative
-- [ ] Unshared types in `feature/type/`
-- [ ] Unshared constants in `feature/const/`
-- [ ] Unshared hooks in the parent’s `hooks/` folder
-- [ ] No `index.tsx` component entry
-- [ ] `app/` pages import the feature barrel or the parent, not grandchildren
+- [ ] Feature lives in `features/<name>/` with a public `index.ts`
+- [ ] Leaf component is `name.tsx`; a parent with children gets `name/name.tsx` plus an `index.ts` barrel
+- [ ] Each styled component has a colocated `name.module.css`; no feature CSS in global files
+- [ ] Values come from tokens, breakpoints use the named media queries
+- [ ] Other components' classes are wrapped in `:global()`
+- [ ] Unshared types, constants and hooks are in `type/`, `const/`, `hooks/`
+- [ ] `app/` imports the feature barrel, not grandchildren
+- [ ] Computed styles match before and after when the move is meant to be visual-only
 
 ## Anti-patterns
 
 ```
-# BAD — shared pieces dumped at the feature root
-components/making/biography-rail.tsx
-components/making/quote-card.tsx
-# put them in making/record/ so ownership is obvious
-
 # BAD — component in index.tsx
-components/foo/index.tsx
-import { Child } from "./child";   # TypeScript looks for components/child
-
-# BAD — folder and file with the same name
-components/i18n.tsx
-components/i18n/index.ts
-# TypeScript cannot resolve @/components/i18n
+features/foo/index.tsx
 
 # BAD — wrapping a leaf with no children
-components/cart/cart-provider/cart-provider.tsx
-components/cart/cart-provider/index.ts
-# cart-provider has no children — keep cart/cart-provider.tsx
+features/cart/cart-provider/cart-provider.tsx
 
-# BAD — local type in global dump
-apps/storefront/types/foo.ts       # only used by one feature
+# BAD — raw breakpoint and repeated raw color
+@media (max-width: 600px) { .line { color: #18231f; } }
+# GOOD
+@media (--phone) { .line { color: var(--ink); } }
+
+# BAD — styling another component's class as if it were local
+.actions .button { ... }      # becomes a hashed .button that matches nothing
+# GOOD
+.actions :global(.button) { ... }
+
+# BAD — state as a plain class string
+<div className={`${styles.step} ${done ? "is-done" : ""}`}>
+# GOOD
+<div className={styles.step} data-done={done || undefined}>   # .step[data-done]
 
 # BAD — app importing a grandchild
-import { CartLine } from "@/components/cart/cart-page/cart-line"
+import { CartLine } from "@/features/cart/cart-page/cart-line"
 ```

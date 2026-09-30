@@ -51,7 +51,7 @@ export function PwaRegistrar() {
   return (
     <aside className="install-prompt" aria-label={t("pwaPromptTitle")}>
       <span className="install-prompt-logo" aria-hidden="true">
-        <Image src="/rad-logo.png" alt="" width={1254} height={1254} />
+        <Image src="/rad-logo.png" alt="" width={512} height={512} />
       </span>
       <div>
         <b>{t("pwaPromptTitle")}</b>

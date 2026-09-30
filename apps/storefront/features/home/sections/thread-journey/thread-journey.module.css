@@ -1,0 +1,86 @@
+/*
+ * The hero and the paths below share one stacking context so the thread can
+ * pass behind their papers. `--hero-edge` is the wave the hero is torn along:
+ * the hero's rim follows it and the journey's top is cut to it.
+ */
+
+.threadHome {
+  --oxide: #8a4938;
+  --oxide-deep: #6f3526;
+  --hero-edge: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 60' preserveAspectRatio='none'%3E%3Cpath d='M0 60V41.0L0 41.0L9 42.1L18 41.2L28 40.7L37 42.2L48 41.4L56 41.8L67 43.7L73 44.6L85 44.0L95 42.7L100 43.4L106 42.3L113 41.5L122 41.7L133 40.7L143 39.5L154 38.2L161 38.6L174 37.0L184 35.0L191 34.6L197 35.6L205 35.7L213 36.1L225 34.4L232 37.0L241 37.9L249 36.4L259 38.9L266 37.7L274 40.3L285 38.7L292 38.7L298 40.4L305 39.8L313 38.7L324 38.1L334 37.5L342 37.3L350 38.8L361 36.8L373 36.4L381 38.0L391 36.3L403 37.0L411 38.7L418 37.9L424 37.7L434 38.5L444 39.1L452 40.6L461 39.6L473 38.2L479 39.5L491 36.7L497 36.9L510 33.7L522 33.0L532 30.0L538 27.8L550 25.9L561 24.2L572 23.4L579 21.6L590 20.5L597 21.4L609 21.4L616 22.3L623 20.4L630 21.8L636 21.5L644 22.9L650 22.8L662 25.0L672 24.8L682 23.8L688 23.7L700 25.4L712 23.8L722 25.0L733 24.6L745 24.3L754 26.4L766 27.2L777 28.5L789 29.0L799 31.9L811 32.7L822 35.7L831 36.7L840 37.7L849 37.7L859 40.9L871 40.9L879 41.0L889 40.2L900 38.9L911 38.0L921 38.4L928 38.4L937 37.5L949 36.0L954 35.9L965 35.4L971 37.1L981 36.2L993 36.5L1003 36.9L1012 39.0L1024 40.1L1032 39.9L1040 39.3L1049 41.4L1060 41.5L1072 40.6L1079 40.9L1086 40.3L1095 41.1L1104 40.2L1115 41.7L1124 39.5L1130 41.6L1135 41.4L1145 41.0L1156 41.3L1162 43.1L1168 44.7L1175 44.1L1181 46.2L1189 47.7L1200 49.9V60Z'/%3E%3C/svg%3E");
+  --hero-edge-h: clamp(2.6rem, 5.5vw, 4.75rem);
+  --hero-edge-size: 100%;
+  --hero-edge-x: 0%;
+  --hero-thread-at: 0.68;
+
+  position: relative;
+  isolation: isolate;
+}
+
+@media (max-width: 700px) {
+  .threadHome {
+    --hero-edge-h: 3rem;
+    --hero-edge-size: 190%;
+    --hero-edge-x: 30%;
+    --hero-thread-at: 0.42;
+  }
+}
+
+.journey {
+  --journey-max: 76rem;
+  --journey-gutter: max(var(--page), (100% - var(--journey-max)) / 2);
+  --journey-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --journey-edge: clamp(0.75rem, 3vw, 1.5rem);
+  --tear: 10px;
+  --tear-top: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 24' preserveAspectRatio='none'%3E%3Cpath d='M0 24V11l22 2 19-4 27 3 16-5 31 4 18-2 24 5 29-6 17 3 26-2 21 4 33-5 14 2 28-3 23 5 19-4 31 3 16-2 27 4 22-5 18 3 35-3 21 4 15-5 29 3 24-2 19 4 32-4 17 3 26-5 20 4 30-2 18 3 25-4 21 5 28-4 16 2 33-3 19 4 23-5 27 3 17-2 31 4 20-3 24 3 18-4 29 5 22-4 26 2 15-3 30 4 21-2 19 3V24Z'/%3E%3C/svg%3E");
+  --tear-bottom: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 24' preserveAspectRatio='none'%3E%3Cpath transform='matrix(-1 0 0 -1 1200 24)' d='M0 24V11l22 2 19-4 27 3 16-5 31 4 18-2 24 5 29-6 17 3 26-2 21 4 33-5 14 2 28-3 23 5 19-4 31 3 16-2 27 4 22-5 18 3 35-3 21 4 15-5 29 3 24-2 19 4 32-4 17 3 26-5 20 4 30-2 18 3 25-4 21 5 28-4 16 2 33-3 19 4 23-5 27 3 17-2 31 4 20-3 24 3 18-4 29 5 22-4 26 2 15-3 30 4 21-2 19 3V24Z'/%3E%3C/svg%3E");
+  --tear-left: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 1200' preserveAspectRatio='none'%3E%3Cpath d='M24 0H11l2 22 -4 19 3 27 -5 16 4 31 -2 18 5 24 -6 29 3 17 -2 26 4 21 -5 33 2 14 -3 28 5 23 -4 19 3 31 -2 16 4 27 -5 22 3 18 -3 35 4 21 -5 15 3 29 -2 24 4 19 -4 32 3 17 -5 26 4 20 -2 30 3 18 -4 25 5 21 -4 28 2 16 -3 33 4 19 -5 23 3 27 -2 17 4 31 -3 20 3 24 -4 18 5 29 -4 22 2 26 -3 15 4 30 -2 21 3 19H24Z'/%3E%3C/svg%3E");
+  --tear-right: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 1200' preserveAspectRatio='none'%3E%3Cpath transform='matrix(-1 0 0 1 24 0)' d='M24 0H11l2 22 -4 19 3 27 -5 16 4 31 -2 18 5 24 -6 29 3 17 -2 26 4 21 -5 33 2 14 -3 28 5 23 -4 19 3 31 -2 16 4 27 -5 22 3 18 -3 35 4 21 -5 15 3 29 -2 24 4 19 -4 32 3 17 -5 26 4 20 -2 30 3 18 -4 25 5 21 -4 28 2 16 -3 33 4 19 -5 23 3 27 -2 17 4 31 -3 20 3 24 -4 18 5 29 -4 22 2 26 -3 15 4 30 -2 21 3 19H24Z'/%3E%3C/svg%3E");
+
+  --torn-top:
+    var(--hero-edge) var(--hero-edge-x) 0 / var(--hero-edge-size)
+      var(--hero-edge-h) no-repeat,
+    linear-gradient(#000 0 0) 0 calc(var(--hero-edge-h) - 1px) / 100% 100%
+      no-repeat;
+
+  position: relative;
+  display: grid;
+  margin-top: calc(-1 * var(--hero-edge-h));
+  overflow: clip;
+  color: var(--ink);
+}
+
+/*
+ * The journey rides up over the hero's foot, cut to the tear. Only its page
+ * and first path are masked: a mask on the journey itself would flatten its
+ * layers, and the tag and step bar have to sit above the thread.
+ */
+
+.journey::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: var(--canvas);
+  -webkit-mask: var(--torn-top);
+  mask: var(--torn-top);
+  pointer-events: none;
+}
+
+.journey h2 {
+  margin: 0;
+  color: var(--moss);
+  font-size: clamp(1.25rem, 4.2vw, 2.7rem);
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.journey p {
+  margin: 0;
+}
+
+.journey :global(.button) {
+  gap: 0.5rem;
+  padding-inline: 1.1rem;
+  white-space: nowrap;
+}

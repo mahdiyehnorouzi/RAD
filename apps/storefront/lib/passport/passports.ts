@@ -231,16 +231,6 @@ export function findPassport(
   return passports.find((item) => item.radNumber === radNumber);
 }
 
-export function passportForProduct(
-  passports: RadPassport[],
-  product: { slug: string; radNumber?: number },
-) {
-  return (
-    passports.find((item) => item.slug === product.slug) ??
-    findPassport(passports, product.radNumber)
-  );
-}
-
 export function formatPassportName(
   passport: Pick<RadPassport, "code" | "name">,
   locale: "fa" | "en",

@@ -1,6 +1,6 @@
 import type { LocalizedText } from "@rad/types";
 
-export type PriceRange = {
+type PriceRange = {
   id: string;
   /** Whole toman, inclusive; `null` leaves that side open. */
   min: number | null;

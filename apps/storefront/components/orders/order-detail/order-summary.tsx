@@ -51,8 +51,16 @@ export function OrderSummary({
 
   const facts = [
     { icon: Tag, label: t("orderId"), value: order.id, ltr: true },
-    { icon: CalendarDays, label: t("orderDate"), value: formatDate(order.createdAt) },
-    { icon: WalletCards, label: t("orderTotal"), value: formatTotal(total, locale) },
+    {
+      icon: CalendarDays,
+      label: t("orderDate"),
+      value: formatDate(order.createdAt),
+    },
+    {
+      icon: WalletCards,
+      label: t("orderTotal"),
+      value: formatTotal(total, locale),
+    },
     {
       icon: MapPin,
       label: t("shippingAddress"),
@@ -60,10 +68,23 @@ export function OrderSummary({
       soft: true,
     },
     ...(order.trackingCode
-      ? [{ icon: PackageSearch, label: t("trackingCode"), value: order.trackingCode, ltr: true }]
+      ? [
+          {
+            icon: PackageSearch,
+            label: t("trackingCode"),
+            value: order.trackingCode,
+            ltr: true,
+          },
+        ]
       : []),
     ...(order.estimatedDeliveryAt
-      ? [{ icon: Truck, label: t("estimatedDelivery"), value: formatDate(order.estimatedDeliveryAt) }]
+      ? [
+          {
+            icon: Truck,
+            label: t("estimatedDelivery"),
+            value: formatDate(order.estimatedDeliveryAt),
+          },
+        ]
       : []),
   ];
 

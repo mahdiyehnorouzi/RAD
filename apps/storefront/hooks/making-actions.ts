@@ -1,12 +1,23 @@
-import type {ChangeRequest, FeasibilityDecision, FiringRecord, MakingBrief, MakingCommission, MakingStageId, PhotoKind, PreKilnProposal, QuoteProposal, StageMessage} from "@/components/making/type";
+import type {
+  ChangeRequest,
+  FeasibilityDecision,
+  FiringRecord,
+  MakingBrief,
+  MakingCommission,
+  MakingStageId,
+  PhotoKind,
+  PreKilnProposal,
+  QuoteProposal,
+  StageMessage,
+} from "@/components/making/type";
 import type { PolicyVersions } from "@rad/types";
-import type {LocaleCopy} from "@/types/locale";
+import type { LocaleCopy } from "@/types/locale";
 import { createSubmittedCommission, newEntityId, touch } from "@/lib/making";
-export function loc(fa: string, en: string): LocaleCopy {
+function loc(fa: string, en: string): LocaleCopy {
   return { fa, en };
 }
 
-export function withMessage(
+function withMessage(
   commission: MakingCommission,
   message: Omit<StageMessage, "id" | "createdAt">,
 ): MakingCommission {
@@ -16,7 +27,10 @@ export function withMessage(
     createdAt: Date.now(),
   };
   if (message.internal) {
-    return { ...commission, internalNotes: [...commission.internalNotes, entry] };
+    return {
+      ...commission,
+      internalNotes: [...commission.internalNotes, entry],
+    };
   }
   return { ...commission, messages: [...commission.messages, entry] };
 }
@@ -31,7 +45,11 @@ export type MakingActions = {
   }) => MakingCommission;
   addMessage: (
     id: string,
-    input: { author: StageMessage["author"]; body: LocaleCopy; internal?: boolean },
+    input: {
+      author: StageMessage["author"];
+      body: LocaleCopy;
+      internal?: boolean;
+    },
   ) => void;
   artistDecide: (
     id: string,
@@ -42,12 +60,20 @@ export type MakingActions = {
       alternative?: LocaleCopy;
     },
   ) => void;
-  customerResolveChange: (id: string, accept: boolean, note?: LocaleCopy) => void;
+  customerResolveChange: (
+    id: string,
+    accept: boolean,
+    note?: LocaleCopy,
+  ) => void;
   artistSendQuote: (id: string, quote: QuoteProposal) => void;
   customerApproveDeposit: (id: string) => void;
   artistPublishUpdate: (
     id: string,
-    input: { note: LocaleCopy; photoKind: PhotoKind; requiresApproval?: boolean },
+    input: {
+      note: LocaleCopy;
+      photoKind: PhotoKind;
+      requiresApproval?: boolean;
+    },
   ) => void;
   artistOpenPreKiln: (id: string, proposal: PreKilnProposal) => void;
   customerApproveKiln: (id: string) => void;
@@ -58,8 +84,13 @@ export type MakingActions = {
 };
 
 export function createMakingActions(
-  update: (id: string, map: (current: MakingCommission) => MakingCommission) => void,
-  setCommissions: (map: (current: MakingCommission[]) => MakingCommission[]) => void,
+  update: (
+    id: string,
+    map: (current: MakingCommission) => MakingCommission,
+  ) => void,
+  setCommissions: (
+    map: (current: MakingCommission[]) => MakingCommission[],
+  ) => void,
 ): MakingActions {
   return {
     submitDesign: (input) => {
@@ -82,7 +113,10 @@ export function createMakingActions(
         if (decision === "decline") {
           const reason =
             payload?.reason ??
-            loc("این طرح در ماده فعلی قابل ساخت نیست.", "This design cannot be made in the current material.");
+            loc(
+              "این طرح در ماده فعلی قابل ساخت نیست.",
+              "This design cannot be made in the current material.",
+            );
           return withMessage(
             touch(
               current,
@@ -90,7 +124,10 @@ export function createMakingActions(
               {
                 actor: "artist",
                 stageId: "feasibility",
-                action: loc("طرح با دلیل رد شد", "Design declined with a reason"),
+                action: loc(
+                  "طرح با دلیل رد شد",
+                  "Design declined with a reason",
+                ),
               },
             ),
             { stageId: "feasibility", author: "artist", body: reason },
@@ -114,14 +151,20 @@ export function createMakingActions(
             {
               actor: "artist",
               stageId: "feasibility",
-              action: loc("تغییر مشخص درخواست شد", "A specific change was requested"),
+              action: loc(
+                "تغییر مشخص درخواست شد",
+                "A specific change was requested",
+              ),
             },
           );
         }
         if (decision === "offer_alternative") {
           const alternative =
             payload?.alternative ??
-            loc("بدیلی ساده‌تر با همین حس پیشنهاد می‌شود.", "A simpler alternative with the same feeling is offered.");
+            loc(
+              "بدیلی ساده‌تر با همین حس پیشنهاد می‌شود.",
+              "A simpler alternative with the same feeling is offered.",
+            );
           return withMessage(
             touch(
               current,
@@ -150,7 +193,10 @@ export function createMakingActions(
       update(id, (current) => {
         const changeRequests = current.changeRequests.map((item) =>
           item.status === "open"
-            ? { ...item, status: accept ? ("accepted" as const) : ("withdrawn" as const) }
+            ? {
+                ...item,
+                status: accept ? ("accepted" as const) : ("withdrawn" as const),
+              }
             : item,
         );
         const next = touch(
@@ -161,11 +207,18 @@ export function createMakingActions(
             stageId: "feasibility",
             action: accept
               ? loc("تغییر پذیرفته شد", "Change accepted")
-              : loc("تغییر رد شد؛ هنرمند بدیل می‌نویسد", "Change declined; artist will write an alternative"),
+              : loc(
+                  "تغییر رد شد؛ هنرمند بدیل می‌نویسد",
+                  "Change declined; artist will write an alternative",
+                ),
           },
         );
         return note
-          ? withMessage(next, { stageId: "feasibility", author: "customer", body: note })
+          ? withMessage(next, {
+              stageId: "feasibility",
+              author: "customer",
+              body: note,
+            })
           : next;
       });
     },
@@ -198,7 +251,10 @@ export function createMakingActions(
           {
             actor: "artist",
             stageId: "quote",
-            action: loc("پیشنهاد و زمان‌بندی ارسال شد", "Quote and schedule sent"),
+            action: loc(
+              "پیشنهاد و زمان‌بندی ارسال شد",
+              "Quote and schedule sent",
+            ),
           },
         ),
       );
@@ -217,14 +273,19 @@ export function createMakingActions(
               approvedAt: Date.now(),
             },
             payments: current.payments.map((item) =>
-              item.kind === "deposit" ? { ...item, status: "paid", at: Date.now() } : item,
+              item.kind === "deposit"
+                ? { ...item, status: "paid", at: Date.now() }
+                : item,
             ),
           },
           {},
           {
             actor: "customer",
             stageId: "approval_deposit",
-            action: loc("مشخصات تأیید و بیعانه پرداخت شد", "Specification accepted and deposit paid"),
+            action: loc(
+              "مشخصات تأیید و بیعانه پرداخت شد",
+              "Specification accepted and deposit paid",
+            ),
           },
         );
       });
@@ -276,7 +337,10 @@ export function createMakingActions(
           {
             actor: "artist",
             stageId: "pre_kiln",
-            action: loc("ایستگاه پیش از کوره باز شد", "Pre-kiln checkpoint opened"),
+            action: loc(
+              "ایستگاه پیش از کوره باز شد",
+              "Pre-kiln checkpoint opened",
+            ),
           },
         ),
       );
@@ -284,12 +348,20 @@ export function createMakingActions(
     customerApproveKiln: (id) => {
       update(id, (current) =>
         touch(
-          { ...current, stage: "firing", nextActor: "artist", kilnLocked: true },
+          {
+            ...current,
+            stage: "firing",
+            nextActor: "artist",
+            kilnLocked: true,
+          },
           {},
           {
             actor: "customer",
             stageId: "pre_kiln",
-            action: loc("کوره تأیید شد — برگشت‌ناپذیر", "Kiln approved — irreversible"),
+            action: loc(
+              "کوره تأیید شد — برگشت‌ناپذیر",
+              "Kiln approved — irreversible",
+            ),
           },
         ),
       );
@@ -309,7 +381,10 @@ export function createMakingActions(
             stageId: "firing",
             action: record.unexpected
               ? loc("نتیجه غیرمنتظره ثبت شد", "Unexpected result recorded")
-              : loc("پخت و کنترل کیفیت ثبت شد", "Firing and quality control recorded"),
+              : loc(
+                  "پخت و کنترل کیفیت ثبت شد",
+                  "Firing and quality control recorded",
+                ),
           },
         ),
       );
@@ -335,7 +410,9 @@ export function createMakingActions(
             stage: "shipping",
             nextActor: "artist",
             payments: current.payments.map((item) =>
-              item.kind === "balance" ? { ...item, status: "paid", at: Date.now() } : item,
+              item.kind === "balance"
+                ? { ...item, status: "paid", at: Date.now() }
+                : item,
             ),
           },
           {},

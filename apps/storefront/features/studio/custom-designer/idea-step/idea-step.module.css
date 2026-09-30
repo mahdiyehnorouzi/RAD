@@ -1,0 +1,153 @@
+/* Upload zone */
+
+.ideaDrop {
+  display: grid;
+  justify-items: center;
+  gap: 0.35rem;
+  width: 100%;
+  padding: 1.6rem 1rem 1.4rem;
+  border: 1.5px dashed #c4b7a3;
+  border-radius: 14px;
+  background: #f6f1e8;
+  color: var(--cs-ink);
+  text-align: center;
+  cursor: pointer;
+  transition:
+    border-color 0.2s ease,
+    background-color 0.2s ease;
+}
+
+.ideaDrop:hover {
+  border-color: var(--cs-green);
+  background: #f2ebdf;
+}
+
+.ideaDropIcon {
+  display: grid;
+  place-items: center;
+  width: 3.2rem;
+  height: 3.2rem;
+  margin-bottom: 0.35rem;
+  border: 1px solid var(--cs-line);
+  border-radius: 50%;
+  background: var(--cs-paper);
+  color: var(--cs-green);
+  transition: transform 0.35s var(--cs-ease);
+}
+
+.ideaDrop:hover .ideaDropIcon {
+  transform: translateY(-3px);
+}
+
+.ideaDrop strong {
+  font-size: 0.98rem;
+  font-weight: 700;
+  line-height: 1.6;
+}
+
+.ideaDrop small {
+  color: var(--cs-muted);
+  font-size: 0.8rem;
+  line-height: 1.6;
+}
+
+.ideaPrompt {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.ideaPromptBox {
+  position: relative;
+}
+
+.ideaPrompt textarea {
+  display: block;
+  width: 100%;
+  min-height: 8.5rem;
+  padding: 0.9rem 1rem 2.2rem;
+  border: 1px solid var(--cs-line);
+  border-radius: 14px;
+  background: var(--cs-paper);
+  color: var(--cs-ink);
+  font-size: 0.95rem;
+  line-height: 1.95;
+  transition: border-color 0.2s ease;
+}
+
+.ideaPrompt textarea:focus {
+  border-color: var(--cs-green);
+}
+
+.ideaCount {
+  position: absolute;
+  bottom: 0.6rem;
+  inset-inline-end: 1rem;
+  color: #8a847b;
+  font-size: 0.74rem;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+}
+
+.ideaTiles {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.6rem;
+}
+
+.ideaTile {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  min-height: 3.2rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--cs-line);
+  border-radius: 12px;
+  background: var(--cs-paper);
+  color: var(--cs-ink);
+  font-size: 0.86rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.ideaTile svg {
+  flex: 0 0 auto;
+  color: var(--cs-green);
+}
+
+.ideaTile:hover:not(:disabled) {
+  border-color: #c3b6a2;
+}
+
+.ideaTile.open {
+  border-color: var(--cs-green);
+  background: #f6f1e8;
+}
+
+.ideaTileCheck {
+  position: absolute;
+  top: -0.4rem;
+  inset-inline-end: -0.4rem;
+  display: grid;
+  place-items: center;
+  width: 1.1rem;
+  height: 1.1rem;
+  border-radius: 50%;
+  background: var(--cs-green);
+  color: var(--cs-paper);
+}
+
+.ideaTileCheck svg {
+  color: var(--cs-paper);
+}
+
+.ideaPanel {
+  padding: 1rem;
+  border: 1px solid var(--cs-line);
+  border-radius: 14px;
+  background: var(--cs-paper);
+}

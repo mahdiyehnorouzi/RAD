@@ -1,1 +1,1 @@
-export { trailCopy, TRAIL_HIDDEN_PATHS, type TrailCopy } from "./trail-copy";
+export { trailCopy, TRAIL_HIDDEN_PATHS } from "./trail-copy";

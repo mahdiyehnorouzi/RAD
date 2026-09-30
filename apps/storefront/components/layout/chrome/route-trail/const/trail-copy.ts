@@ -59,7 +59,5 @@ export const trailCopy = {
   },
 } as const;
 
-export type TrailCopy = (typeof trailCopy)[keyof typeof trailCopy];
-
 /** Home is the root of every trail, so it has nothing to show. */
 export const TRAIL_HIDDEN_PATHS = ["/"];

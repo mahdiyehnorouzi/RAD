@@ -1,11 +1,10 @@
 .favorite-button.compact {
-  inset-inline-end: auto;
   inset-inline-start: 1rem;
   border-radius: 50%;
 }
 
-@media (max-width: 600px) {
-.favorite-button.compact {
+@media (--phone) {
+  .favorite-button.compact {
     inset-inline-start: 0.75rem;
     top: 0.75rem;
   }
@@ -229,7 +228,7 @@ html[dir="rtl"] .favorite-button:not(.compact) .favorite-burst {
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
+@media (--reduced-motion) {
   .favorite-button.is-bursting svg,
   .favorite-burst i {
     animation: none;
@@ -250,18 +249,18 @@ html[dir="rtl"] .favorite-button:not(.compact) .favorite-burst {
   background: rgba(251, 248, 241, 0.9);
 }
 
-@media (max-width: 600px) {
-.account-link {
+@media (--phone) {
+  .account-link {
     display: none;
   }
-.notification-panel {
+  .notification-panel {
     position: fixed;
     top: 76px;
     inset-inline: 0;
     width: auto;
     border-radius: 0 0 var(--radius) var(--radius);
   }
-.toast {
+  .toast {
     inset-inline: 1rem;
     bottom: 1rem;
     width: auto;

@@ -1,0 +1,47 @@
+/* Fills the banner's middle row edge to edge, so the side cards can run off the wall. */
+
+.heroCards {
+  --end: -1;
+  --turn: -180deg;
+  --ease-turn: cubic-bezier(0.65, 0, 0.25, 1);
+  position: relative;
+  z-index: 1;
+  justify-self: stretch;
+  margin-inline: calc(var(--page) * -1);
+  container-type: size;
+  pointer-events: none;
+}
+
+.heroCards[dir="ltr"] {
+  --end: 1;
+  --turn: 180deg;
+}
+
+.heroCardsStage {
+  --card-h: min(34rem, 94cqh, 108cqw);
+  --card-w: calc(var(--card-h) * 0.73);
+  --spread: calc(var(--card-w) * 0.74);
+  --fan-turn: 0deg;
+  --fan-tilt: 0deg;
+  --fan-depth: 7rem;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: var(--card-w);
+  height: var(--card-h);
+  translate: -50% -50%;
+  perspective: 1500px;
+  perspective-origin: 50% 30%;
+  transform-style: preserve-3d;
+  pointer-events: auto;
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+@media (max-width: 700px) {
+  .heroCardsStage {
+    --spread: calc(var(--card-w) * 0.6);
+    --fan-depth: 5rem;
+  }
+}

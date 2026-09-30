@@ -3,7 +3,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { useCart } from "@/components/cart";
+import { useCart } from "@/features/cart";
 import { useLocale } from "@/components/i18n";
 import { useHeaderMotion } from "./hooks";
 import { Heart, Menu as MenuIcon, ShoppingBag, X } from "lucide-react";
@@ -34,7 +34,7 @@ export function Header() {
         aria-label={t("home")}
         onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
       >
-        <Image src="/rad-mark.png" alt="" width={224} height={224} priority />
+        <Image src="/rad-mark.webp" alt="" width={224} height={224} priority />
       </Link>
       <nav className={open ? "nav open" : "nav"} aria-label={t("navAria")}>
         <Link href={href("/products")} onClick={() => setOpen(false)}>

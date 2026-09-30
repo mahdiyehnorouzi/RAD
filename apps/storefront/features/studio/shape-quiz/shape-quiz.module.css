@@ -1,0 +1,128 @@
+/* What shape is my RAD? — built from the approved phone mockup, spread into two columns from 960px. */
+
+.shapeQuiz {
+  --sq-bg: #f4efe7;
+  --sq-sheet: #f9f6f0;
+  --sq-paper: #fdfbf7;
+  --sq-photo: #ece4d8;
+  --sq-ink: #1f2a25;
+  --sq-muted: #5d5850;
+  --sq-green: #263d34;
+  --sq-green-deep: #1b2c25;
+  --sq-line: #e3d9ca;
+  --sq-line-strong: #c9bcaa;
+  --sq-oxide: #8a4938;
+  --sq-sand: #dccab0;
+  --sq-shadow:
+    0 1px 2px rgb(74 54 34 / 0.05), 0 14px 28px -22px rgb(74 54 34 / 0.45);
+  --sq-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --sq-gutter: clamp(1.25rem, 5vw, 3rem);
+  --icon-knock: var(--sq-paper);
+  position: relative;
+  overflow: clip;
+  background: var(--sq-bg);
+  color: var(--sq-ink);
+}
+
+.shapeQuiz ::selection {
+  background: var(--sq-green);
+  color: var(--sq-paper);
+}
+
+.shapeQuiz :where(h1, h2, p) {
+  margin: 0;
+}
+
+.shapeQuiz :where(h1, h2) {
+  color: var(--sq-ink);
+  font-weight: 800;
+  letter-spacing: 0;
+  text-wrap: balance;
+}
+
+.shapeQuiz p {
+  text-wrap: pretty;
+}
+
+.shapeQuiz :where(h1, h2):focus {
+  outline: 0;
+}
+
+.shapeQuiz :where(a, button):focus-visible {
+  outline: 2px solid var(--sq-oxide);
+  outline-offset: 3px;
+}
+
+.sqLayout {
+  display: grid;
+  width: min(100%, 72rem);
+  margin-inline: auto;
+  padding-top: clamp(1.1rem, 3.5vw, 3rem);
+}
+
+/* Head: title, lede and the numbered steps */
+
+.sqHead {
+  display: grid;
+  gap: 0.7rem;
+  padding: 0 var(--sq-gutter) 1.6rem;
+}
+
+.sqHead h1 {
+  font-size: clamp(2.05rem, 8.6vw, 3.3rem);
+  line-height: 1.5;
+}
+
+.sqHead p {
+  max-width: 21rem;
+  color: var(--sq-muted);
+  font-size: 1rem;
+  line-height: 2;
+}
+
+html[dir="ltr"] .sqHead h1 {
+  line-height: 1.15;
+}
+
+html[dir="ltr"] .sqHead p {
+  line-height: 1.7;
+}
+
+/* The paper sheet that holds the question */
+
+.sqSheet {
+  position: relative;
+  z-index: 1;
+  padding: 1.6rem var(--sq-gutter) 2.25rem;
+  border-radius: 24px 24px 0 0;
+  background: var(--sq-sheet);
+  box-shadow:
+    0 -1px 0 rgb(255 255 255 / 0.7),
+    0 -20px 34px -28px rgb(74 54 34 / 0.4);
+  scroll-margin-top: calc(var(--header-height, 68px) + 0.75rem);
+}
+
+@media (--wide) {
+  /* Wide: the head holds the reading-start column, the sheet or the results the other */
+  .sqLayout {
+    width: min(100%, 68rem);
+    grid-template-columns: minmax(0, 23rem) minmax(0, 36rem);
+    justify-content: space-between;
+    align-items: start;
+    gap: 3rem;
+    padding: clamp(2.5rem, 5vw, 4.5rem) var(--sq-gutter) 1rem;
+  }
+
+  .sqHead {
+    position: sticky;
+    top: calc(var(--header-height, 68px) + 2.5rem);
+    padding: 1rem 0 0;
+  }
+
+  .sqSheet {
+    padding: 2.1rem 2.25rem 2.25rem;
+    border: 1px solid var(--sq-line);
+    border-radius: 24px;
+    box-shadow: var(--sq-shadow);
+  }
+}

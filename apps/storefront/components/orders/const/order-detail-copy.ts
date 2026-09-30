@@ -20,7 +20,10 @@ export const orderDetailCopy = {
 };
 
 /** Pill tone for the status badge on the summary card. */
-export const ORDER_STATUS_TONE: Record<StoreOrderStatus, "wait" | "go" | "stop"> = {
+export const ORDER_STATUS_TONE: Record<
+  StoreOrderStatus,
+  "wait" | "go" | "stop"
+> = {
   pending_payment: "wait",
   pending_verification: "wait",
   confirmed: "go",

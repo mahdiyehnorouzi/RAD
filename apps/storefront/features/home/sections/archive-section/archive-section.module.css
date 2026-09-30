@@ -1,0 +1,210 @@
+.homeReveal .revealItem {
+  opacity: 0;
+  transform: translateY(28px);
+}
+
+.homeReveal.visible .revealItem {
+  animation: rad-home-reveal 650ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.homeReveal.visible .revealItem[data-reveal="eyebrow"] {
+  animation-delay: 0ms;
+  margin-bottom: 0.5rem;
+}
+
+.homeReveal.visible .revealItem[data-reveal="heading"] {
+  animation-delay: 100ms;
+}
+
+.homeReveal.visible .revealItem[data-reveal="body"] {
+  animation-delay: 180ms;
+}
+
+.homeReveal.visible .revealItem[data-reveal="media"] {
+  animation-delay: 260ms;
+}
+
+.homeReveal.visible .revealItem[data-reveal="cta"] {
+  animation-delay: 340ms;
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+}
+
+@media (--reduced-motion) {
+  .homeReveal .revealItem,
+  .homeReveal.visible .revealItem {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.archiveSection {
+  --archive-gutter: var(--page);
+  position: relative;
+  overflow: visible;
+  background: color-mix(in srgb, var(--sand) 24%, var(--canvas));
+}
+
+/*
+ * On narrow screens the home's red thread runs down the margin at the reading
+ * start, clear of the heading; on wide ones it passes straight behind the works.
+ */
+
+.archiveThread {
+  position: absolute;
+  inset-inline-start: 0.5rem;
+  display: none;
+  width: 1px;
+  height: 1px;
+}
+
+.archiveThread.top {
+  top: 0.75rem;
+}
+
+.archiveThread.bottom {
+  bottom: 0.75rem;
+}
+
+@media (--tablet) {
+  .archiveThread {
+    display: block;
+  }
+}
+
+.archiveSection > :global(.eyebrow) {
+  margin-bottom: 0.75rem;
+}
+
+.archiveSection :global(.section-heading) {
+  flex-direction: column;
+  align-items: start;
+  gap: clamp(1.25rem, 3vw, 2rem);
+  width: 100%;
+  margin-bottom: clamp(1.5rem, 3vw, 2.5rem);
+  text-align: start;
+}
+
+.archiveSection :global(.section-heading) h2 {
+  font-size: clamp(1.45rem, 15vw, 1.85rem);
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.archiveSection :global(.section-heading) > :global(.button) {
+  align-self: start;
+}
+
+.archiveSection .archiveHeadingPin {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+}
+
+/* One wide featured plate beside a card, then a row of three. */
+
+.homeProducts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: stretch;
+  gap: clamp(1.25rem, 2.5vw, 2rem);
+}
+
+.homeProducts > :global(.rad-card--featured) {
+  grid-column: span 2;
+}
+
+/* Above the home's red thread, which runs on behind the works */
+
+.archiveSection .homeProducts {
+  position: relative;
+  z-index: 6;
+}
+
+.homeProducts > :global(.rad-card) {
+  opacity: 0;
+  translate: 0 28px;
+}
+
+.archiveSection.visible .homeProducts > :global(.rad-card) {
+  animation: rad-card-rise 650ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.archiveSection.visible .homeProducts > :global(.rad-card):nth-child(1) {
+  animation-delay: 80ms;
+}
+
+.archiveSection.visible .homeProducts > :global(.rad-card):nth-child(2) {
+  animation-delay: 180ms;
+}
+
+.archiveSection.visible .homeProducts > :global(.rad-card):nth-child(3) {
+  animation-delay: 280ms;
+}
+
+.archiveSection.visible .homeProducts > :global(.rad-card):nth-child(4) {
+  animation-delay: 380ms;
+}
+
+.archiveSection.visible .homeProducts > :global(.rad-card):nth-child(5) {
+  animation-delay: 480ms;
+}
+
+@media (--reduced-motion) {
+  .homeProducts > :global(.rad-card),
+  .archiveSection.visible .homeProducts > :global(.rad-card) {
+    animation: none;
+    opacity: 1;
+    translate: none;
+  }
+}
+
+@media (--desktop) {
+  .archiveSection:global(.section) {
+    padding-block: clamp(3.25rem, 5.5vw, 5rem);
+  }
+}
+
+@media (--tablet) {
+  .homeProducts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (--phone) {
+  .archiveSection:global(.section) {
+    padding-block: 2rem;
+    padding-inline: 1rem;
+  }
+  .homeProducts {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.75rem;
+  }
+  .homeProducts > :global(.rad-card--featured) {
+    grid-column: auto;
+  }
+}
+
+@keyframes rad-home-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(28px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes rad-card-rise {
+  from {
+    opacity: 0;
+    translate: 0 28px;
+  }
+  to {
+    opacity: 1;
+    translate: none;
+  }
+}

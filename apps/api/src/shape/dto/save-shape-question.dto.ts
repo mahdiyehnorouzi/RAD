@@ -19,7 +19,7 @@ import type { ShapeTrait } from "../type";
 
 export class ShapePhotoDto {
   @ApiProperty({
-    example: "/shape/q1-straight.jpg",
+    example: "/shape/q1-straight.webp",
     description: "Path under the storefront or an absolute http(s) URL",
   })
   @IsString()

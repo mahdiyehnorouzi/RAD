@@ -115,7 +115,7 @@ export const seedCommissions: MakingCommission[] = [
           "Thrown on the wheel; the rim turns slightly inward.",
         ),
         photoKind: "forming",
-        image: "/making/RAD-M-1405-17/forming.png",
+        image: "/making/RAD-M-1405-17/forming.webp",
         imageAlt: loc(
           "دست‌های هنرمند هنگام شکل‌دادن کاسه حیاط مادربزرگ روی چرخ",
           "The artist forming the courtyard bowl on the wheel",
@@ -131,7 +131,7 @@ export const seedCommissions: MakingCommission[] = [
           "Form dried and cleaned; ready for the glaze proposal.",
         ),
         photoKind: "cleaned",
-        image: "/making/RAD-M-1405-17/cleaned.png",
+        image: "/making/RAD-M-1405-17/cleaned.webp",
         imageAlt: loc(
           "کاسه حیاط مادربزرگ در مرحله خشک و پاک‌شده پیش از لعاب",
           "The dried and cleaned courtyard bowl before glazing",
@@ -147,7 +147,7 @@ export const seedCommissions: MakingCommission[] = [
           "G-17 test tile from a previous firing.",
         ),
         photoKind: "tile",
-        image: "/making/RAD-M-1405-17/glaze-tile.png",
+        image: "/making/RAD-M-1405-17/glaze-tile.webp",
         imageAlt: loc(
           "کاشی آزمایشی لعاب زیتونی G-17 روی سنگ‌رس",
           "G-17 olive ash glaze test tile on stoneware",
