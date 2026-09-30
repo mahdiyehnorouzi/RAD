@@ -1,8 +1,13 @@
 import { DataSource, type DataSourceOptions } from "typeorm";
 import { entities } from "./entities";
 
+/** The Compose database used by local API development when no env file is present. */
+export const DEFAULT_DATABASE_URL = "postgresql://rad:rad@localhost:5432/rad";
+
 /** Strip Prisma-style `schema=` query params that `pg` does not understand. */
-export function cleanDatabaseUrl(url = process.env.DATABASE_URL ?? "") {
+export function cleanDatabaseUrl(
+  url = process.env.DATABASE_URL ?? DEFAULT_DATABASE_URL,
+) {
   try {
     const parsed = new URL(url);
     parsed.searchParams.delete("schema");
