@@ -21,6 +21,16 @@ export const STORE_ORDER_STATUS_KEY: Record<StoreOrderStatus, MessageKey> = {
   returned: "shopStageReturned",
 };
 
+/** Clay art per progress stage: an animated `.gif` and a still `.png` share this base path. */
+export const STORE_ORDER_STAGE_ART: Partial<Record<StoreOrderStatus, string>> = {
+  pending_payment: "/orders/stages/pending_payment",
+  pending_verification: "/orders/stages/pending_verification",
+  confirmed: "/orders/stages/confirmed",
+  packing: "/orders/stages/packing",
+  shipped: "/orders/stages/shipped",
+  delivered: "/orders/stages/delivered",
+};
+
 export function shopStageIndex(status: StoreOrderStatus) {
   const index = STORE_ORDER_PROGRESS.indexOf(status);
   return index < 0 ? 0 : index;
