@@ -1,6 +1,6 @@
 import { Check } from "lucide-react";
 import type { Order, StoreOrderStatus } from "@rad/types";
-import { STORE_ORDER_PROGRESS } from "../const";
+import { STORE_ORDER_PROGRESS, STORE_ORDER_STAGE_ART } from "../const";
 
 /** When the order entered each stage, where the order records it. */
 function stageTimes(order: Order): Partial<Record<StoreOrderStatus, number>> {
@@ -47,6 +47,7 @@ export function OrderTimeline({
           const current = index === activeStage;
           const time =
             done || current ? times[STORE_ORDER_PROGRESS[index]] : undefined;
+          const art = STORE_ORDER_STAGE_ART[STORE_ORDER_PROGRESS[index]];
           return (
             <li
               key={stage}
@@ -66,6 +67,19 @@ export function OrderTimeline({
                   </time>
                 ) : null}
               </span>
+              {art ? (
+                <picture className="track-step-art">
+                  {current ? <source srcSet={`${art}.png`} media="(prefers-reduced-motion: reduce)" /> : null}
+                  <img
+                    src={current ? `${art}.gif` : `${art}.png`}
+                    alt=""
+                    width={192}
+                    height={192}
+                    loading="lazy"
+                    decoding="async"
+                  />
+                </picture>
+              ) : null}
             </li>
           );
         })}

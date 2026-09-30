@@ -378,12 +378,13 @@ html[dir="ltr"] .track-cta:hover svg {
 .track-steps li {
   --step-dot: 2.6rem;
   --step-check: 1.75rem;
+  --step-art: 4.25rem;
   position: relative;
   display: grid;
-  grid-template-columns: var(--step-check) var(--step-dot) minmax(0, 1fr);
+  grid-template-columns: var(--step-check) var(--step-dot) minmax(0, 1fr) var(--step-art);
   column-gap: 0.85rem;
   align-items: center;
-  min-height: 4rem;
+  min-height: 4.75rem;
   padding-block: 0.35rem;
 }
 
@@ -490,6 +491,28 @@ html[dir="ltr"] .track-cta:hover svg {
   color: var(--track-muted);
   font-size: 0.76rem;
   font-variant-numeric: tabular-nums;
+}
+
+.track-step-art {
+  display: block;
+  width: var(--step-art);
+  height: var(--step-art);
+}
+
+.track-step-art img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.track-steps li:not(.is-done):not(.is-current) .track-step-art {
+  opacity: 0.55;
+  filter: saturate(0.6);
+}
+
+.track-steps li.is-current .track-step-art {
+  transform: scale(1.15);
 }
 
 /* ——— Cards that carry the sprig ——— */
@@ -998,6 +1021,8 @@ html[dir="ltr"] .order-sprig {
   .track-steps li {
     --step-dot: 2.4rem;
     --step-check: 1.6rem;
+    --step-art: 3.5rem;
+    column-gap: 0.6rem;
   }
 }
 
