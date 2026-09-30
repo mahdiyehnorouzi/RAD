@@ -1,0 +1,255 @@
+.cdLegendHint {
+  margin-inline-start: 0.35rem;
+  color: var(--cs-muted);
+  font-size: 0.76rem;
+  font-weight: 400;
+}
+
+.dimBox input::placeholder {
+  color: #7d776e;
+}
+
+/* Size: one preview that grows along a three-stop track */
+
+.sizeStage {
+  display: grid;
+  gap: 0.9rem;
+  padding: 0.9rem 1rem 1rem;
+  border: 1px solid var(--cs-line);
+  border-radius: 14px;
+  background: #f6f1e8;
+}
+
+.sizePreview {
+  position: relative;
+  display: block;
+  justify-self: center;
+  width: min(100%, 15rem);
+  aspect-ratio: 1.7 / 1;
+}
+
+.sizePreview > span {
+  position: absolute;
+  inset: -50% -20% 0;
+  transform-origin: 50% 92%;
+  transition: transform 0.5s var(--cs-ease);
+}
+
+.sizePreview img {
+  object-fit: contain;
+}
+
+.sizeTrack {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.sizeTrack::before {
+  content: "";
+  position: absolute;
+  top: 0.7rem;
+  inset-inline: calc(100% / 6);
+  height: 2px;
+  border-radius: 2px;
+  background: #d5c9b7;
+}
+
+.sizeStop {
+  display: grid;
+  justify-items: center;
+  gap: 0.4rem;
+  color: var(--cs-muted);
+  font-size: 0.86rem;
+  line-height: 1.4;
+}
+
+.sizeDot {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 1.4rem;
+  height: 1.4rem;
+}
+
+.sizeDot::before {
+  content: "";
+  width: 0.75rem;
+  height: 0.75rem;
+  border: 2px solid #b3a794;
+  border-radius: 50%;
+  background: var(--cs-paper);
+  transition:
+    width 0.3s var(--cs-ease),
+    height 0.3s var(--cs-ease),
+    border-color 0.2s ease,
+    background-color 0.2s ease;
+}
+
+.sizeStop:hover .sizeDot::before {
+  border-color: var(--cs-green);
+}
+
+.sizeStop.checked {
+  color: var(--cs-ink);
+  font-weight: 700;
+}
+
+.sizeStop.checked .sizeDot::before {
+  width: 1.4rem;
+  height: 1.4rem;
+  border: 5px solid var(--cs-green);
+  background: var(--cs-paper);
+  box-shadow: 0 2px 6px rgb(38 61 52 / 0.3);
+}
+
+.sizeReadout {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  margin: 0;
+  padding-top: 0.7rem;
+  border-top: 1px dashed #d5c9b7;
+  color: var(--cs-muted);
+  font-size: 0.86rem;
+}
+
+.sizeReadout svg {
+  color: var(--cs-green);
+}
+
+.sizeReadout b {
+  color: var(--cs-ink);
+  font-weight: 700;
+}
+
+/* Exact dimensions */
+
+.dims {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+.dimBox {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 2.9rem;
+  padding: 0 0.7rem;
+  color: var(--cs-muted);
+  font-size: 0.8rem;
+  cursor: text;
+}
+
+.dimBox input {
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--cs-ink);
+  font-size: 0.92rem;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.dimBox small {
+  font-size: 0.72rem;
+}
+
+/* Colours */
+
+.swatches {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem 0.6rem;
+}
+
+.swatch {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 0.35rem;
+  cursor: pointer;
+}
+
+.swatch input {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.swatchChip {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  aspect-ratio: 1.6 / 1;
+  border-radius: 10px;
+  background: var(--swatch);
+  box-shadow:
+    inset 0 0 0 1px rgb(0 0 0 / 0.08),
+    0 2px 4px rgb(74 54 34 / 0.14);
+  color: #fff;
+  transition: transform 0.25s var(--cs-ease);
+}
+
+.swatchChip::after {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border: 2px solid transparent;
+  border-radius: 13px;
+  transition: border-color 0.2s ease;
+}
+
+.swatch.checked .swatchChip::after {
+  border-color: var(--cs-green);
+}
+
+.swatch:hover .swatchChip {
+  transform: translateY(-2px);
+}
+
+.swatch:has(input:focus-visible) .swatchChip::after {
+  border-color: var(--cs-oxide);
+}
+
+.swatchChip svg {
+  filter: drop-shadow(0 1px 1px rgb(0 0 0 / 0.45));
+}
+
+.swatch.light .swatchChip {
+  color: var(--cs-ink);
+}
+
+.swatch.light .swatchChip svg {
+  filter: none;
+}
+
+.swatchName {
+  color: var(--cs-muted);
+  font-size: 0.76rem;
+  line-height: 1.4;
+}
+
+.swatch.checked .swatchName {
+  color: var(--cs-ink);
+  font-weight: 700;
+}
+
+.swatch.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+@media (min-width: 700px) {
+  .swatches {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+}

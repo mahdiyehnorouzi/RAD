@@ -1,0 +1,79 @@
+.ideaImages {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.ideaImages:empty {
+  display: none;
+}
+
+.ideaUploadGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.6rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ideaUploadGrid li {
+  position: relative;
+  aspect-ratio: 1.6 / 1;
+}
+
+.ideaUploadGrid img {
+  width: 100%;
+  height: 100%;
+  border-radius: 14px;
+  object-fit: cover;
+}
+
+.ideaUploadRemove {
+  position: absolute;
+  top: 0.5rem;
+  inset-inline-end: 0.5rem;
+  display: grid;
+  place-items: center;
+  width: 1.9rem;
+  height: 1.9rem;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgb(250 247 241 / 0.92);
+  color: var(--cs-ink);
+  cursor: pointer;
+}
+
+.ideaUploadAdd {
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 0.45rem;
+  width: 100%;
+  height: 100%;
+  border: 1.5px dashed #cbbfad;
+  border-radius: 14px;
+  background: transparent;
+  color: var(--cs-muted);
+  font-size: 0.78rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+}
+
+.ideaUploadAdd:hover:not(:disabled) {
+  border-color: var(--cs-green);
+}
+
+.ideaUploadAdd i {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border: 1px solid #cbbfad;
+  border-radius: 50%;
+}
+
+.ideaImageErrors {
+  white-space: pre-line;
+}

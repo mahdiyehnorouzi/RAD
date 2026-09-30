@@ -1,0 +1,124 @@
+/* Stepper: dots on a thread */
+
+.cdStepper ol {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cdStepper li {
+  position: relative;
+}
+
+.cdStepper li:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  top: 0.75rem;
+  inset-inline-start: calc(50% + 0.95rem);
+  inset-inline-end: calc(-50% + 0.95rem);
+  height: 1.5px;
+  border-radius: 2px;
+  background: #d8cdbd;
+  transition: background-color 0.4s ease;
+}
+
+.cdStepper li.done::after {
+  background: var(--cs-green);
+}
+
+.cdStepper button {
+  display: grid;
+  justify-items: center;
+  gap: 0.45rem;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--cs-muted);
+  cursor: pointer;
+}
+
+.cdStepper button:disabled {
+  opacity: 1;
+  cursor: default;
+}
+
+.cdStepper i {
+  display: grid;
+  place-items: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  color: var(--cs-paper);
+}
+
+.cdStepper i::before {
+  content: "";
+  grid-area: 1 / 1;
+  width: 0.6rem;
+  height: 0.6rem;
+  border: 1.5px solid #bdb09c;
+  border-radius: 50%;
+  background: var(--cs-paper);
+  transition:
+    width 0.3s var(--cs-ease),
+    height 0.3s var(--cs-ease),
+    background-color 0.3s ease,
+    border-color 0.3s ease;
+}
+
+.cdStepper i svg {
+  position: relative;
+  grid-area: 1 / 1;
+}
+
+.cdStepper .done i::before {
+  width: 1.3rem;
+  height: 1.3rem;
+  border-color: var(--cs-green);
+  background: var(--cs-green);
+}
+
+.cdStepper .current i {
+  box-shadow: 0 0 0 1.5px var(--cs-green);
+}
+
+.cdStepper .current i::before {
+  width: 0.7rem;
+  height: 0.7rem;
+  border-color: var(--cs-green);
+  background: var(--cs-green);
+}
+
+.cdStepper button > span {
+  font-size: 0.72rem;
+  line-height: 1.45;
+  text-align: center;
+}
+
+.cdStepper .done button > span {
+  color: var(--cs-ink);
+}
+
+.cdStepper .current button > span {
+  color: var(--cs-ink);
+  font-weight: 700;
+}
+
+.cdStepper button:not(:disabled):hover i::before {
+  border-color: var(--cs-green);
+}
+
+@media (min-width: 700px) {
+  .cdStepper button > span {
+    font-size: 0.82rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .cdStepper button > span {
+    font-size: 0.66rem;
+  }
+}

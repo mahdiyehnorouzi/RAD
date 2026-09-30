@@ -1,4 +1,4 @@
-import { CustomOrder } from "@/components/studio";
+import { CustomOrder } from "@/features/studio";
 
 export default function Studio() {
   return <CustomOrder />;

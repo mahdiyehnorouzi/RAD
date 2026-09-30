@@ -1,0 +1,298 @@
+/* Hero */
+
+.csHero {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  grid-template-columns: 100%;
+  grid-template-rows: auto minmax(21rem, 1fr) auto;
+  background: #e9dccb;
+}
+
+.csHeroArch {
+  position: relative;
+  z-index: -1;
+  grid-row: 1 / 3;
+  grid-column: 1;
+  overflow: hidden;
+}
+
+.csHeroArch img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 0% 100%;
+}
+
+html[dir="ltr"] .csHeroArch img {
+  transform: scaleX(-1);
+}
+
+.csHeroCopy {
+  grid-row: 1;
+  grid-column: 1;
+  padding: 2rem 1.25rem 0;
+}
+
+.csHeroCopy h1 {
+  max-width: 15ch;
+  font-size: clamp(2.05rem, 9.2vw, 2.75rem);
+  line-height: 1.5;
+}
+
+html[dir="ltr"] .csHeroCopy h1 {
+  line-height: 1.12;
+  letter-spacing: -0.02em;
+}
+
+.csHeroCopy p {
+  max-width: 20rem;
+  margin-top: 0.85rem;
+  color: #4f4a42;
+  font-size: 1rem;
+  line-height: 2;
+}
+
+html[dir="ltr"] .csHeroCopy p {
+  line-height: 1.65;
+}
+
+.csHeroStage {
+  position: relative;
+  grid-row: 2;
+  grid-column: 1;
+}
+
+.csHeroHand {
+  position: absolute;
+  top: 16%;
+  inset-inline-start: 1.25rem;
+  display: grid;
+  justify-items: start;
+  color: var(--cs-hand);
+  font-family: var(--font-hand);
+  font-size: clamp(1.15rem, 5vw, 1.45rem);
+  line-height: 1.55;
+  transform: rotate(-5deg);
+}
+
+html[dir="ltr"] .csHeroHand {
+  transform: rotate(4deg);
+}
+
+.csHeroActions {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  gap: 0.7rem;
+  margin-top: -1.5rem;
+  padding: 1.1rem 1.25rem 0.75rem;
+  background: var(--cs-bg);
+}
+
+.csHeroTear {
+  bottom: calc(100% - 1px);
+  height: 1.75rem;
+}
+
+.csHeroFoot {
+  display: none;
+  bottom: -1px;
+  height: 2rem;
+}
+
+@media (--motion-ok) {
+  /* Motion: the hero settles and the threads draw once, then prints rise in view. */
+  .csHeroArch img {
+    animation: csSettle 1.4s var(--cs-ease) both;
+  }
+
+  html[dir="ltr"] .csHeroArch img {
+    animation-name: csSettleMirror;
+  }
+
+  .csHeroCopy {
+    animation: csRise 0.9s var(--cs-ease) both;
+  }
+
+  .csHeroCopy {
+    animation-delay: 0.1s;
+  }
+}
+
+@media (min-width: 700px) {
+  /* Tablets */
+  .csHero {
+    grid-template-rows: auto minmax(26rem, 1fr) auto;
+  }
+
+  .csHeroCopy {
+    padding: 3rem var(--page) 0;
+  }
+
+  .csHeroCopy p {
+    max-width: 26rem;
+    font-size: 1.05rem;
+  }
+
+  .csHeroHand {
+    inset-inline-start: var(--page);
+  }
+
+  .csHeroActions {
+    display: flex;
+    flex-wrap: wrap;
+    padding-inline: var(--page);
+  }
+}
+
+@media (--wide) {
+  /* Wide: copy beside an arched frame on the window-lit wall. */
+  .csHero {
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+    grid-template-rows: 1fr auto;
+    column-gap: clamp(2rem, 5vw, 5rem);
+    min-height: clamp(38rem, 50vw, 48rem);
+    overflow: hidden;
+    padding: clamp(2.5rem, 4vw, 4rem) max(var(--page), calc((100% - 76rem) / 2))
+      0;
+    background:
+      linear-gradient(rgb(244 239 231 / 0.3), rgb(244 239 231 / 0.3)),
+      url("/studio/window.webp") center / cover #ece2d4;
+  }
+
+  .csHeroArch {
+    z-index: 1;
+    grid-row: 1 / 3;
+    grid-column: 2;
+    align-self: end;
+    justify-self: center;
+    width: min(100%, 31rem);
+    aspect-ratio: 935 / 1140;
+    border: 0.55rem solid var(--cs-paper);
+    border-bottom: 0;
+    border-radius: 999px 999px 0 0;
+    box-shadow:
+      0 -2px 6px rgb(74 54 34 / 0.06),
+      0 30px 60px -30px rgb(74 54 34 / 0.55);
+  }
+
+  .csHeroArch img {
+    object-position: 50% 100%;
+  }
+
+  .csHeroCopy {
+    grid-row: 1;
+    grid-column: 1;
+    align-self: end;
+    padding: 0;
+  }
+
+  .csHeroCopy h1 {
+    max-width: 11ch;
+    font-size: clamp(2.6rem, 4.2vw, 3.9rem);
+    line-height: 1.42;
+  }
+
+  .csHeroCopy p {
+    max-width: 27rem;
+    margin-top: 1.1rem;
+    font-size: 1.1rem;
+  }
+
+  .csHeroStage {
+    z-index: 2;
+    grid-row: 1;
+    grid-column: 2;
+  }
+
+  .csHeroHand {
+    top: 8%;
+    inset-inline-start: -4%;
+    font-size: clamp(1.35rem, 1.9vw, 1.75rem);
+  }
+
+  .csHeroActions {
+    grid-row: 2;
+    grid-column: 1;
+    align-self: start;
+    margin: 2rem 0 0;
+    padding: 0 0 clamp(4.5rem, 7vw, 6.5rem);
+    background: none;
+  }
+
+  .csHeroTear {
+    display: none;
+  }
+
+  .csHeroFoot {
+    display: block;
+  }
+}
+
+@media (max-width: 380px) {
+  .csHeroCopy h1 {
+    font-size: 1.95rem;
+  }
+}
+
+@keyframes csSettle {
+  from {
+    transform: scale(1.05);
+    filter: saturate(0.85) brightness(1.04);
+  }
+}
+
+@keyframes csSettleMirror {
+  from {
+    transform: scaleX(-1) scale(1.05);
+    filter: saturate(0.85) brightness(1.04);
+  }
+  to {
+    transform: scaleX(-1);
+  }
+}
+
+@keyframes csRise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+    filter: blur(4px);
+  }
+}
+
+.csHeroThread {
+  width: 7.5rem;
+  height: 1.9rem;
+  margin-top: 0.1rem;
+}
+
+html[dir="rtl"] .csHeroThread {
+  transform: scaleX(-1);
+}
+
+@media (--wide) {
+  .csHeroThread {
+    width: 9rem;
+    height: 2.3rem;
+  }
+}
+
+@media (--motion-ok) {
+  .csHeroActions > :global(a) {
+    animation: csRise 0.9s var(--cs-ease) both;
+    animation-delay: 0.3s;
+  }
+
+  .csHeroThread path {
+    animation: csDraw 1.2s 0.7s var(--cs-ease) forwards;
+  }
+}
+
+@keyframes csDraw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}

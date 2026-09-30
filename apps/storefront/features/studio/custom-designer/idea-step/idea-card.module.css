@@ -1,0 +1,75 @@
+/* RAD IDEA card */
+
+.ideaCard {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 42%;
+  min-height: 8rem;
+  overflow: hidden;
+  border-radius: 14px;
+  background: var(--cs-card);
+}
+
+.ideaCardText {
+  display: grid;
+  align-content: center;
+  gap: 0.4rem;
+  padding: 0.9rem 1rem;
+}
+
+.ideaCardId {
+  justify-self: start;
+  color: var(--cs-ink);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+html[dir="ltr"] .ideaCardId {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 0.74rem;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+}
+
+.ideaCardText p {
+  margin: 0;
+  color: var(--cs-ink);
+  font-size: 0.84rem;
+  line-height: 1.85;
+  overflow-wrap: anywhere;
+}
+
+.ideaCardText .ideaCardNote {
+  color: var(--cs-muted);
+  font-size: 0.76rem;
+}
+
+.ideaCardArt {
+  position: relative;
+  display: grid;
+  place-items: center;
+  margin: 0;
+  background: #efe7da;
+}
+
+.ideaCardArt img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.ideaCardPaper {
+  display: grid;
+  place-items: center;
+  width: 78%;
+  aspect-ratio: 1 / 1;
+  background: #fbf8f2;
+  box-shadow: 0 6px 14px -8px rgb(74 54 34 / 0.45);
+  color: #3a3631;
+  transform: rotate(4deg);
+}
+
+html[dir="ltr"] .ideaCardPaper {
+  transform: rotate(-4deg);
+}

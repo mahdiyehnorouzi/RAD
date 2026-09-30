@@ -1,0 +1,306 @@
+.sqField {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.sqField legend {
+  display: grid;
+  gap: 0.3rem;
+  width: 100%;
+  padding: 0;
+}
+
+.sqStage {
+  color: var(--sq-oxide);
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+.sqField h2 {
+  font-size: clamp(1.7rem, 7vw, 2.2rem);
+  line-height: 1.6;
+}
+
+html[dir="ltr"] .sqField h2 {
+  line-height: 1.2;
+}
+
+.sqHint {
+  max-width: 24rem;
+  color: var(--sq-muted);
+  font-size: 0.97rem;
+  line-height: 2;
+}
+
+/* Outranks the .shapeQuiz p reset in shape-quiz.module.css. */
+.sqField .sqHint {
+  margin-top: 0.45rem;
+}
+
+html[dir="ltr"] .sqHint {
+  line-height: 1.65;
+}
+
+/* Answer cards: radio, words, photograph at the reading end */
+
+.sqChoices {
+  display: grid;
+  gap: 0.85rem;
+  margin-top: 1.4rem;
+}
+
+.sqChoice {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 46%);
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.55rem;
+  padding-inline-start: 1rem;
+  border: 1.5px solid var(--sq-line);
+  border-radius: 16px;
+  background: var(--sq-paper);
+  box-shadow: 0 1px 2px rgb(74 54 34 / 0.05);
+  cursor: pointer;
+  transition:
+    border-color 0.25s ease,
+    box-shadow 0.3s ease,
+    transform 0.3s var(--sq-ease);
+}
+
+.sqChoice > input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.sqChoice:has(> input:focus-visible) {
+  outline: 2px solid var(--sq-oxide);
+  outline-offset: 3px;
+}
+
+.sqChoice:hover {
+  border-color: var(--sq-line-strong);
+}
+
+.sqChoice.checked {
+  border-color: var(--sq-green);
+  box-shadow: 0 16px 28px -20px rgb(38 61 52 / 0.6);
+}
+
+.sqRadio {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 1.4rem;
+  height: 1.4rem;
+  border: 1.5px solid #a99d8a;
+  border-radius: 50%;
+  background: var(--sq-paper);
+  transition: border-color 0.2s ease;
+}
+
+.sqRadio::after {
+  content: "";
+  width: 0.72rem;
+  height: 0.72rem;
+  border-radius: 50%;
+  background: var(--sq-green);
+  transform: scale(0);
+  transition: transform 0.35s var(--sq-ease);
+}
+
+.checked .sqRadio {
+  border-color: var(--sq-green);
+}
+
+.checked .sqRadio::after {
+  transform: scale(1);
+}
+
+.sqChoiceCopy {
+  display: grid;
+  align-self: start;
+  gap: 0.3rem;
+  padding-top: 0.85rem;
+}
+
+.sqChoiceTitle {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.sqChoiceTitle strong {
+  font-size: 1.08rem;
+  font-weight: 800;
+  line-height: 1.6;
+}
+
+.sqChoiceNote {
+  padding-inline-start: 2.1rem;
+  color: var(--sq-muted);
+  font-size: 0.86rem;
+  line-height: 1.9;
+}
+
+html[dir="ltr"] .sqChoiceTitle strong {
+  line-height: 1.3;
+}
+
+html[dir="ltr"] .sqChoiceNote {
+  line-height: 1.5;
+}
+
+.sqChoicePhoto {
+  position: relative;
+  display: block;
+  aspect-ratio: 1 / 0.94;
+  overflow: hidden;
+  border-radius: 11px;
+  background: var(--sq-photo);
+}
+
+.sqChoicePhoto img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.6s var(--sq-ease);
+}
+
+.sqChoice:hover .sqChoicePhoto img {
+  transform: scale(1.04);
+}
+
+/* Actions */
+
+.sqActions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1.6rem;
+}
+
+.sqNext,
+.sqBack {
+  font: inherit;
+  cursor: pointer;
+}
+
+.sqNext {
+  position: relative;
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  justify-content: center;
+  min-height: 3.5rem;
+  padding: 0 3rem;
+  border: 0;
+  border-radius: 999px;
+  background: var(--sq-green);
+  color: var(--sq-paper);
+  font-size: 1.02rem;
+  font-weight: 700;
+  transition: background-color 0.2s ease;
+}
+
+.sqNext svg {
+  position: absolute;
+  inset-inline-end: 1.2rem;
+  transition: transform 0.3s var(--sq-ease);
+}
+
+.sqNext:hover:not(:disabled) {
+  background: var(--sq-green-deep);
+}
+
+.sqNext:hover:not(:disabled) svg {
+  transform: translateX(-3px);
+}
+
+html[dir="ltr"] .sqNext:hover:not(:disabled) svg {
+  transform: translateX(3px);
+}
+
+.sqNext:disabled {
+  background: color-mix(in srgb, var(--sq-green) 38%, var(--sq-sheet));
+  cursor: not-allowed;
+}
+
+.sqBack {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 3.5rem;
+  height: 3.5rem;
+  padding: 0;
+  border: 1.5px solid rgb(31 42 37 / 0.22);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--sq-ink);
+  transition:
+    border-color 0.2s ease,
+    background-color 0.2s ease;
+}
+
+.sqBack:hover {
+  border-color: var(--sq-green);
+  background: var(--sq-paper);
+}
+
+.sqHome {
+  display: block;
+  width: fit-content;
+  margin: 1.1rem auto 0;
+  padding: 0.35rem 0.5rem;
+  color: var(--sq-ink);
+  font-size: 0.92rem;
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--sq-ink) 35%, transparent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.5em;
+  transition: text-decoration-color 0.2s ease;
+}
+
+.sqHome:hover {
+  text-decoration-color: var(--sq-oxide);
+}
+
+@media (--motion-ok) {
+  /* Motion: the question slides in along the reading direction; results rise; the thread draws once */
+  .sqBody {
+    --sq-from: -18px;
+    animation: sq-step-in 0.5s var(--sq-ease) both;
+  }
+
+  html[dir="ltr"] .sqBody,
+  .sqBody[data-way="back"] {
+    --sq-from: 18px;
+  }
+
+  html[dir="ltr"] .sqBody[data-way="back"] {
+    --sq-from: -18px;
+  }
+}
+
+@media (--wide) {
+  .sqChoiceCopy {
+    align-self: center;
+    padding-top: 0;
+  }
+
+  .sqChoiceTitle strong {
+    font-size: 1.15rem;
+  }
+}
+
+@keyframes sq-step-in {
+  from {
+    opacity: 0;
+    transform: translateX(var(--sq-from));
+  }
+}
