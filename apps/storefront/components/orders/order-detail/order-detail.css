@@ -1,78 +1,761 @@
-.order-detail-heading h1 {
-  font-size: clamp(2.4rem, 5vw, 4.5rem);
-  line-height: 1.15;
-  margin: 0;
-}
+/* Order tracking: paper cards on the cream account page, kiln-green actions, oxide threads. */
 
-.order-detail-heading p {
-  max-width: 40rem;
-  margin: 0.85rem 0 1.25rem;
-  color: #5c574f;
-}
-
-.order-detail-card {
+.order-detail {
+  --track-paper: #fbf8f2;
+  --track-line: #e4dbcc;
+  --track-line-strong: #cfc4b2;
+  --track-green: #263d34;
+  --track-oxide: #8a4938;
+  --track-wash: #f5e2d4;
+  --track-sage: #e5e7de;
+  --track-sand: #efe6d8;
+  --track-ink: #1c2622;
+  --track-muted: #6c675e;
+  --track-radius: 14px;
+  --track-shadow:
+    0 1px 2px rgb(38 61 52 / 0.05), 0 10px 26px -16px rgb(38 61 52 / 0.22);
   display: grid;
-  gap: 1.5rem;
+  gap: 1.25rem;
+  color: var(--track-ink);
 }
 
-.order-detail .order-card {
-  padding: clamp(1.25rem, 3vw, 2rem);
-  border-radius: var(--radius);
-  background: var(--paper);
-}
+/* ——— Heading ——— */
 
-.order-detail dl {
+.track-heading {
+  position: relative;
   display: grid;
-  gap: 1rem;
+  gap: 0.4rem;
+  padding-block: 0.75rem 0.5rem;
+  padding-inline-end: clamp(6rem, 22vw, 9rem);
+}
+
+.track-heading .order-sprig {
+  position: absolute;
+  inset-inline-end: 0;
+  top: 0;
+  width: clamp(5.5rem, 20vw, 8rem);
+}
+
+.track-eyebrow,
+.order-detail h2.track-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
   margin: 0;
+  color: var(--track-oxide);
+  font-size: 0.92rem;
+  font-weight: var(--font-weight-medium);
+  line-height: 1.6;
 }
 
-.order-detail dt {
-  color: #71665b;
+.track-eyebrow::before {
+  width: 1.9rem;
+  height: 1px;
+  flex: none;
+  background: currentColor;
+  content: "";
 }
 
-.order-detail dd {
-  margin: 0;
-  font-weight: 700;
+.track-heading h1 {
+  margin: 0.15rem 0 0;
+  color: var(--track-ink);
+  font-size: clamp(2.1rem, 5vw, 3.2rem);
+  font-weight: 800;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
 }
 
-.order-detail .form-error {
-  color: #8f2e20;
+.track-heading p {
+  max-width: 34rem;
+  margin: 0.2rem 0 0;
+  color: var(--track-muted);
+  font-size: 0.98rem;
+  line-height: 1.95;
 }
 
-.order-artwork {
+/* ——— Layout ——— */
+
+.track-layout,
+.track-aside,
+.track-main {
   display: grid;
-  grid-template-columns: 7.5rem minmax(0, 1fr);
-  gap: 1rem;
+  gap: 1.25rem;
+  align-content: start;
+  min-width: 0;
+}
+
+.track-card {
+  position: relative;
+  padding: clamp(1.15rem, 3vw, 1.6rem);
+  border: 1px solid var(--track-line);
+  border-radius: var(--track-radius);
+  background: var(--track-paper);
+  box-shadow: var(--track-shadow);
+}
+
+.order-detail [id] {
+  scroll-margin-top: calc(var(--header-height) + 1.25rem);
+}
+
+/* ——— Summary ——— */
+
+.track-summary {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.track-works {
+  display: grid;
+  gap: 1.1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.track-work {
+  display: grid;
+  grid-template-columns: 8.75rem minmax(0, 1fr);
+  gap: 1.1rem;
   align-items: center;
 }
 
-.order-art {
-  display: block;
+.track-work-art {
   position: relative;
-  width: 7.5rem;
-  height: 9rem;
-  border-radius: 0.8rem;
+  aspect-ratio: 1 / 1.05;
   overflow: hidden;
+  border-radius: 12px;
   background: var(--sand);
 }
 
-.order-art .product-photo {
+.track-work-art img,
+.track-work-art .product-photo {
   width: 100%;
   height: 100%;
   object-fit: cover;
   object-position: center;
 }
 
-.order-artwork h2 {
-  margin: 0.2rem 0;
-  font-size: 1.35rem;
+.track-work-copy {
+  display: grid;
+  align-content: center;
+  gap: 0.35rem;
+  min-width: 0;
 }
 
-.order-next {
-  display: grid;
-  gap: 0.85rem;
+.track-work-copy h2 {
+  margin: 0.2rem 0 0.1rem;
+  font-size: clamp(1.2rem, 2.6vw, 1.5rem);
+  font-weight: 800;
+  line-height: 1.5;
+}
+
+.track-work-copy p {
   margin: 0;
+  color: var(--track-muted);
+  font-size: 0.88rem;
+  line-height: 1.7;
+}
+
+.track-work-copy b {
+  color: var(--track-ink);
+  font-weight: 600;
+}
+
+.track-status {
+  display: inline-flex;
+  justify-self: start;
+  align-items: center;
+  gap: 0.5rem;
+  max-width: 100%;
+  padding: 0.45rem 0.85rem;
+  border-radius: 10px;
+  background: var(--track-wash);
+  color: var(--track-oxide);
+  font-size: 0.85rem;
+  font-weight: 600;
+  line-height: 1.5;
+  text-wrap: balance;
+}
+
+.track-status svg {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  stroke-width: 1.7;
+}
+
+.track-status.is-go {
+  background: color-mix(in srgb, var(--track-green) 10%, var(--track-paper));
+  color: var(--track-green);
+}
+
+.track-status.is-stop {
+  background: color-mix(in srgb, #8f2e20 9%, var(--track-paper));
+  color: #8f2e20;
+}
+
+.track-facts {
+  display: grid;
+  margin: 0;
+  border-top: 1px solid var(--track-line);
+}
+
+.track-facts > div {
+  display: grid;
+  grid-template-columns: minmax(7.25rem, auto) minmax(0, 1fr);
+  gap: 1rem;
+  align-items: start;
+  padding: 0.9rem 0;
+  border-bottom: 1px solid var(--track-line);
+}
+
+.track-facts > div:last-child {
+  border-bottom: 0;
+  padding-bottom: 0.2rem;
+}
+
+.track-facts dt {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  color: var(--track-muted);
+  font-size: 0.9rem;
+  line-height: 1.7;
+}
+
+.track-facts dt svg {
+  width: 19px;
+  height: 19px;
+  flex: none;
+  color: color-mix(in srgb, var(--track-ink) 72%, transparent);
+  stroke-width: 1.5;
+}
+
+.track-facts dd {
+  margin: 0;
+  color: var(--track-ink);
+  font-weight: 700;
+  line-height: 1.7;
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+}
+
+html[dir="rtl"] .track-facts dd[dir="ltr"] {
+  text-align: start;
+}
+
+.track-facts > div.is-soft dd {
+  color: color-mix(in srgb, var(--track-ink) 82%, transparent);
+  font-weight: 500;
+  line-height: 1.9;
+  text-align: start;
+}
+
+.track-cta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  min-height: 3.35rem;
+  padding: 0 1.25rem;
+  border-radius: 10px;
+  background: var(--track-green);
+  color: var(--track-paper);
+  font-size: 1rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 200ms ease-out;
+}
+
+.track-cta svg {
+  width: 18px;
+  height: 18px;
+  stroke-width: 1.8;
+  transition: transform 220ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.track-cta:hover {
+  background: color-mix(in srgb, var(--track-green) 84%, black);
+}
+
+.track-cta:hover svg {
+  transform: translateX(-3px);
+}
+
+html[dir="ltr"] .track-cta:hover svg {
+  transform: translateX(3px);
+}
+
+/* ——— Address ——— */
+
+.track-address {
+  display: grid;
+  gap: 0.7rem;
+  padding-inline-end: clamp(6.5rem, 24vw, 8rem);
+}
+
+.track-address .order-sprig {
+  position: absolute;
+  inset-inline-end: 0.9rem;
+  top: 50%;
+  width: clamp(5rem, 18vw, 6.5rem);
+  translate: 0 -50%;
+}
+
+.track-kicker,
+.order-detail h2.track-kicker {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  color: var(--track-oxide);
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.6;
+}
+
+.track-kicker svg {
+  width: 20px;
+  height: 20px;
+  flex: none;
+  stroke-width: 1.6;
+}
+
+.track-address address {
+  display: grid;
+  gap: 0.1rem;
+  color: color-mix(in srgb, var(--track-ink) 86%, transparent);
+  font-size: 0.95rem;
+  font-style: normal;
+  line-height: 1.95;
+}
+
+.track-address address span[dir="ltr"] {
+  justify-self: start;
+  font-variant-numeric: tabular-nums;
+}
+
+.track-chip {
+  display: inline-flex;
+  justify-self: start;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 2.5rem;
+  padding: 0.35rem 0.85rem;
+  border: 1px solid var(--track-line-strong);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--track-paper) 60%, white);
+  color: var(--track-ink);
+  font-size: 0.84rem;
+  line-height: 1.6;
+  text-decoration: none;
+  transition:
+    border-color 180ms ease-out,
+    color 180ms ease-out;
+}
+
+.track-chip svg {
+  width: 16px;
+  height: 16px;
+  flex: none;
+  stroke-width: 1.6;
+}
+
+.track-chip:hover {
+  border-color: var(--track-green);
+  color: var(--track-green);
+}
+
+/* ——— Progress ——— */
+
+.track-steps {
+  display: grid;
+  margin: 1rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.track-steps li {
+  --step-dot: 2.6rem;
+  --step-check: 1.75rem;
+  position: relative;
+  display: grid;
+  grid-template-columns: var(--step-check) var(--step-dot) minmax(0, 1fr);
+  column-gap: 0.85rem;
+  align-items: center;
+  min-height: 4rem;
+  padding-block: 0.35rem;
+}
+
+.track-steps li:not(:last-child)::after {
+  position: absolute;
+  inset-inline-start: calc(
+    var(--step-check) + 0.85rem + var(--step-dot) / 2 - 0.5px
+  );
+  top: 50%;
+  bottom: -50%;
+  width: 1px;
+  background: var(--track-line-strong);
+  content: "";
+}
+
+.track-steps li.is-done::after {
+  background: var(--track-green);
+}
+
+.track-step-check {
+  display: grid;
+  place-items: center;
+  width: var(--step-check);
+  height: var(--step-check);
+  border-radius: 50%;
+}
+
+.track-steps li.is-done .track-step-check {
+  background: color-mix(in srgb, var(--track-green) 9%, var(--track-paper));
+  color: var(--track-green);
+}
+
+.track-step-check svg {
+  width: 15px;
+  height: 15px;
+  stroke-width: 2.2;
+}
+
+.track-steps i {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: var(--step-dot);
+  height: var(--step-dot);
+  border: 1px solid var(--track-line-strong);
+  border-radius: 50%;
+  background: var(--track-paper);
+  color: color-mix(in srgb, var(--track-ink) 68%, transparent);
+  font-size: 0.95rem;
+  font-style: normal;
+}
+
+.track-steps li.is-done i,
+.track-steps li.is-current i {
+  border-color: var(--track-green);
+  background: var(--track-green);
+  color: var(--track-paper);
+}
+
+.track-steps li.is-current i {
+  box-shadow: 0 0 0 6px color-mix(in srgb, var(--track-green) 13%, transparent);
+  animation: track-halo 2.8s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+
+@keyframes track-halo {
+  50% {
+    box-shadow: 0 0 0 9px color-mix(in srgb, var(--track-green) 7%, transparent);
+  }
+}
+
+.track-step-copy {
+  display: grid;
+  gap: 0.05rem;
+  min-width: 0;
+}
+
+.track-step-copy b {
+  color: color-mix(in srgb, var(--track-ink) 72%, transparent);
+  font-size: 1rem;
+  font-weight: 500;
+  line-height: 1.6;
+}
+
+.track-steps li.is-done b {
+  color: var(--track-ink);
+  font-weight: 600;
+}
+
+.track-steps li.is-current b {
+  color: var(--track-ink);
+  font-size: 1.1rem;
+  font-weight: 800;
+}
+
+.track-step-copy em {
+  color: color-mix(in srgb, var(--track-ink) 78%, transparent);
+  font-size: 0.8rem;
+  font-style: normal;
+  font-weight: 600;
+}
+
+.track-step-copy time {
+  color: var(--track-muted);
+  font-size: 0.76rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ——— Cards that carry the sprig ——— */
+
+.track-decorated {
+  position: relative;
+}
+
+.track-decorated > .order-sprig {
+  position: absolute;
+  inset-inline-end: 1rem;
+  top: 50%;
+  width: clamp(5rem, 18vw, 6.75rem);
+  translate: 0 -50%;
+  pointer-events: none;
+}
+
+.track-decorated.is-top > .order-sprig {
+  top: 1.35rem;
+  translate: none;
+}
+
+.order-detail .order-status-guide,
+.order-detail .order-policies {
+  gap: 0.6rem;
+  padding: clamp(1.15rem, 3vw, 1.6rem);
+  border: 1px solid var(--track-line);
+  border-radius: var(--track-radius);
+  background: var(--track-paper);
+  box-shadow: var(--track-shadow);
+}
+
+.order-detail .order-status-guide {
+  padding-inline-end: clamp(6.5rem, 22vw, 8.5rem);
+}
+
+.order-detail .order-status-guide h2 {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  color: var(--track-ink);
+  font-size: clamp(1.25rem, 2.8vw, 1.5rem);
+  font-weight: 800;
+  line-height: 1.5;
+}
+
+.order-detail .order-status-guide h2 svg {
+  width: 26px;
+  height: 26px;
+  flex: none;
+  color: var(--track-oxide);
+  stroke-width: 1.5;
+}
+
+.order-detail .order-status-guide strong {
+  color: var(--track-oxide);
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.order-detail .order-status-guide p,
+.order-detail .order-policies p {
+  color: color-mix(in srgb, var(--track-ink) 78%, transparent);
+  font-size: 0.95rem;
+  line-height: 2;
+}
+
+.order-detail .order-status-guide a {
+  margin-top: 0.15rem;
+  color: var(--track-ink);
+  font-size: 0.88rem;
+  text-decoration-color: color-mix(in srgb, var(--track-ink) 45%, transparent);
+  text-underline-offset: 0.5em;
+}
+
+.order-detail .order-policies h2 {
+  color: var(--track-ink);
+  font-size: clamp(1.3rem, 3vw, 1.6rem);
+  font-weight: 800;
+  line-height: 1.5;
+}
+
+.order-detail .order-policies ul {
+  margin-top: 0.5rem;
+}
+
+.order-detail .order-policies li {
+  align-items: center;
+  padding: 0.85rem 0;
+  border-top-color: var(--track-line);
+  font-size: 0.92rem;
+}
+
+.order-detail .order-policies a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  color: var(--track-ink);
+  text-decoration: none;
+}
+
+.order-detail .order-policies a svg {
+  width: 19px;
+  height: 19px;
+  flex: none;
+  color: color-mix(in srgb, var(--track-ink) 65%, transparent);
+  stroke-width: 1.5;
+}
+
+.order-detail .order-policies a span {
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--track-ink) 40%, transparent);
+  text-underline-offset: 0.5em;
+}
+
+.order-detail .order-policies a:hover span {
+  text-decoration-color: currentColor;
+}
+
+.order-detail .order-policies time {
+  color: color-mix(in srgb, var(--track-ink) 78%, transparent);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ——— What happens next ——— */
+
+.track-next {
+  display: grid;
+  gap: 1rem;
+}
+
+.track-notice {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.8rem;
+  align-items: start;
+  padding: 1rem 1.1rem;
+  border-radius: 12px;
+  background: var(--track-sage);
+}
+
+.track-notice > svg {
+  width: 23px;
+  height: 23px;
+  margin-top: 0.2rem;
+  color: var(--track-oxide);
+  stroke-width: 1.6;
+}
+
+.track-notice.is-go {
+  background: color-mix(in srgb, var(--track-green) 9%, var(--track-paper));
+}
+
+.track-notice.is-go > svg {
+  color: var(--track-green);
+}
+
+.track-notice.is-stop {
+  background: color-mix(in srgb, #8f2e20 8%, var(--track-paper));
+}
+
+.track-notice.is-stop > svg {
+  color: #8f2e20;
+}
+
+.track-notice strong {
+  display: block;
+  color: var(--track-ink);
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.8;
+}
+
+.track-notice span {
+  display: block;
+  margin-top: 0.1rem;
+  color: color-mix(in srgb, var(--track-ink) 68%, transparent);
+  font-size: 0.86rem;
+  line-height: 1.8;
+}
+
+.track-next-body {
+  display: grid;
+  gap: 0.95rem;
+}
+
+.track-receipt-number {
+  display: inline-flex;
+  justify-self: start;
+  align-items: center;
+  gap: 0.55rem;
+  margin: 0;
+  padding: 0.6rem 0.95rem;
+  border-radius: 10px;
+  background: var(--track-sand);
+  color: var(--track-ink);
+  font-size: 0.92rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.track-receipt-number svg {
+  width: 19px;
+  height: 19px;
+  flex: none;
+  color: var(--track-oxide);
+  stroke-width: 1.5;
+}
+
+.track-receipt {
+  display: grid;
+  margin: 0;
+  overflow: hidden;
+  border: 1px solid var(--track-line);
+  border-radius: var(--track-radius);
+  background: var(--track-sand);
+  box-shadow: var(--track-shadow);
+}
+
+.track-receipt img {
+  display: block;
+  width: 100%;
+  max-height: 24rem;
+  object-fit: contain;
+}
+
+.track-receipt figcaption {
+  padding: 0.6rem 1rem;
+  border-top: 1px solid var(--track-line);
+  background: var(--track-paper);
+  color: var(--track-muted);
+  font-size: 0.8rem;
+}
+
+.track-quiet-link {
+  display: inline-flex;
+  justify-self: start;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 2.75rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--track-ink);
+  font: inherit;
+  font-size: 0.94rem;
+  font-weight: 500;
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--track-ink) 40%, transparent);
+  text-underline-offset: 0.5em;
+  cursor: pointer;
+}
+
+.track-quiet-link svg {
+  width: 17px;
+  height: 17px;
+  stroke-width: 1.8;
+}
+
+.track-quiet-link:hover {
+  color: var(--track-green);
+  text-decoration-color: currentColor;
+}
+
+.track-quiet-link:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
 .order-next-actions {
@@ -81,40 +764,59 @@
   gap: 0.75rem;
 }
 
+.order-detail .track-next .button {
+  min-height: 3rem !important;
+  padding: 0 1.25rem !important;
+  border-radius: 10px !important;
+}
+
+.order-detail .track-next .button.outline {
+  border: 1px solid color-mix(in srgb, var(--track-ink) 62%, transparent) !important;
+  background: transparent !important;
+  color: var(--track-ink) !important;
+  text-decoration: none;
+}
+
+.order-detail .track-next .button.outline:hover {
+  border-color: var(--track-green) !important;
+  color: var(--track-green) !important;
+}
+
 .order-pay-card {
   display: grid;
   gap: 0.35rem;
   justify-items: start;
   padding: 1rem 1.1rem;
-  border: 1px solid color-mix(in srgb, var(--line) 88%, transparent);
-  background: color-mix(in srgb, var(--paper) 88%, var(--sand));
+  border: 1px solid var(--track-line);
+  border-radius: 12px;
+  background: var(--track-paper);
 }
 
 .order-pay-card-label {
-  font-size: 0.75rem;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: color-mix(in srgb, var(--ink) 58%, transparent);
+  color: var(--track-muted);
+  font-size: 0.78rem;
 }
 
 .order-pay-card-number {
+  color: var(--track-ink);
   font-size: clamp(1.15rem, 2.4vw, 1.45rem);
   font-weight: 700;
   letter-spacing: 0.04em;
-  color: var(--ink);
+  font-variant-numeric: tabular-nums;
 }
 
 .order-pay-card-meta,
 .order-pay-card-amount {
-  color: color-mix(in srgb, var(--ink) 72%, transparent);
+  color: color-mix(in srgb, var(--track-ink) 72%, transparent);
 }
 
 .order-pay-note {
   margin: 0;
-  color: color-mix(in srgb, var(--ink) 70%, transparent);
+  color: color-mix(in srgb, var(--track-ink) 70%, transparent);
 }
 
 .order-receipt-upload {
+  position: relative;
   display: grid;
   gap: 0.55rem;
   justify-items: start;
@@ -125,40 +827,92 @@
   font-weight: 600;
 }
 
+.order-receipt-file {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.order-receipt-drop {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  width: 100%;
+  min-height: 3.6rem;
+  padding: 0.75rem 1rem;
+  border: 1px dashed var(--track-line-strong);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--track-paper) 55%, white);
+  color: color-mix(in srgb, var(--track-ink) 78%, transparent);
+  font-size: 0.9rem;
+  line-height: 1.6;
+  cursor: pointer;
+  transition:
+    border-color 180ms ease-out,
+    background 180ms ease-out;
+}
+
+.order-receipt-drop span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.order-receipt-drop svg {
+  width: 22px;
+  height: 22px;
+  flex: none;
+  color: var(--track-oxide);
+  stroke-width: 1.5;
+}
+
+.order-receipt-drop:hover {
+  border-color: var(--track-green);
+  background: color-mix(in srgb, var(--track-green) 5%, var(--track-paper));
+}
+
+.order-receipt-file:focus-visible + .order-receipt-drop {
+  outline: 2px solid var(--track-oxide);
+  outline-offset: 3px;
+}
+
+.order-receipt-file[aria-invalid="true"] + .order-receipt-drop {
+  border-color: #8f2e20;
+}
+
+.order-receipt-file:disabled + .order-receipt-drop {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
 .order-tracking-input {
   width: min(100%, 18rem);
+  min-height: 3rem;
+  padding: 0 0.9rem;
+  border: 1px solid var(--track-line-strong);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--track-paper) 55%, white);
   letter-spacing: 0.06em;
 }
 
+.order-tracking-input:focus-visible {
+  border-color: var(--track-green);
+  outline: 2px solid color-mix(in srgb, var(--track-green) 30%, transparent);
+  outline-offset: 1px;
+}
+
 .order-receipt-upload small {
-  color: color-mix(in srgb, var(--ink) 62%, transparent);
-}
-
-.order-next-rejected {
-  padding: 1rem 1.1rem;
-  border-inline-start: 3px solid #8f2e20;
-  background: color-mix(in srgb, #8f2e20 6%, var(--paper));
-}
-
-.order-help {
-  display: grid;
-  gap: 1rem;
-  margin-top: clamp(1.5rem, 3vw, 2.25rem);
-}
-
-.order-next-rejected p {
-  margin: 0;
-}
-
-.order-rejection-reason {
-  color: #8f2e20;
-  font-weight: 600;
+  color: color-mix(in srgb, var(--track-ink) 62%, transparent);
 }
 
 .order-receipt-preview {
-  margin: 0;
   width: min(100%, 14rem);
-  border: 1px solid color-mix(in srgb, var(--line) 88%, transparent);
+  margin: 0;
+  overflow: hidden;
+  border: 1px solid var(--track-line);
+  border-radius: 10px;
   background: #fff;
 }
 
@@ -168,85 +922,91 @@
   height: auto;
 }
 
-.order-timeline {
-  list-style: none;
+.order-detail .form-error {
   margin: 0;
-  padding: 0.25rem 0;
-  position: relative;
-  display: grid;
-  gap: 0;
+  color: #8f2e20;
 }
 
-.order-timeline::before {
-  content: "";
-  position: absolute;
-  top: 1.25rem;
-  bottom: 1.25rem;
-  inset-inline-start: 19px;
-  width: 1px;
-  background: var(--line);
+/* ——— Focus ——— */
+
+.track-cta:focus-visible,
+.track-chip:focus-visible,
+.track-quiet-link:focus-visible,
+.order-detail .order-policies a:focus-visible,
+.order-detail .order-status-guide a:focus-visible {
+  outline: 2px solid var(--track-oxide);
+  outline-offset: 3px;
 }
 
-.order-timeline li {
-  position: relative;
-  display: grid;
-  grid-template-columns: 40px minmax(0, 1fr);
-  gap: 0.85rem;
-  align-items: center;
-  min-height: 3.5rem;
-  padding-block: 0.45rem;
-}
+/* ——— Sprig ——— */
 
-.order-timeline i {
-  position: relative;
-  z-index: 1;
-  width: 40px;
-  height: 40px;
-  display: grid;
-  place-items: center;
-  border: 1px solid var(--line);
-  border-radius: 50%;
-  background: var(--paper);
-  font-style: normal;
-  font-size: 0.85rem;
-}
-
-.order-timeline span {
-  min-width: 0;
-  line-height: 1.45;
-}
-
-.order-timeline li.complete i {
-  background: var(--moss);
-  border-color: var(--moss);
-  color: var(--paper);
-}
-
-.order-timeline li.current i {
-  background: var(--clay);
-  border-color: var(--clay);
-  color: var(--paper);
-}
-
-.order-timeline li.current span {
-  font-weight: 650;
-}
-
-.order-timeline li b {
+.order-sprig {
   display: block;
-  margin-top: 0.15rem;
-  font-size: 0.7rem;
-  color: var(--clay);
-  font-weight: 650;
+  height: auto;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.order-sprig-wash {
+  fill: #ecdfca;
+  opacity: 0.75;
+}
+
+.order-sprig-line path {
+  fill: none;
+  stroke: #9a5a45;
+  stroke-width: 1.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+html[dir="ltr"] .order-sprig {
+  transform: scaleX(-1);
+}
+
+/* ——— Wide: summary and address stay beside the progress ——— */
+
+@media (min-width: 1280px) {
+  .track-layout {
+    grid-template-columns: minmax(24rem, 0.92fr) minmax(0, 1.08fr);
+    align-items: start;
+    gap: 1.5rem;
+  }
+
+  .track-aside {
+    position: sticky;
+    top: calc(var(--header-height) + 1.5rem);
+  }
 }
 
 @media (max-width: 600px) {
-  .order-artwork {
-    grid-template-columns: 5.5rem minmax(0, 1fr);
+  .track-work {
+    grid-template-columns: 7rem minmax(0, 1fr);
+    gap: 0.9rem;
   }
 
-  .order-art {
-    width: 5.5rem;
-    height: 6.75rem;
+  .track-status {
+    padding: 0.4rem 0.7rem;
+    font-size: 0.8rem;
+  }
+
+  .track-facts > div {
+    grid-template-columns: minmax(6.5rem, auto) minmax(0, 1fr);
+  }
+
+  .track-steps li {
+    --step-dot: 2.4rem;
+    --step-check: 1.6rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .track-steps li.is-current i {
+    animation: none;
+  }
+
+  .track-cta svg {
+    transition: none;
   }
 }

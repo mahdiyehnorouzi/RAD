@@ -361,6 +361,7 @@ export const fa = {
     "پس از واریز، تصویر رسید را بارگذاری کنید تا تیم رَد پرداخت را بررسی و تأیید کند.",
   confirmManualPayment: "ارسال رسید و ثبت پرداخت",
   receiptUploadLabel: "تصویر رسید بانکی",
+  receiptChoose: "انتخاب تصویر رسید",
   receiptPreviewAlt: "پیش‌نمایش رسید پرداخت",
   receiptImageError: "فقط تصویر JPEG، PNG یا WebP تا ۱ مگابایت مجاز است.",
   receiptRequired: "برای ادامه، تصویر رسید را انتخاب کنید.",

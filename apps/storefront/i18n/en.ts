@@ -367,6 +367,7 @@ export const en = {
     "After transferring, upload a photo of your receipt so RAD can review and confirm payment.",
   confirmManualPayment: "Submit receipt",
   receiptUploadLabel: "Bank transfer receipt",
+  receiptChoose: "Choose the receipt image",
   receiptPreviewAlt: "Payment receipt preview",
   receiptImageError: "Only JPEG, PNG, or WebP images up to 1 MB are allowed.",
   receiptRequired: "Choose a receipt image to continue.",

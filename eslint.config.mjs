@@ -4,20 +4,25 @@ import nextTs from "eslint-config-next/typescript";
 import prettier from "eslint-config-prettier/flat";
 import globals from "globals";
 
+// ESLint 9 requires the plugin on the same config object as these rule names.
+const reactHookWarnings = {
+  "react-hooks/set-state-in-effect": "warn",
+  "react-hooks/purity": "warn",
+  "react-hooks/refs": "warn",
+  "react-hooks/use-memo": "warn",
+  "react-hooks/preserve-manual-memoization": "warn",
+};
+
 export default defineConfig([
-  ...nextVitals,
+  ...nextVitals.map((config) =>
+    config.plugins?.["react-hooks"]
+      ? { ...config, rules: { ...config.rules, ...reactHookWarnings } }
+      : config,
+  ),
   ...nextTs,
   {
     settings: {
       next: { rootDir: ["apps/storefront/", "apps/admin/"] },
-    },
-    // React Compiler rules: existing violations are tracked as warnings until each is refactored.
-    rules: {
-      "react-hooks/set-state-in-effect": "warn",
-      "react-hooks/purity": "warn",
-      "react-hooks/refs": "warn",
-      "react-hooks/use-memo": "warn",
-      "react-hooks/preserve-manual-memoization": "warn",
     },
   },
   {
@@ -27,6 +32,12 @@ export default defineConfig([
       "apps/*/scripts/**/*.{js,mjs}",
     ],
     languageOptions: { globals: globals.node },
+  },
+  {
+    files: ["**/*.cjs"],
+    rules: {
+      "@typescript-eslint/no-require-imports": "off",
+    },
   },
   // Formatting belongs to Prettier; must stay after every config that can enable style rules.
   prettier,

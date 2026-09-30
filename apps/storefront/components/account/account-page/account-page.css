@@ -321,7 +321,11 @@ html[lang="en"] .account-banner-line {
 }
 
 .account-menu a:hover {
-  border-color: color-mix(in srgb, var(--account-green) 35%, var(--account-line));
+  border-color: color-mix(
+    in srgb,
+    var(--account-green) 35%,
+    var(--account-line)
+  );
 }
 
 .account-menu a:focus-visible {
@@ -418,7 +422,8 @@ html[lang="en"] .account-banner-line {
   }
 
   .account-page.section {
+    --page: 1rem;
     padding-block: 2rem !important;
-    padding-inline: 1rem !important;
+    padding-inline: var(--page) !important;
   }
 }

@@ -4,11 +4,8 @@ import "./order-detail.css";
 import { useEffect, useState } from "react";
 import type { Order } from "@rad/types";
 import { fetchOrder, errorMessage } from "@/lib/api";
-import { productCopy } from "@/lib/catalog/products";
-import { formatTotal } from "@/lib/money";
 import { useCommerce } from "@/components/commerce";
 import { useLocale } from "@/components/i18n";
-import { ProductMedia } from "@/components/product";
 import { useCatalog } from "@/components/catalog";
 import { AccountShell } from "../../account/account-shell";
 import { CardListSkeleton } from "@/components/ui/skeleton";
@@ -19,17 +16,28 @@ import {
   PAYMENT_HELP_STATUSES,
   STORE_ORDER_PROGRESS,
   STORE_ORDER_STATUS_KEY,
-  formatShippingAddress,
   isTerminalStoreStatus,
-  radArtworkNumber,
 } from "../const";
-import { OrderTimeline } from "./order-timeline";
+import { OrderAddress } from "./order-address";
 import { OrderNextAction } from "./order-next-action";
+import { OrderSprig } from "./order-sprig";
+import { OrderSummary } from "./order-summary";
+import { OrderTimeline } from "./order-timeline";
 import { DamageReportPanel } from "./damage-report";
 
 function formatDate(value: number, locale: "fa" | "en") {
   return new Intl.DateTimeFormat(locale === "fa" ? "fa-IR" : "en-US", {
     dateStyle: "medium",
+  }).format(value);
+}
+
+function formatTime(value: number, locale: "fa" | "en") {
+  return new Intl.DateTimeFormat(locale === "fa" ? "fa-IR" : "en-US", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
   }).format(value);
 }
 
@@ -91,10 +99,15 @@ export function OrderDetail({ id }: { id: string }) {
     );
   }
 
-  const stages = STORE_ORDER_PROGRESS.map((stage) => t(STORE_ORDER_STATUS_KEY[stage]));
+  const stages = STORE_ORDER_PROGRESS.map((stage) =>
+    t(STORE_ORDER_STATUS_KEY[stage]),
+  );
   const usdTotal =
     order.usdTotal ??
-    order.slugs.reduce((sum, slug) => sum + (getProduct(slug)?.usdPrice ?? 0), 0);
+    order.slugs.reduce(
+      (sum, slug) => sum + (getProduct(slug)?.usdPrice ?? 0),
+      0,
+    );
   const items = order.slugs
     .map((slug) => getProduct(slug))
     .filter((item): item is NonNullable<typeof item> => Boolean(item));
@@ -111,99 +124,80 @@ export function OrderDetail({ id }: { id: string }) {
     }
   };
 
+  const terminal = isTerminalStoreStatus(order.status);
+
   return (
     <AccountShell>
-    <section className="order-detail section">
-      <header className="order-detail-heading">
-        <span className="eyebrow">{t("ordersEyebrow")}</span>
-        <h1>{t("trackOrder")}</h1>
-        <p>{t("ordersShopNote")}</p>
-      </header>
-      <article className="order-card order-detail-card">
-        {items.map((product) => (
-          <div className="order-artwork" key={product.slug}>
-            <div className="order-art">
-              <ProductMedia product={product} showStatusBadge={false} />
+      <section className="order-detail section">
+        <header className="track-heading">
+          <OrderSprig />
+          <span className="track-eyebrow">{t("ordersEyebrow")}</span>
+          <h1>{t("trackOrder")}</h1>
+          <p>{t("ordersShopNote")}</p>
+        </header>
+
+        <div className="track-layout">
+          <div className="track-aside">
+            <OrderSummary
+              order={order}
+              items={items}
+              products={products}
+              total={locale === "fa" ? order.total : usdTotal}
+              progressHref={terminal ? "#order-next" : "#order-progress"}
+              formatDate={(value) => formatDate(value, locale)}
+            />
+            <OrderAddress order={order} helpHref="#order-help" />
+          </div>
+
+          <div className="track-main">
+            {!terminal ? (
+              <OrderTimeline
+                id="order-progress"
+                order={order}
+                stages={stages}
+                number={number}
+                label={t("orderProgress")}
+                currentLabel={t("youAreHere")}
+                formatTime={(value) => formatTime(value, locale)}
+              />
+            ) : null}
+            <div className="track-decorated">
+              <OrderStatusGuide status={order.status} />
+              <OrderSprig />
             </div>
-            <div>
-              <span>{t("uniquePiece")}</span>
-              <h2>{productCopy(product, locale).name}</h2>
-              <p>
-                {t("artworkNumber")}: {radArtworkNumber(product.slug, products)}
+            {error ? (
+              <p className="form-error" role="alert">
+                {error}
               </p>
+            ) : null}
+            <OrderNextAction
+              id="order-next"
+              order={order}
+              busy={busy}
+              onConfirmPayment={(receipt) =>
+                run(() => confirmDemoPayment(order.id, receipt))
+              }
+              onCancel={() => run(() => cancelOrder(order.id))}
+            />
+            <DamageReportPanel order={order} />
+            {order.policyAcceptance ? (
+              <OrderPolicies acceptance={order.policyAcceptance} />
+            ) : null}
+            <div id="order-help" className="track-decorated is-top">
+              <HelpPanel
+                context="order"
+                orderId={order.id}
+                tone={
+                  PAYMENT_HELP_STATUSES.includes(order.status)
+                    ? "payment"
+                    : "general"
+                }
+              />
+              <OrderSprig />
             </div>
           </div>
-        ))}
-        <dl>
-          <div>
-            <dt>{t("orderId")}</dt>
-            <dd dir="ltr">{order.id}</dd>
-          </div>
-          <div>
-            <dt>{t("orderDate")}</dt>
-            <dd>{formatDate(order.createdAt, locale)}</dd>
-          </div>
-          <div>
-            <dt>{t("orderTotal")}</dt>
-            <dd>{formatTotal(locale === "fa" ? order.total : usdTotal, locale)}</dd>
-          </div>
-          <div>
-            <dt>{t("orderStatus")}</dt>
-            <dd>{t(STORE_ORDER_STATUS_KEY[order.status])}</dd>
-          </div>
-          <div>
-            <dt>{t("shippingAddress")}</dt>
-            <dd>{formatShippingAddress(order.delivery) || "—"}</dd>
-          </div>
-          {order.trackingCode ? (
-            <div>
-              <dt>{t("trackingCode")}</dt>
-              <dd dir="ltr">{order.trackingCode}</dd>
-            </div>
-          ) : null}
-          {order.estimatedDeliveryAt ? (
-            <div>
-              <dt>{t("estimatedDelivery")}</dt>
-              <dd>{formatDate(order.estimatedDeliveryAt, locale)}</dd>
-            </div>
-          ) : null}
-        </dl>
-        {!isTerminalStoreStatus(order.status) ? (
-          <OrderTimeline
-            status={order.status}
-            stages={stages}
-            number={number}
-            label={t("orderProgress")}
-            currentLabel={t("youAreHere")}
-          />
-        ) : null}
-        <OrderStatusGuide status={order.status} />
-        {error ? (
-          <p className="form-error" role="alert">
-            {error}
-          </p>
-        ) : null}
-        <OrderNextAction
-          order={order}
-          busy={busy}
-          onConfirmPayment={(receipt) =>
-            run(() => confirmDemoPayment(order.id, receipt))
-          }
-          onCancel={() => run(() => cancelOrder(order.id))}
-        />
-        <DamageReportPanel order={order} />
-        <div className="order-help">
-          {order.policyAcceptance ? (
-            <OrderPolicies acceptance={order.policyAcceptance} />
-          ) : null}
-          <HelpPanel
-            context="order"
-            orderId={order.id}
-            tone={PAYMENT_HELP_STATUSES.includes(order.status) ? "payment" : "general"}
-          />
         </div>
-      </article>
-    </section>
+      </section>
     </AccountShell>
   );
 }

@@ -65,18 +65,23 @@ export default function GlobalError({
             >
               تلاش دوباره
             </button>
-            <a
-              href="/"
+            <button
+              type="button"
+              onClick={() => {
+                window.location.href = "/";
+              }}
               style={{
+                font: "inherit",
                 padding: "0.6rem 1.4rem",
                 borderRadius: "999px",
                 border: "1px solid currentColor",
+                background: "transparent",
                 color: "inherit",
-                textDecoration: "none",
+                cursor: "pointer",
               }}
             >
               صفحه اصلی
-            </a>
+            </button>
           </div>
         </main>
       </body>

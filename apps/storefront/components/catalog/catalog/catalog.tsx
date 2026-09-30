@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useId, useState } from "react";
 import Link from "next/link";
-import { Check } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, ShoppingBag } from "lucide-react";
 import type { Product } from "@rad/types";
 import { useCart } from "@/features/cart";
 import { useLocale } from "@/components/i18n";
@@ -152,7 +152,8 @@ export function AddToBag({
   icon?: React.ReactNode;
 }) {
   const { add } = useCart();
-  const { t, href } = useLocale();
+  const { locale, t, href } = useLocale();
+  const Forward = locale === "fa" ? ChevronLeft : ChevronRight;
   const { addNotice } = useCommerce();
   const refresh = useCatalogRefresh();
   const [error, setError] = useState("");
@@ -217,7 +218,17 @@ export function AddToBag({
       </button>
       {added ? (
         <Link className="add-to-bag-next" href={href("/cart")}>
-          {t("goToBag")}
+          <svg
+            className="add-to-bag-next-thread"
+            viewBox="0 0 96 56"
+            preserveAspectRatio="none"
+            aria-hidden="true"
+          >
+            <path d="M58 -2c-6 10 8 16 2 26s-22 10-26 20 6 12 2 16" />
+          </svg>
+          <ShoppingBag aria-hidden="true" />
+          <span>{t("goToBag")}</span>
+          <Forward className="add-to-bag-next-arrow" aria-hidden="true" />
         </Link>
       ) : null}
       {error ? (
