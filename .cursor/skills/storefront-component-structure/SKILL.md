@@ -67,6 +67,10 @@ features/cart/
 8. **No new global stylesheets for features.** `globals.css` layers are `reset`, `defaults` and `helpers`; component styles stay unlayered, so they win over those.
 9. **`@counter-style` rules go in `app/globals.css`.** Turbopack renames them inside a module but not the `counter()` calls that use them. Keyframes are fine in a module when the animation that uses them is in the same file.
 10. **A parent sizing a child component uses a custom property the child reads** (`--stroke-width`, `--swatch-size`), or passes a `className`. Don't rely on which module's CSS loads first.
+11. **Classes reused by several components in a feature live in one shared module**, imported under a short name next to `styles`: `import btn from "../studio-btn.module.css"` gives `` className={`${btn.csBtn} ${btn.csBtnSolid}`} ``. Put the feature root's frame classes in the root module (`custom-designer.module.css` imported as `shell`) rather than copying them.
+12. **State set from JavaScript is a data attribute or a module class**, never a plain string like `"is-open"`, which a module can't match. Prefer `data-visible={inView || undefined}` styled as `.card[data-visible]`; use `styles.current` when the state is already a class.
+13. **One `@keyframes` per name per module.** A later definition with the same name silently replaces the first.
+14. **Module load order isn't the old global order.** When two modules set the same property with equal specificity, the winner can flip. Remove the dead declaration, or raise specificity on purpose (`.card.card h2`, `.field .hint`) with a one-line comment naming the rule it beats.
 
 ## Checklist
 
@@ -97,6 +101,11 @@ features/cart/cart-provider/cart-provider.tsx
 .actions .button { ... }      # becomes a hashed .button that matches nothing
 # GOOD
 .actions :global(.button) { ... }
+
+# BAD — state as a plain class string
+<div className={`${styles.step} ${done ? "is-done" : ""}`}>
+# GOOD
+<div className={styles.step} data-done={done || undefined}>   # .step[data-done]
 
 # BAD — app importing a grandchild
 import { CartLine } from "@/features/cart/cart-page/cart-line"
