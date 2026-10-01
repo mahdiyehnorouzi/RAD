@@ -23,7 +23,7 @@ import "./catalog-card.css";
 
 /** Shop-floor card: photograph with a pencilled number, a torn paper label beneath. */
 export function CatalogCard({ product }: { product: Product }) {
-  const { locale, href, number } = useLocale();
+  const { locale, href, number, t } = useLocale();
   const c = productCardCopy[locale];
   const copy = productCopy(product, locale);
   const { status, label, inBag, reserved, purchasable } =
@@ -90,6 +90,12 @@ export function CatalogCard({ product }: { product: Product }) {
             {price.unit ? <span>{price.unit}</span> : null}
           </p>
         </div>
+        {markDigits ? (
+          <p className="plp-card-archive">
+            <span>{t("archiveNumber")}</span>
+            <bdi dir="ltr">RĀD / {markDigits}</bdi>
+          </p>
+        ) : null}
         <ProductCardQr product={product} name={copy.name} />
       </div>
     </article>

@@ -160,6 +160,21 @@
   text-align: start;
 }
 
+.plp-card-archive {
+  display: flex;
+  align-items: baseline;
+  gap: 0.45rem;
+  margin: 0.3rem 0 0;
+  color: var(--muted);
+  font-size: 0.68rem;
+}
+
+.plp-card-archive bdi {
+  color: var(--ink);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+}
+
 .plp-card-tear {
   position: absolute;
   bottom: calc(100% - 1px);

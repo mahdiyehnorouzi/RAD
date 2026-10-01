@@ -71,8 +71,23 @@
   width: 100%;
 }
 
+.nav-separator,
+.nav-light-separator {
+  display: none;
+}
+
 .mobile-nav-link {
   display: none;
+}
+
+.nav-social-link {
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.nav-muted-link {
+  color: var(--muted);
+  font-size: 0.74rem !important;
 }
 
 .header-actions {
@@ -199,6 +214,28 @@
 
   .nav.open {
     display: flex;
+  }
+
+  .nav-separator,
+  .nav-light-separator {
+    display: block;
+    width: 100%;
+    height: 1px;
+    background: var(--line);
+  }
+
+  .nav-separator {
+    margin: 0.25rem 0 0.5rem;
+  }
+
+  .nav-light-separator {
+    margin: 0.5rem 0 0.2rem;
+    opacity: 0.55;
+  }
+
+  .nav .mobile-nav-link {
+    display: flex;
+    padding: 0.6rem 0;
   }
 
   .menu {
