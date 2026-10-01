@@ -10,6 +10,7 @@
   width: min(100%, 74rem);
   margin-inline: auto;
   min-height: 70vh;
+  padding-inline: clamp(0rem, 2vw, 1.5rem);
 }
 
 .checkout-flow.section {
@@ -140,6 +141,10 @@ html[dir="rtl"] .checkout-flow {
   grid-template-rows: auto auto 1fr;
   column-gap: clamp(2rem, 5vw, 4.5rem);
   align-items: start;
+  padding: clamp(1rem, 2vw, 1.5rem);
+  border: 1px solid color-mix(in srgb, var(--ink) 8%, transparent);
+  border-radius: 1.25rem;
+  background: color-mix(in srgb, var(--paper) 48%, transparent);
 }
 
 .checkout-flow-body.is-result {
@@ -589,6 +594,30 @@ div.checkout-alert p {
 @media (--phone) {
   .checkout-flow.section {
     padding-inline: 1.1rem;
+  }
+
+  .checkout-flow {
+    padding-inline: 0;
+  }
+
+  .checkout-flow-body {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 0.85rem;
+    border-radius: 1.25rem 1.25rem 0 0;
+    border-inline: 0;
+    background: color-mix(in srgb, var(--paper) 66%, #fff);
+  }
+
+  .checkout-flow-aside {
+    order: -1;
+    width: 100%;
+  }
+
+  .checkout-summary {
+    border-radius: 1rem;
+    box-shadow: none;
   }
 
   .checkout-step-label {
