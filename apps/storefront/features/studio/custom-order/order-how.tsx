@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useLocale } from "@/components/i18n";
 import {
   ORDER_OVERVIEW,
@@ -21,7 +22,7 @@ const icons: Record<OrderOverviewStep["id"], StudioIconName> = {
 };
 
 export function OrderHow() {
-  const { locale } = useLocale();
+  const { locale, href } = useLocale();
   const c = orderCopy[locale];
 
   return (
@@ -47,13 +48,13 @@ export function OrderHow() {
             </li>
           ))}
         </ol>
-        <a
+        <Link
           className={`${btn.csBtn} ${btn.csBtnSolid} ${styles.csHowCta}`}
-          href="#your-idea"
+          href={href("/studio/start")}
         >
           <span>{c.stepsCta}</span>
           <StudioIcon name={readingArrow(locale, "forward")} size={20} />
-        </a>
+        </Link>
       </div>
 
       <figure className={styles.csHowPair}>

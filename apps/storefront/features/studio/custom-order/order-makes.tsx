@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useLocale } from "@/components/i18n";
 import { ORDER_MAKES, orderCopy, type OrderMake } from "../const";
 import { StudioIcon, readingArrow } from "../studio-icon";
@@ -23,8 +24,8 @@ export function OrderMakes({ onPick }: { onPick: (make: OrderMake) => void }) {
       <ul className={styles.csMakeGrid}>
         {ORDER_MAKES.map((make, index) => (
           <li key={make.id} className={index < 2 ? styles.wide : ""}>
-            <button
-              type="button"
+            <Link
+              href={`/studio/start?form=${encodeURIComponent(make.form)}`}
               className={styles.csMake}
               aria-label={c.makesPick.replace("{name}", make.title[locale])}
               onClick={() => onPick(make)}
@@ -49,7 +50,7 @@ export function OrderMakes({ onPick }: { onPick: (make: OrderMake) => void }) {
               >
                 <StudioIcon name={readingArrow(locale, "forward")} size={16} />
               </span>
-            </button>
+            </Link>
           </li>
         ))}
       </ul>
