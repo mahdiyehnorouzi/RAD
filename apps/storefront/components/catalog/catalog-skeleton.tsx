@@ -9,7 +9,7 @@ import "./catalog/catalog.css";
 export function CatalogSkeleton() {
   return (
     <PageSection className="plp">
-      <CatalogHero intro={<CatalogIntro />} />
+      <CatalogHero intro={<CatalogIntro key="catalog-intro" />} />
       <div className="plp-categories" aria-hidden="true">
         <div className="plp-chip-rail">
           {Array.from({ length: 8 }, (_, index) => (

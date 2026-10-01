@@ -19,7 +19,7 @@ export function CatalogPage({
         products={products}
         live={live}
         initialFilters={filters}
-        intro={<CatalogIntro />}
+        intro={<CatalogIntro key="catalog-intro" />}
       />
     </PageSection>
   );
