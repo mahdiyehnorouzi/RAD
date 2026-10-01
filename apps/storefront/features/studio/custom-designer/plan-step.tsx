@@ -84,6 +84,7 @@ export function PlanStep({ designer }: { designer: Designer }) {
               <StudioIcon name="calendar" size={20} />
               <input
                 id="order-need-by"
+                type="date"
                 value={designer.needBy}
                 onChange={(event) => designer.setNeedBy(event.target.value)}
                 placeholder={c.datePlaceholder}

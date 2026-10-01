@@ -29,7 +29,9 @@ export function schemaSyncEnabled(
   return nodeEnv !== "production";
 }
 
-export function typeOrmOptions(overrides: Partial<DataSourceOptions> = {}): DataSourceOptions {
+export function typeOrmOptions(
+  overrides: Partial<DataSourceOptions> = {},
+): DataSourceOptions {
   return {
     type: "postgres",
     url: cleanDatabaseUrl(),
@@ -47,6 +49,8 @@ export function typeOrmOptions(overrides: Partial<DataSourceOptions> = {}): Data
   } as DataSourceOptions;
 }
 
-export function createAppDataSource(overrides: Partial<DataSourceOptions> = {}) {
+export function createAppDataSource(
+  overrides: Partial<DataSourceOptions> = {},
+) {
   return new DataSource(typeOrmOptions(overrides));
 }

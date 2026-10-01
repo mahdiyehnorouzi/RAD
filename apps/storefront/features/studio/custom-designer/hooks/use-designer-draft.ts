@@ -135,16 +135,11 @@ function removeDraft() {
 function writeDraft(draft: DesignerDraft) {
   try {
     window.localStorage.setItem(storageKey, JSON.stringify(draft));
+    return true;
   } catch {
-    // Quota: keep the words and choices even if the images don't fit.
-    try {
-      window.localStorage.setItem(
-        storageKey,
-        JSON.stringify({ ...draft, uploads: [], sketch: "" }),
-      );
-    } catch {
-      /* storage unavailable */
-    }
+    // Never silently delete user attachments to fit the quota. The caller
+    // surfaces a warning so the user can remove an attachment deliberately.
+    return false;
   }
 }
 
@@ -157,6 +152,7 @@ export function useDesignerDraft(
   restore: (draft: DesignerDraft) => void,
 ) {
   const [restored, setRestored] = useState(false);
+  const [storageWarning, setStorageWarning] = useState(false);
   const hydrated = useRef(false);
 
   useEffect(() => {
@@ -171,8 +167,11 @@ export function useDesignerDraft(
   useEffect(() => {
     if (!hydrated.current) return undefined;
     const timer = window.setTimeout(() => {
-      if (hasContent(draft)) writeDraft(draft);
-      else removeDraft();
+      if (hasContent(draft)) setStorageWarning(!writeDraft(draft));
+      else {
+        removeDraft();
+        setStorageWarning(false);
+      }
     }, SAVE_DELAY_MS);
     return () => window.clearTimeout(timer);
   }, [draft]);
@@ -197,5 +196,5 @@ export function useDesignerDraft(
     hydrated.current = true;
   }, [restore]);
 
-  return { restored, clear, discard, reset };
+  return { restored, storageWarning, clear, discard, reset };
 }

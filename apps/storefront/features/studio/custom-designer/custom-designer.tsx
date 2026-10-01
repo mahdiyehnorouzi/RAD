@@ -53,7 +53,7 @@ export function CustomDesigner({ designer }: { designer: Designer }) {
   const signInHref = href(
     `/account?returnTo=${encodeURIComponent("/studio#your-idea")}`,
   );
-  const { canAdvance, goBack, goNext, goTo, step } = designer;
+  const { canAdvance, canSubmit, goBack, goNext, goTo, step } = designer;
 
   function keepInView() {
     const top = shell.current?.getBoundingClientRect().top ?? 0;
@@ -140,7 +140,7 @@ export function CustomDesigner({ designer }: { designer: Designer }) {
   }
 
   function submitCommission() {
-    if (!canAdvance || submitting) return;
+    if (!canSubmit || submitting) return;
     if (!online) {
       setFailure("network");
       setSubmitError(t("designerOffline"));
@@ -214,7 +214,7 @@ export function CustomDesigner({ designer }: { designer: Designer }) {
         onSubmit={(event) => event.preventDefault()}
         noValidate
       >
-        {!online || draftStore.restored ? (
+        {!online || draftStore.restored || draftStore.storageWarning ? (
           <div className={styles.cdNotices}>
             {!online ? (
               <StateNotice tone="error">
@@ -234,6 +234,13 @@ export function CustomDesigner({ designer }: { designer: Designer }) {
                 }
               >
                 <p>{t("designerDraftRestored")}</p>
+              </StateNotice>
+            ) : null}
+            {draftStore.storageWarning ? (
+              <StateNotice tone="error">
+                {locale === "fa"
+                  ? "ذخیره‌ی پیش‌نویس جا نداشت؛ پیوست‌ها حذف نشدن. یکی از فایل‌ها رو بردار و دوباره امتحان کن."
+                  : "There is not enough space to save this draft. Your attachments were kept; remove one and try again."}
               </StateNotice>
             ) : null}
           </div>

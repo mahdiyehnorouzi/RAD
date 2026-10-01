@@ -1,4 +1,9 @@
-import { ForbiddenException, Injectable, NotFoundException, UnauthorizedException } from "@nestjs/common";
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { Commission } from "../database/entities";
@@ -32,7 +37,7 @@ export class CommissionsService {
       where: { ownerKey: this.identity.key(actor) },
       order: { updatedAt: "DESC" },
     });
-    return rows.map((row) => this.toCommission(row.payload));
+    return rows.map((row) => this.toCustomer(row.payload));
   }
 
   async listWorkshop(actor: Actor) {
@@ -45,7 +50,7 @@ export class CommissionsService {
 
   async getMine(actor: Actor, id: string) {
     this.requireSignedIn(actor);
-    return this.toCommission((await this.requireOwned(actor, id)).payload);
+    return this.toCustomer((await this.requireOwned(actor, id)).payload);
   }
 
   async create(actor: Actor, input: CreateCommissionDto) {
@@ -68,17 +73,25 @@ export class CommissionsService {
         payload,
       }),
     );
-    return payload;
+    return this.toCustomer(payload);
   }
 
   async saveMine(actor: Actor, id: string, payload: MakingCommission) {
     this.requireSignedIn(actor);
     const row = await this.requireOwned(actor, id);
-    const previous = this.toCommission(row.payload);
-    const next = { ...payload, id: row.id, updatedAt: Date.now() };
+    // Customer saves may update the editable brief only. Never trust a client
+    // to write workflow state, payments, audit entries, or internal notes.
+    const current = this.toCommission(row.payload);
+    const next = {
+      ...current,
+      title: payload.title,
+      customerName: payload.customerName,
+      brief: payload.brief,
+      id: row.id,
+      updatedAt: Date.now(),
+    };
     await this.commissions.update({ id }, { payload: next });
-    await this.emitStageNotice(row.ownerKey, previous.stage, next.stage, id);
-    return next;
+    return this.toCustomer(next);
   }
 
   async saveWorkshop(actor: Actor, id: string, payload: MakingCommission) {
@@ -88,10 +101,12 @@ export class CommissionsService {
 
   async addMineMessage(actor: Actor, id: string, body: LocaleCopy) {
     this.requireSignedIn(actor);
-    const current = this.toCommission((await this.requireOwned(actor, id)).payload);
+    const current = this.toCommission(
+      (await this.requireOwned(actor, id)).payload,
+    );
     const next = addCommissionMessage(current, { author: "customer", body });
     await this.commissions.update({ id }, { payload: next });
-    return next;
+    return this.toCustomer(next);
   }
 
   async listAll() {
@@ -142,7 +157,11 @@ export class CommissionsService {
     const row = await this.commissions.findOne({ where: { id } });
     if (!row) throw new NotFoundException("سفارش اختصاصی پیدا نشد.");
     const current = this.toCommission(row.payload);
-    const next = addCommissionMessage(current, { author: "artist", body, internal });
+    const next = addCommissionMessage(current, {
+      author: "artist",
+      body,
+      internal,
+    });
     await this.commissions.update({ id }, { payload: next });
     if (!internal) {
       await this.notices.createForOwner(row.ownerKey, "commission_message", id);
@@ -204,6 +223,18 @@ export class CommissionsService {
 
   private toCommission(payload: unknown): MakingCommission {
     return payload as MakingCommission;
+  }
+
+  /** Customer-facing payload: internal notes and staff-only audit data never leave the API. */
+  private toCustomer(
+    payload: unknown,
+  ): Omit<MakingCommission, "internalNotes"> {
+    const commission = this.toCommission(payload);
+    const { internalNotes: _internalNotes, ...customerPayload } = commission;
+    return {
+      ...customerPayload,
+      messages: commission.messages.filter((message) => !message.internal),
+    };
   }
 
   private toAdmin(row: {

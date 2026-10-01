@@ -11,6 +11,24 @@ import type { DesignerDraft } from "../type";
 const maxImages = 4;
 export const MAX_PROMPT = 500;
 
+function normalizedNumber(value: string) {
+  return value
+    .replace(/[۰-۹]/g, (digit) => String("۰۱۲۳۴۵۶۷۸۹".indexOf(digit)))
+    .replace(/[٠-٩]/g, (digit) => String("٠١٢٣٤٥٦٧٨٩".indexOf(digit)));
+}
+
+function validDimension(value: string) {
+  if (!value.trim()) return true;
+  const number = Number(normalizedNumber(value));
+  return Number.isFinite(number) && number > 0;
+}
+
+function validFutureDate(value: string) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const date = new Date(`${value}T00:00:00`);
+  return !Number.isNaN(date.valueOf()) && date > new Date();
+}
+
 export function freedomToPermission(value: number) {
   if (value <= 33) return "faithful";
   if (value <= 66) return "hand";
@@ -51,13 +69,38 @@ export function useDesigner() {
   const canAdvance = useMemo(() => {
     if (step === "idea") return hasSpark;
     if (step === "form") return Boolean(form);
-    if (step === "details") return true;
+    if (step === "details")
+      return [length, width, height].every(validDimension);
     if (step === "plan")
       return Boolean(
-        budget && timeline && (timeline !== DATED_TIMELINE || needBy.trim()),
+        budget &&
+        timeline &&
+        (timeline !== DATED_TIMELINE || validFutureDate(needBy)),
       );
     return agreed;
-  }, [agreed, budget, form, hasSpark, needBy, step, timeline]);
+  }, [
+    agreed,
+    budget,
+    form,
+    hasSpark,
+    height,
+    length,
+    needBy,
+    step,
+    timeline,
+    width,
+  ]);
+
+  const canSubmit =
+    hasSpark &&
+    Boolean(form) &&
+    [length, width, height].every(validDimension) &&
+    Boolean(
+      budget &&
+      timeline &&
+      (timeline !== DATED_TIMELINE || validFutureDate(needBy)),
+    ) &&
+    agreed;
 
   function goTo(next: DesignerStep) {
     const nextIndex = DESIGNER_STEPS.indexOf(next);
@@ -189,6 +232,7 @@ export function useDesigner() {
     agreed,
     budget,
     canAdvance,
+    canSubmit,
     chooseTimeline,
     colorNote,
     colors,
