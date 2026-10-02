@@ -117,6 +117,7 @@ export function Catalog({
         activeCount={activeFilters}
         artists={artists}
         onChange={update}
+        onClose={() => setFiltersOpen(false)}
         onClear={() => update(clearedPanel)}
       />
       <CatalogResults

@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, X } from "lucide-react";
 import { useLocale } from "@/components/i18n";
 import type { CatalogArtist } from "@/lib/catalog/refine";
 import type { CatalogFilters, StatusFilter } from "@/lib/catalog/filters";
@@ -13,6 +13,7 @@ export function CatalogFilterPanel({
   activeCount,
   artists,
   onChange,
+  onClose,
   onClear,
 }: {
   id: string;
@@ -22,6 +23,7 @@ export function CatalogFilterPanel({
   activeCount: number;
   artists: CatalogArtist[];
   onChange: (patch: Partial<CatalogFilters>) => void;
+  onClose: () => void;
   onClear: () => void;
 }) {
   const { t, locale, number } = useLocale();
@@ -58,6 +60,14 @@ export function CatalogFilterPanel({
     <div id={id} className="plp-filters" data-open={open} inert={!open}>
       <div className="plp-filters-inner">
         <div className="plp-filters-body">
+          <div className="plp-filters-head">
+            <span>
+              {locale === "fa" ? "فیلتر و مرتب‌سازی" : "Filter and sort"}
+            </span>
+            <button type="button" onClick={onClose} aria-label={t("closeMenu")}>
+              <X aria-hidden="true" />
+            </button>
+          </div>
           <fieldset className="plp-filter-group">
             <legend>{t("availabilityHeading")}</legend>
             <div className="catalog-segment">
