@@ -884,8 +884,31 @@ html[dir="ltr"] .plp-categories {
   }
 
   .plp-filters[data-open="true"] {
+    position: fixed;
+    inset: 0;
+    z-index: 40;
+    display: flex;
+    align-items: flex-end;
+    padding-top: 4rem;
+    background: rgb(24 35 31 / 42%);
+  }
+
+  .plp-filters[data-open="true"] .plp-filters-inner {
     position: relative;
-    z-index: 4;
+    width: 100%;
+    max-height: min(82svh, 44rem);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    border-radius: 1.6rem 1.6rem 0 0;
+    background: var(--paper);
+    box-shadow: 0 -22px 60px -30px rgb(24 35 31 / 62%);
+  }
+
+  .plp-filters[data-open="true"] .plp-filters-body {
+    border: 0;
+    border-radius: 1.6rem 1.6rem 0 0;
+    box-shadow: none;
+    padding-bottom: max(1.25rem, env(safe-area-inset-bottom));
   }
 
   .plp-filter-group:nth-child(2) {

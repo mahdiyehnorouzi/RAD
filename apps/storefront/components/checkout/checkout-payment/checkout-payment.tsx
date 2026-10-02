@@ -17,7 +17,7 @@ import { readableErrorMessage } from "@/lib/api";
 import { formatCountdown } from "@/lib/catalog/product-status";
 import { formatTotal } from "@/lib/money";
 import { checkoutCopy } from "../const";
-import { CheckoutMeter, CheckoutSteps, CheckoutSummary } from "../flow";
+import { CheckoutMeter, CheckoutSteps, CheckoutSummary, PaymentJourney } from "../flow";
 import { useCheckoutOrder } from "./hooks";
 import { PaymentCard } from "./payment-card";
 import { PaymentReceipt } from "./payment-receipt";
@@ -117,6 +117,7 @@ export function CheckoutPayment({ id }: { id: string }) {
   return (
     <section className="checkout-flow section">
       <CheckoutSteps current={1} />
+      <PaymentJourney current={3} />
       <header className="checkout-flow-head">
         <h1>{c.payTitle}</h1>
         <p>{c.payLede}</p>

@@ -101,6 +101,65 @@ html[dir="rtl"] .checkout-flow {
   font-weight: var(--font-weight-medium, 500);
 }
 
+/* The payment screen follows the six moments shown in RAD's mobile purchase flow. */
+.payment-journey {
+  overflow-x: auto;
+  margin: -0.5rem 0 clamp(1.5rem, 3vw, 2.25rem);
+  padding: 0.75rem 0 0.5rem;
+  scrollbar-width: none;
+}
+
+.payment-journey::-webkit-scrollbar { display: none; }
+
+.payment-journey ol {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(6.25rem, 1fr));
+  min-width: 38rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.payment-journey-step {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 0.42rem;
+  color: var(--muted);
+  text-align: center;
+}
+
+.payment-journey-line {
+  position: absolute;
+  top: 1rem;
+  inset-inline: 0;
+  height: 1px;
+  background: var(--line);
+}
+
+.payment-journey-step:first-child .payment-journey-line { inset-inline-start: 50%; }
+.payment-journey-step:last-child .payment-journey-line { inset-inline-end: 50%; }
+.payment-journey-step.is-done .payment-journey-line,
+.payment-journey-step.is-current .payment-journey-line { background: var(--moss); }
+
+.payment-journey-dot {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border: 1px solid color-mix(in srgb, var(--ink) 20%, transparent);
+  border-radius: 50%;
+  background: var(--paper);
+}
+
+.payment-journey-step.is-done .payment-journey-dot { border-color: var(--moss); color: var(--moss); }
+.payment-journey-step.is-current .payment-journey-dot { border-color: var(--moss); background: var(--moss); color: var(--paper); box-shadow: 0 0 0 4px color-mix(in srgb, var(--moss) 13%, transparent); }
+.payment-journey-label { display: grid; gap: 0.08rem; font-size: 0.75rem; line-height: 1.35; }
+.payment-journey-label b { color: color-mix(in srgb, var(--muted) 70%, transparent); font-size: 0.68rem; font-weight: 400; }
+.payment-journey-step.is-current .payment-journey-label { color: var(--ink); font-weight: var(--font-weight-medium, 500); }
+
 /* ——— Head ——— */
 
 .checkout-flow-head {
