@@ -18,6 +18,7 @@ export type MakingStageId =
 export type NextActor = "customer" | "artist" | "none";
 
 export type MakingBrief = {
+  voice?: string;
   concept: string;
   dimensions: string;
   material: string;

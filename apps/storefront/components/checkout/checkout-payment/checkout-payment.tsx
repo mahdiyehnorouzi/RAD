@@ -1,8 +1,9 @@
 "use client";
 import "./checkout-payment.css";
+import "../flow/purchase-design.css";
 
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, ArrowRight, Info } from "lucide-react";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 import { ORDER_PAYMENT_WINDOW_MINUTES, type Product } from "@rad/types";
 import type { PaymentReceiptInput } from "@/types/api";
 import { useCatalog } from "@/components/catalog";
@@ -17,7 +18,7 @@ import { readableErrorMessage } from "@/lib/api";
 import { formatCountdown } from "@/lib/catalog/product-status";
 import { formatTotal } from "@/lib/money";
 import { checkoutCopy } from "../const";
-import { CheckoutMeter, CheckoutSteps, CheckoutSummary, PaymentJourney } from "../flow";
+import { CheckoutMeter, CheckoutSteps, CheckoutSummary } from "../flow";
 import { useCheckoutOrder } from "./hooks";
 import { PaymentCard } from "./payment-card";
 import { PaymentReceipt } from "./payment-receipt";
@@ -35,7 +36,25 @@ export function CheckoutPayment({ id }: { id: string }) {
   const [busy, setBusy] = useState<"receipt" | "cancel" | null>(null);
   const [error, setError] = useState("");
   const [asking, setAsking] = useState(false);
+  const [receiptStep, setReceiptStep] = useState(false);
+  useEffect(() => {
+    setReceiptStep(
+      new URLSearchParams(window.location.search).get("step") === "receipt",
+    );
+  }, []);
+  const showReceipt = (value: boolean) => {
+    setReceiptStep(value);
+    const url = new URL(window.location.href);
+    if (value) url.searchParams.set("step", "receipt");
+    else url.searchParams.delete("step");
+    window.history.replaceState(window.history.state, "", url);
+    window.scrollTo({ top: 0, behavior: "instant" });
+  };
   const errorRef = useRef<HTMLParagraphElement>(null);
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  useEffect(() => {
+    headingRef.current?.focus();
+  }, [receiptStep]);
   const ArrowIcon = locale === "fa" ? ArrowLeft : ArrowRight;
 
   useEffect(() => {
@@ -74,13 +93,14 @@ export function CheckoutPayment({ id }: { id: string }) {
       ? formatTotal(tomanDue, "fa")
       : `${new Intl.NumberFormat("en-US").format(tomanDue)} toman`;
   const usdTotal =
-    order.usdTotal ?? items.reduce((sum, product) => sum + (product.usdPrice ?? 0), 0);
-  const summaryTotal = locale === "fa" ? tomanLabel : formatTotal(usdTotal, "en");
+    order.usdTotal ??
+    items.reduce((sum, product) => sum + (product.usdPrice ?? 0), 0);
+  const summaryTotal =
+    locale === "fa" ? tomanLabel : formatTotal(usdTotal, "en");
 
   if (order.status !== "pending_payment") {
     return (
       <section className="checkout-flow section">
-        <CheckoutSteps current={2} />
         <div className="checkout-flow-body is-result">
           <div className="checkout-flow-main">
             <PaymentResult order={order} amount={tomanLabel} />
@@ -93,14 +113,20 @@ export function CheckoutPayment({ id }: { id: string }) {
     );
   }
 
-  const run = async (kind: "receipt" | "cancel", action: () => Promise<unknown>) => {
+  const run = async (
+    kind: "receipt" | "cancel",
+    action: () => Promise<unknown>,
+  ) => {
     try {
       setBusy(kind);
       setError("");
       await action();
     } catch (err) {
       setError(
-        readableErrorMessage(err, kind === "receipt" ? c.receiptFailed : c.requestFailed),
+        readableErrorMessage(
+          err,
+          kind === "receipt" ? c.receiptFailed : c.requestFailed,
+        ),
       );
     } finally {
       setBusy(null);
@@ -116,60 +142,65 @@ export function CheckoutPayment({ id }: { id: string }) {
 
   return (
     <section className="checkout-flow section">
-      <CheckoutSteps current={1} />
-      <PaymentJourney current={3} />
+      <CheckoutSteps current={receiptStep ? 2 : 1} />
       <header className="checkout-flow-head">
-        <h1>{c.payTitle}</h1>
-        <p>{c.payLede}</p>
+        <h1 ref={headingRef} tabIndex={-1}>
+          {receiptStep ? c.receiptTitle : c.payTitle}
+        </h1>
+        <p>
+          {receiptStep
+            ? locale === "fa"
+              ? "عکس یا اسکرین‌شات رسید پرداخت را اینجا بفرستید."
+              : "Upload a photo or screenshot of your payment receipt."
+            : c.payLede}
+        </p>
       </header>
 
       <div className="checkout-flow-body">
         <div className="checkout-flow-main checkout-pay">
-          {redirectUrl ? (
-            <div className="payment-gateway">
-              <p>{c.gatewayHint}</p>
-              <button
-                type="button"
-                className="checkout-submit"
-                onClick={() => window.location.assign(redirectUrl)}
-              >
-                <span>{c.gatewayGo}</span>
-                <ArrowIcon aria-hidden="true" />
-              </button>
-            </div>
-          ) : manualCard ? (
-            <PaymentCard
-              card={manualCard}
-              amount={tomanLabel}
-              amountDigits={String(tomanDue)}
-            />
-          ) : (
-            <p className="checkout-alert" role="status">
-              {c.noCard}
-            </p>
-          )}
-
-          <div className="payment-exact">
-            <Info aria-hidden="true" />
-            <p>
-              <b>{c.exactTitle}</b> {c.exactBody}
-            </p>
-          </div>
+          {!receiptStep &&
+            (redirectUrl ? (
+              <div className="payment-gateway">
+                <p>{c.gatewayHint}</p>
+                <button
+                  type="button"
+                  className="checkout-submit"
+                  onClick={() => window.location.assign(redirectUrl)}
+                >
+                  <span>{c.gatewayGo}</span>
+                  <ArrowIcon aria-hidden="true" />
+                </button>
+              </div>
+            ) : manualCard ? (
+              <PaymentCard
+                card={manualCard}
+                amount={tomanLabel}
+                amountDigits={String(tomanDue)}
+              />
+            ) : (
+              <p className="checkout-alert" role="status">
+                {c.noCard}
+              </p>
+            ))}
 
           {remaining !== null ? (
             <CheckoutMeter
               title={expired ? c.deadlineExpired : c.deadlineLabel}
-              time={expired ? undefined : formatCountdown(remaining, locale, number)}
+              time={
+                expired ? undefined : formatCountdown(remaining, locale, number)
+              }
               fraction={remaining / (ORDER_PAYMENT_WINDOW_MINUTES * 60_000)}
             />
           ) : null}
 
           {redirectUrl || expired ? null : (
-            <PaymentReceipt
-              id={RECEIPT_FORM_ID}
-              busy={busy !== null}
-              onSubmit={(receipt) => void submitReceipt(receipt)}
-            />
+            <div hidden={!receiptStep}>
+              <PaymentReceipt
+                id={RECEIPT_FORM_ID}
+                busy={busy !== null}
+                onSubmit={(receipt) => void submitReceipt(receipt)}
+              />
+            </div>
           )}
         </div>
 
@@ -179,11 +210,16 @@ export function CheckoutPayment({ id }: { id: string }) {
 
         <div className="checkout-flow-action">
           {error ? (
-            <p ref={errorRef} className="checkout-alert" role="alert" tabIndex={-1}>
+            <p
+              ref={errorRef}
+              className="checkout-alert"
+              role="alert"
+              tabIndex={-1}
+            >
               {error}
             </p>
           ) : null}
-          {redirectUrl || expired ? null : (
+          {redirectUrl || expired ? null : receiptStep ? (
             <button
               type="submit"
               form={RECEIPT_FORM_ID}
@@ -191,8 +227,44 @@ export function CheckoutPayment({ id }: { id: string }) {
               disabled={busy !== null}
               aria-busy={busy === "receipt" || undefined}
             >
-              <span>{busy === "receipt" ? c.submittingReceipt : c.submitReceipt}</span>
+              <span>
+                {busy === "receipt" ? c.submittingReceipt : c.submitReceipt}
+              </span>
               <ArrowIcon aria-hidden="true" />
+            </button>
+          ) : (
+            <div className="transfer-next">
+              <p>
+                {locale === "fa"
+                  ? "واریز را انجام دادید؟"
+                  : "Have you made the transfer?"}
+              </p>
+              <button
+                type="button"
+                className="checkout-submit"
+                onClick={() => showReceipt(true)}
+              >
+                <span>
+                  {locale === "fa"
+                    ? "بله، رسید رو می‌فرستم"
+                    : "Yes, send my receipt"}
+                </span>
+                <ArrowIcon aria-hidden="true" />
+              </button>
+              <ButtonLink href="/cart" outline>
+                {locale === "fa" ? "هنوز نه" : "Not yet"}
+              </ButtonLink>
+            </div>
+          )}
+          {receiptStep && (
+            <button
+              className="transfer-back"
+              type="button"
+              onClick={() => showReceipt(false)}
+            >
+              {locale === "fa"
+                ? "بازگشت به اطلاعات پرداخت"
+                : "Back to payment details"}
             </button>
           )}
 

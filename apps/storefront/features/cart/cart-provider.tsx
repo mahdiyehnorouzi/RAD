@@ -178,27 +178,19 @@ export function CartProvider({ children }: { children: ReactNode }) {
       add: async (product) => {
         if (!isPurchasableStatus(product.status)) return false;
         const slug = product.slug;
-        setCart((current) =>
-          current.slugs.includes(slug)
-            ? current
-            : { ...current, slugs: [...current.slugs, slug] },
+        // No optimistic flip here: `has(slug)`/`count` must only ever reflect
+        // a confirmed server snapshot, so the UI can never read "added"
+        // while the request is still in flight or has actually failed
+        // (e.g. a 5xx from the API) — only `apply()` on real success moves
+        // the needle.
+        apply(
+          await api<CartSnapshot>("/cart/items", {
+            method: "POST",
+            body: JSON.stringify({ slug }),
+          }),
         );
-        try {
-          apply(
-            await api<CartSnapshot>("/cart/items", {
-              method: "POST",
-              body: JSON.stringify({ slug }),
-            }),
-          );
-          void refreshCatalog();
-          return true;
-        } catch (error) {
-          setCart((current) => ({
-            ...current,
-            slugs: current.slugs.filter((item) => item !== slug),
-          }));
-          throw error;
-        }
+        void refreshCatalog();
+        return true;
       },
       remove: async (slug) => {
         apply(

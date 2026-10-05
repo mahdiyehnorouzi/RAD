@@ -10,7 +10,7 @@ export const DESIGNER_STEPS = [
 
 export type DesignerStep = (typeof DESIGNER_STEPS)[number];
 
-export const DESIGNER_STEP_LABEL: Record<DesignerStep, LocaleCopy> = {
+const DESIGNER_STEP_LABEL: Record<DesignerStep, LocaleCopy> = {
   idea: { fa: "ایده", en: "Idea" },
   form: { fa: "فرم", en: "Form" },
   details: { fa: "جزئیات", en: "Details" },

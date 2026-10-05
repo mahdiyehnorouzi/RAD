@@ -100,8 +100,15 @@ export function CatalogResults({
   }
 
   const staleNotice = failed ? (
-    <StateNotice tone="error" action={retryButton} className="catalog-notice">
-      <p>{t("catalogStaleNotice")}</p>
+    <StateNotice
+      tone="notice"
+      action={retryButton}
+      className="catalog-notice"
+      live="polite"
+    >
+      <p>
+        {t("catalogStaleNotice")} {t("catalogStaleNoticeDetail")}
+      </p>
     </StateNotice>
   ) : null;
 

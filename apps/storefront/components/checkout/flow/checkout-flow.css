@@ -109,7 +109,9 @@ html[dir="rtl"] .checkout-flow {
   scrollbar-width: none;
 }
 
-.payment-journey::-webkit-scrollbar { display: none; }
+.payment-journey::-webkit-scrollbar {
+  display: none;
+}
 
 .payment-journey ol {
   display: grid;
@@ -137,10 +139,16 @@ html[dir="rtl"] .checkout-flow {
   background: var(--line);
 }
 
-.payment-journey-step:first-child .payment-journey-line { inset-inline-start: 50%; }
-.payment-journey-step:last-child .payment-journey-line { inset-inline-end: 50%; }
+.payment-journey-step:first-child .payment-journey-line {
+  inset-inline-start: 50%;
+}
+.payment-journey-step:last-child .payment-journey-line {
+  inset-inline-end: 50%;
+}
 .payment-journey-step.is-done .payment-journey-line,
-.payment-journey-step.is-current .payment-journey-line { background: var(--moss); }
+.payment-journey-step.is-current .payment-journey-line {
+  background: var(--moss);
+}
 
 .payment-journey-dot {
   position: relative;
@@ -154,11 +162,31 @@ html[dir="rtl"] .checkout-flow {
   background: var(--paper);
 }
 
-.payment-journey-step.is-done .payment-journey-dot { border-color: var(--moss); color: var(--moss); }
-.payment-journey-step.is-current .payment-journey-dot { border-color: var(--moss); background: var(--moss); color: var(--paper); box-shadow: 0 0 0 4px color-mix(in srgb, var(--moss) 13%, transparent); }
-.payment-journey-label { display: grid; gap: 0.08rem; font-size: 0.75rem; line-height: 1.35; }
-.payment-journey-label b { color: color-mix(in srgb, var(--muted) 70%, transparent); font-size: 0.68rem; font-weight: 400; }
-.payment-journey-step.is-current .payment-journey-label { color: var(--ink); font-weight: var(--font-weight-medium, 500); }
+.payment-journey-step.is-done .payment-journey-dot {
+  border-color: var(--moss);
+  color: var(--moss);
+}
+.payment-journey-step.is-current .payment-journey-dot {
+  border-color: var(--moss);
+  background: var(--moss);
+  color: var(--paper);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--moss) 13%, transparent);
+}
+.payment-journey-label {
+  display: grid;
+  gap: 0.08rem;
+  font-size: 0.75rem;
+  line-height: 1.35;
+}
+.payment-journey-label b {
+  color: color-mix(in srgb, var(--muted) 70%, transparent);
+  font-size: 0.68rem;
+  font-weight: 400;
+}
+.payment-journey-step.is-current .payment-journey-label {
+  color: var(--ink);
+  font-weight: var(--font-weight-medium, 500);
+}
 
 /* ——— Head ——— */
 

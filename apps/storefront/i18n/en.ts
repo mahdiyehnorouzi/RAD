@@ -526,8 +526,8 @@ export const en = {
   catalogErrorTitle: "The works couldn't be loaded.",
   catalogErrorBody:
     "We couldn't reach the shop. Check your connection and try again.",
-  catalogStaleNotice:
-    "Live availability couldn't be refreshed; what you see may be out of date.",
+  catalogStaleNotice: "Some availability didn't refresh.",
+  catalogStaleNoticeDetail: "A few pieces may have changed status.",
   catalogEmptyTitle: "The collection is between pieces.",
   catalogEmptyBody:
     "Every current work has found a home. Browse the archive or commission your own piece.",

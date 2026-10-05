@@ -10,7 +10,7 @@ import type { FlowScreen } from "../type/flow-screen";
 import type { DesignerDraft } from "../type";
 
 const maxImages = 4;
-export const MAX_PROMPT = 500;
+const MAX_PROMPT = 500;
 
 function normalizedNumber(value: string) {
   return value

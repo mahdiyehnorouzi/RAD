@@ -1,18 +1,17 @@
 export const checkoutCopy = {
   fa: {
     stepsLabel: "مراحل خرید",
-    steps: ["اطلاعات ارسال", "پرداخت", "تأیید"],
+    steps: ["اطلاعات", "پرداخت", "رسید"],
     stepDone: "انجام شد",
     stepCurrent: "مرحله‌ی فعلی",
 
-    detailsTitle: "این رَد رو کجا بفرستیم؟",
-    detailsLede:
-      "اطلاعات تحویل رو وارد کن. مرحله‌ی بعد مبلغ رو کارت‌به‌کارت می‌کنی و رسیدش رو همین‌جا می‌فرستی.",
+    detailsTitle: "اطلاعات دریافت اثر",
+    detailsLede: "لطفاً اطلاعات خود را برای ارسال اثر وارد کنید.",
     nameLabel: "نام و نام خانوادگی",
     phoneLabel: "شماره تماس",
     phonePlaceholder: "۰۹۱۲ ۱۲۳ ۴۵۶۷",
-    cityLabel: "شهر",
-    addressLabel: "نشانی کامل",
+    cityLabel: "استان / شهر",
+    addressLabel: "آدرس",
     addressPlaceholder: "خیابان، کوچه، پلاک، واحد",
     postalLabel: "کد پستی",
     optional: "اختیاری",
@@ -21,7 +20,7 @@ export const checkoutCopy = {
     cityError: "شهر گیرنده را بنویسید.",
     addressError: "آدرس رو کامل بنویس که بسته درست به دستت برسه.",
     fixFields: "چندتا از اطلاعات بالا هنوز کامل نیست.",
-    holdTitle: "این رَد فقط همین یه نسخه‌ست.",
+    holdTitle: "این اثر فعلاً برای شما کنار گذاشته شده.",
     holdBody: "تا پایان این زمان فقط برای شما نگه داشته می‌شود.",
     holdAfter:
       "با ثبت سفارش، {minutes} دقیقه برای واریز و فرستادن رسید وقت دارید.",
@@ -43,9 +42,9 @@ export const checkoutCopy = {
     total: "مبلغ نهایی",
     quantity: "تعداد: {count}",
 
-    payTitle: "پرداخت کارت‌به‌کارت",
+    payTitle: "کارت به کارت",
     payLede:
-      "این مبلغ رو به کارت زیر واریز کن. بعد عکس رسید و شماره‌ی پیگیری رو همین پایین بفرست.",
+      "مبلغ زیر را به این کارت واریز کنید و بعد دوباره به همین صفحه برگردید.",
     amountLabel: "مبلغ قابل پرداخت",
     cardLabel: "شماره کارت",
     holderLabel: "به نام",
@@ -64,17 +63,17 @@ export const checkoutCopy = {
     gatewayHint: "برای تکمیل خرید به درگاه امن پرداخت منتقل می‌شوید.",
     gatewayGo: "ورود به درگاه پرداخت",
 
-    receiptTitle: "واریز کردی؟",
-    receiptDrop: "عکس رسید رو بفرست",
+    receiptTitle: "ارسال رسید",
+    receiptDrop: "انتخاب عکس رسید",
     receiptDropHint: "JPG، PNG یا WebP، تا ۱ مگابایت",
-    receiptChange: "عوض کردن تصویر",
+    receiptChange: "تغییر عکس",
     receiptPreviewAlt: "پیش‌نمایش رسید پرداخت",
     receiptError: "فقط تصویر JPG، PNG یا WebP تا ۱ مگابایت.",
     receiptRequired: "تصویر رسید را انتخاب کنید.",
-    trackingLabel: "شماره‌ی پیگیری واریز",
+    trackingLabel: "شماره پیگیری (اختیاری)",
     trackingHint: "شماره‌ی پیگیری یا مرجع روی رسید بانکی",
     trackingError: "شماره‌ی پیگیری را درست بنویسید (دست‌کم ۴ رقم).",
-    submitReceipt: "فرستادن رسید",
+    submitReceipt: "ارسال رسید",
     submittingReceipt: "در حال فرستادن رسید…",
     receiptFailed:
       "رسید فرستاده نشد. دوباره بزنید؛ تصویر انتخاب‌شده سر جایش می‌ماند.",
@@ -84,9 +83,9 @@ export const checkoutCopy = {
     cancelYes: "بله، لغو شود",
     cancelNo: "نه، ادامه می‌دهم",
 
-    doneTitle: "رسیدت به دستمون رسید.",
+    doneTitle: "رسید شما دریافت شد :)",
     doneBody:
-      "رسید رو بررسی می‌کنیم. تا اون موقع این رَد برای تو کنار می‌مونه.",
+      "رسید را دریافت کردیم. پرداخت شما بررسی می‌شود و نتیجه از همین‌جا به شما اطلاع داده می‌شود.",
     doneNext:
       "پس از تأیید، اثر بسته‌بندی می‌شود و کد رهگیری پست را در صفحه‌ی سفارش می‌بینید.",
     confirmedTitle: "پرداختت تأیید شد.",
@@ -94,8 +93,8 @@ export const checkoutCopy = {
     orderLabel: "شماره‌ی سفارش",
     trackingSaved: "شماره‌ی پیگیری",
     paidLabel: "مبلغ",
-    trackOrder: "پیگیری سفارش",
-    moreWorks: "دیدن آثار دیگر",
+    trackOrder: "مشاهده سفارش",
+    moreWorks: "بازگشت به آثار",
 
     closedExpiredTitle: "مهلت پرداخت این سفارش تمام شد.",
     closedExpiredBody:
@@ -112,7 +111,7 @@ export const checkoutCopy = {
   },
   en: {
     stepsLabel: "Checkout steps",
-    steps: ["Delivery", "Payment", "Confirmation"],
+    steps: ["Information", "Payment", "Receipt"],
     stepDone: "done",
     stepCurrent: "current step",
 
@@ -182,7 +181,7 @@ export const checkoutCopy = {
     receiptPreviewAlt: "Payment receipt preview",
     receiptError: "Only JPG, PNG or WebP images up to 1 MB.",
     receiptRequired: "Choose the receipt image.",
-    trackingLabel: "Transfer tracking number",
+    trackingLabel: "Tracking number (optional)",
     trackingHint: "The tracking or reference number on your bank receipt",
     trackingError: "Enter the tracking number correctly (at least 4 digits).",
     submitReceipt: "Send receipt and complete order",

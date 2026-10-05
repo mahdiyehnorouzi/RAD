@@ -3,7 +3,8 @@ import type { Product } from "@rad/types";
 import { useLocale } from "@/components/i18n";
 import { formatArtworkNumber, ProductMedia } from "@/components/product";
 import { productCopy } from "@/lib/catalog/products";
-import { checkoutCopy, fillCopy } from "../const";
+import { productPrice } from "@/lib/money";
+import { checkoutCopy } from "../const";
 
 export function CheckoutSummary({
   items,
@@ -17,7 +18,10 @@ export function CheckoutSummary({
   const c = checkoutCopy[locale];
 
   return (
-    <section className="checkout-summary" aria-labelledby="checkout-summary-title">
+    <section
+      className="checkout-summary"
+      aria-labelledby="checkout-summary-title"
+    >
       <h2 id="checkout-summary-title">{c.summaryTitle}</h2>
       <ul className="checkout-summary-items">
         {items.map((product) => (
@@ -26,9 +30,11 @@ export function CheckoutSummary({
               <ProductMedia product={product} showStatusBadge={false} />
             </span>
             <span className="checkout-summary-text">
-              <small dir="ltr">{formatArtworkNumber(product, number, locale)}</small>
+              <small dir="ltr">
+                {formatArtworkNumber(product, number, locale)}
+              </small>
               <b>{productCopy(product, locale).name}</b>
-              <span>{fillCopy(c.quantity, { count: number(1) })}</span>
+              <span>{productPrice(product, locale)}</span>
             </span>
           </li>
         ))}

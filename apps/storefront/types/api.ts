@@ -11,5 +11,5 @@ export type PlaceOrderInput = {
 
 export type PaymentReceiptInput = {
   receiptImage: string;
-  trackingNumber: string;
+  trackingNumber?: string;
 };
