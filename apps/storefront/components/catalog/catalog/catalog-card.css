@@ -24,7 +24,7 @@
 
 .plp-card-stage {
   position: relative;
-  aspect-ratio: 7 / 6;
+  aspect-ratio: 1.05;
   overflow: hidden;
   background: color-mix(in srgb, var(--sand) 34%, var(--paper));
   isolation: isolate;
@@ -105,8 +105,8 @@
   z-index: 1;
   display: grid;
   flex: 0 0 auto;
-  width: clamp(1.9rem, 18cqi, 2.5rem);
-  min-height: clamp(1.9rem, 18cqi, 2.5rem);
+  width: 44px;
+  min-height: 44px;
   padding: 0;
   place-items: center;
   border: 0;
@@ -151,7 +151,7 @@
   grid-template-columns: minmax(0, 1fr) auto;
   grid-template-areas:
     "name name"
-    "meta qr";
+    "meta bag";
   align-content: start;
   align-items: end;
   gap: 0.15rem 0.5rem;
@@ -183,7 +183,7 @@
   display: -webkit-box;
   margin: 0;
   overflow: hidden;
-  font-size: clamp(0.82rem, 6.6cqi, 1.12rem);
+  font-size: clamp(0.9rem, 7.4cqi, 1.12rem);
   font-weight: var(--font-weight-semibold, 600);
   line-height: 1.55;
   -webkit-box-orient: vertical;
@@ -206,7 +206,7 @@
   margin: 0;
   overflow: hidden;
   color: var(--muted);
-  font-size: clamp(0.66rem, 5.4cqi, 0.8rem);
+  font-size: clamp(0.73rem, 6cqi, 0.85rem);
   line-height: 1.6;
   white-space: nowrap;
   text-overflow: ellipsis;
@@ -222,7 +222,7 @@
 }
 
 .plp-card-price b {
-  font-size: clamp(0.76rem, 6cqi, 1rem);
+  font-size: clamp(0.8rem, 6.5cqi, 1rem);
   font-weight: var(--font-weight-semibold, 600);
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.01em;
@@ -233,21 +233,38 @@
   font-size: clamp(0.62rem, 5cqi, 0.76rem);
 }
 
-.plp-card .rad-card-qr {
-  --qr-size: clamp(1.65rem, 15cqi, 2.5rem);
-  grid-area: qr;
+/* Compact cart action shares the existing availability and error handling. */
+.plp-card .add-to-bag--compact {
+  grid-area: bag;
   align-self: end;
 }
-
-.plp-card .rad-card-qr-frame {
-  padding: 0.1rem;
-  border-radius: 3px;
-  background: transparent;
-  box-shadow: none;
+.plp-card .add-to-bag--compact .add {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  min-height: 44px;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: #fcf9f3;
+  color: var(--ink);
+  box-shadow: 0 2px 5px rgb(58 40 20 / 6%);
 }
-
-.plp-card .rad-card-qr-code {
-  fill: color-mix(in srgb, var(--ink) 88%, #000);
+.plp-card .add-to-bag--compact .add svg {
+  width: 21px;
+  height: 21px;
+  stroke-width: 1.5;
+}
+.plp-card .add-to-bag--compact .form-error {
+  grid-column: 1 / -1;
+  font-size: 0.7rem;
+}
+.plp-card-body:has(.form-error) {
+  grid-template-areas: "name name" "meta meta" "bag bag";
+}
+.plp-card .add-to-bag--compact .add:focus-visible {
+  outline: 2px solid var(--moss);
+  outline-offset: 3px;
 }
 
 /* ——— States and interaction ——— */

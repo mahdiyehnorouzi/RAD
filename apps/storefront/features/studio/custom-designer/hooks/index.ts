@@ -1,5 +1,4 @@
 export {
-  MAX_PROMPT,
   freedomToPermission,
   useDesigner,
   type Designer,

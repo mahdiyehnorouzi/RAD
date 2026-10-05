@@ -9,12 +9,14 @@ import {
   TIMELINE_OPTIONS,
   USE_OPTIONS,
 } from "../const";
+import { FLOW_SCREENS } from "../const/flow-screens";
 import type { DesignerDraft } from "../type";
 
 const storageKey = "rad-studio-draft-v1";
 const SAVE_DELAY_MS = 400;
 
 const emptyDesignerDraft: DesignerDraft = {
+  flowScreen: "choose",
   step: "idea",
   reached: "idea",
   prompt: "",
@@ -29,7 +31,7 @@ const emptyDesignerDraft: DesignerDraft = {
   height: "",
   colors: [],
   colorNote: "",
-  freedom: 70,
+  freedom: 50,
   budget: "",
   timeline: "",
   needBy: "",
@@ -94,12 +96,16 @@ function readDraft(): DesignerDraft | null {
       ? parsed.reached!
       : step;
     const draft: DesignerDraft = {
+      flowScreen: FLOW_SCREENS.includes(parsed.flowScreen as never)
+        ? parsed.flowScreen
+        : "choose",
       step,
       reached,
       prompt: String(parsed.prompt ?? ""),
       uploads: strings(parsed.uploads),
       sketch: String(parsed.sketch ?? ""),
-      hasVoice: Boolean(parsed.hasVoice),
+      hasVoice: Boolean(parsed.voice),
+      voice: typeof parsed.voice === "string" ? parsed.voice : "",
       form: known(parsed.form, FORM_OPTIONS) || legacyForm(parsed.forms),
       uses: strings(parsed.uses).filter((id) =>
         USE_OPTIONS.some((option) => option.id === id),
@@ -135,16 +141,11 @@ function removeDraft() {
 function writeDraft(draft: DesignerDraft) {
   try {
     window.localStorage.setItem(storageKey, JSON.stringify(draft));
+    return true;
   } catch {
-    // Quota: keep the words and choices even if the images don't fit.
-    try {
-      window.localStorage.setItem(
-        storageKey,
-        JSON.stringify({ ...draft, uploads: [], sketch: "" }),
-      );
-    } catch {
-      /* storage unavailable */
-    }
+    // Never silently delete user attachments to fit the quota. The caller
+    // surfaces a warning so the user can remove an attachment deliberately.
+    return false;
   }
 }
 
@@ -157,6 +158,7 @@ export function useDesignerDraft(
   restore: (draft: DesignerDraft) => void,
 ) {
   const [restored, setRestored] = useState(false);
+  const [storageWarning, setStorageWarning] = useState(false);
   const hydrated = useRef(false);
 
   useEffect(() => {
@@ -171,8 +173,11 @@ export function useDesignerDraft(
   useEffect(() => {
     if (!hydrated.current) return undefined;
     const timer = window.setTimeout(() => {
-      if (hasContent(draft)) writeDraft(draft);
-      else removeDraft();
+      if (hasContent(draft)) setStorageWarning(!writeDraft(draft));
+      else {
+        removeDraft();
+        setStorageWarning(false);
+      }
     }, SAVE_DELAY_MS);
     return () => window.clearTimeout(timer);
   }, [draft]);
@@ -197,5 +202,5 @@ export function useDesignerDraft(
     hydrated.current = true;
   }, [restore]);
 
-  return { restored, clear, discard, reset };
+  return { restored, storageWarning, clear, discard, reset };
 }

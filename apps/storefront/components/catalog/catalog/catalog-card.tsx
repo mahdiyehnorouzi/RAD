@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { ShoppingBag } from "lucide-react";
+import { AddToBag } from "./catalog";
 import type { Product } from "@rad/types";
 import { FavoriteButton } from "@/components/commerce";
 import { useLocale } from "@/components/i18n";
@@ -9,7 +11,6 @@ import {
   LinkPending,
   ProductCardArtwork,
   ProductCardBadge,
-  ProductCardQr,
   productCardCopy,
   type ProductBadgeTone,
 } from "@/components/product/listing";
@@ -90,7 +91,11 @@ export function CatalogCard({ product }: { product: Product }) {
             {price.unit ? <span>{price.unit}</span> : null}
           </p>
         </div>
-        <ProductCardQr product={product} name={copy.name} />
+        <AddToBag
+          product={product}
+          compact
+          icon={<ShoppingBag aria-hidden="true" />}
+        />
       </div>
     </article>
   );

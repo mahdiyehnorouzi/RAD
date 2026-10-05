@@ -1,6 +1,12 @@
 "use client";
-import { useId, useRef, useState, type ChangeEvent, type DragEvent } from "react";
-import { ImageUp, RefreshCw } from "lucide-react";
+import {
+  useId,
+  useRef,
+  useState,
+  type ChangeEvent,
+  type DragEvent,
+} from "react";
+import { ImageUp, RefreshCw, X } from "lucide-react";
 import type { PaymentReceiptInput } from "@/types/api";
 import { useLocale } from "@/components/i18n";
 import {
@@ -26,6 +32,8 @@ export function PaymentReceipt({
   const uid = useId();
   const fileRef = useRef<HTMLInputElement>(null);
   const trackingRef = useRef<HTMLInputElement>(null);
+  const readVersion = useRef(0);
+  const [reading, setReading] = useState(false);
   const [image, setImage] = useState("");
   const [fileName, setFileName] = useState("");
   const [dragging, setDragging] = useState(false);
@@ -39,13 +47,21 @@ export function PaymentReceipt({
       setImageError(c.receiptError);
       return;
     }
+    const version = ++readVersion.current;
+    setReading(true);
     readReceiptFile(file)
       .then((dataUrl) => {
+        if (version !== readVersion.current) return;
         setImage(dataUrl);
         setFileName(file.name);
         setImageError("");
       })
-      .catch(() => setImageError(c.receiptError));
+      .catch(() => {
+        if (version === readVersion.current) setImageError(c.receiptError);
+      })
+      .finally(() => {
+        if (version === readVersion.current) setReading(false);
+      });
   };
 
   const onChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -64,22 +80,23 @@ export function PaymentReceipt({
       id={id}
       className="payment-receipt"
       aria-labelledby={`${uid}-title`}
+      aria-busy={reading || busy}
       noValidate
       onSubmit={(event) => {
         event.preventDefault();
-        if (busy) return;
+        if (busy || reading) return;
         const number = normalizeTrackingNumber(tracking);
         if (!image) {
           setImageError(c.receiptRequired);
           fileRef.current?.focus();
           return;
         }
-        if (!number) {
+        if (tracking.trim() && !number) {
           setTrackingError(c.trackingError);
           trackingRef.current?.focus();
           return;
         }
-        onSubmit({ receiptImage: image, trackingNumber: number });
+        onSubmit({ receiptImage: image, trackingNumber: number ?? undefined });
       }}
     >
       <h2 id={`${uid}-title`}>{c.receiptTitle}</h2>
@@ -124,8 +141,32 @@ export function PaymentReceipt({
           </>
         )}
       </label>
+      {reading && (
+        <p role="status">
+          {locale === "fa" ? "در حال آماده‌سازی تصویر…" : "Preparing image…"}
+        </p>
+      )}
+      {image && (
+        <button
+          type="button"
+          className="receipt-remove"
+          disabled={busy || reading}
+          onClick={() => {
+            readVersion.current++;
+            setImage("");
+            setFileName("");
+          }}
+        >
+          <X aria-hidden="true" />
+          {locale === "fa" ? "حذف تصویر" : "Remove image"}
+        </button>
+      )}
       {imageError ? (
-        <p id={`${uid}-file-error`} className="checkout-field-error" role="alert">
+        <p
+          id={`${uid}-file-error`}
+          className="checkout-field-error"
+          role="alert"
+        >
           {imageError}
         </p>
       ) : null}
@@ -147,10 +188,16 @@ export function PaymentReceipt({
           }}
           disabled={busy}
           aria-invalid={trackingError ? true : undefined}
-          aria-describedby={trackingError ? `${uid}-tracking-error` : `${uid}-tracking-hint`}
+          aria-describedby={
+            trackingError ? `${uid}-tracking-error` : `${uid}-tracking-hint`
+          }
         />
         {trackingError ? (
-          <p id={`${uid}-tracking-error`} className="checkout-field-error" role="alert">
+          <p
+            id={`${uid}-tracking-error`}
+            className="checkout-field-error"
+            role="alert"
+          >
             {trackingError}
           </p>
         ) : (

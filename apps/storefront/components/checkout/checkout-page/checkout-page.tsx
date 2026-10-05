@@ -1,5 +1,6 @@
 "use client";
 import "./checkout-page.css";
+import "../flow/purchase-design.css";
 
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";

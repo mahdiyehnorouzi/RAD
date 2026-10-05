@@ -1,4 +1,4 @@
-export { StateScreen, StateWorks } from "./state-screen";
+export { StateScreen } from "./state-screen";
 export { EmptyBagState } from "./empty-bag-state";
 export { EmptyCategoryState } from "./empty-category-state";
 export { EmptyFavoritesState } from "./empty-favorites-state";

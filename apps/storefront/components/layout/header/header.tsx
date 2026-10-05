@@ -6,7 +6,8 @@ import { useEffect, useState } from "react";
 import { useCart } from "@/features/cart";
 import { useLocale } from "@/components/i18n";
 import { useHeaderMotion } from "./hooks";
-import { Heart, Menu as MenuIcon, ShoppingBag, X } from "lucide-react";
+import { Heart, Menu as MenuIcon, Search, ShoppingBag, X } from "lucide-react";
+import { RAD_INSTAGRAM, InstagramIcon } from "@/components/contact";
 import "./header.css";
 
 export function Header() {
@@ -43,11 +44,16 @@ export function Header() {
         <Link href={href("/studio")} onClick={() => setOpen(false)}>
           {t("navStudio")}
         </Link>
-        <Link href={href("/making")} onClick={() => setOpen(false)}>
-          {t("makingNav")}
-        </Link>
         <Link href={href("/about")} onClick={() => setOpen(false)}>
           {t("navAbout")}
+        </Link>
+        <span className="nav-separator" aria-hidden="true" />
+        <Link
+          className="mobile-nav-link"
+          href={href("/orders")}
+          onClick={() => setOpen(false)}
+        >
+          {t("orders")}
         </Link>
         <Link
           className="mobile-nav-link"
@@ -63,13 +69,24 @@ export function Header() {
         >
           {t("profile")}
         </Link>
+        <span className="nav-light-separator" aria-hidden="true" />
         <Link
-          className="mobile-nav-link"
-          href={href("/cart")}
+          className="mobile-nav-link nav-muted-link"
+          href={href("/help")}
           onClick={() => setOpen(false)}
         >
-          {t("shoppingBag")}
+          {t("menuHelp")}
         </Link>
+        <a
+          className="mobile-nav-link nav-muted-link nav-social-link"
+          href={RAD_INSTAGRAM.profileUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={() => setOpen(false)}
+        >
+          <InstagramIcon size={15} />
+          {t("menuInstagram")}
+        </a>
       </nav>
       <div className="header-actions">
         <button
@@ -97,6 +114,13 @@ export function Header() {
           aria-label={t("favoritesTitle")}
         >
           <Heart aria-hidden="true" />
+        </Link>
+        <Link
+          href={href("/products")}
+          className="utility-button header-search"
+          aria-label={t("search")}
+        >
+          <Search aria-hidden="true" />
         </Link>
         <Link
           href={href("/cart")}

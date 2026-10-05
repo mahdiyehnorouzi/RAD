@@ -22,10 +22,12 @@ export function CatalogHero({ intro }: { intro: React.ReactNode }) {
           focusable="false"
         >
           <path
+            key="banner-thread-start"
             pathLength={1}
             d="M-6 111c22-5 44-6 70-3 30 3 56 2 82-3 16-3 30-2 42 1"
           />
           <path
+            key="banner-thread-end"
             pathLength={1}
             d="M204 132c8-22 26-36 52-48 24-11 50-18 64-34 5-6 9-12 12-18"
           />

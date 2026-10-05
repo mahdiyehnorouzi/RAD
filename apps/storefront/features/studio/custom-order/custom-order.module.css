@@ -22,6 +22,50 @@
   background: var(--cs-bg);
   color: var(--cs-ink);
 }
+
+.startPage {
+  min-height: calc(100svh - var(--header-height));
+  background:
+    radial-gradient(
+      circle at 12% 8%,
+      rgb(255 255 255 / 62%),
+      transparent 28rem
+    ),
+    var(--canvas);
+}
+
+.startPage .csBand {
+  min-height: calc(100svh - var(--header-height));
+  padding-block: clamp(1.5rem, 5vw, 4rem);
+}
+
+.startPage .csSection {
+  width: min(100%, 48rem);
+  margin-inline: auto;
+}
+
+.startPage .csFlowSheet {
+  border: 1px solid color-mix(in srgb, var(--cs-ink) 10%, transparent);
+  border-radius: 1.5rem 1.5rem 0.35rem 0.35rem;
+  background: color-mix(in srgb, var(--cs-paper) 94%, #fff);
+  box-shadow: 0 24px 70px -48px rgb(24 35 31 / 48%);
+}
+
+.startPage .csHead {
+  padding: clamp(1.25rem, 5vw, 2.75rem) clamp(1.1rem, 5vw, 3rem) 0;
+}
+
+.startPage .csKicker {
+  margin: 0 0 0.45rem;
+  color: var(--cs-oxide);
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.startPage .cdShell {
+  padding: clamp(1.1rem, 5vw, 3rem);
+}
 .customOrder ::selection {
   background: var(--cs-green);
   color: var(--cs-paper);

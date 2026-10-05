@@ -101,7 +101,7 @@ export const ORDER_PRICE_TIERS: OrderPriceTier[] = [
 
 type OrderPathStep = { id: string; title: LocaleCopy; short: LocaleCopy };
 
-export const ORDER_PATH: OrderPathStep[] = [
+const ORDER_PATH: OrderPathStep[] = [
   {
     id: "review",
     title: { fa: "بررسی ایده", en: "Idea review" },
@@ -140,7 +140,7 @@ export const ORDER_PATH: OrderPathStep[] = [
   },
 ];
 
-export type OrderRule = {
+type OrderRule = {
   id: "changes" | "kiln" | "cancel";
   title: LocaleCopy;
   brief: LocaleCopy;
@@ -148,7 +148,7 @@ export type OrderRule = {
 };
 
 /** The notes repeated, folded, right before the visitor sends the idea. */
-export const ORDER_RULES: OrderRule[] = [
+const ORDER_RULES: OrderRule[] = [
   {
     id: "changes",
     title: { fa: "درباره‌ی تغییرات", en: "About changes" },

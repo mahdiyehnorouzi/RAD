@@ -48,8 +48,6 @@ export function CartLine({
   const name = product ? productCopy(product, locale).name : slug;
   const quantity = (
     <div className={styles.qty}>
-      <span>{c.quantity}</span>
-      <b>{number(1)}</b>
       <button
         type="button"
         className={styles.remove}

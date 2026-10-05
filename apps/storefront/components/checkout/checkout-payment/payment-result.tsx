@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef } from "react";
-import { Check, CircleSlash } from "lucide-react";
+import { Check, CircleSlash, Clock } from "lucide-react";
 import type { Order } from "@rad/types";
 import { useLocale } from "@/components/i18n";
 import { ButtonLink } from "@/components/ui/button-link";
@@ -8,7 +8,13 @@ import { checkoutCopy } from "../const";
 
 const CLOSED = ["expired", "rejected", "cancelled", "returned"] as const;
 
-export function PaymentResult({ order, amount }: { order: Order; amount: string }) {
+export function PaymentResult({
+  order,
+  amount,
+}: {
+  order: Order;
+  amount: string;
+}) {
   const { locale } = useLocale();
   const c = checkoutCopy[locale];
   const headingRef = useRef<HTMLHeadingElement>(null);
@@ -40,9 +46,17 @@ export function PaymentResult({ order, amount }: { order: Order; amount: string 
 
   return (
     <section className={`payment-result${closed ? " is-closed" : ""}`}>
-      <span className="payment-result-seal" aria-hidden="true">
-        {closed ? <CircleSlash /> : <Check />}
-      </span>
+      {reviewing ? (
+        <img
+          className="payment-result-art"
+          src="/catalog/photos/speckled-sculpted-mug.webp"
+          alt=""
+        />
+      ) : (
+        <span className="payment-result-seal" aria-hidden="true">
+          {closed ? <CircleSlash /> : <Check />}
+        </span>
+      )}
       <h1 ref={headingRef} tabIndex={-1}>
         {title}
       </h1>
@@ -68,10 +82,17 @@ export function PaymentResult({ order, amount }: { order: Order; amount: string 
         </div>
       </dl>
 
-      {reviewing ? <p className="payment-result-next">{c.doneNext}</p> : null}
+      {reviewing ? (
+        <p className="payment-result-next">
+          <Clock aria-hidden="true" />
+          {locale === "fa" ? "در انتظار بررسی" : "Awaiting review"}
+        </p>
+      ) : null}
 
       <div className="payment-result-actions">
-        <ButtonLink href={`/orders/${encodeURIComponent(order.id)}`}>{c.trackOrder}</ButtonLink>
+        <ButtonLink href={`/orders/${encodeURIComponent(order.id)}`}>
+          {c.trackOrder}
+        </ButtonLink>
         <ButtonLink href="/products" outline>
           {c.moreWorks}
         </ButtonLink>

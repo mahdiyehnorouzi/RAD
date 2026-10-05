@@ -39,7 +39,19 @@ export class InventoryService implements OnModuleInit, OnModuleDestroy {
   constructor(private readonly dataSource: DataSource) {}
 
   async onModuleInit() {
-    await this.migrateLegacyStatuses();
+    // A one-time legacy-data cleanup must never take the whole API down: a
+    // transient DB hiccup during boot (slow network, cold start) would
+    // otherwise throw out of onModuleInit and crash the process before
+    // app.listen() ever runs, turning a momentary DB blip into a full outage.
+    try {
+      await this.migrateLegacyStatuses();
+    } catch (error) {
+      this.logger.warn(
+        `Legacy product status migration skipped (will retry on next boot): ${
+          error instanceof Error ? error.message : error
+        }`,
+      );
+    }
     this.sweepTimer = setInterval(() => {
       this.releaseExpiredHolds().catch((error) =>
         this.logger.warn(

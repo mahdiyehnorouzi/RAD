@@ -64,7 +64,18 @@ export class OrdersService implements OnModuleInit {
   ) {}
 
   async onModuleInit() {
-    await migrateLegacyOrderStatuses(this.dataSource, this.logger);
+    // Same reasoning as InventoryService: a one-time legacy-status rewrite
+    // must not be able to crash the whole API on a transient DB hiccup at
+    // boot. Log and move on; it retries harmlessly on the next restart.
+    try {
+      await migrateLegacyOrderStatuses(this.dataSource, this.logger);
+    } catch (error) {
+      this.logger.warn(
+        `Legacy order status migration skipped (will retry on next boot): ${
+          error instanceof Error ? error.message : error
+        }`,
+      );
+    }
   }
 
   async list(actor: Actor) {
@@ -232,22 +243,26 @@ export class OrdersService implements OnModuleInit {
     await this.inventory.releaseExpiredHolds();
     const receiptImage = input.receiptImage?.trim() ?? "";
     if (!receiptImage) {
-      throw new BadRequestException(
-        "برای تأیید پرداخت، تصویر رسید را بارگذاری کنید.",
-      );
+      throw new BadRequestException({
+        message: "برای تأیید پرداخت، تصویر رسید را بارگذاری کنید.",
+        code: "receipt_required",
+      });
     }
     try {
       assertImageData(receiptImage, receiptImageLimit, receiptImageError);
     } catch (error) {
-      throw new BadRequestException(
-        error instanceof Error ? error.message : receiptImageError,
-      );
+      throw new BadRequestException({
+        message: error instanceof Error ? error.message : receiptImageError,
+        code: "receipt_invalid",
+      });
     }
-    const trackingNumber = normalizeTrackingNumber(input.trackingNumber);
-    if (!trackingNumber) {
-      throw new BadRequestException(
-        "شماره پیگیری واریز را درست وارد کنید (۴ تا ۳۲ رقم یا حرف لاتین).",
-      );
+    const trackingNumber = normalizeTrackingNumber(input.trackingNumber ?? "");
+    if (input.trackingNumber?.trim() && !trackingNumber) {
+      throw new BadRequestException({
+        message:
+          "شماره پیگیری واریز را درست وارد کنید (۴ تا ۳۲ رقم یا حرف لاتین).",
+        code: "tracking_invalid",
+      });
     }
     const hash = receiptHash(receiptImage);
     const ownerKey = this.identity.key(actor);
@@ -255,15 +270,33 @@ export class OrdersService implements OnModuleInit {
     await this.dataSource.transaction(async (manager) => {
       const order = await this.lockOwnedOrder(manager, ownerKey, id);
       const status = normalizeStoreOrderStatus(order.status);
-      this.assertCanSubmitReceipt(status, order.paymentDueAt);
 
       const payments = manager.getRepository(PaymentIntent);
       const payment = await payments.findOne({ where: { orderId: order.id } });
-      if (!payment) throw new NotFoundException("پرداخت این سفارش پیدا نشد.");
+      if (!payment) {
+        throw new NotFoundException({
+          message: "پرداخت این سفارش پیدا نشد.",
+          code: "payment_missing",
+        });
+      }
+
+      // Idempotency: a double-click or a retry after a dropped response
+      // resends the exact same receipt. If it matches what's already on
+      // file for this order, treat it as a no-op success instead of
+      // re-validating state, burning a submission slot, or touching rows.
+      const isIdenticalResubmit =
+        payment.status === "submitted" &&
+        payment.receiptHash === hash &&
+        (payment.trackingNumber ?? null) === trackingNumber;
+      if (isIdenticalResubmit) return;
+
+      this.assertCanSubmitReceipt(status, order.paymentDueAt);
       if (payment.receiptSubmissions >= MAX_RECEIPT_SUBMISSIONS) {
-        throw new BadRequestException(
-          "تعداد دفعات ارسال رسید به سقف رسیده؛ لطفاً با پشتیبانی رَد تماس بگیرید.",
-        );
+        throw new BadRequestException({
+          message:
+            "تعداد دفعات ارسال رسید به سقف رسیده؛ لطفاً با پشتیبانی رَد تماس بگیرید.",
+          code: "receipt_limit",
+        });
       }
       await this.assertReceiptNotReused(
         manager,
@@ -355,43 +388,58 @@ export class OrdersService implements OnModuleInit {
   ) {
     if (status === "pending_payment") {
       if (paymentDueAt && paymentDueAt.getTime() <= Date.now()) {
-        throw new BadRequestException(
-          "مهلت پرداخت این سفارش تمام شده و اثر به فروشگاه برگشته است.",
-        );
+        throw new BadRequestException({
+          message:
+            "مهلت پرداخت این سفارش تمام شده و اثر به فروشگاه برگشته است.",
+          code: "order_expired",
+        });
       }
       return;
     }
     if (status === "pending_verification") return;
     if (status === "expired") {
-      throw new BadRequestException(
-        "مهلت پرداخت این سفارش تمام شده و اثر به فروشگاه برگشته است.",
-      );
+      throw new BadRequestException({
+        message: "مهلت پرداخت این سفارش تمام شده و اثر به فروشگاه برگشته است.",
+        code: "order_expired",
+      });
     }
     if (status === "rejected") {
-      throw new BadRequestException(
-        "پرداخت این سفارش رد شده است؛ برای خرید دوباره سفارش تازه ثبت کنید.",
-      );
+      throw new BadRequestException({
+        message:
+          "پرداخت این سفارش رد شده است؛ برای خرید دوباره سفارش تازه ثبت کنید.",
+        code: "order_rejected",
+      });
     }
     if (status === "cancelled" || status === "returned") {
-      throw new BadRequestException("این سفارش بسته شده است.");
+      throw new BadRequestException({
+        message: "این سفارش بسته شده است.",
+        code: "order_closed",
+      });
     }
-    throw new BadRequestException("پرداخت این سفارش قبلاً تأیید شده است.");
+    throw new BadRequestException({
+      message: "پرداخت این سفارش قبلاً تأیید شده است.",
+      code: "order_already_confirmed",
+    });
   }
 
   /** One transfer pays for one order: tracking number and image must be new. */
   private async assertReceiptNotReused(
     manager: EntityManager,
     orderId: string,
-    trackingNumber: string,
+    trackingNumber: string | null,
     hash: string,
   ) {
     const reused = await manager.getRepository(PaymentIntent).findOne({
       where: [
-        {
-          orderId: Not(orderId),
-          trackingNumber,
-          status: In(["submitted", "verified"]),
-        },
+        ...(trackingNumber
+          ? [
+              {
+                orderId: Not(orderId),
+                trackingNumber,
+                status: In(["submitted", "verified"]),
+              },
+            ]
+          : []),
         {
           orderId: Not(orderId),
           receiptHash: hash,
@@ -401,9 +449,10 @@ export class OrdersService implements OnModuleInit {
       select: { id: true },
     });
     if (reused) {
-      throw new ConflictException(
-        "این رسید یا شماره پیگیری قبلاً برای سفارش دیگری ثبت شده است.",
-      );
+      throw new ConflictException({
+        message: "این رسید یا شماره پیگیری قبلاً برای سفارش دیگری ثبت شده است.",
+        code: "receipt_duplicate",
+      });
     }
   }
 
@@ -417,7 +466,12 @@ export class OrdersService implements OnModuleInit {
       where: { id, ownerKey },
       lock: { mode: "pessimistic_write" },
     });
-    if (!order) throw new NotFoundException("سفارش پیدا نشد.");
+    if (!order) {
+      throw new NotFoundException({
+        message: "سفارش پیدا نشد.",
+        code: "order_not_found",
+      });
+    }
     return order;
   }
 
@@ -426,7 +480,12 @@ export class OrdersService implements OnModuleInit {
       where: { id, ownerKey: this.identity.key(actor) },
       relations: orderRelations,
     });
-    if (!order) throw new NotFoundException("سفارش پیدا نشد.");
+    if (!order) {
+      throw new NotFoundException({
+        message: "سفارش پیدا نشد.",
+        code: "order_not_found",
+      });
+    }
     return order;
   }
 }

@@ -2,21 +2,14 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { startTransition, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { COMMISSION_POLICY_SLUGS, currentPolicyVersions } from "@rad/types";
 import { useLocale } from "@/components/i18n";
 import { useCommerce } from "@/components/commerce";
 import { useMaking } from "@/hooks/use-making-workspace";
 import { useOnline } from "@/hooks/use-online";
-import { StateNotice } from "@/components/ui/state-panel";
 import { isNetworkError, isSessionExpired } from "@/lib/api";
-import { StudioIcon, readingArrow } from "../studio-icon";
-import { DesignerNav } from "./designer-nav";
-import { IdeaStep } from "./idea-step";
-import { FormStep } from "./form-step";
-import { DetailsStep } from "./details-step";
-import { PlanStep } from "./plan-step";
-import { ReviewStep } from "./review-step";
+import { OrderFlow } from "./order-flow";
 import { SentNotice } from "./sent-notice";
 import { freedomToPermission, useDesignerDraft, type Designer } from "./hooks";
 import {
@@ -30,10 +23,8 @@ import {
   designerCopy,
   fidelityKey,
   optionLabel,
-  type DesignerStep,
 } from "./const";
 import styles from "./custom-designer.module.css";
-import btn from "../studio-btn.module.css";
 
 type SubmitFailure = "session" | "network" | "failed" | null;
 
@@ -51,31 +42,13 @@ export function CustomDesigner({ designer }: { designer: Designer }) {
   const [sentId, setSentId] = useState("");
   const shell = useRef<HTMLDivElement>(null);
   const signInHref = href(
-    `/account?returnTo=${encodeURIComponent("/studio#your-idea")}`,
+    `/account?returnTo=${encodeURIComponent("/studio/start")}`,
   );
-  const { canAdvance, goBack, goNext, goTo, step } = designer;
+  const { canSubmit } = designer;
 
   function keepInView() {
     const top = shell.current?.getBoundingClientRect().top ?? 0;
     if (top < 0) shell.current?.scrollIntoView({ block: "start" });
-  }
-
-  function moveTo(next: DesignerStep) {
-    goTo(next);
-    keepInView();
-  }
-
-  function advance() {
-    if (!canAdvance) return;
-    startTransition(() => {
-      goNext();
-    });
-    keepInView();
-  }
-
-  function retreat() {
-    goBack();
-    keepInView();
   }
 
   function buildBrief() {
@@ -102,7 +75,7 @@ export function CustomDesigner({ designer }: { designer: Designer }) {
     const colors = [
       ...designer.colors.map((color) => {
         const name = colorLabel(color, locale);
-        return name === color ? color : `${name} (${color})`;
+        return name;
       }),
       designer.colorNote.trim(),
     ].filter(Boolean);
@@ -133,6 +106,7 @@ export function CustomDesigner({ designer }: { designer: Designer }) {
       freedom: designer.freedom,
       sketch: designer.sketch || undefined,
       hasVoice: designer.hasVoice,
+      voice: designer.voice || undefined,
       forms: designer.form ? [designer.form] : [],
       size: size?.id,
       timeline: time,
@@ -140,7 +114,7 @@ export function CustomDesigner({ designer }: { designer: Designer }) {
   }
 
   function submitCommission() {
-    if (!canAdvance || submitting) return;
+    if (!canSubmit || submitting) return;
     if (!online) {
       setFailure("network");
       setSubmitError(t("designerOffline"));
@@ -203,90 +177,27 @@ export function CustomDesigner({ designer }: { designer: Designer }) {
   }
 
   return (
-    <div className={styles.cdShell} ref={shell}>
-      <DesignerNav
-        step={step}
-        reachedIndex={designer.reachedIndex}
-        onSelect={moveTo}
-      />
-      <form
-        className={styles.cdForm}
-        onSubmit={(event) => event.preventDefault()}
-        noValidate
-      >
-        {!online || draftStore.restored ? (
-          <div className={styles.cdNotices}>
-            {!online ? (
-              <StateNotice tone="error">
-                <p>{t("designerOffline")}</p>
-              </StateNotice>
-            ) : null}
-            {draftStore.restored ? (
-              <StateNotice
-                action={
-                  <button
-                    type="button"
-                    className="state-action"
-                    onClick={draftStore.discard}
-                  >
-                    {t("designerDraftDiscard")}
-                  </button>
-                }
-              >
-                <p>{t("designerDraftRestored")}</p>
-              </StateNotice>
-            ) : null}
-          </div>
-        ) : null}
-
-        <div className={styles.cdStepBody} key={step}>
-          {step === "idea" ? <IdeaStep designer={designer} /> : null}
-          {step === "form" ? <FormStep designer={designer} /> : null}
-          {step === "details" ? <DetailsStep designer={designer} /> : null}
-          {step === "plan" ? <PlanStep designer={designer} /> : null}
-          {step === "review" ? (
-            <ReviewStep
-              designer={{ ...designer, goTo: moveTo }}
-              onSubmit={submitCommission}
-              submitting={submitting}
-              offline={!online}
-              error={submitError}
-              errorAction={
-                failure === "session" ? (
-                  <Link href={signInHref}>{t("designerSignInAgain")}</Link>
-                ) : null
-              }
-            />
-          ) : null}
-        </div>
-
-        {step !== "review" ? (
-          <div
-            className={`${styles.cdActions}${step === "idea" ? ` ${styles.single}` : ""}`}
-          >
-            {step !== "idea" ? (
-              <button
-                type="button"
-                className={styles.cdBack}
-                onClick={retreat}
-                disabled={submitting}
-              >
-                <StudioIcon name={readingArrow(locale, "back")} size={18} />
-                <span>{c.back}</span>
-              </button>
-            ) : null}
-            <button
-              type="button"
-              className={`${btn.csBtn} ${btn.csBtnSolid} ${styles.cdNext}`}
-              disabled={!canAdvance}
-              onClick={advance}
-            >
-              <span>{c.next}</span>
-              <StudioIcon name={readingArrow(locale, "forward")} size={20} />
-            </button>
-          </div>
-        ) : null}
-      </form>
-    </div>
+    <OrderFlow
+      designer={designer}
+      onSubmit={submitCommission}
+      submitting={submitting}
+      offline={!online}
+      error={submitError}
+      notices={
+        <>
+          {!online && <p role="status">{t("designerOffline")}</p>}
+          {draftStore.storageWarning && (
+            <p role="alert">
+              {locale === "fa"
+                ? "پیش‌نویس ذخیره نشد؛ قبل از ترک صفحه پیوست‌ها را بررسی کنید."
+                : "Draft could not be saved. Check attachments before leaving."}
+            </p>
+          )}
+          {failure === "session" && (
+            <Link href={signInHref}>{t("designerSignInAgain")}</Link>
+          )}
+        </>
+      }
+    />
   );
 }

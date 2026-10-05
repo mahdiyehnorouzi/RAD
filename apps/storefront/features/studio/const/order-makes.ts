@@ -1,6 +1,6 @@
 import type { LocaleCopy } from "@/types/locale";
 
-export type OrderMake = {
+type OrderMake = {
   id: string;
   title: LocaleCopy;
   examples: LocaleCopy;

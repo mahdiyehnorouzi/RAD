@@ -1,122 +1,87 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { Check, Copy, CopyCheck } from "lucide-react";
+import { Check, Copy, Landmark } from "lucide-react";
 import type { ManualCardPayment } from "@rad/types";
 import { useLocale } from "@/components/i18n";
-import { WatercolorWash } from "@/components/ui/watercolor-wash";
-import { cardNumberGroups, toLocaleDigits } from "@/lib/payment/receipt";
+import { cardNumberGroups } from "@/lib/payment/receipt";
 import { checkoutCopy } from "../const";
-
-type CopyKey = "all" | "card" | "holder" | "amount";
-
 export function PaymentCard({
   card,
   amount,
   amountDigits,
 }: {
   card: ManualCardPayment;
-  /** Formatted for display, with the currency unit. */
   amount: string;
-  /** Plain digits for the clipboard. */
   amountDigits: string;
 }) {
   const { locale } = useLocale();
   const c = checkoutCopy[locale];
-  const [copied, setCopied] = useState<CopyKey | null>(null);
+  const [copied, setCopied] = useState<"card" | "amount" | null>(null);
   const [failed, setFailed] = useState(false);
   const timer = useRef<number | undefined>(undefined);
-  const groups = cardNumberGroups(card.cardNumber);
-  const digits = groups.join("");
-
   useEffect(() => () => window.clearTimeout(timer.current), []);
-
-  const copy = async (key: CopyKey, text: string) => {
-    window.clearTimeout(timer.current);
+  async function copy(key: "card" | "amount", text: string) {
+    clearTimeout(timer.current);
     try {
       await navigator.clipboard.writeText(text);
-      setFailed(false);
       setCopied(key);
-      timer.current = window.setTimeout(() => setCopied(null), 1800);
+      setFailed(false);
+      timer.current = window.setTimeout(() => setCopied(null), 2500);
     } catch {
       setFailed(true);
     }
-  };
-
-  const copyButton = (key: CopyKey, label: string, text: string) => (
-    <button
-      type="button"
-      className={`payment-copy${copied === key ? " is-copied" : ""}`}
-      onClick={() => void copy(key, text)}
-      aria-label={label}
-      title={label}
-    >
-      {copied === key ? (
-        <Check aria-hidden="true" />
-      ) : (
-        <Copy aria-hidden="true" />
-      )}
-    </button>
-  );
-
+  }
+  const groups = cardNumberGroups(card.cardNumber);
   return (
-    <>
-      <div className="payment-amount">
-        <span>{c.amountLabel}</span>
-        <b>{amount}</b>
-        {copyButton("amount", c.copyAmount, amountDigits)}
-      </div>
-
-      <article className="payment-card" aria-label={c.cardLabel}>
-        <WatercolorWash shape="edge" className="payment-card-wash" />
-
-        <header className="payment-card-head">
-          {card.bankName ? <b className="payment-card-bank">{card.bankName}</b> : <span />}
-          <button
-            type="button"
-            className={`payment-copy-all${copied === "all" ? " is-copied" : ""}`}
-            onClick={() =>
-              void copy(
-                "all",
-                [digits, card.cardHolder, card.bankName, amountDigits]
-                  .filter(Boolean)
-                  .join("\n"),
-              )
-            }
-          >
-            {copied === "all" ? <CopyCheck aria-hidden="true" /> : <Copy aria-hidden="true" />}
-            <span>{copied === "all" ? c.copied : c.copyAll}</span>
-          </button>
-        </header>
-
-        <div className="payment-card-row">
-          <div>
-            <span className="payment-card-label">{c.cardLabel}</span>
-            <p className="payment-card-number" dir="ltr">
-              {groups.map((group, index) => (
-                <span key={index}>{toLocaleDigits(group, locale)}</span>
-              ))}
-            </p>
-          </div>
-          {copyButton("card", c.copyCard, digits)}
+    <div className="transfer-details">
+      <article className="transfer-card" aria-label={c.cardLabel}>
+        <div className="transfer-bank">
+          <Landmark aria-hidden="true" />
+          <span>{card.bankName}</span>
         </div>
-
-        <div className="payment-card-row">
-          <div>
-            <span className="payment-card-label">{c.holderLabel}</span>
-            <p className="payment-card-holder">{card.cardHolder}</p>
-          </div>
-          {copyButton("holder", c.copyHolder, card.cardHolder)}
+        <p className="transfer-number" dir="ltr">
+          {groups.join("  ")}
+        </p>
+        <div className="transfer-holder">
+          <span>{card.cardHolder}</span>
+          <Copy aria-hidden="true" />
         </div>
       </article>
-
-      <span className="checkout-sr" aria-live="polite">
-        {copied ? c.copied : ""}
-      </span>
-      {failed ? (
+      <button
+        className="transfer-copy"
+        type="button"
+        onClick={() => void copy("card", groups.join(""))}
+      >
+        <Copy aria-hidden="true" />
+        {c.copyCard}
+      </button>
+      <p className="transfer-feedback" aria-live="polite">
+        {copied === "card" && (
+          <>
+            <Check />
+            {locale === "fa" ? "شماره کارت کپی شد" : "Card number copied"}
+          </>
+        )}
+      </p>
+      <div className="transfer-amount">
+        <span>
+          {locale === "fa" ? "مبلغی که باید واریز کنید" : "Amount to transfer"}
+        </span>
+        <b>{amount}</b>
+        <button
+          className="transfer-copy"
+          type="button"
+          onClick={() => void copy("amount", amountDigits)}
+        >
+          {copied === "amount" ? <Check /> : <Copy />}
+          {copied === "amount" ? c.copied : c.copyAmount}
+        </button>
+      </div>
+      {failed && (
         <p className="checkout-alert" role="alert">
           {c.copyFailed}
         </p>
-      ) : null}
-    </>
+      )}
+    </div>
   );
 }

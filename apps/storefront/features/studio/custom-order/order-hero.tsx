@@ -50,10 +50,13 @@ export function OrderHero() {
 
       <div className={styles.csHeroActions}>
         <OrderTear shape={orderTears.hero} className={styles.csHeroTear} />
-        <a className={`${btn.csBtn} ${btn.csBtnSolid}`} href="#your-idea">
+        <Link
+          className={`${btn.csBtn} ${btn.csBtnSolid}`}
+          href={href("/studio/start")}
+        >
           <span>{c.heroCta}</span>
           <StudioIcon name={readingArrow(locale, "forward")} size={20} />
-        </a>
+        </Link>
         <Link
           className={`${btn.csBtn} ${btn.csBtnPaper}`}
           href={href("/differences")}

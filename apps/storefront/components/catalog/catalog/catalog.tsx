@@ -14,6 +14,7 @@ import {
 } from "@/lib/catalog/filters";
 import { catalogArtists, refineCatalog, shopFloor } from "@/lib/catalog/refine";
 import { useProductStatus } from "@/hooks/use-product-status";
+import { BagAddedSheet } from "./bag-added-sheet";
 import { CatalogBar } from "./catalog-bar";
 import { CatalogCategories } from "./catalog-categories";
 import { CatalogFilterPanel } from "./catalog-filters";
@@ -61,20 +62,10 @@ export function Catalog({
   const failed = !live;
   const { filters: state, update } = useCatalogFilters(initialFilters);
   const panelId = useId();
-  const [filtersOpen, setFiltersOpen] = useState(
-    () => panelRefinements(initialFilters) > 0,
-  );
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const shopProducts = shopFloor(products);
   const visible = refineCatalog(shopProducts, state, locale);
-  const artistCounts = new Map(
-    catalogArtists(
-      refineCatalog(shopProducts, { ...state, artist: "all" }, locale),
-    ).map((artist) => [artist.key, artist.count]),
-  );
-  const artists = catalogArtists(shopProducts).map((artist) => ({
-    ...artist,
-    count: artistCounts.get(artist.key) ?? 0,
-  }));
+  const artists = catalogArtists(shopProducts);
   const activeFilters = panelRefinements(state);
 
   const [retrying, setRetrying] = useState(false);
@@ -97,8 +88,6 @@ export function Catalog({
       />
       <CatalogBar
         count={visible.length}
-        sort={state.sort}
-        onSort={(sort) => update({ sort })}
         filtersOpen={filtersOpen}
         activeFilters={activeFilters}
         panelId={panelId}
@@ -110,15 +99,15 @@ export function Catalog({
           onClear={() => update({ query: "" })}
         />
       ) : null}
-      <CatalogFilterPanel
-        id={panelId}
-        open={filtersOpen}
-        filters={state}
-        activeCount={activeFilters}
-        artists={artists}
-        onChange={update}
-        onClear={() => update(clearedPanel)}
-      />
+      {filtersOpen ? (
+        <CatalogFilterPanel
+          id={panelId}
+          filters={state}
+          artists={artists}
+          onChange={update}
+          onClose={() => setFiltersOpen(false)}
+        />
+      ) : null}
       <CatalogResults
         visible={visible}
         shopCount={shopProducts.length}
@@ -145,11 +134,13 @@ export function AddToBag({
   product,
   onConflict,
   icon,
+  compact = false,
 }: {
   product: Product;
   /** Called after the API refuses the add (taken or withdrawn) so the page can re-check. */
   onConflict?: () => void;
   icon?: React.ReactNode;
+  compact?: boolean;
 }) {
   const { add } = useCart();
   const { locale, t, href } = useLocale();
@@ -159,6 +150,7 @@ export function AddToBag({
   const [error, setError] = useState("");
   const [blocked, setBlocked] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [addedSheet, setAddedSheet] = useState(false);
   const { inBag: added, purchasable, label } = useProductStatus(product);
   const unavailable = blocked || (!added && !purchasable);
   const unavailableLabel = label && !purchasable ? label : t("soldOut");
@@ -169,20 +161,22 @@ export function AddToBag({
     setError("");
   }, [product.status, product.reservedUntil]);
   return (
-    <div className="add-to-bag">
+    <div className={`add-to-bag${compact ? " add-to-bag--compact" : ""}`}>
       <button
         type="button"
-        className={`button add${added ? " add--in-bag" : ""}`}
+        className={`${compact ? "plp-bag-button" : "button"} add${added ? " add--in-bag" : ""}`}
         onClick={async () => {
           if (busy || added) return;
           try {
             setBusy(true);
             setError("");
-            const addPromise = add(product);
-            // Optimistic cart update flips `added` immediately; clear busy so UI isn't frozen.
+            // Stay busy/disabled until the API confirms the add — there's no
+            // optimistic flip to lean on, so a second click here before the
+            // request settles must not fire a second POST.
+            const addedToBag = await add(product);
             setBusy(false);
-            const addedToBag = await addPromise;
             if (addedToBag) {
+              setAddedSheet(true);
               void addNotice("cart", product.slug).catch(() => {});
             }
           } catch (err) {
@@ -208,15 +202,20 @@ export function AddToBag({
         aria-live="polite"
       >
         {added ? <Check aria-hidden="true" /> : icon}
-        {added
-          ? t("inBag")
-          : unavailable
-            ? unavailableLabel
-            : busy
-              ? t("submitting")
-              : t("addBag")}
+        <span className={compact ? "sr-only" : undefined}>
+          {added
+            ? t("inBag")
+            : unavailable
+              ? unavailableLabel
+              : busy
+                ? t("submitting")
+                : t("addBag")}
+        </span>
       </button>
-      {added ? (
+      {addedSheet && (
+        <BagAddedSheet product={product} onClose={() => setAddedSheet(false)} />
+      )}
+      {added && !compact ? (
         <Link className="add-to-bag-next" href={href("/cart")}>
           <svg
             className="add-to-bag-next-thread"

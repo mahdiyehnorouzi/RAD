@@ -16,8 +16,8 @@ export function CatalogTear({
       aria-hidden="true"
       focusable="false"
     >
-      <path className="plp-tear-rim" d={shape.rim} />
-      <path className="plp-tear-edge" d={shape.edge} />
+      <path key="tear-rim" className="plp-tear-rim" d={shape.rim} />
+      <path key="tear-edge" className="plp-tear-edge" d={shape.edge} />
     </svg>
   );
 }

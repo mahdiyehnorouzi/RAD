@@ -11,12 +11,6 @@ export function toLatinDigits(raw: string) {
     .replace(/[٠-٩]/g, (digit) => String(ARABIC_DIGITS.indexOf(digit)));
 }
 
-export function toLocaleDigits(raw: string, locale: "fa" | "en") {
-  return locale === "fa"
-    ? raw.replace(/\d/g, (digit) => PERSIAN_DIGITS[Number(digit)])
-    : raw;
-}
-
 export function normalizeTrackingNumber(raw: string) {
   const value = toLatinDigits(raw).replace(/[\s-]/g, "").toUpperCase();
   return /^[A-Z0-9]{4,32}$/.test(value) ? value : null;

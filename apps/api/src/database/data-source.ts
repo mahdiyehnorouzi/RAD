@@ -1,8 +1,13 @@
 import { DataSource, type DataSourceOptions } from "typeorm";
 import { entities } from "./entities";
 
+/** The Compose database used by local API development when no env file is present. */
+export const DEFAULT_DATABASE_URL = "postgresql://rad:rad@localhost:5432/rad";
+
 /** Strip Prisma-style `schema=` query params that `pg` does not understand. */
-export function cleanDatabaseUrl(url = process.env.DATABASE_URL ?? "") {
+export function cleanDatabaseUrl(
+  url = process.env.DATABASE_URL ?? DEFAULT_DATABASE_URL,
+) {
   try {
     const parsed = new URL(url);
     parsed.searchParams.delete("schema");
@@ -24,7 +29,9 @@ export function schemaSyncEnabled(
   return nodeEnv !== "production";
 }
 
-export function typeOrmOptions(overrides: Partial<DataSourceOptions> = {}): DataSourceOptions {
+export function typeOrmOptions(
+  overrides: Partial<DataSourceOptions> = {},
+): DataSourceOptions {
   return {
     type: "postgres",
     url: cleanDatabaseUrl(),
@@ -42,6 +49,8 @@ export function typeOrmOptions(overrides: Partial<DataSourceOptions> = {}): Data
   } as DataSourceOptions;
 }
 
-export function createAppDataSource(overrides: Partial<DataSourceOptions> = {}) {
+export function createAppDataSource(
+  overrides: Partial<DataSourceOptions> = {},
+) {
   return new DataSource(typeOrmOptions(overrides));
 }

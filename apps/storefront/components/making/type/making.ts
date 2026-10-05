@@ -20,10 +20,7 @@ export type MakingStageId =
   | "declined";
 
 export type FeasibilityDecision =
-  | "approve"
-  | "request_change"
-  | "offer_alternative"
-  | "decline";
+  "approve" | "request_change" | "offer_alternative" | "decline";
 
 export type PhotoKind =
   | "concept"
@@ -50,6 +47,7 @@ export interface MakingBrief {
   freedom?: number;
   sketch?: string;
   hasVoice?: boolean;
+  voice?: string;
   forms?: string[];
   size?: string;
   timeline?: string;

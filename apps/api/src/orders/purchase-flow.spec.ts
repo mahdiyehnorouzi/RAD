@@ -33,6 +33,37 @@ function travel(ms: number) {
 }
 
 describe("E2E purchase (card-to-card)", () => {
+  test("receipts may omit tracking, while duplicate images remain blocked", async () => {
+    const receipt = rad.receipt();
+    for (let i = 0; i < 2; i++) {
+      const buyer = rad.buyer(`optional-tracking-${i}`);
+      await rad.cart.add(buyer, await rad.product(3_000_000));
+      const order = await rad.orders.checkout(buyer, {
+        name: "Test buyer",
+        phone: "09121234567",
+        city: "تهران",
+        address: "Test address",
+        acceptedPolicies: rad.acceptedPolicies,
+      });
+      if (i === 0) {
+        const submitted = await rad.orders.confirmPayment(buyer, order.id, {
+          receiptImage: receipt,
+        });
+        assert.equal(submitted.status, "pending_verification");
+        assert.ok(!submitted.payment?.trackingNumber);
+      } else {
+        await assert.rejects(
+          rad.orders.confirmPayment(buyer, order.id, { receiptImage: receipt }),
+          ConflictException,
+        );
+        const submitted = await rad.orders.confirmPayment(buyer, order.id, {
+          receiptImage: rad.receipt(),
+        });
+        assert.equal(submitted.status, "pending_verification");
+      }
+    }
+  });
+
   test("1. purchase an existing product: cart → checkout → receipt → admin approve → confirmed → unavailable", async () => {
     const slug = await rad.product(12_500_000);
     const buyer = rad.buyer("sara");
@@ -286,7 +317,6 @@ describe("E2E purchase (card-to-card)", () => {
       },
       { receiptImage: "data:image/png;base64,", trackingNumber: tracking },
       { receiptImage: oversized, trackingNumber: tracking },
-      { receiptImage: rad.receipt() },
       { receiptImage: rad.receipt(), trackingNumber: "12" },
       { receiptImage: rad.receipt(), trackingNumber: "12#45$78" },
     ];
@@ -339,6 +369,35 @@ describe("E2E purchase (card-to-card)", () => {
     );
   });
 
+  test("7b. double-click / dropped-response retry resubmits the identical receipt without burning a slot", async () => {
+    const buyer = rad.buyer("double-click");
+    const order = await rad.placeOrder(buyer, await rad.product());
+    const receipt = rad.receipt();
+    const tracking = rad.trackingNumber();
+
+    const first = await rad.orders.confirmPayment(buyer, order.id, {
+      receiptImage: receipt,
+      trackingNumber: tracking,
+    });
+    assert.equal(first.status, "pending_verification");
+
+    // Same payload sent again, as a real double click or a client retry
+    // after the first response was dropped would do.
+    const second = await rad.orders.confirmPayment(buyer, order.id, {
+      receiptImage: receipt,
+      trackingNumber: tracking,
+    });
+    assert.equal(second.status, "pending_verification");
+    assert.equal(second.payment?.trackingNumber, tracking);
+
+    const review = await rad.adminOrder(order.id);
+    assert.equal(
+      review.receiptSubmissions,
+      1,
+      "an identical resubmit is a no-op, not a second submission",
+    );
+  });
+
   test("8. two buyers for the same product: only one can ever reach payment", async () => {
     const slug = await rad.product();
     const buyerA = rad.buyer("a");
@@ -374,9 +433,9 @@ describe("E2E purchase (card-to-card)", () => {
     );
     await assert.rejects(
       rad.orders.checkout(other, {
-      phone: "09120000003",
-      acceptedPolicies: rad.acceptedPolicies,
-    }),
+        phone: "09120000003",
+        acceptedPolicies: rad.acceptedPolicies,
+      }),
       ConflictException,
     );
 
@@ -484,6 +543,9 @@ describe("E2E purchase (card-to-card)", () => {
       acceptedPolicies: rad.acceptedPolicies,
     });
     assert.ok(order.policyAcceptance?.acceptedAt);
-    assert.equal(order.policyAcceptance?.versions.terms, rad.acceptedPolicies.terms);
+    assert.equal(
+      order.policyAcceptance?.versions.terms,
+      rad.acceptedPolicies.terms,
+    );
   });
 });

@@ -1,13 +1,12 @@
 "use client";
 import "./checkout-flow.css";
 
-import { Check } from "lucide-react";
 import { useLocale } from "@/components/i18n";
 import { checkoutCopy } from "../const";
 
-/** 0 = delivery details, 1 = payment, 2 = confirmation. */
+/** 0 = delivery details, 1 = payment, 2 = receipt. */
 export function CheckoutSteps({ current }: { current: 0 | 1 | 2 }) {
-  const { locale, number } = useLocale();
+  const { locale } = useLocale();
   const c = checkoutCopy[locale];
 
   return (
@@ -22,13 +21,7 @@ export function CheckoutSteps({ current }: { current: 0 | 1 | 2 }) {
               className={`checkout-step is-${state}`}
               aria-current={state === "current" ? "step" : undefined}
             >
-              <span className="checkout-step-dot" aria-hidden="true">
-                {state === "done" ? (
-                  <Check size={15} strokeWidth={2} />
-                ) : (
-                  number(index + 1)
-                )}
-              </span>
+              <span className="checkout-step-dot" aria-hidden="true"></span>
               <span className="checkout-step-label">
                 {label}
                 {state === "next" ? null : (

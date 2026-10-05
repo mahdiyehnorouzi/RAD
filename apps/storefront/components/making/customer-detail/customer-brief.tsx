@@ -3,11 +3,16 @@
 import { useLocale } from "@/components/i18n";
 import type { MakingCommission } from "@/components/making/type";
 
-export function CustomerBrief({ commission }: { commission: MakingCommission }) {
+export function CustomerBrief({
+  commission,
+}: {
+  commission: MakingCommission;
+}) {
   const { locale, t } = useLocale();
   const images = [
     ...(commission.brief.images ?? []),
-    ...(commission.brief.image && !(commission.brief.images ?? []).includes(commission.brief.image)
+    ...(commission.brief.image &&
+    !(commission.brief.images ?? []).includes(commission.brief.image)
       ? [commission.brief.image]
       : []),
   ];
@@ -38,12 +43,16 @@ export function CustomerBrief({ commission }: { commission: MakingCommission }) 
     },
     {
       label: locale === "fa" ? "رنگ" : "Colours",
-      value: commission.brief.colors?.length ? commission.brief.colors.join(" / ") : "",
+      value: commission.brief.colors?.length
+        ? commission.brief.colors.join(" / ")
+        : "",
     },
     {
       label: locale === "fa" ? "آزادی سازنده" : "Maker freedom",
       value:
-        typeof commission.brief.freedom === "number" ? `${commission.brief.freedom}%` : "",
+        typeof commission.brief.freedom === "number"
+          ? `${commission.brief.freedom}%`
+          : "",
     },
     {
       label: locale === "fa" ? "اجازه غافلگیری" : "Permission for surprise",
@@ -53,7 +62,9 @@ export function CustomerBrief({ commission }: { commission: MakingCommission }) 
 
   return (
     <>
-      <h2>{locale === "fa" ? "مشخصات ارسال‌شده" : "Submitted specification"}</h2>
+      <h2>
+        {locale === "fa" ? "مشخصات ارسال‌شده" : "Submitted specification"}
+      </h2>
       <dl className="making-brief">
         {rows.map((row) => (
           <div key={row.label}>
@@ -62,6 +73,15 @@ export function CustomerBrief({ commission }: { commission: MakingCommission }) 
           </div>
         ))}
       </dl>
+      {commission.brief.voice ? (
+        <audio
+          controls
+          src={commission.brief.voice}
+          aria-label={
+            locale === "fa" ? "صدای ایده‌ی شما" : "Your recorded idea"
+          }
+        />
+      ) : null}
       {images.length ? (
         <ul className="making-brief-images">
           {images.map((src, index) => (

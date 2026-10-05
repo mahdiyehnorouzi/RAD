@@ -1,0 +1,238 @@
+/* Native modal keeps focus and background interaction inside the filter sheet. */
+.plp-filter-sheet {
+  width: min(100%, 44rem);
+  max-width: 100%;
+  max-height: min(92dvh, 52rem);
+  margin: auto auto 0;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: 24px 24px 0 0;
+  background: #faf7f1;
+  color: var(--ink);
+  box-shadow: 0 -12px 60px rgb(24 35 31 / 12%);
+}
+.plp-filter-sheet[open] {
+  display: flex;
+  flex-direction: column;
+}
+.plp-filter-sheet::backdrop {
+  background: rgb(24 28 24 / 48%);
+}
+.plp-sheet-handle {
+  flex: none;
+  width: 32px;
+  height: 4px;
+  margin: 11px auto 0;
+  border-radius: 9px;
+  background: #c9c2b8;
+}
+.plp-sheet-head {
+  position: relative;
+  flex: none;
+  padding: 16px 52px 20px;
+  text-align: center;
+}
+.plp-sheet-head h2 {
+  margin: 0;
+  font-size: clamp(1.1rem, 3.6vw, 1.4rem);
+  font-weight: 600;
+}
+.plp-sheet-head button {
+  position: absolute;
+  inset-inline-end: 12px;
+  top: 7px;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+.plp-sheet-fields {
+  padding: 0 18px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.plp-sheet-group {
+  min-width: 0;
+  margin: 0;
+  padding: 17px 0 14px;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+}
+.plp-sheet-group:last-child {
+  border-bottom: 0;
+}
+.plp-sheet-group legend,
+.plp-sheet-label {
+  display: flex;
+  float: inline-start;
+  width: 100%;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding: 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+.plp-sheet-group legend + * {
+  clear: both;
+}
+.plp-sheet-group legend svg,
+.plp-sheet-label svg {
+  width: 21px;
+  height: 21px;
+  stroke-width: 1.6;
+}
+.plp-sheet-options {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 5px;
+}
+.plp-sheet-option {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 0;
+  min-height: 40px;
+  padding: 8px 5px;
+  border: 1px solid #e3dcd1;
+  border-radius: 11px;
+  background: #f4efe6;
+  color: var(--ink);
+  font-size: clamp(0.68rem, 2.8vw, 0.9rem);
+  line-height: 1.6;
+  cursor: pointer;
+}
+.plp-sheet-option:has(:checked) {
+  border-color: var(--moss);
+  background: var(--moss);
+  color: #fff;
+}
+.plp-sheet-option input {
+  appearance: none;
+  flex: none;
+  width: 14px;
+  height: 14px;
+  margin: 0;
+  border: 1px solid #b8b2a8;
+  border-radius: 50%;
+  background: transparent;
+}
+.plp-sheet-option input:checked {
+  border-color: #fff;
+  background: #fff;
+  box-shadow: inset 0 0 0 3px var(--moss);
+}
+.plp-sheet-option:has(:focus-visible) {
+  outline: 2px solid var(--moss);
+  outline-offset: 3px;
+}
+.plp-sheet-option input:focus-visible {
+  outline: none;
+}
+.plp-sheet-prices .plp-sheet-option {
+  font-size: clamp(0.61rem, 2.45vw, 0.8rem);
+  gap: 4px;
+}
+.plp-sheet-select {
+  position: relative;
+  clear: both;
+}
+.plp-sheet-select select {
+  appearance: none;
+  width: 100%;
+  min-height: 44px;
+  padding: 9px 14px;
+  padding-inline-end: 40px;
+  border: 1px solid #e3dcd1;
+  border-radius: 11px;
+  background: #f4efe6;
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+.plp-sheet-select svg {
+  position: absolute;
+  top: 50%;
+  inset-inline-end: 12px;
+  width: 18px;
+  height: 18px;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+.plp-sheet-footer {
+  display: grid;
+  flex: none;
+  grid-template-columns: 1.1fr 1fr;
+  gap: 12px;
+  padding: 8px 18px max(12px, env(safe-area-inset-bottom));
+  background: #faf7f1;
+  box-shadow: 0 -5px 18px rgb(24 35 31 / 3%);
+}
+.plp-sheet-footer button {
+  min-height: 49px;
+  border: 0;
+  font: inherit;
+  cursor: pointer;
+}
+.plp-sheet-apply {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border-radius: 14px;
+  background: var(--moss);
+  color: white;
+  font-weight: 600 !important;
+}
+.plp-sheet-apply svg {
+  width: 21px;
+  height: 21px;
+}
+.plp-sheet-clear {
+  background: transparent;
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 5px;
+}
+.plp-filter-sheet button:focus-visible,
+.plp-sheet-select select:focus-visible {
+  outline: 2px solid var(--moss);
+  outline-offset: 3px;
+}
+@media (min-width: 700px) {
+  .plp-filter-sheet {
+    margin: auto;
+    border-radius: 24px;
+  }
+  .plp-sheet-fields {
+    padding-inline: 28px;
+  }
+  .plp-sheet-head {
+    padding-block: 20px 25px;
+  }
+  .plp-sheet-group {
+    padding-block: 20px;
+  }
+  .plp-sheet-option {
+    min-height: 48px;
+  }
+  .plp-sheet-footer {
+    padding: 16px 28px 24px;
+  }
+}
+@media (max-width: 359px) {
+  .plp-sheet-options {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .plp-sheet-option,
+  .plp-sheet-prices .plp-sheet-option {
+    font-size: 0.75rem;
+  }
+}
