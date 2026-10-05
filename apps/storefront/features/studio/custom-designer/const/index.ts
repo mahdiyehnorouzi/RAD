@@ -1,9 +1,5 @@
 export { designerCopy } from "./designer-copy";
-export {
-  DESIGNER_STEP_LABEL,
-  DESIGNER_STEPS,
-  type DesignerStep,
-} from "./designer-steps";
+export { DESIGNER_STEPS, type DesignerStep } from "./designer-steps";
 export {
   BUDGET_OPTIONS,
   DATED_TIMELINE,

@@ -4,7 +4,6 @@ export {
   ProductCard,
   ProductCardArtwork,
   ProductCardBadge,
-  ProductCardQr,
 } from "./product-card";
 export { ProductCarousel } from "./product-carousel";
 export { ProductGridSkeleton } from "./product-grid-skeleton";
