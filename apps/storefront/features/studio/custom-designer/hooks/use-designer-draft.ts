@@ -9,12 +9,14 @@ import {
   TIMELINE_OPTIONS,
   USE_OPTIONS,
 } from "../const";
+import { FLOW_SCREENS } from "../const/flow-screens";
 import type { DesignerDraft } from "../type";
 
 const storageKey = "rad-studio-draft-v1";
 const SAVE_DELAY_MS = 400;
 
 const emptyDesignerDraft: DesignerDraft = {
+  flowScreen: "choose",
   step: "idea",
   reached: "idea",
   prompt: "",
@@ -29,7 +31,7 @@ const emptyDesignerDraft: DesignerDraft = {
   height: "",
   colors: [],
   colorNote: "",
-  freedom: 70,
+  freedom: 50,
   budget: "",
   timeline: "",
   needBy: "",
@@ -94,12 +96,16 @@ function readDraft(): DesignerDraft | null {
       ? parsed.reached!
       : step;
     const draft: DesignerDraft = {
+      flowScreen: FLOW_SCREENS.includes(parsed.flowScreen as never)
+        ? parsed.flowScreen
+        : "choose",
       step,
       reached,
       prompt: String(parsed.prompt ?? ""),
       uploads: strings(parsed.uploads),
       sketch: String(parsed.sketch ?? ""),
-      hasVoice: Boolean(parsed.hasVoice),
+      hasVoice: Boolean(parsed.voice),
+      voice: typeof parsed.voice === "string" ? parsed.voice : "",
       form: known(parsed.form, FORM_OPTIONS) || legacyForm(parsed.forms),
       uses: strings(parsed.uses).filter((id) =>
         USE_OPTIONS.some((option) => option.id === id),

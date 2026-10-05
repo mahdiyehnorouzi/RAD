@@ -9,15 +9,21 @@ type FormOption = Option & { category: ProductCategory; image: string };
 export const FORM_OPTIONS: FormOption[] = [
   {
     id: "container",
-    label: { fa: "ظرف و کاربردی", en: "Tableware" },
+    label: { fa: "ماگ و فنجان", en: "Mugs & cups" },
     category: "tableware",
     image: "/catalog/photos/transparent/speckled-sculpted-mug.webp",
   },
   {
-    id: "sculpture",
-    label: { fa: "مجسمه", en: "Sculpture" },
-    category: "sculpture",
-    image: "/catalog/photos/transparent/orange-boat-sculpture.webp",
+    id: "vase",
+    label: { fa: "گلدان", en: "Vase" },
+    category: "ceramics",
+    image: "/catalog/photos/transparent/blue-flower-portrait.webp",
+  },
+  {
+    id: "serving",
+    label: { fa: "ظروف سرو", en: "Serving ware" },
+    category: "tableware",
+    image: "/catalog/photos/transparent/cobalt-fold-bowl.webp",
   },
   {
     id: "open",
@@ -42,6 +48,7 @@ export const FORM_OPTIONS: FormOption[] = [
 /** Ids from the earlier multi-select studio, so saved drafts still land somewhere. */
 export const LEGACY_FORM_IDS: Record<string, string> = {
   mug: "container",
+  sculpture: "open",
   object: "open",
   lamp: "light",
   unsure: "open",

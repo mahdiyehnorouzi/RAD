@@ -6,6 +6,7 @@ import {
   MAX_DESIGNER_COLORS,
   type DesignerStep,
 } from "../const";
+import type { FlowScreen } from "../type/flow-screen";
 import type { DesignerDraft } from "../type";
 
 const maxImages = 4;
@@ -17,13 +18,13 @@ function normalizedNumber(value: string) {
     .replace(/[٠-٩]/g, (digit) => String("٠١٢٣٤٥٦٧٨٩".indexOf(digit)));
 }
 
-function validDimension(value: string) {
+export function validDimension(value: string) {
   if (!value.trim()) return true;
   const number = Number(normalizedNumber(value));
   return Number.isFinite(number) && number > 0;
 }
 
-function validFutureDate(value: string) {
+export function validFutureDate(value: string) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
   const date = new Date(`${value}T00:00:00`);
   return !Number.isNaN(date.valueOf()) && date > new Date();
@@ -36,12 +37,18 @@ export function freedomToPermission(value: number) {
 }
 
 export function useDesigner() {
+  const [flowScreen, setFlowScreen] = useState<FlowScreen>("choose");
   const [step, setStep] = useState<DesignerStep>("idea");
   const [reached, setReached] = useState<DesignerStep>("idea");
   const [prompt, setPrompt] = useState("");
   const [uploads, setUploads] = useState<string[]>([]);
   const [sketch, setSketch] = useState("");
   const [hasVoice, setHasVoice] = useState(false);
+  const [voice, setVoiceData] = useState("");
+  const setVoice = (value: string) => {
+    setVoiceData(value);
+    setHasVoice(Boolean(value));
+  };
   const [form, setForm] = useState("");
   const [uses, setUses] = useState<string[]>([]);
   const [size, setSize] = useState(DEFAULT_SIZE);
@@ -50,7 +57,7 @@ export function useDesigner() {
   const [height, setHeight] = useState("");
   const [colors, setColors] = useState<string[]>([]);
   const [colorNote, setColorNote] = useState("");
-  const [freedom, setFreedom] = useState(70);
+  const [freedom, setFreedom] = useState(50);
   const [budget, setBudget] = useState("");
   const [timeline, setTimeline] = useState("");
   const [needBy, setNeedBy] = useState("");
@@ -161,12 +168,14 @@ export function useDesigner() {
 
   const draft = useMemo<DesignerDraft>(
     () => ({
+      flowScreen,
       step,
       reached,
       prompt,
       uploads,
       sketch,
       hasVoice,
+      voice,
       form,
       uses,
       size,
@@ -181,12 +190,14 @@ export function useDesigner() {
       needBy,
     }),
     [
+      flowScreen,
       step,
       reached,
       prompt,
       uploads,
       sketch,
       hasVoice,
+      voice,
       form,
       uses,
       size,
@@ -203,12 +214,14 @@ export function useDesigner() {
   );
 
   const restoreDraft = useCallback((next: DesignerDraft) => {
+    setFlowScreen(next.flowScreen ?? "choose");
     setStep(next.step);
     setReached(next.reached);
     setPrompt(next.prompt.slice(0, MAX_PROMPT));
     setUploads(next.uploads.slice(0, maxImages));
     setSketch(next.sketch);
-    setHasVoice(next.hasVoice);
+    setHasVoice(Boolean(next.voice));
+    setVoiceData(next.voice ?? "");
     setForm(next.form);
     setUses(next.uses);
     setSize(next.size);
@@ -226,7 +239,11 @@ export function useDesigner() {
   }, []);
 
   return {
+    flowScreen,
+    setFlowScreen,
     draft,
+    voice,
+    setVoice,
     restoreDraft,
     addUploads,
     agreed,

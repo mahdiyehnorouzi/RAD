@@ -3,13 +3,13 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useLocale } from "@/components/i18n";
-import { ORDER_MAKES, orderCopy, type OrderMake } from "../const";
+import { ORDER_MAKES, orderCopy } from "../const";
 import { StudioIcon, readingArrow } from "../studio-icon";
 import styles from "./order-makes.module.css";
 import order from "./custom-order.module.css";
 
-export function OrderMakes({ onPick }: { onPick: (make: OrderMake) => void }) {
-  const { locale } = useLocale();
+export function OrderMakes() {
+  const { locale, href } = useLocale();
   const c = orderCopy[locale];
 
   return (
@@ -25,10 +25,9 @@ export function OrderMakes({ onPick }: { onPick: (make: OrderMake) => void }) {
         {ORDER_MAKES.map((make, index) => (
           <li key={make.id} className={index < 2 ? styles.wide : ""}>
             <Link
-              href={`/studio/start?form=${encodeURIComponent(make.form)}`}
+              href={href(`/studio/start?form=${encodeURIComponent(make.form)}`)}
               className={styles.csMake}
               aria-label={c.makesPick.replace("{name}", make.title[locale])}
-              onClick={() => onPick(make)}
             >
               <span className={styles.csMakeArt} aria-hidden="true">
                 <Image
