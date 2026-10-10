@@ -18,11 +18,63 @@ export const productImageSelect: (keyof ProductImage)[] = [
   "accent",
   "shape",
   "sortOrder",
+  "storage",
+  "objectKey",
 ];
 
-function imageSrc(image: ProductImageMeta, embedImages: boolean) {
+/**
+ * `static` and `external` rows hold a real, directly-usable path/URL in
+ * `src` — return it as-is. Only `legacy_base64` masks the row behind
+ * `/catalog/images/:id` (that route decodes the data URI and streams
+ * bytes). `cloudinary` rows derive their URL from `objectKey` (the
+ * Cloudinary public_id) below.
+ */
+/**
+ * Cloudinary delivery URL for a `cloudinary`-storage row, derived from the
+ * public_id (`objectKey`, the durable source of truth persisted in the
+ * DB) plus `CLOUDINARY_CLOUD_NAME` config — never persisted itself, so
+ * renaming the cloud or moving assets around only ever requires updating
+ * config, not every row.
+ *
+ * `f_auto,q_auto` is baked in here (Cloudinary's own format/quality
+ * auto-negotiation) so every consumer gets a reasonably optimized asset by
+ * default even without going through `next/image`. `apps/storefront`'s
+ * `ProductMedia` component additionally applies a width (`w_<width>`) on
+ * top of this exact transformation segment via a custom `next/image`
+ * loader scoped to Cloudinary URLs — see `product-media.tsx` — so the
+ * existing per-context `sizes` logic (PLP vs PDP vs cart/checkout) still
+ * drives how large an image Cloudinary actually serves, without also
+ * paying for Cloudflare's Workers-level image resizing on top of it. Keep
+ * this transformation segment's exact text (`f_auto,q_auto`) in sync with
+ * that loader's string replace.
+ */
+function cloudinaryDeliveryUrl(objectKey: string) {
+  const cloudName = (process.env.CLOUDINARY_CLOUD_NAME ?? "").trim();
+  if (!cloudName) {
+    // Not configured — fall back to the legacy proxy route so the app
+    // doesn't crash; the image simply won't resolve until
+    // CLOUDINARY_CLOUD_NAME is set (see apps/api/.env.example).
+    return undefined;
+  }
+  return `https://res.cloudinary.com/${cloudName}/image/upload/f_auto,q_auto/${objectKey}`;
+}
+
+export function imageSrc(image: ProductImageMeta, embedImages: boolean) {
   if (embedImages) return image.src ?? undefined;
-  return `/catalog/images/${image.id}`;
+  switch (image.storage) {
+    case "static":
+    case "external":
+      return image.src ?? `/catalog/images/${image.id}`;
+    case "cloudinary":
+      return (
+        (image.objectKey ? cloudinaryDeliveryUrl(image.objectKey) : undefined) ??
+        `/catalog/images/${image.id}`
+      );
+    case "legacy_base64":
+    default:
+      // `default` also covers rows from before the Phase 0 backfill ran.
+      return `/catalog/images/${image.id}`;
+  }
 }
 
 export function toCatalogImages(
@@ -157,13 +209,22 @@ export const publicProductWhere = {
 };
 
 export function stripImageSrc(images: ProductImage[]): ProductImageMeta[] {
-  return images.map(({ id, alt, enAlt, color, accent, shape, sortOrder }) => ({
-    id,
-    alt,
-    enAlt,
-    color,
-    accent,
-    shape,
-    sortOrder,
-  }));
+  return images.map(
+    ({ id, alt, enAlt, color, accent, shape, sortOrder, storage, src, objectKey }) => ({
+      id,
+      alt,
+      enAlt,
+      color,
+      accent,
+      shape,
+      sortOrder,
+      storage,
+      objectKey,
+      // Only keep `src` for the formats the public mapper actually returns
+      // as-is (`static`/`external`); never carry the base64 payload past
+      // this point for `legacy_base64` rows, and `cloudinary` rows never
+      // have a `src` to begin with (see `replaceImages`).
+      src: storage === "legacy_base64" ? null : src,
+    }),
+  );
 }

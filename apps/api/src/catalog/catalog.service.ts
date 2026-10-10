@@ -1,18 +1,37 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { Injectable, Logger, NotFoundException, OnModuleInit } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
+import { DataSource, Repository } from "typeorm";
 import { Product } from "../database/entities";
 import { InventoryService } from "../inventory/inventory.service";
 import { pricedCatalogQuery } from "./catalog.query";
+import { migrateProductImageStorage } from "./product-image-storage.migration";
 import { stripImageSrc, toProduct } from "./product.mapper";
 
 @Injectable()
-export class CatalogService {
+export class CatalogService implements OnModuleInit {
+  private readonly logger = new Logger(CatalogService.name);
+
   constructor(
+    private readonly dataSource: DataSource,
     @InjectRepository(Product)
     private readonly products: Repository<Product>,
     private readonly inventory: InventoryService,
   ) {}
+
+  async onModuleInit() {
+    // Same reasoning as OrdersService: a one-time backfill must not be able
+    // to crash the whole API on a transient DB hiccup at boot. Log and move
+    // on; it retries harmlessly on the next restart.
+    try {
+      await migrateProductImageStorage(this.dataSource, this.logger);
+    } catch (error) {
+      this.logger.warn(
+        `ProductImage storage backfill skipped (will retry on next boot): ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      );
+    }
+  }
 
   async list(category?: string) {
     await this.inventory.releaseExpiredHolds();
