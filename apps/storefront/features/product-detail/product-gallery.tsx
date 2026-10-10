@@ -41,13 +41,22 @@ export function ProductGallery({
   const PreviousIcon = locale === "fa" ? ArrowRight : ArrowLeft;
   const NextIcon = locale === "fa" ? ArrowLeft : ArrowRight;
 
-  const renderSlide = (slide: Slide) =>
-    slide.kind === "photo" ? (
+  // The main stage image occupies ~42% of the 86rem PDP max-width on
+  // desktop (gallery column is 0.72fr of a 1.72fr grid), going full-width
+  // below the 1100px/700px breakpoints where the layout stacks. The thumb
+  // rail is a fixed 5.25rem (84px, 4.25rem/68px from 1100px down).
+  const renderSlide = (slide: Slide, context: "stage" | "thumb") => {
+    const sizes =
+      context === "stage"
+        ? "(max-width: 700px) 100vw, (max-width: 1100px) 55vw, 42vw"
+        : "84px";
+    return slide.kind === "photo" ? (
       <ProductMedia
         product={product}
         imageIndex={slide.index}
         showStatusBadge={false}
-        priority={slide === slides[0]}
+        priority={context === "stage" && slide === slides[0]}
+        sizes={sizes}
       />
     ) : (
       <ProductMedia
@@ -55,9 +64,11 @@ export function ProductGallery({
         imageIndex={0}
         showStatusBadge={false}
         preserveTransparentBackground
-        priority={slide === slides[0]}
+        priority={context === "stage" && slide === slides[0]}
+        sizes={sizes}
       />
     );
+  };
 
   return (
     <div
@@ -91,7 +102,7 @@ export function ProductGallery({
               aria-label={`${format(index + 1)} / ${format(count)}`}
               aria-hidden={index !== active}
             >
-              {renderSlide(slide)}
+              {renderSlide(slide, "stage")}
               {slide.kind === "plate" && recordNumber ? (
                 <span className={styles.plateMark} aria-hidden="true">
                   <b dir="ltr">{recordNumber}</b>
@@ -145,7 +156,7 @@ export function ProductGallery({
                   : `${c.view} ${format(index + 1)}`
               }
             >
-              <span aria-hidden="true">{renderSlide(slide)}</span>
+              <span aria-hidden="true">{renderSlide(slide, "thumb")}</span>
             </button>
           ))}
         </div>

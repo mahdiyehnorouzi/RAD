@@ -16,6 +16,7 @@
     "binding": "ASSETS"
   },
   "cache": { "enabled": true },
+  "images": { "binding": "IMAGES" },
   "vars": {
     "API_URL": "https://api.rad-object.com",
     "RAD_VERSION": "1.5.0"

@@ -9,10 +9,13 @@ export function ProductCardArtwork({
   product,
   slide = { kind: "photo", index: 0 },
   forceCategoryArtwork = false,
+  sizes = "(max-width: 600px) 100vw, (max-width: 900px) 50vw, 33vw",
 }: {
   product: Product;
   slide?: ProductCardSlide;
   forceCategoryArtwork?: boolean;
+  /** Pass a smaller value for a thumbnail-rail usage; defaults to a full PLP grid card. */
+  sizes?: string;
 }) {
   const plate = slide.kind === "plate";
   const imageIndex = slide.kind === "photo" ? slide.index : 0;
@@ -37,6 +40,7 @@ export function ProductCardArtwork({
               imageIndex={imageIndex}
               forceCategoryArtwork={forceCategoryArtwork}
               showStatusBadge={false}
+              sizes={sizes}
             />
           )}
         </span>
@@ -48,6 +52,7 @@ export function ProductCardArtwork({
           forceCategoryArtwork={forceCategoryArtwork}
           showStatusBadge={false}
           preserveTransparentBackground={plate}
+          sizes={sizes}
         />
       </span>
     </span>

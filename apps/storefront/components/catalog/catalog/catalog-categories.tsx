@@ -69,7 +69,11 @@ export function CatalogCategories({
             >
               <span className="plp-chip-thumb" aria-hidden="true">
                 {chip.work ? (
-                  <ProductMedia product={chip.work} showStatusBadge={false} />
+                  <ProductMedia
+                    product={chip.work}
+                    showStatusBadge={false}
+                    sizes="45px"
+                  />
                 ) : "preview" in chip && chip.preview ? (
                   <ArtworkVisual
                     visual={chip.preview.visual}

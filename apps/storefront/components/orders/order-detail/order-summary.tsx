@@ -103,7 +103,11 @@ export function OrderSummary({
         {items.map((product, index) => (
           <li className="track-work" key={product.slug}>
             <div className="track-work-art">
-              <ProductMedia product={product} showStatusBadge={false} />
+              <ProductMedia
+                product={product}
+                showStatusBadge={false}
+                sizes="(max-width: 600px) 7rem, 8.75rem"
+              />
             </div>
             <div className="track-work-copy">
               {index === 0 ? status : null}
