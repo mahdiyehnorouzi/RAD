@@ -3,6 +3,7 @@ import {
   ConflictException,
   ForbiddenException,
   Injectable,
+  Logger,
   NotFoundException,
 } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
@@ -14,6 +15,13 @@ import {
   productImageError,
   productImageLimit,
 } from "../common/image-data";
+import {
+  CloudinaryStorageService,
+  isAllowedProductImageMime,
+  isValidProductImagePublicId,
+  productImageFolder,
+} from "../storage/cloudinary-storage.service";
+import type { AdminProductImageInputDto } from "./dto";
 import {
   CartItem,
   Favorite,
@@ -75,7 +83,39 @@ export class AdminService {
     private readonly payments: Repository<PaymentIntent>,
     private readonly inventory: InventoryService,
     private readonly paymentReview: PaymentReviewService,
+    private readonly storage: CloudinaryStorageService,
   ) {}
+
+  private readonly logger = new Logger(AdminService.name);
+
+  /**
+   * Issues signed Cloudinary upload params for a new admin image upload.
+   * The destination folder is derived here, server-side — never from
+   * anything client-supplied — so `replaceImages` can later trust a
+   * `public_id` that matches the expected namespace
+   * (`isValidProductImagePublicId`). `CLOUDINARY_API_SECRET` never leaves
+   * this process; only the signature + public params are returned.
+   *
+   * `slug` here is only a route param for admin UX (the dialog calls this
+   * before a product may even exist, e.g. with a draft/placeholder slug);
+   * it is never trusted for the folder itself. We re-resolve it to the
+   * real, current `Product.id` with a fresh DB read every call — never a
+   * client-cached id — and namespace by that `id`, which is immutable. If
+   * no product exists yet for this slug (new-product flow, image attached
+   * before the first save), the folder falls back to the unassociated
+   * `rad/pending` namespace; `replaceImages` accepts that pattern for any
+   * product at save time (see `cloudinary-storage.service.ts` for why no
+   * migration step is needed when that image is later attached).
+   */
+  async signProductImageUpload(slug: string, mime: string) {
+    if (!isAllowedProductImageMime(mime)) {
+      throw new BadRequestException(productImageError);
+    }
+    const normalizedSlug = slug.trim().toLowerCase().replace(/\s+/g, "-");
+    const existing = await this.products.findOne({ where: { slug: normalizedSlug } });
+    const folder = productImageFolder(existing?.id ?? null);
+    return this.storage.createSignedUpload(folder);
+  }
 
   assert(role: string | undefined, permission: AdminPermission) {
     if (!canAdmin(role, permission)) {
@@ -145,7 +185,7 @@ export class AdminService {
           }),
         );
 
-    await this.replaceImages(product.slug, input.name.trim(), input.images);
+    await this.replaceImages(product.id, product.slug, input.name.trim(), input.images);
     const saved = await this.products.findOneOrFail({
       where: { id: product.id },
       relations: productIncludeWithSrc,
@@ -389,26 +429,107 @@ export class AdminService {
     return this.products.findOneOrFail({ where: { id } });
   }
 
-  private async replaceImages(slug: string, name: string, images: string[]) {
-    await this.productImages.delete({ productSlug: slug });
-    if (!images.length) return;
-    for (const src of images) {
-      try {
-        assertImageData(src, productImageLimit, productImageError);
-      } catch {
-        throw new BadRequestException(productImageError);
-      }
-    }
-    await this.productImages.save(
-      images.map((src, sortOrder) =>
-        this.productImages.create({
+  private async replaceImages(
+    productId: string,
+    slug: string,
+    name: string,
+    images: AdminProductImageInputDto[],
+  ) {
+    const rows = images.map((image, sortOrder) => {
+      if (image.storage === "legacy_base64") {
+        if (!image.src) throw new BadRequestException(productImageError);
+        try {
+          assertImageData(image.src, productImageLimit, productImageError);
+        } catch {
+          throw new BadRequestException(productImageError);
+        }
+        return {
           productSlug: slug,
-          src,
+          storage: "legacy_base64" as const,
+          src: image.src,
+          objectKey: null,
           alt: name,
           enAlt: name,
           sortOrder,
-        }),
-      ),
+        };
+      }
+      if (image.storage === "static" || image.storage === "external") {
+        if (!image.src) throw new BadRequestException(productImageError);
+        return {
+          productSlug: slug,
+          storage: image.storage,
+          src: image.src,
+          objectKey: null,
+          alt: name,
+          enAlt: name,
+          sortOrder,
+        };
+      }
+      // storage === "cloudinary": never trust the client's objectKey
+      // (public_id) blindly, even though the browser uploaded the bytes
+      // directly to Cloudinary with our signature — re-validate it matches
+      // exactly what our own sign endpoint would have issued for this
+      // product (`rad/products/<productId>/<id>`, or the unassociated
+      // `rad/pending/<id>` namespace for an image attached before the
+      // product existed), so a client can't point a product at an
+      // arbitrary asset elsewhere in the Cloudinary account. Namespacing
+      // by the immutable `productId` (not `slug`) means this still holds
+      // even if `slug` were ever renamed. Unlike the R2 design this
+      // replaces, a `rad/pending/...` public_id is persisted as-is — no
+      // rename/migration step — see `cloudinary-storage.service.ts`.
+      if (!image.objectKey || !isValidProductImagePublicId(productId, image.objectKey)) {
+        throw new BadRequestException(
+          "کلید تصویر نامعتبر است. تصویر را دوباره بارگذاری کنید.",
+        );
+      }
+      return {
+        productSlug: slug,
+        storage: "cloudinary" as const,
+        src: null,
+        objectKey: image.objectKey,
+        alt: name,
+        enAlt: name,
+        sortOrder,
+      };
+    });
+
+    // Figure out which Cloudinary assets are being dropped (removed or
+    // replaced) before we touch the DB, so we can clean them up in
+    // Cloudinary only *after* the delete+reinsert transaction below has
+    // actually committed — never before, since deleting storage ahead of a
+    // DB write that could still roll back would leave a product.image
+    // pointing at nothing.
+    const existing = await this.productImages.find({ where: { productSlug: slug } });
+    const keptObjectKeys = new Set(
+      rows.filter((row) => row.storage === "cloudinary").map((row) => row.objectKey as string),
     );
+    const orphanedObjectKeys = existing
+      .filter(
+        (row) => row.storage === "cloudinary" && row.objectKey && !keptObjectKeys.has(row.objectKey),
+      )
+      .map((row) => row.objectKey as string);
+
+    await this.dataSource.transaction(async (manager) => {
+      await manager.delete(ProductImage, { productSlug: slug });
+      if (!rows.length) return;
+      await manager.save(ProductImage, rows.map((row) => manager.create(ProductImage, row)));
+    });
+
+    if (orphanedObjectKeys.length) {
+      // Best-effort: an orphaned Cloudinary asset left behind is an
+      // acceptable cost; failing the whole save because the Cloudinary
+      // delete flaked is not. `destroy` treats "not found" as success, so
+      // a repeated/duplicate save of the same diff never double-deletes or
+      // errors.
+      for (const objectKey of orphanedObjectKeys) {
+        try {
+          await this.storage.destroy(objectKey);
+        } catch (error) {
+          this.logger.warn(
+            `Failed to delete orphaned Cloudinary asset ${objectKey}: ${(error as Error).message}`,
+          );
+        }
+      }
+    }
   }
 }

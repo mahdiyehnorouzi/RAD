@@ -28,6 +28,7 @@ import { NoticesService } from "../../notices/notices.service";
 import { CURRENT_POLICY_VERSIONS, ORDER_POLICY_SLUGS } from "../../policies/const";
 import { OrdersService } from "../orders.service";
 import { PaymentReviewService } from "../payment-review.service";
+import { CloudinaryStorageService } from "../../storage/cloudinary-storage.service";
 
 function freePort() {
   return new Promise<number>((resolve, reject) => {
@@ -101,6 +102,7 @@ export async function startPurchaseHarness() {
     repo(PaymentIntent),
     inventory,
     paymentReview,
+    new CloudinaryStorageService(new ConfigService({})),
   );
 
   let productCount = 0;

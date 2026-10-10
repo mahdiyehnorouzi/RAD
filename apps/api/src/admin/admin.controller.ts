@@ -14,6 +14,7 @@ import { AdminGuard } from "../common/guards/admin.guard";
 import { AdminService } from "./admin.service";
 import {
   InviteMemberDto,
+  SignProductImageDto,
   RejectPaymentDto,
   SaveProductDto,
   UpdateMemberDto,
@@ -76,6 +77,16 @@ export class AdminController {
   deleteProduct(@Param("id") id: string, @Req() request: AuthedRequest) {
     this.admin.assert(request.adminRole, "product.delete");
     return this.admin.deleteProduct(id);
+  }
+
+  @Post("products/:slug/images/sign")
+  signProductImage(
+    @Param("slug") slug: string,
+    @Body() body: SignProductImageDto,
+    @Req() request: AuthedRequest,
+  ) {
+    this.admin.assert(request.adminRole, "product.write");
+    return this.admin.signProductImageUpload(slug, body.mime);
   }
 
   @Get("orders")

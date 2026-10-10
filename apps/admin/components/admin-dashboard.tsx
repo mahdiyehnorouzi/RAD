@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Archive,
   ChevronLeft,
@@ -508,6 +508,7 @@ export function AdminDashboard() {
       {productEditor && (
         <ProductDialog
           product={productEditor === "new" ? null : productEditor}
+          onUploadImage={workspace.uploadProductImage}
           onClose={() => setProductEditor(null)}
           onSave={async (product) => {
             try {
@@ -805,7 +806,7 @@ function Products({
 function ProductThumb({ product }: { product: AdminProduct }) {
   return (
     <div className="product-thumb">
-      {product.images[0] ? <img src={product.images[0]} alt="" /> : <Package />}
+      {product.images[0]?.src ? <img src={product.images[0].src} alt="" /> : <Package />}
       <span>{number.format(product.images.length)} عکس</span>
     </div>
   );
@@ -1155,10 +1156,15 @@ function ProductDialog({
   product,
   onClose,
   onSave,
+  onUploadImage,
 }: {
   product: AdminProduct | null;
   onClose: () => void;
   onSave: (product: AdminProduct) => void | Promise<void>;
+  onUploadImage: (
+    slug: string,
+    file: File,
+  ) => Promise<{ storage: "cloudinary"; objectKey: string }>;
 }) {
   const [draft, setDraft] = useState<AdminProduct>(
     product ?? {
@@ -1175,7 +1181,17 @@ function ProductDialog({
     },
   );
   const [imageError, setImageError] = useState("");
+  const [uploadingCount, setUploadingCount] = useState(0);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  // Local blob: preview URLs created for in-flight uploads — revoked once
+  // the real objectKey is stored (or the upload fails), so we never leak
+  // them past this dialog's lifetime.
+  const previewUrlsRef = useRef<string[]>([]);
+  useEffect(() => {
+    return () => {
+      previewUrlsRef.current.forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, []);
   const submit = (event: React.FormEvent) => {
     event.preventDefault();
     const next: Record<string, string> = {};
@@ -1190,7 +1206,7 @@ function ProductDialog({
     if (Object.keys(next).length) return;
     void onSave({ ...draft, updatedAt: Date.now() });
   };
-  const addImage = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const addImage = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     event.target.value = "";
     if (!file) return;
@@ -1202,16 +1218,34 @@ function ProductDialog({
       setImageError("فقط JPG، PNG یا WebP تا ۲ مگابایت مجاز است.");
       return;
     }
-    const reader = new FileReader();
-    reader.onload = () => {
+    setImageError("");
+    const previewUrl = URL.createObjectURL(file);
+    previewUrlsRef.current.push(previewUrl);
+    // Immediate local preview while the upload is in flight.
+    setDraft((item) => ({
+      ...item,
+      images: [...item.images, { storage: "cloudinary", objectKey: "", src: previewUrl }],
+    }));
+    setUploadingCount((count) => count + 1);
+    try {
+      const { objectKey } = await onUploadImage(draft.slug, file);
       setDraft((item) => ({
         ...item,
-        images: [...item.images, String(reader.result)],
+        images: item.images.map((image) =>
+          image.src === previewUrl ? { storage: "cloudinary", objectKey, src: previewUrl } : image,
+        ),
       }));
-      setImageError("");
-    };
-    reader.onerror = () => setImageError("بارگذاری تصویر ناموفق بود.");
-    reader.readAsDataURL(file);
+    } catch {
+      setImageError("بارگذاری تصویر ناموفق بود.");
+      setDraft((item) => ({
+        ...item,
+        images: item.images.filter((image) => image.src !== previewUrl),
+      }));
+      URL.revokeObjectURL(previewUrl);
+      previewUrlsRef.current = previewUrlsRef.current.filter((url) => url !== previewUrl);
+    } finally {
+      setUploadingCount((count) => count - 1);
+    }
   };
   return (
     <DialogShell
@@ -1344,30 +1378,40 @@ function ProductDialog({
             )}
           </div>
           <div className="image-list">
-            {draft.images.map((image, index) => (
-              <div key={`${index}-${image.slice(0, 32)}`}>
-                <img src={image} alt="" />
-                <span>
-                  {index === 0
-                    ? "تصویر اصلی"
-                    : `تصویر ${number.format(index + 1)}`}
-                </span>
-                <button
-                  type="button"
-                  onClick={() =>
-                    setDraft({
-                      ...draft,
-                      images: draft.images.filter(
-                        (_, itemIndex) => itemIndex !== index,
-                      ),
-                    })
-                  }
-                  aria-label={`حذف تصویر ${index + 1}`}
+            {draft.images.map((image, index) => {
+              const isUploading = image.storage === "cloudinary" && !image.objectKey;
+              return (
+                <div
+                  key={`${index}-${image.storage}-${
+                    image.storage === "cloudinary" ? image.objectKey || image.src : image.src
+                  }`}
                 >
-                  <X />
-                </button>
-              </div>
-            ))}
+                  {image.src ? <img src={image.src} alt="" /> : <ImagePlus />}
+                  <span>
+                    {isUploading
+                      ? "در حال بارگذاری…"
+                      : index === 0
+                        ? "تصویر اصلی"
+                        : `تصویر ${number.format(index + 1)}`}
+                  </span>
+                  <button
+                    type="button"
+                    disabled={isUploading}
+                    onClick={() =>
+                      setDraft({
+                        ...draft,
+                        images: draft.images.filter(
+                          (_, itemIndex) => itemIndex !== index,
+                        ),
+                      })
+                    }
+                    aria-label={`حذف تصویر ${index + 1}`}
+                  >
+                    <X />
+                  </button>
+                </div>
+              );
+            })}
             {!draft.images.length && (
               <div className="image-empty">
                 <ImagePlus />
@@ -1380,8 +1424,8 @@ function ProductDialog({
           <button className="secondary-action" type="button" onClick={onClose}>
             انصراف
           </button>
-          <button className="primary-action" type="submit">
-            ذخیره تغییرات
+          <button className="primary-action" type="submit" disabled={uploadingCount > 0}>
+            {uploadingCount > 0 ? "در حال بارگذاری تصاویر…" : "ذخیره تغییرات"}
           </button>
         </div>
       </form>

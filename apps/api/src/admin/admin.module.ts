@@ -10,6 +10,7 @@ import { ShapeModule } from "../shape/shape.module";
 import { AdminController } from "./admin.controller";
 import { AdminService } from "./admin.service";
 import { AdminGuard } from "../common/guards/admin.guard";
+import { StorageModule } from "../storage/storage.module";
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { AdminGuard } from "../common/guards/admin.guard";
     ReviewsModule,
     ShapeModule,
     HelpModule,
+    StorageModule,
   ],
   controllers: [AdminController],
   providers: [AdminService, AdminGuard],

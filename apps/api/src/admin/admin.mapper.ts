@@ -6,6 +6,7 @@ import type {
   User,
   Vendor,
 } from "../database/entities";
+import { imageSrc } from "../catalog/product.mapper";
 import { normalizeProductStatus } from "../inventory/product-status";
 import { normalizeStoreOrderStatus } from "../orders/store-order-status";
 import { toPolicyAcceptance } from "../policies/policy-acceptance";
@@ -68,10 +69,19 @@ export function toAdminProduct(
     holdExpiresAt: product.holdExpiresAt?.getTime(),
     held: Boolean(product.heldBy),
     artist: product.vendor?.displayName ?? "استودیو رَد",
+    // Round-trippable shape: the admin UI re-sends this array, unchanged,
+    // for any image it didn't touch — `storage`/`objectKey` must survive
+    // the trip for `cloudinary` rows (which have no `src` to fall back
+    // on), while `src` here is a ready-to-render URL/base64 string for the
+    // editor's `<img>` preview, not necessarily the DB column value
+    // (cloudinary derives it).
     images: product.images
       .sort((a, b) => a.sortOrder - b.sortOrder)
-      .map((image) => image.src)
-      .filter((src): src is string => Boolean(src)),
+      .map((image) => ({
+        storage: image.storage ?? "legacy_base64",
+        src: image.storage === "cloudinary" ? imageSrc(image, false) ?? null : image.src,
+        objectKey: image.objectKey ?? null,
+      })),
     updatedAt: product.updatedAt.getTime(),
   };
 }

@@ -215,6 +215,50 @@ export function useAdminWorkspace() {
         }),
       );
     },
+    /**
+     * Uploads a new product image file directly to Cloudinary: get signed
+     * upload params from the API, POST the file straight to Cloudinary's
+     * upload endpoint from the browser (bytes never transit through Nest),
+     * then return the `{storage:"cloudinary", objectKey}` reference to
+     * store in `draft.images` — `slug` is just a route param the API uses
+     * to look up the product and namespace the signed folder by its
+     * immutable id; for a not-yet-created product (no id yet) the API
+     * signs an upload into an unassociated `rad/pending` folder instead.
+     * Either way the API alone decides (and signs) the destination folder,
+     * and re-validates the resulting public_id on save — never trusted
+     * blindly from the client. `CLOUDINARY_API_SECRET` never reaches this
+     * code; only the public `apiKey`/`cloudName` + a one-time signature do.
+     */
+    async uploadProductImage(slug: string, file: File) {
+      const { cloudName, apiKey, timestamp, folder, signature } = await api<{
+        cloudName: string;
+        apiKey: string;
+        timestamp: number;
+        folder: string;
+        signature: string;
+      }>(`/admin/products/${encodeURIComponent(slug || "draft")}/images/sign`, {
+        method: "POST",
+        body: JSON.stringify({ mime: file.type }),
+      });
+      const body = new FormData();
+      body.append("file", file);
+      body.append("api_key", apiKey);
+      body.append("timestamp", String(timestamp));
+      body.append("folder", folder);
+      body.append("signature", signature);
+      const uploadResponse = await fetch(
+        `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
+        { method: "POST", body },
+      );
+      if (!uploadResponse.ok) {
+        throw new Error("بارگذاری تصویر به فضای ذخیره‌سازی ناموفق بود.");
+      }
+      const uploaded = (await uploadResponse.json()) as { public_id?: string };
+      if (!uploaded.public_id) {
+        throw new Error("بارگذاری تصویر به فضای ذخیره‌سازی ناموفق بود.");
+      }
+      return { storage: "cloudinary" as const, objectKey: uploaded.public_id };
+    },
     async saveProduct(product: AdminProduct) {
       const payload = {
         slug: product.slug,
@@ -224,7 +268,14 @@ export function useAdminWorkspace() {
         price: product.price,
         status: product.status,
         artist: product.artist,
-        images: product.images,
+        // Only send what the API's save contract needs per storage —
+        // never the display-only `src` the API derived for a `cloudinary`
+        // row (or a local blob: URL left over from an in-flight upload).
+        images: product.images.map((image) =>
+          image.storage === "cloudinary"
+            ? { storage: "cloudinary" as const, objectKey: image.objectKey }
+            : { storage: image.storage, src: image.src },
+        ),
       };
       const exists = products.some((item) => item.id === product.id);
       const saved = exists
