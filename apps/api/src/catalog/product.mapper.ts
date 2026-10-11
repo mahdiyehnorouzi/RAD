@@ -67,8 +67,9 @@ export function imageSrc(image: ProductImageMeta, embedImages: boolean) {
       return image.src ?? `/catalog/images/${image.id}`;
     case "cloudinary":
       return (
-        (image.objectKey ? cloudinaryDeliveryUrl(image.objectKey) : undefined) ??
-        `/catalog/images/${image.id}`
+        (image.objectKey
+          ? cloudinaryDeliveryUrl(image.objectKey)
+          : undefined) ?? `/catalog/images/${image.id}`
       );
     case "legacy_base64":
     default:
@@ -210,7 +211,18 @@ export const publicProductWhere = {
 
 export function stripImageSrc(images: ProductImage[]): ProductImageMeta[] {
   return images.map(
-    ({ id, alt, enAlt, color, accent, shape, sortOrder, storage, src, objectKey }) => ({
+    ({
+      id,
+      alt,
+      enAlt,
+      color,
+      accent,
+      shape,
+      sortOrder,
+      storage,
+      src,
+      objectKey,
+    }) => ({
       id,
       alt,
       enAlt,

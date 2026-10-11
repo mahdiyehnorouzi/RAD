@@ -41,8 +41,7 @@ export function CatalogCategories({
   useEffect(() => {
     const node = railRef.current;
     if (!node) return undefined;
-    const sync = () =>
-      setOverflowing(node.scrollWidth > node.clientWidth + 2);
+    const sync = () => setOverflowing(node.scrollWidth > node.clientWidth + 2);
     sync();
     const observer = new ResizeObserver(sync);
     observer.observe(node);

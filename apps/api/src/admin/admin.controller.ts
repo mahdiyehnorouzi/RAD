@@ -181,13 +181,19 @@ export class AdminController {
   }
 
   @Post("shape-questions")
-  createShapeQuestion(@Body() body: SaveShapeQuestionDto, @Req() request: AuthedRequest) {
+  createShapeQuestion(
+    @Body() body: SaveShapeQuestionDto,
+    @Req() request: AuthedRequest,
+  ) {
     this.admin.assert(request.adminRole, "content.write");
     return this.shape.create(body);
   }
 
   @Put("shape-questions/order")
-  reorderShapeQuestions(@Body() body: ReorderDto, @Req() request: AuthedRequest) {
+  reorderShapeQuestions(
+    @Body() body: ReorderDto,
+    @Req() request: AuthedRequest,
+  ) {
     this.admin.assert(request.adminRole, "content.write");
     return this.shape.reorder(body.ids);
   }
@@ -214,13 +220,19 @@ export class AdminController {
   }
 
   @Post("help-questions")
-  createHelpQuestion(@Body() body: SaveHelpQuestionDto, @Req() request: AuthedRequest) {
+  createHelpQuestion(
+    @Body() body: SaveHelpQuestionDto,
+    @Req() request: AuthedRequest,
+  ) {
     this.admin.assert(request.adminRole, "content.write");
     return this.help.create(body);
   }
 
   @Put("help-questions/order")
-  reorderHelpQuestions(@Body() body: ReorderDto, @Req() request: AuthedRequest) {
+  reorderHelpQuestions(
+    @Body() body: ReorderDto,
+    @Req() request: AuthedRequest,
+  ) {
     this.admin.assert(request.adminRole, "content.write");
     return this.help.reorder(body.ids);
   }

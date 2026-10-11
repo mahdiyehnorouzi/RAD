@@ -112,7 +112,9 @@ export class AdminService {
       throw new BadRequestException(productImageError);
     }
     const normalizedSlug = slug.trim().toLowerCase().replace(/\s+/g, "-");
-    const existing = await this.products.findOne({ where: { slug: normalizedSlug } });
+    const existing = await this.products.findOne({
+      where: { slug: normalizedSlug },
+    });
     const folder = productImageFolder(existing?.id ?? null);
     return this.storage.createSignedUpload(folder);
   }
@@ -185,7 +187,12 @@ export class AdminService {
           }),
         );
 
-    await this.replaceImages(product.id, product.slug, input.name.trim(), input.images);
+    await this.replaceImages(
+      product.id,
+      product.slug,
+      input.name.trim(),
+      input.images,
+    );
     const saved = await this.products.findOneOrFail({
       where: { id: product.id },
       relations: productIncludeWithSrc,
@@ -256,12 +263,13 @@ export class AdminService {
       if (nextStatus !== currentStatus) {
         if (nextStatus === "cancelled" || nextStatus === "returned") {
           await this.inventory.restock(manager, slugs);
-          await manager
-            .getRepository(PaymentIntent)
-            .update(
-              { orderId: id, status: In(["created", "redirected", "submitted"]) },
-              { status: "failed" },
-            );
+          await manager.getRepository(PaymentIntent).update(
+            {
+              orderId: id,
+              status: In(["created", "redirected", "submitted"]),
+            },
+            { status: "failed" },
+          );
         } else {
           await this.inventory.markSold(manager, slugs);
         }
@@ -271,8 +279,7 @@ export class AdminService {
         { id },
         {
           status: nextStatus,
-          paymentDueAt:
-            nextStatus === "cancelled" ? null : order.paymentDueAt,
+          paymentDueAt: nextStatus === "cancelled" ? null : order.paymentDueAt,
           trackingCode: trackingCode || null,
           deliveredAt:
             nextStatus === "delivered"
@@ -290,7 +297,10 @@ export class AdminService {
         },
       );
 
-      return orders.findOneOrFail({ where: { id }, relations: adminOrderRelations });
+      return orders.findOneOrFail({
+        where: { id },
+        relations: adminOrderRelations,
+      });
     });
     return toAdminOrder(updated);
   }
@@ -477,7 +487,10 @@ export class AdminService {
       // even if `slug` were ever renamed. Unlike the R2 design this
       // replaces, a `rad/pending/...` public_id is persisted as-is — no
       // rename/migration step — see `cloudinary-storage.service.ts`.
-      if (!image.objectKey || !isValidProductImagePublicId(productId, image.objectKey)) {
+      if (
+        !image.objectKey ||
+        !isValidProductImagePublicId(productId, image.objectKey)
+      ) {
         throw new BadRequestException(
           "کلید تصویر نامعتبر است. تصویر را دوباره بارگذاری کنید.",
         );
@@ -499,20 +512,30 @@ export class AdminService {
     // actually committed — never before, since deleting storage ahead of a
     // DB write that could still roll back would leave a product.image
     // pointing at nothing.
-    const existing = await this.productImages.find({ where: { productSlug: slug } });
+    const existing = await this.productImages.find({
+      where: { productSlug: slug },
+    });
     const keptObjectKeys = new Set(
-      rows.filter((row) => row.storage === "cloudinary").map((row) => row.objectKey as string),
+      rows
+        .filter((row) => row.storage === "cloudinary")
+        .map((row) => row.objectKey as string),
     );
     const orphanedObjectKeys = existing
       .filter(
-        (row) => row.storage === "cloudinary" && row.objectKey && !keptObjectKeys.has(row.objectKey),
+        (row) =>
+          row.storage === "cloudinary" &&
+          row.objectKey &&
+          !keptObjectKeys.has(row.objectKey),
       )
       .map((row) => row.objectKey as string);
 
     await this.dataSource.transaction(async (manager) => {
       await manager.delete(ProductImage, { productSlug: slug });
       if (!rows.length) return;
-      await manager.save(ProductImage, rows.map((row) => manager.create(ProductImage, row)));
+      await manager.save(
+        ProductImage,
+        rows.map((row) => manager.create(ProductImage, row)),
+      );
     });
 
     if (orphanedObjectKeys.length) {

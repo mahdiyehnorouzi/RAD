@@ -55,8 +55,14 @@ describe("admin sign-upload endpoint authorization", () => {
 
   test("AdminService.assert throws ForbiddenException for a role without product.write", () => {
     const admin = adminServiceForUnitTests();
-    assert.throws(() => admin.assert("viewer", "product.write"), ForbiddenException);
-    assert.throws(() => admin.assert(undefined, "product.write"), ForbiddenException);
+    assert.throws(
+      () => admin.assert("viewer", "product.write"),
+      ForbiddenException,
+    );
+    assert.throws(
+      () => admin.assert(undefined, "product.write"),
+      ForbiddenException,
+    );
   });
 });
 

@@ -77,9 +77,17 @@ before(async () => {
 
   const repo = dataSource.getRepository.bind(dataSource);
   const inventory = new InventoryService(dataSource);
-  const notices = { notifyPaymentVerified: async () => {}, notifyPaymentRejected: async () => {} } as unknown as NoticesService;
+  const notices = {
+    notifyPaymentVerified: async () => {},
+    notifyPaymentRejected: async () => {},
+  } as unknown as NoticesService;
   const mail = new MailService(new ConfigService({}));
-  const paymentReview = new PaymentReviewService(dataSource, inventory, notices, mail);
+  const paymentReview = new PaymentReviewService(
+    dataSource,
+    inventory,
+    notices,
+    mail,
+  );
   const storage = new CloudinaryStorageService(new ConfigService({}));
   // This sandbox has no real Cloudinary credentials, and these specs never
   // actually upload bytes to Cloudinary — only `objectKey` (public_id)
@@ -170,7 +178,10 @@ describe("AdminService.saveProduct — cloudinary images (Phase 2)", () => {
     await assert.rejects(() =>
       admin.saveProduct(
         baseInput(slug, [
-          { storage: "cloudinary", objectKey: "rad/products/someone-elses-product-id/x" },
+          {
+            storage: "cloudinary",
+            objectKey: "rad/products/someone-elses-product-id/x",
+          },
         ]) as never,
       ),
     );
@@ -185,7 +196,11 @@ describe("AdminService.saveProduct — cloudinary images (Phase 2)", () => {
     // be rejected because the validation is against *this* product's id.
     const forgedKey = `rad/products/${productA.id}/forged333`;
     await assert.rejects(() =>
-      admin.saveProduct(baseInput(slugB, [{ storage: "cloudinary", objectKey: forgedKey }]) as never),
+      admin.saveProduct(
+        baseInput(slugB, [
+          { storage: "cloudinary", objectKey: forgedKey },
+        ]) as never,
+      ),
     );
   });
 
@@ -193,7 +208,11 @@ describe("AdminService.saveProduct — cloudinary images (Phase 2)", () => {
     const slug = `cloudinary-rename-${Date.now()}`;
     const baseline = await admin.saveProduct(baseInput(slug, []) as never);
     await assert.rejects(
-      () => admin.saveProduct(baseInput(`${slug}-renamed`, []) as never, baseline.id),
+      () =>
+        admin.saveProduct(
+          baseInput(`${slug}-renamed`, []) as never,
+          baseline.id,
+        ),
       /شناسه URL پس از ایجاد قابل تغییر نیست/,
     );
   });
@@ -212,7 +231,11 @@ describe("AdminService.saveProduct — cloudinary images (Phase 2)", () => {
       .find({ where: { productSlug: slug } });
     assert.equal(rows.length, 1);
     assert.equal(rows[0].objectKey, objectKey);
-    assert.deepEqual(deleteCalls, [], "re-saving an unchanged image set must not delete anything");
+    assert.deepEqual(
+      deleteCalls,
+      [],
+      "re-saving an unchanged image set must not delete anything",
+    );
   });
 
   test("removing one cloudinary image from a multi-image product deletes only the removed asset, post-commit", async () => {
@@ -253,7 +276,10 @@ describe("AdminService.saveProduct — cloudinary images (Phase 2)", () => {
       .getRepository(ProductImage)
       .find({ where: { productSlug: slug } });
     deleteCalls.length = 0;
-    const input = { ...baseInput(slug, [{ storage: "cloudinary", objectKey: key }]), price: 2_000_000 };
+    const input = {
+      ...baseInput(slug, [{ storage: "cloudinary", objectKey: key }]),
+      price: 2_000_000,
+    };
     await admin.saveProduct(input as never, created.id);
     const after = await dataSource
       .getRepository(ProductImage)
@@ -301,7 +327,10 @@ describe("AdminService.saveProduct — cloudinary images (Phase 2)", () => {
       throw new Error("simulated Cloudinary outage");
     };
     try {
-      const after = await admin.saveProduct(baseInput(slug, []) as never, created.id);
+      const after = await admin.saveProduct(
+        baseInput(slug, []) as never,
+        created.id,
+      );
       assert.equal(after.images.length, 0);
     } finally {
       storage.destroy = originalDestroy;
@@ -309,6 +338,10 @@ describe("AdminService.saveProduct — cloudinary images (Phase 2)", () => {
     const rows = await dataSource
       .getRepository(ProductImage)
       .find({ where: { productSlug: slug } });
-    assert.equal(rows.length, 0, "the DB-side removal must still have committed");
+    assert.equal(
+      rows.length,
+      0,
+      "the DB-side removal must still have committed",
+    );
   });
 });

@@ -114,11 +114,7 @@ export function CartLine({
         tabIndex={-1}
         aria-hidden="true"
       >
-        <ProductMedia
-          product={product}
-          showStatusBadge={false}
-          sizes="108px"
-        />
+        <ProductMedia product={product} showStatusBadge={false} sizes="108px" />
         <LinkPending />
       </Link>
       <div className={styles.copy}>

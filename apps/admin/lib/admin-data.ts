@@ -65,12 +65,7 @@ export type AdminOrderStatus =
   | "returned";
 
 export type AdminPaymentStatus =
-  | "created"
-  | "redirected"
-  | "submitted"
-  | "verified"
-  | "rejected"
-  | "failed";
+  "created" | "redirected" | "submitted" | "verified" | "rejected" | "failed";
 
 export interface AdminProduct {
   id: string;
@@ -343,7 +338,10 @@ export const productStatusLabels: Record<AdminProductStatus, string> = {
   archived: "آرشیو",
 };
 
-const faTime = new Intl.DateTimeFormat("fa-IR", { hour: "2-digit", minute: "2-digit" });
+const faTime = new Intl.DateTimeFormat("fa-IR", {
+  hour: "2-digit",
+  minute: "2-digit",
+});
 
 export function productStatusLabel(product: AdminProduct) {
   if (product.holdExpiresAt) {
@@ -356,11 +354,19 @@ export function productStatusLabel(product: AdminProduct) {
 /** Statuses the editor may pick; new products can start anywhere. */
 export function productStatusOptions(current?: AdminProductStatus) {
   if (!current) return [...PRODUCT_STATUSES];
-  return PRODUCT_STATUSES.filter((status) => canTransitionProductStatus(current, status));
+  return PRODUCT_STATUSES.filter((status) =>
+    canTransitionProductStatus(current, status),
+  );
 }
 
 export const permissions = {
-  owner: ["product.write", "product.delete", "order.write", "member.write", "content.write"],
+  owner: [
+    "product.write",
+    "product.delete",
+    "order.write",
+    "member.write",
+    "content.write",
+  ],
   manager: ["product.write", "order.write", "member.write", "content.write"],
   editor: ["product.write", "content.write"],
   viewer: [],

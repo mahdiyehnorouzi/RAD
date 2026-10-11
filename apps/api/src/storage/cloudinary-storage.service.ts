@@ -15,7 +15,9 @@ export type AllowedProductImageMimeType =
 export function isAllowedProductImageMime(
   value: string,
 ): value is AllowedProductImageMimeType {
-  return (ALLOWED_PRODUCT_IMAGE_MIME_TYPES as readonly string[]).includes(value);
+  return (ALLOWED_PRODUCT_IMAGE_MIME_TYPES as readonly string[]).includes(
+    value,
+  );
 }
 
 /**
@@ -50,9 +52,13 @@ export function productImagePublicIdPattern(productId: string) {
  * authenticated admin with `product.write` can ever request a signature
  * for, or submit, one.
  */
-export const PENDING_PRODUCT_IMAGE_PUBLIC_ID_PATTERN = /^rad\/pending\/[A-Za-z0-9_-]+$/;
+export const PENDING_PRODUCT_IMAGE_PUBLIC_ID_PATTERN =
+  /^rad\/pending\/[A-Za-z0-9_-]+$/;
 
-export function isValidProductImagePublicId(productId: string, publicId: string) {
+export function isValidProductImagePublicId(
+  productId: string,
+  publicId: string,
+) {
   return (
     productImagePublicIdPattern(productId).test(publicId) ||
     PENDING_PRODUCT_IMAGE_PUBLIC_ID_PATTERN.test(publicId)

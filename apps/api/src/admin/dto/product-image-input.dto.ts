@@ -32,7 +32,10 @@ export class AdminProductImageInputDto {
   @IsIn(PRODUCT_IMAGE_STORAGES)
   storage!: ProductImageInputStorage;
 
-  @ApiProperty({ required: false, description: "Required for legacy_base64/static/external" })
+  @ApiProperty({
+    required: false,
+    description: "Required for legacy_base64/static/external",
+  })
   @IsOptional()
   @IsString()
   @MinLength(1)
@@ -40,7 +43,8 @@ export class AdminProductImageInputDto {
 
   @ApiProperty({
     required: false,
-    description: "Required for storage: cloudinary — the asset's Cloudinary public_id",
+    description:
+      "Required for storage: cloudinary — the asset's Cloudinary public_id",
   })
   @IsOptional()
   @IsString()

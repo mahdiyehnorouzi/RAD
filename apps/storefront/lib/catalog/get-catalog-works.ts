@@ -34,7 +34,10 @@ const CATALOG_PROCESS_CACHE_MS = 30_000;
  * `revalidate: 30`. `refreshCatalog` clears it alongside the tag so a
  * mutation is visible immediately instead of waiting out the window.
  */
-let processCatalogCache: { value: Promise<CatalogLoad>; expiresAt: number } | null = null;
+let processCatalogCache: {
+  value: Promise<CatalogLoad>;
+  expiresAt: number;
+} | null = null;
 
 function loadCatalogForProcess(): Promise<CatalogLoad> {
   const now = Date.now();

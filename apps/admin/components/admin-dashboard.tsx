@@ -397,7 +397,11 @@ export function AdminDashboard() {
             onSetHidden={async (id, hidden) => {
               try {
                 await workspace.setReviewHidden(id, hidden);
-                announce(hidden ? "نظر از فروشگاه پنهان شد." : "نظر دوباره در فروشگاه دیده می‌شود.");
+                announce(
+                  hidden
+                    ? "نظر از فروشگاه پنهان شد."
+                    : "نظر دوباره در فروشگاه دیده می‌شود.",
+                );
               } catch (error) {
                 announce((error as Error).message);
               }
@@ -421,7 +425,9 @@ export function AdminDashboard() {
             onSave={async (input, id) => {
               try {
                 await workspace.saveShapeQuestion(input, id);
-                announce(id ? "سؤال ذخیره شد." : "سؤال تازه به پرسشنامه اضافه شد.");
+                announce(
+                  id ? "سؤال ذخیره شد." : "سؤال تازه به پرسشنامه اضافه شد.",
+                );
                 return true;
               } catch (error) {
                 announce((error as Error).message);
@@ -454,7 +460,11 @@ export function AdminDashboard() {
             onSave={async (input, id) => {
               try {
                 await workspace.saveHelpQuestion(input, id);
-                announce(id ? "سؤال ذخیره شد." : "سؤال تازه به صفحه‌ی راهنما اضافه شد.");
+                announce(
+                  id
+                    ? "سؤال ذخیره شد."
+                    : "سؤال تازه به صفحه‌ی راهنما اضافه شد.",
+                );
                 return true;
               } catch (error) {
                 announce((error as Error).message);
@@ -806,7 +816,11 @@ function Products({
 function ProductThumb({ product }: { product: AdminProduct }) {
   return (
     <div className="product-thumb">
-      {product.images[0]?.src ? <img src={product.images[0].src} alt="" /> : <Package />}
+      {product.images[0]?.src ? (
+        <img src={product.images[0].src} alt="" />
+      ) : (
+        <Package />
+      )}
       <span>{number.format(product.images.length)} عکس</span>
     </div>
   );
@@ -1224,7 +1238,10 @@ function ProductDialog({
     // Immediate local preview while the upload is in flight.
     setDraft((item) => ({
       ...item,
-      images: [...item.images, { storage: "cloudinary", objectKey: "", src: previewUrl }],
+      images: [
+        ...item.images,
+        { storage: "cloudinary", objectKey: "", src: previewUrl },
+      ],
     }));
     setUploadingCount((count) => count + 1);
     try {
@@ -1232,7 +1249,9 @@ function ProductDialog({
       setDraft((item) => ({
         ...item,
         images: item.images.map((image) =>
-          image.src === previewUrl ? { storage: "cloudinary", objectKey, src: previewUrl } : image,
+          image.src === previewUrl
+            ? { storage: "cloudinary", objectKey, src: previewUrl }
+            : image,
         ),
       }));
     } catch {
@@ -1242,7 +1261,9 @@ function ProductDialog({
         images: item.images.filter((image) => image.src !== previewUrl),
       }));
       URL.revokeObjectURL(previewUrl);
-      previewUrlsRef.current = previewUrlsRef.current.filter((url) => url !== previewUrl);
+      previewUrlsRef.current = previewUrlsRef.current.filter(
+        (url) => url !== previewUrl,
+      );
     } finally {
       setUploadingCount((count) => count - 1);
     }
@@ -1379,11 +1400,14 @@ function ProductDialog({
           </div>
           <div className="image-list">
             {draft.images.map((image, index) => {
-              const isUploading = image.storage === "cloudinary" && !image.objectKey;
+              const isUploading =
+                image.storage === "cloudinary" && !image.objectKey;
               return (
                 <div
                   key={`${index}-${image.storage}-${
-                    image.storage === "cloudinary" ? image.objectKey || image.src : image.src
+                    image.storage === "cloudinary"
+                      ? image.objectKey || image.src
+                      : image.src
                   }`}
                 >
                   {image.src ? <img src={image.src} alt="" /> : <ImagePlus />}
@@ -1424,7 +1448,11 @@ function ProductDialog({
           <button className="secondary-action" type="button" onClick={onClose}>
             انصراف
           </button>
-          <button className="primary-action" type="submit" disabled={uploadingCount > 0}>
+          <button
+            className="primary-action"
+            type="submit"
+            disabled={uploadingCount > 0}
+          >
             {uploadingCount > 0 ? "در حال بارگذاری تصاویر…" : "ذخیره تغییرات"}
           </button>
         </div>

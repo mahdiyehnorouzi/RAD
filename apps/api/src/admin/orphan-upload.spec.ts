@@ -71,9 +71,12 @@ describe("abandoned signed uploads (orphans)", () => {
     ) => Promise<void>;
     await assert.rejects(
       () =>
-        (
-          admin as unknown as { replaceImages: ReplaceImages }
-        ).replaceImages("prod_123", "some-slug", "name", [{ storage: "legacy_base64" }]),
+        (admin as unknown as { replaceImages: ReplaceImages }).replaceImages(
+          "prod_123",
+          "some-slug",
+          "name",
+          [{ storage: "legacy_base64" }],
+        ),
       BadRequestException,
     );
     assert.equal(deleteCount(), 0);

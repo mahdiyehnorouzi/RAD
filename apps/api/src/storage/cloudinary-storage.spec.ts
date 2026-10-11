@@ -34,30 +34,51 @@ describe("productImageFolder", () => {
 describe("isValidProductImagePublicId", () => {
   test("accepts a public_id under the product's own folder", () => {
     assert.equal(
-      isValidProductImagePublicId("prod_abc123", "rad/products/prod_abc123/abcDEF123"),
+      isValidProductImagePublicId(
+        "prod_abc123",
+        "rad/products/prod_abc123/abcDEF123",
+      ),
       true,
     );
   });
 
   test("rejects a public_id namespaced under a different product (no forged-reference injection)", () => {
     assert.equal(
-      isValidProductImagePublicId("prod_abc123", "rad/products/prod_other456/abcDEF123"),
+      isValidProductImagePublicId(
+        "prod_abc123",
+        "rad/products/prod_other456/abcDEF123",
+      ),
       false,
     );
   });
 
   test("accepts a rad/pending/ public_id for any productId (pre-creation upload, no id to tie it to yet)", () => {
-    assert.equal(isValidProductImagePublicId("prod_abc123", "rad/pending/abcDEF123"), true);
-    assert.equal(isValidProductImagePublicId("prod_other456", "rad/pending/abcDEF123"), true);
+    assert.equal(
+      isValidProductImagePublicId("prod_abc123", "rad/pending/abcDEF123"),
+      true,
+    );
+    assert.equal(
+      isValidProductImagePublicId("prod_other456", "rad/pending/abcDEF123"),
+      true,
+    );
   });
 
   test("rejects an arbitrary client-supplied public_id outside the expected namespaces", () => {
-    assert.equal(isValidProductImagePublicId("prod_abc123", "secrets/admin-config"), false);
     assert.equal(
-      isValidProductImagePublicId("prod_abc123", "rad/products/prod_other456/x"),
+      isValidProductImagePublicId("prod_abc123", "secrets/admin-config"),
       false,
     );
-    assert.equal(isValidProductImagePublicId("prod_abc123", "../../etc/passwd"), false);
+    assert.equal(
+      isValidProductImagePublicId(
+        "prod_abc123",
+        "rad/products/prod_other456/x",
+      ),
+      false,
+    );
+    assert.equal(
+      isValidProductImagePublicId("prod_abc123", "../../etc/passwd"),
+      false,
+    );
   });
 });
 
@@ -77,7 +98,10 @@ describe("CloudinaryStorageService.createSignedUpload", () => {
 
   test("throws when Cloudinary config is missing (never silently signs with empty credentials)", () => {
     const storage = service({});
-    assert.throws(() => storage.createSignedUpload("rad/pending"), InternalServerErrorException);
+    assert.throws(
+      () => storage.createSignedUpload("rad/pending"),
+      InternalServerErrorException,
+    );
   });
 
   test("signature matches an independently-computed SHA-1 digest of the sorted params + secret", () => {

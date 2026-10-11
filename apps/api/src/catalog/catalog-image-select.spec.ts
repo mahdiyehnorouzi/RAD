@@ -128,7 +128,12 @@ describe("publicCatalogQuery image src projection", () => {
 
     // The query itself must never hydrate the legacy row's base64 payload —
     // this is the actual DB-level fix: no row carries it back on this path.
-    assert.equal(byStorage.get("legacy_base64")?.src, null);
+    // TypeORM hydrates a raw CASE-expression NULL onto an unset property as
+    // `undefined` rather than `null`; `imageSrc()` never reads `src` for
+    // `legacy_base64` rows regardless (see product.mapper.ts), so both
+    // values are equally correct here — only a real base64 string would be
+    // a bug.
+    assert.equal(byStorage.get("legacy_base64")?.src ?? null, null);
     assert.equal(byStorage.get("static")?.src, "/images/static-work.jpg");
     assert.equal(
       byStorage.get("external")?.src,

@@ -79,7 +79,10 @@ export function toAdminProduct(
       .sort((a, b) => a.sortOrder - b.sortOrder)
       .map((image) => ({
         storage: image.storage ?? "legacy_base64",
-        src: image.storage === "cloudinary" ? imageSrc(image, false) ?? null : image.src,
+        src:
+          image.storage === "cloudinary"
+            ? (imageSrc(image, false) ?? null)
+            : image.src,
         objectKey: image.objectKey ?? null,
       })),
     updatedAt: product.updatedAt.getTime(),

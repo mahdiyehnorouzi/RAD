@@ -35,10 +35,14 @@ export function useAdminWorkspace() {
   const [helpQuestions, setHelpQuestions] = useState<HelpQuestion[]>([]);
   const [ready, setReady] = useState(false);
   const [error, setError] = useState("");
-  const currentRole: AdminRole = (user?.adminRole as AdminRole | undefined) ?? "viewer";
+  const currentRole: AdminRole =
+    (user?.adminRole as AdminRole | undefined) ?? "viewer";
 
   const refresh = useCallback(async (session?: AuthUser | null) => {
-    const nextUser = session === undefined ? (await api<{ user: AuthUser | null }>("/auth/me")).user : session;
+    const nextUser =
+      session === undefined
+        ? (await api<{ user: AuthUser | null }>("/auth/me")).user
+        : session;
     setUser(nextUser);
     if (!nextUser?.adminRole) {
       setProducts([]);
@@ -98,299 +102,395 @@ export function useAdminWorkspace() {
   const can = (permission: AdminPermission) =>
     (permissions[currentRole] as readonly string[]).includes(permission);
 
-  return useMemo(() => ({
-    ready,
-    user,
-    error,
-    products,
-    orders,
-    members,
-    users,
-    commissions,
-    messages,
-    damageReports,
-    reviews,
-    shapeQuestions,
-    helpQuestions,
-    currentRole,
-    can,
-    async login(input: { email: string; password: string; rememberMe?: boolean }) {
-      setError("");
-      const payload = await api<{ user: AuthUser }>("/auth/session", {
-        method: "POST",
-        body: JSON.stringify(input),
-      });
-      if (!payload.user.adminRole) {
+  return useMemo(
+    () => ({
+      ready,
+      user,
+      error,
+      products,
+      orders,
+      members,
+      users,
+      commissions,
+      messages,
+      damageReports,
+      reviews,
+      shapeQuestions,
+      helpQuestions,
+      currentRole,
+      can,
+      async login(input: {
+        email: string;
+        password: string;
+        rememberMe?: boolean;
+      }) {
+        setError("");
+        const payload = await api<{ user: AuthUser }>("/auth/session", {
+          method: "POST",
+          body: JSON.stringify(input),
+        });
+        if (!payload.user.adminRole) {
+          await api("/auth/logout", { method: "POST" });
+          setUser(null);
+          throw new Error("این حساب به دفتر کوره دسترسی ندارد.");
+        }
+        await refresh(payload.user);
+      },
+      async forgotPassword(email: string) {
+        return api<{ message: string }>("/auth/password/forgot", {
+          method: "POST",
+          body: JSON.stringify({ email }),
+        });
+      },
+      async resetPassword(input: {
+        email: string;
+        code: string;
+        password: string;
+      }) {
+        return api<{ ok: boolean }>("/auth/password/reset", {
+          method: "POST",
+          body: JSON.stringify(input),
+        });
+      },
+      async changePassword(input: {
+        currentPassword: string;
+        newPassword: string;
+      }) {
+        return api<{ ok: boolean }>("/auth/password", {
+          method: "PATCH",
+          body: JSON.stringify(input),
+        });
+      },
+      async logout() {
         await api("/auth/logout", { method: "POST" });
         setUser(null);
-        throw new Error("این حساب به دفتر کوره دسترسی ندارد.");
-      }
-      await refresh(payload.user);
-    },
-    async forgotPassword(email: string) {
-      return api<{ message: string }>("/auth/password/forgot", {
-        method: "POST",
-        body: JSON.stringify({ email }),
-      });
-    },
-    async resetPassword(input: { email: string; code: string; password: string }) {
-      return api<{ ok: boolean }>("/auth/password/reset", {
-        method: "POST",
-        body: JSON.stringify(input),
-      });
-    },
-    async changePassword(input: { currentPassword: string; newPassword: string }) {
-      return api<{ ok: boolean }>("/auth/password", {
-        method: "PATCH",
-        body: JSON.stringify(input),
-      });
-    },
-    async logout() {
-      await api("/auth/logout", { method: "POST" });
-      setUser(null);
-      setProducts([]);
-      setOrders([]);
-      setMembers([]);
-      setUsers([]);
-      setCommissions([]);
-      setMessages([]);
-      setDamageReports([]);
-      setReviews([]);
-      setShapeQuestions([]);
-      setHelpQuestions([]);
-    },
-    async setReviewHidden(id: string, hidden: boolean) {
-      const saved = await api<AdminReview>(`/admin/reviews/${id}`, {
-        method: "PATCH",
-        body: JSON.stringify({ hidden }),
-      });
-      setReviews((items) => items.map((item) => (item.id === saved.id ? saved : item)));
-    },
-    async deleteReview(id: string) {
-      await api(`/admin/reviews/${id}`, { method: "DELETE" });
-      setReviews((items) => items.filter((item) => item.id !== id));
-    },
-    async saveShapeQuestion(input: ShapeQuestionInput, id?: string) {
-      const saved = await api<ShapeQuestion>(
-        id ? `/admin/shape-questions/${id}` : "/admin/shape-questions",
-        { method: id ? "PATCH" : "POST", body: JSON.stringify(input) },
-      );
-      setShapeQuestions((items) =>
-        id ? items.map((item) => (item.id === saved.id ? saved : item)) : [...items, saved],
-      );
-    },
-    async deleteShapeQuestion(id: string) {
-      await api(`/admin/shape-questions/${id}`, { method: "DELETE" });
-      setShapeQuestions((items) => items.filter((item) => item.id !== id));
-    },
-    async reorderShapeQuestions(ids: string[]) {
-      setShapeQuestions(
-        await api<ShapeQuestion[]>("/admin/shape-questions/order", {
-          method: "PUT",
-          body: JSON.stringify({ ids }),
-        }),
-      );
-    },
-    async saveHelpQuestion(input: HelpQuestionInput, id?: string) {
-      const saved = await api<HelpQuestion>(
-        id ? `/admin/help-questions/${id}` : "/admin/help-questions",
-        {
-          method: id ? "PATCH" : "POST",
-          body: JSON.stringify({ ...input, more: input.more ?? null }),
-        },
-      );
-      setHelpQuestions((items) =>
-        id ? items.map((item) => (item.id === saved.id ? saved : item)) : [...items, saved],
-      );
-    },
-    async deleteHelpQuestion(id: string) {
-      await api(`/admin/help-questions/${id}`, { method: "DELETE" });
-      setHelpQuestions((items) => items.filter((item) => item.id !== id));
-    },
-    async reorderHelpQuestions(ids: string[]) {
-      setHelpQuestions(
-        await api<HelpQuestion[]>("/admin/help-questions/order", {
-          method: "PUT",
-          body: JSON.stringify({ ids }),
-        }),
-      );
-    },
-    /**
-     * Uploads a new product image file directly to Cloudinary: get signed
-     * upload params from the API, POST the file straight to Cloudinary's
-     * upload endpoint from the browser (bytes never transit through Nest),
-     * then return the `{storage:"cloudinary", objectKey}` reference to
-     * store in `draft.images` — `slug` is just a route param the API uses
-     * to look up the product and namespace the signed folder by its
-     * immutable id; for a not-yet-created product (no id yet) the API
-     * signs an upload into an unassociated `rad/pending` folder instead.
-     * Either way the API alone decides (and signs) the destination folder,
-     * and re-validates the resulting public_id on save — never trusted
-     * blindly from the client. `CLOUDINARY_API_SECRET` never reaches this
-     * code; only the public `apiKey`/`cloudName` + a one-time signature do.
-     */
-    async uploadProductImage(slug: string, file: File) {
-      const { cloudName, apiKey, timestamp, folder, signature } = await api<{
-        cloudName: string;
-        apiKey: string;
-        timestamp: number;
-        folder: string;
-        signature: string;
-      }>(`/admin/products/${encodeURIComponent(slug || "draft")}/images/sign`, {
-        method: "POST",
-        body: JSON.stringify({ mime: file.type }),
-      });
-      const body = new FormData();
-      body.append("file", file);
-      body.append("api_key", apiKey);
-      body.append("timestamp", String(timestamp));
-      body.append("folder", folder);
-      body.append("signature", signature);
-      const uploadResponse = await fetch(
-        `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
-        { method: "POST", body },
-      );
-      if (!uploadResponse.ok) {
-        throw new Error("بارگذاری تصویر به فضای ذخیره‌سازی ناموفق بود.");
-      }
-      const uploaded = (await uploadResponse.json()) as { public_id?: string };
-      if (!uploaded.public_id) {
-        throw new Error("بارگذاری تصویر به فضای ذخیره‌سازی ناموفق بود.");
-      }
-      return { storage: "cloudinary" as const, objectKey: uploaded.public_id };
-    },
-    async saveProduct(product: AdminProduct) {
-      const payload = {
-        slug: product.slug,
-        name: product.name,
-        description: product.description,
-        category: product.category,
-        price: product.price,
-        status: product.status,
-        artist: product.artist,
-        // Only send what the API's save contract needs per storage —
-        // never the display-only `src` the API derived for a `cloudinary`
-        // row (or a local blob: URL left over from an in-flight upload).
-        images: product.images.map((image) =>
-          image.storage === "cloudinary"
-            ? { storage: "cloudinary" as const, objectKey: image.objectKey }
-            : { storage: image.storage, src: image.src },
-        ),
-      };
-      const exists = products.some((item) => item.id === product.id);
-      const saved = exists
-        ? await api<AdminProduct>(`/admin/products/${product.id}`, {
-            method: "PATCH",
-            body: JSON.stringify(payload),
-          })
-        : await api<AdminProduct>("/admin/products", {
+        setProducts([]);
+        setOrders([]);
+        setMembers([]);
+        setUsers([]);
+        setCommissions([]);
+        setMessages([]);
+        setDamageReports([]);
+        setReviews([]);
+        setShapeQuestions([]);
+        setHelpQuestions([]);
+      },
+      async setReviewHidden(id: string, hidden: boolean) {
+        const saved = await api<AdminReview>(`/admin/reviews/${id}`, {
+          method: "PATCH",
+          body: JSON.stringify({ hidden }),
+        });
+        setReviews((items) =>
+          items.map((item) => (item.id === saved.id ? saved : item)),
+        );
+      },
+      async deleteReview(id: string) {
+        await api(`/admin/reviews/${id}`, { method: "DELETE" });
+        setReviews((items) => items.filter((item) => item.id !== id));
+      },
+      async saveShapeQuestion(input: ShapeQuestionInput, id?: string) {
+        const saved = await api<ShapeQuestion>(
+          id ? `/admin/shape-questions/${id}` : "/admin/shape-questions",
+          { method: id ? "PATCH" : "POST", body: JSON.stringify(input) },
+        );
+        setShapeQuestions((items) =>
+          id
+            ? items.map((item) => (item.id === saved.id ? saved : item))
+            : [...items, saved],
+        );
+      },
+      async deleteShapeQuestion(id: string) {
+        await api(`/admin/shape-questions/${id}`, { method: "DELETE" });
+        setShapeQuestions((items) => items.filter((item) => item.id !== id));
+      },
+      async reorderShapeQuestions(ids: string[]) {
+        setShapeQuestions(
+          await api<ShapeQuestion[]>("/admin/shape-questions/order", {
+            method: "PUT",
+            body: JSON.stringify({ ids }),
+          }),
+        );
+      },
+      async saveHelpQuestion(input: HelpQuestionInput, id?: string) {
+        const saved = await api<HelpQuestion>(
+          id ? `/admin/help-questions/${id}` : "/admin/help-questions",
+          {
+            method: id ? "PATCH" : "POST",
+            body: JSON.stringify({ ...input, more: input.more ?? null }),
+          },
+        );
+        setHelpQuestions((items) =>
+          id
+            ? items.map((item) => (item.id === saved.id ? saved : item))
+            : [...items, saved],
+        );
+      },
+      async deleteHelpQuestion(id: string) {
+        await api(`/admin/help-questions/${id}`, { method: "DELETE" });
+        setHelpQuestions((items) => items.filter((item) => item.id !== id));
+      },
+      async reorderHelpQuestions(ids: string[]) {
+        setHelpQuestions(
+          await api<HelpQuestion[]>("/admin/help-questions/order", {
+            method: "PUT",
+            body: JSON.stringify({ ids }),
+          }),
+        );
+      },
+      /**
+       * Uploads a new product image file directly to Cloudinary: get signed
+       * upload params from the API, POST the file straight to Cloudinary's
+       * upload endpoint from the browser (bytes never transit through Nest),
+       * then return the `{storage:"cloudinary", objectKey}` reference to
+       * store in `draft.images` — `slug` is just a route param the API uses
+       * to look up the product and namespace the signed folder by its
+       * immutable id; for a not-yet-created product (no id yet) the API
+       * signs an upload into an unassociated `rad/pending` folder instead.
+       * Either way the API alone decides (and signs) the destination folder,
+       * and re-validates the resulting public_id on save — never trusted
+       * blindly from the client. `CLOUDINARY_API_SECRET` never reaches this
+       * code; only the public `apiKey`/`cloudName` + a one-time signature do.
+       */
+      async uploadProductImage(slug: string, file: File) {
+        const { cloudName, apiKey, timestamp, folder, signature } = await api<{
+          cloudName: string;
+          apiKey: string;
+          timestamp: number;
+          folder: string;
+          signature: string;
+        }>(
+          `/admin/products/${encodeURIComponent(slug || "draft")}/images/sign`,
+          {
             method: "POST",
-            body: JSON.stringify(payload),
-          });
-      setProducts((items) => {
-        if (items.some((item) => item.id === saved.id)) {
-          return items.map((item) => (item.id === saved.id ? saved : item));
+            body: JSON.stringify({ mime: file.type }),
+          },
+        );
+        const body = new FormData();
+        body.append("file", file);
+        body.append("api_key", apiKey);
+        body.append("timestamp", String(timestamp));
+        body.append("folder", folder);
+        body.append("signature", signature);
+        const uploadResponse = await fetch(
+          `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
+          { method: "POST", body },
+        );
+        if (!uploadResponse.ok) {
+          throw new Error("بارگذاری تصویر به فضای ذخیره‌سازی ناموفق بود.");
         }
-        return [saved, ...items];
-      });
-    },
-    async deleteProduct(id: string) {
-      await api(`/admin/products/${id}`, { method: "DELETE" });
-      setProducts((items) => items.filter((item) => item.id !== id));
-    },
-    async updateOrder(order: AdminOrder) {
-      const saved = await api<AdminOrder>(`/admin/orders/${order.id}`, {
-        method: "PATCH",
-        body: JSON.stringify({ status: order.status }),
-      });
-      setOrders((items) => items.map((item) => (item.id === saved.id ? saved : item)));
-    },
-    async approvePayment(id: string) {
-      const saved = await api<AdminOrder>(`/admin/orders/${id}/payment/approve`, {
-        method: "POST",
-      });
-      setOrders((items) => items.map((item) => (item.id === saved.id ? saved : item)));
-      const refreshed = await api<AdminProduct[]>("/admin/products");
-      setProducts(refreshed);
-    },
-    async rejectPayment(id: string, reason: string) {
-      const saved = await api<AdminOrder>(`/admin/orders/${id}/payment/reject`, {
-        method: "POST",
-        body: JSON.stringify({ reason }),
-      });
-      setOrders((items) => items.map((item) => (item.id === saved.id ? saved : item)));
-      const refreshed = await api<AdminProduct[]>("/admin/products");
-      setProducts(refreshed);
-    },
-    async setMessageStatus(id: string, status: AdminContactMessage["status"]) {
-      const saved = await api<AdminContactMessage>(`/admin/messages/${id}`, {
-        method: "PATCH",
-        body: JSON.stringify({ status }),
-      });
-      setMessages((items) => items.map((item) => (item.id === saved.id ? saved : item)));
-    },
-    async reviewDamageReport(
-      id: string,
-      review: { status: AdminDamageReport["status"]; resolution?: AdminDamageReport["resolution"]; note?: string },
-    ) {
-      const saved = await api<AdminDamageReport>(`/admin/damage-reports/${id}`, {
-        method: "PATCH",
-        body: JSON.stringify(review),
-      });
-      setDamageReports((items) => items.map((item) => (item.id === saved.id ? saved : item)));
-    },
-    async inviteMember(member: AdminMember) {
-      const saved = await api<AdminMember>("/admin/members", {
-        method: "POST",
-        body: JSON.stringify({ name: member.name, email: member.email, role: member.role }),
-      });
-      setMembers((items) => [saved, ...items]);
-    },
-    async updateMember(member: AdminMember) {
-      const saved = await api<AdminMember>(`/admin/members/${member.id}`, {
-        method: "PATCH",
-        body: JSON.stringify({ role: member.role, status: member.status }),
-      });
-      setMembers((items) => items.map((item) => (item.id === saved.id ? saved : item)));
-    },
-    async beginCommissionReview(id: string) {
-      const saved = await api<AdminCommission>(`/admin/commissions/${id}/review`, {
-        method: "POST",
-      });
-      setCommissions((items) => items.map((item) => (item.id === saved.id ? saved : item)));
-      return saved;
-    },
-    async decideCommission(input: {
-      id: string;
-      decision: "approve" | "request_change" | "offer_alternative" | "decline";
-      reason?: { fa: string; en: string };
-      alternative?: { fa: string; en: string };
-      change?: {
-        whatChanged: { fa: string; en: string };
-        whyNecessary: { fa: string; en: string };
-        priceImpact: { fa: string; en: string };
-        timeImpact: { fa: string; en: string };
-      };
-    }) {
-      const saved = await api<AdminCommission>(`/admin/commissions/${input.id}/decide`, {
-        method: "POST",
-        body: JSON.stringify({
-          decision: input.decision,
-          reason: input.reason,
-          alternative: input.alternative,
-          change: input.change,
-        }),
-      });
-      setCommissions((items) => items.map((item) => (item.id === saved.id ? saved : item)));
-      return saved;
-    },
-    async messageCommission(id: string, body: { fa: string; en: string }, internal?: boolean) {
-      const saved = await api<AdminCommission>(`/admin/commissions/${id}/messages`, {
-        method: "POST",
-        body: JSON.stringify({ body, internal }),
-      });
-      setCommissions((items) => items.map((item) => (item.id === saved.id ? saved : item)));
-      return saved;
-    },
-  }), [commissions, currentRole, damageReports, error, helpQuestions, members, messages, orders, products, ready, refresh, reviews, shapeQuestions, user, users]);
+        const uploaded = (await uploadResponse.json()) as {
+          public_id?: string;
+        };
+        if (!uploaded.public_id) {
+          throw new Error("بارگذاری تصویر به فضای ذخیره‌سازی ناموفق بود.");
+        }
+        return {
+          storage: "cloudinary" as const,
+          objectKey: uploaded.public_id,
+        };
+      },
+      async saveProduct(product: AdminProduct) {
+        const payload = {
+          slug: product.slug,
+          name: product.name,
+          description: product.description,
+          category: product.category,
+          price: product.price,
+          status: product.status,
+          artist: product.artist,
+          // Only send what the API's save contract needs per storage —
+          // never the display-only `src` the API derived for a `cloudinary`
+          // row (or a local blob: URL left over from an in-flight upload).
+          images: product.images.map((image) =>
+            image.storage === "cloudinary"
+              ? { storage: "cloudinary" as const, objectKey: image.objectKey }
+              : { storage: image.storage, src: image.src },
+          ),
+        };
+        const exists = products.some((item) => item.id === product.id);
+        const saved = exists
+          ? await api<AdminProduct>(`/admin/products/${product.id}`, {
+              method: "PATCH",
+              body: JSON.stringify(payload),
+            })
+          : await api<AdminProduct>("/admin/products", {
+              method: "POST",
+              body: JSON.stringify(payload),
+            });
+        setProducts((items) => {
+          if (items.some((item) => item.id === saved.id)) {
+            return items.map((item) => (item.id === saved.id ? saved : item));
+          }
+          return [saved, ...items];
+        });
+      },
+      async deleteProduct(id: string) {
+        await api(`/admin/products/${id}`, { method: "DELETE" });
+        setProducts((items) => items.filter((item) => item.id !== id));
+      },
+      async updateOrder(order: AdminOrder) {
+        const saved = await api<AdminOrder>(`/admin/orders/${order.id}`, {
+          method: "PATCH",
+          body: JSON.stringify({ status: order.status }),
+        });
+        setOrders((items) =>
+          items.map((item) => (item.id === saved.id ? saved : item)),
+        );
+      },
+      async approvePayment(id: string) {
+        const saved = await api<AdminOrder>(
+          `/admin/orders/${id}/payment/approve`,
+          {
+            method: "POST",
+          },
+        );
+        setOrders((items) =>
+          items.map((item) => (item.id === saved.id ? saved : item)),
+        );
+        const refreshed = await api<AdminProduct[]>("/admin/products");
+        setProducts(refreshed);
+      },
+      async rejectPayment(id: string, reason: string) {
+        const saved = await api<AdminOrder>(
+          `/admin/orders/${id}/payment/reject`,
+          {
+            method: "POST",
+            body: JSON.stringify({ reason }),
+          },
+        );
+        setOrders((items) =>
+          items.map((item) => (item.id === saved.id ? saved : item)),
+        );
+        const refreshed = await api<AdminProduct[]>("/admin/products");
+        setProducts(refreshed);
+      },
+      async setMessageStatus(
+        id: string,
+        status: AdminContactMessage["status"],
+      ) {
+        const saved = await api<AdminContactMessage>(`/admin/messages/${id}`, {
+          method: "PATCH",
+          body: JSON.stringify({ status }),
+        });
+        setMessages((items) =>
+          items.map((item) => (item.id === saved.id ? saved : item)),
+        );
+      },
+      async reviewDamageReport(
+        id: string,
+        review: {
+          status: AdminDamageReport["status"];
+          resolution?: AdminDamageReport["resolution"];
+          note?: string;
+        },
+      ) {
+        const saved = await api<AdminDamageReport>(
+          `/admin/damage-reports/${id}`,
+          {
+            method: "PATCH",
+            body: JSON.stringify(review),
+          },
+        );
+        setDamageReports((items) =>
+          items.map((item) => (item.id === saved.id ? saved : item)),
+        );
+      },
+      async inviteMember(member: AdminMember) {
+        const saved = await api<AdminMember>("/admin/members", {
+          method: "POST",
+          body: JSON.stringify({
+            name: member.name,
+            email: member.email,
+            role: member.role,
+          }),
+        });
+        setMembers((items) => [saved, ...items]);
+      },
+      async updateMember(member: AdminMember) {
+        const saved = await api<AdminMember>(`/admin/members/${member.id}`, {
+          method: "PATCH",
+          body: JSON.stringify({ role: member.role, status: member.status }),
+        });
+        setMembers((items) =>
+          items.map((item) => (item.id === saved.id ? saved : item)),
+        );
+      },
+      async beginCommissionReview(id: string) {
+        const saved = await api<AdminCommission>(
+          `/admin/commissions/${id}/review`,
+          {
+            method: "POST",
+          },
+        );
+        setCommissions((items) =>
+          items.map((item) => (item.id === saved.id ? saved : item)),
+        );
+        return saved;
+      },
+      async decideCommission(input: {
+        id: string;
+        decision:
+          "approve" | "request_change" | "offer_alternative" | "decline";
+        reason?: { fa: string; en: string };
+        alternative?: { fa: string; en: string };
+        change?: {
+          whatChanged: { fa: string; en: string };
+          whyNecessary: { fa: string; en: string };
+          priceImpact: { fa: string; en: string };
+          timeImpact: { fa: string; en: string };
+        };
+      }) {
+        const saved = await api<AdminCommission>(
+          `/admin/commissions/${input.id}/decide`,
+          {
+            method: "POST",
+            body: JSON.stringify({
+              decision: input.decision,
+              reason: input.reason,
+              alternative: input.alternative,
+              change: input.change,
+            }),
+          },
+        );
+        setCommissions((items) =>
+          items.map((item) => (item.id === saved.id ? saved : item)),
+        );
+        return saved;
+      },
+      async messageCommission(
+        id: string,
+        body: { fa: string; en: string },
+        internal?: boolean,
+      ) {
+        const saved = await api<AdminCommission>(
+          `/admin/commissions/${id}/messages`,
+          {
+            method: "POST",
+            body: JSON.stringify({ body, internal }),
+          },
+        );
+        setCommissions((items) =>
+          items.map((item) => (item.id === saved.id ? saved : item)),
+        );
+        return saved;
+      },
+    }),
+    [
+      commissions,
+      currentRole,
+      damageReports,
+      error,
+      helpQuestions,
+      members,
+      messages,
+      orders,
+      products,
+      ready,
+      refresh,
+      reviews,
+      shapeQuestions,
+      user,
+      users,
+    ],
+  );
 }
