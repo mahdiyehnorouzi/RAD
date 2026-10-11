@@ -7,20 +7,21 @@ import { publicProductWhere } from "./product.mapper";
  * resolve a real path for `static`/`external`/`cloudinary` rows directly;
  * only `legacy_base64` rows get masked behind `/catalog/images/:id` there.
  *
- * `images.src` is fetched via a `CASE` expression rather than a plain
- * column select: for `legacy_base64` rows the mapper (`imageSrc` in
- * `product.mapper.ts`) never looks at `src` at all — it always returns
- * `/catalog/images/:id` — so there is no reason to pay for detoasting a
- * (potentially large) base64 data URI on every public list/detail query.
- * The `CASE` only returns `src` for `static`/`external`/null-storage rows,
- * where the mapper does use it. Postgres does not evaluate the `ELSE`
- * branch when the `WHEN` matches, so the large payload is never detoasted
- * for `legacy_base64` rows. `stripImageSrc` still nulls it out again at the
- * application layer as defense in depth, but the DB-side cost is what this
- * fixes. Admin's "embedImages" path (`CatalogAdminService`/
- * `productIncludeWithSrc`) uses a separate `relations: { images: true }`
- * TypeORM `find`/`findOne` call, not this query builder, so it is
- * unaffected and still always gets the full `src`.
+ * `images.src` is a plain column select, not a raw `CASE` expression: an
+ * earlier attempt to skip detoasting `legacy_base64`'s base64 payload via
+ * `addSelect("CASE WHEN ... END", "images_src")` turned out not to
+ * hydrate onto the entity at all under TypeORM's raw-alias hydration —
+ * confirmed against real Postgres in CI, where it silently broke `src`
+ * for every row, not just `legacy_base64` ones. `stripImageSrc` still
+ * nulls `legacy_base64`'s `src` out at the application layer (defense in
+ * depth, and now the only layer doing it), so no base64 payload reaches a
+ * public response either way; the DB-side detoast-avoidance is a known,
+ * accepted regression pending a follow-up that validates a safer
+ * mechanism (e.g. `getRawAndEntities()` with manual zipping) against a
+ * real database before landing it again. Admin's "embedImages" path
+ * (`CatalogAdminService`/`productIncludeWithSrc`) uses a separate
+ * `relations: { images: true }` TypeORM `find`/`findOne` call, not this
+ * query builder, so it is unaffected and still always gets the full `src`.
  */
 export function publicCatalogQuery(
   products: Repository<Product>,
@@ -43,11 +44,8 @@ export function publicCatalogQuery(
       "images.sortOrder",
       "images.storage",
       "images.objectKey",
+      "images.src",
     ])
-    .addSelect(
-      "CASE WHEN images.storage = 'legacy_base64' THEN NULL ELSE images.src END",
-      "images_src",
-    )
     .where("product.status NOT IN (:...hidden)", {
       hidden: publicProductWhere.status.notIn,
     })

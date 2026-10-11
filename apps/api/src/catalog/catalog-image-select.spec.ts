@@ -58,12 +58,15 @@ after(async () => {
 
 /**
  * Regression coverage for the public catalog query's `ProductImage.src`
- * projection: `legacy_base64` rows must never return their raw base64
- * payload to the public query path, while `static`/`external` rows still
- * need their real `src` to resolve a usable path/URL.
+ * projection: `static`/`external` rows need their real `src` to resolve a
+ * usable path/URL. `legacy_base64` rows DO still carry their raw src at
+ * this query layer (a plain column select — see `catalog.query.ts` for
+ * why a DB-level CASE-based skip was reverted after it silently broke
+ * hydration for every row); `stripImageSrc` is the layer that nulls it
+ * before anything public-facing is built from it, covered below.
  */
 describe("publicCatalogQuery image src projection", () => {
-  test("static/external rows keep src, legacy_base64 rows do not", async () => {
+  test("static/external rows resolve their real src; stripImageSrc nulls legacy_base64's", async () => {
     const products = dataSource.getRepository(Product);
     const images = dataSource.getRepository(ProductImage);
 
@@ -126,14 +129,11 @@ describe("publicCatalogQuery image src projection", () => {
       (row!.images ?? []).map((image) => [image.storage, image]),
     );
 
-    // The query itself must never hydrate the legacy row's base64 payload —
-    // this is the actual DB-level fix: no row carries it back on this path.
-    // TypeORM hydrates a raw CASE-expression NULL onto an unset property as
-    // `undefined` rather than `null`; `imageSrc()` never reads `src` for
-    // `legacy_base64` rows regardless (see product.mapper.ts), so both
-    // values are equally correct here — only a real base64 string would be
-    // a bug.
-    assert.equal(byStorage.get("legacy_base64")?.src ?? null, null);
+    // At the raw query layer, legacy_base64's src IS the real payload — the
+    // DB-level skip was reverted (see catalog.query.ts); application code
+    // (stripImageSrc, asserted below) is what nulls it before anything
+    // public-facing is built from it.
+    assert.equal(byStorage.get("legacy_base64")?.src, base64Payload);
     assert.equal(byStorage.get("static")?.src, "/images/static-work.jpg");
     assert.equal(
       byStorage.get("external")?.src,
