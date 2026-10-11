@@ -1,6 +1,6 @@
 {
   "name": "@rad/api",
-  "version": "1.5.0",
+  "version": "1.5.1",
   "private": true,
   "type": "commonjs",
   "scripts": {
@@ -47,7 +47,7 @@
   "devDependencies": {
     "@nestjs/cli": "^11.0.10",
     "@nestjs/schematics": "^11.0.7",
-    "@rad/artworks": "1.5.0",
+    "@rad/artworks": "1.5.1",
     "@types/cookie-parser": "^1.4.9",
     "@types/express": "^5.0.3",
     "@types/node": "^22",
