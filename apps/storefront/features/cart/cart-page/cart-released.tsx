@@ -112,7 +112,11 @@ export function CartReleased({
                 tabIndex={-1}
                 aria-hidden="true"
               >
-                <ProductMedia product={product} showStatusBadge={false} />
+                <ProductMedia
+                  product={product}
+                  showStatusBadge={false}
+                  sizes="(max-width: 600px) 88px, 104px"
+                />
               </Link>
             </li>
           );

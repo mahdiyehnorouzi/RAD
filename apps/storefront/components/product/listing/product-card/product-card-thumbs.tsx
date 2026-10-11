@@ -41,7 +41,7 @@ export function ProductCardThumbs({
           }
           onClick={() => onSelect(index)}
         >
-          <ProductCardArtwork product={product} slide={slide} />
+          <ProductCardArtwork product={product} slide={slide} sizes="72px" />
         </button>
       ))}
       {hidden > 0 ? (

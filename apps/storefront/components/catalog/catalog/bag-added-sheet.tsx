@@ -61,7 +61,11 @@ export function BagAddedSheet({
       </button>
       <div className="bag-added-product">
         <span className="bag-added-photo">
-          <ProductMedia product={product} showStatusBadge={false} />
+          <ProductMedia
+            product={product}
+            showStatusBadge={false}
+            sizes="88px"
+          />
         </span>
         <div>
           <h2 id="bag-added-title">{productCopy(product, locale).name}</h2>

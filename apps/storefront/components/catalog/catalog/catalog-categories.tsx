@@ -41,8 +41,7 @@ export function CatalogCategories({
   useEffect(() => {
     const node = railRef.current;
     if (!node) return undefined;
-    const sync = () =>
-      setOverflowing(node.scrollWidth > node.clientWidth + 2);
+    const sync = () => setOverflowing(node.scrollWidth > node.clientWidth + 2);
     sync();
     const observer = new ResizeObserver(sync);
     observer.observe(node);
@@ -69,7 +68,11 @@ export function CatalogCategories({
             >
               <span className="plp-chip-thumb" aria-hidden="true">
                 {chip.work ? (
-                  <ProductMedia product={chip.work} showStatusBadge={false} />
+                  <ProductMedia
+                    product={chip.work}
+                    showStatusBadge={false}
+                    sizes="45px"
+                  />
                 ) : "preview" in chip && chip.preview ? (
                   <ArtworkVisual
                     visual={chip.preview.visual}

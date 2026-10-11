@@ -41,6 +41,7 @@
   gap: 20px;
 }
 .bag-added-photo {
+  position: relative;
   order: 2;
   width: 88px;
   height: 88px;

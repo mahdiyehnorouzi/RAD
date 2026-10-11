@@ -14,6 +14,7 @@ import { AdminGuard } from "../common/guards/admin.guard";
 import { AdminService } from "./admin.service";
 import {
   InviteMemberDto,
+  SignProductImageDto,
   RejectPaymentDto,
   SaveProductDto,
   UpdateMemberDto,
@@ -76,6 +77,16 @@ export class AdminController {
   deleteProduct(@Param("id") id: string, @Req() request: AuthedRequest) {
     this.admin.assert(request.adminRole, "product.delete");
     return this.admin.deleteProduct(id);
+  }
+
+  @Post("products/:slug/images/sign")
+  signProductImage(
+    @Param("slug") slug: string,
+    @Body() body: SignProductImageDto,
+    @Req() request: AuthedRequest,
+  ) {
+    this.admin.assert(request.adminRole, "product.write");
+    return this.admin.signProductImageUpload(slug, body.mime);
   }
 
   @Get("orders")
@@ -170,13 +181,19 @@ export class AdminController {
   }
 
   @Post("shape-questions")
-  createShapeQuestion(@Body() body: SaveShapeQuestionDto, @Req() request: AuthedRequest) {
+  createShapeQuestion(
+    @Body() body: SaveShapeQuestionDto,
+    @Req() request: AuthedRequest,
+  ) {
     this.admin.assert(request.adminRole, "content.write");
     return this.shape.create(body);
   }
 
   @Put("shape-questions/order")
-  reorderShapeQuestions(@Body() body: ReorderDto, @Req() request: AuthedRequest) {
+  reorderShapeQuestions(
+    @Body() body: ReorderDto,
+    @Req() request: AuthedRequest,
+  ) {
     this.admin.assert(request.adminRole, "content.write");
     return this.shape.reorder(body.ids);
   }
@@ -203,13 +220,19 @@ export class AdminController {
   }
 
   @Post("help-questions")
-  createHelpQuestion(@Body() body: SaveHelpQuestionDto, @Req() request: AuthedRequest) {
+  createHelpQuestion(
+    @Body() body: SaveHelpQuestionDto,
+    @Req() request: AuthedRequest,
+  ) {
     this.admin.assert(request.adminRole, "content.write");
     return this.help.create(body);
   }
 
   @Put("help-questions/order")
-  reorderHelpQuestions(@Body() body: ReorderDto, @Req() request: AuthedRequest) {
+  reorderHelpQuestions(
+    @Body() body: ReorderDto,
+    @Req() request: AuthedRequest,
+  ) {
     this.admin.assert(request.adminRole, "content.write");
     return this.help.reorder(body.ids);
   }

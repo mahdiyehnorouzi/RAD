@@ -15,8 +15,16 @@ export class ArtworksService {
     private readonly inventory: InventoryService,
   ) {}
 
+  /**
+   * Read-only: does not call `releaseExpiredHolds()`. Expired holds are
+   * released by `InventoryService`'s periodic sweep (`HOLD_SWEEP_INTERVAL_MS`,
+   * every 30s) and by every write path that actually mutates availability
+   * (cart hold, checkout, admin review). A listing read may lag an expiry by
+   * up to one sweep interval; that is a staleness tradeoff, not a correctness
+   * one — the real-time guard against overselling is the pessimistic lock in
+   * `OrdersService.checkout`, which this method never touches.
+   */
   async list() {
-    await this.inventory.releaseExpiredHolds();
     const rows = await publicCatalogQuery(this.products).getMany();
     return rows.map((row) =>
       toArtwork({ ...row, images: stripImageSrc(row.images ?? []) }),

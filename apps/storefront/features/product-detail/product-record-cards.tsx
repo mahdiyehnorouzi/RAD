@@ -56,6 +56,7 @@ export function ProductRecordCards({
                 product={product}
                 imageIndex={0}
                 showStatusBadge={false}
+                sizes="(max-width: 700px) 36vw, (max-width: 1100px) 20vw, 15vw"
               />
             </span>
           </Link>

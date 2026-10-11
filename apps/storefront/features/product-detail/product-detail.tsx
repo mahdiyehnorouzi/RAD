@@ -49,6 +49,11 @@ export function ProductDetail({
   const [faq, setFaq] = useState<FaqContent | null>(initialFaq);
 
   useEffect(() => {
+    // The server already fetched FAQ for the current locale (`initialFaq`),
+    // and switching locale is a full page navigation (see `switchLocale` in
+    // `components/i18n.tsx`), so there is never a locale change to react to
+    // here. Only fall back to a client fetch when the server fetch failed.
+    if (initialFaq !== null) return undefined;
     let active = true;
     fetchFaq(locale)
       .then((payload) => {
@@ -60,7 +65,7 @@ export function ProductDetail({
     return () => {
       active = false;
     };
-  }, [locale]);
+  }, [locale, initialFaq]);
 
   const live = useLiveProduct(product.slug);
   const resolved = overlayLiveProduct(product, live.product);

@@ -60,6 +60,7 @@ export function OrdersPage() {
                         <ProductMedia
                           product={product}
                           showStatusBadge={false}
+                          sizes="(max-width: 600px) 5.5rem, 6.5rem"
                         />
                       </Link>
                       <div>

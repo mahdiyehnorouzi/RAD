@@ -8,9 +8,11 @@ import {
   IsString,
   Min,
   MinLength,
+  ValidateNested,
 } from "class-validator";
 import { PRODUCT_STATUSES } from "../../inventory/const/product-status";
 import type { ProductStatus } from "../../inventory/type";
+import { AdminProductImageInputDto } from "./product-image-input.dto";
 
 const ADMIN_CATEGORIES = [
   "گلدان",
@@ -71,10 +73,14 @@ export class SaveProductDto {
 
   @ApiProperty({
     example: [],
-    description: "Product images as base64 data URLs",
-    type: [String],
+    description:
+      "Product images: legacy_base64/static/external carry `src`, cloudinary carries " +
+      "the `objectKey` (Cloudinary public_id) the signed upload from " +
+      "POST /admin/products/:slug/images/sign wrote to.",
+    type: [AdminProductImageInputDto],
   })
   @IsArray()
-  @IsString({ each: true })
-  images!: string[];
+  @ValidateNested({ each: true })
+  @Type(() => AdminProductImageInputDto)
+  images!: AdminProductImageInputDto[];
 }

@@ -25,9 +25,13 @@ import {
 import { InventoryService } from "../../inventory/inventory.service";
 import { MailService } from "../../mail/mail.service";
 import { NoticesService } from "../../notices/notices.service";
-import { CURRENT_POLICY_VERSIONS, ORDER_POLICY_SLUGS } from "../../policies/const";
+import {
+  CURRENT_POLICY_VERSIONS,
+  ORDER_POLICY_SLUGS,
+} from "../../policies/const";
 import { OrdersService } from "../orders.service";
 import { PaymentReviewService } from "../payment-review.service";
+import { CloudinaryStorageService } from "../../storage/cloudinary-storage.service";
 
 function freePort() {
   return new Promise<number>((resolve, reject) => {
@@ -101,6 +105,7 @@ export async function startPurchaseHarness() {
     repo(PaymentIntent),
     inventory,
     paymentReview,
+    new CloudinaryStorageService(new ConfigService({})),
   );
 
   let productCount = 0;
@@ -151,9 +156,9 @@ export async function startPurchaseHarness() {
     /** A distinct, well-formed PNG data URL each call. */
     receipt() {
       receiptCount += 1;
-      const body = Buffer.from(`receipt-${receiptCount}-${Date.now()}`).toString(
-        "base64",
-      );
+      const body = Buffer.from(
+        `receipt-${receiptCount}-${Date.now()}`,
+      ).toString("base64");
       return `data:image/png;base64,${body}`;
     },
 

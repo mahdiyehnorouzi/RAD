@@ -75,6 +75,7 @@ export function ResultCard({
               <ProductMedia
                 product={productFromArtwork(artwork)}
                 showStatusBadge={false}
+                sizes="(max-width: 960px) 44vw, 253px"
               />
             </span>
           ) : null}

@@ -27,7 +27,11 @@ export function CheckoutSummary({
         {items.map((product) => (
           <li key={product.slug} className="checkout-summary-item">
             <span className="checkout-summary-art">
-              <ProductMedia product={product} showStatusBadge={false} />
+              <ProductMedia
+                product={product}
+                showStatusBadge={false}
+                sizes="68px"
+              />
             </span>
             <span className="checkout-summary-text">
               <small dir="ltr">

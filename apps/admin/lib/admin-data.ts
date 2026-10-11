@@ -38,6 +38,20 @@ export type AdminSection =
   | "members"
   | "account";
 export type AdminProductStatus = ProductStatus;
+
+/**
+ * One product image, in the shape the API's save endpoint expects:
+ * `legacy_base64`/`static`/`external` round-trip an existing `src`
+ * unchanged; `cloudinary` carries only the Cloudinary `public_id` (as
+ * `objectKey`) the signed upload wrote to — never raw bytes. `src` on a
+ * `cloudinary` entry is a display-only URL the API derived for the
+ * editor's `<img>` preview (or a local blob URL while a new upload is in
+ * flight) — it is never sent back as the source of truth, `objectKey` is.
+ */
+export type AdminProductImage =
+  | { storage: "legacy_base64"; src: string; objectKey?: null }
+  | { storage: "static" | "external"; src: string; objectKey?: null }
+  | { storage: "cloudinary"; objectKey: string; src?: string | null };
 export type AdminOrderStatus =
   | "pending_payment"
   | "pending_verification"
@@ -51,12 +65,7 @@ export type AdminOrderStatus =
   | "returned";
 
 export type AdminPaymentStatus =
-  | "created"
-  | "redirected"
-  | "submitted"
-  | "verified"
-  | "rejected"
-  | "failed";
+  "created" | "redirected" | "submitted" | "verified" | "rejected" | "failed";
 
 export interface AdminProduct {
   id: string;
@@ -71,7 +80,7 @@ export interface AdminProduct {
   /** A customer holds the work (cart, unpaid order, or receipt awaiting review). */
   held?: boolean;
   artist: string;
-  images: string[];
+  images: AdminProductImage[];
   updatedAt: number;
 }
 
@@ -329,7 +338,10 @@ export const productStatusLabels: Record<AdminProductStatus, string> = {
   archived: "آرشیو",
 };
 
-const faTime = new Intl.DateTimeFormat("fa-IR", { hour: "2-digit", minute: "2-digit" });
+const faTime = new Intl.DateTimeFormat("fa-IR", {
+  hour: "2-digit",
+  minute: "2-digit",
+});
 
 export function productStatusLabel(product: AdminProduct) {
   if (product.holdExpiresAt) {
@@ -342,11 +354,19 @@ export function productStatusLabel(product: AdminProduct) {
 /** Statuses the editor may pick; new products can start anywhere. */
 export function productStatusOptions(current?: AdminProductStatus) {
   if (!current) return [...PRODUCT_STATUSES];
-  return PRODUCT_STATUSES.filter((status) => canTransitionProductStatus(current, status));
+  return PRODUCT_STATUSES.filter((status) =>
+    canTransitionProductStatus(current, status),
+  );
 }
 
 export const permissions = {
-  owner: ["product.write", "product.delete", "order.write", "member.write", "content.write"],
+  owner: [
+    "product.write",
+    "product.delete",
+    "order.write",
+    "member.write",
+    "content.write",
+  ],
   manager: ["product.write", "order.write", "member.write", "content.write"],
   editor: ["product.write", "content.write"],
   viewer: [],

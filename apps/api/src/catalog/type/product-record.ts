@@ -2,7 +2,15 @@ import type { Product, ProductImage, Vendor } from "../../database/entities";
 
 export type ProductImageMeta = Pick<
   ProductImage,
-  "id" | "alt" | "enAlt" | "color" | "accent" | "shape" | "sortOrder"
+  | "id"
+  | "alt"
+  | "enAlt"
+  | "color"
+  | "accent"
+  | "shape"
+  | "sortOrder"
+  | "storage"
+  | "objectKey"
 > & { src?: string | null };
 
 export type EnCopy = {

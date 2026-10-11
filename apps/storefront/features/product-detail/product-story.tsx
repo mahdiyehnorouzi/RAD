@@ -55,6 +55,7 @@ export function ProductStory({
             product={product}
             imageIndex={1}
             showStatusBadge={false}
+            sizes="(max-width: 700px) 100vw, (max-width: 1100px) 55vw, 42vw"
           />
         </figure>
       ) : null}

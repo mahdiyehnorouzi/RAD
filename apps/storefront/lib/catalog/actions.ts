@@ -2,8 +2,10 @@
 
 import { updateTag } from "next/cache";
 import { CATALOG_TAG } from "./catalog-tag";
+import { resetProcessCatalogCache } from "./get-catalog-works";
 
 /** After a bag, order or availability change: the next render reads fresh statuses. */
 export async function refreshCatalog() {
   updateTag(CATALOG_TAG);
+  resetProcessCatalogCache();
 }

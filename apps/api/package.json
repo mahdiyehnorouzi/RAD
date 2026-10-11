@@ -15,9 +15,10 @@
     "db:import-uploaded-products": "tsx seed/import-uploaded-products.ts",
     "db:embedded": "node scripts/start-pg.mjs",
     "pricing:crawl": "tsx src/pricing/cli.ts",
-    "test": "npm run test:pricing && npm run test:purchase",
+    "test": "npm run test:pricing && npm run test:purchase && npm run test:catalog",
     "test:pricing": "tsx --test src/pricing/*.spec.ts",
     "test:purchase": "tsx --test src/orders/*.spec.ts",
+    "test:catalog": "tsx --test src/catalog/*.spec.ts",
     "pricing:baseline": "tsx scripts/apply-baseline-prices.ts"
   },
   "dependencies": {
@@ -34,6 +35,7 @@
     "cheerio": "^1.2.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.2",
+    "cloudinary": "^2.11.0",
     "cookie-parser": "^1.4.7",
     "nodemailer": "^9.1.0",
     "pg": "^8.23.0",
