@@ -1,4 +1,4 @@
-import { getCatalog, traceCatalogCall } from "@/lib/catalog/get-catalog-works";
+import { getCatalog } from "@/lib/catalog/get-catalog-works";
 import { CatalogProvider } from "./catalog-provider";
 
 /**
@@ -8,18 +8,12 @@ import { CatalogProvider } from "./catalog-provider";
  */
 export async function CatalogScope({
   withArtworks = false,
-  // TEMP DIAGNOSTIC — remove after identifying catalog-fetch caller distribution
-  caller = "catalog-scope:unknown",
   children,
 }: {
   /** Also pass full artworks (passports, portraits); most routes need only products. */
   withArtworks?: boolean;
-  /** TEMP DIAGNOSTIC — identifies which layout mounted this scope. */
-  caller?: string;
   children: React.ReactNode;
 }) {
-  // TEMP DIAGNOSTIC — remove after identifying catalog-fetch caller distribution
-  traceCatalogCall(caller);
   const { products, artworks, origin } = await getCatalog();
   return (
     <CatalogProvider

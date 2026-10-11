@@ -13,9 +13,5 @@ export default function ShapeLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return (
-    <CatalogScope withArtworks caller="catalog-scope:shape">
-      {children}
-    </CatalogScope>
-  );
+  return <CatalogScope withArtworks>{children}</CatalogScope>;
 }

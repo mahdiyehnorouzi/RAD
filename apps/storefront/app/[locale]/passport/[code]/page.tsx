@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { cache } from "react";
 import { PassportPage } from "@/components/passport";
 import { fallbackArtworks, resolveArtwork } from "@/lib/artworks/server";
-import { getCatalog, traceCatalogCall } from "@/lib/catalog/get-catalog-works";
+import { getCatalog } from "@/lib/catalog/get-catalog-works";
 import { isGoneStatus } from "@/lib/catalog/product-status";
 import {
   familyMembers,
@@ -55,8 +55,6 @@ export default async function PassportDetail({
   params: Promise<{ code: string }>;
 }) {
   const { code } = await params;
-  // TEMP DIAGNOSTIC — remove after identifying catalog-fetch caller distribution
-  traceCatalogCall("passport");
   const [passport, { artworks }] = await Promise.all([
     resolvePassport(code),
     getCatalog(),

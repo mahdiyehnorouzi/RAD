@@ -68,24 +68,6 @@ export function resetProcessCatalogCache() {
  */
 export const getCatalog = cache(loadCatalogForProcess);
 
-// TEMP DIAGNOSTIC — remove after identifying catalog-fetch caller distribution
-//
-// Logs every call reaching the catalog-fetch path, labeled by caller, and
-// whether the module-scope `processCatalogCache` singleton was already warm
-// (cacheHit) or about to trigger `loadArtworks()`/a live fetch (cacheHit=false).
-// Checked synchronously *before* `getCatalog()`/`getCatalogIndex()` actually
-// runs, so it reflects the singleton's state at the moment of the call.
-// Call this at every call site instead of modifying `getCatalog`'s signature —
-// `getCatalog` is wrapped in React's `cache()`, which keys its memoization by
-// arguments, so giving it a `caller` parameter would fragment that per-request
-// dedup instead of just labeling it.
-export function traceCatalogCall(caller: string) {
-  const hit = Boolean(processCatalogCache && processCatalogCache.expiresAt > Date.now());
-  console.error(
-    `[rad:diag:caller] pid=${process.pid} caller=${caller} cacheHit=${hit} ts=${Date.now()}`,
-  );
-}
-
 /** Names and numbers only: enough for breadcrumbs, toasts and notices on every page. */
 export const getCatalogIndex = cache(async (): Promise<CatalogIndexEntry[]> => {
   const { artworks, products } = await getCatalog();

@@ -7,7 +7,7 @@ export const metadata: Metadata = privatePageMetadata;
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <CatalogScope withArtworks caller="catalog-scope:account">
+    <CatalogScope withArtworks>
       <MakingProvider>{children}</MakingProvider>
     </CatalogScope>
   );

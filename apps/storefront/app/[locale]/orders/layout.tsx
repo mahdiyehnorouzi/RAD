@@ -5,5 +5,5 @@ import { privatePageMetadata } from "@/lib/seo";
 export const metadata: Metadata = privatePageMetadata;
 
 export default function Layout({ children }: { children: React.ReactNode }) {
-  return <CatalogScope caller="catalog-scope:orders">{children}</CatalogScope>;
+  return <CatalogScope>{children}</CatalogScope>;
 }

@@ -25,24 +25,10 @@ export class ArtworksService {
    * `OrdersService.checkout`, which this method never touches.
    */
   async list() {
-    // TEMP DIAGNOSTIC — remove after confirming build-time pool contention
-    const pool = (this.products.manager.connection.driver as unknown as {
-      master?: { totalCount: number; idleCount: number; waitingCount: number };
-    }).master;
-    const start = process.hrtime.bigint();
-    console.error(
-      `[rad:diag:api] pid=${process.pid} ts=${Date.now()} artworks.list start pool(max=5) total=${pool?.totalCount} idle=${pool?.idleCount} waiting=${pool?.waitingCount}`,
-    );
     const rows = await publicCatalogQuery(this.products).getMany();
-    const result = rows.map((row) =>
+    return rows.map((row) =>
       toArtwork({ ...row, images: stripImageSrc(row.images ?? []) }),
     );
-    // TEMP DIAGNOSTIC — remove after confirming build-time pool contention
-    const ms = Number(process.hrtime.bigint() - start) / 1e6;
-    console.error(
-      `[rad:diag:api] pid=${process.pid} ts=${Date.now()} artworks.list done ms=${ms.toFixed(1)} rows=${result.length}`,
-    );
-    return result;
   }
 
   /** `key` is a RAD number (`41`, `041`, `RAD-041`) or a slug. */
