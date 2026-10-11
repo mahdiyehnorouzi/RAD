@@ -20,8 +20,14 @@ export async function loadArtworks(
   if (source === "registry") {
     return { artworks: fallbackArtworks, origin: "registry" };
   }
+  // TEMP DIAGNOSTIC — remove after confirming build-time pool contention
+  const start = Date.now();
   try {
     const remote = await fetchArtworks(init);
+    // TEMP DIAGNOSTIC — remove after confirming build-time pool contention
+    console.error(
+      `[rad:diag] pid=${process.pid} GET /artworks ok ms=${Date.now() - start}`,
+    );
     const list = Array.isArray(remote) ? remote : [];
     return {
       artworks: list.length
@@ -30,6 +36,10 @@ export async function loadArtworks(
       origin: "api",
     };
   } catch (error) {
+    // TEMP DIAGNOSTIC — remove after confirming build-time pool contention
+    console.error(
+      `[rad:diag] pid=${process.pid} GET /artworks FAIL ms=${Date.now() - start}`,
+    );
     if (source === "api") throw error;
     logRecovered("catalog", error);
     return { artworks: fallbackArtworks, origin: "registry" };
