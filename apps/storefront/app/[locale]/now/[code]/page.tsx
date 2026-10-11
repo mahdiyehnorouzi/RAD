@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { LivePage } from "@/components/now";
 import { fallbackArtworks } from "@/lib/artworks/server";
-import { getCatalog } from "@/lib/catalog/get-catalog-works";
+import { getCatalog, traceCatalogCall } from "@/lib/catalog/get-catalog-works";
 import { findLivePiece, livePiecesFrom } from "@/lib/now";
 import { absoluteUrl, pageMetadata, safeJsonLd } from "@/lib/seo";
 
@@ -12,7 +12,9 @@ export function generateStaticParams() {
   }));
 }
 
-async function findPiece(code: string) {
+// TEMP DIAGNOSTIC — remove after identifying catalog-fetch caller distribution
+async function findPiece(code: string, caller: string) {
+  traceCatalogCall(caller);
   const { artworks } = await getCatalog();
   return findLivePiece(livePiecesFrom(artworks), code);
 }
@@ -23,7 +25,7 @@ export async function generateMetadata({
   params: Promise<{ code: string }>;
 }): Promise<Metadata> {
   const { code } = await params;
-  const piece = await findPiece(code);
+  const piece = await findPiece(code, "generateMetadata:now-detail");
   if (!piece) {
     return {
       title: "این رَد پیدا نشد",
@@ -43,7 +45,7 @@ export default async function LiveMaking({
   params: Promise<{ code: string }>;
 }) {
   const { code } = await params;
-  const piece = await findPiece(code);
+  const piece = await findPiece(code, "now-detail");
   if (!piece) notFound();
 
   const path = `/now/${piece.code}`;

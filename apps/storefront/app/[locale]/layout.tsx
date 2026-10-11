@@ -16,7 +16,7 @@ import { CartProvider } from "@/features/cart";
 import { LocaleProvider } from "@/components/i18n";
 import { CommerceProvider } from "@/components/commerce";
 import { CatalogIndexProvider } from "@/components/catalog";
-import { getCatalogIndex } from "@/lib/catalog/get-catalog-works";
+import { getCatalogIndex, traceCatalogCall } from "@/lib/catalog/get-catalog-works";
 import { HomeBanner } from "@/features/home/home-banner";
 import {
   DEFAULT_LOCALE,
@@ -114,6 +114,8 @@ export default async function RootLayout({
   const { locale: segment } = await params;
   // The 404 page renders this layout without a `locale` param.
   const locale = isLocale(segment) ? segment : DEFAULT_LOCALE;
+  // TEMP DIAGNOSTIC — remove after identifying catalog-fetch caller distribution
+  traceCatalogCall("layout");
   const catalogIndex = await getCatalogIndex();
   const gaMeasurementId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
   const gaEnabled = Boolean(

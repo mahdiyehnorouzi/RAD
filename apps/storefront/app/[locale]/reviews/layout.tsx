@@ -14,5 +14,5 @@ export default function ReviewsLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return <CatalogScope>{children}</CatalogScope>;
+  return <CatalogScope caller="catalog-scope:reviews">{children}</CatalogScope>;
 }

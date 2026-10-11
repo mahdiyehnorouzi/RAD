@@ -5,11 +5,13 @@ import {
   CertificateSection,
   ThreadJourney,
 } from "@/features/home";
-import { getCatalog } from "@/lib/catalog/get-catalog-works";
+import { getCatalog, traceCatalogCall } from "@/lib/catalog/get-catalog-works";
 import { livePiecesFrom, workshopToday } from "@/lib/now";
 import { productListJsonLd, safeJsonLd } from "@/lib/seo";
 
 export default async function Home() {
+  // TEMP DIAGNOSTIC — remove after identifying catalog-fetch caller distribution
+  traceCatalogCall("home");
   const { artworks, products } = await getCatalog();
   const featured = featuredHomeWorks(products);
   const today = workshopToday(livePiecesFrom(artworks));

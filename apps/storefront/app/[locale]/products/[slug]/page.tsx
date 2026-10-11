@@ -8,7 +8,11 @@ import { fetchFaq, fetchProductReviews } from "@/lib/api";
 import type { RadPassport } from "@/components/passport/type";
 import { productFromArtwork } from "@/lib/artworks";
 import { resolveArtwork } from "@/lib/artworks/server";
-import { getCatalog, registryProducts } from "@/lib/catalog/get-catalog-works";
+import {
+  getCatalog,
+  registryProducts,
+  traceCatalogCall,
+} from "@/lib/catalog/get-catalog-works";
 import { relatedWorks } from "@/lib/catalog/related";
 import {
   PRODUCT_SEO,
@@ -136,6 +140,8 @@ export default async function PDP({
       ? `/r/${formatRadCode(product.radNumber)}`
       : `/products/${product.slug}`,
   );
+  // TEMP DIAGNOSTIC — remove after identifying catalog-fetch caller distribution
+  traceCatalogCall("PDP");
   const [faq, reviews, qrSvg, catalog] = await Promise.all([
     fetchFaq("fa"),
     fetchProductReviews(product.slug).catch(

@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { getCatalog } from "@/lib/catalog/get-catalog-works";
+import { getCatalog, traceCatalogCall } from "@/lib/catalog/get-catalog-works";
 import { productCopy } from "@/lib/catalog/products";
 import {
   normalizeQuery,
@@ -11,6 +11,8 @@ export async function GET(request: NextRequest) {
   const params = request.nextUrl.searchParams;
   const locale = params.get("locale") === "en" ? "en" : "fa";
   const normalized = normalizeQuery(params.get("q") ?? "", locale);
+  // TEMP DIAGNOSTIC — remove after identifying catalog-fetch caller distribution
+  if (normalized) traceCatalogCall("search-api");
   const { products } = normalized ? await getCatalog() : { products: [] };
   const results: SearchHit[] = products
     .filter((product) => productMatchesQuery(product, normalized, locale))

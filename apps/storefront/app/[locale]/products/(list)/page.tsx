@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { CatalogPage } from "@/components/catalog";
-import { getCatalog } from "@/lib/catalog/get-catalog-works";
+import { getCatalog, traceCatalogCall } from "@/lib/catalog/get-catalog-works";
 import { catalogMetadata } from "@/lib/catalog/catalog-metadata";
 import { catalogHref, parseCatalogFilters } from "@/lib/catalog/filters";
 import {
@@ -14,7 +14,12 @@ type Props = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
-async function loadCatalogView(searchParams: Props["searchParams"]) {
+async function loadCatalogView(
+  searchParams: Props["searchParams"],
+  // TEMP DIAGNOSTIC — remove after identifying catalog-fetch caller distribution
+  caller: string,
+) {
+  traceCatalogCall(caller);
   const [{ products, origin }, params] = await Promise.all([
     getCatalog(),
     searchParams,
@@ -26,12 +31,18 @@ async function loadCatalogView(searchParams: Props["searchParams"]) {
 export async function generateMetadata({
   searchParams,
 }: Props): Promise<Metadata> {
-  const { products, filters } = await loadCatalogView(searchParams);
+  const { products, filters } = await loadCatalogView(
+    searchParams,
+    "generateMetadata:products-list",
+  );
   return catalogMetadata(filters, products);
 }
 
 export default async function Products({ searchParams }: Props) {
-  const { products, live, filters } = await loadCatalogView(searchParams);
+  const { products, live, filters } = await loadCatalogView(
+    searchParams,
+    "products-list",
+  );
   const href = catalogHref(filters);
   const listed = refineCatalog(shopFloor(products), filters, "fa");
 
