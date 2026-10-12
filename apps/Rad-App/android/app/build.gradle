@@ -22,6 +22,12 @@ react {
     //   skip the bundling of the JS bundle and the assets. Default is "debug", "debugOptimized".
     //   If you add flavors like lite, prod, etc. you'll have to list your debuggableVariants.
     // debuggableVariants = ["liteDebug", "liteDebugOptimized", "prodDebug", "prodDebugOptimized"]
+    // Every store flavor's debug variants load JS from Metro instead of embedding the bundle.
+    debuggableVariants = [
+        "playDebug", "playDebugOptimized",
+        "cafebazaarDebug", "cafebazaarDebugOptimized",
+        "myketDebug", "myketDebugOptimized",
+    ]
 
     /* Bundling */
     //   A list containing the node command and its flags. Default is just 'node'.
@@ -99,6 +105,22 @@ android {
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
         versionName "1.0"
+    }
+    // One flavor per store. All share the application ID; Cafe Bazaar and Myket builds carry
+    // a version-name suffix (e.g. 1.0-CB) so a build can be traced back to its store.
+    flavorDimensions "store"
+    productFlavors {
+        play {
+            dimension "store"
+        }
+        cafebazaar {
+            dimension "store"
+            versionNameSuffix "-CB"
+        }
+        myket {
+            dimension "store"
+            versionNameSuffix "-MK"
+        }
     }
     signingConfigs {
         debug {

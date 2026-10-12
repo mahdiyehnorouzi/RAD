@@ -4,6 +4,8 @@ React Native wrapper that loads the RAD storefront (`https://www.rad-object.com/
 
 It lives in `apps/Rad-App` but is deliberately **not** an npm workspace. The root `package.json` lists its workspaces explicitly so this app is left out: React Native pins its own React version, and hoisting would clash with the web apps. It has its own `node_modules`, lockfile, ESLint and Prettier config. If you add a new app under `apps/`, add it to the root `workspaces` list.
 
+Planned work is tracked in [ROADMAP.md](ROADMAP.md).
+
 ## What's inside
 
 - `App.tsx`: safe-area shell, WebView, and the splash overlay.
@@ -52,20 +54,34 @@ Every `app:*` script at the root forwards to the script of the same name in `Rad
 | `app:build:ios:debug` | `build:ios:debug` | Simulator Debug build into `ios/build` |
 | `app:build:ios:release` | `build:ios:release` | Release archive at `ios/build/Rad.xcarchive` |
 | `app:build:ios:ipa` | `build:ios:ipa` | Archive and export an App Store `.ipa` to `ios/build/ipa` |
-| `app:build:android:debug` | `build:android:debug` | Debug APK |
+| `app:build:android:debug` | `build:android:debug` | Debug APK (`play` flavor) |
 | `app:build:android:release` | `build:android:release` | Release AAB for Google Play |
-| `app:build:android:apk` | `build:android:apk` | Release APK (sideloading or testing) |
+| `app:build:android:apk` | `build:android:apk` | Google Play release APK (sideloading or testing) |
+| `app:build:android:cafebazaar` | `build:android:cafebazaar` | Cafe Bazaar release APK (`-CB`) |
+| `app:build:android:myket` | `build:android:myket` | Myket release APK (`-MK`) |
+| `app:build:android:stores` | `build:android:stores` | All three store builds in one go |
 | `app:clean` | `clean` | Gradle clean + remove `ios/build` |
 | `app:assets` | `assets` | Regenerate icons and splash images |
 | `app:check:isolation` | `check:isolation` | Fail if a production bundle includes files from outside the app |
 | `app:typecheck` / `app:test` | `typecheck` / `test` | TypeScript / Jest |
 
-Other Rad-App scripts: `ios:device`, `pods:update`, `pods:clean`, `lint`.
+Other Rad-App scripts: `android:cafebazaar` / `android:myket` (run that flavor's debug build), `ios:device`, `pods:update`, `pods:clean`, `lint`.
 
 Build outputs:
 
-- Android AAB: `android/app/build/outputs/bundle/release/app-release.aab`
-- Android APK: `android/app/build/outputs/apk/{debug,release}/`
+- Google Play AAB: `android/app/build/outputs/bundle/playRelease/app-play-release.aab`
+- Cafe Bazaar APK: `android/app/build/outputs/apk/cafebazaar/release/app-cafebazaar-release.apk`
+- Myket APK: `android/app/build/outputs/apk/myket/release/app-myket-release.apk`
+
+## Android store flavors
+
+| Flavor | Store | Version name | Default artifact |
+|---|---|---|---|
+| `play` | Google Play | `1.0` | AAB |
+| `cafebazaar` | Cafe Bazaar | `1.0-CB` | APK |
+| `myket` | Myket | `1.0-MK` | APK |
+
+All flavors share the application ID `com.radobject.app` (`.dev` for debug builds) and the same `versionCode`, and they're signed with the same upload key. Combine a flavor with a build type to get a Gradle task, e.g. `./gradlew assembleMyketRelease`. Store-specific code or resources can go in `android/app/src/<flavor>/`.
 
 ## Release signing
 
