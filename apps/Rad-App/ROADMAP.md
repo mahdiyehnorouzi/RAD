@@ -119,3 +119,11 @@ Use `@react-native-community/netinfo` to show the offline screen immediately and
 - Haptic feedback on key actions (add to cart, payment submitted) through a small `postMessage` bridge.
 - ~~Native share sheet when the site calls `navigator.share`.~~ Bridged on Android, whose WebView lacks the Web Share API (used by the favorites page); iOS uses its built-in support.
 - Keep WebView and React Native up to date. Check the `react-native-webview` TypeScript workaround in `src/RadWebView.tsx` on each upgrade.
+
+### 17. ⬜ Android release signing key (do before the first store upload)
+Release builds are currently signed with the debug key, because no upload keystore is configured (the build prints *"no upload keystore configured"*). Google Play rejects these builds, and the debug key is public, so anyone could sign an "update" with it.
+- Generate the real key with the `keytool` command in `android/keystore.properties.example`, then fill in `android/keystore.properties` (gitignored), or set the `RAD_UPLOAD_*` variables on CI (item 14).
+- **Cafe Bazaar and Myket:** the key that signs the first published APK is permanent. Every later update must use the same key, or users have to uninstall to upgrade. Never publish a debug-signed build to these stores.
+- **Google Play:** enroll in Play App Signing. Google holds the app signing key, and this key is only the upload key, which can be reset if it's lost.
+- Back up the keystore and its passwords outside the repo (a password manager plus an offline copy). Losing it means Bazaar and Myket users can't receive updates.
+- **Done when:** `assemble*Release` builds no longer print the debug-key warning, and `apksigner verify --print-certs` shows the upload certificate.
