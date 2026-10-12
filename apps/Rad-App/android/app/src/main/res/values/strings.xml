@@ -1,0 +1,3 @@
+<resources>
+    <!-- app_name is set per build type in android/app/build.gradle (Rad / Rad Dev). -->
+</resources>

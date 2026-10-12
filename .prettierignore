@@ -27,5 +27,8 @@ apps/api/data
 .cursor
 work
 
+# React Native app has its own Prettier config
+apps/Rad-App
+
 # Prose docs are edited by hand
 *.md
