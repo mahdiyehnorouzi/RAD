@@ -58,5 +58,7 @@ export default defineConfig([
     ".agents/**",
     ".openai/**",
     "work/**",
+    // React Native app has its own ESLint config and dependencies.
+    "apps/Rad-App/**",
   ]),
 ]);

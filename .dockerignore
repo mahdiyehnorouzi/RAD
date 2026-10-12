@@ -16,6 +16,7 @@ dist
 .DS_Store
 work
 apps/api/data
+apps/Rad-App
 *.db
 *.db-journal
 .env
