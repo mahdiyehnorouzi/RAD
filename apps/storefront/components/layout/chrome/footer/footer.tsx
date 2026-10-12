@@ -44,7 +44,11 @@ export function Footer() {
               <bdi dir="ltr">@{RAD_INSTAGRAM.handle}</bdi>
             </a>,
             RAD_EMAIL ? (
-              <a key="email" className="footer-icon-link" href={`mailto:${RAD_EMAIL}`}>
+              <a
+                key="email"
+                className="footer-icon-link"
+                href={`mailto:${RAD_EMAIL}`}
+              >
                 <Mail size={16} strokeWidth={1.6} aria-hidden="true" />
                 <bdi dir="ltr">{RAD_EMAIL}</bdi>
               </a>

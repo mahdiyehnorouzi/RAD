@@ -72,8 +72,7 @@ export function ProductDetail({
   // The floating bar is the inline CTA's understudy: it only appears once
   // the real inline Add to Bag button (observed via `buyRef`) has scrolled
   // out of view, so the two are never both on screen at once.
-  const { ref: buyRef, inView: inlineBuyInView } =
-    useInView<HTMLDivElement>();
+  const { ref: buyRef, inView: inlineBuyInView } = useInView<HTMLDivElement>();
 
   const live = useLiveProduct(product.slug);
   const resolved = overlayLiveProduct(product, live.product);

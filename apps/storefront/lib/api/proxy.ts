@@ -18,7 +18,7 @@ const HOP_BY_HOP = new Set([
  * this Worker's outbound fetch indefinitely regardless of what the client
  * decided to wait for.
  */
-export const UPSTREAM_TIMEOUT_MS = 20_000;
+const UPSTREAM_TIMEOUT_MS = 20_000;
 
 /** Dev-only request timing; opt in elsewhere with RAD_PROXY_TIMING=1. Never logs headers, cookies, or bodies. */
 const timingEnabled =
@@ -67,7 +67,10 @@ export function createUpstreamSignal(
   else inboundSignal.addEventListener("abort", onInboundAbort, { once: true });
 
   const timer = setTimeout(
-    () => controller.abort(new DOMException("Upstream request timed out", "TimeoutError")),
+    () =>
+      controller.abort(
+        new DOMException("Upstream request timed out", "TimeoutError"),
+      ),
     timeoutMs,
   );
 
@@ -127,7 +130,10 @@ export async function proxyApiRequest(
     init.duplex = "half";
   }
 
-  const { signal, dispose } = createUpstreamSignal(request.signal, UPSTREAM_TIMEOUT_MS);
+  const { signal, dispose } = createUpstreamSignal(
+    request.signal,
+    UPSTREAM_TIMEOUT_MS,
+  );
   // A single clock (this Worker's own), read before and after the awaited
   // fetch — an elapsed duration, not a timestamp compared against another
   // machine's clock. Workers freeze Date.now() only across synchronous,
@@ -140,7 +146,13 @@ export async function proxyApiRequest(
   try {
     const upstream = await fetch(target, { ...init, signal });
     const proxyToApiMs = Date.now() - proxyStart;
-    logTiming({ requestId, method, path: `/${path}`, status: upstream.status, proxyToApiMs });
+    logTiming({
+      requestId,
+      method,
+      path: `/${path}`,
+      status: upstream.status,
+      proxyToApiMs,
+    });
     const responseHeaders = copyUpstreamHeaders(upstream);
     responseHeaders.set("x-request-id", requestId);
     if (timingEnabled) {
@@ -170,7 +182,8 @@ export async function proxyApiRequest(
       "content-type": "application/json",
       "x-request-id": requestId,
     };
-    if (timingEnabled) errorHeaders["server-timing"] = `proxy;dur=${proxyToApiMs}`;
+    if (timingEnabled)
+      errorHeaders["server-timing"] = `proxy;dur=${proxyToApiMs}`;
     return Response.json(
       {
         error: timedOut ? "ارتباط با سرور طولانی شد." : "API unavailable",

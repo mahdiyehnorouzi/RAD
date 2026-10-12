@@ -218,7 +218,10 @@ export function ProductOverlay() {
           width: targetRect.width,
           height: targetRect.height,
           borderRadius: 14,
-          transition: { duration: viaGesture ? 0.32 : 0.38, ease: [0.16, 1, 0.3, 1] },
+          transition: {
+            duration: viaGesture ? 0.32 : 0.38,
+            ease: [0.16, 1, 0.3, 1],
+          },
         })
         .then(finish);
     },

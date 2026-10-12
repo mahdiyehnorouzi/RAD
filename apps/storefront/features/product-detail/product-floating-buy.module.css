@@ -46,7 +46,9 @@
    way — same geometry, just translated off-screen and non-interactive.
    Never unmounted, so AddToBag's in-flight busy state survives. */
 .bar[data-hidden="true"] {
-  transform: translateY(calc(100% + var(--page) + env(safe-area-inset-bottom, 0px)));
+  transform: translateY(
+    calc(100% + var(--page) + env(safe-area-inset-bottom, 0px))
+  );
   opacity: 0;
   pointer-events: none;
 }

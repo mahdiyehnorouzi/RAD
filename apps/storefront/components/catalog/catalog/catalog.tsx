@@ -221,7 +221,7 @@ export function AddToBag({
             : unavailable
               ? unavailableLabel
               : busy
-                ? busyLabel ?? t("submitting")
+                ? (busyLabel ?? t("submitting"))
                 : t("addBag")}
         </span>
       </button>

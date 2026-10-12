@@ -21,6 +21,7 @@ export function getProductSourceRect(slug: string): DOMRect | null {
 export function getProductSourceImageSrc(slug: string): string | null {
   const el = registry.get(slug);
   if (!el) return null;
-  const img = el.tagName === "IMG" ? (el as HTMLImageElement) : el.querySelector("img");
+  const img =
+    el.tagName === "IMG" ? (el as HTMLImageElement) : el.querySelector("img");
   return img?.currentSrc || img?.src || null;
 }

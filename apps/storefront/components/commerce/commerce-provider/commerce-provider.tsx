@@ -86,7 +86,9 @@ function cachedFavorites(): string[] {
   try {
     const raw = window.localStorage.getItem(FAVORITES_CACHE_KEY);
     const parsed = raw ? JSON.parse(raw) : [];
-    return Array.isArray(parsed) ? parsed.filter((v) => typeof v === "string") : [];
+    return Array.isArray(parsed)
+      ? parsed.filter((v) => typeof v === "string")
+      : [];
   } catch {
     return [];
   }

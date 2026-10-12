@@ -10,12 +10,17 @@ import type { Request, Response, NextFunction } from "express";
  * bodies and already-encoded responses must be left alone, so turning this
  * on does not add gzip overhead where it cannot help.
  */
-function startServer(handler: http.RequestListener): Promise<{ url: string; close: () => Promise<void> }> {
+function startServer(
+  handler: http.RequestListener,
+): Promise<{ url: string; close: () => Promise<void> }> {
   return new Promise((resolve) => {
     const compress = compressionMiddleware();
     const server = http.createServer((req, res) => {
-      compress(req as unknown as Request, res as unknown as Response, (() =>
-        handler(req, res)) as NextFunction);
+      compress(
+        req as unknown as Request,
+        res as unknown as Response,
+        (() => handler(req, res)) as NextFunction,
+      );
     });
     server.listen(0, () => {
       const { port } = server.address() as { port: number };
@@ -33,7 +38,9 @@ test("compression leaves a small JSON response uncompressed (below the default 1
     res.end(JSON.stringify({ ok: true }));
   });
   try {
-    const response = await fetch(url, { headers: { "accept-encoding": "gzip, br" } });
+    const response = await fetch(url, {
+      headers: { "accept-encoding": "gzip, br" },
+    });
     assert.equal(response.headers.get("content-encoding"), null);
   } finally {
     await close();
@@ -41,13 +48,17 @@ test("compression leaves a small JSON response uncompressed (below the default 1
 });
 
 test("compression gzips a large JSON response when the client accepts it", async () => {
-  const bigPayload = JSON.stringify({ items: Array.from({ length: 2000 }, (_, i) => ({ id: i, name: "artwork" })) });
+  const bigPayload = JSON.stringify({
+    items: Array.from({ length: 2000 }, (_, i) => ({ id: i, name: "artwork" })),
+  });
   const { url, close } = await startServer((_req, res) => {
     res.setHeader("content-type", "application/json");
     res.end(bigPayload);
   });
   try {
-    const response = await fetch(url, { headers: { "accept-encoding": "gzip, br" } });
+    const response = await fetch(url, {
+      headers: { "accept-encoding": "gzip, br" },
+    });
     assert.ok(
       response.headers.get("content-encoding") === "gzip" ||
         response.headers.get("content-encoding") === "br",
@@ -66,7 +77,9 @@ test("compression does not double-compress a response that already set its own C
     res.end(Buffer.from([1, 2, 3, 4]));
   });
   try {
-    const response = await fetch(url, { headers: { "accept-encoding": "gzip, br" } });
+    const response = await fetch(url, {
+      headers: { "accept-encoding": "gzip, br" },
+    });
     assert.equal(response.headers.get("content-encoding"), "br");
   } finally {
     await close();
@@ -74,13 +87,17 @@ test("compression does not double-compress a response that already set its own C
 });
 
 test("compression is skipped entirely when the client sends no Accept-Encoding", async () => {
-  const bigPayload = JSON.stringify({ items: Array.from({ length: 2000 }, (_, i) => i) });
+  const bigPayload = JSON.stringify({
+    items: Array.from({ length: 2000 }, (_, i) => i),
+  });
   const { url, close } = await startServer((_req, res) => {
     res.setHeader("content-type", "application/json");
     res.end(bigPayload);
   });
   try {
-    const response = await fetch(url, { headers: { "accept-encoding": "identity" } });
+    const response = await fetch(url, {
+      headers: { "accept-encoding": "identity" },
+    });
     assert.equal(response.headers.get("content-encoding"), null);
   } finally {
     await close();

@@ -1,12 +1,16 @@
 "use client";
 
 import "./customer-sidebar.css";
-import type {MakingCommission} from "@/components/making/type";
+import type { MakingCommission } from "@/components/making/type";
 import { moneyFor } from "@/lib/making";
 import { formatWhen } from "@/lib/making";
 import { useLocale } from "@/components/i18n";
 
-export function PaymentHistory({ commission }: { commission: MakingCommission }) {
+export function PaymentHistory({
+  commission,
+}: {
+  commission: MakingCommission;
+}) {
   const { locale } = useLocale();
   if (!commission.payments.length) return null;
   return (

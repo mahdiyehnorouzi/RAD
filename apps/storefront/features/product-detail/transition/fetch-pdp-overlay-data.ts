@@ -1,6 +1,6 @@
 import type { PdpData } from "@/lib/catalog/resolve-pdp-data";
 
-export type PdpOverlayResult =
+type PdpOverlayResult =
   | { kind: "data"; data: PdpData }
   | { kind: "moved"; href: string }
   | { kind: "not_found" }
@@ -47,7 +47,10 @@ export async function fetchPdpOverlayData(
     if (signal.aborted) controller.abort(signal.reason);
     else signal.addEventListener("abort", onCallerAbort, { once: true });
     const timer = setTimeout(
-      () => controller.abort(new DOMException("PDP overlay fetch timed out", "TimeoutError")),
+      () =>
+        controller.abort(
+          new DOMException("PDP overlay fetch timed out", "TimeoutError"),
+        ),
       Math.min(PER_ATTEMPT_TIMEOUT_MS, remaining),
     );
 
@@ -57,9 +60,7 @@ export async function fetchPdpOverlayData(
         signal: controller.signal,
       });
       const payload = (await response.json()) as
-        | PdpData
-        | { moved: string }
-        | { error: string };
+        PdpData | { moved: string } | { error: string };
       if (!response.ok) {
         if ("error" in payload && payload.error === "not_found") {
           return { kind: "not_found" };
@@ -71,7 +72,8 @@ export async function fetchPdpOverlayData(
       return { kind: "data", data: payload };
     } catch {
       if (signal.aborted) return { kind: "error" }; // caller cancelled — do not retry
-      if (attempt === MAX_ATTEMPTS || Date.now() >= deadline) return { kind: "error" };
+      if (attempt === MAX_ATTEMPTS || Date.now() >= deadline)
+        return { kind: "error" };
       // fall through and retry once, budget permitting
     } finally {
       clearTimeout(timer);

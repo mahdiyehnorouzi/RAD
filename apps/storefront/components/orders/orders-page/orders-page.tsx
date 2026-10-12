@@ -85,9 +85,7 @@ export function OrdersPage() {
                       <dd>{number(order.slugs.length)}</dd>
                     </div>
                   </dl>
-                  <strong>
-                    {formatTotal(order.total, locale)}
-                  </strong>
+                  <strong>{formatTotal(order.total, locale)}</strong>
                   <ButtonLink href={`/orders/${order.id}`}>
                     {t("trackOrder")}
                   </ButtonLink>

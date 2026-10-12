@@ -26,7 +26,10 @@ import { StageMeter } from "@rad/ui";
 
 const copy = (value: { fa: string; en: string }) => value.fa;
 const date = (value: number) =>
-  new Intl.DateTimeFormat("fa-IR", { dateStyle: "medium", timeStyle: "short" }).format(value);
+  new Intl.DateTimeFormat("fa-IR", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(value);
 const shortDate = (value: number) =>
   new Intl.DateTimeFormat("fa-IR", { dateStyle: "medium" }).format(value);
 
@@ -50,7 +53,8 @@ interface CommissionPayloadShape {
   estimatedCompletion?: string;
 }
 function readPayload(payload: unknown): CommissionPayloadShape {
-  if (payload && typeof payload === "object") return payload as CommissionPayloadShape;
+  if (payload && typeof payload === "object")
+    return payload as CommissionPayloadShape;
   return {};
 }
 
@@ -82,16 +86,28 @@ export function AdminCommissions({
       timeImpact: { fa: string; en: string };
     };
   }) => Promise<unknown>;
-  onMessage: (id: string, body: { fa: string; en: string }, internal?: boolean) => Promise<unknown>;
+  onMessage: (
+    id: string,
+    body: { fa: string; en: string },
+    internal?: boolean,
+  ) => Promise<unknown>;
   onBeginReview: (id: string) => Promise<unknown>;
 }) {
   const inbox = useMemo(
-    () => commissions.filter((item) => item.stage === "design_submitted" || item.stage === "feasibility"),
+    () =>
+      commissions.filter(
+        (item) =>
+          item.stage === "design_submitted" || item.stage === "feasibility",
+      ),
     [commissions],
   );
-  const [selectedId, setSelectedId] = useState<string | null>(inbox[0]?.id ?? commissions[0]?.id ?? null);
+  const [selectedId, setSelectedId] = useState<string | null>(
+    inbox[0]?.id ?? commissions[0]?.id ?? null,
+  );
   const [query, setQuery] = useState("");
-  const [stageFilter, setStageFilter] = useState<AdminCommissionStage | "all">("all");
+  const [stageFilter, setStageFilter] = useState<AdminCommissionStage | "all">(
+    "all",
+  );
   const inputRef = useRef<HTMLInputElement>(null);
   const selected = commissions.find((item) => item.id === selectedId) ?? null;
 
@@ -100,7 +116,9 @@ export function AdminCommissions({
       commissions
         .filter((item) => stageFilter === "all" || item.stage === stageFilter)
         .filter((item) =>
-          `${item.customerName} ${item.concept} ${item.id}`.includes(query.trim()),
+          `${item.customerName} ${item.concept} ${item.id}`.includes(
+            query.trim(),
+          ),
         ),
     [commissions, query, stageFilter],
   );
@@ -122,13 +140,17 @@ export function AdminCommissions({
   );
 
   return (
-    <section className={`paper-panel data-view commission-view${selected ? " has-detail" : ""}`}>
+    <section
+      className={`paper-panel data-view commission-view${selected ? " has-detail" : ""}`}
+    >
       <div className="view-heading">
         <div>
           <span className="eyebrow">دفتر کوره</span>
           <h2>سفارش اختصاصی</h2>
           <p>
-            سفارش اختصاصی خرید اثر آماده نیست؛ یک قطعه‌ی یک‌به‌یک است که پس از تأیید شما ساخته می‌شود. پیام‌ها و تصمیم بازبینی همین‌جا ثبت می‌شوند و مشتری در مسیر ساخت و اعلان‌ها می‌بیند.
+            سفارش اختصاصی خرید اثر آماده نیست؛ یک قطعه‌ی یک‌به‌یک است که پس از
+            تأیید شما ساخته می‌شود. پیام‌ها و تصمیم بازبینی همین‌جا ثبت می‌شوند
+            و مشتری در مسیر ساخت و اعلان‌ها می‌بیند.
           </p>
         </div>
       </div>
@@ -143,7 +165,14 @@ export function AdminCommissions({
             aria-label="جست‌وجوی سفارش اختصاصی"
           />
           {query && (
-            <button type="button" onClick={() => { setQuery(""); inputRef.current?.focus(); }} aria-label="پاک کردن جست‌وجو">
+            <button
+              type="button"
+              onClick={() => {
+                setQuery("");
+                inputRef.current?.focus();
+              }}
+              aria-label="پاک کردن جست‌وجو"
+            >
               <X />
             </button>
           )}
@@ -212,7 +241,9 @@ export function AdminCommissions({
             })
           ) : (
             <p className="commission-empty">
-              {commissions.length ? "سفارشی با این جست‌وجو پیدا نشد." : "هنوز سفارش اختصاصی‌ای ارسال نشده است."}
+              {commissions.length
+                ? "سفارشی با این جست‌وجو پیدا نشد."
+                : "هنوز سفارش اختصاصی‌ای ارسال نشده است."}
             </p>
           )}
         </div>
@@ -225,7 +256,9 @@ export function AdminCommissions({
             onClose={() => setSelectedId(null)}
           />
         ) : (
-          <div className="commission-empty-detail">یک سفارش را از فهرست انتخاب کنید.</div>
+          <div className="commission-empty-detail">
+            یک سفارش را از فهرست انتخاب کنید.
+          </div>
         )}
       </div>
     </section>
@@ -272,7 +305,11 @@ function CommissionDetail({
   const meter = commissionMeter(commission);
   const payload = readPayload(commission.payload);
   const brief = payload.brief;
-  const images = brief?.images?.length ? brief.images : brief?.image || commission.image ? [brief?.image ?? commission.image!] : [];
+  const images = brief?.images?.length
+    ? brief.images
+    : brief?.image || commission.image
+      ? [brief?.image ?? commission.image!]
+      : [];
 
   const tabs: { id: DetailTab; label: string }[] = [
     { id: "summary", label: "خلاصه" },
@@ -283,7 +320,12 @@ function CommissionDetail({
 
   return (
     <div className="commission-detail">
-      <button className="commission-detail-close" type="button" onClick={onClose} aria-label="بازگشت به فهرست">
+      <button
+        className="commission-detail-close"
+        type="button"
+        onClick={onClose}
+        aria-label="بازگشت به فهرست"
+      >
         <ChevronRight />
         بازگشت به فهرست
       </button>
@@ -322,38 +364,54 @@ function CommissionDetail({
         <div className="commission-summary">
           <dl className="commission-facts">
             <div>
-              <dt><Package /> هنرمند</dt>
+              <dt>
+                <Package /> هنرمند
+              </dt>
               <dd>{commission.artistName || "تعیین‌نشده"}</dd>
             </div>
             <div>
-              <dt><Tag /> دسته‌بندی</dt>
+              <dt>
+                <Tag /> دسته‌بندی
+              </dt>
               <dd>{brief?.category || "ثبت نشده"}</dd>
             </div>
             <div>
-              <dt><Ruler /> اندازه</dt>
+              <dt>
+                <Ruler /> اندازه
+              </dt>
               <dd>{brief?.dimensions || "ثبت نشده"}</dd>
             </div>
             <div>
-              <dt><CircleDollarSign /> بودجه</dt>
+              <dt>
+                <CircleDollarSign /> بودجه
+              </dt>
               <dd>{brief?.budget || "ثبت نشده"}</dd>
             </div>
             <div>
-              <dt><Boxes /> کاربرد و استایل</dt>
+              <dt>
+                <Boxes /> کاربرد و استایل
+              </dt>
               <dd>{commission.intendedUse || "ثبت نشده"}</dd>
             </div>
             <div>
-              <dt><ShieldCheck /> اجازه بازآفرینی</dt>
+              <dt>
+                <ShieldCheck /> اجازه بازآفرینی
+              </dt>
               <dd>{brief?.permission || "ثبت نشده"}</dd>
             </div>
             {payload.estimatedCompletion && (
               <div>
-                <dt><Calendar /> زمان تحویل موردنظر</dt>
+                <dt>
+                  <Calendar /> زمان تحویل موردنظر
+                </dt>
                 <dd>{payload.estimatedCompletion}</dd>
               </div>
             )}
             {payload.deadlineAt && (
               <div>
-                <dt><Calendar /> مهلت پاسخ</dt>
+                <dt>
+                  <Calendar /> مهلت پاسخ
+                </dt>
                 <dd>{shortDate(payload.deadlineAt)}</dd>
               </div>
             )}
@@ -371,7 +429,13 @@ function CommissionDetail({
         (images.length ? (
           <div className="commission-files">
             {images.map((src, index) => (
-              <a key={`${src}-${index}`} href={src} target="_blank" rel="noreferrer" className="commission-file">
+              <a
+                key={`${src}-${index}`}
+                href={src}
+                target="_blank"
+                rel="noreferrer"
+                className="commission-file"
+              >
                 <img src={src} alt="" />
               </a>
             ))}
@@ -383,16 +447,29 @@ function CommissionDetail({
         ))}
 
       {tab === "messages" && (
-        <CommissionMessages commission={commission} canWrite={canWrite} onMessage={onMessage} />
+        <CommissionMessages
+          commission={commission}
+          canWrite={canWrite}
+          onMessage={onMessage}
+        />
       )}
 
       {tab === "decision" && open && (
-        <CommissionDecisionForm commission={commission} canWrite={canWrite} onDecide={onDecide} />
+        <CommissionDecisionForm
+          commission={commission}
+          canWrite={canWrite}
+          onDecide={onDecide}
+        />
       )}
       {tab === "decision" && !open && (
         <p className="commission-note">
-          این سفارش از مرحلهٔ بازبینی گذشته است. مشتری وضعیت را در مسیر ساخت می‌بیند. برای ادامه‌ی ساخت وارد{" "}
-          <a href="https://rad-object.com/workshop" target="_blank" rel="noreferrer">
+          این سفارش از مرحلهٔ بازبینی گذشته است. مشتری وضعیت را در مسیر ساخت
+          می‌بیند. برای ادامه‌ی ساخت وارد{" "}
+          <a
+            href="https://rad-object.com/workshop"
+            target="_blank"
+            rel="noreferrer"
+          >
             کارگاه هنرمند
           </a>{" "}
           شوید.
@@ -418,14 +495,19 @@ function CommissionMessages({
         {commission.messages.length ? (
           commission.messages.map((item) => (
             <li key={item.id} className={item.author}>
-              <b>{item.author === "artist" ? "کارگاه" : commission.customerName}</b>
+              <b>
+                {item.author === "artist" ? "کارگاه" : commission.customerName}
+              </b>
               <span>{date(item.createdAt)}</span>
               <p>{copy(item.body)}</p>
             </li>
           ))
         ) : (
           <li>
-            <p>هنوز پیامی رد و بدل نشده. تصمیم یا پیام شما برای مشتری در مسیر ساخت ظاهر می‌شود.</p>
+            <p>
+              هنوز پیامی رد و بدل نشده. تصمیم یا پیام شما برای مشتری در مسیر
+              ساخت ظاهر می‌شود.
+            </p>
           </li>
         )}
       </ol>
@@ -434,12 +516,23 @@ function CommissionMessages({
         onSubmit={(event) => {
           event.preventDefault();
           if (!message.trim() || !canWrite) return;
-          void onMessage(commission.id, asCopy(message.trim())).then(() => setMessage(""));
+          void onMessage(commission.id, asCopy(message.trim())).then(() =>
+            setMessage(""),
+          );
         }}
       >
         <label htmlFor="studio-message">پیام به مشتری</label>
-        <textarea id="studio-message" value={message} onChange={(event) => setMessage(event.target.value)} rows={3} />
-        <button className="secondary-action" type="submit" disabled={!canWrite || !message.trim()}>
+        <textarea
+          id="studio-message"
+          value={message}
+          onChange={(event) => setMessage(event.target.value)}
+          rows={3}
+        />
+        <button
+          className="secondary-action"
+          type="submit"
+          disabled={!canWrite || !message.trim()}
+        >
           ارسال پیام
         </button>
       </form>
@@ -456,7 +549,9 @@ function CommissionDecisionForm({
   canWrite: boolean;
   onDecide: Parameters<typeof AdminCommissions>[0]["onDecide"];
 }) {
-  const [decision, setDecision] = useState<"approve" | "request_change" | "offer_alternative" | "decline">("approve");
+  const [decision, setDecision] = useState<
+    "approve" | "request_change" | "offer_alternative" | "decline"
+  >("approve");
   const [reason, setReason] = useState("");
   const [alternative, setAlternative] = useState("");
   const [what, setWhat] = useState("");
@@ -464,11 +559,31 @@ function CommissionDecisionForm({
   const [price, setPrice] = useState("");
   const [time, setTime] = useState("");
 
-  const decisionOptions: { value: typeof decision; label: string; note: string }[] = [
-    { value: "approve", label: "تأیید طرح", note: "طرح تأیید شده و می‌توان وارد مرحله بعد شد." },
-    { value: "request_change", label: "نیاز به اصلاح", note: "درخواست تغییرات از مشتری و ادامه بررسی." },
-    { value: "offer_alternative", label: "پیشنهاد بدیل", note: "امکان‌پذیری بررسی شد و قیمت پیشنهادی ارسال می‌شود." },
-    { value: "decline", label: "رد سفارش", note: "امکان اجرای سفارش وجود ندارد." },
+  const decisionOptions: {
+    value: typeof decision;
+    label: string;
+    note: string;
+  }[] = [
+    {
+      value: "approve",
+      label: "تأیید طرح",
+      note: "طرح تأیید شده و می‌توان وارد مرحله بعد شد.",
+    },
+    {
+      value: "request_change",
+      label: "نیاز به اصلاح",
+      note: "درخواست تغییرات از مشتری و ادامه بررسی.",
+    },
+    {
+      value: "offer_alternative",
+      label: "پیشنهاد بدیل",
+      note: "امکان‌پذیری بررسی شد و قیمت پیشنهادی ارسال می‌شود.",
+    },
+    {
+      value: "decline",
+      label: "رد سفارش",
+      note: "امکان اجرای سفارش وجود ندارد.",
+    },
   ];
 
   return (
@@ -481,12 +596,18 @@ function CommissionDecisionForm({
           id: commission.id,
           decision,
           reason: reason.trim() ? asCopy(reason.trim()) : undefined,
-          alternative: alternative.trim() ? asCopy(alternative.trim()) : undefined,
+          alternative: alternative.trim()
+            ? asCopy(alternative.trim())
+            : undefined,
           change:
             decision === "request_change"
               ? {
-                  whatChanged: asCopy(what.trim() || "جزئیات ساخت باید عوض شود."),
-                  whyNecessary: asCopy(why.trim() || "با ماده فعلی قابل ساخت نیست."),
+                  whatChanged: asCopy(
+                    what.trim() || "جزئیات ساخت باید عوض شود.",
+                  ),
+                  whyNecessary: asCopy(
+                    why.trim() || "با ماده فعلی قابل ساخت نیست.",
+                  ),
                   priceImpact: asCopy(price.trim() || "بدون تغییر قیمت"),
                   timeImpact: asCopy(time.trim() || "بدون تغییر زمان"),
                 }
@@ -515,25 +636,49 @@ function CommissionDecisionForm({
       {decision === "request_change" ? (
         <>
           <label htmlFor="what">چه چیزی عوض می‌شود</label>
-          <textarea id="what" value={what} onChange={(event) => setWhat(event.target.value)} />
+          <textarea
+            id="what"
+            value={what}
+            onChange={(event) => setWhat(event.target.value)}
+          />
           <label htmlFor="why">چرا لازم است</label>
-          <textarea id="why" value={why} onChange={(event) => setWhy(event.target.value)} />
+          <textarea
+            id="why"
+            value={why}
+            onChange={(event) => setWhy(event.target.value)}
+          />
           <label htmlFor="price">اثر بر قیمت</label>
-          <input id="price" value={price} onChange={(event) => setPrice(event.target.value)} />
+          <input
+            id="price"
+            value={price}
+            onChange={(event) => setPrice(event.target.value)}
+          />
           <label htmlFor="time">اثر بر زمان</label>
-          <input id="time" value={time} onChange={(event) => setTime(event.target.value)} />
+          <input
+            id="time"
+            value={time}
+            onChange={(event) => setTime(event.target.value)}
+          />
         </>
       ) : null}
       {decision === "offer_alternative" ? (
         <>
           <label htmlFor="alternative">بدیل</label>
-          <textarea id="alternative" value={alternative} onChange={(event) => setAlternative(event.target.value)} />
+          <textarea
+            id="alternative"
+            value={alternative}
+            onChange={(event) => setAlternative(event.target.value)}
+          />
         </>
       ) : null}
       {decision === "decline" ? (
         <>
           <label htmlFor="reason">دلیل رد</label>
-          <textarea id="reason" value={reason} onChange={(event) => setReason(event.target.value)} />
+          <textarea
+            id="reason"
+            value={reason}
+            onChange={(event) => setReason(event.target.value)}
+          />
         </>
       ) : null}
       <button className="primary-action" type="submit" disabled={!canWrite}>

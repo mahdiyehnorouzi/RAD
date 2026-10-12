@@ -4,5 +4,8 @@
  * unreachable Liara API never gets mistaken for a dead frontend container.
  */
 export function GET() {
-  return Response.json({ ok: true }, { headers: { "cache-control": "no-store" } });
+  return Response.json(
+    { ok: true },
+    { headers: { "cache-control": "no-store" } },
+  );
 }

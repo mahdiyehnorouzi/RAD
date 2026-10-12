@@ -1,6 +1,10 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { createUpstreamSignal, isUpstreamTimeout, proxyApiRequest } from "./proxy-api";
+import {
+  createUpstreamSignal,
+  isUpstreamTimeout,
+  proxyApiRequest,
+} from "./proxy-api";
 
 test("createUpstreamSignal aborts with TimeoutError once the deadline passes", async () => {
   const inbound = new AbortController();

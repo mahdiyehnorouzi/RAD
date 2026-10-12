@@ -196,7 +196,9 @@ export function productJsonLd(
     brand: { "@type": "Brand", name: "رَد", alternateName: "RĀD" },
     seller: { "@id": `${absoluteUrl()}#organization` },
     ...(options.passportPath
-      ? { subjectOf: { "@id": `${absoluteUrl(options.passportPath)}#passport` } }
+      ? {
+          subjectOf: { "@id": `${absoluteUrl(options.passportPath)}#passport` },
+        }
       : {}),
     offers: {
       "@type": "Offer",

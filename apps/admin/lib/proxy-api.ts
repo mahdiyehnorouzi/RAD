@@ -40,7 +40,8 @@ function copyUpstreamHeaders(upstream: Response): Headers {
   });
 
   if (getSetCookie?.length) {
-    for (const cookie of getSetCookie) responseHeaders.append("set-cookie", cookie);
+    for (const cookie of getSetCookie)
+      responseHeaders.append("set-cookie", cookie);
   } else {
     const single = upstream.headers.get("set-cookie");
     if (single) responseHeaders.append("set-cookie", single);
@@ -65,7 +66,10 @@ export function createUpstreamSignal(
   else inboundSignal.addEventListener("abort", onInboundAbort, { once: true });
 
   const timer = setTimeout(
-    () => controller.abort(new DOMException("Upstream request timed out", "TimeoutError")),
+    () =>
+      controller.abort(
+        new DOMException("Upstream request timed out", "TimeoutError"),
+      ),
     timeoutMs,
   );
 
@@ -121,7 +125,10 @@ export async function proxyApiRequest(
     init.duplex = "half";
   }
 
-  const { signal, dispose } = createUpstreamSignal(request.signal, UPSTREAM_TIMEOUT_MS);
+  const { signal, dispose } = createUpstreamSignal(
+    request.signal,
+    UPSTREAM_TIMEOUT_MS,
+  );
   // A single clock (this Worker's own), read before and after the awaited
   // fetch — an elapsed duration, not a timestamp compared against another
   // machine's clock. See apps/storefront/lib/api/proxy.ts for the Workers
@@ -131,7 +138,13 @@ export async function proxyApiRequest(
   try {
     const upstream = await fetch(target, { ...init, signal });
     const proxyToApiMs = Date.now() - proxyStart;
-    logTiming({ requestId, method, path: `/${path}`, status: upstream.status, proxyToApiMs });
+    logTiming({
+      requestId,
+      method,
+      path: `/${path}`,
+      status: upstream.status,
+      proxyToApiMs,
+    });
     const responseHeaders = copyUpstreamHeaders(upstream);
     responseHeaders.set("x-request-id", requestId);
     if (timingEnabled) {
@@ -157,7 +170,8 @@ export async function proxyApiRequest(
       "content-type": "application/json",
       "x-request-id": requestId,
     };
-    if (timingEnabled) errorHeaders["server-timing"] = `proxy;dur=${proxyToApiMs}`;
+    if (timingEnabled)
+      errorHeaders["server-timing"] = `proxy;dur=${proxyToApiMs}`;
     return Response.json(
       {
         error: timedOut ? "ارتباط با سرور طولانی شد." : "API unavailable",

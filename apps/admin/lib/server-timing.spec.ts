@@ -7,7 +7,10 @@ test("parseServerTimingDuration reads a single metric", () => {
 });
 
 test("parseServerTimingDuration picks the named metric out of several", () => {
-  assert.equal(parseServerTimingDuration("db;dur=5, proxy;dur=120, cache;dur=1", "proxy"), 120);
+  assert.equal(
+    parseServerTimingDuration("db;dur=5, proxy;dur=120, cache;dur=1", "proxy"),
+    120,
+  );
 });
 
 test("parseServerTimingDuration returns undefined when the header is missing", () => {
@@ -19,5 +22,8 @@ test("parseServerTimingDuration returns undefined when the metric isn't present"
 });
 
 test("parseServerTimingDuration ignores a malformed duration", () => {
-  assert.equal(parseServerTimingDuration("proxy;dur=notanumber", "proxy"), undefined);
+  assert.equal(
+    parseServerTimingDuration("proxy;dur=notanumber", "proxy"),
+    undefined,
+  );
 });

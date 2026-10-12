@@ -119,7 +119,9 @@ function formatPriceInput(value: number) {
   return number.format(value);
 }
 
-function statusTone(status: AdminProduct["status"]): "green" | "oxide" | "muted" {
+function statusTone(
+  status: AdminProduct["status"],
+): "green" | "oxide" | "muted" {
   if (status === "available") return "green";
   if (status === "sold") return "oxide";
   return "muted";
@@ -648,8 +650,9 @@ function Overview({
   const inWorkshop = workspace.products.filter(
     (item) => item.status === "in_workshop",
   ).length;
-  const sold = workspace.products.filter((item) => item.status === "sold")
-    .length;
+  const sold = workspace.products.filter(
+    (item) => item.status === "sold",
+  ).length;
   const recentProducts = [...workspace.products]
     .sort((a, b) => b.updatedAt - a.updatedAt)
     .slice(0, 6);
@@ -668,7 +671,11 @@ function Overview({
         </div>
       </section>
       <section className="stat-grid">
-        <StatTile icon={<PackageCheck />} value={available} label="آماده فروش" />
+        <StatTile
+          icon={<PackageCheck />}
+          value={available}
+          label="آماده فروش"
+        />
         <StatTile icon={<Hammer />} value={inWorkshop} label="در کارگاه" />
         <StatTile icon={<Boxes />} value={sold} label="فروخته شده" />
         <StatTile
@@ -895,9 +902,7 @@ function Products({
         <div>
           <span className="eyebrow">کاتالوگ یک‌به‌یک</span>
           <h2>آثار و محصولات</h2>
-          <p>
-            تمام آثار ثبت‌شده در استودیو؛ هر اثر فقط یک‌بار ساخته شده است.
-          </p>
+          <p>تمام آثار ثبت‌شده در استودیو؛ هر اثر فقط یک‌بار ساخته شده است.</p>
         </div>
         <button
           className="primary-action"
@@ -953,7 +958,9 @@ function Products({
           className="filter-select"
           value={statusFilter}
           onChange={(event) => {
-            setStatusFilter(event.target.value as AdminProduct["status"] | "all");
+            setStatusFilter(
+              event.target.value as AdminProduct["status"] | "all",
+            );
             resetToFirstPage();
           }}
           aria-label="وضعیت"
@@ -1632,7 +1639,11 @@ function ProductDialog({
   const sections: { id: string; label: string; icon: React.ReactNode }[] = [
     { id: "section-basics", label: "اطلاعات اصلی", icon: <Pencil /> },
     { id: "section-category", label: "دسته‌بندی", icon: <Tag /> },
-    { id: "section-pricing", label: "وضعیت و قیمت", icon: <CircleDollarSign /> },
+    {
+      id: "section-pricing",
+      label: "وضعیت و قیمت",
+      icon: <CircleDollarSign />,
+    },
     { id: "section-images", label: "تصاویر اثر", icon: <ImageIcon /> },
   ];
   const [activeSection, setActiveSection] = useState(sections[0].id);
@@ -2290,8 +2301,8 @@ function AdminLogin({
           <span className="eyebrow">دفتر کوره</span>
           <h1>ورود به مدیریت رَد</h1>
           <p>
-            حساب‌های جدید مشتری از فروشگاه ساخته می‌شوند. محصولات تازه را پس
-            از ورود در همین پنل اضافه کنید.
+            حساب‌های جدید مشتری از فروشگاه ساخته می‌شوند. محصولات تازه را پس از
+            ورود در همین پنل اضافه کنید.
           </p>
           <form
             className="editor-form"
@@ -2341,7 +2352,9 @@ function AdminLogin({
                   type="button"
                   className="password-toggle"
                   onClick={() => setShowPassword((value) => !value)}
-                  aria-label={showPassword ? "پنهان کردن رمز عبور" : "نمایش رمز عبور"}
+                  aria-label={
+                    showPassword ? "پنهان کردن رمز عبور" : "نمایش رمز عبور"
+                  }
                 >
                   {showPassword ? <EyeOff /> : <Eye />}
                 </button>

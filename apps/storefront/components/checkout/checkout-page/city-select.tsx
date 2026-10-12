@@ -79,9 +79,7 @@ export function CitySelect({
           if (event.key === "ArrowDown") {
             event.preventDefault();
             setOpen(true);
-            setActiveIndex((index) =>
-              Math.min(index + 1, filtered.length - 1),
-            );
+            setActiveIndex((index) => Math.min(index + 1, filtered.length - 1));
           } else if (event.key === "ArrowUp") {
             event.preventDefault();
             setActiveIndex((index) => Math.max(index - 1, 0));

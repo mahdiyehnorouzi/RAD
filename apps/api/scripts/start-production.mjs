@@ -4,7 +4,10 @@ import { fileURLToPath } from "node:url";
 import { spawn } from "node:child_process";
 
 const pkg = JSON.parse(
-  readFileSync(join(dirname(fileURLToPath(import.meta.url)), "..", "package.json"), "utf8"),
+  readFileSync(
+    join(dirname(fileURLToPath(import.meta.url)), "..", "package.json"),
+    "utf8",
+  ),
 );
 process.env.RAD_VERSION ??= pkg.version;
 
@@ -21,7 +24,10 @@ function run(command, args) {
     child.on("error", reject);
     child.on("exit", (code) => {
       if (code === 0) resolve();
-      else reject(new Error(`${command} ${args.join(" ")} exited with code ${code}`));
+      else
+        reject(
+          new Error(`${command} ${args.join(" ")} exited with code ${code}`),
+        );
     });
   });
 }
@@ -35,7 +41,9 @@ async function runWithRetry(command, args, attempts = 6) {
     } catch (error) {
       lastError = error;
       if (attempt === attempts) break;
-      console.warn(`Retrying ${command} ${args.join(" ")} (${attempt}/${attempts})...`);
+      console.warn(
+        `Retrying ${command} ${args.join(" ")} (${attempt}/${attempts})...`,
+      );
       await sleep(attempt * 2000);
     }
   }

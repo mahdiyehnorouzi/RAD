@@ -58,7 +58,11 @@ export function FavoritesPage() {
         }
         action={
           !waiting && !sharedSlugs?.length && favorites.length > 0 ? (
-            <button type="button" className="account-button account-button--quiet" onClick={share}>
+            <button
+              type="button"
+              className="account-button account-button--quiet"
+              onClick={share}
+            >
               <Share2 aria-hidden="true" strokeWidth={1.6} />
               {shared ? t("linkCopied") : t("shareList")}
             </button>

@@ -31,7 +31,10 @@ async function bootstrap() {
   app.use(compression());
   const corsOrigins = allowedOrigins();
   app.enableCors({
-    origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+    origin: (
+      origin: string | undefined,
+      callback: (err: Error | null, allow?: boolean) => void,
+    ) => {
       callback(null, isAllowedOrigin(origin, corsOrigins));
     },
     credentials: true,

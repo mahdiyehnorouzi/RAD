@@ -4,9 +4,7 @@
   "port": 3000,
   "build": {
     "dockerfile": "apps/storefront/Dockerfile",
-    "args": [
-      "NEXT_PUBLIC_SITE_URL=https://rad-object.com"
-    ]
+    "args": ["NEXT_PUBLIC_SITE_URL=https://rad-object.com"]
   },
   "healthCheck": {
     "command": "CMD node -e \"require('http').get('http://localhost:3000/api/health',(r)=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))\"",

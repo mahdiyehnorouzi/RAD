@@ -114,7 +114,10 @@ export function CheckoutPage() {
     for (const [name, value] of Object.entries(draft)) {
       if (!value) continue;
       const field = form.elements.namedItem(name);
-      if (field instanceof HTMLInputElement || field instanceof HTMLTextAreaElement) {
+      if (
+        field instanceof HTMLInputElement ||
+        field instanceof HTMLTextAreaElement
+      ) {
         field.value = value;
       }
     }

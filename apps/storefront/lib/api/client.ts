@@ -92,13 +92,17 @@ export async function api<T>(
     });
     if (timingEnabled) {
       const totalMs = performance.now() - clientStart;
-      const proxyMs = parseServerTimingDuration(response.headers.get("server-timing"), "proxy");
+      const proxyMs = parseServerTimingDuration(
+        response.headers.get("server-timing"),
+        "proxy",
+      );
       console.debug("[rad:client-timing]", {
         path,
         status: response.status,
         totalMs: Math.round(totalMs),
         proxyMs,
-        networkMs: proxyMs !== undefined ? Math.round(totalMs - proxyMs) : undefined,
+        networkMs:
+          proxyMs !== undefined ? Math.round(totalMs - proxyMs) : undefined,
       });
     }
     const data = (await response.json().catch(() => ({}))) as T & ApiErrorBody;

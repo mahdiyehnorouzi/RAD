@@ -63,7 +63,10 @@ export function PdpLightbox({
   } | null>(null);
   const pan = useRef<{ x: number; y: number } | null>(null);
 
-  const resetZoom = useCallback(() => setTransform({ scale: 1, x: 0, y: 0 }), []);
+  const resetZoom = useCallback(
+    () => setTransform({ scale: 1, x: 0, y: 0 }),
+    [],
+  );
 
   useEffect(() => {
     resetZoom();
@@ -148,7 +151,10 @@ export function PdpLightbox({
       node.startDistance = Math.hypot(a.x - b.x, a.y - b.y);
       node.startScale = transform.scale;
     } else if (node.pointers.size === 1 && transform.scale > 1) {
-      pan.current = { x: event.clientX - transform.x, y: event.clientY - transform.y };
+      pan.current = {
+        x: event.clientX - transform.x,
+        y: event.clientY - transform.y,
+      };
     }
     pinch.current = node;
   };
@@ -162,7 +168,10 @@ export function PdpLightbox({
       const dist = Math.hypot(a.x - b.x, a.y - b.y);
       const next = Math.min(
         MAX_SCALE,
-        Math.max(MIN_SCALE, node.startScale * (dist / (node.startDistance || dist))),
+        Math.max(
+          MIN_SCALE,
+          node.startScale * (dist / (node.startDistance || dist)),
+        ),
       );
       setTransform((prev) => ({ ...prev, scale: next }));
     } else if (node.pointers.size === 1 && pan.current && transform.scale > 1) {
@@ -183,12 +192,18 @@ export function PdpLightbox({
   };
 
   const onDoubleClick = () => {
-    setTransform((prev) => (prev.scale > 1 ? { scale: 1, x: 0, y: 0 } : { scale: 2.2, x: 0, y: 0 }));
+    setTransform((prev) =>
+      prev.scale > 1 ? { scale: 1, x: 0, y: 0 } : { scale: 2.2, x: 0, y: 0 },
+    );
   };
 
-  const neighbors = [active - 2, active - 1, active, active + 1, active + 2].filter(
-    (i) => i >= 0 && i < count,
-  );
+  const neighbors = [
+    active - 2,
+    active - 1,
+    active,
+    active + 1,
+    active + 2,
+  ].filter((i) => i >= 0 && i < count);
 
   return (
     <div
@@ -214,7 +229,8 @@ export function PdpLightbox({
         {count > 1 ? (
           <span className={styles.counter} aria-live="polite">
             <bdi dir="ltr">
-              {format(active + 1).padStart(2, "0")} / {format(count).padStart(2, "0")}
+              {format(active + 1).padStart(2, "0")} /{" "}
+              {format(count).padStart(2, "0")}
             </bdi>
           </span>
         ) : null}
