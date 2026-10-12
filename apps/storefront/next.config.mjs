@@ -6,8 +6,24 @@ const monorepoRoot = path.resolve(appRoot, "../..");
 const nextConfig = {
   transpilePackages: ["@rad/ui", "@rad/types", "@rad/artworks", "@rad/i18n"],
   turbopack: { root: monorepoRoot },
+  // Only for the plain `next build` path (Docker/Liara) — gated behind an
+  // env var so `vinext build` (Cloudflare) never sees it; vinext has its
+  // own output pipeline and standalone's bundled server.js makes no sense
+  // on Workers anyway.
+  ...(process.env.LIARA_BUILD === "1" ? { output: "standalone" } : {}),
   async redirects() {
     return [
+      // Canonicalize to the www host so www/non-www never split into two
+      // session identities (host-only cookies differ per hostname). This
+      // must run for every path, including /r/[code] QR redirects, which
+      // is why it lives here rather than in proxy.ts (whose matcher
+      // excludes /r/).
+      {
+        source: "/:path*",
+        has: [{ type: "host", value: "^rad-object\\.com$" }],
+        destination: "https://www.rad-object.com/:path*",
+        permanent: true,
+      },
       { source: "/passport", destination: "/reviews", permanent: true },
       { source: "/archive", destination: "/products", permanent: true },
       // Public images are WebP now; the database and shared links still hold .png/.jpg paths.

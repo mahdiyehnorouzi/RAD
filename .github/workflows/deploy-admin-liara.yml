@@ -1,0 +1,47 @@
+name: Deploy Admin (Liara)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "apps/admin/**"
+      - "packages/**"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/deploy-admin-liara.yml"
+
+concurrency:
+  group: deploy-admin-liara
+  cancel-in-progress: false
+
+jobs:
+  checks:
+    uses: ./.github/workflows/ci.yml
+
+  deploy:
+    name: Deploy to Liara
+    needs: checks
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check deploy secret
+        env:
+          HAS_LIARA: ${{ secrets.LIARA_API_TOKEN != '' }}
+        run: |
+          if [[ "${HAS_LIARA}" != "true" ]]; then
+            echo "::error::LIARA_API_TOKEN is missing. Add it as a Repository secret."
+            exit 1
+          fi
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Deploy admin to Liara
+        env:
+          LIARA_API_TOKEN: ${{ secrets.LIARA_API_TOKEN }}
+        run: bash scripts/deploy-admin-liara.sh

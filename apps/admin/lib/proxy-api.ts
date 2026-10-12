@@ -11,6 +11,23 @@ const HOP_BY_HOP = new Set([
   "upgrade",
 ]);
 
+/**
+ * The browser's own fetch may give up long before this; without an
+ * independent deadline here a stalled Liara connection would otherwise hang
+ * this Worker's outbound fetch indefinitely regardless of what the client
+ * decided to wait for.
+ */
+export const UPSTREAM_TIMEOUT_MS = 20_000;
+
+/** Dev-only request timing; opt in elsewhere with RAD_PROXY_TIMING=1. Never logs headers, cookies, or bodies. */
+const timingEnabled =
+  process.env.NODE_ENV !== "production" || process.env.RAD_PROXY_TIMING === "1";
+
+function logTiming(fields: Record<string, string | number | undefined>) {
+  if (!timingEnabled) return;
+  console.debug("[rad:proxy-timing]", fields);
+}
+
 function copyUpstreamHeaders(upstream: Response): Headers {
   const responseHeaders = new Headers();
   const getSetCookie = (
@@ -32,7 +49,52 @@ function copyUpstreamHeaders(upstream: Response): Headers {
   return responseHeaders;
 }
 
-export async function proxyApiRequest(request: Request, pathSegments: string[]): Promise<Response> {
+/**
+ * Composes the inbound request's own abort (the browser disconnected) with
+ * an independent upstream timeout, so either one tears down the outbound
+ * fetch. Exported so the timeout window and the resulting error shape can be
+ * exercised directly from tests without a live network call.
+ */
+export function createUpstreamSignal(
+  inboundSignal: AbortSignal,
+  timeoutMs: number,
+): { signal: AbortSignal; dispose: () => void } {
+  const controller = new AbortController();
+  const onInboundAbort = () => controller.abort(inboundSignal.reason);
+  if (inboundSignal.aborted) controller.abort(inboundSignal.reason);
+  else inboundSignal.addEventListener("abort", onInboundAbort, { once: true });
+
+  const timer = setTimeout(
+    () => controller.abort(new DOMException("Upstream request timed out", "TimeoutError")),
+    timeoutMs,
+  );
+
+  return {
+    signal: controller.signal,
+    dispose: () => {
+      clearTimeout(timer);
+      inboundSignal.removeEventListener("abort", onInboundAbort);
+    },
+  };
+}
+
+/** True once the signal aborted for the timeout, not because the client disconnected. */
+export function isUpstreamTimeout(
+  signal: AbortSignal,
+  inboundSignal: AbortSignal,
+): boolean {
+  return (
+    signal.aborted &&
+    !inboundSignal.aborted &&
+    signal.reason instanceof DOMException &&
+    signal.reason.name === "TimeoutError"
+  );
+}
+
+export async function proxyApiRequest(
+  request: Request,
+  pathSegments: string[],
+): Promise<Response> {
   const path = pathSegments.map(encodeURIComponent).join("/");
   const target = new URL(`/${path}`, API_BASE);
   const incoming = new URL(request.url);
@@ -41,6 +103,11 @@ export async function proxyApiRequest(request: Request, pathSegments: string[]):
   const headers = new Headers(request.headers);
   headers.set("host", target.host);
   for (const key of HOP_BY_HOP) headers.delete(key);
+
+  // Web Crypto global (not node:crypto) — see the matching comment in
+  // apps/storefront/lib/api/proxy.ts for why.
+  const requestId = request.headers.get("x-request-id") || crypto.randomUUID();
+  headers.set("x-request-id", requestId);
 
   const method = request.method;
   const init: RequestInit & { duplex?: "half" } = {
@@ -54,10 +121,51 @@ export async function proxyApiRequest(request: Request, pathSegments: string[]):
     init.duplex = "half";
   }
 
-  const upstream = await fetch(target, init);
-  return new Response(upstream.body, {
-    status: upstream.status,
-    statusText: upstream.statusText,
-    headers: copyUpstreamHeaders(upstream),
-  });
+  const { signal, dispose } = createUpstreamSignal(request.signal, UPSTREAM_TIMEOUT_MS);
+  // A single clock (this Worker's own), read before and after the awaited
+  // fetch — an elapsed duration, not a timestamp compared against another
+  // machine's clock. See apps/storefront/lib/api/proxy.ts for the Workers
+  // Date.now() caveat this relies on.
+  const proxyStart = Date.now();
+
+  try {
+    const upstream = await fetch(target, { ...init, signal });
+    const proxyToApiMs = Date.now() - proxyStart;
+    logTiming({ requestId, method, path: `/${path}`, status: upstream.status, proxyToApiMs });
+    const responseHeaders = copyUpstreamHeaders(upstream);
+    responseHeaders.set("x-request-id", requestId);
+    if (timingEnabled) {
+      responseHeaders.append("server-timing", `proxy;dur=${proxyToApiMs}`);
+    }
+    return new Response(upstream.body, {
+      status: upstream.status,
+      statusText: upstream.statusText,
+      headers: responseHeaders,
+    });
+  } catch (error) {
+    const timedOut = isUpstreamTimeout(signal, request.signal);
+    const proxyToApiMs = Date.now() - proxyStart;
+    if (timingEnabled) console.warn("[rad:admin-proxy]", error);
+    logTiming({
+      requestId,
+      method,
+      path: `/${path}`,
+      status: timedOut ? "timeout" : "error",
+      proxyToApiMs,
+    });
+    const errorHeaders: Record<string, string> = {
+      "content-type": "application/json",
+      "x-request-id": requestId,
+    };
+    if (timingEnabled) errorHeaders["server-timing"] = `proxy;dur=${proxyToApiMs}`;
+    return Response.json(
+      {
+        error: timedOut ? "ارتباط با سرور طولانی شد." : "API unavailable",
+        code: timedOut ? "timeout" : "upstream_unavailable",
+      },
+      { status: timedOut ? 504 : 503, headers: errorHeaders },
+    );
+  } finally {
+    dispose();
+  }
 }

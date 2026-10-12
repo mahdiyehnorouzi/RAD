@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start -H localhost -p 3002",
     "typecheck": "tsc --noEmit -p tsconfig.typecheck.json",
+    "test": "tsx --test lib/*.spec.ts",
     "dev:vinext": "vinext dev --port 3001",
     "build:vinext": "vinext build",
     "start:vinext": "wrangler dev --config dist/server/wrangler.json",

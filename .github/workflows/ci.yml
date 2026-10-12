@@ -81,6 +81,14 @@ jobs:
             script: build:vinext
           - app: storefront
             script: build:vinext
+          # Node.js runtime path (Liara/Docker) — validated independently of
+          # the Cloudflare/vinext build above; see apps/*/liara.json.
+          - app: admin
+            script: build
+            liara: "1"
+          - app: storefront
+            script: build
+            liara: "1"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -91,6 +99,7 @@ jobs:
       - name: Build @rad/${{ matrix.app }}
         env:
           API_URL: ${{ vars.API_URL || 'https://api.rad-object.com' }}
+          LIARA_BUILD: ${{ matrix.liara }}
         run: npm run ${{ matrix.script }} --workspace @rad/${{ matrix.app }}
 
   # Single required status check for branch protection.
