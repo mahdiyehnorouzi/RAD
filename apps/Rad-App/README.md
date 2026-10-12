@@ -63,6 +63,7 @@ Every `app:*` script at the root forwards to the script of the same name in `Rad
 | `app:clean` | `clean` | Gradle clean + remove `ios/build` |
 | `app:assets` | `assets` | Regenerate icons and splash images |
 | `app:check:isolation` | `check:isolation` | Fail if a production bundle includes files from outside the app |
+| `app:version:set -- 1.2.0 [build]` | `version:set -- 1.2.0 [build]` | Set the version on iOS and Android together (build defaults to current + 1; no argument prints the current version) |
 | `app:typecheck` / `app:test` | `typecheck` / `test` | TypeScript / Jest |
 
 Other Rad-App scripts: `android:cafebazaar` / `android:myket` (run that flavor's debug build), `ios:device`, `pods:update`, `pods:clean`, `lint`.
@@ -81,7 +82,7 @@ Build outputs:
 | `cafebazaar` | Cafe Bazaar | `1.0-CB` | APK |
 | `myket` | Myket | `1.0-MK` | APK |
 
-All flavors share the application ID `com.radobject.app` (`.dev` for debug builds) and the same `versionCode`, and they're signed with the same upload key. Combine a flavor with a build type to get a Gradle task, e.g. `./gradlew assembleMyketRelease`. Store-specific code or resources can go in `android/app/src/<flavor>/`.
+Bazaar and Myket APKs include only ARM libraries (about 27 MB instead of 53 MB); Play keeps every architecture, since its AAB is split per device anyway. All flavors share the application ID `com.radobject.app` (`.dev` for debug builds) and the same `versionCode`, and they're signed with the same upload key. Combine a flavor with a build type to get a Gradle task, e.g. `./gradlew assembleMyketRelease`. Store-specific code or resources can go in `android/app/src/<flavor>/`.
 
 ## Release signing
 

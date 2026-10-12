@@ -1,11 +1,24 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { StatusBar, StyleSheet } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import { ErrorBoundary } from './src/ErrorBoundary';
 import { RadWebView } from './src/RadWebView';
 import { SplashOverlay } from './src/SplashOverlay';
 import { SPLASH_MAX_MS, SPLASH_MIN_MS, colors } from './src/config';
 
 function App() {
+  return (
+    <SafeAreaProvider>
+      <StatusBar barStyle="dark-content" />
+      {/* The splash lives inside the boundary, so a crash during startup shows the error screen right away. */}
+      <ErrorBoundary>
+        <AppContent />
+      </ErrorBoundary>
+    </SafeAreaProvider>
+  );
+}
+
+function AppContent() {
   const [splashHidden, setSplashHidden] = useState(false);
   const startedAt = useRef(Date.now());
 
@@ -21,8 +34,7 @@ function App() {
   }, []);
 
   return (
-    <SafeAreaProvider>
-      <StatusBar barStyle="dark-content" />
+    <>
       <SafeAreaView
         style={styles.root}
         edges={['top', 'bottom', 'left', 'right']}
@@ -30,7 +42,7 @@ function App() {
         <RadWebView onFirstLoad={hideSplash} />
       </SafeAreaView>
       <SplashOverlay hidden={splashHidden} />
-    </SafeAreaProvider>
+    </>
   );
 }
 

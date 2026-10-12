@@ -62,6 +62,7 @@
     "app:clean": "npm run clean --prefix apps/Rad-App",
     "app:assets": "npm run assets --prefix apps/Rad-App",
     "app:check:isolation": "npm run check:isolation --prefix apps/Rad-App",
+    "app:version:set": "npm run version:set --prefix apps/Rad-App --",
     "app:typecheck": "npm run typecheck --prefix apps/Rad-App",
     "app:test": "npm run test --prefix apps/Rad-App"
   },

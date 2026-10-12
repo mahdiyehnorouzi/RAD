@@ -108,18 +108,24 @@ android {
     }
     // One flavor per store. All share the application ID; Cafe Bazaar and Myket builds carry
     // a version-name suffix (e.g. 1.0-CB) so a build can be traced back to its store.
+    // CPU architectures are per flavor (see gradle.properties). Bazaar and Myket get a single
+    // universal APK, so they skip the emulator-only x86 / x86_64 libraries (about 40% of the
+    // APK). Google Play keeps every ABI; its AAB already serves per-device splits.
     flavorDimensions "store"
     productFlavors {
         play {
             dimension "store"
+            ndk { abiFilters "armeabi-v7a", "arm64-v8a", "x86", "x86_64" }
         }
         cafebazaar {
             dimension "store"
             versionNameSuffix "-CB"
+            ndk { abiFilters "armeabi-v7a", "arm64-v8a" }
         }
         myket {
             dimension "store"
             versionNameSuffix "-MK"
+            ndk { abiFilters "armeabi-v7a", "arm64-v8a" }
         }
     }
     signingConfigs {

@@ -3,17 +3,22 @@ import {
   BackHandler,
   Linking,
   Platform,
-  Pressable,
+  Share,
   StyleSheet,
-  Text,
+  ToastAndroid,
   View,
 } from 'react-native';
 import { WebView } from 'react-native-webview';
 import type {
   ShouldStartLoadRequest,
+  WebViewHttpErrorEvent,
+  WebViewMessageEvent,
   WebViewNavigation,
 } from 'react-native-webview/lib/WebViewTypes';
+import { ErrorScreen } from './ErrorScreen';
 import {
+  BACK_EXIT_WINDOW_MS,
+  CRASH_LOOP_WINDOW_MS,
   INTERNAL_HOSTS,
   SITE_URL,
   USER_AGENT_SUFFIX,
@@ -31,6 +36,9 @@ type Props = {
   onFirstLoad: () => void;
 };
 
+/** offline: network failure; server: 5xx on the page itself; crash: WebView process keeps dying. */
+type LoadError = 'offline' | 'server' | 'crash';
+
 function isInternal(url: string): boolean {
   const match = /^https?:\/\/([^/:?#]+)/i.exec(url);
   if (!match) return false;
@@ -38,11 +46,34 @@ function isInternal(url: string): boolean {
   return INTERNAL_HOSTS.some(h => host === h || host.endsWith(`.${h}`));
 }
 
+/**
+ * Android's WebView has no Web Share API, so `navigator.share` (used by the
+ * favorites page) is bridged to the native share sheet. Only added when missing.
+ */
+const SHARE_BRIDGE = `(function () {
+  if (navigator.share || !window.ReactNativeWebView) return;
+  navigator.share = function (data) {
+    data = data || {};
+    window.ReactNativeWebView.postMessage(JSON.stringify({
+      type: 'rad:share',
+      title: String(data.title || ''),
+      text: String(data.text || ''),
+      url: String(data.url || '')
+    }));
+    return Promise.resolve();
+  };
+})();
+true;`;
+
 export function RadWebView({ onFirstLoad }: Props) {
   const webView = useRef<RadWebViewRef>(null);
   const canGoBack = useRef(false);
   const firstLoadDone = useRef(false);
-  const [failed, setFailed] = useState(false);
+  const lastCrashAt = useRef(0);
+  const lastBackAt = useRef(0);
+  const [error, setError] = useState<LoadError | null>(null);
+  // Changing the key remounts the WebView on the home page.
+  const [sessionKey, setSessionKey] = useState(0);
 
   const finishFirstLoad = useCallback(() => {
     if (firstLoadDone.current) return;
@@ -50,18 +81,22 @@ export function RadWebView({ onFirstLoad }: Props) {
     onFirstLoad();
   }, [onFirstLoad]);
 
-  // Android hardware back walks the WebView history before leaving the app.
+  // Android back walks the WebView history, then asks for a second press before exiting.
   useEffect(() => {
     if (Platform.OS !== 'android') return;
     const sub = BackHandler.addEventListener('hardwareBackPress', () => {
-      if (canGoBack.current && !failed) {
+      if (canGoBack.current && !error) {
         webView.current?.goBack();
         return true;
       }
-      return false;
+      const now = Date.now();
+      if (now - lastBackAt.current < BACK_EXIT_WINDOW_MS) return false;
+      lastBackAt.current = now;
+      ToastAndroid.show(copy.pressBackAgain, ToastAndroid.SHORT);
+      return true;
     });
     return () => sub.remove();
-  }, [failed]);
+  }, [error]);
 
   const onNavigationStateChange = useCallback((nav: WebViewNavigation) => {
     canGoBack.current = nav.canGoBack;
@@ -87,14 +122,64 @@ export function RadWebView({ onFirstLoad }: Props) {
     [],
   );
 
-  const retry = useCallback(() => {
-    setFailed(false);
+  // Both platforms only report HTTP errors for the main document, not images or API calls.
+  // 4xx is left to the site, which renders its own not-found page.
+  const onHttpError = useCallback(
+    (event: WebViewHttpErrorEvent) => {
+      if (event.nativeEvent.statusCode >= 500) setError('server');
+      finishFirstLoad();
+    },
+    [finishFirstLoad],
+  );
+
+  // A single WebView process crash recovers quietly; a second one soon after shows the error screen.
+  // iOS can reload the same view; on Android the dead view must be replaced (remounted).
+  const onProcessCrash = useCallback(() => {
+    const now = Date.now();
+    if (now - lastCrashAt.current < CRASH_LOOP_WINDOW_MS) {
+      setError('crash');
+    } else if (Platform.OS === 'ios') {
+      webView.current?.reload();
+    } else {
+      setSessionKey(k => k + 1);
+    }
+    lastCrashAt.current = now;
+  }, []);
+
+  const onMessage = useCallback((event: WebViewMessageEvent) => {
+    if (!isInternal(event.nativeEvent.url)) return;
+    let data: unknown;
+    try {
+      data = JSON.parse(event.nativeEvent.data);
+    } catch {
+      return;
+    }
+    if (
+      typeof data === 'object' &&
+      data !== null &&
+      (data as { type?: unknown }).type === 'rad:share'
+    ) {
+      const { title, text, url } = data as Record<string, string>;
+      const message = [text, url].filter(Boolean).join('\n');
+      if (message) Share.share({ title, message, url }).catch(() => {});
+    }
+  }, []);
+
+  const reload = useCallback(() => {
+    setError(null);
     webView.current?.reload();
+  }, []);
+
+  const goHome = useCallback(() => {
+    setError(null);
+    canGoBack.current = false;
+    setSessionKey(k => k + 1);
   }, []);
 
   return (
     <View style={styles.container}>
       <WebView<object>
+        key={sessionKey}
         ref={webView}
         source={{ uri: SITE_URL }}
         style={styles.webView}
@@ -107,6 +192,7 @@ export function RadWebView({ onFirstLoad }: Props) {
           'intent:*',
         ]}
         applicationNameForUserAgent={USER_AGENT_SUFFIX}
+        injectedJavaScriptBeforeContentLoaded={SHARE_BRIDGE}
         sharedCookiesEnabled
         thirdPartyCookiesEnabled
         domStorageEnabled
@@ -121,33 +207,40 @@ export function RadWebView({ onFirstLoad }: Props) {
         decelerationRate="normal"
         onNavigationStateChange={onNavigationStateChange}
         onShouldStartLoadWithRequest={onShouldStartLoadWithRequest}
+        onMessage={onMessage}
         onLoadEnd={finishFirstLoad}
         onError={() => {
-          setFailed(true);
+          setError('offline');
           finishFirstLoad();
         }}
-        onHttpError={finishFirstLoad}
-        onContentProcessDidTerminate={() => webView.current?.reload()}
+        onHttpError={onHttpError}
+        onContentProcessDidTerminate={onProcessCrash}
         onRenderProcessGone={() => {
-          webView.current?.reload();
+          onProcessCrash();
           return true;
         }}
       />
-      {failed && (
-        <View style={styles.error}>
-          <Text style={styles.errorTitle}>{copy.offlineTitle}</Text>
-          <Text style={styles.errorBody}>{copy.offlineBody}</Text>
-          <Pressable
-            accessibilityRole="button"
-            onPress={retry}
-            style={({ pressed }) => [
-              styles.button,
-              pressed && styles.buttonPressed,
-            ]}
-          >
-            <Text style={styles.buttonText}>{copy.retry}</Text>
-          </Pressable>
-        </View>
+      {error === 'offline' && (
+        <ErrorScreen
+          title={copy.offlineTitle}
+          body={copy.offlineBody}
+          primary={{ label: copy.retry, onPress: reload }}
+        />
+      )}
+      {error === 'server' && (
+        <ErrorScreen
+          title={copy.errorTitle}
+          body={copy.serverBody}
+          primary={{ label: copy.reload, onPress: reload }}
+          secondary={{ label: copy.home, onPress: goHome }}
+        />
+      )}
+      {error === 'crash' && (
+        <ErrorScreen
+          title={copy.errorTitle}
+          body={copy.crashBody}
+          primary={{ label: copy.reload, onPress: goHome }}
+        />
       )}
     </View>
   );
@@ -156,35 +249,4 @@ export function RadWebView({ onFirstLoad }: Props) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.canvas },
   webView: { flex: 1, backgroundColor: colors.canvas },
-  error: {
-    ...StyleSheet.absoluteFill,
-    backgroundColor: colors.canvas,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 32,
-  },
-  errorTitle: {
-    color: colors.ink,
-    fontSize: 20,
-    fontWeight: '500',
-    textAlign: 'center',
-    writingDirection: 'rtl',
-  },
-  errorBody: {
-    color: colors.muted,
-    fontSize: 15,
-    lineHeight: 24,
-    marginTop: 8,
-    textAlign: 'center',
-    writingDirection: 'rtl',
-  },
-  button: {
-    marginTop: 24,
-    backgroundColor: colors.moss,
-    borderRadius: 4,
-    paddingHorizontal: 28,
-    paddingVertical: 12,
-  },
-  buttonPressed: { opacity: 0.85 },
-  buttonText: { color: '#fff', fontSize: 15, fontWeight: '500' },
 });

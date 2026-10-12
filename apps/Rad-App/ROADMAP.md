@@ -2,25 +2,23 @@
 
 What's next for the React Native wrapper (`apps/Rad-App`), roughly in priority order. Items 1–3 were requested directly; the rest are suggestions, marked as such.
 
-Status legend: ⬜ not started · 🟨 in progress · ✅ done
+Status legend: ⬜ not started · 🟨 partly done · ✅ done. Finished work is ~~struck through~~.
 
 ---
 
-## 1. ⬜ Production error boundary (Persian)
+## 1. ✅ ~~Production error boundary (Persian)~~
 
-**Goal:** if anything breaks, the user sees a calm Persian screen with a way out, never a blank or white screen.
+~~**Goal:** if anything breaks, the user sees a calm Persian screen with a way out, never a blank or white screen.~~
 
-- Wrap the app in a React error boundary. On a JS crash, show a simple full-screen message on the canvas background with the Rad mark, for example *«مشکلی پیش آمد»* / *«لطفاً دوباره تلاش کنید.»*, plus two actions:
-  - **بارگذاری دوباره** (reload): resets the boundary and reloads the website.
-  - **بازگشت به صفحه اصلی** (home): reloads `SITE_URL`.
-- Use the same screen for failures inside the WebView, not just JS errors:
-  - Network errors (`onError`) already show the offline screen. Move it to this shared component.
-  - HTTP 5xx on the main document (`onHttpError`, top frame only). Ignore 4xx: the site renders its own 404 page.
-  - WebView process crashes (`onContentProcessDidTerminate` on iOS, `onRenderProcessGone` on Android) currently reload silently. Show the screen if a crash repeats within a short window, so the app can't get stuck in a reload loop.
-- Never show stack traces or technical messages in production (see AGENTS.md §6).
-- Report caught errors to crash reporting (item 6) once that exists.
+- ~~React error boundary (`src/ErrorBoundary.tsx`) around the whole app, splash included. A JS crash shows *«مشکلی پیش آمد»* with **بارگذاری دوباره**, which remounts the app on the home page.~~
+- ~~One shared Persian error screen (`src/ErrorScreen.tsx`) for every failure:~~
+  - ~~Network errors: *«اتصال برقرار نشد»* + **تلاش دوباره**.~~
+  - ~~HTTP 5xx on the page itself (main document only, 4xx left to the site): reload, or **بازگشت به صفحه اصلی**.~~
+  - ~~WebView process crashes: the first one recovers quietly; a second within 30 s shows the error screen instead of looping.~~
+- ~~No stack traces or technical messages in production.~~
+- Still open: send caught errors to crash reporting (item 6).
 
-**Done when:** a forced JS error, a 500 from the site, and airplane mode each show the Persian screen, and the reload action recovers.
+~~**Done when:** a forced JS error, a 500 from the site, and airplane mode each show the Persian screen, and the reload action recovers.~~ Verified: JS crash and recovery covered by `__tests__/ErrorBoundary.test.tsx`; the network-error screen checked on the iOS simulator. The 5xx and crash-loop paths are not yet exercised on a device.
 
 ## 2. ⬜ QA build with a control panel
 
@@ -73,17 +71,17 @@ The storefront already loads GA4 (`apps/storefront/components/layout/chrome/goog
 ### 6. ⬜ Crash and error reporting
 Native crashes and JS errors are currently invisible. Add Sentry (the web side could share the same project) or Firebase Crashlytics; upload source maps and dSYMs from the release scripts. Feeds the production error boundary (item 1).
 
-### 7. ⬜ Reduce APK size
-Release APKs are **53 MB** because they ship native libraries for four CPU types (`armeabi-v7a`, `arm64-v8a`, `x86`, `x86_64`). x86 is only for emulators.
-- Cafe Bazaar / Myket APKs: drop x86/x86_64 for release, or build one APK per ABI if the stores accept it. Real devices then download roughly half.
+### 7. 🟨 Reduce APK size
+Release APKs were **53 MB** because they shipped native libraries for four CPU types (`armeabi-v7a`, `arm64-v8a`, `x86`, `x86_64`). x86 is only for emulators.
+- ~~Cafe Bazaar / Myket APKs: drop x86/x86_64.~~ Done per flavor in `android/app/build.gradle`: **52.7 MB → 26.8 MB**. Note: Bazaar/Myket debug builds no longer run on Intel (x86) emulators; Apple Silicon emulators and real devices are fine.
 - Google Play AAB already serves per-device splits, so it's unaffected.
 - Turn on R8 (`enableProguardInReleaseBuilds`) and resource shrinking, then retest the WebView and file upload.
 - Track size per release; `npm run app:check:isolation` already guards the JS bundle.
 
-### 8. ⬜ Payment receipt upload on Android and iOS
+### 8. 🟨 Payment receipt upload on Android and iOS
 The core purchase flow depends on uploading a receipt image through the website's file input.
 - Test it end to end on real devices: gallery, files, and camera on both platforms.
-- Android camera capture needs the `CAMERA` permission (not added yet); gallery and files work without it.
+- ~~Android camera capture needs the `CAMERA` permission.~~ Added (camera marked optional hardware); react-native-webview asks for it only when the user picks the camera.
 - iOS photo and camera usage texts are in Info.plist. Translate them to Persian (`fa.lproj/InfoPlist.strings`).
 
 ### 9. ⬜ Deep links (Universal Links / App Links)
@@ -106,18 +104,18 @@ Use `@react-native-community/netinfo` to show the offline screen immediately and
 ### 13. ⬜ Android pull-to-refresh
 `pullToRefreshEnabled` is iOS-only in react-native-webview. On Android, either wrap in a refresh control or let the site handle it.
 
-### 14. ⬜ CI builds and release automation
+### 14. 🟨 CI builds and release automation
 - GitHub Actions on a macOS runner: typecheck, lint, test, `check:isolation`, and the Android store builds; iOS archives via Fastlane or `xcodebuild`.
 - Keep signing secrets (`RAD_UPLOAD_*`, App Store Connect API key) in CI secrets.
 - Optionally Fastlane for TestFlight and Play uploads; Bazaar and Myket uploads stay manual or use their developer APIs.
-- Version bumping: one command that updates iOS `MARKETING_VERSION` / `CURRENT_PROJECT_VERSION` and Android `versionName` / `versionCode` together.
+- ~~Version bumping: one command that updates iOS and Android together.~~ `npm run app:version:set -- 1.2.0 [build]` (build defaults to current + 1).
 
 ### 15. ⬜ Store listings and compliance
 - Privacy policy URL (the storefront `policies` pages), App Store privacy labels, Google Play Data safety, Persian store descriptions and screenshots for Bazaar and Myket.
 - Account deletion: Apple requires in-app account deletion if users can create accounts. Confirm the website flow covers it.
 
-### 16. ⬜ Small polish
-- Android back press on the home page: confirm before exit (*«برای خروج دوباره بزنید»*) instead of closing immediately.
+### 16. 🟨 Small polish
+- ~~Android back press on the home page: confirm before exit (*«برای خروج دوباره بزنید»*).~~
 - Haptic feedback on key actions (add to cart, payment submitted) through a small `postMessage` bridge.
-- Native share sheet for product links when the site calls `navigator.share`.
+- ~~Native share sheet when the site calls `navigator.share`.~~ Bridged on Android, whose WebView lacks the Web Share API (used by the favorites page); iOS uses its built-in support.
 - Keep WebView and React Native up to date. Check the `react-native-webview` TypeScript workaround in `src/RadWebView.tsx` on each upgrade.

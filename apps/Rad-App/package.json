@@ -29,6 +29,7 @@
     "clean": "npm run clean:android && npm run clean:ios",
     "assets": "node scripts/generate-assets.mjs",
     "check:isolation": "node scripts/check-isolation.mjs",
+    "version:set": "node scripts/set-version.mjs",
     "typecheck": "tsc --noEmit",
     "lint": "ESLINT_USE_FLAT_CONFIG=false eslint .",
     "test": "jest"
