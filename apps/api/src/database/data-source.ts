@@ -29,6 +29,28 @@ export function schemaSyncEnabled(
   return nodeEnv !== "production";
 }
 
+/**
+ * `max` bounds how many connections THIS process can open; Liara's Postgres
+ * caps the whole server at 100. `idleTimeoutMillis` only reaps clients sitting
+ * idle *in the pool* — it does nothing for a connection stuck mid-transaction
+ * on the Postgres side (state `idle in transaction`), which is why that's a
+ * separate, pg-driver-level setting below: both are sent as session
+ * parameters on each new connection (`SET ...` on connect), not a
+ * database-wide `ALTER DATABASE`.
+ */
+export const POOL_EXTRA = {
+  max: 5,
+  keepAlive: true,
+  keepAliveInitialDelayMillis: 1000,
+  connectionTimeoutMillis: 20_000,
+  idleTimeoutMillis: 10_000,
+  // A stuck/abandoned transaction (e.g. the app process was killed between
+  // running a query and committing) self-terminates instead of holding a
+  // pool slot — and one of the server's 100 connections — forever.
+  idle_in_transaction_session_timeout: 30_000,
+  statement_timeout: 30_000,
+};
+
 export function typeOrmOptions(
   overrides: Partial<DataSourceOptions> = {},
 ): DataSourceOptions {
@@ -38,13 +60,7 @@ export function typeOrmOptions(
     entities: [...entities],
     synchronize: schemaSyncEnabled(),
     logging: false,
-    extra: {
-      max: 5,
-      keepAlive: true,
-      keepAliveInitialDelayMillis: 1000,
-      connectionTimeoutMillis: 20_000,
-      idleTimeoutMillis: 10_000,
-    },
+    extra: { ...POOL_EXTRA },
     ...overrides,
   } as DataSourceOptions;
 }

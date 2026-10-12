@@ -1,6 +1,8 @@
 "use client";
 import type { CSSProperties } from "react";
-import { ArrowLeft, ArrowRight } from "lucide-react";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { ArrowLeft, ArrowRight, ChevronLeft, ChevronRight, Share2 } from "lucide-react";
 import type { Product } from "@rad/types";
 import { FavoriteButton } from "@/components/commerce";
 import { useLocale } from "@/components/i18n";
@@ -11,6 +13,7 @@ import {
 } from "@/components/product/listing";
 import { pdpCopy } from "./const";
 import { useGalleryTrack } from "./hooks";
+import { PdpLightbox } from "./pdp-lightbox";
 import styles from "./product-gallery.module.css";
 
 type Slide = { kind: "photo"; index: number } | { kind: "plate" };
@@ -23,7 +26,9 @@ export function ProductGallery({
   className: string;
 }) {
   const { locale, number } = useLocale();
+  const router = useRouter();
   const c = pdpCopy[locale];
+  const [lightboxOpen, setLightboxOpen] = useState(false);
   const photographed = hasStudioPhotos(product);
   const slides: Slide[] = [
     ...Array.from(
@@ -40,6 +45,24 @@ export function ProductGallery({
   const recordNumber = formatArtworkNumber(product, number, locale);
   const PreviousIcon = locale === "fa" ? ArrowRight : ArrowLeft;
   const NextIcon = locale === "fa" ? ArrowLeft : ArrowRight;
+  const BackIcon = locale === "fa" ? ChevronRight : ChevronLeft;
+
+  const onShare = async () => {
+    const url = typeof window !== "undefined" ? window.location.href : "";
+    if (typeof navigator !== "undefined" && navigator.share) {
+      try {
+        await navigator.share({ title: product.slug, url });
+        return;
+      } catch {
+        // cancelled/unsupported — fall through to clipboard
+      }
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+    } catch {
+      // nothing more we can do without clipboard access
+    }
+  };
 
   // The main stage image occupies ~42% of the 86rem PDP max-width on
   // desktop (gallery column is 0.72fr of a 1.72fr grid), going full-width
@@ -72,7 +95,7 @@ export function ProductGallery({
 
   return (
     <div
-      className={`${className} ${styles.gallery}${photographed ? ` ${styles.photographed}` : ""}${count > 1 ? ` ${styles.hasThumbs}` : ""}`}
+      className={`${className} ${styles.gallery}${photographed ? ` ${styles.photographed}` : ""}${count > 1 ? ` ${styles.hasThumbs}` : ""}${count > 2 ? ` ${styles.hasSecondary}` : ""}`}
       style={
         {
           "--plate-color": product.color,
@@ -86,6 +109,27 @@ export function ProductGallery({
         aria-roledescription={locale === "fa" ? "گالری" : "carousel"}
         aria-label={c.gallery}
       >
+        <div className={styles.stageHeader}>
+          <button
+            type="button"
+            className={styles.headerIcon}
+            onClick={() => router.back()}
+            aria-label={c.back}
+          >
+            <BackIcon aria-hidden="true" />
+          </button>
+          <div className={styles.headerEnd}>
+            <FavoriteButton slug={product.slug} compact />
+            <button
+              type="button"
+              className={styles.headerIcon}
+              onClick={() => void onShare()}
+              aria-label={c.share}
+            >
+              <Share2 aria-hidden="true" />
+            </button>
+          </div>
+        </div>
         <div
           ref={trackRef}
           className={styles.stageTrack}
@@ -94,13 +138,25 @@ export function ProductGallery({
           tabIndex={count > 1 ? 0 : -1}
         >
           {slides.map((slide, index) => (
-            <div
+            <button
               key={slide.kind === "photo" ? slide.index : "plate"}
+              type="button"
               className={`${styles.slide} ${styles[slide.kind]}`}
-              role="group"
               aria-roledescription={locale === "fa" ? "نما" : "slide"}
               aria-label={`${format(index + 1)} / ${format(count)}`}
               aria-hidden={index !== active}
+              tabIndex={index === active ? 0 : -1}
+              onClick={() => {
+                goTo(index);
+                setLightboxOpen(true);
+              }}
+              style={
+                index === 0
+                  ? ({
+                      viewTransitionName: `rad-pdp-image-${product.slug}`,
+                    } as CSSProperties)
+                  : undefined
+              }
             >
               {renderSlide(slide, "stage")}
               {slide.kind === "plate" && recordNumber ? (
@@ -109,10 +165,9 @@ export function ProductGallery({
                   <i dir="ltr">{c.oneOfOne}</i>
                 </span>
               ) : null}
-            </div>
+            </button>
           ))}
         </div>
-        <FavoriteButton slug={product.slug} compact />
         {count > 1 ? (
           <>
             <div className={styles.stageNav}>
@@ -160,6 +215,38 @@ export function ProductGallery({
             </button>
           ))}
         </div>
+      ) : null}
+      {count > 2 ? (
+        <div className={styles.secondaryGrid} aria-label={c.secondaryViews}>
+          {slides.slice(1, 5).map((slide, offset) => {
+            const index = offset + 1;
+            return (
+              <button
+                key={slide.kind === "photo" ? slide.index : "plate"}
+                type="button"
+                className={styles.secondaryTile}
+                onClick={() => {
+                  goTo(index);
+                  setLightboxOpen(true);
+                }}
+                aria-label={`${c.view} ${format(index + 1)}`}
+              >
+                {renderSlide(slide, "thumb")}
+              </button>
+            );
+          })}
+        </div>
+      ) : null}
+      {lightboxOpen ? (
+        <PdpLightbox
+          product={product}
+          slides={slides}
+          active={active}
+          count={count}
+          onGoTo={goTo}
+          onClose={() => setLightboxOpen(false)}
+          renderSlide={(slide) => renderSlide(slide, "stage")}
+        />
       ) : null}
     </div>
   );

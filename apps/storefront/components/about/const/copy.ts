@@ -31,7 +31,7 @@ export const aboutCopy = {
       "شاید فقط فُرمشان توی ذهنم",
       "مانده بود.",
     ],
-    founderCta: "بیشتر درباره‌ی مهدیه",
+    founderCta: "گفت‌وگو با مهدیه",
     founderAlt: "فیلم کارگاه: دست‌هایی که روی میز کار گل را ورز می‌دهند",
     passageTitleLines: ["چیزی که از", "عبور باقی می‌ماند."],
     passageBodyLines: [
@@ -52,7 +52,7 @@ export const aboutCopy = {
       { lines: ["تولید انبوه"] },
       { lines: ["کنترل همه‌چیز", "تا آخرین میلی‌متر"] },
       { lines: ["کپی دقیق یک نمونه"] },
-      { lines: ["کنترل همه‌چیز", "تا آخرین میلی‌متر"] },
+      { lines: ["یک ماده که گاهی", "حرف خودش را می‌زند"] },
       { lines: ["ساختن دوباره‌ی یک اثر"] },
     ],
     notAlt: "کاسه‌ی دست‌ساز با لعاب چکه‌ای روی سنگ",
@@ -114,7 +114,7 @@ export const aboutCopy = {
       "or whose form had simply",
       "stayed in my mind.",
     ],
-    founderCta: "More about me",
+    founderCta: "Talk to Mahdiyeh",
     founderAlt: "Workshop film: hands wedging clay on the workbench",
     passageTitleLines: ["What remains", "after something", "passes."],
     passageBodyLines: [

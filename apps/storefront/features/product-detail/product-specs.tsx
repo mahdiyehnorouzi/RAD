@@ -177,7 +177,7 @@ export function ProductSpecs({
       title={c.specsTitle}
       lede={c.specsLede}
       mark={<WorkStroke textures={textures} index={index} />}
-      desktop="open"
+      openByDefault
       className={styles.specs}
     >
       <dl>

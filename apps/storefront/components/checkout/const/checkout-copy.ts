@@ -20,10 +20,10 @@ export const checkoutCopy = {
     cityError: "شهر گیرنده را بنویسید.",
     addressError: "آدرس رو کامل بنویس که بسته درست به دستت برسه.",
     fixFields: "چندتا از اطلاعات بالا هنوز کامل نیست.",
-    holdTitle: "این اثر فعلاً برای شما کنار گذاشته شده.",
-    holdBody: "تا پایان این زمان فقط برای شما نگه داشته می‌شود.",
+    holdTitle: "برای تکمیل اطلاعات، تا این زمان فرصت داری.",
+    holdBody: "",
     holdAfter:
-      "با ثبت سفارش، {minutes} دقیقه برای واریز و فرستادن رسید وقت دارید.",
+      "بعد از ثبت سفارش، {minutes} دقیقه برای واریز و فرستادن رسید داری.",
     holdGone:
       "یکی از آثار کیسه دیگر برای شما نگه داشته نمی‌شود. به کیسه برگردید و آن را بردارید.",
     backToBag: "بازگشت به کیسه",
@@ -131,8 +131,8 @@ export const checkoutCopy = {
     cityError: "Enter the recipient's city.",
     addressError: "Enter the full address so the parcel reaches you.",
     fixFields: "Some delivery details are missing.",
-    holdTitle: "This work is one of one.",
-    holdBody: "It stays held for you until this timer runs out.",
+    holdTitle: "You have until this time to finish your details.",
+    holdBody: "",
     holdAfter:
       "Once you place the order, you have {minutes} minutes to transfer and send the receipt.",
     holdGone:

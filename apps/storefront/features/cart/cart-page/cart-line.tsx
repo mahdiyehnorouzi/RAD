@@ -18,11 +18,11 @@ export type CartLineIssue =
 export function priceChange(
   product: Product,
   atAdd: CartPriceAtAdd | undefined,
-): { toman: [number, number]; usd: [number, number] } | null {
+): { toman: [number, number] } | null {
   if (!atAdd) return null;
   const toman = priceToNumber(product.price);
-  if (toman === atAdd.toman && product.usdPrice === atAdd.usd) return null;
-  return { toman: [atAdd.toman, toman], usd: [atAdd.usd, product.usdPrice] };
+  if (toman === atAdd.toman) return null;
+  return { toman: [atAdd.toman, toman] };
 }
 
 export function CartLine({
@@ -97,11 +97,7 @@ export function CartLine({
           : issue === "unavailable"
             ? t("statusUnavailable")
             : null;
-  const [from, to] = changed
-    ? locale === "fa"
-      ? changed.toman
-      : changed.usd
-    : [0, 0];
+  const [from, to] = changed ? changed.toman : [0, 0];
 
   return (
     <article

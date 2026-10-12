@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { useCart } from "@/features/cart";
 import { useLocale } from "@/components/i18n";
 import { useHeaderMotion } from "./hooks";
-import { Heart, Menu as MenuIcon, Search, ShoppingBag, X } from "lucide-react";
+import { Heart, Menu as MenuIcon, ShoppingBag, X } from "lucide-react";
 import { RAD_INSTAGRAM, InstagramIcon } from "@/components/contact";
 import "./header.css";
 
@@ -71,6 +71,35 @@ export function Header() {
         </Link>
         <span className="nav-light-separator" aria-hidden="true" />
         <Link
+          className="mobile-nav-link"
+          href={href("/shape")}
+          onClick={() => setOpen(false)}
+        >
+          {t("footerShape")}
+        </Link>
+        <Link
+          className="mobile-nav-link"
+          href={href("/now")}
+          onClick={() => setOpen(false)}
+        >
+          {t("footerNow")}
+        </Link>
+        <Link
+          className="mobile-nav-link"
+          href={href("/reviews")}
+          onClick={() => setOpen(false)}
+        >
+          {t("footerReviews")}
+        </Link>
+        <Link
+          className="mobile-nav-link"
+          href={href("/differences")}
+          onClick={() => setOpen(false)}
+        >
+          {t("museumTitle")}
+        </Link>
+        <span className="nav-light-separator" aria-hidden="true" />
+        <Link
           className="mobile-nav-link nav-muted-link"
           href={href("/help")}
           onClick={() => setOpen(false)}
@@ -114,13 +143,6 @@ export function Header() {
           aria-label={t("favoritesTitle")}
         >
           <Heart aria-hidden="true" />
-        </Link>
-        <Link
-          href={href("/products")}
-          className="utility-button header-search"
-          aria-label={t("search")}
-        >
-          <Search aria-hidden="true" />
         </Link>
         <Link
           href={href("/cart")}

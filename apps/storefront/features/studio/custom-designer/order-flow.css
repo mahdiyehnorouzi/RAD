@@ -38,7 +38,6 @@ body:has(.custom-order-route) {
 }
 .order-flow-phases {
   display: flex;
-  direction: ltr;
   width: 72%;
   margin: 0 auto;
   padding: 0;
@@ -58,7 +57,7 @@ body:has(.custom-order-route) {
   content: "";
   position: absolute;
   top: 13px;
-  right: 72%;
+  inset-inline-end: 72%;
   width: 56%;
   height: 1px;
   background: var(--flow-line);

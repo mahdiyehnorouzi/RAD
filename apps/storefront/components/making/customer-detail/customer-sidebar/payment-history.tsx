@@ -22,7 +22,7 @@ export function PaymentHistory({ commission }: { commission: MakingCommission })
                 ? "مانده حساب"
                 : "Balance"}
           </b>
-          <span>{moneyFor(commission, locale, item.amountToman, item.amountUsd)}</span>
+          <span>{moneyFor(commission, locale, item.amountToman)}</span>
           <small>
             {item.status === "paid"
               ? `${locale === "fa" ? "پرداخت‌شده" : "Paid"}${item.at ? ` · ${formatWhen(item.at, locale)}` : ""}`

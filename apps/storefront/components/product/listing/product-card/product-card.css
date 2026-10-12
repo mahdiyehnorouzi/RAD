@@ -442,11 +442,17 @@
   box-shadow: 0 0 0 1px color-mix(in srgb, var(--ink) 8%, transparent);
 }
 
-.rad-card-qr-code {
+.rad-card-qr-mark {
   display: block;
-  width: 100%;
-  height: 100%;
-  fill: #1a1714;
+  width: 58%;
+  height: 58%;
+  margin: 21%;
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.82;
   transition:
     opacity 300ms ease,
     transform 300ms var(--rc-ease);
@@ -524,8 +530,8 @@
 .rad-card-qr:focus-visible .rad-card-qr-beam {
   animation: rad-qr-beam 1.2s linear forwards;
 }
-.rad-card-qr.is-scanned .rad-card-qr-code,
-.rad-card-qr:focus-visible .rad-card-qr-code {
+.rad-card-qr.is-scanned .rad-card-qr-mark,
+.rad-card-qr:focus-visible .rad-card-qr-mark {
   animation: rad-qr-code 1.2s ease forwards;
 }
 .rad-card-qr.is-scanned .rad-card-qr-check,
@@ -548,7 +554,7 @@
   .rad-card-qr:hover .rad-card-qr-beam {
     animation: rad-qr-beam 1.2s linear forwards;
   }
-  .rad-card-qr:hover .rad-card-qr-code {
+  .rad-card-qr:hover .rad-card-qr-mark {
     animation: rad-qr-code 1.2s ease forwards;
   }
   .rad-card-qr:hover .rad-card-qr-check {

@@ -22,8 +22,8 @@ const LETTER_LINE = 0.74;
 const CATCH_UP = 0.25;
 const SAMPLE_PX = 6;
 /** The whole letter is written in this long once the thread reaches it, plus a lift of the pen between strokes. */
-const WRITE_MS = 1700;
-const LIFT_MS = 120;
+const WRITE_MS = 700;
+const LIFT_MS = 60;
 
 /** Vertical handles make the thread hang and swing between its anchors instead of cutting across. */
 function threadPath(points: Point[]) {

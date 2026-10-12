@@ -3,9 +3,18 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Archive,
+  ArrowLeft,
+  Bell,
+  Boxes,
   ChevronLeft,
+  ChevronRight,
+  CircleDollarSign,
   CircleGauge,
   CircleHelp,
+  Eye,
+  EyeOff,
+  Hammer,
+  Image as ImageIcon,
   MessageSquareQuote,
   Shapes,
   ImagePlus,
@@ -14,7 +23,9 @@ import {
   LayoutDashboard,
   LogOut,
   Menu,
+  MoreVertical,
   Package,
+  PackageCheck,
   PackageX,
   Pencil,
   Plus,
@@ -22,6 +33,7 @@ import {
   Search,
   ShieldCheck,
   ShoppingBag,
+  Tag,
   Trash2,
   UserRound,
   Users,
@@ -105,6 +117,30 @@ function parsePriceInput(raw: string) {
 function formatPriceInput(value: number) {
   if (!value) return "";
   return number.format(value);
+}
+
+function statusTone(status: AdminProduct["status"]): "green" | "oxide" | "muted" {
+  if (status === "available") return "green";
+  if (status === "sold") return "oxide";
+  return "muted";
+}
+
+const relativeUnits: [number, string][] = [
+  [60, "لحظاتی پیش"],
+  [3600, "دقیقه پیش"],
+  [86400, "ساعت پیش"],
+  [2592000, "روز پیش"],
+];
+function relativeTime(value: number) {
+  const diff = Math.max(0, Math.floor((Date.now() - value) / 1000));
+  if (diff < relativeUnits[0][0]) return relativeUnits[0][1];
+  if (diff < relativeUnits[1][0])
+    return `${number.format(Math.floor(diff / 60))} ${relativeUnits[1][1]}`;
+  if (diff < relativeUnits[2][0])
+    return `${number.format(Math.floor(diff / 3600))} ${relativeUnits[2][1]}`;
+  if (diff < relativeUnits[3][0])
+    return `${number.format(Math.floor(diff / 86400))} ${relativeUnits[3][1]}`;
+  return date(value);
 }
 
 export function AdminDashboard() {
@@ -287,6 +323,21 @@ export function AdminDashboard() {
             <span className="context-label">رَد / عملیات استودیو</span>
             <h1>{navItems.find((item) => item.id === section)?.label}</h1>
           </div>
+          <button
+            className="topbar-bell"
+            type="button"
+            onClick={() => go("messages")}
+            aria-label={
+              openMessages
+                ? `${number.format(openMessages)} پیام رسیدگی‌نشده`
+                : "پیام‌ها"
+            }
+          >
+            <Bell />
+            {openMessages > 0 && (
+              <em className="nav-count">{number.format(openMessages)}</em>
+            )}
+          </button>
           <div className="topbar-status">
             <span className="live-dot" />
             پایگاه داده Postgres
@@ -520,6 +571,14 @@ export function AdminDashboard() {
           product={productEditor === "new" ? null : productEditor}
           onUploadImage={workspace.uploadProductImage}
           onClose={() => setProductEditor(null)}
+          onDelete={
+            productEditor !== "new"
+              ? () => {
+                  setDeleteTarget(productEditor);
+                  setProductEditor(null);
+                }
+              : undefined
+          }
           onSave={async (product) => {
             try {
               await workspace.saveProduct(product);
@@ -583,52 +642,106 @@ function Overview({
   workspace: ReturnType<typeof useAdminWorkspace>;
   onNavigate: (section: AdminSection) => void;
 }) {
-  const active = workspace.orders.filter(
-    (order) =>
-      order.status !== "delivered" && !isTerminalOrderStatus(order.status),
+  const available = workspace.products.filter(
+    (item) => item.status === "available",
   ).length;
-  const receiptsToReview = workspace.orders.filter(
-    (order) => order.status === "pending_verification",
+  const inWorkshop = workspace.products.filter(
+    (item) => item.status === "in_workshop",
   ).length;
-  const waiting = workspace.commissions.filter(
-    (item) => item.stage === "design_submitted" || item.stage === "feasibility",
-  ).length;
+  const sold = workspace.products.filter((item) => item.status === "sold")
+    .length;
+  const recentProducts = [...workspace.products]
+    .sort((a, b) => b.updatedAt - a.updatedAt)
+    .slice(0, 6);
+  const todayLabel = new Intl.DateTimeFormat("fa-IR", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  }).format(Date.now());
   return (
     <div className="view-stack">
       <section className="overview-hero">
         <div>
           <span className="eyebrow">وضعیت امروز</span>
-          <h2>هر اثر، از ثبت تا تحویل زیر یک سقف.</h2>
-          <p>
-            سفارش اختصاصی را در صندوق بازبینی بپذیرید، با مشتری پیام بگذارید، و
-            سفارش فروشگاه را جداگانه جلو ببرید.
-          </p>
-        </div>
-        <div className="kiln-dial">
-          <CircleGauge />
-          <strong>{number.format(workspace.products.length)}</strong>
-          <span>اثر ثبت‌شده</span>
+          <h2>سلام {workspace.user?.name.split(" ")[0]}،</h2>
+          <p>امروز در استودیو رَد چه خبر است؟ · {todayLabel}</p>
         </div>
       </section>
-      <section className="metric-grid">
-        <Metric
-          label="آثار موجود"
-          value={
-            workspace.products.filter((item) => item.status === "available")
-              .length
-          }
-          note="آمادهٔ فروش"
+      <section className="stat-grid">
+        <StatTile icon={<PackageCheck />} value={available} label="آماده فروش" />
+        <StatTile icon={<Hammer />} value={inWorkshop} label="در کارگاه" />
+        <StatTile icon={<Boxes />} value={sold} label="فروخته شده" />
+        <StatTile
+          icon={<CircleGauge />}
+          value={workspace.products.length}
+          label="اثر ثبت‌شده"
         />
-        <Metric
-          label="رسید منتظر تأیید"
-          value={receiptsToReview}
-          note={`${number.format(active)} سفارش فروشگاه در جریان`}
+      </section>
+      <section className="shortcut-grid">
+        <ShortcutTile
+          icon={<Archive />}
+          label="آثار و محصولات"
+          onClick={() => onNavigate("products")}
         />
-        <Metric
-          label="بازبینی اختصاصی"
-          value={waiting}
-          note="منتظر تصمیم هنرمند"
+        <ShortcutTile
+          icon={<ShoppingBag />}
+          label="سفارش‌های فروشگاه"
+          onClick={() => onNavigate("orders")}
         />
+        <ShortcutTile
+          icon={<ScrollText />}
+          label="سفارش اختصاصی"
+          onClick={() => onNavigate("commissions")}
+        />
+        <ShortcutTile
+          icon={<Inbox />}
+          label="پیام‌ها"
+          onClick={() => onNavigate("messages")}
+        />
+      </section>
+      <section>
+        <div className="panel-heading">
+          <div>
+            <span className="eyebrow">تازه‌ترین تغییرات</span>
+            <h3>آخرین آثار</h3>
+          </div>
+          <button
+            className="text-action"
+            type="button"
+            onClick={() => onNavigate("products")}
+          >
+            دیدن همه
+          </button>
+        </div>
+        <div className="recent-products" style={{ paddingTop: 18 }}>
+          {recentProducts.map((product) => (
+            <div className="recent-card" key={product.id}>
+              <ProductThumb product={product} />
+              <strong>{product.name}</strong>
+              <StatusBadge
+                label={productStatusLabel(product)}
+                tone={statusTone(product.status)}
+              />
+            </div>
+          ))}
+          {!recentProducts.length && <p>هنوز اثری ثبت نشده است.</p>}
+        </div>
+        <div className="activity-list" style={{ paddingTop: 10 }}>
+          {recentProducts.slice(0, 4).map((product) => (
+            <div className="activity-row" key={`activity-${product.id}`}>
+              <ProductThumb product={product} />
+              <div>
+                <strong>{product.name}</strong>
+                <small>
+                  {product.status === "available"
+                    ? "اثر آمادهٔ فروش شد"
+                    : "اطلاعات اثر به‌روزرسانی شد"}{" "}
+                  · {relativeTime(product.updatedAt)}
+                </small>
+              </div>
+            </div>
+          ))}
+        </div>
       </section>
       <section className="split-grid">
         <article className="paper-panel">
@@ -677,23 +790,45 @@ function Overview({
   );
 }
 
-function Metric({
-  label,
+function StatTile({
+  icon,
   value,
-  note,
+  label,
 }: {
-  label: string;
+  icon: React.ReactNode;
   value: number;
-  note: string;
+  label: string;
 }) {
   return (
-    <article className="metric">
+    <article className="stat-tile">
+      <span className="stat-icon">{icon}</span>
+      <strong>{number.format(value)}</strong>
       <span>{label}</span>
-      <strong>{number.format(value).padStart(2, "۰")}</strong>
-      <small>{note}</small>
     </article>
   );
 }
+
+function ShortcutTile({
+  icon,
+  label,
+  onClick,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  onClick: () => void;
+}) {
+  return (
+    <button className="shortcut-tile" type="button" onClick={onClick}>
+      <span className="stat-icon">{icon}</span>
+      <span>{label}</span>
+      <ChevronLeft />
+    </button>
+  );
+}
+
+type ProductSort = "newest" | "oldest" | "price_desc" | "price_asc";
+
+const PAGE_SIZE = 10;
 
 function Products({
   products,
@@ -709,23 +844,60 @@ function Products({
   onDelete: (product: AdminProduct) => void;
 }) {
   const [query, setQuery] = useState("");
+  const [sort, setSort] = useState<ProductSort>("newest");
+  const [statusFilter, setStatusFilter] = useState<
+    AdminProduct["status"] | "all"
+  >("all");
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [page, setPage] = useState(1);
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const filtered = useMemo(
-    () =>
-      products.filter((product) =>
+
+  const categories = useMemo(
+    () => Array.from(new Set(products.map((item) => item.category))),
+    [products],
+  );
+
+  const filtered = useMemo(() => {
+    const list = products
+      .filter((product) =>
         `${product.name} ${product.artist} ${product.slug}`.includes(
           query.trim(),
         ),
-      ),
-    [products, query],
+      )
+      .filter(
+        (product) => statusFilter === "all" || product.status === statusFilter,
+      )
+      .filter(
+        (product) =>
+          categoryFilter === "all" || product.category === categoryFilter,
+      );
+    return [...list].sort((a, b) => {
+      if (sort === "newest") return b.updatedAt - a.updatedAt;
+      if (sort === "oldest") return a.updatedAt - b.updatedAt;
+      if (sort === "price_desc") return b.price - a.price;
+      return a.price - b.price;
+    });
+  }, [products, query, statusFilter, categoryFilter, sort]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const pageItems = filtered.slice(
+    (currentPage - 1) * PAGE_SIZE,
+    currentPage * PAGE_SIZE,
   );
+
+  const resetToFirstPage = () => setPage(1);
+
   return (
     <section className="paper-panel data-view">
       <div className="view-heading">
         <div>
           <span className="eyebrow">کاتالوگ یک‌به‌یک</span>
-          <h2>آثار</h2>
-          <p>{number.format(filtered.length)} محصول در این نما</p>
+          <h2>آثار و محصولات</h2>
+          <p>
+            تمام آثار ثبت‌شده در استودیو؛ هر اثر فقط یک‌بار ساخته شده است.
+          </p>
         </div>
         <button
           className="primary-action"
@@ -734,7 +906,7 @@ function Products({
           disabled={!canWrite}
         >
           <Plus />
-          افزودن محصول
+          افزودن اثر
         </button>
       </div>
       <div className="toolbar">
@@ -743,7 +915,10 @@ function Products({
           <input
             ref={inputRef}
             value={query}
-            onChange={(event) => setQuery(event.target.value)}
+            onChange={(event) => {
+              setQuery(event.target.value);
+              resetToFirstPage();
+            }}
             placeholder="جست‌وجوی نام، هنرمند یا شناسه"
             aria-label="جست‌وجوی محصولات"
           />
@@ -753,6 +928,7 @@ function Products({
               onClick={() => {
                 setQuery("");
                 inputRef.current?.focus();
+                resetToFirstPage();
               }}
               aria-label="پاک کردن جست‌وجو"
             >
@@ -761,55 +937,238 @@ function Products({
           )}
         </div>
       </div>
-      {filtered.length ? (
-        <div className="product-list">
-          {filtered.map((product) => (
-            <article className="product-row" key={product.id}>
-              <ProductThumb product={product} />
-              <div className="product-primary">
-                <span>
-                  {product.category} · {product.artist}
-                </span>
-                <h3>{product.name}</h3>
-                <p>{product.description}</p>
-              </div>
-              <div className="product-meta">
-                <StatusBadge
-                  label={productStatusLabel(product)}
-                  tone={product.status === "available" ? "green" : "muted"}
-                />
-                <strong>{money(product.price)}</strong>
-                <small>ویرایش {date(product.updatedAt)}</small>
-              </div>
-              <div className="row-actions">
-                <button
-                  type="button"
-                  onClick={() => onEdit(product)}
-                  disabled={!canWrite}
-                  aria-label={`ویرایش ${product.name}`}
-                >
-                  <Pencil />
-                </button>
-                <button
-                  className="danger"
-                  type="button"
-                  onClick={() => onDelete(product)}
-                  disabled={!canWrite}
-                  aria-label={`حذف ${product.name}`}
-                >
-                  <Trash2 />
-                </button>
-              </div>
-            </article>
+      <div className="filters-row">
+        <select
+          className="filter-select"
+          value={sort}
+          onChange={(event) => setSort(event.target.value as ProductSort)}
+          aria-label="مرتب‌سازی"
+        >
+          <option value="newest">جدیدترین</option>
+          <option value="oldest">قدیمی‌ترین</option>
+          <option value="price_desc">گران‌ترین</option>
+          <option value="price_asc">ارزان‌ترین</option>
+        </select>
+        <select
+          className="filter-select"
+          value={statusFilter}
+          onChange={(event) => {
+            setStatusFilter(event.target.value as AdminProduct["status"] | "all");
+            resetToFirstPage();
+          }}
+          aria-label="وضعیت"
+        >
+          <option value="all">همه وضعیت‌ها</option>
+          {Object.entries(productStatusLabels).map(([value, label]) => (
+            <option key={value} value={value}>
+              {label}
+            </option>
           ))}
-        </div>
+        </select>
+        <select
+          className="filter-select"
+          value={categoryFilter}
+          onChange={(event) => {
+            setCategoryFilter(event.target.value);
+            resetToFirstPage();
+          }}
+          aria-label="دسته‌بندی"
+        >
+          <option value="all">همه دسته‌ها</option>
+          {categories.map((category) => (
+            <option key={category} value={category}>
+              {category}
+            </option>
+          ))}
+        </select>
+        <span className="results-count">
+          {number.format(filtered.length)} محصول در این نما
+        </span>
+      </div>
+      {pageItems.length ? (
+        <>
+          <div className="admin-table-wrap">
+            <table className="products-table">
+              <thead>
+                <tr>
+                  <th>کاور</th>
+                  <th>نام اثر</th>
+                  <th>شناسه</th>
+                  <th>دسته‌بندی</th>
+                  <th>وضعیت</th>
+                  <th>قیمت (تومان)</th>
+                  <th>آخرین ویرایش</th>
+                  <th>عملیات</th>
+                </tr>
+              </thead>
+              <tbody>
+                {pageItems.map((product) => (
+                  <tr key={product.id}>
+                    <td className="cell-thumb">
+                      <ProductThumb product={product} />
+                    </td>
+                    <td>{product.name}</td>
+                    <td>{product.slug}</td>
+                    <td>{product.category}</td>
+                    <td>
+                      <StatusBadge
+                        label={productStatusLabel(product)}
+                        tone={statusTone(product.status)}
+                      />
+                    </td>
+                    <td>{money(product.price)}</td>
+                    <td>{date(product.updatedAt)}</td>
+                    <td className="cell-actions">
+                      <RowMenu
+                        open={openMenuId === product.id}
+                        onToggle={() =>
+                          setOpenMenuId((current) =>
+                            current === product.id ? null : product.id,
+                          )
+                        }
+                        canWrite={canWrite}
+                        onEdit={() => {
+                          setOpenMenuId(null);
+                          onEdit(product);
+                        }}
+                        onDelete={() => {
+                          setOpenMenuId(null);
+                          onDelete(product);
+                        }}
+                      />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div className="product-list">
+            {pageItems.map((product) => (
+              <article className="product-row" key={product.id}>
+                <ProductThumb product={product} />
+                <div className="product-primary">
+                  <span>
+                    {product.category} · {product.artist}
+                  </span>
+                  <h3>{product.name}</h3>
+                  <p>{product.description}</p>
+                </div>
+                <div className="product-meta">
+                  <StatusBadge
+                    label={productStatusLabel(product)}
+                    tone={statusTone(product.status)}
+                  />
+                  <strong>{money(product.price)}</strong>
+                  <small>ویرایش {date(product.updatedAt)}</small>
+                </div>
+                <RowMenu
+                  open={openMenuId === product.id}
+                  onToggle={() =>
+                    setOpenMenuId((current) =>
+                      current === product.id ? null : product.id,
+                    )
+                  }
+                  canWrite={canWrite}
+                  onEdit={() => {
+                    setOpenMenuId(null);
+                    onEdit(product);
+                  }}
+                  onDelete={() => {
+                    setOpenMenuId(null);
+                    onDelete(product);
+                  }}
+                />
+              </article>
+            ))}
+          </div>
+          {totalPages > 1 && (
+            <nav className="pagination" aria-label="صفحه‌بندی محصولات">
+              <button
+                type="button"
+                onClick={() => setPage((value) => Math.max(1, value - 1))}
+                disabled={currentPage === 1}
+                aria-label="صفحه قبل"
+              >
+                <ChevronRight />
+              </button>
+              {Array.from({ length: totalPages }, (_, index) => index + 1).map(
+                (pageNumber) => (
+                  <button
+                    key={pageNumber}
+                    type="button"
+                    className={pageNumber === currentPage ? "active" : ""}
+                    onClick={() => setPage(pageNumber)}
+                  >
+                    {number.format(pageNumber)}
+                  </button>
+                ),
+              )}
+              <button
+                type="button"
+                onClick={() =>
+                  setPage((value) => Math.min(totalPages, value + 1))
+                }
+                disabled={currentPage === totalPages}
+                aria-label="صفحه بعد"
+              >
+                <ChevronLeft />
+              </button>
+            </nav>
+          )}
+        </>
       ) : (
         <EmptyState
           title="محصولی پیدا نشد"
-          description="عبارت جست‌وجو را تغییر دهید یا محصول تازه‌ای اضافه کنید."
+          description="عبارت جست‌وجو یا فیلترها را تغییر دهید یا محصول تازه‌ای اضافه کنید."
         />
       )}
     </section>
+  );
+}
+
+function RowMenu({
+  open,
+  onToggle,
+  canWrite,
+  onEdit,
+  onDelete,
+}: {
+  open: boolean;
+  onToggle: () => void;
+  canWrite: boolean;
+  onEdit: () => void;
+  onDelete: () => void;
+}) {
+  return (
+    <>
+      <button
+        className="row-menu-trigger"
+        type="button"
+        onClick={onToggle}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-label="عملیات"
+      >
+        <MoreVertical />
+      </button>
+      {open && (
+        <div className="row-menu" role="menu">
+          <button type="button" onClick={onEdit} disabled={!canWrite}>
+            <Pencil />
+            ویرایش
+          </button>
+          <button
+            type="button"
+            className="danger"
+            onClick={onDelete}
+            disabled={!canWrite}
+          >
+            <Trash2 />
+            حذف
+          </button>
+        </div>
+      )}
+    </>
   );
 }
 
@@ -1171,6 +1530,7 @@ function ProductDialog({
   onClose,
   onSave,
   onUploadImage,
+  onDelete,
 }: {
   product: AdminProduct | null;
   onClose: () => void;
@@ -1179,6 +1539,7 @@ function ProductDialog({
     slug: string,
     file: File,
   ) => Promise<{ storage: "cloudinary"; objectKey: string }>;
+  onDelete?: () => void;
 }) {
   const [draft, setDraft] = useState<AdminProduct>(
     product ?? {
@@ -1268,196 +1629,312 @@ function ProductDialog({
       setUploadingCount((count) => count - 1);
     }
   };
+  const sections: { id: string; label: string; icon: React.ReactNode }[] = [
+    { id: "section-basics", label: "اطلاعات اصلی", icon: <Pencil /> },
+    { id: "section-category", label: "دسته‌بندی", icon: <Tag /> },
+    { id: "section-pricing", label: "وضعیت و قیمت", icon: <CircleDollarSign /> },
+    { id: "section-images", label: "تصاویر اثر", icon: <ImageIcon /> },
+  ];
+  const [activeSection, setActiveSection] = useState(sections[0].id);
+  const goToSection = (id: string) => {
+    setActiveSection(id);
+    document
+      .getElementById(id)
+      ?.scrollIntoView({ block: "start", behavior: "smooth" });
+  };
+
   return (
-    <DialogShell
-      title={product ? "ویرایش محصول" : "محصول تازه"}
-      description="نام، توضیحات، قیمت و تصاویر اثر را ثبت کنید."
-      onClose={onClose}
+    <div
+      className="editor-shell"
+      role="presentation"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
     >
-      <form className="editor-form" onSubmit={submit} noValidate>
-        <div className="form-grid">
-          <Field label="نام محصول" error={errors.name}>
-            <input
-              value={draft.name}
-              onChange={(event) =>
-                setDraft({ ...draft, name: event.target.value })
-              }
-              aria-invalid={Boolean(errors.name)}
-            />
-          </Field>
-          <Field label="شناسه URL" error={errors.slug}>
-            <input
-              dir="ltr"
-              value={draft.slug}
-              readOnly={Boolean(product)}
-              onChange={(event) =>
-                setDraft({
-                  ...draft,
-                  slug: event.target.value.toLowerCase().replace(/\s+/g, "-"),
-                })
-              }
-              aria-invalid={Boolean(errors.slug)}
-            />
-          </Field>
-          <Field label="هنرمند" error={errors.artist}>
-            <input
-              value={draft.artist}
-              onChange={(event) =>
-                setDraft({ ...draft, artist: event.target.value })
-              }
-              aria-invalid={Boolean(errors.artist)}
-            />
-          </Field>
-          <Field label="قیمت (تومان)" error={errors.price}>
-            <input
-              dir="ltr"
-              inputMode="numeric"
-              value={formatPriceInput(draft.price)}
-              onChange={(event) =>
-                setDraft({
-                  ...draft,
-                  price: parsePriceInput(event.target.value),
-                })
-              }
-              aria-invalid={Boolean(errors.price)}
-            />
-          </Field>
-          <Field label="دسته‌بندی">
-            <select
-              value={draft.category}
-              onChange={(event) =>
-                setDraft({
-                  ...draft,
-                  category: event.target.value as AdminProduct["category"],
-                })
-              }
-            >
-              <option>گلدان</option>
-              <option>ظروف</option>
-              <option>مجسمه</option>
-              <option>سفال و سرامیک</option>
-              <option>نقاشی</option>
-              <option>پارچه و بافت</option>
-              <option>آثار چوبی</option>
-              <option>زیورآلات هنری</option>
-              <option>چاپ دستی و تصویر</option>
-            </select>
-          </Field>
-          <Field label="وضعیت">
-            <select
-              value={draft.status}
-              disabled={Boolean(product?.held)}
-              title={product?.held ? productStatusLabel(product) : undefined}
-              onChange={(event) =>
-                setDraft({
-                  ...draft,
-                  status: event.target.value as AdminProduct["status"],
-                })
-              }
-            >
-              {productStatusOptions(product?.status).map((value) => (
-                <option key={value} value={value}>
-                  {productStatusLabels[value]}
-                </option>
-              ))}
-            </select>
-          </Field>
-        </div>
-        <Field label="توضیحات محصول" error={errors.description}>
-          <textarea
-            rows={5}
-            value={draft.description}
-            onChange={(event) =>
-              setDraft({ ...draft, description: event.target.value })
-            }
-            aria-invalid={Boolean(errors.description)}
-          />
-        </Field>
-        <div className="image-editor">
-          <div className="field-label">
-            <span>عکس‌های محصول</span>
-            <small>
-              تصاویر در پایگاه داده ذخیره می‌شوند؛ اولین تصویر، تصویر اصلی است.
-            </small>
-          </div>
-          <div className="image-add">
-            <label className="upload-button">
+      <form
+        className="editor-dialog"
+        onSubmit={submit}
+        noValidate
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="editor-title"
+      >
+        <aside className="editor-aside">
+          <button className="editor-back" type="button" onClick={onClose}>
+            <ChevronRight />
+            بازگشت به لیست
+          </button>
+          <div className="editor-cover">
+            {draft.images[0]?.src ? (
+              <img
+                className="product-thumb"
+                src={draft.images[0].src}
+                alt=""
+                style={{ objectFit: "cover" }}
+              />
+            ) : (
+              <div className="product-thumb">
+                <Package />
+              </div>
+            )}
+            <label>
               <ImagePlus />
-              افزودن عکس
+              تغییر کاور
               <input
                 type="file"
                 accept="image/jpeg,image/png,image/webp"
                 onChange={addImage}
-                aria-label="بارگذاری تصویر محصول"
+                aria-label="تغییر تصویر اصلی"
                 hidden
               />
             </label>
-            {imageError && (
-              <small className="field-error" role="alert">
-                {imageError}
-              </small>
-            )}
           </div>
-          <div className="image-list">
-            {draft.images.map((image, index) => {
-              const isUploading =
-                image.storage === "cloudinary" && !image.objectKey;
-              return (
-                <div
-                  key={`${index}-${image.storage}-${
-                    image.storage === "cloudinary"
-                      ? image.objectKey || image.src
-                      : image.src
-                  }`}
+          <nav className="editor-section-nav">
+            {sections.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                className={activeSection === item.id ? "active" : ""}
+                onClick={() => goToSection(item.id)}
+              >
+                {item.icon}
+                <span>{item.label}</span>
+                <ChevronLeft />
+              </button>
+            ))}
+            {product && onDelete && (
+              <button className="danger" type="button" onClick={onDelete}>
+                <Trash2 />
+                <span>حذف محصول</span>
+              </button>
+            )}
+          </nav>
+        </aside>
+
+        <div className="editor-main">
+          <div className="editor-main-head">
+            <h2 id="editor-title">{product ? "ویرایش اثر" : "اثر تازه"}</h2>
+            <button
+              className="primary-action"
+              type="submit"
+              disabled={uploadingCount > 0}
+            >
+              <PackageCheck />
+              {uploadingCount > 0 ? "در حال بارگذاری…" : "ذخیره تغییرات"}
+            </button>
+          </div>
+
+          <section id="section-basics" className="editor-section-card">
+            <h3>
+              <Pencil />
+              اطلاعات اصلی
+            </h3>
+            <div className="form-grid">
+              <Field label="نام اثر" error={errors.name}>
+                <input
+                  value={draft.name}
+                  onChange={(event) =>
+                    setDraft({ ...draft, name: event.target.value })
+                  }
+                  aria-invalid={Boolean(errors.name)}
+                />
+              </Field>
+              <Field label="شناسه (خودکار)" error={errors.slug}>
+                <input
+                  dir="ltr"
+                  value={draft.slug}
+                  readOnly={Boolean(product)}
+                  onChange={(event) =>
+                    setDraft({
+                      ...draft,
+                      slug: event.target.value
+                        .toLowerCase()
+                        .replace(/\s+/g, "-"),
+                    })
+                  }
+                  aria-invalid={Boolean(errors.slug)}
+                />
+              </Field>
+              <Field label="هنرمند" error={errors.artist}>
+                <input
+                  value={draft.artist}
+                  onChange={(event) =>
+                    setDraft({ ...draft, artist: event.target.value })
+                  }
+                  aria-invalid={Boolean(errors.artist)}
+                />
+              </Field>
+            </div>
+            <Field label="توضیحات اثر" error={errors.description}>
+              <textarea
+                rows={5}
+                value={draft.description}
+                onChange={(event) =>
+                  setDraft({ ...draft, description: event.target.value })
+                }
+                aria-invalid={Boolean(errors.description)}
+              />
+            </Field>
+          </section>
+
+          <section id="section-category" className="editor-section-card">
+            <h3>
+              <Tag />
+              دسته‌بندی
+            </h3>
+            <div className="form-grid">
+              <Field label="دسته‌بندی فرعی">
+                <select
+                  value={draft.category}
+                  onChange={(event) =>
+                    setDraft({
+                      ...draft,
+                      category: event.target.value as AdminProduct["category"],
+                    })
+                  }
                 >
-                  {image.src ? <img src={image.src} alt="" /> : <ImagePlus />}
-                  <span>
-                    {isUploading
-                      ? "در حال بارگذاری…"
-                      : index === 0
-                        ? "تصویر اصلی"
-                        : `تصویر ${number.format(index + 1)}`}
-                  </span>
-                  <button
-                    type="button"
-                    disabled={isUploading}
-                    onClick={() =>
-                      setDraft({
-                        ...draft,
-                        images: draft.images.filter(
-                          (_, itemIndex) => itemIndex !== index,
-                        ),
-                      })
-                    }
-                    aria-label={`حذف تصویر ${index + 1}`}
-                  >
-                    <X />
-                  </button>
-                </div>
-              );
-            })}
-            {!draft.images.length && (
-              <div className="image-empty">
-                <ImagePlus />
-                <span>هنوز تصویری اضافه نشده است.</span>
+                  <option>گلدان</option>
+                  <option>ظروف</option>
+                  <option>مجسمه</option>
+                  <option>سفال و سرامیک</option>
+                  <option>نقاشی</option>
+                  <option>پارچه و بافت</option>
+                  <option>آثار چوبی</option>
+                  <option>زیورآلات هنری</option>
+                  <option>چاپ دستی و تصویر</option>
+                </select>
+              </Field>
+            </div>
+          </section>
+
+          <section id="section-pricing" className="editor-section-card">
+            <h3>
+              <CircleDollarSign />
+              وضعیت و قیمت
+            </h3>
+            <div className="form-grid">
+              <Field label="قیمت اثر (تومان)" error={errors.price}>
+                <input
+                  dir="ltr"
+                  inputMode="numeric"
+                  value={formatPriceInput(draft.price)}
+                  onChange={(event) =>
+                    setDraft({
+                      ...draft,
+                      price: parsePriceInput(event.target.value),
+                    })
+                  }
+                  aria-invalid={Boolean(errors.price)}
+                />
+              </Field>
+              <Field label="وضعیت اثر">
+                <select
+                  value={draft.status}
+                  disabled={Boolean(product?.held)}
+                  title={
+                    product?.held ? productStatusLabel(product) : undefined
+                  }
+                  onChange={(event) =>
+                    setDraft({
+                      ...draft,
+                      status: event.target.value as AdminProduct["status"],
+                    })
+                  }
+                >
+                  {productStatusOptions(product?.status).map((value) => (
+                    <option key={value} value={value}>
+                      {productStatusLabels[value]}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+            </div>
+          </section>
+
+          <section id="section-images" className="editor-section-card">
+            <h3>
+              <ImageIcon />
+              تصاویر اثر
+            </h3>
+            <div className="image-editor">
+              <div className="field-label">
+                <small>
+                  تصاویر در پایگاه داده ذخیره می‌شوند؛ اولین تصویر، تصویر اصلی
+                  است.
+                </small>
               </div>
-            )}
-          </div>
-        </div>
-        <div className="dialog-actions">
-          <button className="secondary-action" type="button" onClick={onClose}>
-            انصراف
-          </button>
-          <button
-            className="primary-action"
-            type="submit"
-            disabled={uploadingCount > 0}
-          >
-            {uploadingCount > 0 ? "در حال بارگذاری تصاویر…" : "ذخیره تغییرات"}
-          </button>
+              <div className="image-add">
+                <label className="upload-button">
+                  <ImagePlus />
+                  افزودن عکس
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    onChange={addImage}
+                    aria-label="بارگذاری تصویر محصول"
+                    hidden
+                  />
+                </label>
+                {imageError && (
+                  <small className="field-error" role="alert">
+                    {imageError}
+                  </small>
+                )}
+              </div>
+              <div className="image-list">
+                {draft.images.map((image, index) => {
+                  const isUploading =
+                    image.storage === "cloudinary" && !image.objectKey;
+                  return (
+                    <div
+                      key={`${index}-${image.storage}-${
+                        image.storage === "cloudinary"
+                          ? image.objectKey || image.src
+                          : image.src
+                      }`}
+                    >
+                      {image.src ? (
+                        <img src={image.src} alt="" />
+                      ) : (
+                        <ImagePlus />
+                      )}
+                      <span>
+                        {isUploading
+                          ? "در حال بارگذاری…"
+                          : index === 0
+                            ? "تصویر اصلی"
+                            : `تصویر ${number.format(index + 1)}`}
+                      </span>
+                      <button
+                        type="button"
+                        disabled={isUploading}
+                        onClick={() =>
+                          setDraft({
+                            ...draft,
+                            images: draft.images.filter(
+                              (_, itemIndex) => itemIndex !== index,
+                            ),
+                          })
+                        }
+                        aria-label={`حذف تصویر ${index + 1}`}
+                      >
+                        <X />
+                      </button>
+                    </div>
+                  );
+                })}
+                {!draft.images.length && (
+                  <div className="image-empty">
+                    <ImagePlus />
+                    <span>هنوز تصویری اضافه نشده است.</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </section>
         </div>
       </form>
-    </DialogShell>
+    </div>
   );
 }
 
@@ -1543,7 +2020,7 @@ function StatusBadge({
   tone,
 }: {
   label: string;
-  tone: "green" | "muted";
+  tone: "green" | "oxide" | "muted";
 }) {
   return <span className={`status-badge ${tone}`}>{label}</span>;
 }
@@ -1673,6 +2150,39 @@ function AccountSettings({
   );
 }
 
+function LoginVisual({ tagline }: { tagline?: string }) {
+  return (
+    <div className="login-visual">
+      <svg className="visual-thread" viewBox="0 0 400 600" aria-hidden="true">
+        <path d="M60 110 C140 150 90 230 180 220 C 260 212 220 140 320 150" />
+      </svg>
+      <span className="visual-stone" aria-hidden="true" />
+      <div className="brand-block">
+        <span className="brand-mark">
+          <img src="/rad-logo.png" alt="رَد" width={56} height={56} />
+        </span>
+        <strong>پنل مدیریت استودیو</strong>
+        <small>رَد</small>
+      </div>
+      {tagline && <p className="visual-tagline">{tagline}</p>}
+    </div>
+  );
+}
+
+function ConnectingScreen() {
+  return (
+    <div className="connecting-screen" role="status" aria-live="polite">
+      <span className="visual-stone" aria-hidden="true" />
+      <div className="connecting-dots" aria-hidden="true">
+        <span />
+        <span />
+        <span />
+      </div>
+      <p>در حال اتصال به پنل مدیریت…</p>
+    </div>
+  );
+}
+
 function AdminLogin({
   onLogin,
   onForgotPassword,
@@ -1687,22 +2197,101 @@ function AdminLogin({
   const [mode, setMode] = useState<"login" | "forgot">("login");
   const [email, setEmail] = useState(() => loadRememberedEmail());
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(() => loadRememberMe());
   const [error, setError] = useState("");
   const [forgotMessage, setForgotMessage] = useState("");
+  // Brief "connecting" state shown while the login request is in flight —
+  // there is no dedicated backend step for this, it just covers the real
+  // request latency so the panel doesn't jump straight from form to shell.
+  const [connecting, setConnecting] = useState(false);
+
+  if (connecting) return <ConnectingScreen />;
 
   if (mode === "forgot") {
     return (
-      <div className="admin-login">
-        <section className="paper-panel">
-          <div className="brand-mark login-brand">
-            <img src="/rad-logo.png" alt="رَد" width={72} height={72} />
-          </div>
+      <div className="login-screen">
+        <LoginVisual />
+        <div className="login-form-side">
+          <section className="login-form-card">
+            <span className="eyebrow">دفتر کوره</span>
+            <h1>فراموشی رمز عبور</h1>
+            <p>
+              ایمیل حساب مدیریتی خود را وارد کنید. یک کد ۶ رقمی به ایمیل شما
+              ارسال می‌شود.
+            </p>
+            <form
+              className="editor-form"
+              noValidate
+              onSubmit={async (event) => {
+                event.preventDefault();
+                try {
+                  setError("");
+                  const result = await onForgotPassword(email.trim());
+                  setForgotMessage(result.message);
+                } catch (err) {
+                  setError((err as Error).message);
+                }
+              }}
+            >
+              {error && (
+                <small className="field-error" role="alert">
+                  {error}
+                </small>
+              )}
+              {forgotMessage && (
+                <div className="login-success" role="status">
+                  <p>{forgotMessage}</p>
+                  <a
+                    className="text-link"
+                    href={`/reset-password?email=${encodeURIComponent(email.trim())}`}
+                  >
+                    وارد کردن کد بازیابی
+                  </a>
+                </div>
+              )}
+              <Field label="ایمیل">
+                <input
+                  dir="ltr"
+                  type="email"
+                  name="email"
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                  autoComplete="username"
+                  required
+                />
+              </Field>
+              <button className="primary-action" type="submit">
+                ارسال کد بازیابی
+              </button>
+              <button
+                className="text-link-button"
+                type="button"
+                onClick={() => {
+                  setMode("login");
+                  setError("");
+                  setForgotMessage("");
+                }}
+              >
+                بازگشت به ورود
+              </button>
+            </form>
+          </section>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="login-screen">
+      <LoginVisual tagline="هیچ دو رَدی یکسان نیست." />
+      <div className="login-form-side">
+        <section className="login-form-card">
           <span className="eyebrow">دفتر کوره</span>
-          <h1>فراموشی رمز عبور</h1>
+          <h1>ورود به مدیریت رَد</h1>
           <p>
-            ایمیل حساب مدیریتی خود را وارد کنید. یک کد ۶ رقمی به ایمیل شما ارسال
-            می‌شود.
+            حساب‌های جدید مشتری از فروشگاه ساخته می‌شوند. محصولات تازه را پس
+            از ورود در همین پنل اضافه کنید.
           </p>
           <form
             className="editor-form"
@@ -1711,9 +2300,11 @@ function AdminLogin({
               event.preventDefault();
               try {
                 setError("");
-                const result = await onForgotPassword(email.trim());
-                setForgotMessage(result.message);
+                saveLoginPreferences(email, rememberMe);
+                setConnecting(true);
+                await onLogin({ email: email.trim(), password, rememberMe });
               } catch (err) {
+                setConnecting(false);
                 setError((err as Error).message);
               }
             }}
@@ -1722,17 +2313,6 @@ function AdminLogin({
               <small className="field-error" role="alert">
                 {error}
               </small>
-            )}
-            {forgotMessage && (
-              <div className="login-success" role="status">
-                <p>{forgotMessage}</p>
-                <a
-                  className="text-link"
-                  href={`/reset-password?email=${encodeURIComponent(email.trim())}`}
-                >
-                  وارد کردن کد بازیابی
-                </a>
-              </div>
             )}
             <Field label="ایمیل">
               <input
@@ -1745,108 +2325,58 @@ function AdminLogin({
                 required
               />
             </Field>
-            <button className="primary-action" type="submit">
-              ارسال کد بازیابی
-            </button>
-            <button
-              className="text-link-button"
-              type="button"
-              onClick={() => {
-                setMode("login");
-                setError("");
-                setForgotMessage("");
-              }}
-            >
-              بازگشت به ورود
-            </button>
+            <Field label="رمز عبور">
+              <div className="password-field">
+                <input
+                  dir="ltr"
+                  type={showPassword ? "text" : "password"}
+                  name="password"
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  autoComplete="current-password"
+                  minLength={8}
+                  required
+                />
+                <button
+                  type="button"
+                  className="password-toggle"
+                  onClick={() => setShowPassword((value) => !value)}
+                  aria-label={showPassword ? "پنهان کردن رمز عبور" : "نمایش رمز عبور"}
+                >
+                  {showPassword ? <EyeOff /> : <Eye />}
+                </button>
+              </div>
+            </Field>
+            <label className="remember-field">
+              <input
+                type="checkbox"
+                name="remember"
+                checked={rememberMe}
+                onChange={(event) => setRememberMe(event.target.checked)}
+              />
+              <span>
+                مرا به خاطر بسپار — ایمیل و ورود در این مرورگر نگه داشته شود
+              </span>
+            </label>
+            <div className="login-actions">
+              <button className="primary-action" type="submit">
+                ورود
+                <ArrowLeft />
+              </button>
+              <button
+                className="text-link-button"
+                type="button"
+                onClick={() => {
+                  setMode("forgot");
+                  setError("");
+                }}
+              >
+                رمز عبور را فراموش کرده‌اید؟
+              </button>
+            </div>
           </form>
         </section>
       </div>
-    );
-  }
-
-  return (
-    <div className="admin-login">
-      <section className="paper-panel">
-        <div className="brand-mark login-brand">
-          <img src="/rad-logo.png" alt="رَد" width={72} height={72} />
-        </div>
-        <span className="eyebrow">دفتر کوره</span>
-        <h1>ورود به مدیریت رَد</h1>
-        <p>
-          حساب‌های جدید مشتری از فروشگاه ساخته می‌شوند. محصولات تازه را پس از
-          ورود در همین پنل به پایگاه داده اضافه کنید.
-        </p>
-        <form
-          className="editor-form"
-          noValidate
-          onSubmit={async (event) => {
-            event.preventDefault();
-            try {
-              setError("");
-              saveLoginPreferences(email, rememberMe);
-              await onLogin({ email: email.trim(), password, rememberMe });
-            } catch (err) {
-              setError((err as Error).message);
-            }
-          }}
-        >
-          {error && (
-            <small className="field-error" role="alert">
-              {error}
-            </small>
-          )}
-          <Field label="ایمیل">
-            <input
-              dir="ltr"
-              type="email"
-              name="email"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              autoComplete="username"
-              required
-            />
-          </Field>
-          <Field label="رمز عبور">
-            <input
-              dir="ltr"
-              type="password"
-              name="password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              autoComplete="current-password"
-              minLength={8}
-              required
-            />
-          </Field>
-          <label className="remember-field">
-            <input
-              type="checkbox"
-              name="remember"
-              checked={rememberMe}
-              onChange={(event) => setRememberMe(event.target.checked)}
-            />
-            <span>
-              مرا به خاطر بسپار — ایمیل و ورود در این مرورگر نگه داشته شود
-            </span>
-          </label>
-          <div className="login-actions">
-            <button className="primary-action" type="submit">
-              ورود
-            </button>
-            <button
-              className="text-link-button"
-              type="button"
-              onClick={() => {
-                setMode("forgot");
-                setError("");
-              }}
-            >
-              رمز عبور را فراموش کرده‌اید؟
-            </button>
-          </div>
-        </form>
-      </section>
     </div>
   );
 }

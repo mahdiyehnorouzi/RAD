@@ -1,10 +1,29 @@
 .related {
   min-width: 0;
+  width: 100vw;
+  margin-inline-start: calc(50% - 50vw);
 }
 
 section.related > h2 {
   margin-bottom: 1rem;
+  padding-inline: var(--page);
   font-size: clamp(1.25rem, 1.7vw, 1.5rem);
+}
+
+/* The carousel is the shared component used elsewhere with its own gutter;
+   scope the full-bleed padding override to its use inside .related only. */
+.related :global(.product-carousel-track) {
+  margin-inline: 0;
+  padding-inline: var(--page);
+  scroll-padding-inline: var(--page);
+}
+
+.related :global(.product-carousel-arrow.is-previous) {
+  inset-inline-start: calc(var(--page) - 0.9rem);
+}
+
+.related :global(.product-carousel-arrow.is-next) {
+  inset-inline-end: calc(var(--page) - 0.9rem);
 }
 
 @media (--tablet) {

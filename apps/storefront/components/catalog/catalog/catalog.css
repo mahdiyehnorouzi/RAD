@@ -149,21 +149,30 @@ button.add--in-bag:disabled,
   margin-inline: calc(var(--plp-gutter) * -1);
   overflow: hidden;
   background: var(--plp-wall);
-  isolation: isolate;
 }
 
 .plp-banner-photo {
   position: absolute;
-  z-index: -1;
+  /* No negative z-index: the banner's own background always paints behind
+     its children regardless, and pairing a negative z-index with mask-image
+     inside this isolated stacking context fails to paint at all in some
+     engines. */
   top: 0;
-  inset-inline-start: -7%;
-  width: max(calc(var(--plp-art) / 0.3), 60%);
+  /* A percentage inset here scales with the banner's width, so at wide
+     viewports it pushes most of the (now narrow, see aspect-ratio below)
+     box off-canvas. Use a fixed offset instead so the crop stays put. */
+  inset-inline-start: -0.5rem;
+  /* The source photo is a close-up with the mug only in its left third and
+     plain wall filling the rest — a box much wider than it is tall makes
+     `object-fit: cover` scale to the image's full width, showing mostly
+     that blank wall. A fixed aspect-ratio narrower than the source (16:9)
+     keeps cover scaling by height instead, so it always zooms in on the mug. */
+  aspect-ratio: 3 / 4;
+  width: auto;
   max-width: none;
   height: 100%;
   object-fit: cover;
   object-position: 0% 26%;
-  -webkit-mask-image: linear-gradient(to right, #000 62%, transparent 98%);
-  mask-image: linear-gradient(to right, #000 62%, transparent 98%);
   pointer-events: none;
   user-select: none;
   animation: plp-banner-settle 1.6s
@@ -172,6 +181,27 @@ button.add--in-bag:disabled,
 
 html[dir="rtl"] .plp-banner-photo {
   transform: scaleX(-1);
+}
+
+/* Fades the photo into the wall background instead of a hard edge — a
+   sibling overlay sized to match the photo's own box, rather than
+   mask-image on the photo itself: that combination (mask-image +
+   isolation + transform) failed to paint at all in testing. Physical
+   (not logical) gradient directions, because the side that touches the
+   copy text vs. the side that bleeds to the screen edge swaps with it. */
+.plp-banner-fade {
+  position: absolute;
+  top: 0;
+  inset-inline-start: -0.5rem;
+  aspect-ratio: 3 / 4;
+  width: auto;
+  height: 100%;
+  background: linear-gradient(to right, var(--plp-wall) 0%, transparent 55%);
+  pointer-events: none;
+}
+
+html[dir="ltr"] .plp-banner-fade {
+  background: linear-gradient(to left, var(--plp-wall) 0%, transparent 55%);
 }
 
 @keyframes plp-banner-settle {
@@ -555,12 +585,6 @@ html[dir="ltr"] .plp-categories {
     grid-column: 2;
     justify-self: stretch;
     padding: 1.5rem 1rem 1.8rem;
-  }
-
-  .plp-banner-photo {
-    inset-inline-start: -7%;
-    width: 100%;
-    opacity: 1;
   }
 
   .plp-chip {

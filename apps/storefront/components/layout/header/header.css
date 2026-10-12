@@ -276,3 +276,12 @@
     transition: none;
   }
 }
+
+/* PDP mobile/tablet: the gallery renders its own thin overlay header
+   (back/favorite/share on the image), so the global chrome header is
+   hidden rather than stacked above it. Desktop keeps the global header. */
+@media (--phone), (--tablet) {
+  html[data-pdp-bare="true"] .header {
+    display: none;
+  }
+}

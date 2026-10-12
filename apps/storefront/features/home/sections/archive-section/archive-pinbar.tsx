@@ -49,7 +49,7 @@ export function ArchivePinbar({ shown }: { shown: boolean }) {
         </span>
         <span className={styles.archivePinbarTitle}>{t("archiveTitle")}</span>
         <Link className={styles.archivePinbarLink} href={href("/products")}>
-          <span>{t("allWorks")}</span>
+          <span>{t("homeArchiveLink")}</span>
           <ArrowIcon aria-hidden="true" />
         </Link>
       </div>

@@ -16,6 +16,15 @@ export function absoluteUrl(path = "/") {
   return new URL(path, siteUrl).toString();
 }
 
+/**
+ * `opengraph-image.tsx` lives under `app/[locale]/` (so it can inherit that
+ * layout's `metadataBase`) — its served path is locale-prefixed, not `/opengraph-image`.
+ * This fallback always points at the default locale's rendering of it.
+ */
+export function defaultOgImage() {
+  return absoluteUrl("/fa/opengraph-image");
+}
+
 /** hreflang alternates for FA default + EN via `?lang=en`. */
 export function languageAlternates(path: string) {
   const enPath = path.includes("?")
@@ -43,6 +52,12 @@ export function pageMetadata({
   image?: string;
   type?: "website" | "article";
 }): Metadata {
+  // `openGraph`/`twitter` objects replace the root's wholesale rather than
+  // deep-merging, so a page that sets either without an image silently loses
+  // the root's image and falls back to resolving the implicit
+  // `opengraph-image` convention file with no metadataBase in its own route
+  // segment (it lives outside `[locale]`) — always supply one explicitly.
+  const resolvedImage = image ?? defaultOgImage();
   return {
     title,
     description,
@@ -58,15 +73,13 @@ export function pageMetadata({
       title,
       description,
       url: path,
-      ...(image
-        ? { images: [{ url: image, alt: title }] }
-        : {}),
+      images: [{ url: resolvedImage, alt: title }],
     },
     twitter: {
       card: "summary_large_image",
       title,
       description,
-      ...(image ? { images: [image] } : {}),
+      images: [resolvedImage],
     },
   };
 }

@@ -135,12 +135,21 @@ export function AddToBag({
   onConflict,
   icon,
   compact = false,
+  busyLabel,
+  onBusyChange,
+  hideSheet = false,
 }: {
   product: Product;
   /** Called after the API refuses the add (taken or withdrawn) so the page can re-check. */
   onConflict?: () => void;
   icon?: React.ReactNode;
   compact?: boolean;
+  /** Overrides the default "submitting" label shown while the add is in flight. */
+  busyLabel?: string;
+  /** Lets a caller (e.g. a bar that renders its own busy/added chrome) mirror the in-flight state. */
+  onBusyChange?: (busy: boolean) => void;
+  /** Suppresses the built-in `BagAddedSheet` modal for callers rendering their own success state. */
+  hideSheet?: boolean;
 }) {
   const { add } = useCart();
   const { locale, t, href } = useLocale();
@@ -154,6 +163,10 @@ export function AddToBag({
   const { inBag: added, purchasable, label } = useProductStatus(product);
   const unavailable = blocked || (!added && !purchasable);
   const unavailableLabel = label && !purchasable ? label : t("soldOut");
+
+  useEffect(() => {
+    onBusyChange?.(busy);
+  }, [busy, onBusyChange]);
 
   useEffect(() => {
     if (product.status !== "available") return;
@@ -176,7 +189,7 @@ export function AddToBag({
             const addedToBag = await add(product);
             setBusy(false);
             if (addedToBag) {
-              setAddedSheet(true);
+              if (!hideSheet) setAddedSheet(true);
               void addNotice("cart", product.slug).catch(() => {});
             }
           } catch (err) {
@@ -208,14 +221,14 @@ export function AddToBag({
             : unavailable
               ? unavailableLabel
               : busy
-                ? t("submitting")
+                ? busyLabel ?? t("submitting")
                 : t("addBag")}
         </span>
       </button>
       {addedSheet && (
         <BagAddedSheet product={product} onClose={() => setAddedSheet(false)} />
       )}
-      {added && !compact ? (
+      {added && !compact && !hideSheet ? (
         <Link className="add-to-bag-next" href={href("/cart")}>
           <svg
             className="add-to-bag-next-thread"

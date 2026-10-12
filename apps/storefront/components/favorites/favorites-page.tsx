@@ -8,6 +8,7 @@ import { useCommerce } from "@/components/commerce";
 import { useLocale } from "@/components/i18n";
 import { ProductCard } from "@/components/product";
 import { useCatalog } from "@/components/catalog";
+import { ProductGridSkeleton } from "@/components/product/listing/product-grid-skeleton";
 import { EmptyFavoritesState } from "@/components/states";
 import { availableWorks } from "@/lib/catalog/product-status";
 import { AccountShell } from "../account/account-shell";
@@ -65,11 +66,7 @@ export function FavoritesPage() {
         }
       />
       {waiting ? (
-        <div className="favorites-state is-waiting" role="status" aria-live="polite">
-          <Heart aria-hidden="true" strokeWidth={1.6} />
-          <h2>{t("favoritesWaitingTitle")}</h2>
-          <p>{t("favoritesWaitingBody")}</p>
-        </div>
+        <ProductGridSkeleton />
       ) : items.length ? (
         <div className="product-grid">
           {items.map(

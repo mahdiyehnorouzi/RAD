@@ -1,11 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { ShoppingBag } from "lucide-react";
-import { AddToBag } from "./catalog";
 import type { Product } from "@rad/types";
 import { FavoriteButton } from "@/components/commerce";
 import { useLocale } from "@/components/i18n";
+import { useOpenProductTransition } from "@/features/product-detail";
 import {
   formatRadDigits,
   LinkPending,
@@ -31,6 +30,12 @@ export function CatalogCard({ product }: { product: Product }) {
     useProductStatus(product);
 
   const productHref = href(`/products/${product.slug}`);
+  // Apple Store-style PDP entry: expand this exact card's photograph into
+  // the fullscreen PDP overlay (see features/product-detail/transition).
+  const { ref: artRef, onClick: openTransition } = useOpenProductTransition(
+    product.slug,
+    productHref,
+  );
   const digits = Number(product.artworkNumber?.replace(/\D/g, "") || 0);
   const markDigits = digits ? formatRadDigits(digits, number, locale) : "";
   const price = productFullPriceParts(product, locale);
@@ -54,9 +59,11 @@ export function CatalogCard({ product }: { product: Product }) {
       <div className="plp-card-stage">
         <Link
           href={productHref}
+          ref={artRef}
           className="plp-card-art"
           tabIndex={-1}
           aria-hidden="true"
+          onClick={openTransition}
         >
           <ProductCardArtwork product={product} />
           <LinkPending />
@@ -91,11 +98,6 @@ export function CatalogCard({ product }: { product: Product }) {
             {price.unit ? <span>{price.unit}</span> : null}
           </p>
         </div>
-        <AddToBag
-          product={product}
-          compact
-          icon={<ShoppingBag aria-hidden="true" />}
-        />
       </div>
     </article>
   );

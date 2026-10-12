@@ -29,24 +29,6 @@ export function Footer() {
 
       <div className="footer-index">
         <FooterGroup
-          title={t("footerShop")}
-          links={[
-            page("/products", t("footerUnique")),
-            page("/studio", t("footerCustom")),
-            page("/shape", t("footerShape")),
-          ]}
-        />
-        <FooterGroup
-          title={t("footerRad")}
-          links={[
-            page("/about", t("footerStory")),
-            page("/now", t("footerNow")),
-            page("/reviews", t("footerReviews")),
-            page("/differences", t("museumTitle")),
-            page("/account", t("profile")),
-          ]}
-        />
-        <FooterGroup
           title={t("footerConnect")}
           links={[
             page("/contact", t("footerContact")),

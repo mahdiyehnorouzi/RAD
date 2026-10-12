@@ -118,6 +118,39 @@
       scroll-behavior: auto !important;
     }
   }
+
+  /* PDP-01: product-card -> PDP hero view transition. The named group
+     (`rad-pdp-image-<slug>`, set on both the card photo and the PDP hero
+     slide) is the one element that should visibly morph — everything else
+     is the browser's default `root` cross-fade, which left at its normal
+     duration makes the *whole page* (including chrome like the gallery
+     counter) fade in gradually instead of appearing at once. `root` is
+     pinned to near-zero so only the tagged image animates; page content
+     appears immediately alongside it. Belt-and-suspenders with the JS
+     prefers-reduced-motion check in product-card-stage.tsx — if a view
+     transition is ever triggered while the user has reduced motion set,
+     cut it to an instant swap instead of a cross-fade/morph. */
+  ::view-transition-group(*) {
+    animation-duration: 420ms;
+    animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  ::view-transition-group(root) {
+    animation-duration: 1ms;
+  }
+
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none;
+  }
+
+  @media (--reduced-motion) {
+    ::view-transition-group(*),
+    ::view-transition-old(*),
+    ::view-transition-new(*) {
+      animation: none !important;
+    }
+  }
 }
 
 @layer helpers {

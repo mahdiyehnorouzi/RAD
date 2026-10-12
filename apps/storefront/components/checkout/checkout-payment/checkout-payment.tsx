@@ -92,11 +92,7 @@ export function CheckoutPayment({ id }: { id: string }) {
     locale === "fa"
       ? formatTotal(tomanDue, "fa")
       : `${new Intl.NumberFormat("en-US").format(tomanDue)} toman`;
-  const usdTotal =
-    order.usdTotal ??
-    items.reduce((sum, product) => sum + (product.usdPrice ?? 0), 0);
-  const summaryTotal =
-    locale === "fa" ? tomanLabel : formatTotal(usdTotal, "en");
+  const summaryTotal = tomanLabel;
 
   if (order.status !== "pending_payment") {
     return (

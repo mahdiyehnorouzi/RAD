@@ -19,19 +19,14 @@ export function QuoteCard({
   const rows = [
     [locale === "fa" ? "مشخصات نهایی" : "Final specification", copy(quote.specification, locale)],
     [locale === "fa" ? "هنرمند" : "Artist", quote.artistName],
-    [locale === "fa" ? "قیمت" : "Price", moneyFor(commission, locale, quote.priceToman, quote.priceUsd)],
+    [locale === "fa" ? "قیمت" : "Price", moneyFor(commission, locale, quote.priceToman)],
     [
       locale === "fa" ? "بیعانه" : "Deposit",
-      moneyFor(commission, locale, quote.depositToman, quote.depositUsd),
+      moneyFor(commission, locale, quote.depositToman),
     ],
     [
       locale === "fa" ? "مانده" : "Remaining balance",
-      moneyFor(
-        commission,
-        locale,
-        quote.priceToman - quote.depositToman,
-        quote.priceUsd - quote.depositUsd,
-      ),
+      moneyFor(commission, locale, quote.priceToman - quote.depositToman),
     ],
     [locale === "fa" ? "پنجره تکمیل" : "Completion window", copy(quote.completionWindow, locale)],
     [

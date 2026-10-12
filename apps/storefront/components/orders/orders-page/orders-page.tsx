@@ -32,12 +32,6 @@ export function OrdersPage() {
           <div className="orders-list">
             {orders.map((order) => {
               const product = getProduct(order.slugs[0] ?? "");
-              const usdTotal =
-                order.usdTotal ??
-                order.slugs.reduce(
-                  (sum, slug) => sum + (getProduct(slug)?.usdPrice ?? 0),
-                  0,
-                );
               return (
                 <article className="order-card" key={order.id}>
                   <header>
@@ -92,10 +86,7 @@ export function OrdersPage() {
                     </div>
                   </dl>
                   <strong>
-                    {formatTotal(
-                      locale === "fa" ? order.total : usdTotal,
-                      locale,
-                    )}
+                    {formatTotal(order.total, locale)}
                   </strong>
                   <ButtonLink href={`/orders/${order.id}`}>
                     {t("trackOrder")}

@@ -1,7 +1,7 @@
 import { Global, Module } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { TypeOrmModule } from "@nestjs/typeorm";
-import { cleanDatabaseUrl, schemaSyncEnabled } from "./data-source";
+import { cleanDatabaseUrl, POOL_EXTRA, schemaSyncEnabled } from "./data-source";
 import { entities } from "./entities";
 
 @Global()
@@ -20,13 +20,7 @@ import { entities } from "./entities";
           entities: [...entities],
           synchronize,
           logging: false,
-          extra: {
-            max: 5,
-            keepAlive: true,
-            keepAliveInitialDelayMillis: 1000,
-            connectionTimeoutMillis: 20_000,
-            idleTimeoutMillis: 10_000,
-          },
+          extra: { ...POOL_EXTRA },
         };
       },
     }),

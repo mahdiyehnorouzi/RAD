@@ -7,11 +7,26 @@
   --pdp-stage-max: max(30rem, calc(100svh - var(--header-height) - 9rem));
   display: grid;
   gap: var(--pdp-band);
-  padding: clamp(0.75rem, 2vw, 1.75rem) var(--page) clamp(3rem, 6vw, 5rem);
+  /* The trailing +6rem clears the floating purchase bar (its own height,
+     bottom offset, and safe-area inset) so the last accordion card is
+     never hidden behind it even scrolled all the way down. */
+  padding: clamp(0.75rem, 2vw, 1.75rem) var(--page)
+    calc(clamp(3rem, 6vw, 5rem) + 6rem + env(safe-area-inset-bottom, 0px));
   background: var(--paper);
 }
 
-.pdp > * {
+@media (--desktop) {
+  .pdp {
+    padding-bottom: clamp(3rem, 6vw, 5rem);
+  }
+}
+
+/* Excludes the floating purchase bar: it's a `position: fixed` direct
+   child of `.pdp` (not part of the normal-flow content column), and this
+   rule's `width: 100%; margin-inline: auto` was winning the cascade over
+   the bar's own width/inset rules (equal specificity, later in source
+   order) — collapsing its carefully balanced side insets back to 0/0. */
+.pdp > :global(:not(.pdp-floating-bar)) {
   width: 100%;
   max-width: 86rem;
   min-width: 0;
@@ -44,7 +59,7 @@
 
 .top {
   display: grid;
-  grid-template-columns: minmax(20rem, 0.72fr) minmax(0, 1fr);
+  grid-template-columns: minmax(20rem, 0.55fr) minmax(0, 1fr);
   grid-template-rows: auto 1fr;
   grid-template-areas:
     "summary gallery"
@@ -52,6 +67,12 @@
   align-items: start;
   gap: 1.25rem var(--pdp-gap);
   counter-reset: pdp-fold;
+}
+
+@media (--desktop) {
+  .top {
+    grid-template-columns: minmax(19rem, 0.42fr) minmax(0, 1fr);
+  }
 }
 
 .gallery {
@@ -62,6 +83,15 @@
   grid-area: summary;
 }
 
+@media (--desktop) {
+  .summary {
+    position: sticky;
+    top: calc(var(--header-height, 0px) + 1.5rem);
+    max-height: calc(100svh - var(--header-height, 0px) - 3rem);
+    overflow-y: auto;
+  }
+}
+
 .rest {
   grid-area: rest;
   display: grid;
@@ -70,9 +100,13 @@
   margin-top: 1.5rem;
 }
 
-/* The glaze rule takes the place of the fold list's closing hairline. */
-.foldList:has(+ .restStrip) > details:last-child {
-  border-bottom: 0;
+/* The specs card lives in `.summary`, which has no trailing-gap mechanism
+   of its own (unlike `.rest`, which has an explicit `gap`) — so it was the
+   one card with no guaranteed separation from whatever follows it below
+   (previously relying on `.rest`'s negative margin-top to coincidentally
+   leave *some* room, which is exactly backwards). */
+.summary :global(.pdp-section-card) {
+  margin-bottom: 0.75rem;
 }
 
 .restStrip {
@@ -96,12 +130,23 @@
     gap: 1rem;
   }
   .rest {
-    gap: 0.75rem;
-    margin-top: -0.25rem;
+    gap: 0.875rem;
+    margin-top: 0;
   }
   /* The cards and their strokes carry the work's surface here. */
   .restStrip {
     display: none;
+  }
+}
+
+/* The gallery's own overlay header replaces the global chrome header/trail
+   on phone — the hero image starts essentially at the viewport top. */
+@media (--phone) {
+  .pdp {
+    padding-top: 0;
+  }
+  .top {
+    gap: 0;
   }
 }
 
