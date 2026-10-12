@@ -5,7 +5,7 @@
   "scripts": {
     "start": "react-native start",
     "start:reset": "react-native start --reset-cache",
-    "android": "react-native run-android --mode debug",
+    "android": "react-native run-android --mode debug --appIdSuffix dev",
     "android:release": "react-native run-android --mode release",
     "ios": "react-native run-ios --scheme Rad --mode Debug",
     "ios:release": "react-native run-ios --scheme Rad --mode Release",

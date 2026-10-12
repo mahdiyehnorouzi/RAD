@@ -273,7 +273,8 @@
 					"-ObjC",
 					"-lc++",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.radobject.app;
+				APP_DISPLAY_NAME = "Rad Dev";
+				PRODUCT_BUNDLE_IDENTIFIER = com.radobject.app.dev;
 				PRODUCT_NAME = Rad;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
@@ -302,6 +303,7 @@
 					"-ObjC",
 					"-lc++",
 				);
+				APP_DISPLAY_NAME = Rad;
 				PRODUCT_BUNDLE_IDENTIFIER = com.radobject.app;
 				PRODUCT_NAME = Rad;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";

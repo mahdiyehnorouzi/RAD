@@ -75,9 +75,20 @@ Build outputs:
 
 ## Identifiers and versions
 
-- Bundle ID / application ID: `com.radobject.app`
-- Version: iOS `MARKETING_VERSION` / `CURRENT_PROJECT_VERSION` in the Xcode project. Android `versionName` / `versionCode` in `android/app/build.gradle`. Bump the build number for every store upload.
+| Build | Name on device | iOS bundle ID / Android application ID |
+|---|---|---|
+| Debug (dev) | Rad Dev | `com.radobject.app.dev` |
+| Release (store) | Rad | `com.radobject.app` |
+
+Dev builds have their own ID, so they install next to the store app instead of replacing it. Names are set per configuration: `APP_DISPLAY_NAME` in the Xcode build settings, and `resValue "app_name"` per build type in `android/app/build.gradle`.
+
+Versions: iOS `MARKETING_VERSION` / `CURRENT_PROJECT_VERSION` in the Xcode project. Android `versionName` / `versionCode` in `android/app/build.gradle`. Bump the build number for every store upload.
 
 ## Icons and splash
 
-`npm run app:assets` regenerates everything from the storefront logo: the iOS `AppIcon` (1024, opaque) and `SplashLogo`, Android legacy, round and adaptive launcher icons, the pre-Android-12 launch drawable, and the Android 12+ splash icon. The splash background is the storefront `--canvas` color (`#eee7dc`).
+`npm run app:assets` regenerates everything from `assets-src/rad-logo.png`, the same file the website uses as its favicon and PWA icon.
+
+- **App icons** are that logo itself: the iOS `AppIcon` (1024, opaque), and Android legacy, round and adaptive icons (adaptive background `#f2e8db`, the logo's own cream).
+- **Splash screens** use the mark cut out of the logo on the storefront `--canvas` color (`#eee7dc`): the iOS `SplashLogo`, the pre-Android-12 launch drawable, the Android 12+ splash icon, and the in-app overlay.
+
+The logo is 512px, so the 1024 iOS icon is upscaled. Drop in a larger `rad-logo.png` and rerun to sharpen it.

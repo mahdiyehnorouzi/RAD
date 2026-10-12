@@ -117,10 +117,15 @@ android {
         }
     }
     buildTypes {
+        // Dev builds are "Rad Dev" with their own application ID, so they install next to
+        // the store app. debugOptimized is created from debug and inherits both.
         debug {
             signingConfig signingConfigs.debug
+            applicationIdSuffix ".dev"
+            resValue "string", "app_name", "Rad Dev"
         }
         release {
+            resValue "string", "app_name", "Rad"
             // Store builds are signed with the upload key from android/keystore.properties
             // (or RAD_UPLOAD_* env vars). Without it the build falls back to the debug key,
             // which is fine for local testing but will be rejected by Google Play.
