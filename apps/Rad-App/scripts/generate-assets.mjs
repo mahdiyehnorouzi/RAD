@@ -1,9 +1,8 @@
 /**
- * Generates app icons and splash artwork from the storefront's brand logo
- * (apps/storefront/public/rad-logo.png) so the native app matches the web.
- *
- * Uses `sharp` from the monorepo root node_modules:
- *   npm run assets   (from Rad-App)
+ * Generates app icons and splash artwork from assets-src/rad-logo.png, a copy
+ * of the storefront logo kept here so the app never reads from the web project.
+ * If the brand logo changes, replace that file and run:
+ *   npm run assets
  */
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
@@ -11,7 +10,7 @@ import { fileURLToPath } from "node:url";
 import sharp from "sharp";
 
 const appDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const source = path.resolve(appDir, "../apps/storefront/public/rad-logo.png");
+const source = path.join(appDir, "assets-src/rad-logo.png");
 
 // Sampled from rad-logo.png: cream paper and the green mark.
 const LOGO_BG = { r: 242, g: 232, b: 219 };

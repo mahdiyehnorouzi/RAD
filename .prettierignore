@@ -28,7 +28,7 @@ apps/api/data
 work
 
 # React Native app has its own Prettier config
-Rad-App
+apps/Rad-App
 
 # Prose docs are edited by hand
 *.md

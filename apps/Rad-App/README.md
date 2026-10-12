@@ -2,7 +2,7 @@
 
 React Native wrapper that loads the RAD storefront (`https://www.rad-object.com/`) in a WebView, for publishing on the App Store and Google Play.
 
-It lives outside the npm workspaces (`apps/*`, `packages/*`) on purpose: React Native pins its own React version, and hoisting would clash with the web apps. It has its own `node_modules`, lockfile, ESLint and Prettier config.
+It lives in `apps/Rad-App` but is deliberately **not** an npm workspace. The root `package.json` lists its workspaces explicitly so this app is left out: React Native pins its own React version, and hoisting would clash with the web apps. It has its own `node_modules`, lockfile, ESLint and Prettier config. If you add a new app under `apps/`, add it to the root `workspaces` list.
 
 ## What's inside
 
@@ -10,9 +10,19 @@ It lives outside the npm workspaces (`apps/*`, `packages/*`) on purpose: React N
 - `src/RadWebView.tsx`: WebView setup. `rad-object.com` links stay in the app; anything else (`tel:`, `mailto:`, social links) opens in the system. Handles Android back, offline/error retry, and WebView process crashes.
 - `src/SplashOverlay.tsx`: continues the native launch screen (same canvas color and mark) until the first page load finishes, then fades out.
 - `src/config.ts`: site URL, allowed hosts, colors and copy mirrored from the storefront.
-- `scripts/generate-assets.mjs`: builds every app icon and splash image from `apps/storefront/public/rad-logo.png`.
+- `scripts/generate-assets.mjs`: builds every app icon and splash image from `assets-src/rad-logo.png`, a copy of the storefront logo.
+- `scripts/check-isolation.mjs`: builds the production bundles and fails if any file in them comes from outside this folder.
 
 The WebView user agent ends with `RadApp`, so the site can detect it is running inside the app.
+
+## Isolation from the web project
+
+The app and the web project don't depend on each other in either direction:
+
+- **App → web.** Metro only reads files inside `apps/Rad-App`. Importing anything from `apps/storefront`, `packages/*` or the root `node_modules` fails with "Unable to resolve module", even if the package is installed at the root. Build tooling (`sharp` for icons) and the logo are local copies too. Colors and copy in `src/config.ts` are copied values, not imports.
+- **Web → app.** The app isn't in the root `workspaces`, so root `npm install`/`npm ci`, `build:all`, `typecheck:all`, `test` and CI ignore it. Root ESLint, Prettier and `.dockerignore` exclude it, and nothing in the web apps imports from it.
+
+Run `npm run app:check:isolation` to confirm. Today each production bundle has about 540 modules (about 870 KB, the normal React Native baseline), with zero from outside the app. If the brand logo changes, replace `assets-src/rad-logo.png` and run `npm run app:assets`.
 
 ## Setup
 
@@ -27,7 +37,7 @@ npm run app:ios         # debug build on the iOS simulator
 npm run app:android     # debug build on an emulator/device
 ```
 
-Every `app:*` script at the root forwards to the script of the same name in `Rad-App/package.json`, so you can also run them from inside `Rad-App` without the `app:` prefix.
+Every `app:*` script at the root forwards to the script of the same name in `Rad-App/package.json`, so you can also run them from inside `apps/Rad-App` without the `app:` prefix.
 
 ## Scripts
 
@@ -47,6 +57,7 @@ Every `app:*` script at the root forwards to the script of the same name in `Rad
 | `app:build:android:apk` | `build:android:apk` | Release APK (sideloading or testing) |
 | `app:clean` | `clean` | Gradle clean + remove `ios/build` |
 | `app:assets` | `assets` | Regenerate icons and splash images |
+| `app:check:isolation` | `check:isolation` | Fail if a production bundle includes files from outside the app |
 | `app:typecheck` / `app:test` | `typecheck` / `test` | TypeScript / Jest |
 
 Other Rad-App scripts: `ios:device`, `pods:update`, `pods:clean`, `lint`.
