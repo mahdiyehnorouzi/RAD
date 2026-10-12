@@ -204,7 +204,9 @@ export function RadWebView({ onFirstLoad }: Props) {
         allowFileAccess={false}
         mixedContentMode="never"
         overScrollMode="never"
-        decelerationRate="normal"
+        // No decelerationRate: "normal" is already the iOS default, and react-native-webview
+        // passes the string unconverted to Android, where the native prop is a double and
+        // the release app crashes on launch (ClassCastException in RNCWebViewManagerDelegate).
         onNavigationStateChange={onNavigationStateChange}
         onShouldStartLoadWithRequest={onShouldStartLoadWithRequest}
         onMessage={onMessage}
