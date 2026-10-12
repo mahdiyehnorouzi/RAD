@@ -1,0 +1,5 @@
+<resources>
+    <!-- Matches --canvas in apps/storefront/styles/tokens.css -->
+    <color name="rad_canvas">#EEE7DC</color>
+    <color name="ic_launcher_background">#EEE7DC</color>
+</resources>
