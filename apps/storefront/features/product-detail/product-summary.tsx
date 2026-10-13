@@ -1,5 +1,5 @@
 "use client";
-import { useId } from "react";
+import { useId, type Ref } from "react";
 import { Info, ShoppingBag } from "lucide-react";
 import type { Artwork, Product } from "@rad/types";
 import { useLocale } from "@/components/i18n";
@@ -31,6 +31,7 @@ export function ProductSummary({
   passport,
   qrSvg,
   textures,
+  buyRef,
 }: {
   className: string;
   product: Product;
@@ -40,6 +41,8 @@ export function ProductSummary({
   passport?: RadPassport;
   qrSvg?: string;
   textures: WorkTexture[];
+  /** Observed by the page to know when the inline CTA leaves the viewport. */
+  buyRef?: Ref<HTMLDivElement>;
 }) {
   const { locale, t, number } = useLocale();
   const c = pdpCopy[locale];
@@ -57,6 +60,14 @@ export function ProductSummary({
   const open = state.status === "available" && !state.inBag && !state.reserved;
   const availability = open ? c.available : state.label;
   const closed = state.sold || state.withdrawn;
+  // Reserved is disabled too, but handled as its own explicit branch (not
+  // folded into `closed`/routed through AddToBag's own generic label) so
+  // its text matches the floating bar's `c.reservedNow` exactly — relying
+  // on AddToBag's internal useProductStatus() label here previously showed
+  // a *different* string ("رزرو شده") than the floating bar's "فعلاً رزرو شده"
+  // for the identical state.
+  const unavailableInline = closed || state.reserved;
+  const unavailableInlineLabel = state.reserved ? c.reservedNow : t("soldOut");
   const change = artwork?.passport?.unexpectedChanges?.[locale];
 
   return (
@@ -94,6 +105,12 @@ export function ProductSummary({
         <p className={styles.price}>{productPrice(product, locale)}</p>
       </div>
 
+      {state.sold ? (
+        <p className={styles.contextNote}>{c.soldFoundNote}</p>
+      ) : state.reserved ? (
+        <p className={styles.contextNote}>{c.reservedAvailableNote}</p>
+      ) : null}
+
       <ProductLiveNotice
         product={product}
         live={live}
@@ -101,8 +118,8 @@ export function ProductSummary({
         reserved={state.reserved}
       />
 
-      <div className={styles.buy}>
-        {closed ? (
+      <div className={styles.buy} ref={buyRef}>
+        {unavailableInline ? (
           <div className="add-to-bag">
             <button
               type="button"
@@ -111,7 +128,7 @@ export function ProductSummary({
               aria-describedby={state.sold ? noteId : undefined}
             >
               <ShoppingBag aria-hidden="true" />
-              {t("addBag")}
+              {unavailableInlineLabel}
             </button>
           </div>
         ) : (
@@ -119,6 +136,7 @@ export function ProductSummary({
             product={product}
             onConflict={() => void live.check()}
             icon={<ShoppingBag aria-hidden="true" />}
+            busyLabel={c.addingBag}
           />
         )}
         {state.sold ? (

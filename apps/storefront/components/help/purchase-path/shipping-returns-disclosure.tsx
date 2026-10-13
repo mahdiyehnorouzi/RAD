@@ -33,7 +33,7 @@ export function ShippingReturnsDisclosure({
             { slug: "shipping", id: "cost" },
             { slug: "shipping", id: "tehran" },
             { slug: "shipping", id: "cities" },
-            { slug: "returns", id: "window", review: true },
+            { slug: "returns", id: "window" },
             { slug: "returns", id: "damage" },
             { slug: "returns", id: "compensation" },
           ]}

@@ -1,15 +1,4 @@
-import type { LocaleCopy } from "@/types/locale";
 import type { PolicyDocument } from "../type";
-
-/**
- * Iranian e-commerce law gives distance buyers at least seven working days
- * to withdraw. The 48-hour window below is published pending that review;
- * the order page and checkout copy in `purchase-path-copy.ts` repeat it.
- */
-export const RETURN_WINDOW_REVIEW: LocaleCopy = {
-  fa: "این مهلت در حال بازبینی با قانون تجارت الکترونیکی است و اگر تغییر کند، به نفع خریدار تغییر می‌کند.",
-  en: "This window is being reviewed against Iran's e-commerce law; if it changes, it will change in the buyer's favour.",
-};
 
 export const RETURNS_POLICY: PolicyDocument = {
   slug: "returns",
@@ -75,7 +64,6 @@ export const RETURNS_POLICY: PolicyDocument = {
               },
             },
           ],
-          underReview: RETURN_WINDOW_REVIEW,
         },
         {
           id: "how",

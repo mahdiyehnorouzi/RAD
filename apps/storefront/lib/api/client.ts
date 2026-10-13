@@ -1,4 +1,8 @@
 import { withCurrentAssetPaths } from "@/lib/media/legacy-assets";
+import { parseServerTimingDuration } from "./server-timing";
+
+const timingEnabled =
+  typeof window !== "undefined" && process.env.NODE_ENV !== "production";
 
 /** Where server code reaches the API; browsers go through the /backend proxy. */
 export const SERVER_API_URL = process.env.API_URL || "http://localhost:4000";
@@ -76,6 +80,9 @@ export async function api<T>(
     else external.addEventListener("abort", onExternalAbort, { once: true });
   }
   const timer = setTimeout(() => controller.abort(), timeoutMs);
+  // The browser's own monotonic clock, start to finish — never compared
+  // against a timestamp from another machine (see server-timing.ts).
+  const clientStart = timingEnabled ? performance.now() : 0;
   try {
     const response = await fetch(`${API_BASE}${path}`, {
       ...fetchInit,
@@ -83,6 +90,21 @@ export async function api<T>(
       headers,
       signal: controller.signal,
     });
+    if (timingEnabled) {
+      const totalMs = performance.now() - clientStart;
+      const proxyMs = parseServerTimingDuration(
+        response.headers.get("server-timing"),
+        "proxy",
+      );
+      console.debug("[rad:client-timing]", {
+        path,
+        status: response.status,
+        totalMs: Math.round(totalMs),
+        proxyMs,
+        networkMs:
+          proxyMs !== undefined ? Math.round(totalMs - proxyMs) : undefined,
+      });
+    }
     const data = (await response.json().catch(() => ({}))) as T & ApiErrorBody;
     if (!response.ok) {
       throw new ApiError(

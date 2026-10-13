@@ -6,6 +6,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -67,11 +68,37 @@ type CommerceContextValue = {
 const CommerceContext = createContext<CommerceContextValue | null>(null);
 
 const NOTICE_POLL_MS = 30_000;
+const FAVORITES_CACHE_KEY = "rad.favorites.cache";
 
 function upsertOrder(orders: Order[], order: Order) {
   return orders.some((item) => item.id === order.id)
     ? orders.map((item) => (item.id === order.id ? order : item))
     : [order, ...orders];
+}
+
+/**
+ * Seeds favorites from the last known server response so a hard refresh or
+ * locale switch (a full `window.location.assign`, see `switchLocale`) never
+ * paints an empty favorites list while `/session` is still in flight.
+ */
+function cachedFavorites(): string[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = window.localStorage.getItem(FAVORITES_CACHE_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed)
+      ? parsed.filter((v) => typeof v === "string")
+      : [];
+  } catch {
+    return [];
+  }
+}
+
+function cacheFavorites(slugs: string[]) {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(FAVORITES_CACHE_KEY, JSON.stringify(slugs));
+  } catch {}
 }
 
 export function CommerceProvider({ children }: { children: React.ReactNode }) {
@@ -88,14 +115,27 @@ export function CommerceProvider({ children }: { children: React.ReactNode }) {
   const refresh = useCatalogRefresh();
   const { locale, t } = useLocale();
 
-  const applyNotices = (payload: { notices: Notice[]; unread?: number }) => {
-    setNotices(payload.notices);
+  // `payload.notices`/`session.notices` defensively fall back to `[]` — a
+  // malformed/partial API response (seen locally with the dev proxy's
+  // ERR_CONTENT_DECODING_FAILED) must not leave `notices` as `undefined`,
+  // which crashes every render that calls `.filter` on it below.
+  const applyNotices = (payload: { notices?: Notice[]; unread?: number }) => {
+    setNotices(payload.notices ?? []);
   };
 
   const applySession = useCallback((session: SessionState) => {
     setUser(session.user);
     setFavorites(session.favorites);
-    setNotices(session.notices);
+    cacheFavorites(session.favorites);
+    setNotices(session.notices ?? []);
+  }, []);
+
+  // Runs before paint so a refresh or locale switch (a full page reload,
+  // see `switchLocale`) never flashes an empty favorites list while the
+  // `/session` request above is still in flight.
+  useLayoutEffect(() => {
+    const cached = cachedFavorites();
+    if (cached.length) setFavorites(cached);
   }, []);
 
   const loadOrders = useCallback(async () => {
@@ -139,8 +179,8 @@ export function CommerceProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const refreshNotices = () => {
       if (document.visibilityState !== "visible") return;
-      api<{ notices: Notice[] }>("/notices")
-        .then((payload) => setNotices(payload.notices))
+      api<{ notices?: Notice[] }>("/notices")
+        .then((payload) => setNotices(payload.notices ?? []))
         .catch((error) => logRecovered("notices", error));
     };
     const timer = window.setInterval(refreshNotices, NOTICE_POLL_MS);
@@ -197,6 +237,7 @@ export function CommerceProvider({ children }: { children: React.ReactNode }) {
           { method: "POST" },
         );
         setFavorites(payload.slugs);
+        cacheFavorites(payload.slugs);
         if (payload.added) {
           await addNotice("favorite", slug);
           setToast({

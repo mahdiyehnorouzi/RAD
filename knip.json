@@ -2,7 +2,7 @@
   "$schema": "https://unpkg.com/knip@5/schema.json",
   "workspaces": {
     "apps/storefront": {
-      "entry": ["proxy.ts", "vite.config.ts"],
+      "entry": ["proxy.ts", "vite.config.ts", "**/*.spec.ts"],
       "project": ["**/*.{ts,tsx,mjs}"],
       "ignore": [
         "dist/**",
@@ -10,8 +10,17 @@
         "components/layout/chrome/pwa.tsx",
         "components/orders/**",
         "components/contact/**",
-        "components/help/**"
-      ]
+        "components/help/**",
+        "lib/qr.ts",
+        "lib/seo.ts",
+        "lib/catalog/resolve-pdp-data.ts",
+        "features/product-detail/index.ts",
+        "features/product-detail/hooks/index.ts",
+        "features/product-detail/hooks/use-media-query.ts",
+        "features/product-detail/transition/source-registry.ts",
+        "features/product-detail/transition/product-transition-store.ts"
+      ],
+      "ignoreDependencies": ["sharp"]
     }
   }
 }

@@ -1,12 +1,16 @@
 "use client";
 
 import "./customer-sidebar.css";
-import type {MakingCommission} from "@/components/making/type";
+import type { MakingCommission } from "@/components/making/type";
 import { moneyFor } from "@/lib/making";
 import { formatWhen } from "@/lib/making";
 import { useLocale } from "@/components/i18n";
 
-export function PaymentHistory({ commission }: { commission: MakingCommission }) {
+export function PaymentHistory({
+  commission,
+}: {
+  commission: MakingCommission;
+}) {
   const { locale } = useLocale();
   if (!commission.payments.length) return null;
   return (
@@ -22,7 +26,7 @@ export function PaymentHistory({ commission }: { commission: MakingCommission })
                 ? "مانده حساب"
                 : "Balance"}
           </b>
-          <span>{moneyFor(commission, locale, item.amountToman, item.amountUsd)}</span>
+          <span>{moneyFor(commission, locale, item.amountToman)}</span>
           <small>
             {item.status === "paid"
               ? `${locale === "fa" ? "پرداخت‌شده" : "Paid"}${item.at ? ` · ${formatWhen(item.at, locale)}` : ""}`

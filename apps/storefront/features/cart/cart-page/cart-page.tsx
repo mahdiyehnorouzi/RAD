@@ -68,7 +68,7 @@ export function CartPage() {
     .filter((line) => !line.issue)
     .map((line) => line.product)
     .filter((item): item is Product => Boolean(item));
-  const total = cartTotal(payable, locale);
+  const total = cartTotal(payable);
 
   const retry = async () => {
     setRetrying(true);

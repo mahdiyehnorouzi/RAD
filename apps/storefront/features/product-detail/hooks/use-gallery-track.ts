@@ -8,7 +8,6 @@ import type { KeyboardEvent } from "react";
  */
 export function useGalleryTrack(count: number) {
   const trackRef = useRef<HTMLDivElement>(null);
-  const frame = useRef(0);
   const [active, setActive] = useState(0);
 
   const goTo = useCallback(
@@ -29,13 +28,16 @@ export function useGalleryTrack(count: number) {
     [count],
   );
 
+  // Computed synchronously, directly from the fired scroll event — no
+  // requestAnimationFrame indirection (that deferred the index update to
+  // the *next* frame on top of whatever frame the scroll event itself
+  // landed on, adding a perceptible beat of lag during a swipe for no
+  // correctness benefit, since `track.scrollLeft` is already current the
+  // instant the event fires).
   const onScroll = useCallback(() => {
-    cancelAnimationFrame(frame.current);
-    frame.current = requestAnimationFrame(() => {
-      const track = trackRef.current;
-      if (!track?.clientWidth) return;
-      setActive(Math.round(Math.abs(track.scrollLeft) / track.clientWidth));
-    });
+    const track = trackRef.current;
+    if (!track?.clientWidth) return;
+    setActive(Math.round(Math.abs(track.scrollLeft) / track.clientWidth));
   }, []);
 
   const onKeyDown = useCallback(
@@ -50,8 +52,6 @@ export function useGalleryTrack(count: number) {
     },
     [active, goTo],
   );
-
-  useEffect(() => () => cancelAnimationFrame(frame.current), []);
 
   useEffect(() => {
     if (active > count - 1) goTo(count - 1);

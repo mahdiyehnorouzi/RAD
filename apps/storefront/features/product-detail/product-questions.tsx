@@ -47,7 +47,6 @@ export function ProductQuestions({
       title={c.questionsTitle}
       lede={c.questionsLede}
       mark={<WorkStroke textures={textures} index={index} />}
-      desktop="closed"
     >
       {showShipping ? (
         <ShippingReturnsDisclosure className={styles.shipping} />

@@ -1,0 +1,106 @@
+.root {
+  position: fixed;
+  z-index: 100;
+  inset: 0;
+}
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: color-mix(in srgb, var(--ink) 55%, #000);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.card {
+  position: fixed;
+  z-index: 1;
+  inset: 0;
+  overflow: hidden;
+  background: var(--paper);
+  touch-action: pan-y;
+}
+
+.scroll {
+  position: relative;
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* An invisible placeholder the same size/position as the PDP's own hero —
+   measured once laid out to give the open/close rect-morph its target,
+   without hardcoding the hero's dimensions a second time here. */
+.heroTarget {
+  position: absolute;
+  top: 0;
+  inset-inline: 0;
+  aspect-ratio: 4 / 5;
+  pointer-events: none;
+}
+
+.content {
+  position: relative;
+  transition: opacity 220ms ease-out;
+}
+
+.close {
+  position: absolute;
+  z-index: 2;
+  top: calc(1rem + env(safe-area-inset-top, 0px));
+  inset-inline-end: 1rem;
+  display: grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--paper) 90%, transparent);
+  color: var(--ink);
+  box-shadow: 0 6px 18px color-mix(in srgb, var(--ink) 18%, transparent);
+  cursor: pointer;
+}
+
+.close svg {
+  width: 20px;
+  height: 20px;
+  stroke-width: 1.8;
+}
+
+.morphImage {
+  position: fixed;
+  z-index: 2;
+  top: 0;
+  inset-inline-start: 0;
+  object-fit: cover;
+  pointer-events: none;
+  will-change: transform, width, height, border-radius;
+}
+
+.errorState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 4rem 1.5rem;
+  text-align: center;
+  color: var(--ink);
+}
+
+.errorRetry {
+  padding: 0.6rem 1.4rem;
+  border: 1px solid var(--ink);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+@media (--reduced-motion) {
+  .content {
+    transition: none;
+  }
+}

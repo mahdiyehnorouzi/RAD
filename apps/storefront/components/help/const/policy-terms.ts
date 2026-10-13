@@ -1,5 +1,4 @@
 import type { PolicyDocument } from "../type";
-import { RETURN_WINDOW_REVIEW } from "./policy-returns";
 
 export const TERMS_POLICY: PolicyDocument = {
   slug: "terms",
@@ -169,7 +168,6 @@ export const TERMS_POLICY: PolicyDocument = {
               },
             },
           ],
-          underReview: RETURN_WINDOW_REVIEW,
         },
         {
           id: "damage",

@@ -44,6 +44,7 @@
   --archive-gutter: var(--page);
   position: relative;
   overflow: visible;
+  padding-top: clamp(2.5rem, 6vw, 4rem);
   background: color-mix(in srgb, var(--sand) 24%, var(--canvas));
 }
 

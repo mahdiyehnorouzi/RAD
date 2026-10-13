@@ -49,7 +49,7 @@ export function CheckoutAgreement({ ref, checked, onChange, invalid }: Props) {
         facts={[
           { slug: "buying", id: "one-of-one" },
           { slug: "buying", id: "payment-window" },
-          { slug: "returns", id: "window", review: true },
+          { slug: "returns", id: "window" },
           { slug: "returns", id: "damage" },
         ]}
       />

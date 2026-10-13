@@ -14,31 +14,33 @@ export function formatToman(value: number) {
   return `${new Intl.NumberFormat("fa-IR").format(value)} تومان`;
 }
 
+/**
+ * Settlement is always in Toman via card-to-card bank transfer, regardless
+ * of UI locale — there is no real USD payment path. English copy must not
+ * imply a dollar amount, so it formats the same Toman figure with Latin
+ * digits instead of converting to `usdPrice` (which is only a rough
+ * reference figure, not something the buyer can actually pay).
+ */
 export function productPrice(product: Product, locale: Locale) {
   return locale === "fa"
     ? product.price
-    : new Intl.NumberFormat("en-US", {
-        style: "currency",
-        currency: "USD",
-        maximumFractionDigits: 0,
-      }).format(product.usdPrice);
+    : `${new Intl.NumberFormat("en-US").format(priceToNumber(product.price))} toman`;
 }
 
-/** Whole price with its unit apart: `۴٬۵۰۰٬۰۰۰` + `تومان`, or `$1,200` alone. */
+/** Whole price with its unit apart: `۴٬۵۰۰٬۰۰۰` + `تومان`, or `4,500,000` + `toman`. */
 export function productFullPriceParts(product: Product, locale: Locale) {
-  if (locale !== "fa") {
-    return { amount: productPrice(product, locale), unit: null };
-  }
+  const amountDigits = new Intl.NumberFormat(
+    locale === "fa" ? "fa-IR" : "en-US",
+  ).format(priceToNumber(product.price));
   return {
-    amount: new Intl.NumberFormat("fa-IR").format(priceToNumber(product.price)),
-    unit: "تومان",
+    amount: amountDigits,
+    unit: locale === "fa" ? "تومان" : "toman",
   };
 }
 
-export function cartTotal(products: Product[], locale: Locale) {
+export function cartTotal(products: Product[]) {
   return products.reduce(
-    (sum, product) =>
-      sum + (locale === "fa" ? priceToNumber(product.price) : product.usdPrice),
+    (sum, product) => sum + priceToNumber(product.price),
     0,
   );
 }
@@ -46,9 +48,5 @@ export function cartTotal(products: Product[], locale: Locale) {
 export function formatTotal(value: number, locale: Locale) {
   return locale === "fa"
     ? formatToman(value)
-    : new Intl.NumberFormat("en-US", {
-        style: "currency",
-        currency: "USD",
-        maximumFractionDigits: 0,
-      }).format(value);
+    : `${new Intl.NumberFormat("en-US").format(value)} toman`;
 }

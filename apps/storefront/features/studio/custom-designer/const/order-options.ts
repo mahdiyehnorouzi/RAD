@@ -87,13 +87,25 @@ export const SIZE_OPTIONS: Array<Option & { hint: LocaleCopy; scale: number }> =
 export const DEFAULT_SIZE = "medium";
 
 export const BUDGET_OPTIONS: Option[] = [
-  { id: "under-3", label: { fa: "تا ۳ میلیون تومان", en: "Up to $35" } },
-  { id: "3-5", label: { fa: "۳ تا ۵ میلیون تومان", en: "$35–60" } },
-  { id: "5-8", label: { fa: "۵ تا ۸ میلیون تومان", en: "$60–100" } },
-  { id: "8-12", label: { fa: "۸ تا ۱۲ میلیون تومان", en: "$100–150" } },
+  {
+    id: "under-3",
+    label: { fa: "تا ۳ میلیون تومان", en: "Up to 3,000,000 toman" },
+  },
+  {
+    id: "3-5",
+    label: { fa: "۳ تا ۵ میلیون تومان", en: "3,000,000–5,000,000 toman" },
+  },
+  {
+    id: "5-8",
+    label: { fa: "۵ تا ۸ میلیون تومان", en: "5,000,000–8,000,000 toman" },
+  },
+  {
+    id: "8-12",
+    label: { fa: "۸ تا ۱۲ میلیون تومان", en: "8,000,000–12,000,000 toman" },
+  },
   {
     id: "more",
-    label: { fa: "بیشتر از ۱۲ میلیون تومان", en: "More than $150" },
+    label: { fa: "بیشتر از ۱۲ میلیون تومان", en: "More than 12,000,000 toman" },
   },
 ];
 

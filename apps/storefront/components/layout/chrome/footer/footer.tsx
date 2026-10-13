@@ -29,24 +29,6 @@ export function Footer() {
 
       <div className="footer-index">
         <FooterGroup
-          title={t("footerShop")}
-          links={[
-            page("/products", t("footerUnique")),
-            page("/studio", t("footerCustom")),
-            page("/shape", t("footerShape")),
-          ]}
-        />
-        <FooterGroup
-          title={t("footerRad")}
-          links={[
-            page("/about", t("footerStory")),
-            page("/now", t("footerNow")),
-            page("/reviews", t("footerReviews")),
-            page("/differences", t("museumTitle")),
-            page("/account", t("profile")),
-          ]}
-        />
-        <FooterGroup
           title={t("footerConnect")}
           links={[
             page("/contact", t("footerContact")),
@@ -62,7 +44,11 @@ export function Footer() {
               <bdi dir="ltr">@{RAD_INSTAGRAM.handle}</bdi>
             </a>,
             RAD_EMAIL ? (
-              <a key="email" className="footer-icon-link" href={`mailto:${RAD_EMAIL}`}>
+              <a
+                key="email"
+                className="footer-icon-link"
+                href={`mailto:${RAD_EMAIL}`}
+              >
                 <Mail size={16} strokeWidth={1.6} aria-hidden="true" />
                 <bdi dir="ltr">{RAD_EMAIL}</bdi>
               </a>

@@ -1,25 +1,18 @@
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
-import { cache } from "react";
-import QRCode from "qrcode";
-import { formatRadCode, type Artwork, type Product } from "@rad/types";
 import { ProductDetail } from "@/features/product-detail";
-import { fetchFaq, fetchProductReviews } from "@/lib/api";
-import type { RadPassport } from "@/components/passport/type";
-import { productFromArtwork } from "@/lib/artworks";
-import { resolveArtwork } from "@/lib/artworks/server";
-import { getCatalog, registryProducts } from "@/lib/catalog/get-catalog-works";
-import { relatedWorks } from "@/lib/catalog/related";
+import { fetchProductReviews } from "@/lib/api";
+import { registryProducts } from "@/lib/catalog/get-catalog-works";
+import { resolvePdpData, resolveWork } from "@/lib/catalog/resolve-pdp-data";
 import {
   PRODUCT_SEO,
   productSeoDescription,
   productSeoState,
   productSeoTitle,
 } from "@/lib/catalog/product-seo";
-import { passportFromArtwork } from "@/lib/passport";
 import {
-  absoluteUrl,
   breadcrumbJsonLd,
+  defaultOgImage,
   faqPageJsonLd,
   languageAlternates,
   productJsonLd,
@@ -27,41 +20,6 @@ import {
   siteName,
 } from "@/lib/seo";
 import { recover } from "@/lib/log";
-
-type Work =
-  | { kind: "moved"; to: string }
-  | {
-      kind: "product";
-      product: Product;
-      artwork: Artwork;
-      priceToman: number;
-      passport?: RadPassport;
-      passportPath?: string;
-    };
-
-/**
- * Only works offered in the shop have a product page. A RAD number resolves to
- * its slug, and a work never offered for sale lives on its passport. Both are
- * temporary redirects: slugs and prices can still change.
- */
-const resolveWork = cache(async (slug: string): Promise<Work | null> => {
-  const artwork = await resolveArtwork(slug);
-  if (!artwork) return null;
-  const passport = passportFromArtwork(artwork);
-  const passportPath = passport ? `/passport/${passport.code}` : undefined;
-  if (artwork.price === null)
-    return passportPath ? { kind: "moved", to: passportPath } : null;
-  if (artwork.slug !== slug)
-    return { kind: "moved", to: `/products/${artwork.slug}` };
-  return {
-    kind: "product",
-    product: productFromArtwork(artwork),
-    artwork,
-    priceToman: artwork.price,
-    passport: passport ?? undefined,
-    passportPath,
-  };
-});
 
 export async function generateMetadata({
   params,
@@ -103,15 +61,18 @@ export async function generateMetadata({
       title,
       description,
       url: path,
-      images: image?.src
-        ? [{ url: image.src, alt: image.alt || product.name }]
-        : undefined,
+      images: [
+        {
+          url: image?.src || defaultOgImage(),
+          alt: image?.alt || product.name,
+        },
+      ],
     },
     twitter: {
       card: "summary_large_image",
       title,
       description,
-      images: image?.src ? [image.src] : undefined,
+      images: [image?.src || defaultOgImage()],
     },
   };
 }
@@ -126,29 +87,34 @@ export default async function PDP({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const work = await resolveWork(slug);
-  if (!work) notFound();
-  if (work.kind === "moved") redirect(work.to);
-
-  const { product, artwork, priceToman, passport, passportPath } = work;
-  const qrTarget = absoluteUrl(
-    product.radNumber
-      ? `/r/${formatRadCode(product.radNumber)}`
-      : `/products/${product.slug}`,
-  );
-  const [faq, reviews, qrSvg, catalog] = await Promise.all([
-    fetchFaq("fa"),
-    fetchProductReviews(product.slug).catch(
-      recover(`reviews ${product.slug}`, []),
-    ),
-    QRCode.toString(qrTarget, {
-      type: "svg",
-      margin: 0,
-      errorCorrectionLevel: "M",
-      color: { dark: "#1a1714", light: "#00000000" },
-    }).catch(recover("product qr svg", undefined)),
-    getCatalog(),
+  // Single source of truth for PDP data — the card-click overlay's data
+  // endpoint (app/api/pdp/[slug]/route.ts) calls the exact same
+  // `resolvePdpData`, so the two render paths can never diverge in what
+  // product/artwork/passport/related/FAQ content they show.
+  //
+  // Reviews don't depend on resolvePdpData's result — resolveWork() only
+  // ever returns `kind: "product"` when `artwork.slug === slug`, so the
+  // route's own slug is already the canonical one whenever `data` isn't
+  // `moved`/null — so the two fetches run in parallel instead of one full
+  // round trip after the other. The tradeoff: an unused reviews fetch fires
+  // for the rarer not-found/moved cases, where it's simply discarded below.
+  const [data, reviews] = await Promise.all([
+    resolvePdpData(slug),
+    fetchProductReviews(slug).catch(recover(`reviews ${slug}`, [])),
   ]);
+  if (!data) notFound();
+  if ("moved" in data) redirect(data.moved);
+
+  const {
+    product,
+    artwork,
+    priceToman,
+    passport,
+    passportPath,
+    qrSvg,
+    related,
+    faq,
+  } = data;
 
   const productSchema = productJsonLd(product, {
     availability: PRODUCT_SEO[productSeoState(product)].availability,
@@ -180,7 +146,7 @@ export default async function PDP({
         product={product}
         artwork={artwork}
         passport={passport}
-        related={relatedWorks(product, catalog.products)}
+        related={related}
         initialFaq={faq}
         qrSvg={qrSvg}
       />

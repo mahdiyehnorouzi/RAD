@@ -236,8 +236,6 @@ export const fa = {
   emptyFavoritesBody:
     "خرید اثر هنری تصمیم یک‌لحظه‌ای نیست. قلب روی هر اثر، آن را برای دیدن دوباره نگه می‌دارد.",
   emptyFavoritesAction: "دیدن آثار",
-  favoritesWaitingTitle: "فهرست در حال چیده‌شدن است.",
-  favoritesWaitingBody: "آثار ذخیره‌شده‌تان را می‌آوریم.",
   favoritesWaitingCount: "در حال خواندن فهرست",
   pwaEyebrow: "برنامه رَد",
   pwaTitle: "رَد روی دستگاه شما",
@@ -272,7 +270,7 @@ export const fa = {
   createPathTitle: "سفارش اختصاصی",
   archiveEyebrow: "آرشیو رَد",
   archiveTitle: "آثار تازه",
-  homeArchiveLink: "دیدن همه آثار و آرشیو",
+  homeArchiveLink: "دیدن همه‌ی آثار",
   certificateEyebrow: "شناسنامه اثر",
   certificateTitle: "هر رَد یک زندگی دارد",
   certificateArtist: "ساخته‌شده توسط هنرمند",

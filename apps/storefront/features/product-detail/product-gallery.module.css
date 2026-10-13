@@ -10,6 +10,30 @@
   grid-template-columns: minmax(0, 1fr) 5.25rem;
 }
 
+/* Desktop: deliberate, asymmetric composition — a thin thumbnail rail,
+   a dominant hero, and (when there are enough images) a tighter secondary
+   collage beside the hero rather than a uniform grid below it. */
+@media (--desktop) {
+  .gallery.hasThumbs {
+    grid-template-columns: 5.25rem minmax(0, 1.9fr);
+    grid-template-areas: "thumbs stage";
+  }
+
+  .gallery.hasThumbs.hasSecondary {
+    grid-template-columns: 5.25rem minmax(0, 1.9fr) minmax(13rem, 0.95fr);
+    grid-template-areas: "thumbs stage secondary";
+    align-items: stretch;
+  }
+
+  .stage {
+    grid-area: stage;
+  }
+
+  .thumbs {
+    grid-area: thumbs;
+  }
+}
+
 .stage {
   position: relative;
   width: 100%;
@@ -18,6 +42,64 @@
   overflow: hidden;
   border-radius: 4px;
   background: color-mix(in srgb, var(--plate-color) 22%, var(--canvas));
+}
+
+.stageHeader {
+  position: absolute;
+  z-index: 2;
+  top: 1rem;
+  inset-inline: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  pointer-events: none;
+}
+
+.stageHeader > * {
+  pointer-events: auto;
+}
+
+.headerEnd {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.headerIcon {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--paper) 90%, transparent);
+  color: var(--ink);
+  box-shadow: 0 6px 18px color-mix(in srgb, var(--ink) 12%, transparent);
+  cursor: pointer;
+  transition: transform 200ms var(--pdp-ease);
+}
+
+.headerIcon:hover {
+  transform: scale(1.06);
+}
+
+.headerIcon svg {
+  width: 20px;
+  height: 20px;
+  stroke-width: 1.6;
+}
+
+@media (--phone) {
+  .gallery {
+    gap: 0;
+  }
+  .stage {
+    aspect-ratio: 4 / 5;
+    border-radius: 0;
+    margin-inline: calc(-1 * var(--page));
+    width: calc(100% + 2 * var(--page));
+  }
 }
 
 .stageTrack {
@@ -43,8 +125,73 @@
   flex: 0 0 100%;
   height: 100%;
   overflow: hidden;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: zoom-in;
   scroll-snap-align: start;
   scroll-snap-stop: always;
+}
+
+.secondaryGrid {
+  display: none;
+}
+
+@media (--desktop) {
+  .secondaryGrid {
+    display: grid;
+    grid-area: secondary;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: repeat(3, minmax(6rem, 1fr));
+    gap: 0.6rem;
+    height: 100%;
+    margin-top: 0;
+  }
+
+  /* Asymmetric collage: a portrait-ish tile on the left spanning two rows,
+     a small square top-right, a wide crop filling the bottom row. */
+  .secondaryTile:nth-of-type(1) {
+    grid-column: 1;
+    grid-row: 1 / 3;
+  }
+
+  .secondaryTile:nth-of-type(2) {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .secondaryTile:nth-of-type(3) {
+    grid-column: 2;
+    grid-row: 2;
+  }
+
+  .secondaryTile:nth-of-type(4) {
+    grid-column: 1 / 3;
+    grid-row: 3;
+  }
+
+  .secondaryTile {
+    position: relative;
+    aspect-ratio: auto;
+    padding: 0;
+    overflow: hidden;
+    border: 0;
+    border-radius: 4px;
+    background: color-mix(in srgb, var(--plate-color) 22%, var(--canvas));
+    cursor: zoom-in;
+    transition: opacity 200ms ease-out;
+  }
+
+  .secondaryTile:hover {
+    opacity: 0.85;
+  }
+
+  .secondaryTile :global(.product-photo) {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
 }
 
 .slide > :global(.product-photo),
@@ -112,8 +259,7 @@
 }
 
 .stage :global(.favorite-button):global(.compact) {
-  top: 1rem;
-  inset-inline: 1rem auto;
+  position: static;
   width: 44px;
   min-height: 44px;
   padding: 0;
@@ -267,5 +413,19 @@
   }
   .stage {
     max-height: none;
+  }
+}
+
+@media (--phone) {
+  .thumbs {
+    gap: 2px;
+    padding: 0;
+    margin: 0;
+    margin-inline: calc(-1 * var(--page));
+    width: calc(100% + 2 * var(--page));
+  }
+  .thumb {
+    width: 4.25rem;
+    border-radius: 0;
   }
 }

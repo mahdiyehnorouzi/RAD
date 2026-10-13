@@ -13,6 +13,7 @@ import {
   RouteTrail,
 } from "@/components/layout";
 import { CartProvider } from "@/features/cart";
+import { ProductOverlay } from "@/features/product-detail";
 import { LocaleProvider } from "@/components/i18n";
 import { CommerceProvider } from "@/components/commerce";
 import { CatalogIndexProvider } from "@/components/catalog";
@@ -27,6 +28,7 @@ import {
 import {
   absoluteUrl,
   defaultDescription,
+  defaultOgImage,
   languageAlternates,
   safeJsonLd,
   siteName,
@@ -73,11 +75,13 @@ export const metadata: Metadata = {
     title: brand.title.fa,
     description: defaultDescription,
     url: "/",
+    images: [{ url: defaultOgImage(), width: 1200, height: 630 }],
   },
   twitter: {
     card: "summary_large_image",
     title: brand.title.fa,
     description: defaultDescription,
+    images: [defaultOgImage()],
   },
   robots: {
     index: true,
@@ -169,6 +173,10 @@ export default async function RootLayout({
                 <RouteTrail />
                 <main>{children}</main>
                 <Footer />
+                {/* Mounted once, globally: the card -> PDP expandable-card
+                    overlay. Inert until a ProductCardStage click opens it —
+                    the route underneath stays mounted the whole time. */}
+                <ProductOverlay />
                 {process.env.NODE_ENV === "development" ? (
                   <DevDataBadge />
                 ) : null}

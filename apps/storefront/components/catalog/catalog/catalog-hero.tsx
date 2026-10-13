@@ -12,6 +12,7 @@ export function CatalogHero({ intro }: { intro: React.ReactNode }) {
         fetchPriority="high"
         decoding="async"
       />
+      <div className="plp-banner-fade" aria-hidden="true" />
       <div className="plp-banner-copy">
         {intro}
         <svg

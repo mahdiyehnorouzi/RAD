@@ -64,7 +64,7 @@ export const ORDER_PRICE_TIERS: OrderPriceTier[] = [
       fa: "زیورآلات، آویز، شیء کوچک رومیزی",
       en: "Jewellery, pendants, small desk objects",
     },
-    price: { fa: "از ۲ میلیون تومان", en: "from $25" },
+    price: { fa: "از ۲ میلیون تومان", en: "from 2,000,000 toman" },
     image: "/catalog/photos/transparent/croissant-handle-mug.webp",
   },
   {
@@ -74,7 +74,7 @@ export const ORDER_PRICE_TIERS: OrderPriceTier[] = [
       fa: "ماگ، بشقاب، سینی، گلدان",
       en: "Mugs, plates, trays, vases",
     },
-    price: { fa: "از ۳ میلیون تومان", en: "from $35" },
+    price: { fa: "از ۳ میلیون تومان", en: "from 3,000,000 toman" },
     image: "/catalog/photos/transparent/cobalt-fold-bowl.webp",
   },
   {
@@ -84,7 +84,7 @@ export const ORDER_PRICE_TIERS: OrderPriceTier[] = [
       fa: "مجسمه، چراغ، فرم‌های چندجزئی",
       en: "Sculptures, lamps, detailed forms",
     },
-    price: { fa: "از ۵ میلیون تومان", en: "from $60" },
+    price: { fa: "از ۵ میلیون تومان", en: "from 5,000,000 toman" },
     image: "/catalog/photos/transparent/dachshund-sculpture.webp",
   },
   {

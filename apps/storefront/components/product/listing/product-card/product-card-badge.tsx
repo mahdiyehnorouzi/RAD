@@ -1,9 +1,8 @@
-import { Flame, ShoppingBag, ShoppingCart } from "lucide-react";
+import { Flame } from "lucide-react";
 import type { ProductBadgeTone } from "../type";
 
+/** Purchase happens on PDP, not here — no bag/cart icons on listing cards. */
 const ICONS: Partial<Record<ProductBadgeTone, typeof Flame>> = {
-  sold: ShoppingBag,
-  bag: ShoppingCart,
   popular: Flame,
 };
 

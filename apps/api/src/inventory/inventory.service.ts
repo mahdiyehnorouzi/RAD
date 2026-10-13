@@ -35,6 +35,7 @@ import type { ProductStatus } from "./type";
 export class InventoryService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(InventoryService.name);
   private sweepTimer: NodeJS.Timeout | null = null;
+  private sweepInFlight: Promise<string[]> | null = null;
 
   constructor(private readonly dataSource: DataSource) {}
 
@@ -64,6 +65,7 @@ export class InventoryService implements OnModuleInit, OnModuleDestroy {
 
   onModuleDestroy() {
     if (this.sweepTimer) clearInterval(this.sweepTimer);
+    this.sweepTimer = null;
   }
 
   isPublic(status: string) {
@@ -78,7 +80,22 @@ export class InventoryService implements OnModuleInit, OnModuleDestroy {
    * `pending_verification` never expire: the buyer has paid and waits on RAD.
    * Safe to call concurrently.
    */
-  async releaseExpiredHolds(): Promise<string[]> {
+  releaseExpiredHolds(): Promise<string[]> {
+    // A sweep is called both from the 30s timer and from every `hold()` on
+    // the request path, so overlapping calls are routine. Reusing the
+    // in-flight run (rather than opening a second transaction/connection)
+    // avoids unnecessary pool pressure and row-lock contention with itself.
+    // Not `async`: an `async` wrapper would box this return in a brand-new
+    // Promise on every call, defeating the point of returning the same
+    // in-flight one to a caller that arrives while it's running.
+    if (this.sweepInFlight) return this.sweepInFlight;
+    this.sweepInFlight = this.runReleaseExpiredHolds().finally(() => {
+      this.sweepInFlight = null;
+    });
+    return this.sweepInFlight;
+  }
+
+  private async runReleaseExpiredHolds(): Promise<string[]> {
     return this.dataSource.transaction(async (manager) => {
       const now = new Date();
       const overdue = await manager

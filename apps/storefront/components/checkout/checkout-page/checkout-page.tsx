@@ -29,12 +29,45 @@ import { toLatinDigits } from "@/lib/payment/receipt";
 import { checkoutCopy, fillCopy } from "../const";
 import { CheckoutMeter, CheckoutSteps, CheckoutSummary } from "../flow";
 import { CheckoutField } from "./checkout-field";
+import { CitySelect } from "./city-select";
 
 type FieldName = "name" | "phone" | "city" | "address";
 type FieldErrors = Partial<Record<FieldName, string>>;
 
 const FORM_ID = "checkout-details";
 const FIELD_ORDER: FieldName[] = ["name", "phone", "city", "address"];
+const DRAFT_KEY = "rad.checkout.draft";
+type Draft = Partial<Record<FieldName | "postalCode", string>>;
+
+/**
+ * Inputs below are uncontrolled (`defaultValue`), so a browser back
+ * navigation from `/checkout/[id]` (payment) to `/checkout` fully remounts
+ * this form and would otherwise lose everything the buyer typed. Persist a
+ * draft to sessionStorage and seed `defaultValue` from it.
+ */
+function readDraft(): Draft {
+  if (typeof window === "undefined") return {};
+  try {
+    const raw = window.sessionStorage.getItem(DRAFT_KEY);
+    return raw ? (JSON.parse(raw) as Draft) : {};
+  } catch {
+    return {};
+  }
+}
+
+function writeDraft(draft: Draft) {
+  if (typeof window === "undefined") return;
+  try {
+    window.sessionStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+  } catch {}
+}
+
+function clearDraft() {
+  if (typeof window === "undefined") return;
+  try {
+    window.sessionStorage.removeItem(DRAFT_KEY);
+  } catch {}
+}
 
 function normalizePhone(raw: string) {
   return toLatinDigits(raw).replace(/[^\d+]/g, "");
@@ -61,7 +94,7 @@ export function CheckoutPage() {
   const items = slugs
     .map((slug) => getProduct(slug))
     .filter((item): item is Product => Boolean(item));
-  const total = formatTotal(cartTotal(items, locale), locale);
+  const total = formatTotal(cartTotal(items), locale);
   const lost = slugs.some((slug) => !holds[slug] || !getProduct(slug));
   const remaining = useCountdown(holdEndsAt);
   const ArrowIcon = locale === "fa" ? ArrowLeft : ArrowRight;
@@ -70,6 +103,39 @@ export function CheckoutPage() {
     if (!error) return;
     errorRef.current?.focus();
   }, [error]);
+
+  // Restore a draft left by an earlier visit to this form (e.g. the buyer
+  // went on to /checkout/[id] and came back). Applied imperatively after
+  // mount so it never fights SSR/hydration.
+  useEffect(() => {
+    const draft = readDraft();
+    const form = formRef.current;
+    if (!form) return;
+    for (const [name, value] of Object.entries(draft)) {
+      if (!value) continue;
+      const field = form.elements.namedItem(name);
+      if (
+        field instanceof HTMLInputElement ||
+        field instanceof HTMLTextAreaElement
+      ) {
+        field.value = value;
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const persistDraft = () => {
+    const form = formRef.current;
+    if (!form) return;
+    const data = new FormData(form);
+    writeDraft({
+      name: String(data.get("name") ?? ""),
+      phone: String(data.get("phone") ?? ""),
+      city: String(data.get("city") ?? ""),
+      address: String(data.get("address") ?? ""),
+      postalCode: String(data.get("postalCode") ?? ""),
+    });
+  };
 
   const validate = (data: FormData): FieldErrors => {
     const value = (key: FieldName) => String(data.get(key) ?? "").trim();
@@ -128,6 +194,7 @@ export function CheckoutPage() {
         acceptedPolicies: currentPolicyVersions(ORDER_POLICY_SLUGS),
       });
       setLeaving(true);
+      clearDraft();
       if (created.payment?.redirectUrl) {
         window.location.assign(created.payment.redirectUrl);
         return;
@@ -189,7 +256,10 @@ export function CheckoutPage() {
     name,
     "aria-invalid": errors[name] ? true : undefined,
     "aria-describedby": errors[name] ? `checkout-${name}-error` : undefined,
-    onInput: () => clearFieldError(name),
+    onInput: () => {
+      clearFieldError(name);
+      persistDraft();
+    },
     disabled: busy,
   });
 
@@ -241,10 +311,17 @@ export function CheckoutPage() {
             label={c.cityLabel}
             error={errors.city}
           >
-            <input
-              {...fieldProps("city")}
-              type="text"
-              autoComplete="address-level2"
+            <CitySelect
+              id="checkout-city"
+              name="city"
+              defaultValue={""}
+              disabled={busy}
+              invalid={Boolean(errors.city)}
+              describedBy={errors.city ? "checkout-city-error" : undefined}
+              onChangeValue={() => {
+                clearFieldError("city");
+                persistDraft();
+              }}
             />
           </CheckoutField>
           <CheckoutField
@@ -275,6 +352,7 @@ export function CheckoutPage() {
               autoComplete="postal-code"
               dir="ltr"
               disabled={busy}
+              onInput={persistDraft}
             />
           </CheckoutField>
         </form>
@@ -297,7 +375,7 @@ export function CheckoutPage() {
               time={formatCountdown(remaining, locale, number)}
               fraction={remaining / (CART_HOLD_MINUTES * 60_000)}
             >
-              {c.holdBody}{" "}
+              {c.holdBody ? `${c.holdBody} ` : ""}
               {fillCopy(c.holdAfter, {
                 minutes: number(ORDER_PAYMENT_WINDOW_MINUTES),
               })}

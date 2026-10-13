@@ -12,11 +12,23 @@
   display: grid;
   grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
   min-height: clamp(18.5rem, 76vw, 36rem);
-  /* Room inside the torn-top mask for the photo's torn foot and shadow */
-  padding-bottom: 1.5rem;
+  /* Room inside the torn-top/bottom masks for the photo's torn foot */
+  padding-block: 0 calc(var(--hero-edge-h) + 0.5rem);
   margin-bottom: clamp(0rem, 5vw - 1.5rem, 1.5rem);
-  -webkit-mask: var(--torn-top);
-  mask: var(--torn-top);
+  -webkit-mask:
+    var(--hero-edge) var(--hero-edge-x) 0 / var(--hero-edge-size)
+      var(--hero-edge-h) no-repeat,
+    var(--hero-edge-bottom) var(--hero-edge-x) 100% / var(--hero-edge-size)
+      var(--hero-edge-h) no-repeat,
+    linear-gradient(#000 0 0) 0 calc(var(--hero-edge-h) - 1px) / 100%
+      calc(100% - 2 * var(--hero-edge-h) + 2px) no-repeat;
+  mask:
+    var(--hero-edge) var(--hero-edge-x) 0 / var(--hero-edge-size)
+      var(--hero-edge-h) no-repeat,
+    var(--hero-edge-bottom) var(--hero-edge-x) 100% / var(--hero-edge-size)
+      var(--hero-edge-h) no-repeat,
+    linear-gradient(#000 0 0) 0 calc(var(--hero-edge-h) - 1px) / 100%
+      calc(100% - 2 * var(--hero-edge-h) + 2px) no-repeat;
 }
 
 html[dir="rtl"] .journeyWorkshop {
@@ -106,7 +118,6 @@ html[dir="ltr"] .journeyWorkshopLink:hover svg {
   grid-row: 1;
   z-index: 1;
   margin-bottom: calc(var(--tear) * -0.6);
-  filter: drop-shadow(0 8px 12px rgb(52 36 20 / 0.22));
 }
 
 .journeyWorkshopPhoto img {

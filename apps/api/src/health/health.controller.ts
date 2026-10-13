@@ -41,6 +41,11 @@ export class HealthController {
       ok: db,
       service: "rad-api",
       version: process.env.RAD_VERSION ?? APP_VERSION,
+      // Not a secret — just the mode name. Lets a deploy script confirm the
+      // process it just started is actually running in production mode
+      // (e.g. `synchronize` disabled) rather than a leftover `nest start
+      // --watch` dev process that happens to report a matching version.
+      env: process.env.NODE_ENV ?? "development",
       api: true,
       db,
     };

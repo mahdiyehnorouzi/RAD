@@ -237,7 +237,7 @@ html[dir="rtl"] .journeyCustomSteps li::after {
     :has(+ li > .journeyCustomStepMark[data-reached])
   )
   .journeyCustomStepNumber::after {
-  animation: journey-step-pulse 2.4s ease-out 0.4s infinite;
+  animation: journey-step-pulse 900ms ease-out 0.4s 1;
 }
 
 @media (min-width: 900px) {

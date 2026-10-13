@@ -47,20 +47,8 @@
 }
 
 .archivePinbarSection {
-  position: relative;
   color: var(--ink);
   font-weight: 700;
-}
-
-.archivePinbarSection::after {
-  content: "";
-  position: absolute;
-  right: 0;
-  bottom: 0.55rem;
-  left: 0;
-  height: 2px;
-  border-radius: 2px;
-  background: var(--oxide);
 }
 
 .archivePinbarTitle {

@@ -25,15 +25,19 @@ verify_api_health() {
     local http_code
     http_code="$(curl -fsS -o "$body_file" -w '%{http_code}' "$HEALTH_URL" 2>/dev/null || echo "000")"
     if [[ "$http_code" == "200" ]]; then
-      local resp_ok resp_version
+      local resp_ok resp_version resp_env
       resp_ok="$(node -e "try{const d=JSON.parse(require('fs').readFileSync(process.argv[1],'utf8'));process.stdout.write(String(d.ok===true))}catch(e){process.stdout.write('false')}" "$body_file")"
       resp_version="$(node -e "try{const d=JSON.parse(require('fs').readFileSync(process.argv[1],'utf8'));process.stdout.write(String(d.version||''))}catch(e){process.stdout.write('')}" "$body_file")"
-      if [[ "$resp_ok" == "true" && "$resp_version" == "$VERSION" ]]; then
-        echo "API healthy: ok=true version=${resp_version}"
+      resp_env="$(node -e "try{const d=JSON.parse(require('fs').readFileSync(process.argv[1],'utf8'));process.stdout.write(String(d.env||''))}catch(e){process.stdout.write('')}" "$body_file")"
+      # Version alone isn't enough: a leftover `nest start --watch` dev
+      # process picks up new source on `git pull` and recompiles itself,
+      # so it can report the right version while still running in dev mode.
+      if [[ "$resp_ok" == "true" && "$resp_version" == "$VERSION" && "$resp_env" == "production" ]]; then
+        echo "API healthy: ok=true version=${resp_version} env=${resp_env}"
         rm -f "$body_file"
         return 0
       fi
-      echo "API responded but not ready yet (ok=${resp_ok}, version=${resp_version}, expected=${VERSION})..."
+      echo "API responded but not ready yet (ok=${resp_ok}, version=${resp_version}, env=${resp_env}, expected version=${VERSION}, expected env=production)..."
     else
       echo "API not reachable yet (http_code=${http_code})..."
     fi

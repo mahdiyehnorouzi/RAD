@@ -69,16 +69,11 @@ export function moneyFor(
   commission: MakingCommission,
   locale: "fa" | "en",
   toman: number,
-  usd: number,
 ) {
   if (locale === "fa") {
     return `${new Intl.NumberFormat("fa-IR").format(toman)} تومان`;
   }
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-  }).format(usd);
+  return `${new Intl.NumberFormat("en-US").format(toman)} toman`;
 }
 
 export function situationFor(commission: MakingCommission): {

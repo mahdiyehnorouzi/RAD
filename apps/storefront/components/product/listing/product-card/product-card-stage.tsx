@@ -1,6 +1,8 @@
+"use client";
 import Link from "next/link";
 import type { Product } from "@rad/types";
 import { FavoriteButton } from "@/components/commerce";
+import { useOpenProductTransition } from "@/features/product-detail";
 import { LinkPending } from "../link-pending";
 import type { ProductBadgeTone, ProductCardSlide } from "../type";
 import { ProductCardArtwork } from "./product-card-artwork";
@@ -22,13 +24,19 @@ export function ProductCardStage({
   badge: { tone: ProductBadgeTone; label: string } | null;
   forceCategoryArtwork: boolean;
 }) {
+  // Apple Store-style PDP entry: expand this exact card's photograph into
+  // the fullscreen PDP overlay (see features/product-detail/transition).
+  const { ref, onClick } = useOpenProductTransition(product.slug, productHref);
+
   return (
     <div className="rad-card-stage">
       <Link
         href={productHref}
+        ref={ref}
         className="rad-card-art"
         tabIndex={-1}
         aria-hidden="true"
+        onClick={onClick}
       >
         <ProductCardArtwork
           product={product}
