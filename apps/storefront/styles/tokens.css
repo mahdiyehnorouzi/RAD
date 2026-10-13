@@ -12,7 +12,39 @@
 @custom-media --motion-ok (prefers-reduced-motion: no-preference);
 @custom-media --fine-pointer (hover: hover) and (pointer: fine);
 
+/*
+ * Shared stepper motion language ("kiln"): used by any step/progress rail
+ * (checkout, custom-order) to suggest firing/heat as a step becomes active
+ * and settling/cooling as it's completed. Colors come from each caller via
+ * --rad-kiln-glow-ring/-peak so the vocabulary stays shared while the tint
+ * stays local to each flow's palette. The blanket @media(--reduced-motion)
+ * rule below in globals.css already collapses these to near-zero duration.
+ */
+@keyframes rad-kiln-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 0 4px
+      var(--rad-kiln-glow-ring, color-mix(in srgb, var(--moss) 14%, transparent));
+  }
+  50% {
+    box-shadow: 0 0 0 7px
+      var(--rad-kiln-glow-peak, color-mix(in srgb, var(--moss) 24%, transparent));
+  }
+}
+
+@keyframes rad-kiln-settle {
+  from {
+    transform: scale(0.86);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
 :root {
+  --rad-kiln-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --rad-kiln-enter: 480ms;
+  --rad-kiln-glow-duration: 2200ms;
   --canvas: #eee7dc;
   --paper: #f7f2e9;
   --ink: #18231f;

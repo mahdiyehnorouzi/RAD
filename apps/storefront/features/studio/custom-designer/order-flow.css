@@ -4,6 +4,8 @@ body:has(.custom-order-route) {
 .order-flow {
   --flow-line: #e3d5c1;
   --flow-green: #173c31;
+  --rad-kiln-glow-ring: color-mix(in srgb, var(--flow-green) 14%, transparent);
+  --rad-kiln-glow-peak: color-mix(in srgb, var(--flow-green) 24%, transparent);
   width: min(100%, 460px);
   margin: 0 auto;
   padding: 22px 24px 40px;
@@ -61,6 +63,10 @@ body:has(.custom-order-route) {
   width: 56%;
   height: 1px;
   background: var(--flow-line);
+  transition: background var(--rad-kiln-enter) var(--rad-kiln-ease);
+}
+.order-flow-phases [data-done="true"] + li:before {
+  background: var(--flow-green);
 }
 .order-flow-phases svg {
   width: 27px;
@@ -69,6 +75,10 @@ body:has(.custom-order-route) {
   border: 1px solid var(--flow-line);
   border-radius: 50%;
   stroke-width: 1.4;
+  transition:
+    background var(--rad-kiln-enter) var(--rad-kiln-ease),
+    border-color var(--rad-kiln-enter) var(--rad-kiln-ease),
+    box-shadow var(--rad-kiln-enter) var(--rad-kiln-ease);
 }
 .order-flow-phases :is([data-current="true"], [data-done="true"]) {
   color: var(--flow-green);
@@ -77,6 +87,10 @@ body:has(.custom-order-route) {
   background: var(--flow-green);
   color: #fff;
   border-color: var(--flow-green);
+  animation: rad-kiln-glow var(--rad-kiln-glow-duration) var(--rad-kiln-ease) infinite;
+}
+.order-flow-phases [data-done="true"] svg {
+  animation: rad-kiln-settle var(--rad-kiln-enter) var(--rad-kiln-ease);
 }
 .order-flow-body {
   display: flex;
