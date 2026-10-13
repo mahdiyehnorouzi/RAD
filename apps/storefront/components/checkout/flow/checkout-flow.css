@@ -91,7 +91,8 @@ html[dir="rtl"] .checkout-flow {
   border-color: var(--moss);
   background: var(--moss);
   color: var(--paper);
-  animation: rad-kiln-glow var(--rad-kiln-glow-duration) var(--rad-kiln-ease) infinite;
+  animation: rad-kiln-glow var(--rad-kiln-glow-duration) var(--rad-kiln-ease)
+    infinite;
 }
 
 .checkout-step.is-done .checkout-step-dot {
@@ -185,7 +186,8 @@ html[dir="rtl"] .checkout-flow {
   border-color: var(--moss);
   background: var(--moss);
   color: var(--paper);
-  animation: rad-kiln-glow var(--rad-kiln-glow-duration) var(--rad-kiln-ease) infinite;
+  animation: rad-kiln-glow var(--rad-kiln-glow-duration) var(--rad-kiln-ease)
+    infinite;
 }
 .payment-journey-label {
   display: grid;
