@@ -208,8 +208,32 @@ export function OrderFlow({
   );
   const validSize = [d.length, d.width, d.height].every(validDimension);
   const validDate = d.timeline !== "date" || validFutureDate(d.needBy);
+  const summaryRows: [string, string][] = [
+    [txt("چی بسازیم؟", "Object"), optionLabel(FORM_OPTIONS, d.form, locale)],
+    [
+      txt("اندازه", "Size"),
+      [
+        optionLabel(SIZE_OPTIONS, d.size, locale),
+        [d.length, d.width, d.height].filter(Boolean).join(" × "),
+      ]
+        .filter(Boolean)
+        .join(" — "),
+    ],
+    [
+      txt("رنگ", "Color"),
+      [...d.colors.map((v) => colorLabel(v, locale)), d.colorNote]
+        .filter(Boolean)
+        .join("، "),
+    ],
+    [txt("بودجه", "Budget"), optionLabel(BUDGET_OPTIONS, d.budget, locale)],
+    [
+      txt("زمان", "Time"),
+      d.needBy || optionLabel(TIMELINE_OPTIONS, d.timeline, locale),
+    ],
+  ];
   return (
     <div className="order-flow" dir={fa ? "rtl" : "ltr"}>
+      <div className="order-flow-main">
       <header className="order-flow-top">
         {screen === "choose" ? (
           <Link
@@ -680,6 +704,28 @@ export function OrderFlow({
           </>
         )}
       </section>
+      </div>
+      {screen !== "review" && (
+        <aside
+          className="order-flow-aside"
+          aria-label={txt("خلاصه سفارش", "Order summary")}
+        >
+          <h2>{txt("خلاصه تا این‌جا", "Summary so far")}</h2>
+          <dl>
+            {summaryRows.map(([label, value]) => (
+              <div key={label}>
+                <dt>{label}</dt>
+                <dd>{value || "—"}</dd>
+              </div>
+            ))}
+          </dl>
+          {hasReference && (
+            <p className="order-flow-aside-note">
+              {txt("مرجع تصویری اضافه شده", "Reference image added")}
+            </p>
+          )}
+        </aside>
+      )}
     </div>
   );
 }
