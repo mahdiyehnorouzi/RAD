@@ -30,6 +30,8 @@ import { ContactService } from "../contact/contact.service";
 import { UpdateContactMessageDto } from "../contact/dto";
 import { DamageReportsService } from "../damage/damage-reports.service";
 import { ReviewDamageReportDto } from "../damage/dto";
+import { ArtistApplicationsService } from "../artist-applications/artist-applications.service";
+import { ReviewArtistApplicationDto } from "../artist-applications/review-artist-application.dto";
 import { ReviewsService } from "../reviews/reviews.service";
 import { UpdateReviewDto } from "../reviews/dto/update-review.dto";
 import { ShapeService } from "../shape/shape.service";
@@ -47,6 +49,7 @@ export class AdminController {
     private readonly commissions: CommissionsService,
     private readonly contact: ContactService,
     private readonly damageReports: DamageReportsService,
+    private readonly artistApplications: ArtistApplicationsService,
     private readonly reviews: ReviewsService,
     private readonly shape: ShapeService,
     private readonly help: HelpService,
@@ -151,6 +154,21 @@ export class AdminController {
   ) {
     this.admin.assert(request.adminRole, "order.write");
     return this.damageReports.review(id, body, request.userId ?? null);
+  }
+
+  @Get("artist-applications")
+  listArtistApplications() {
+    return this.artistApplications.listAll();
+  }
+
+  @Patch("artist-applications/:id")
+  reviewArtistApplication(
+    @Param("id") id: string,
+    @Body() body: ReviewArtistApplicationDto,
+    @Req() request: AuthedRequest,
+  ) {
+    this.admin.assert(request.adminRole, "order.write");
+    return this.artistApplications.review(id, body);
   }
 
   @Get("reviews")

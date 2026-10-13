@@ -1,3 +1,4 @@
+import { ArtistApplication } from "./artist-application.entity";
 import { CartItem } from "./cart-item.entity";
 import { Commission } from "./commission.entity";
 import { ContactMessage } from "./contact-message.entity";
@@ -34,11 +35,13 @@ export const entities = [
   DamageReport,
   ShapeQuestion,
   HelpQuestion,
+  ArtistApplication,
 ] as const;
 
 export type EntityClass = (typeof entities)[number];
 
 export {
+  ArtistApplication,
   CartItem,
   Commission,
   ContactMessage,
