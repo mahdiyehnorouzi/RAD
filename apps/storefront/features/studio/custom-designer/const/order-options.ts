@@ -89,7 +89,7 @@ export const DEFAULT_SIZE = "medium";
 export const BUDGET_OPTIONS: Option[] = [
   {
     id: "under-3",
-    label: { fa: "تا ۳ میلیون تومان", en: "Up to 3,000,000 toman" },
+    label: { fa: "۲ تا ۳ میلیون تومان", en: "2,000,000–3,000,000 toman" },
   },
   {
     id: "3-5",
