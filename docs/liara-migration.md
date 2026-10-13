@@ -39,7 +39,16 @@ deployment has happened.
   `.github/workflows/deploy-admin-liara.yml` — independent workflows, each
   gated on the existing CI checks, each only triggered by changes to its
   own app (plus shared `packages/`), with `workflow_dispatch` for manual
-  runs.
+  runs. **Build strategy (updated after the first live deploy attempt,
+  see §9 below):** each workflow has a `build-image` job that builds the
+  app's Docker image on a GitHub-hosted `ubuntu-latest` (amd64) runner and
+  pushes it to GHCR (`ghcr.io/<owner>/rad-admin`,
+  `ghcr.io/<owner>/rad-storefront`), tagged with both the commit SHA and
+  `latest`. The `deploy` job only runs `liara deploy --image <ref>` —
+  Liara never builds a Dockerfile itself. The `deploy` job is also gated
+  `if: github.event_name == 'workflow_dispatch'`, so pushing to `main`
+  builds and publishes the image (no production effect) but never
+  deploys without a human explicitly running the workflow.
 - `.github/workflows/ci.yml` — added two build-matrix entries that run the
   plain `next build` (Docker/Liara path) for storefront and admin, so this
   path is validated on every PR too, independent of the vinext build.
@@ -183,7 +192,96 @@ Because the Cloudflare deployment is untouched:
    commit to Cloudflare via the existing `npm run deploy:vinext` /
    `deploy:admin` scripts before relying on it for rollback traffic.
 
-## 7. Remaining steps that need your credentials (not done here)
+## 7. Build timeout on Liara's remote builder — why, and the fix
+
+The first live `rad-admin` deploy attempt (source upload → Liara's own
+Docker build) failed with `Error: TIMEOUT — Build timed out. It took about
+20 minutes.`, stopping around Dockerfile step 12/26 — right after `npm ci`
+had already reported installing 1,134 packages successfully in ~2 minutes.
+
+**Root cause**: this is not a dependency or `npm ci` problem (it had
+already finished), and not a Next.js build error (none was reported).
+It's Liara's *remote builder itself* running the whole multi-stage Docker
+build — `COPY . .` of the full monorepo, then `next build` for a
+workspace that also drags the other apps' type definitions through the
+TypeScript project — on infrastructure that is consistently slower than a
+GitHub Actions runner for this build, and that has a hard 20-minute wall
+clock regardless of why a step is slow. `apps/admin/Dockerfile` and
+`apps/storefront/Dockerfile` were already reasonably lean multi-stage
+builds (separate `deps`/`builder`/`runner` stages, standalone output, only
+the per-app `package.json` files copied into the `deps` stage) — the
+problem is *where* the build runs, not the Dockerfile's structure.
+
+**Fix**: stop asking Liara to build anything. Build the image on a
+GitHub-hosted `ubuntu-latest` runner (amd64, matching Liara's host
+architecture) using `docker/build-push-action`, push it to GHCR, and have
+Liara pull and run that prebuilt image (`liara deploy --image <ref>`,
+confirmed as a supported CLI flag via `liara deploy --help` — Liara's own
+docs additionally document the equivalent `liara.json` `"image"` key for
+public-registry images at `docs.liara.ir/paas/docker/how-tos/deploy-image-from-dockerhub/`,
+which works for "any other public registry", GHCR included). This also
+means `npm ci`/`next build` now run once per push on Actions' build
+caching infra instead of on every deploy attempt against Liara's builder.
+
+**Registry choice and the private-registry limitation**: Liara's
+documented prebuilt-image path and the CLI's `--image` flag target a
+*public* registry — no private-registry authentication (registry
+username/password) was found in the CLI help or docs. GHCR is used here
+because it needs zero extra secrets (GitHub Actions' built-in
+`GITHUB_TOKEN` can push to it), but **the GHCR package must be switched to
+public visibility once, manually** (GitHub → your profile/org → Packages
+→ `rad-admin` / `rad-storefront` → Package settings → Change visibility →
+Public) — this is a GitHub account/package setting, not something to
+automate, and it only needs doing once per package, after the first
+successful push creates it.
+
+**Not verified live**: `docker/build-push-action` producing a working
+amd64 image and GHCR push (plausible from the action's documented
+behavior and this repo's already-tested local `docker build`, but not run
+in this session — no GitHub Actions run was triggered); an actual `liara
+deploy --image ...` pulling from GHCR (Liara's CLI help confirms the
+`--image`/`-i` flag exists and takes "docker image to deploy", but no live
+deploy was executed, per §10 below).
+
+## 8. Exact steps: deploy `rad-admin` first
+
+1. **Create the Liara app** (if not already done): Liara console → Create
+   app → Docker platform → name it `rad-admin` (must match
+   `apps/admin/liara.json`'s `"app"` field).
+2. **Add the repo secret**: GitHub repo → Settings → Secrets and variables
+   → Actions → New repository secret → name `LIARA_API_TOKEN`, value from
+   Liara console → your profile → API tokens → create one.
+3. **Set runtime env vars on the Liara app** (console → `rad-admin` →
+   Environment Variables), per `apps/admin/.env.production.liara.example`:
+   `API_URL=https://api.rad-object.com` (and anything else listed there).
+   No build-time `NEXT_PUBLIC_*` vars exist for admin today.
+4. **Trigger the build** — either push a commit touching `apps/admin/**`
+   to `main`, or go to GitHub → Actions → "Deploy Admin (Liara)" → Run
+   workflow (`workflow_dispatch`), with the branch you want. This runs CI,
+   then `build-image`, which pushes `ghcr.io/<owner>/rad-admin:<sha>` and
+   `:latest`.
+5. **Make the GHCR package public, once**: GitHub → your profile (or the
+   org, if `<owner>` is an org) → Packages → `rad-admin` → Package
+   settings → Change visibility → Public. (Liara's documented image-deploy
+   path only supports public registries — see §7. The package only
+   appears after step 4's first push.)
+6. **Run the deploy job**: the same "Deploy Admin (Liara)" workflow run
+   only deploys if it was started via `workflow_dispatch` (step 4's manual
+   "Run workflow" button) — a plain push to `main` builds and publishes
+   the image but stops there. If you pushed a commit instead, go back to
+   Actions → "Deploy Admin (Liara)" → Run workflow once the image is
+   public, to actually run `deploy`.
+7. **Verify**: once the `deploy` job finishes, check
+   `https://rad-admin.liara.run` (or whatever subdomain Liara assigned) —
+   confirm `/api/health` returns `{"ok":true}` and the admin login page
+   loads. Do this before touching DNS (§4) or the `admin.rad-object.com`
+   cutover (§5).
+
+Repeat the same sequence for `rad-storefront` once admin is verified,
+substituting its workflow name, app name, and env vars from
+`apps/storefront/.env.production.liara.example`.
+
+## 9. Remaining steps that need your credentials (not done here)
 
 - [ ] Create the two Liara apps (`rad-storefront`, `rad-admin` — or your
       chosen names; update `apps/*/liara.json`'s `"app"` field to match) on
@@ -202,8 +300,10 @@ Because the Cloudflare deployment is untouched:
 - [ ] Decide whether to keep the `*.workers.dev` entries in
       `apps/api/src/common/cors-origins.ts` until Cloudflare is fully
       retired, then remove them.
+- [ ] Make the `rad-admin`/`rad-storefront` GHCR packages public once each
+      (§8, step 5) — required for Liara to pull them.
 
-## 8. Validation performed
+## 10. Validation performed
 
 - **Tested**: `npm run build --workspace @rad/storefront` and
   `--workspace @rad/admin` with `LIARA_BUILD=1 NODE_ENV=production` —
@@ -221,3 +321,10 @@ Because the Cloudflare deployment is untouched:
 - **Not tested** (needs your Liara account): an actual `liara deploy`,
   DNS cutover, or anything on the live `rad-object.com`/
   `admin.rad-object.com` domains.
+- **Not tested** (needs a GitHub Actions run): the `build-image` jobs in
+  `deploy-admin-liara.yml`/`deploy-storefront-liara.yml` (GHCR push,
+  `docker/build-push-action` with `platforms: linux/amd64`), and
+  `liara deploy --image ...` against a real GHCR-hosted image. Only
+  inspected against `liara deploy --help` output and Liara's own docs
+  (§7) — no workflow was triggered in this session, per the task's "do
+  not run any production deployments automatically" constraint.
