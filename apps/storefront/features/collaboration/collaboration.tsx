@@ -17,9 +17,9 @@ import {
   collaborateCopy,
   optionLabel,
 } from "./const";
-import styles from "./collaborate.module.css";
+import styles from "./collaboration.module.css";
 
-export function Collaborate() {
+export function Collaboration() {
   const { locale, href } = useLocale();
   const c = collaborateCopy[locale];
   const online = useOnline();

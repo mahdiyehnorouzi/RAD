@@ -3,7 +3,7 @@
 import { useRef, type ReactNode } from "react";
 import type { LivePiece } from "@/components/now/type";
 import { useLocale } from "@/components/i18n";
-import { CollaborateBand } from "../collaborate-band";
+import { CollaborationBand } from "../collaboration-band";
 import { journeyCopy } from "./const";
 import { JourneyAbout } from "./journey-about";
 import { JourneyCustom } from "./journey-custom";
@@ -44,7 +44,7 @@ export function ThreadJourney({
         <JourneyCustom />
       </section>
       {works}
-      <CollaborateBand />
+      <CollaborationBand />
       <JourneyAbout />
       {closing}
       <RedThread ref={svgRef} geometry={geometry} />

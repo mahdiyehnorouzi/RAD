@@ -5,7 +5,7 @@ import { Plus, X } from "lucide-react";
 import { useLocale } from "@/components/i18n";
 import { prepareImage } from "@/lib/media/prepare-image";
 import { collaborateCopy } from "./const";
-import styles from "./collaborate.module.css";
+import styles from "./collaboration.module.css";
 
 export function ArtworkImages({
   images,
