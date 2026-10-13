@@ -64,6 +64,7 @@
 
 .photo img {
   object-fit: cover;
+  object-position: center 25%;
 }
 
 .curve {

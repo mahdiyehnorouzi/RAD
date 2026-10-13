@@ -48,7 +48,7 @@ export function CollaborationBand() {
 
       <figure className={styles.photo}>
         <Image
-          src="/difference/homesickness-bowl/artist-v2.webp"
+          src="/home/collaborate/artist.webp"
           alt=""
           fill
           sizes="(min-width: 900px) 46vw, 100vw"
