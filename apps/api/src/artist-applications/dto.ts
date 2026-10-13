@@ -10,7 +10,12 @@ import {
   MaxLength,
   MinLength,
 } from "class-validator";
-import { ABOUT_MAX, ARTWORK_CATEGORIES, ARTWORK_IMAGE_MAX, SHIPPING_METHODS } from "./const";
+import {
+  ABOUT_MAX,
+  ARTWORK_CATEGORIES,
+  ARTWORK_IMAGE_MAX,
+  SHIPPING_METHODS,
+} from "./const";
 
 export class CreateArtistApplicationDto {
   @ApiProperty({ example: "سارا محمدی" })
@@ -25,6 +30,12 @@ export class CreateArtistApplicationDto {
   @MaxLength(80)
   artistName?: string;
 
+  /**
+   * DTO-level sanity bound only — not the real business rule. The actual
+   * check (a valid Iranian mobile number) lives in `normalizeIranMobile`
+   * (service-level, `contact.ts`), mirroring how `ConfirmPaymentDto` treats
+   * `trackingNumber` vs `normalizeTrackingNumber`.
+   */
   @ApiProperty({ example: "09123456789" })
   @IsString()
   @MinLength(5)

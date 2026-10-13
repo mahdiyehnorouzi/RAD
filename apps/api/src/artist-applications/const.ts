@@ -10,7 +10,11 @@ export const ARTWORK_CATEGORIES = [
   "other",
 ] as const;
 
-export const SHIPPING_METHODS = ["studio_dropoff", "self_ship", "either"] as const;
+export const SHIPPING_METHODS = [
+  "studio_dropoff",
+  "self_ship",
+  "either",
+] as const;
 
 export const ARTIST_APPLICATION_STATUSES = [
   "submitted",

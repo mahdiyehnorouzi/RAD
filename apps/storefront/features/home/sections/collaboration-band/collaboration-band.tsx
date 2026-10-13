@@ -83,7 +83,10 @@ export function CollaborationBand() {
         ))}
       </ul>
 
-      <span className={`${styles.tear} ${styles.tearBottom}`} aria-hidden="true" />
+      <span
+        className={`${styles.tear} ${styles.tearBottom}`}
+        aria-hidden="true"
+      />
     </section>
   );
 }

@@ -14,7 +14,13 @@ export class ArtistApplicationsController {
 
   @Post()
   @Throttle({ default: { limit: 5, ttl: 60_000 } })
-  async create(@Body() body: CreateArtistApplicationDto, @Req() request: AuthedRequest) {
-    return this.applications.create(await this.identity.fromRequest(request), body);
+  async create(
+    @Body() body: CreateArtistApplicationDto,
+    @Req() request: AuthedRequest,
+  ) {
+    return this.applications.create(
+      await this.identity.fromRequest(request),
+      body,
+    );
   }
 }

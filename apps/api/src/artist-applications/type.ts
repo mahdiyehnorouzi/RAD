@@ -6,7 +6,8 @@ import type {
 
 export type ArtworkCategory = (typeof ARTWORK_CATEGORIES)[number];
 export type ShippingMethod = (typeof SHIPPING_METHODS)[number];
-export type ArtistApplicationStatus = (typeof ARTIST_APPLICATION_STATUSES)[number];
+export type ArtistApplicationStatus =
+  (typeof ARTIST_APPLICATION_STATUSES)[number];
 
 /** The application as the applicant sees it after submitting. */
 export type CustomerArtistApplication = {

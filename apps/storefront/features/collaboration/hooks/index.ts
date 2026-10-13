@@ -1,1 +1,1 @@
-export { useCollaborate, type Collaborate } from "./use-collaborate";
+export { useCollaborate } from "./use-collaborate";

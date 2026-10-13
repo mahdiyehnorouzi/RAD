@@ -7,7 +7,9 @@ export class ReviewArtistApplicationDto {
   @IsIn(ARTIST_APPLICATION_STATUSES)
   status!: string;
 
-  @ApiPropertyOptional({ example: "نمونه‌کارها عالی بود؛ برای همکاری تماس گرفته شد." })
+  @ApiPropertyOptional({
+    example: "نمونه‌کارها عالی بود؛ برای همکاری تماس گرفته شد.",
+  })
   @IsOptional()
   @IsString()
   @MaxLength(1000)

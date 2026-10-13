@@ -1,9 +1,5 @@
 export { requestPasswordReset, resetAccountPassword } from "./auth";
-export {
-  submitArtistApplication,
-  type ArtistApplication,
-  type ArtistApplicationInput,
-} from "./artist-collaboration";
+export { submitArtistApplication } from "./artist-collaboration";
 export { fetchArtwork, fetchArtworks } from "./artworks";
 export { fetchProduct } from "./catalog";
 export {

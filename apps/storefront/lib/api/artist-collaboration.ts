@@ -1,6 +1,6 @@
 import { api } from "./client";
 
-export type ArtistApplicationInput = {
+type ArtistApplicationInput = {
   fullName: string;
   artistName?: string;
   contact: string;
@@ -13,7 +13,7 @@ export type ArtistApplicationInput = {
   availability?: string;
 };
 
-export type ArtistApplication = ArtistApplicationInput & {
+type ArtistApplication = ArtistApplicationInput & {
   id: string;
   status: string;
   createdAt: number;

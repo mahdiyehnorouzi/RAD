@@ -10,6 +10,14 @@ const HOP_BY_HOP = new Set([
   "trailers",
   "transfer-encoding",
   "upgrade",
+  // `fetch()` transparently gunzips the upstream body while handing us
+  // `upstream.body` already decoded, so echoing a gzip `content-encoding`
+  // (API responses over ~1KB get compressed — see compression.spec.ts)
+  // would make the browser try to gunzip already-plain bytes and fail with
+  // ERR_CONTENT_DECODING_FAILED. `content-length` is stale for the same
+  // reason; the runtime recomputes it from the actual body we send.
+  "content-encoding",
+  "content-length",
 ]);
 
 /**

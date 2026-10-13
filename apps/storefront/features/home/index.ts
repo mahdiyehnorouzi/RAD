@@ -1,7 +1,6 @@
 export {
   ArchiveSection,
   CertificateSection,
-  CollaborationBand,
   HomeHero,
   ProcessSection,
   ThreadJourney,

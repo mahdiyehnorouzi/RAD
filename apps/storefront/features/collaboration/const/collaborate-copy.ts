@@ -1,9 +1,17 @@
 import type { LocaleCopy } from "@/types/locale";
 
-export const COLLABORATE_STEPS = ["intro", "artworks", "terms", "review"] as const;
+export const COLLABORATE_STEPS = [
+  "intro",
+  "artworks",
+  "terms",
+  "review",
+] as const;
 export type CollaborateStep = (typeof COLLABORATE_STEPS)[number];
 
-export const ARTWORK_CATEGORY_OPTIONS: Array<{ id: string; label: LocaleCopy }> = [
+export const ARTWORK_CATEGORY_OPTIONS: Array<{
+  id: string;
+  label: LocaleCopy;
+}> = [
   { id: "wood", label: { fa: "چوب", en: "Wood" } },
   { id: "ceramics", label: { fa: "سفال و سرامیک", en: "Ceramics" } },
   { id: "metal", label: { fa: "فلز", en: "Metal" } },
@@ -14,11 +22,18 @@ export const ARTWORK_CATEGORY_OPTIONS: Array<{ id: string; label: LocaleCopy }> 
   { id: "other", label: { fa: "سایر", en: "Other" } },
 ];
 
-export const SHIPPING_METHOD_OPTIONS: Array<{ id: string; label: LocaleCopy }> = [
-  { id: "studio_dropoff", label: { fa: "تحویل به استودیو رد", en: "Drop off at the RAD studio" } },
-  { id: "self_ship", label: { fa: "ارسال توسط خودم", en: "I’ll ship it myself" } },
-  { id: "either", label: { fa: "هر دو", en: "Either works" } },
-];
+export const SHIPPING_METHOD_OPTIONS: Array<{ id: string; label: LocaleCopy }> =
+  [
+    {
+      id: "studio_dropoff",
+      label: { fa: "تحویل به استودیو رد", en: "Drop off at the RAD studio" },
+    },
+    {
+      id: "self_ship",
+      label: { fa: "ارسال توسط خودم", en: "I’ll ship it myself" },
+    },
+    { id: "either", label: { fa: "هر دو", en: "Either works" } },
+  ];
 
 export const collaborateCopy = {
   fa: {
@@ -70,6 +85,12 @@ export const collaborateCopy = {
     offline: "اتصال اینترنت برقرار نیست؛ دوباره تلاش کن.",
     submitFailed: "ارسال پرونده با خطا مواجه شد؛ دوباره تلاش کن.",
     fieldRequired: "این بخش را تکمیل کن.",
+    contactEmpty: "شماره موبایلت رو وارد کن.",
+    contactInvalid: "شماره موبایل درست نیست. یه بار دیگه بررسیش کن.",
+    categoriesRequired: "حداقل یک دسته را انتخاب کن.",
+    shippingRequired: "روش ارسال را مشخص کن.",
+    availabilityRequired: "زمان آمادگی‌ات را انتخاب کن.",
+    artworksRequired: "حداقل یک تصویر از آثارت اضافه کن.",
     imageTypeError: "فقط تصویر JPEG، PNG یا WebP پذیرفته می‌شود.",
     imageTooLarge: "حجم تصویر {name} زیاد است؛ عکس سبک‌تری انتخاب کن.",
     imageCorrupt: "فایل {name} خراب است یا باز نشد.",
@@ -126,6 +147,12 @@ export const collaborateCopy = {
     offline: "No internet connection; try again.",
     submitFailed: "Sending the application failed; try again.",
     fieldRequired: "Please fill this in.",
+    contactEmpty: "Enter your mobile number.",
+    contactInvalid: "That mobile number isn’t right; check it again.",
+    categoriesRequired: "Pick at least one category.",
+    shippingRequired: "Choose a shipping method.",
+    availabilityRequired: "Choose when you can start.",
+    artworksRequired: "Add at least one photo of your work.",
     imageTypeError: "Only JPEG, PNG or WebP photos are accepted.",
     imageTooLarge: "{name} is too large; choose a lighter photo.",
     imageCorrupt: "{name} is corrupted or couldn’t be opened.",
