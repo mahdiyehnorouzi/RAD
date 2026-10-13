@@ -125,8 +125,13 @@ export function CommerceProvider({ children }: { children: React.ReactNode }) {
 
   const applySession = useCallback((session: SessionState) => {
     setUser(session.user);
-    setFavorites(session.favorites);
-    cacheFavorites(session.favorites);
+    // Same defensive fallback as `notices` above, for the same reason: a
+    // malformed/partial `/session` response must not leave `favorites`
+    // `undefined`, which crashes every render that calls `.includes` on it
+    // (e.g. `FavoriteButton` via this provider's `isFavorite`).
+    const favorites = session.favorites ?? [];
+    setFavorites(favorites);
+    cacheFavorites(favorites);
     setNotices(session.notices ?? []);
   }, []);
 

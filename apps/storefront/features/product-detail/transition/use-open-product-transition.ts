@@ -23,6 +23,11 @@ export function useOpenProductTransition(slug: string, href: string) {
       if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
         return;
       }
+      // Guards against stacking a second `radOverlay` history entry if the
+      // visitor manages to tap another card (e.g. a related work) while the
+      // overlay is still open — one history entry per overlay session keeps
+      // a single browser-back press landing back on the real origin page.
+      if (window.history.state?.radOverlay) return;
       const img = artRef.current?.querySelector("img");
       if (!img) return;
       const rect = img.getBoundingClientRect();

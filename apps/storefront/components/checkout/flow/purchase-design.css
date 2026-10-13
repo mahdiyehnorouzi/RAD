@@ -3,9 +3,7 @@ body:has(.purchase-bag) {
   background: #faf7ef;
 }
 body:has(.checkout-flow) .route-trail,
-body:has(.purchase-bag) .route-trail,
-body:has(.checkout-flow) .footer,
-body:has(.purchase-bag) .footer {
+body:has(.purchase-bag) .route-trail {
   display: none;
 }
 .checkout-flow.section {

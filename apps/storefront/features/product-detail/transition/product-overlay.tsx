@@ -8,6 +8,7 @@ import {
   type PointerEvent as ReactPointerEvent,
 } from "react";
 import { X } from "lucide-react";
+import { usePathname } from "next/navigation";
 import {
   animate,
   motion,
@@ -38,6 +39,20 @@ const NO_DISMISS_SELECTOR =
 const DISMISS_DISTANCE = 140; // px — commit the close past this drag distance…
 const DISMISS_VELOCITY = 700; // …or past this downward velocity (px/s), whichever comes first.
 const DRAG_RANGE = 340; // px of travel the rubber-band/visual interpolation is defined over.
+/** Upper bound on waiting for the real hero image to decode before revealing content anyway. */
+const HERO_READY_TIMEOUT_MS = 2500;
+
+type Rect = { left: number; top: number; width: number; height: number };
+
+function lerpRect(from: Rect, to: Rect, progress: number): Rect {
+  const t = Math.min(Math.max(progress, 0), 1);
+  return {
+    left: from.left + (to.left - from.left) * t,
+    top: from.top + (to.top - from.top) * t,
+    width: from.width + (to.width - from.width) * t,
+    height: from.height + (to.height - from.height) * t,
+  };
+}
 
 /**
  * The fullscreen expandable-card PDP overlay: mounted once (see
@@ -61,23 +76,38 @@ const DRAG_RANGE = 340; // px of travel the rubber-band/visual interpolation is 
 export function ProductOverlay() {
   const { phase, slug, href, sourceRect, imageSrc, returnScrollY, close } =
     useProductTransitionStore();
+  const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
   const [data, setData] = useState<PdpData | null>(null);
   const [loadError, setLoadError] = useState(false);
   const [retryToken, setRetryToken] = useState(0);
   const [showMorphImage, setShowMorphImage] = useState(false);
   const [imageProgressed, setImageProgressed] = useState(false);
+  const [heroReady, setHeroReady] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
   const [canDismiss, setCanDismiss] = useState(true);
-  // Content only ever appears once BOTH the open animation has progressed
-  // far enough AND the full canonical data has arrived — never a reduced
-  // view that then gets replaced; that visible swap is exactly the bug
-  // this endpoint/prop-set exists to prevent (see resolvePdpData). A load
-  // failure is shown the same way, once the morph has progressed, rather
-  // than leaving the sheet on its loading state forever.
-  const contentVisible = imageProgressed && (data !== null || loadError);
+  // Content only ever appears once the open animation has finished AND the
+  // real canonical hero image has actually decoded at its painted size (see
+  // the heroReady effect below) AND the full canonical data has arrived —
+  // never a reduced view that then gets replaced; that visible swap is
+  // exactly the bug this endpoint/prop-set exists to prevent (see
+  // resolvePdpData). A load failure is shown the same way, once the morph
+  // has progressed, rather than leaving the sheet on its loading state
+  // forever — heroReady is irrelevant in that case since there is no hero.
+  const contentVisible =
+    imageProgressed && (loadError || (data !== null && heroReady));
   const scrollRef = useRef<HTMLDivElement>(null);
   const heroTargetRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+  // Captured once at drag start so the floating image can track the finger
+  // continuously instead of only appearing at drag-end (see onDragStart/onDrag).
+  const dragRectsRef = useRef<{ hero: Rect; target: Rect } | null>(null);
+  // True only while the OPEN handoff's clone is still waiting to hand off to
+  // real content (see the contentVisible-driven fade-out effect below). Scoped
+  // deliberately so that effect never re-fires during a later drag or close,
+  // where `showMorphImage`/`contentVisible` can legitimately both be true
+  // again for unrelated reasons.
+  const openHandoffPendingRef = useRef(false);
 
   const y = useMotionValue(0);
   const imageControls = useAnimation();
@@ -95,6 +125,33 @@ export function ProductOverlay() {
     setMounted(phase === "open");
   }, [phase]);
 
+  // `usePathname()` turns out to track the manual `pushState` in
+  // use-open-product-transition.ts too (it isn't Next-router-exclusive in
+  // this version), so `pathname` briefly lags behind `href` right after
+  // opening and then catches up to equal it — that catch-up is NOT a
+  // departure and must not close the overlay. Only once pathname has
+  // actually arrived at `href` does any further mismatch mean a *real* way
+  // out (Link/router.push to /cart, /checkout, any non-product route,
+  // including one triggered from inside the overlaid PDP itself, e.g.
+  // "رفتن به کیسه") — the one unambiguous signal the visible screen is no
+  // longer this product. Tear down immediately and unconditionally then:
+  // the destination route has already rendered underneath by the time
+  // `pathname` changes, so there is nothing left to reverse-animate back
+  // to, and leaving the overlay mounted here is exactly the "URL changed
+  // but PDP stays visible" bug.
+  const hasArrivedRef = useRef(false);
+  useEffect(() => {
+    if (phase !== "open") {
+      hasArrivedRef.current = false;
+      return;
+    }
+    if (!hasArrivedRef.current) {
+      if (pathname === href) hasArrivedRef.current = true;
+      return;
+    }
+    if (pathname !== href) close();
+  }, [pathname, phase, href, close]);
+
   // Fetches the exact same data the direct route renders from (see
   // resolvePdpData / app/api/pdp/[slug]/route.ts) — not a reduced payload.
   // If the slug turns out to have moved (rare: a passport-only or renamed
@@ -104,10 +161,12 @@ export function ProductOverlay() {
     if (!mounted || !slug) {
       setData(null);
       setLoadError(false);
+      setHeroReady(false);
       return undefined;
     }
     setData(null);
     setLoadError(false);
+    setHeroReady(false);
     const controller = new AbortController();
     fetchPdpOverlayData(slug, controller.signal).then((result) => {
       if (controller.signal.aborted) return;
@@ -129,6 +188,42 @@ export function ProductOverlay() {
     // navigated away from can never land and overwrite newer state.
     return () => controller.abort();
   }, [mounted, slug, retryToken]);
+
+  // The real canonical hero <img data-pdp-hero> only exists in the DOM once
+  // `data` has rendered `ProductDetail`. It is marked in product-gallery.tsx
+  // specifically so this can find it without reimplementing which photo
+  // variant/transform ends up as the rendered src. Resolves `heroReady` once
+  // that exact element has actually decoded — never a guessed delay — with a
+  // bounded fallback so a slow/broken image can't block the reveal forever.
+  useEffect(() => {
+    if (!data) return undefined;
+    let settled = false;
+    const markReady = () => {
+      if (!settled) {
+        settled = true;
+        setHeroReady(true);
+      }
+    };
+    const timer = window.setTimeout(markReady, HERO_READY_TIMEOUT_MS);
+    const img = contentRef.current?.querySelector<HTMLImageElement>(
+      "[data-pdp-hero] img",
+    );
+    if (!img) {
+      // No photographed hero for this product (plate-only work) — nothing
+      // to wait for.
+      markReady();
+    } else if (img.complete && img.naturalWidth > 0) {
+      markReady();
+    } else {
+      img.addEventListener("load", markReady);
+      img.addEventListener("error", markReady);
+    }
+    return () => {
+      window.clearTimeout(timer);
+      img?.removeEventListener("load", markReady);
+      img?.removeEventListener("error", markReady);
+    };
+  }, [data]);
 
   // Lock the underlying page's scroll while the overlay is open, and
   // restore it — unchanged — the moment the overlay unmounts.
@@ -152,6 +247,8 @@ export function ProductOverlay() {
   useLayoutEffect(() => {
     if (!mounted || !sourceRect) return;
     y.set(0);
+    dragRectsRef.current = null;
+    openHandoffPendingRef.current = true;
     setImageProgressed(false);
     setShowMorphImage(true);
     const target = heroTargetRef.current?.getBoundingClientRect();
@@ -161,12 +258,18 @@ export function ProductOverlay() {
       width: sourceRect.width,
       height: sourceRect.height,
       borderRadius: sourceRect.borderRadius,
+      opacity: 1,
     });
     if (!target || reducedMotion) {
-      setShowMorphImage(false);
       setImageProgressed(true);
       return;
     }
+    // `imageProgressed` flips once the morph genuinely finishes animating —
+    // never a guessed duration. The clone itself is NOT hidden here: it
+    // stays frozen in place (see the contentVisible-driven fade-out effect
+    // below) until the real hero has also decoded, so there is never a
+    // visible blank/placeholder gap between "clone gone" and "real hero
+    // ready" even if the real image is still loading at this point.
     void imageControls
       .start({
         x: target.left,
@@ -176,13 +279,30 @@ export function ProductOverlay() {
         borderRadius: 0,
         transition: { duration: 0.46, ease: [0.16, 1, 0.3, 1] },
       })
-      .then(() => {
-        setShowMorphImage(false);
-      });
-    const contentTimer = window.setTimeout(() => setImageProgressed(true), 220);
-    return () => window.clearTimeout(contentTimer);
+      .then(() => setImageProgressed(true));
     // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally only re-runs when a new card is opened
   }, [mounted, sourceRect]);
+
+  // Cross-fades the floating clone out only once the real content is truly
+  // ready to be seen (see `contentVisible`) — this is the actual handoff,
+  // not the animation's own completion, which is what previously let a
+  // blank hero show through for however long the data/image fetch lagged
+  // behind the 460ms morph.
+  useEffect(() => {
+    if (!openHandoffPendingRef.current || !contentVisible || !showMorphImage) {
+      return undefined;
+    }
+    openHandoffPendingRef.current = false;
+    let cancelled = false;
+    void imageControls
+      .start({ opacity: 0, transition: { duration: 0.18 } })
+      .then(() => {
+        if (!cancelled) setShowMorphImage(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [contentVisible, showMorphImage, imageControls]);
 
   const performClose = useCallback(
     (viaGesture: boolean) => {
@@ -196,21 +316,33 @@ export function ProductOverlay() {
         return;
       }
       setImageProgressed(false);
-      // Snap the scroller to top so the re-shown morph image lines up with
-      // the hero's rect at rest, not wherever the visitor had scrolled to.
-      scrollRef.current?.scrollTo({ top: 0, behavior: "auto" });
-      const heroRect = heroTargetRef.current?.getBoundingClientRect();
-      if (heroRect) {
-        imageControls.set({
-          x: heroRect.left,
-          y: heroRect.top,
-          width: heroRect.width,
-          height: heroRect.height,
-          borderRadius: 0,
-        });
+      const duration = viaGesture ? 0.32 : 0.38;
+      const ease = [0.16, 1, 0.3, 1] as const;
+      // Let the card sheet's own shrink (scale/radius, derived from `y`)
+      // ease back to rest over the same duration as the image morph instead
+      // of snapping to 0 instantly, so the two never visibly disagree.
+      void animate(y, 0, { duration, ease });
+      // A drag already in flight has been continuously positioning the
+      // clone via onDrag below — reuse that live position as the morph's
+      // start instead of resetting to the fullscreen hero rect, which is
+      // what produced the "pop" at drag-end. Only a non-gesture close
+      // (button/back, no drag happened) needs the fullscreen reset.
+      if (!viaGesture || !dragRectsRef.current) {
+        scrollRef.current?.scrollTo({ top: 0, behavior: "auto" });
+        const heroRect = heroTargetRef.current?.getBoundingClientRect();
+        if (heroRect) {
+          imageControls.set({
+            x: heroRect.left,
+            y: heroRect.top,
+            width: heroRect.width,
+            height: heroRect.height,
+            borderRadius: 0,
+            opacity: 1,
+          });
+        }
       }
+      dragRectsRef.current = null;
       setShowMorphImage(true);
-      void animate(y, 0, { type: "tween", duration: 0 });
       void imageControls
         .start({
           x: targetRect.left,
@@ -218,10 +350,8 @@ export function ProductOverlay() {
           width: targetRect.width,
           height: targetRect.height,
           borderRadius: 14,
-          transition: {
-            duration: viaGesture ? 0.32 : 0.38,
-            ease: [0.16, 1, 0.3, 1],
-          },
+          opacity: 1,
+          transition: { duration, ease },
         })
         .then(finish);
     },
@@ -237,17 +367,77 @@ export function ProductOverlay() {
     return () => window.removeEventListener("popstate", onPopState);
   }, [mounted, performClose]);
 
+  // Drag-to-dismiss must move the hero continuously with the finger, not
+  // just the card sheet (which already shrinks via cardScale/cardRadius).
+  // onDragStart captures the two endpoints once; onDrag re-positions the
+  // floating clone every frame by interpolating between them off the live
+  // drag offset — the same rect math the open/close morph uses, just driven
+  // by gesture progress instead of a timed animation.
+  const onDragStart = useCallback(() => {
+    if (!canDismiss || !slug || reducedMotion) return;
+    const heroRect = heroTargetRef.current?.getBoundingClientRect();
+    const targetRect = getProductSourceRect(slug);
+    if (!heroRect || !targetRect) return;
+    dragRectsRef.current = { hero: heroRect, target: targetRect };
+    imageControls.set({
+      x: heroRect.left,
+      y: heroRect.top,
+      width: heroRect.width,
+      height: heroRect.height,
+      borderRadius: 0,
+      opacity: 1,
+    });
+    setShowMorphImage(true);
+  }, [canDismiss, imageControls, reducedMotion, slug]);
+
+  const onDrag = useCallback(
+    (_event: PointerEvent, info: PanInfo) => {
+      const rects = dragRectsRef.current;
+      if (!rects) return;
+      const progress = info.offset.y / DRAG_RANGE;
+      const rect = lerpRect(rects.hero, rects.target, progress);
+      imageControls.set({
+        x: rect.left,
+        y: rect.top,
+        width: rect.width,
+        height: rect.height,
+        borderRadius: 14 * Math.min(Math.max(progress, 0), 1),
+        opacity: 1,
+      });
+    },
+    [imageControls],
+  );
+
   const onDragEnd = useCallback(
     (_event: PointerEvent, info: PanInfo) => {
       const distance = info.offset.y;
       const velocity = info.velocity.y;
       if (distance > DISMISS_DISTANCE || velocity > DISMISS_VELOCITY) {
         performClose(true);
-      } else {
-        void animate(y, 0, { type: "spring", stiffness: 420, damping: 38 });
+        return;
+      }
+      void animate(y, 0, { type: "spring", stiffness: 420, damping: 38 });
+      // Cancelled drag: ease the clone back to the fullscreen hero rect in
+      // step with the card spring, then hand back to the real content.
+      const rects = dragRectsRef.current;
+      if (rects) {
+        void imageControls
+          .start({
+            x: rects.hero.left,
+            y: rects.hero.top,
+            width: rects.hero.width,
+            height: rects.hero.height,
+            borderRadius: 0,
+            opacity: 1,
+            transition: { type: "spring", stiffness: 420, damping: 38 },
+          })
+          .then(() => {
+            dragRectsRef.current = null;
+            if (contentVisible) setShowMorphImage(false);
+          });
       }
     },
-    [performClose, y],
+    [contentVisible, imageControls, performClose, y],
   );
 
   // A dismiss drag may only begin from non-interactive PDP surface, and
@@ -287,6 +477,8 @@ export function ProductOverlay() {
           borderRadius: reducedMotion ? 0 : cardRadius,
         }}
         onPointerDownCapture={onPointerDownCapture}
+        onDragStart={onDragStart}
+        onDrag={onDrag}
         onDragEnd={onDragEnd}
       >
         <div className={styles.scroll} ref={scrollRef}>
@@ -301,6 +493,7 @@ export function ProductOverlay() {
             <X aria-hidden="true" />
           </button>
           <div
+            ref={contentRef}
             className={styles.content}
             style={{ opacity: contentVisible ? 1 : 0 }}
           >

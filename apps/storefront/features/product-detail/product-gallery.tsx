@@ -156,6 +156,10 @@ export function ProductGallery({
                 goTo(index);
                 setLightboxOpen(true);
               }}
+              // Marks the real canonical hero image so the card->PDP overlay
+              // (product-overlay.tsx) can detect when it has actually
+              // decoded, instead of guessing with a timer.
+              data-pdp-hero={index === 0 ? "true" : undefined}
               style={
                 index === 0
                   ? ({
