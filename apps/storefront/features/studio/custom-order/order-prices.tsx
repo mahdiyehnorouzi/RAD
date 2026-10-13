@@ -21,6 +21,8 @@ export function OrderPrices() {
         <header className={order.csHead}>
           <h2 id="custom-order-prices">{c.pricesTitle}</h2>
           <p>{c.pricesLede}</p>
+          <p className={styles.csPriceConstraint}>{c.pricesMin}</p>
+          <p className={styles.csPriceConstraint}>{c.pricesTimeline}</p>
         </header>
         <figure className={`${order.csPrint} ${styles.olive}`}>
           <Image

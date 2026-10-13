@@ -22,6 +22,9 @@ export const orderCopy = {
       "قیمت نهایی بر اساس ابعاد، ماده، جزئیات و پیچیدگی تغییر می‌کند.",
     pricesNote:
       "این قیمت‌ها حدودی هستند. در مرحله‌ی بررسی، قیمت دقیق به تو اعلام می‌شود.",
+    pricesMin: "حداقل سفارش از ۲ میلیون تومان شروع می‌شود.",
+    pricesTimeline:
+      "ساخت معمولاً ۲ تا ۳ هفته طول می‌کشد. برای قطعات بزرگ یا چندتکه، قیمت و زمان دقیق بعد از بررسی ایده مشخص می‌شود.",
     oliveAlt: "شاخه‌ی زیتون روی دیوار روشن",
     flowTitle: "سفارش اختصاصی",
     flowLede: "ایده‌ات را با ما در میان بگذار تا با هم بسازیم.",
@@ -51,6 +54,9 @@ export const orderCopy = {
       "The final price changes with size, material, detail and complexity.",
     pricesNote:
       "These prices are approximate. We confirm the exact price when we review your idea.",
+    pricesMin: "Orders start at a minimum of 2,000,000 toman.",
+    pricesTimeline:
+      "Making usually takes 2–3 weeks. For large or multi-part pieces, exact price and timing are set after we review your idea.",
     oliveAlt: "An olive branch against a pale wall",
     flowTitle: "Custom order",
     flowLede: "Share your idea with us and we’ll make it together.",

@@ -16,6 +16,19 @@
   display: none;
 }
 
+.csPriceConstraint {
+  margin: 0;
+  color: var(--cs-ink);
+  font-size: 0.86rem;
+  font-weight: 600;
+  line-height: 1.85;
+}
+
+.csPriceConstraint + .csPriceConstraint {
+  font-weight: 400;
+  color: var(--cs-muted);
+}
+
 .csPriceList {
   display: grid;
   gap: 0.55rem;
