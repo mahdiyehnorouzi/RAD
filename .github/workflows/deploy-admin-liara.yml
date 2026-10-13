@@ -1,5 +1,11 @@
 name: Deploy Admin (Liara)
 
+# Liara's own remote Docker build (`liara deploy` building the Dockerfile
+# on Liara's builder) timed out at 20 minutes on this monorepo. Instead:
+# build the image here on a GitHub-hosted amd64 runner, push it to GHCR,
+# and have Liara just pull + run the prebuilt image (no build on Liara's
+# side at all). See docs/liara-migration.md for the full writeup.
+
 on:
   workflow_dispatch:
   push:
@@ -15,16 +21,63 @@ concurrency:
   group: deploy-admin-liara
   cancel-in-progress: false
 
+env:
+  IMAGE: ghcr.io/${{ github.repository_owner }}/rad-admin
+
 jobs:
   checks:
     uses: ./.github/workflows/ci.yml
 
-  deploy:
-    name: Deploy to Liara
+  build-image:
+    name: Build & push image
     needs: checks
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      packages: write
+    outputs:
+      image_ref: ${{ steps.tags.outputs.ref }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Compute tags
+        id: tags
+        run: echo "ref=${IMAGE}:${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
+
+      - name: Build and push (linux/amd64)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/admin/Dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: |
+            ${{ env.IMAGE }}:${{ github.sha }}
+            ${{ env.IMAGE }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # Gated on workflow_dispatch only — pushing to main builds and publishes
+  # the image (harmless, no production effect) but never deploys on its
+  # own. A human has to trigger this job explicitly from the Actions tab.
+  deploy:
+    name: Deploy to Liara
+    needs: build-image
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
     steps:
       - uses: actions/checkout@v4
 
@@ -41,7 +94,8 @@ jobs:
         with:
           node-version: 22
 
-      - name: Deploy admin to Liara
+      - name: Deploy admin image to Liara
         env:
           LIARA_API_TOKEN: ${{ secrets.LIARA_API_TOKEN }}
+          IMAGE_REF: ${{ needs.build-image.outputs.image_ref }}
         run: bash scripts/deploy-admin-liara.sh
