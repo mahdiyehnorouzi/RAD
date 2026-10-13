@@ -61,6 +61,10 @@ html[dir="rtl"] .checkout-flow {
   background: var(--line);
 }
 
+.checkout-step + .checkout-step::before {
+  transition: background var(--rad-kiln-enter) var(--rad-kiln-ease);
+}
+
 .checkout-step.is-done + .checkout-step::before,
 .checkout-step.is-done + .checkout-step.is-current::before {
   background: var(--moss);
@@ -77,18 +81,24 @@ html[dir="rtl"] .checkout-flow {
   font-size: 0.85rem;
   font-variant-numeric: tabular-nums;
   line-height: 1;
+  transition:
+    background var(--rad-kiln-enter) var(--rad-kiln-ease),
+    border-color var(--rad-kiln-enter) var(--rad-kiln-ease),
+    box-shadow var(--rad-kiln-enter) var(--rad-kiln-ease);
 }
 
 .checkout-step.is-current .checkout-step-dot {
   border-color: var(--moss);
   background: var(--moss);
   color: var(--paper);
-  box-shadow: 0 0 0 4px color-mix(in srgb, var(--moss) 14%, transparent);
+  animation: rad-kiln-glow var(--rad-kiln-glow-duration) var(--rad-kiln-ease)
+    infinite;
 }
 
 .checkout-step.is-done .checkout-step-dot {
   border-color: var(--moss);
   color: var(--moss);
+  animation: rad-kiln-settle var(--rad-kiln-enter) var(--rad-kiln-ease);
 }
 
 .checkout-step-label {
@@ -137,6 +147,7 @@ html[dir="rtl"] .checkout-flow {
   inset-inline: 0;
   height: 1px;
   background: var(--line);
+  transition: background var(--rad-kiln-enter) var(--rad-kiln-ease);
 }
 
 .payment-journey-step:first-child .payment-journey-line {
@@ -160,17 +171,23 @@ html[dir="rtl"] .checkout-flow {
   border: 1px solid color-mix(in srgb, var(--ink) 20%, transparent);
   border-radius: 50%;
   background: var(--paper);
+  transition:
+    background var(--rad-kiln-enter) var(--rad-kiln-ease),
+    border-color var(--rad-kiln-enter) var(--rad-kiln-ease),
+    box-shadow var(--rad-kiln-enter) var(--rad-kiln-ease);
 }
 
 .payment-journey-step.is-done .payment-journey-dot {
   border-color: var(--moss);
   color: var(--moss);
+  animation: rad-kiln-settle var(--rad-kiln-enter) var(--rad-kiln-ease);
 }
 .payment-journey-step.is-current .payment-journey-dot {
   border-color: var(--moss);
   background: var(--moss);
   color: var(--paper);
-  box-shadow: 0 0 0 4px color-mix(in srgb, var(--moss) 13%, transparent);
+  animation: rad-kiln-glow var(--rad-kiln-glow-duration) var(--rad-kiln-ease)
+    infinite;
 }
 .payment-journey-label {
   display: grid;
