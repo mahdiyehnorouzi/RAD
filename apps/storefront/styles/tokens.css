@@ -24,11 +24,17 @@
   0%,
   100% {
     box-shadow: 0 0 0 4px
-      var(--rad-kiln-glow-ring, color-mix(in srgb, var(--moss) 14%, transparent));
+      var(
+        --rad-kiln-glow-ring,
+        color-mix(in srgb, var(--moss) 14%, transparent)
+      );
   }
   50% {
     box-shadow: 0 0 0 7px
-      var(--rad-kiln-glow-peak, color-mix(in srgb, var(--moss) 24%, transparent));
+      var(
+        --rad-kiln-glow-peak,
+        color-mix(in srgb, var(--moss) 24%, transparent)
+      );
   }
 }
 

@@ -87,7 +87,8 @@ body:has(.custom-order-route) {
   background: var(--flow-green);
   color: #fff;
   border-color: var(--flow-green);
-  animation: rad-kiln-glow var(--rad-kiln-glow-duration) var(--rad-kiln-ease) infinite;
+  animation: rad-kiln-glow var(--rad-kiln-glow-duration) var(--rad-kiln-ease)
+    infinite;
 }
 .order-flow-phases [data-done="true"] svg {
   animation: rad-kiln-settle var(--rad-kiln-enter) var(--rad-kiln-ease);

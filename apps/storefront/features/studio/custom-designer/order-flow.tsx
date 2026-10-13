@@ -234,476 +234,498 @@ export function OrderFlow({
   return (
     <div className="order-flow" dir={fa ? "rtl" : "ltr"}>
       <div className="order-flow-main">
-      <header className="order-flow-top">
-        {screen === "choose" ? (
-          <Link
-            href={href("/studio")}
-            className="order-flow-back"
-            aria-label={txt("بازگشت به استودیو", "Back to studio")}
-          >
-            <ChevronLeft />
-          </Link>
-        ) : (
-          <button
-            type="button"
-            className="order-flow-back"
-            onClick={back}
-            aria-label={txt("بازگشت", "Back")}
-          >
-            <ChevronLeft />
-          </button>
-        )}
-        <ol
-          className="order-flow-phases"
-          aria-label={txt("مراحل سفارش", "Order stages")}
-        >
-          {[Lightbulb, SlidersHorizontal, UserRound].map((Icon, i) => (
-            <li
-              key={i}
-              data-current={phase === i}
-              data-done={phase > i}
-              aria-current={phase === i ? "step" : undefined}
+        <header className="order-flow-top">
+          {screen === "choose" ? (
+            <Link
+              href={href("/studio")}
+              className="order-flow-back"
+              aria-label={txt("بازگشت به استودیو", "Back to studio")}
             >
-              <Icon aria-hidden="true" />
-              <span>
-                {
-                  [
-                    txt("ایده", "Idea"),
-                    txt("انتخاب‌ها", "Choices"),
-                    txt("بررسی", "Review"),
-                  ][i]
-                }
-              </span>
-            </li>
-          ))}
-        </ol>
-      </header>
-      {notices}
-      <section className="order-flow-body" aria-labelledby="order-flow-title">
-        <h1 ref={heading} id="order-flow-title" tabIndex={-1}>
-          {titles[screen]}
-        </h1>
-        {hints[screen] && <p className="order-flow-hint">{hints[screen]}</p>}
-        {screen === "choose" && (
-          <>
-            <div className="order-flow-methods">
-              <button onClick={() => go("write")}>
-                <Pencil />
-                <b>{txt("بنویس", "Write")}</b>
-                <small>
-                  {txt("هر چی تو ذهنته", "Whatever is on your mind")}
-                </small>
-              </button>
-              <button onClick={() => go("photo")}>
-                <ImagePlus />
-                <b>{txt("عکس بفرست", "Send a photo")}</b>
-                <small>
-                  {txt(
-                    "از هر جا یا حتی طرح دستی",
-                    "A photo or your own sketch",
-                  )}
-                </small>
-              </button>
-              <button
-                className="order-flow-voice-tile"
-                onClick={() => go("voice")}
-              >
-                <Mic />
-                <b>{txt("بگو", "Say it")}</b>
-                <small>{txt("صدا ضبط کن", "Record your voice")}</small>
-              </button>
-            </div>
-            <img className="order-flow-corner" src="/studio/bowl.webp" alt="" />
-          </>
-        )}
-        {screen === "write" && (
-          <>
-            <div className="order-flow-examples">
-              {[
-                txt("مثلاً یک ماگ بزرگ", "A big mug, for example"),
-                txt("دسته‌اش شبیه دم نهنگ باشه", "With a whale-tail handle"),
-                txt("رنگش مات و خاکی باشه", "In a matte earthy color"),
-              ].map((v) => (
-                <button
-                  key={v}
-                  onClick={() =>
-                    d.setPrompt(
-                      [d.prompt, v].filter(Boolean).join(" ").slice(0, 500),
-                    )
-                  }
-                >
-                  {v}
-                </button>
-              ))}
-            </div>
-            <label className="order-flow-text">
-              <span className="sr-only">{titles.write}</span>
-              <textarea
-                value={d.prompt}
-                onChange={(e) => d.setPrompt(e.target.value)}
-                maxLength={500}
-                placeholder={txt("ایده‌ات رو بنویس…", "Write your idea…")}
-              />
-              <small>
-                {number(d.prompt.length)}/{number(500)}
-              </small>
-            </label>
-            {onward("more", !d.prompt.trim())}
-          </>
-        )}
-        {screen === "photo" && (
-          <>
+              <ChevronLeft />
+            </Link>
+          ) : (
             <button
-              className="order-flow-upload"
-              onClick={() => input.current?.click()}
+              type="button"
+              className="order-flow-back"
+              onClick={back}
+              aria-label={txt("بازگشت", "Back")}
             >
-              <Plus />
-              <span>{txt("عکس انتخاب کن", "Choose a photo")}</span>
+              <ChevronLeft />
             </button>
-            {imagePanel}
-            <div className="order-flow-reference-examples">
-              {[
-                FORM_OPTIONS[0].image,
-                "/studio/bowl.webp",
-                "/studio/sketch.webp",
-              ].map((src) => (
-                <img key={src} src={src} alt="" />
-              ))}
-            </div>
-            <p className="order-flow-note">
-              {txt(
-                "از پینترست، عکس خودت یا یک طرح دستی…",
-                "Pinterest, your own photo, or a hand-drawn sketch…",
-              )}
-            </p>
-            {onward("more", !d.uploads.length)}
-          </>
-        )}
-        {screen === "voice" && (
-          <>
-            <OrderVoice value={d.voice} onChange={d.setVoice} />
-            {onward("more", !d.voice)}
-          </>
-        )}
-        {screen === "more" && (
-          <>
-            <div className="order-flow-more">
-              {[
-                [
-                  "photo",
-                  ImagePlus,
-                  txt("عکس دیگه اضافه کن", "Add another photo"),
-                ],
-                ["write", Pencil, txt("یک توضیح کوتاه بگو", "Add a few words")],
-                [
-                  "voice",
-                  Mic,
-                  txt("صدای دیگه‌ای ذخیره کن", "Record a voice note"),
-                ],
-              ].map(([target, Icon, label]) => {
-                const I = Icon as typeof Pencil;
-                return (
-                  <button
-                    key={String(target)}
-                    onClick={() => go(target as FlowScreen)}
-                  >
-                    <I />
-                    <span>{String(label)}</span>
-                  </button>
-                );
-              })}
-            </div>
-            {cta(txt("بریم برای انتخاب‌ها", "Let’s make some choices"), () =>
-              next("form"),
-            )}
-          </>
-        )}
-        {screen === "form" && (
-          <div className="order-flow-forms">
-            {["container", "vase", "serving", "light", "accessory", "open"]
-              .map((id) => FORM_OPTIONS.find((o) => o.id === id)!)
-              .map((o) => (
-                <button
-                  key={o.id}
-                  aria-pressed={d.form === o.id}
-                  onClick={() => {
-                    d.setForm(o.id);
-                    next("size");
-                  }}
-                >
-                  {o.id === "open" ? <Pencil /> : <img src={o.image} alt="" />}
-                  <span>{o.label[locale]}</span>
-                  {d.form === o.id && <Check className="order-flow-selected" />}
-                </button>
-              ))}
-          </div>
-        )}
-        {screen === "size" && (
-          <>
-            <div className="order-flow-sizes">
-              {SIZE_OPTIONS.map((o) => (
-                <label key={o.id}>
-                  <input
-                    type="radio"
-                    name="flow-size"
-                    checked={d.size === o.id}
-                    onChange={() => d.setSize(o.id)}
-                  />
-                  <img
-                    src={FORM_OPTIONS[0].image}
-                    alt=""
-                    style={{ scale: String(o.scale) }}
-                  />
-                  <b>{o.label[locale]}</b>
-                  <small>{o.hint[locale]}</small>
-                </label>
-              ))}
-            </div>
-            <label className="order-flow-switch">
-              <input
-                type="checkbox"
-                checked={exact}
-                onChange={(e) => {
-                  setExact(e.target.checked);
-                  if (!e.target.checked) {
-                    d.setLength("");
-                    d.setWidth("");
-                    d.setHeight("");
+          )}
+          <ol
+            className="order-flow-phases"
+            aria-label={txt("مراحل سفارش", "Order stages")}
+          >
+            {[Lightbulb, SlidersHorizontal, UserRound].map((Icon, i) => (
+              <li
+                key={i}
+                data-current={phase === i}
+                data-done={phase > i}
+                aria-current={phase === i ? "step" : undefined}
+              >
+                <Icon aria-hidden="true" />
+                <span>
+                  {
+                    [
+                      txt("ایده", "Idea"),
+                      txt("انتخاب‌ها", "Choices"),
+                      txt("بررسی", "Review"),
+                    ][i]
                   }
-                }}
+                </span>
+              </li>
+            ))}
+          </ol>
+        </header>
+        {notices}
+        <section className="order-flow-body" aria-labelledby="order-flow-title">
+          <h1 ref={heading} id="order-flow-title" tabIndex={-1}>
+            {titles[screen]}
+          </h1>
+          {hints[screen] && <p className="order-flow-hint">{hints[screen]}</p>}
+          {screen === "choose" && (
+            <>
+              <div className="order-flow-methods">
+                <button onClick={() => go("write")}>
+                  <Pencil />
+                  <b>{txt("بنویس", "Write")}</b>
+                  <small>
+                    {txt("هر چی تو ذهنته", "Whatever is on your mind")}
+                  </small>
+                </button>
+                <button onClick={() => go("photo")}>
+                  <ImagePlus />
+                  <b>{txt("عکس بفرست", "Send a photo")}</b>
+                  <small>
+                    {txt(
+                      "از هر جا یا حتی طرح دستی",
+                      "A photo or your own sketch",
+                    )}
+                  </small>
+                </button>
+                <button
+                  className="order-flow-voice-tile"
+                  onClick={() => go("voice")}
+                >
+                  <Mic />
+                  <b>{txt("بگو", "Say it")}</b>
+                  <small>{txt("صدا ضبط کن", "Record your voice")}</small>
+                </button>
+              </div>
+              <img
+                className="order-flow-corner"
+                src="/studio/bowl.webp"
+                alt=""
               />
-              {txt("من اندازه‌ی دقیق مد نظرم هست", "I have exact dimensions")}
-            </label>
-            {exact && (
-              <div className="order-flow-dimensions">
+            </>
+          )}
+          {screen === "write" && (
+            <>
+              <div className="order-flow-examples">
                 {[
-                  [txt("طول", "Length"), d.length, d.setLength],
-                  [txt("عرض", "Width"), d.width, d.setWidth],
-                  [txt("ارتفاع", "Height"), d.height, d.setHeight],
-                ].map(([label, value, set]) => (
-                  <label key={String(label)}>
-                    {String(label)}
+                  txt("مثلاً یک ماگ بزرگ", "A big mug, for example"),
+                  txt("دسته‌اش شبیه دم نهنگ باشه", "With a whale-tail handle"),
+                  txt("رنگش مات و خاکی باشه", "In a matte earthy color"),
+                ].map((v) => (
+                  <button
+                    key={v}
+                    onClick={() =>
+                      d.setPrompt(
+                        [d.prompt, v].filter(Boolean).join(" ").slice(0, 500),
+                      )
+                    }
+                  >
+                    {v}
+                  </button>
+                ))}
+              </div>
+              <label className="order-flow-text">
+                <span className="sr-only">{titles.write}</span>
+                <textarea
+                  value={d.prompt}
+                  onChange={(e) => d.setPrompt(e.target.value)}
+                  maxLength={500}
+                  placeholder={txt("ایده‌ات رو بنویس…", "Write your idea…")}
+                />
+                <small>
+                  {number(d.prompt.length)}/{number(500)}
+                </small>
+              </label>
+              {onward("more", !d.prompt.trim())}
+            </>
+          )}
+          {screen === "photo" && (
+            <>
+              <button
+                className="order-flow-upload"
+                onClick={() => input.current?.click()}
+              >
+                <Plus />
+                <span>{txt("عکس انتخاب کن", "Choose a photo")}</span>
+              </button>
+              {imagePanel}
+              <div className="order-flow-reference-examples">
+                {[
+                  FORM_OPTIONS[0].image,
+                  "/studio/bowl.webp",
+                  "/studio/sketch.webp",
+                ].map((src) => (
+                  <img key={src} src={src} alt="" />
+                ))}
+              </div>
+              <p className="order-flow-note">
+                {txt(
+                  "از پینترست، عکس خودت یا یک طرح دستی…",
+                  "Pinterest, your own photo, or a hand-drawn sketch…",
+                )}
+              </p>
+              {onward("more", !d.uploads.length)}
+            </>
+          )}
+          {screen === "voice" && (
+            <>
+              <OrderVoice value={d.voice} onChange={d.setVoice} />
+              {onward("more", !d.voice)}
+            </>
+          )}
+          {screen === "more" && (
+            <>
+              <div className="order-flow-more">
+                {[
+                  [
+                    "photo",
+                    ImagePlus,
+                    txt("عکس دیگه اضافه کن", "Add another photo"),
+                  ],
+                  [
+                    "write",
+                    Pencil,
+                    txt("یک توضیح کوتاه بگو", "Add a few words"),
+                  ],
+                  [
+                    "voice",
+                    Mic,
+                    txt("صدای دیگه‌ای ذخیره کن", "Record a voice note"),
+                  ],
+                ].map(([target, Icon, label]) => {
+                  const I = Icon as typeof Pencil;
+                  return (
+                    <button
+                      key={String(target)}
+                      onClick={() => go(target as FlowScreen)}
+                    >
+                      <I />
+                      <span>{String(label)}</span>
+                    </button>
+                  );
+                })}
+              </div>
+              {cta(txt("بریم برای انتخاب‌ها", "Let’s make some choices"), () =>
+                next("form"),
+              )}
+            </>
+          )}
+          {screen === "form" && (
+            <div className="order-flow-forms">
+              {["container", "vase", "serving", "light", "accessory", "open"]
+                .map((id) => FORM_OPTIONS.find((o) => o.id === id)!)
+                .map((o) => (
+                  <button
+                    key={o.id}
+                    aria-pressed={d.form === o.id}
+                    onClick={() => {
+                      d.setForm(o.id);
+                      next("size");
+                    }}
+                  >
+                    {o.id === "open" ? (
+                      <Pencil />
+                    ) : (
+                      <img src={o.image} alt="" />
+                    )}
+                    <span>{o.label[locale]}</span>
+                    {d.form === o.id && (
+                      <Check className="order-flow-selected" />
+                    )}
+                  </button>
+                ))}
+            </div>
+          )}
+          {screen === "size" && (
+            <>
+              <div className="order-flow-sizes">
+                {SIZE_OPTIONS.map((o) => (
+                  <label key={o.id}>
                     <input
-                      type="number"
-                      min="0.1"
-                      step="any"
-                      inputMode="decimal"
-                      value={String(value)}
-                      placeholder="cm"
-                      onChange={(e) =>
-                        (set as (s: string) => void)(e.target.value)
-                      }
+                      type="radio"
+                      name="flow-size"
+                      checked={d.size === o.id}
+                      onChange={() => d.setSize(o.id)}
                     />
+                    <img
+                      src={FORM_OPTIONS[0].image}
+                      alt=""
+                      style={{ scale: String(o.scale) }}
+                    />
+                    <b>{o.label[locale]}</b>
+                    <small>{o.hint[locale]}</small>
                   </label>
                 ))}
               </div>
-            )}
-            {onward("color", !validSize)}
-          </>
-        )}
-        {screen === "color" && (
-          <>
-            <div className="order-flow-colors">
-              {DESIGNER_COLORS.map((o) => (
-                <button
-                  key={o.id}
-                  aria-pressed={d.colors.includes(o.value)}
-                  disabled={!d.colors.includes(o.value) && d.colors.length >= 3}
-                  onClick={() => d.toggleColor(o.value)}
-                >
-                  <span
-                    style={{
-                      background: "background" in o ? o.background : o.value,
-                    }}
-                  >
-                    {d.colors.includes(o.value) && <Check />}
-                  </span>
-                  <small>{o.label[locale]}</small>
-                </button>
-              ))}
-            </div>
-            <button
-              className="order-flow-specific"
-              aria-expanded={customColor}
-              onClick={() => setCustomColor((v) => !v)}
-            >
-              <Pencil />
-              {txt(
-                "من رنگ خاصی مد نظرم هست",
-                "I have a specific color in mind",
-              )}
-            </button>
-            {customColor && (
-              <input
-                className="order-flow-input"
-                aria-label={txt("رنگ دلخواه", "Custom color")}
-                value={d.colorNote}
-                onChange={(e) => d.setColorNote(e.target.value)}
-              />
-            )}
-            {onward(hasReference ? "similarity" : "budget")}
-          </>
-        )}
-        {screen === "similarity" && (
-          <>
-            <div className="order-flow-reference-examples">
-              {[0, 1, 2].map((i) => (
-                <img
-                  key={i}
-                  src={d.uploads[i] ?? d.uploads[0] ?? d.sketch}
-                  alt={txt("مرجع شما", "Your reference")}
-                />
-              ))}
-            </div>
-            <input
-              className="order-flow-range"
-              aria-label={titles.similarity}
-              type="range"
-              min="0"
-              max="100"
-              step="50"
-              value={d.freedom}
-              onChange={(e) => d.setFreedom(Number(e.target.value))}
-            />
-            <div className="order-flow-range-labels">
-              <span>{txt("کاملاً شبیه", "Very close")}</span>
-              <span>{txt("با کمی تغییر", "Some changes")}</span>
-              <span>{txt("فقط الهام بگیریم", "Just inspiration")}</span>
-            </div>
-            <p className="order-flow-callout">
-              {txt(
-                "ما فرم کلی و حس طرح رو در نظر می‌گیریم و با توجه به امکان ساخت، پیشنهاد می‌دیم.",
-                "We consider the shape and feel, then suggest what can be made by hand.",
-              )}
-            </p>
-            {onward("budget")}
-          </>
-        )}
-        {screen === "budget" && (
-          <>
-            {rows("flow-budget", BUDGET_OPTIONS, d.budget, (id) => {
-              d.setBudget(id);
-              next("time");
-            })}
-          </>
-        )}
-        {screen === "time" && (
-          <>
-            {rows("flow-time", TIMELINE_OPTIONS, d.timeline, d.chooseTimeline)}
-            {d.timeline === "date" && (
-              <label className="order-flow-date">
-                {txt("چه تاریخی؟", "Which date?")}
+              <label className="order-flow-switch">
                 <input
-                  type="date"
-                  value={d.needBy}
-                  onChange={(e) => d.setNeedBy(e.target.value)}
-                  min={new Date().toISOString().slice(0, 10)}
+                  type="checkbox"
+                  checked={exact}
+                  onChange={(e) => {
+                    setExact(e.target.checked);
+                    if (!e.target.checked) {
+                      d.setLength("");
+                      d.setWidth("");
+                      d.setHeight("");
+                    }
+                  }}
                 />
+                {txt("من اندازه‌ی دقیق مد نظرم هست", "I have exact dimensions")}
               </label>
-            )}
-            {onward("review", !d.timeline || !validDate)}
-          </>
-        )}
-        {screen === "review" && (
-          <>
-            <div className="order-flow-moodboard">
-              {[...d.uploads, d.sketch].filter(Boolean).map((src, i) => (
-                <img
-                  key={i}
-                  src={src}
-                  alt={txt("مرجع ایده", "Idea reference")}
-                />
-              ))}
-              {!hasReference && <Pencil aria-hidden="true" />}
+              {exact && (
+                <div className="order-flow-dimensions">
+                  {[
+                    [txt("طول", "Length"), d.length, d.setLength],
+                    [txt("عرض", "Width"), d.width, d.setWidth],
+                    [txt("ارتفاع", "Height"), d.height, d.setHeight],
+                  ].map(([label, value, set]) => (
+                    <label key={String(label)}>
+                      {String(label)}
+                      <input
+                        type="number"
+                        min="0.1"
+                        step="any"
+                        inputMode="decimal"
+                        value={String(value)}
+                        placeholder="cm"
+                        onChange={(e) =>
+                          (set as (s: string) => void)(e.target.value)
+                        }
+                      />
+                    </label>
+                  ))}
+                </div>
+              )}
+              {onward("color", !validSize)}
+            </>
+          )}
+          {screen === "color" && (
+            <>
+              <div className="order-flow-colors">
+                {DESIGNER_COLORS.map((o) => (
+                  <button
+                    key={o.id}
+                    aria-pressed={d.colors.includes(o.value)}
+                    disabled={
+                      !d.colors.includes(o.value) && d.colors.length >= 3
+                    }
+                    onClick={() => d.toggleColor(o.value)}
+                  >
+                    <span
+                      style={{
+                        background: "background" in o ? o.background : o.value,
+                      }}
+                    >
+                      {d.colors.includes(o.value) && <Check />}
+                    </span>
+                    <small>{o.label[locale]}</small>
+                  </button>
+                ))}
+              </div>
               <button
-                onClick={() => edit("more")}
-                aria-label={txt("ویرایش ایده", "Edit idea")}
+                className="order-flow-specific"
+                aria-expanded={customColor}
+                onClick={() => setCustomColor((v) => !v)}
               >
                 <Pencil />
+                {txt(
+                  "من رنگ خاصی مد نظرم هست",
+                  "I have a specific color in mind",
+                )}
               </button>
-            </div>
-            {d.prompt && <p className="order-flow-brief">{d.prompt}</p>}
-            {d.voice && <audio controls src={d.voice} />}
-            <div className="order-flow-summary">
-              {[
-                [
-                  txt("چی بسازیم؟", "Object"),
-                  optionLabel(FORM_OPTIONS, d.form, locale),
-                  "form",
-                ],
-                [
-                  txt("اندازه", "Size"),
-                  [
-                    optionLabel(SIZE_OPTIONS, d.size, locale),
-                    [d.length, d.width, d.height].filter(Boolean).join(" × "),
-                  ]
-                    .filter(Boolean)
-                    .join(" — "),
-                  "size",
-                ],
-                [
-                  txt("رنگ", "Color"),
-                  [...d.colors.map((v) => colorLabel(v, locale)), d.colorNote]
-                    .filter(Boolean)
-                    .join("، "),
-                  "color",
-                ],
-                [
-                  txt("بودجه", "Budget"),
-                  optionLabel(BUDGET_OPTIONS, d.budget, locale),
-                  "budget",
-                ],
-                [
-                  txt("زمان", "Time"),
-                  d.needBy || optionLabel(TIMELINE_OPTIONS, d.timeline, locale),
-                  "time",
-                ],
-              ].map(([label, value, target]) => (
-                <div key={target}>
-                  <span>{label}</span>
-                  <b>{value || "—"}</b>
-                  <button onClick={() => edit(target as FlowScreen)}>
-                    <Pencil />
-                    {txt("ویرایش", "Edit")}
-                  </button>
-                </div>
-              ))}
-            </div>
-            <p className="order-flow-callout">
-              {txt(
-                "ایده‌ات رو بررسی می‌کنیم و قیمت و زمان دقیق رو بهت می‌گیم. تا قبل از تأیید، پرداختی نداری.",
-                "We’ll review your idea and confirm price and timing. No payment is due before you approve.",
+              {customColor && (
+                <input
+                  className="order-flow-input"
+                  aria-label={txt("رنگ دلخواه", "Custom color")}
+                  value={d.colorNote}
+                  onChange={(e) => d.setColorNote(e.target.value)}
+                />
               )}
-            </p>
-            <label className="order-flow-consent">
+              {onward(hasReference ? "similarity" : "budget")}
+            </>
+          )}
+          {screen === "similarity" && (
+            <>
+              <div className="order-flow-reference-examples">
+                {[0, 1, 2].map((i) => (
+                  <img
+                    key={i}
+                    src={d.uploads[i] ?? d.uploads[0] ?? d.sketch}
+                    alt={txt("مرجع شما", "Your reference")}
+                  />
+                ))}
+              </div>
               <input
-                type="checkbox"
-                checked={d.agreed}
-                onChange={(e) => d.setAgreed(e.target.checked)}
+                className="order-flow-range"
+                aria-label={titles.similarity}
+                type="range"
+                min="0"
+                max="100"
+                step="50"
+                value={d.freedom}
+                onChange={(e) => d.setFreedom(Number(e.target.value))}
               />
-              <span>
-                {txt("شرایط ", "I accept the ")}
-                <Link href={href("/help/custom")} target="_blank">
-                  {txt("سفارش اختصاصی", "custom-order terms")}
-                </Link>
-                {fa ? " را می‌پذیرم." : "."}
-              </span>
-            </label>
-            {error && (
-              <p role="alert" className="order-flow-error">
-                {error}
+              <div className="order-flow-range-labels">
+                <span>{txt("کاملاً شبیه", "Very close")}</span>
+                <span>{txt("با کمی تغییر", "Some changes")}</span>
+                <span>{txt("فقط الهام بگیریم", "Just inspiration")}</span>
+              </div>
+              <p className="order-flow-callout">
+                {txt(
+                  "ما فرم کلی و حس طرح رو در نظر می‌گیریم و با توجه به امکان ساخت، پیشنهاد می‌دیم.",
+                  "We consider the shape and feel, then suggest what can be made by hand.",
+                )}
               </p>
-            )}
-            {cta(
-              submitting
-                ? txt("در حال ارسال…", "Sending…")
-                : txt("ارسال ایده", "Send idea"),
-              onSubmit,
-              !d.canSubmit || submitting || offline,
-            )}
-          </>
-        )}
-      </section>
+              {onward("budget")}
+            </>
+          )}
+          {screen === "budget" && (
+            <>
+              {rows("flow-budget", BUDGET_OPTIONS, d.budget, (id) => {
+                d.setBudget(id);
+                next("time");
+              })}
+            </>
+          )}
+          {screen === "time" && (
+            <>
+              {rows(
+                "flow-time",
+                TIMELINE_OPTIONS,
+                d.timeline,
+                d.chooseTimeline,
+              )}
+              {d.timeline === "date" && (
+                <label className="order-flow-date">
+                  {txt("چه تاریخی؟", "Which date?")}
+                  <input
+                    type="date"
+                    value={d.needBy}
+                    onChange={(e) => d.setNeedBy(e.target.value)}
+                    min={new Date().toISOString().slice(0, 10)}
+                  />
+                </label>
+              )}
+              {onward("review", !d.timeline || !validDate)}
+            </>
+          )}
+          {screen === "review" && (
+            <>
+              <div className="order-flow-moodboard">
+                {[...d.uploads, d.sketch].filter(Boolean).map((src, i) => (
+                  <img
+                    key={i}
+                    src={src}
+                    alt={txt("مرجع ایده", "Idea reference")}
+                  />
+                ))}
+                {!hasReference && <Pencil aria-hidden="true" />}
+                <button
+                  onClick={() => edit("more")}
+                  aria-label={txt("ویرایش ایده", "Edit idea")}
+                >
+                  <Pencil />
+                </button>
+              </div>
+              {d.prompt && <p className="order-flow-brief">{d.prompt}</p>}
+              {d.voice && <audio controls src={d.voice} />}
+              <div className="order-flow-summary">
+                {[
+                  [
+                    txt("چی بسازیم؟", "Object"),
+                    optionLabel(FORM_OPTIONS, d.form, locale),
+                    "form",
+                  ],
+                  [
+                    txt("اندازه", "Size"),
+                    [
+                      optionLabel(SIZE_OPTIONS, d.size, locale),
+                      [d.length, d.width, d.height].filter(Boolean).join(" × "),
+                    ]
+                      .filter(Boolean)
+                      .join(" — "),
+                    "size",
+                  ],
+                  [
+                    txt("رنگ", "Color"),
+                    [...d.colors.map((v) => colorLabel(v, locale)), d.colorNote]
+                      .filter(Boolean)
+                      .join("، "),
+                    "color",
+                  ],
+                  [
+                    txt("بودجه", "Budget"),
+                    optionLabel(BUDGET_OPTIONS, d.budget, locale),
+                    "budget",
+                  ],
+                  [
+                    txt("زمان", "Time"),
+                    d.needBy ||
+                      optionLabel(TIMELINE_OPTIONS, d.timeline, locale),
+                    "time",
+                  ],
+                ].map(([label, value, target]) => (
+                  <div key={target}>
+                    <span>{label}</span>
+                    <b>{value || "—"}</b>
+                    <button onClick={() => edit(target as FlowScreen)}>
+                      <Pencil />
+                      {txt("ویرایش", "Edit")}
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <p className="order-flow-callout">
+                {txt(
+                  "ایده‌ات رو بررسی می‌کنیم و قیمت و زمان دقیق رو بهت می‌گیم. تا قبل از تأیید، پرداختی نداری.",
+                  "We’ll review your idea and confirm price and timing. No payment is due before you approve.",
+                )}
+              </p>
+              <label className="order-flow-consent">
+                <input
+                  type="checkbox"
+                  checked={d.agreed}
+                  onChange={(e) => d.setAgreed(e.target.checked)}
+                />
+                <span>
+                  {txt("شرایط ", "I accept the ")}
+                  <Link href={href("/help/custom")} target="_blank">
+                    {txt("سفارش اختصاصی", "custom-order terms")}
+                  </Link>
+                  {fa ? " را می‌پذیرم." : "."}
+                </span>
+              </label>
+              {error && (
+                <p role="alert" className="order-flow-error">
+                  {error}
+                </p>
+              )}
+              {cta(
+                submitting
+                  ? txt("در حال ارسال…", "Sending…")
+                  : txt("ارسال ایده", "Send idea"),
+                onSubmit,
+                !d.canSubmit || submitting || offline,
+              )}
+            </>
+          )}
+        </section>
       </div>
       {screen !== "review" && (
         <aside
