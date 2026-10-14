@@ -27,7 +27,10 @@ import {
   SaveCommissionDto,
 } from "../commissions/dto";
 import { ContactService } from "../contact/contact.service";
-import { ReplyContactMessageDto, UpdateContactMessageDto } from "../contact/dto";
+import {
+  ReplyContactMessageDto,
+  UpdateContactMessageDto,
+} from "../contact/dto";
 import { DamageReportsService } from "../damage/damage-reports.service";
 import { ReviewDamageReportDto } from "../damage/dto";
 import { ArtistApplicationsService } from "../artist-applications/artist-applications.service";

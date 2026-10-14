@@ -72,7 +72,12 @@ import { AdminDamageReports } from "./admin-damage-reports";
 import { AdminOrderDamage } from "./admin-order-damage";
 import { AdminOrderPolicies } from "./admin-order-policies";
 import type { DamageReview } from "./admin-damage-report";
-import { ConfirmDialog, DialogShell, Field, useBodyScrollLock } from "./admin-dialog";
+import {
+  ConfirmDialog,
+  DialogShell,
+  Field,
+  useBodyScrollLock,
+} from "./admin-dialog";
 import { AdminReviews } from "./admin-reviews";
 import { AdminShapeQuestions } from "./admin-shape-questions";
 import { AdminHelpQuestions } from "./admin-help-questions";

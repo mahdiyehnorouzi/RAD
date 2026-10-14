@@ -28,7 +28,10 @@ export function AdminMessages({
   messages: AdminContactMessage[];
   orders: AdminOrder[];
   canWrite: boolean;
-  onSetStatus: (id: string, status: AdminContactMessage["status"]) => Promise<void>;
+  onSetStatus: (
+    id: string,
+    status: AdminContactMessage["status"],
+  ) => Promise<void>;
   onReply: (id: string, body: string) => Promise<void>;
   onOpenOrder: (orderId: string) => void;
 }) {
@@ -50,7 +53,8 @@ export function AdminMessages({
     }
     // `messages` is the bulk inbox fetch (newest-first); a thread must read
     // oldest-first like a real conversation.
-    for (const list of map.values()) list.sort((a, b) => a.createdAt - b.createdAt);
+    for (const list of map.values())
+      list.sort((a, b) => a.createdAt - b.createdAt);
     return map;
   }, [messages]);
   const counts = useMemo(
@@ -62,7 +66,9 @@ export function AdminMessages({
     [roots],
   );
   const visible =
-    filter === "all" ? roots : roots.filter((message) => message.status === filter);
+    filter === "all"
+      ? roots
+      : roots.filter((message) => message.status === filter);
   const orderById = useMemo(
     () => new Map(orders.map((order) => [order.id, order])),
     [orders],
@@ -102,7 +108,9 @@ export function AdminMessages({
               key={message.id}
               message={message}
               replies={repliesByRoot.get(message.id) ?? []}
-              order={message.orderId ? orderById.get(message.orderId) : undefined}
+              order={
+                message.orderId ? orderById.get(message.orderId) : undefined
+              }
               canWrite={canWrite}
               onSetStatus={onSetStatus}
               onReply={onReply}

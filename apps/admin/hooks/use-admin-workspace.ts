@@ -123,18 +123,16 @@ export function useAdminWorkspace() {
         setMessages(await api<AdminContactMessage[]>("/admin/messages"));
         break;
       case "damageReports":
-          setDamageReports(
-            await api<AdminDamageReport[]>("/admin/damage-reports"),
-          );
-          break;
-        case "reviews":
-          setReviews(await api<AdminReview[]>("/admin/reviews"));
-          break;
-        case "shapeQuestions":
-          setShapeQuestions(
-            await api<ShapeQuestion[]>("/admin/shape-questions"),
-          );
-          break;
+        setDamageReports(
+          await api<AdminDamageReport[]>("/admin/damage-reports"),
+        );
+        break;
+      case "reviews":
+        setReviews(await api<AdminReview[]>("/admin/reviews"));
+        break;
+      case "shapeQuestions":
+        setShapeQuestions(await api<ShapeQuestion[]>("/admin/shape-questions"));
+        break;
       case "helpQuestions":
         setHelpQuestions(await api<HelpQuestion[]>("/admin/help-questions"));
         break;

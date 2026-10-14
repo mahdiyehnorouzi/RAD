@@ -15,7 +15,10 @@ export function AdminOrderMessages({
 }: {
   messages: AdminContactMessage[];
   canWrite: boolean;
-  onSetStatus: (id: string, status: AdminContactMessage["status"]) => Promise<void>;
+  onSetStatus: (
+    id: string,
+    status: AdminContactMessage["status"],
+  ) => Promise<void>;
   onReply: (id: string, body: string) => Promise<void>;
 }) {
   const id = useId();
@@ -33,7 +36,8 @@ export function AdminOrderMessages({
     }
     // `messages` is the bulk inbox fetch (newest-first); a thread must read
     // oldest-first like a real conversation.
-    for (const list of map.values()) list.sort((a, b) => a.createdAt - b.createdAt);
+    for (const list of map.values())
+      list.sort((a, b) => a.createdAt - b.createdAt);
     return map;
   }, [messages]);
   if (!roots.length) return null;

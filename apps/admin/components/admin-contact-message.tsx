@@ -32,7 +32,10 @@ export function AdminContactMessageItem({
   /** The linked order, when it should be shown as a jump link. */
   order?: AdminOrder;
   canWrite: boolean;
-  onSetStatus: (id: string, status: AdminContactMessage["status"]) => Promise<void>;
+  onSetStatus: (
+    id: string,
+    status: AdminContactMessage["status"],
+  ) => Promise<void>;
   onReply?: (id: string, body: string) => Promise<void>;
   onOpenOrder?: (orderId: string) => void;
 }) {
@@ -65,7 +68,8 @@ export function AdminContactMessageItem({
         <div>
           <strong>{message.name || message.contact}</strong>
           <small>
-            {contactTopicLabels[message.topic]} · {contactSourceLabels[message.source]}
+            {contactTopicLabels[message.topic]} ·{" "}
+            {contactSourceLabels[message.source]}
             {message.signedIn ? " · حساب کاربری" : " · مهمان"}
           </small>
         </div>
@@ -79,7 +83,10 @@ export function AdminContactMessageItem({
       {replies.length > 0 && (
         <ol className="contact-message-thread">
           {replies.map((reply) => (
-            <li key={reply.id} className={reply.fromAdmin ? "from-admin" : "from-customer"}>
+            <li
+              key={reply.id}
+              className={reply.fromAdmin ? "from-admin" : "from-customer"}
+            >
               <b>{reply.fromAdmin ? "دفتر کوره" : message.name || "مشتری"}</b>
               <span>{dateTime(reply.createdAt)}</span>
               <p>{reply.body}</p>
@@ -110,7 +117,9 @@ export function AdminContactMessageItem({
       <footer>
         <a
           className="contact-message-reply"
-          href={isEmail ? `mailto:${message.contact}` : `tel:${message.contact}`}
+          href={
+            isEmail ? `mailto:${message.contact}` : `tel:${message.contact}`
+          }
           dir="ltr"
         >
           {isEmail ? <Mail aria-hidden="true" /> : <Phone aria-hidden="true" />}
@@ -137,7 +146,8 @@ export function AdminContactMessageItem({
 
         {resolved && message.resolvedAt ? (
           <span className="contact-message-done">
-            <Check aria-hidden="true" /> رسیدگی شد · {dateTime(message.resolvedAt)}
+            <Check aria-hidden="true" /> رسیدگی شد ·{" "}
+            {dateTime(message.resolvedAt)}
           </span>
         ) : null}
 
