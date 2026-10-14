@@ -32,6 +32,7 @@ export function ProductSummary({
   qrSvg,
   textures,
   buyRef,
+  onSheetVisibleChange,
 }: {
   className: string;
   product: Product;
@@ -43,6 +44,8 @@ export function ProductSummary({
   textures: WorkTexture[];
   /** Observed by the page to know when the inline CTA leaves the viewport. */
   buyRef?: Ref<HTMLDivElement>;
+  /** Mirrors the inline AddToBag's BagAddedSheet visibility up to the page. */
+  onSheetVisibleChange?: (visible: boolean) => void;
 }) {
   const { locale, t, number } = useLocale();
   const c = pdpCopy[locale];
@@ -137,6 +140,7 @@ export function ProductSummary({
             onConflict={() => void live.check()}
             icon={<ShoppingBag aria-hidden="true" />}
             busyLabel={c.addingBag}
+            onSheetVisibleChange={onSheetVisibleChange}
           />
         )}
         {state.sold ? (

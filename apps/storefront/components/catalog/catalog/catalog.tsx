@@ -137,6 +137,7 @@ export function AddToBag({
   compact = false,
   busyLabel,
   onBusyChange,
+  onSheetVisibleChange,
   hideSheet = false,
 }: {
   product: Product;
@@ -148,6 +149,10 @@ export function AddToBag({
   busyLabel?: string;
   /** Lets a caller (e.g. a bar that renders its own busy/added chrome) mirror the in-flight state. */
   onBusyChange?: (busy: boolean) => void;
+  /** Mirrors whether the built-in `BagAddedSheet` is currently showing, so a
+   * sibling surface (the floating buy bar) can suppress itself for as long
+   * as the sheet is up instead of showing a second, competing CTA. */
+  onSheetVisibleChange?: (visible: boolean) => void;
   /** Suppresses the built-in `BagAddedSheet` modal for callers rendering their own success state. */
   hideSheet?: boolean;
 }) {
@@ -167,6 +172,10 @@ export function AddToBag({
   useEffect(() => {
     onBusyChange?.(busy);
   }, [busy, onBusyChange]);
+
+  useEffect(() => {
+    onSheetVisibleChange?.(addedSheet);
+  }, [addedSheet, onSheetVisibleChange]);
 
   useEffect(() => {
     if (product.status !== "available") return;
