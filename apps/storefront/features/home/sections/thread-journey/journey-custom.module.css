@@ -8,8 +8,9 @@
   position: relative;
   display: grid;
   grid-template-columns: clamp(3.4rem, 11vw, 4rem) minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
   align-items: stretch;
-  min-height: clamp(26rem, 118vw, 44rem);
+  min-height: clamp(23rem, 108vw, 40rem);
   margin: clamp(0.75rem, 2.4vw, 1.25rem) var(--journey-edge) 0;
   padding-block: clamp(0.9rem, 3vw, 2rem);
   background: color-mix(in srgb, var(--paper) 55%, var(--canvas));
@@ -202,6 +203,43 @@ html[dir="ltr"] .journeyCustomPhoto img {
   width: 1px;
   height: 1px;
   pointer-events: none;
+}
+
+/*
+ * The page-wide thread latches on here, not on a step circle: this sits in
+ * the dedicated negative space outside the track so the line runs beside the
+ * stepper rather than through its numbers and labels.
+ */
+.journeyCustomThreadAnchor {
+  position: absolute;
+  top: var(--track-top, 0);
+  right: -0.65rem;
+  width: 1px;
+  height: 1px;
+  pointer-events: none;
+}
+
+/*
+ * A second anchor past the last step, in the same outer gutter as the entry
+ * anchor above: with only one anchor the path drifts back toward whatever
+ * comes next and cuts back across the step circles. Pinning both ends of the
+ * run outside the track keeps the whole pass through this section in the
+ * dedicated margin beside it (the page margin on the stepper's outer edge,
+ * never the gap toward the card).
+ */
+.journeyCustomThreadAnchorEnd {
+  position: absolute;
+  top: calc(var(--track-top, 0) + var(--track-height, 0));
+  right: -0.65rem;
+  width: 1px;
+  height: 1px;
+  pointer-events: none;
+}
+
+html[dir="ltr"] .journeyCustomThreadAnchor,
+html[dir="ltr"] .journeyCustomThreadAnchorEnd {
+  right: auto;
+  left: -0.65rem;
 }
 
 @media (min-width: 900px) {

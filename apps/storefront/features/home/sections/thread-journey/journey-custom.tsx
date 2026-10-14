@@ -100,6 +100,16 @@ export function JourneyCustom() {
           } as CSSProperties
         }
       >
+        <span
+          className={styles.journeyCustomThreadAnchor}
+          data-thread-anchor
+          aria-hidden="true"
+        />
+        <span
+          className={styles.journeyCustomThreadAnchorEnd}
+          data-thread-anchor
+          aria-hidden="true"
+        />
         <motion.span
           aria-hidden="true"
           className={styles.journeyCustomStepsFill}
@@ -120,7 +130,6 @@ export function JourneyCustom() {
                   markerRefs.current[index] = element;
                 }}
                 className={styles.journeyCustomStepNumber}
-                data-thread-anchor={index === 0 ? "" : undefined}
                 aria-hidden="true"
                 animate={{ scale: isCurrent ? 1.08 : 1 }}
                 transition={{ duration: reduceMotion ? 0 : 0.3, ease: EASE }}
