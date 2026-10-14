@@ -1,0 +1,163 @@
+.flow {
+  --cs-bg: #f4efe7;
+  --cs-card: #ebe3d6;
+  --cs-card-hover: #e3d8c7;
+  --cs-paper: #fbf8f2;
+  /* Primary text. #1B2923 on #f4efe7 ≈ 13.9:1. */
+  --cs-ink: #1b2923;
+  /* Secondary text. #625D54 on #f4efe7 ≈ 5.4:1 — stays above the 4.5:1 floor
+     for normal text instead of fading into decoration. */
+  --cs-muted: #625d54;
+  /* Primary button background. #FFF9EF text on this is ≈ 10.8:1. */
+  --cs-green: #193e32;
+  --cs-green-deep: #122c24;
+  /* Card/row borders and dividers — strong enough to read as a real
+     boundary (not just a faint hairline) without turning into a heavy box. */
+  --cs-line: #cdbda1;
+  --cs-pick: #dccdb6;
+  --cs-oxide: #8a4938;
+  --cs-hand: #7a5238;
+  /* Text/icon color for anything sitting on --cs-green. */
+  --cs-on-green: #fff9ef;
+  --cs-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  width: min(100%, 30rem);
+  margin: 0 auto;
+  padding: 1.1rem 1.1rem 2.5rem;
+  color: var(--cs-ink);
+  background: var(--cs-bg);
+}
+
+.flow :is(button, input, textarea) {
+  font: inherit;
+}
+
+.flow button {
+  cursor: pointer;
+}
+
+/* :where() keeps this at zero specificity so any component button class
+   (e.g. a primary CTA setting its own `color`) wins without needing
+   `!important` — a plain `.flow button { color: inherit }` would otherwise
+   outrank a single-class selector like `.cta` and silently win ties,
+   which is what caused dark-on-dark primary buttons before this fix. */
+:where(.flow button) {
+  color: inherit;
+}
+
+.top {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: grid;
+  gap: 0.9rem;
+  margin: -1.1rem -1.1rem 1.2rem;
+  padding: 0.9rem 1.1rem 0.7rem;
+  background: var(--cs-bg);
+}
+
+.topRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.back,
+.reset {
+  display: grid;
+  place-items: center;
+  width: 2.3rem;
+  height: 2.3rem;
+  color: var(--cs-ink);
+  background: var(--cs-card);
+  border: 0;
+  border-radius: 50%;
+}
+
+.back svg,
+.reset svg {
+  width: 1.15rem;
+}
+
+.reset svg {
+  width: 1.05rem;
+}
+
+.body {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.dialog {
+  margin: auto;
+  padding: 1.5rem 1.3rem 1.3rem;
+  border: 0;
+  border-radius: 20px;
+  background: var(--cs-paper);
+  color: var(--cs-ink);
+  width: min(90vw, 24rem);
+}
+
+.dialog::backdrop {
+  background: color-mix(in srgb, var(--cs-green-deep) 55%, transparent);
+}
+
+.dialog h2 {
+  margin: 0 0 0.6rem;
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.dialog p {
+  margin: 0;
+  color: var(--cs-muted);
+  font-size: 0.88rem;
+  line-height: 1.85;
+}
+
+.dialogActions {
+  display: flex;
+  gap: 0.7rem;
+  margin-top: 1.4rem;
+}
+
+.dialogCancel,
+.dialogConfirm {
+  flex: 1 1 0;
+  min-height: 2.9rem;
+  border: 0;
+  border-radius: 14px;
+  font-size: 0.86rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.dialogCancel {
+  background: var(--cs-card);
+  color: var(--cs-ink);
+}
+
+.dialogConfirm {
+  background: var(--cs-oxide);
+  color: var(--cs-on-green);
+}
+
+@media (min-width: 700px) {
+  .flow {
+    width: min(100%, 44rem);
+    margin-block: 1.6rem;
+    border: 1px solid var(--cs-line);
+    border-radius: 28px;
+    padding: 2rem;
+  }
+  .top {
+    margin: -2rem -2rem 1.6rem;
+    padding: 1.4rem 2rem 1rem;
+    border-radius: 28px 28px 0 0;
+  }
+}
+
+@media (max-width: 360px) {
+  .flow {
+    padding-inline: 0.9rem;
+  }
+}

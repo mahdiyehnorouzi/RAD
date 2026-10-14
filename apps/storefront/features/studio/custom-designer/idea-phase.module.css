@@ -1,0 +1,300 @@
+.idea {
+  display: grid;
+  /* A grid item's automatic minimum size defaults to its content's
+     min-content width, not 0 — so a deeply nested nowrap flex row (the
+     example chips below) could inflate this whole column past the 393px
+     viewport instead of being clipped by its own `overflow-x: auto`.
+     min-width: 0 opts this item back into normal shrink-to-fit sizing. */
+  min-width: 0;
+  gap: 0.6rem;
+  animation: phase-in 0.35s var(--cs-ease) both;
+}
+
+@keyframes phase-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .idea {
+    animation: none;
+  }
+}
+
+.title {
+  margin: 0;
+  color: var(--cs-ink);
+  font-size: clamp(1.5rem, 6vw, 1.9rem);
+  font-weight: 700;
+  line-height: 1.5;
+  text-align: center;
+  text-wrap: balance;
+}
+
+.hint {
+  margin: 0 0 1.4rem;
+  color: var(--cs-muted);
+  font-size: 0.9rem;
+  line-height: 1.9;
+  text-align: center;
+}
+
+.rows {
+  display: grid;
+  min-width: 0;
+  gap: 0.75rem;
+}
+
+.row {
+  min-width: 0;
+  border: 1px solid var(--cs-line);
+  border-radius: 18px;
+  background: var(--cs-paper);
+  overflow: clip;
+  transition: border-color 0.3s var(--cs-ease);
+}
+
+.row[data-expanded="true"] {
+  border-color: var(--cs-green);
+}
+
+.rowHead {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  width: 100%;
+  min-height: 4.5rem;
+  padding: 0.85rem 1rem;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: start;
+}
+
+.rowThumb {
+  position: relative;
+  flex: none;
+  width: 3.4rem;
+  height: 3.4rem;
+  overflow: hidden;
+  border-radius: 14px;
+  background: var(--cs-card);
+}
+
+.rowThumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.rowThumbIcon {
+  position: absolute;
+  bottom: -0.3rem;
+  inset-inline-end: -0.3rem;
+  display: grid;
+  place-items: center;
+  width: 1.65rem;
+  height: 1.65rem;
+  border: 2px solid var(--cs-paper);
+  border-radius: 50%;
+  background: var(--cs-card);
+  color: var(--cs-green);
+}
+
+.rowThumbIcon[data-filled="true"] {
+  background: var(--cs-green);
+  color: var(--cs-on-green);
+}
+
+.rowThumbIcon svg {
+  width: 0.85rem;
+  height: 0.85rem;
+  stroke-width: 1.6;
+}
+
+.rowText {
+  display: grid;
+  flex: 1 1 auto;
+  min-width: 0;
+  gap: 0.15rem;
+}
+
+.rowText b {
+  font-size: 0.98rem;
+  font-weight: 700;
+}
+
+.rowText small {
+  color: var(--cs-muted);
+  font-size: 0.8rem;
+  line-height: 1.6;
+}
+
+.rowCheck {
+  flex: none;
+  width: 1.1rem;
+  height: 1.1rem;
+  color: var(--cs-green);
+}
+
+.rowChevron {
+  flex: none;
+  width: 1.1rem;
+  height: 1.1rem;
+  color: var(--cs-muted);
+  transition: transform 0.3s var(--cs-ease);
+}
+
+.row[data-expanded="true"] .rowChevron {
+  transform: rotate(180deg);
+}
+
+.rowPanel {
+  padding: 0 1rem 1.25rem;
+  animation: row-in 0.32s var(--cs-ease) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rowPanel {
+    animation: none;
+  }
+}
+
+@keyframes row-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}
+
+.examples {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 0.4rem;
+  margin-bottom: 0.65rem;
+  padding-bottom: 0.15rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.examples::-webkit-scrollbar {
+  display: none;
+}
+
+.examples button {
+  flex: none;
+  padding: 0.35rem 0.75rem;
+  border: 0;
+  border-radius: 30px;
+  background: var(--cs-card);
+  color: var(--cs-ink);
+  font-size: 0.72rem;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.textField {
+  position: relative;
+  display: block;
+  border: 1px solid var(--cs-line);
+  border-radius: 16px;
+  padding: 0.75rem;
+  background: var(--cs-bg);
+}
+
+.textField textarea {
+  display: block;
+  width: 100%;
+  height: 6rem;
+  border: 0;
+  resize: none;
+  background: transparent;
+  color: var(--cs-ink);
+  outline-offset: 4px;
+  font: inherit;
+  font-size: 0.9rem;
+  line-height: 1.8;
+}
+
+.textField small {
+  display: block;
+  direction: ltr;
+  text-align: left;
+  color: var(--cs-muted);
+  font-size: 0.68rem;
+}
+
+.upload {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  width: 100%;
+  min-height: 3.2rem;
+  margin-bottom: 0.85rem;
+  border: 1px dashed var(--cs-hand);
+  border-radius: 14px;
+  background: transparent;
+  color: var(--cs-ink);
+  font-size: 0.86rem;
+  cursor: pointer;
+}
+
+.upload svg {
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
+.referenceExamples {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.55rem;
+  margin-top: 0.9rem;
+}
+
+.referenceExamples img {
+  width: 100%;
+  height: 5.5rem;
+  object-fit: cover;
+  background: var(--cs-card);
+  border-radius: 10px;
+}
+
+.note {
+  margin: 0.6rem 0 0;
+  color: var(--cs-muted);
+  font-size: 0.7rem;
+  text-align: center;
+}
+
+.cta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 3.25rem;
+  margin-top: 1.5rem;
+  border: 0;
+  border-radius: 16px;
+  background: var(--cs-green);
+  color: var(--cs-on-green);
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.cta:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+@media (min-width: 700px) {
+  .cta {
+    width: auto;
+    min-width: 16rem;
+    margin-inline: auto;
+    padding-inline: 2rem;
+  }
+}

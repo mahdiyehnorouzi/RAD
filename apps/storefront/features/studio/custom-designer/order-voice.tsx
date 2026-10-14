@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Mic, Square, RotateCcw } from "lucide-react";
 import { useLocale } from "@/components/i18n";
+import styles from "./order-voice.module.css";
 
 export function OrderVoice({
   value,
@@ -75,10 +76,10 @@ export function OrderVoice({
     }
   }
   return (
-    <div className="order-flow-recorder">
+    <div className={styles.recorder}>
       <button
         type="button"
-        className="order-flow-mic"
+        className={styles.mic}
         onClick={() => (recording ? recorder.current?.stop() : void start())}
         aria-label={
           recording
@@ -109,7 +110,7 @@ export function OrderVoice({
       {recording ? (
         <button
           type="button"
-          className="order-flow-stop"
+          className={styles.stop}
           onClick={() => recorder.current?.stop()}
           aria-label={fa ? "توقف ضبط" : "Stop recording"}
         >
@@ -120,7 +121,7 @@ export function OrderVoice({
           <audio controls src={value} />
           <button
             type="button"
-            className="order-flow-specific"
+            className={styles.rerecord}
             onClick={() => void start()}
           >
             <RotateCcw />

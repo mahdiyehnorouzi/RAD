@@ -180,6 +180,7 @@ export function CustomDesigner({ designer }: { designer: Designer }) {
     <OrderFlow
       designer={designer}
       onSubmit={submitCommission}
+      onReset={draftStore.reset}
       submitting={submitting}
       offline={!online}
       error={submitError}
