@@ -1,6 +1,6 @@
 import type { LocaleCopy } from "@/types/locale";
 
-export type OrderSample = {
+type OrderSample = {
   id: string;
   alt: LocaleCopy;
   image: { src: string; width: number; height: number };

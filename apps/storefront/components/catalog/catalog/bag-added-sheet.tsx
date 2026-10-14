@@ -90,8 +90,7 @@ export function BagAddedSheet({
     }
   };
 
-  const translateY =
-    phase === "open" ? dragY : phase === "entering" ? 24 : 0;
+  const translateY = phase === "open" ? dragY : phase === "entering" ? 24 : 0;
   const style = reducedMotion
     ? undefined
     : {
