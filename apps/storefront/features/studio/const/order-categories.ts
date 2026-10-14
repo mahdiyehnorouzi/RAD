@@ -1,6 +1,6 @@
 import type { LocaleCopy } from "@/types/locale";
 
-export type OrderCategory = {
+type OrderCategory = {
   id: "light" | "vessel" | "mug" | "sculpture";
   title: LocaleCopy;
   examples: LocaleCopy;
@@ -56,7 +56,10 @@ export const ORDER_CATEGORIES: OrderCategory[] = [
   {
     id: "sculpture",
     title: { fa: "مجسمه و فیگور", en: "Figures" },
-    examples: { fa: "حیوان، فیگور و صحنه‌های کوچک", en: "Animals and small figures" },
+    examples: {
+      fa: "حیوان، فیگور و صحنه‌های کوچک",
+      en: "Animals and small figures",
+    },
     image: {
       src: "/studio/sample-dog-sculpture.webp",
       width: 1448,
