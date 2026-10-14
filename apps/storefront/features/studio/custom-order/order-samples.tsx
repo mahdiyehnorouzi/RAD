@@ -58,7 +58,9 @@ export function OrderSamples() {
     if (!track || !item) return;
     const box = track.getBoundingClientRect();
     const rect = item.getBoundingClientRect();
-    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const reduce = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
     track.scrollBy({
       left: rtl ? rect.right - box.right : rect.left - box.left,
       behavior: reduce ? "auto" : "smooth",

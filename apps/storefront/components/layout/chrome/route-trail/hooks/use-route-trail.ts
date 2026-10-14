@@ -112,6 +112,9 @@ export function useRouteTrail() {
     case "studio":
       add(c.studio, "/studio");
       break;
+    case "collaboration":
+      add(c.collaboration, "/collaboration");
+      break;
     case "shape":
       add(c.studio, "/studio");
       add(c.shape, "/shape");
