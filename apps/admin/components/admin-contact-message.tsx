@@ -16,22 +16,32 @@ const dateTime = (value: number) =>
     timeStyle: "short",
   }).format(value);
 
-/** One customer message, shown in the inbox and beside its order. */
+/** One customer message thread (root + replies), shown in the inbox and beside its order. */
 export function AdminContactMessageItem({
   message,
+  replies = [],
   order,
   canWrite,
   onSetStatus,
+  onReply,
   onOpenOrder,
 }: {
   message: AdminContactMessage;
+  /** Replies in this thread, oldest first. */
+  replies?: AdminContactMessage[];
   /** The linked order, when it should be shown as a jump link. */
   order?: AdminOrder;
   canWrite: boolean;
-  onSetStatus: (id: string, status: AdminContactMessage["status"]) => Promise<void>;
+  onSetStatus: (
+    id: string,
+    status: AdminContactMessage["status"],
+  ) => Promise<void>;
+  onReply?: (id: string, body: string) => Promise<void>;
   onOpenOrder?: (orderId: string) => void;
 }) {
   const [busy, setBusy] = useState(false);
+  const [draft, setDraft] = useState("");
+  const [sending, setSending] = useState(false);
   const isEmail = message.contact.includes("@");
   const resolved = message.status === "resolved";
 
@@ -41,13 +51,25 @@ export function AdminContactMessageItem({
     setBusy(false);
   };
 
+  const sendReply = async () => {
+    if (!onReply || !draft.trim()) return;
+    setSending(true);
+    try {
+      await onReply(message.id, draft.trim());
+      setDraft("");
+    } finally {
+      setSending(false);
+    }
+  };
+
   return (
     <article className={`contact-message is-${message.status}`}>
       <header>
         <div>
           <strong>{message.name || message.contact}</strong>
           <small>
-            {contactTopicLabels[message.topic]} · {contactSourceLabels[message.source]}
+            {contactTopicLabels[message.topic]} ·{" "}
+            {contactSourceLabels[message.source]}
             {message.signedIn ? " · حساب کاربری" : " · مهمان"}
           </small>
         </div>
@@ -58,10 +80,46 @@ export function AdminContactMessageItem({
 
       <p className="contact-message-body">{message.body}</p>
 
+      {replies.length > 0 && (
+        <ol className="contact-message-thread">
+          {replies.map((reply) => (
+            <li
+              key={reply.id}
+              className={reply.fromAdmin ? "from-admin" : "from-customer"}
+            >
+              <b>{reply.fromAdmin ? "دفتر کوره" : message.name || "مشتری"}</b>
+              <span>{dateTime(reply.createdAt)}</span>
+              <p>{reply.body}</p>
+            </li>
+          ))}
+        </ol>
+      )}
+
+      {canWrite && onReply && (
+        <div className="contact-message-reply-box">
+          <textarea
+            value={draft}
+            onChange={(event) => setDraft(event.target.value)}
+            placeholder="پاسخ به مشتری…"
+            rows={2}
+          />
+          <button
+            type="button"
+            className="secondary-action"
+            onClick={sendReply}
+            disabled={sending || !draft.trim()}
+          >
+            {sending ? "در حال ارسال…" : "ارسال پاسخ"}
+          </button>
+        </div>
+      )}
+
       <footer>
         <a
           className="contact-message-reply"
-          href={isEmail ? `mailto:${message.contact}` : `tel:${message.contact}`}
+          href={
+            isEmail ? `mailto:${message.contact}` : `tel:${message.contact}`
+          }
           dir="ltr"
         >
           {isEmail ? <Mail aria-hidden="true" /> : <Phone aria-hidden="true" />}
@@ -88,7 +146,8 @@ export function AdminContactMessageItem({
 
         {resolved && message.resolvedAt ? (
           <span className="contact-message-done">
-            <Check aria-hidden="true" /> رسیدگی شد · {dateTime(message.resolvedAt)}
+            <Check aria-hidden="true" /> رسیدگی شد ·{" "}
+            {dateTime(message.resolvedAt)}
           </span>
         ) : null}
 

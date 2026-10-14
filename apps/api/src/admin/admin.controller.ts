@@ -27,7 +27,10 @@ import {
   SaveCommissionDto,
 } from "../commissions/dto";
 import { ContactService } from "../contact/contact.service";
-import { UpdateContactMessageDto } from "../contact/dto";
+import {
+  ReplyContactMessageDto,
+  UpdateContactMessageDto,
+} from "../contact/dto";
 import { DamageReportsService } from "../damage/damage-reports.service";
 import { ReviewDamageReportDto } from "../damage/dto";
 import { ArtistApplicationsService } from "../artist-applications/artist-applications.service";
@@ -138,6 +141,16 @@ export class AdminController {
   ) {
     this.admin.assert(request.adminRole, "order.write");
     return this.contact.setStatus(id, body.status);
+  }
+
+  @Post("messages/:id/reply")
+  replyToMessage(
+    @Param("id") id: string,
+    @Body() body: ReplyContactMessageDto,
+    @Req() request: AuthedRequest,
+  ) {
+    this.admin.assert(request.adminRole, "order.write");
+    return this.contact.replyAsAdmin(id, body.body);
   }
 
   @Get("damage-reports")

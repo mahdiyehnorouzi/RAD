@@ -21,7 +21,11 @@ export {
   saveWorkshopCommission,
   slimCommissionBrief,
 } from "./commissions";
-export { sendContactMessage } from "./contact";
+export {
+  sendContactMessage,
+  fetchOrderMessages,
+  replyToContactMessage,
+} from "./contact";
 export { createDamageReport, fetchDamageReports } from "./damage-reports";
 export { fetchFaq } from "./content";
 export { fetchHelpQuestions } from "./help";

@@ -238,3 +238,106 @@
     width: auto;
   }
 }
+
+.help-panel-thread {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 0.4rem;
+  padding-top: 0.9rem;
+  border-top: 1px dashed var(--line);
+}
+
+.help-panel-thread h3 {
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: var(--font-weight-medium);
+  color: color-mix(in srgb, var(--ink) 72%, transparent);
+}
+
+.help-panel-thread-item {
+  display: grid;
+  gap: 0.5rem;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--paper) 85%, white);
+}
+
+.help-panel-thread-body {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.8;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.help-panel-thread-time {
+  color: color-mix(in srgb, var(--ink) 55%, transparent);
+  font-size: 0.75rem;
+}
+
+.help-panel-thread-reply {
+  max-width: 88%;
+  padding: 0.5rem 0.7rem;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--ink) 6%, transparent);
+}
+
+.help-panel-thread-reply.is-admin {
+  margin-inline-start: auto;
+  background: color-mix(in srgb, var(--oxide, #8a4938) 12%, transparent);
+}
+
+.help-panel-thread-reply b {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: var(--font-weight-medium);
+  color: color-mix(in srgb, var(--ink) 60%, transparent);
+}
+
+.help-panel-thread-reply p {
+  margin: 0.2rem 0 0;
+  font-size: 0.85rem;
+  line-height: 1.75;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.help-panel-thread-reply span {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 0.7rem;
+  color: color-mix(in srgb, var(--ink) 50%, transparent);
+}
+
+.help-panel-thread-compose {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-end;
+}
+
+.help-panel-thread-compose textarea {
+  flex: 1;
+  min-width: 0;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: white;
+  font: inherit;
+  resize: vertical;
+}
+
+.help-panel-thread-compose button {
+  flex: none;
+  padding: 0.5rem 0.9rem;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: transparent;
+  font: inherit;
+  cursor: pointer;
+}
+
+.help-panel-thread-compose button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

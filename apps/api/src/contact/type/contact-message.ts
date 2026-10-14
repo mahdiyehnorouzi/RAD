@@ -18,6 +18,10 @@ export type AdminContactMessage = {
   body: string;
   status: ContactMessageStatus;
   orderId?: string;
+  /** Set on a reply row — the thread's root message id. Undefined on a root message itself. */
+  parentId?: string;
+  /** True for a staff reply, false for the customer's own message. */
+  fromAdmin: boolean;
   fromOrderOwner: boolean;
   signedIn: boolean;
   createdAt: number;

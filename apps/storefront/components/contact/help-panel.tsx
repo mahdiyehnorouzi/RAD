@@ -5,6 +5,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import { Check, Copy, Info, MessageSquareText, Send, X } from "lucide-react";
 import { useLocale } from "@/components/i18n";
 import { InstagramIcon, MessageForm } from "./channels";
+import { MessageThread } from "./message-thread";
 import { RAD_INSTAGRAM, helpPanelCopy } from "./const";
 import type { HelpContext, HelpTone } from "./type";
 
@@ -151,6 +152,10 @@ export function HelpPanel({
           />
         ) : null}
       </div>
+
+      {context === "order" && orderId ? (
+        <MessageThread orderId={orderId} />
+      ) : null}
     </section>
   );
 }

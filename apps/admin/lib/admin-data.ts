@@ -131,6 +131,10 @@ export interface AdminContactMessage {
   body: string;
   status: ContactMessageStatus;
   orderId?: string;
+  /** Set on a reply row — the thread's root message id. Undefined on the root message itself. */
+  parentId?: string;
+  /** True for a staff reply, false for the customer's own message. */
+  fromAdmin: boolean;
   /** False when someone typed an order number that isn't theirs. */
   fromOrderOwner: boolean;
   signedIn: boolean;

@@ -23,6 +23,7 @@ import {
   type AdminCommissionStage,
 } from "../lib/admin-data";
 import { StageMeter } from "@rad/ui";
+import { useBodyScrollLock, useIsMobileViewport } from "./admin-dialog";
 
 const copy = (value: { fa: string; en: string }) => value.fa;
 const date = (value: number) =>
@@ -298,6 +299,12 @@ function CommissionDetail({
   onMessage: Parameters<typeof AdminCommissions>[0]["onMessage"];
   onClose: () => void;
 }) {
+  // Below the mobile breakpoint, `.commission-detail` becomes a position:
+  // fixed full-screen overlay (see the `.commission-view.has-detail` rule
+  // in globals.css) — only lock background scroll then; on desktop this
+  // is just an inline panel beside the list and must not block the page.
+  const isMobile = useIsMobileViewport();
+  useBodyScrollLock(isMobile);
   const open =
     commission.stage === "design_submitted" ||
     (commission.stage === "feasibility" && commission.nextActor === "artist");

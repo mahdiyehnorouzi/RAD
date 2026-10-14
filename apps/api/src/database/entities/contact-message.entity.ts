@@ -43,6 +43,20 @@ export class ContactMessage {
   @Column("text")
   body!: string;
 
+  /**
+   * Null for the first message in a thread; set to that message's own `id`
+   * for every reply (a flat, two-level thread — a reply to a reply still
+   * points at the original root, never chains deeper). Added for admin/
+   * customer bidirectional replies; see `contact-message-thread.migration.ts`.
+   */
+  @Index()
+  @Column("text", { nullable: true })
+  parentId!: string | null;
+
+  /** True for a staff reply, false for the customer's own message. */
+  @Column("boolean", { default: false })
+  fromAdmin!: boolean;
+
   @Index()
   @Column("text", { default: "new" })
   status!: string;
