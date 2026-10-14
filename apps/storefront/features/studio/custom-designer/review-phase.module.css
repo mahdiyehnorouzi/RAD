@@ -1,0 +1,276 @@
+.review {
+  display: grid;
+  /* See idea-phase.module.css .idea — same grid-item min-content trap. */
+  min-width: 0;
+  gap: 0.6rem;
+  animation: phase-in 0.35s var(--cs-ease) both;
+}
+
+@keyframes phase-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .review {
+    animation: none;
+  }
+}
+
+.title {
+  margin: 0;
+  color: var(--cs-ink);
+  font-size: clamp(1.4rem, 6vw, 1.8rem);
+  font-weight: 700;
+  text-align: center;
+}
+
+.hint {
+  margin: 0 0 1.1rem;
+  color: var(--cs-muted);
+  font-size: 0.85rem;
+  line-height: 1.8;
+  text-align: center;
+}
+
+.board {
+  position: relative;
+  border: 1px solid var(--cs-line);
+  border-radius: 20px;
+  padding: 1.1rem;
+  background: var(--cs-card);
+}
+
+.boardEdit {
+  position: absolute;
+  top: 0.8rem;
+  inset-inline-end: 0.8rem;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.4rem 0.7rem;
+  border: 0;
+  border-radius: 30px;
+  background: var(--cs-paper);
+  color: var(--cs-ink);
+  font-size: 0.72rem;
+  cursor: pointer;
+}
+
+.boardEdit svg {
+  width: 0.85rem;
+  height: 0.85rem;
+}
+
+.collage {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.45rem;
+  margin-bottom: 0.9rem;
+  border-radius: 14px;
+  overflow: clip;
+}
+
+.collage[data-count="1"] {
+  grid-template-columns: 1fr;
+}
+
+.collage img {
+  width: 100%;
+  height: 7.5rem;
+  object-fit: cover;
+}
+
+.collage[data-count="1"] img {
+  height: 11rem;
+}
+
+.collage img:first-child:nth-last-child(3) {
+  grid-column: 1 / -1;
+  height: 7.5rem;
+}
+
+.collagePlaceholder {
+  /* Not `display: grid; place-items: center`: centering a grid item
+     without stretching it leaves its height "auto", so a percentage
+     height on the <img> inside has nothing definite to resolve against —
+     the browser falls back to the image's natural aspect ratio and it
+     overflows the box, visually bleeding into the content below even
+     though the boxes themselves never overlap in layout. Plain block
+     flow with a definite parent height doesn't have that problem. */
+  position: relative;
+  height: 9rem;
+  margin-bottom: 0.9rem;
+  padding: 0.75rem;
+  border: 1px solid var(--cs-line);
+  border-radius: 14px;
+  background: var(--cs-paper);
+  overflow: hidden;
+}
+
+.collagePlaceholder img {
+  /* Plain `object-fit: contain`, no blend mode: the category photo's own
+     near-white background used to multiply-blend into this box's cream
+     background with no visible edge, compounding the overflow above. */
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.collagePlaceholder svg {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 2.6rem;
+  height: 2.6rem;
+  stroke-width: 1;
+  color: var(--cs-hand);
+}
+
+.brief {
+  margin: 0 0 0.6rem;
+  color: var(--cs-ink);
+  font-size: 0.85rem;
+  line-height: 1.9;
+  white-space: pre-wrap;
+}
+
+.voiceRow audio {
+  width: 100%;
+}
+
+.details {
+  display: grid;
+  border: 1px solid var(--cs-line);
+  border-radius: 18px;
+  background: var(--cs-paper);
+  overflow: clip;
+}
+
+.detailRow {
+  display: grid;
+  grid-template-columns: 5.5rem 1fr auto;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid var(--cs-line);
+  font-size: 0.82rem;
+}
+
+.detailRow:last-child {
+  border-bottom: 0;
+}
+
+.detailLabel {
+  color: var(--cs-muted);
+}
+
+.detailValue {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--cs-ink);
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.detailSwatches {
+  display: flex;
+  flex: none;
+  gap: 0.2rem;
+}
+
+.detailSwatches i {
+  width: 0.9rem;
+  height: 0.9rem;
+  border-radius: 50%;
+  border: 1px solid var(--cs-line);
+}
+
+.detailEdit {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--cs-muted);
+  font-size: 0.72rem;
+  cursor: pointer;
+}
+
+.detailEdit svg {
+  width: 0.78rem;
+  height: 0.78rem;
+}
+
+.callout {
+  margin-top: 1.2rem;
+  padding: 1rem;
+  border-radius: 16px;
+  background: var(--cs-bg);
+  color: var(--cs-muted);
+  font-size: 0.9rem;
+  line-height: 1.9;
+}
+
+.consent {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  margin-top: 1.1rem;
+  margin-bottom: 0.3rem;
+  font-size: 0.95rem;
+  line-height: 1.85;
+  color: var(--cs-ink);
+}
+
+.consent input {
+  width: 1.15rem;
+  height: 1.15rem;
+  margin-top: 0.15rem;
+  flex: none;
+  accent-color: var(--cs-green);
+}
+
+.consent a {
+  color: var(--cs-green);
+  font-weight: 700;
+  text-decoration: underline;
+}
+
+.error {
+  margin: 0.5rem 0 0;
+  color: var(--cs-oxide);
+  font-size: 0.82rem;
+}
+
+.submit {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 3.25rem;
+  margin-top: 1.2rem;
+  border: 0;
+  border-radius: 16px;
+  background: var(--cs-green);
+  color: var(--cs-on-green);
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.submit:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}

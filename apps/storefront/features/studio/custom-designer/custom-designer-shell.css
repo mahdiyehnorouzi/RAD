@@ -1,0 +1,5 @@
+/* The custom-order route (marked by `.custom-order-route`) always shows the
+   warm cream page background, even before the flow's own root mounts. */
+body:has(.custom-order-route) {
+  background: #faf6ee;
+}

@@ -22,12 +22,24 @@
   transition:
     background-color 0.2s ease,
     border-color 0.2s ease,
-    color 0.2s ease;
+    color 0.2s ease,
+    transform 160ms var(--cs-ease);
+}
+
+.csBtn:active:not(:disabled) {
+  transform: scale(0.97);
 }
 
 .csBtn svg {
   flex: 0 0 auto;
-  transition: transform 0.3s var(--cs-ease);
+  transition: transform 180ms var(--cs-ease);
+}
+
+/* Studio-wide policy: this arrow always points left, regardless of locale direction.
+   The doubled class raises specificity above the html[dir="ltr"] flip rule above,
+   deterministically — bundler output order isn't guaranteed to match source order. */
+html[dir="ltr"] .csBtnArrowLeft.csBtnArrowLeft:hover:not(:disabled) svg {
+  transform: translateX(-3px);
 }
 
 .csBtnSolid {

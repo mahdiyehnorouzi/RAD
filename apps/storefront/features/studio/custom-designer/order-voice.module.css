@@ -1,0 +1,88 @@
+.recorder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.6rem 0 0.6rem;
+}
+
+.mic {
+  display: grid;
+  place-items: center;
+  width: 6rem;
+  height: 6rem;
+  background: var(--cs-green);
+  border: 4px solid var(--cs-paper);
+  outline: 10px solid var(--cs-card);
+  border-radius: 50%;
+  color: var(--cs-on-green);
+}
+
+.mic svg {
+  width: 2.3rem;
+  height: 2.3rem;
+  stroke-width: 1.4;
+}
+
+.mic[data-recording="true"] {
+  animation: voice-ring 1.5s ease-in-out infinite;
+}
+
+.recorder time {
+  font-size: 0.8rem;
+  color: var(--cs-muted);
+}
+
+.recorder b {
+  font-size: 0.85rem;
+  color: var(--cs-ink);
+}
+
+.stop {
+  width: 3.4rem;
+  height: 3.4rem;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--cs-line);
+  border-radius: 50%;
+  background: none;
+  color: var(--cs-oxide);
+}
+
+.stop svg {
+  width: 1.1rem;
+}
+
+.rerecord {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.7rem 1.2rem;
+  border: 1px solid var(--cs-line);
+  border-radius: 30px;
+  background: transparent;
+  color: var(--cs-ink);
+  font-size: 0.78rem;
+}
+
+.recorder audio {
+  width: 100%;
+}
+
+.recorder [role="alert"] {
+  margin: 0;
+  color: var(--cs-oxide);
+  font-size: 0.78rem;
+}
+
+@keyframes voice-ring {
+  50% {
+    outline-width: 16px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mic {
+    animation: none !important;
+  }
+}

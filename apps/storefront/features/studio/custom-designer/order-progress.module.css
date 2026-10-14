@@ -1,0 +1,90 @@
+.progress {
+  display: flex;
+  width: 76%;
+  margin: 0 auto;
+  padding: 0;
+  list-style: none;
+}
+
+.progress li {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.45rem;
+  /* A not-yet-reached step is still legible text, not a decorative hint —
+     cs-muted keeps it a clear step above cs-pick (near-invisible on cream). */
+  color: var(--cs-muted);
+  font-size: 0.66rem;
+  font-weight: 600;
+}
+
+/* The connecting line always runs between siblings in DOM/reading order,
+   so it is correct in both RTL and LTR without a direction override. */
+.progress li + li::before {
+  content: "";
+  position: absolute;
+  top: 0.8rem;
+  inset-inline-end: 72%;
+  width: 56%;
+  height: 1px;
+  background: var(--cs-line);
+  transition: background 0.4s var(--cs-ease);
+}
+
+.progress [data-done="true"] + li::before {
+  background: var(--cs-green);
+}
+
+.progress svg {
+  width: 1.65rem;
+  height: 1.65rem;
+  padding: 0.25rem;
+  border: 1px solid var(--cs-line);
+  border-radius: 50%;
+  stroke-width: 1.4;
+  transition:
+    background 0.4s var(--cs-ease),
+    border-color 0.4s var(--cs-ease);
+}
+
+.progress :is([data-current="true"], [data-done="true"]) {
+  color: var(--cs-green);
+}
+
+.progress [data-current="true"] svg {
+  background: var(--cs-green);
+  color: var(--cs-on-green);
+  border-color: var(--cs-green);
+  animation: step-glow 2.4s var(--cs-ease) infinite;
+}
+
+.progress [data-done="true"] svg {
+  animation: step-settle 0.4s var(--cs-ease);
+}
+
+@keyframes step-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--cs-green) 30%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 7px color-mix(in srgb, var(--cs-green) 0%, transparent);
+  }
+}
+
+@keyframes step-settle {
+  from {
+    transform: scale(0.82);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .progress svg {
+    animation: none !important;
+  }
+}

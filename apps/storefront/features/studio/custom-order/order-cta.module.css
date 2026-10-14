@@ -1,0 +1,150 @@
+/* Final CTA — stacked, natural-flow layout on mobile; horizontal banner on desktop. No absolute positioning for text. */
+
+.csCta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  padding: 1rem;
+  border-radius: 18px;
+  background: var(--cs-card);
+}
+
+.csCtaArt {
+  position: relative;
+  aspect-ratio: 16 / 7;
+  overflow: hidden;
+  border-radius: 12px;
+}
+
+.csCtaArt img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.csCtaDoodle {
+  position: absolute;
+  inset-inline-end: 0.5rem;
+  bottom: 0.5rem;
+  width: 2rem;
+  height: 2rem;
+  overflow: visible;
+  fill: none;
+  stroke: var(--cs-oxide);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.csCtaCopy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  align-items: flex-start;
+}
+
+.csCtaCopy h2 {
+  font-size: 1.2rem;
+  line-height: 1.45;
+}
+
+.csCtaCopy p {
+  color: var(--cs-muted);
+  font-size: 0.85rem;
+  line-height: 1.75;
+}
+
+.csCtaCopy :global(.csBtn) {
+  margin-top: 0.4rem;
+  min-height: 2.75rem;
+  padding: 0 1.1rem;
+  font-size: 0.85rem;
+}
+
+@media (--motion-ok) {
+  .csCta {
+    opacity: 0;
+    transform: translateY(14px);
+    transition:
+      opacity 0.45s var(--cs-ease),
+      transform 0.45s var(--cs-ease);
+  }
+
+  .csCta[data-in-view] {
+    opacity: 1;
+    transform: none;
+  }
+
+  .csCtaDoodle path {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+  }
+
+  .csCta[data-in-view] .csCtaDoodle path {
+    animation: csCtaDraw 1s 0.3s var(--cs-ease) forwards;
+  }
+}
+
+@keyframes csCtaDraw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@media (min-width: 560px) {
+  .csCtaCopy {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem 1.25rem;
+  }
+
+  .csCtaCopy h2,
+  .csCtaCopy p {
+    flex: 1 1 100%;
+  }
+}
+
+@media (--wide) {
+  .csCta {
+    flex-direction: row;
+    align-items: center;
+    gap: 2.5rem;
+    max-width: 76rem;
+    margin-inline: auto;
+    padding: 2.25rem;
+  }
+
+  .csCtaArt {
+    flex: 0 0 22rem;
+    aspect-ratio: 16 / 10;
+  }
+
+  .csCtaCopy {
+    flex: 1;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.6rem;
+  }
+
+  .csCtaCopy h2,
+  .csCtaCopy p {
+    flex: none;
+  }
+
+  .csCtaCopy h2 {
+    font-size: clamp(1.6rem, 2.4vw, 2rem);
+  }
+
+  .csCtaCopy p {
+    max-width: 30rem;
+    font-size: 0.95rem;
+  }
+
+  .csCtaCopy :global(.csBtn) {
+    margin-top: 0.5rem;
+    min-height: 2.9rem;
+    font-size: 0.9rem;
+  }
+}

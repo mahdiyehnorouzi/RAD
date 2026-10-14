@@ -6,96 +6,37 @@ import type { LocaleCopy } from "@/types/locale";
  * the wizard and the review step all read from this file.
  */
 
-export type OrderOverviewStep = {
-  id: "idea" | "review" | "quote" | "making";
+export type OrderStep = {
+  id: "idea" | "design" | "making";
   title: LocaleCopy;
   note: LocaleCopy;
 };
 
-/** The four-beat "how it works" timeline; notes restate `ORDER_PATH`, never new promises. */
-export const ORDER_OVERVIEW: OrderOverviewStep[] = [
+/** The three-beat "how it works" timeline shown on the Studio landing page. */
+export const ORDER_STEPS: OrderStep[] = [
   {
     id: "idea",
-    title: { fa: "ایده‌ی شما", en: "Your idea" },
+    title: { fa: "بگو چی تو ذهنته", en: "Tell us your idea" },
     note: {
-      fa: "عکس، طرح دستی، یادداشت صوتی یا چند خط توضیح؛ هرچه داری بفرست.",
-      en: "A photo, a sketch, a voice note or a few lines; send whatever you have.",
+      fa: "یه عکس، یه نقاشی یا حتی چند تا جمله کافیه.",
+      en: "A photo, a sketch, or a few lines.",
     },
   },
   {
-    id: "review",
-    title: { fa: "بررسی ایده", en: "We review it" },
+    id: "design",
+    title: { fa: "با هم سر و شکلش می‌دیم", en: "We design it together" },
     note: {
-      fa: "می‌بینیم ایده ساختنی است یا نه.",
-      en: "We check whether the idea can be made.",
-    },
-  },
-  {
-    id: "quote",
-    title: { fa: "تأیید و پیشنهاد قیمت", en: "Quote and approval" },
-    note: {
-      fa: "قیمت، زمان و جزئیات اجرا را پیشنهاد می‌دهیم؛ تا ۲ بار اصلاح طرح.",
-      en: "We propose price, timing and approach; up to 2 design revisions.",
+      fa: "درباره‌ی رنگ، اندازه و جزئیاتش با هم تصمیم می‌گیریم.",
+      en: "We work out the details and material.",
     },
   },
   {
     id: "making",
-    title: { fa: "ساخت و ارسال", en: "Making and shipping" },
+    title: { fa: "می‌سازیمش، می‌فرستیمش", en: "Made and shipped" },
     note: {
-      fa: "با بیعانه ساخت شروع می‌شود؛ معمولاً ۲ تا ۳ هفته، بعد ارسال بیمه‌شده.",
-      en: "Making starts with the deposit; usually 2–3 weeks, then insured shipping.",
+      fa: "می‌ره توی کارگاه و وقتی آماده شد، میاد پیشت.",
+      en: "Made with care, just for you.",
     },
-  },
-];
-
-type OrderPriceTier = {
-  id: string;
-  label: LocaleCopy;
-  examples: LocaleCopy;
-  price: LocaleCopy;
-  image: string;
-};
-
-export const ORDER_PRICE_TIERS: OrderPriceTier[] = [
-  {
-    id: "small",
-    label: { fa: "قطعه‌ی کوچک", en: "Small piece" },
-    examples: {
-      fa: "زیورآلات، آویز، شیء کوچک رومیزی",
-      en: "Jewellery, pendants, small desk objects",
-    },
-    price: { fa: "از ۲ میلیون تومان", en: "from 2,000,000 toman" },
-    image: "/catalog/photos/transparent/croissant-handle-mug.webp",
-  },
-  {
-    id: "vessel",
-    label: { fa: "ظرف یا شیء متوسط", en: "Vessel or mid-size object" },
-    examples: {
-      fa: "ماگ، بشقاب، سینی، گلدان",
-      en: "Mugs, plates, trays, vases",
-    },
-    price: { fa: "از ۳ میلیون تومان", en: "from 3,000,000 toman" },
-    image: "/catalog/photos/transparent/cobalt-fold-bowl.webp",
-  },
-  {
-    id: "complex",
-    label: { fa: "شیء پیچیده", en: "Complex object" },
-    examples: {
-      fa: "مجسمه، چراغ، فرم‌های چندجزئی",
-      en: "Sculptures, lamps, detailed forms",
-    },
-    price: { fa: "از ۵ میلیون تومان", en: "from 5,000,000 toman" },
-    image: "/catalog/photos/transparent/dachshund-sculpture.webp",
-  },
-  {
-    id: "large",
-    label: { fa: "قطعه‌ی بزرگ یا چندتکه", en: "Large or multi-part piece" },
-    examples: {
-      fa: "ست‌ها، قطعه‌های بزرگ‌تر از ۵۰ سانتی‌متر",
-      en: "Sets, pieces larger than 50 cm",
-    },
-    price: { fa: "بعد از بررسی", en: "after review" },
-    image: "/catalog/photos/transparent/spotted-loop-teapot.webp",
   },
 ];
 
