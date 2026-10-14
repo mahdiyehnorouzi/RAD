@@ -9,12 +9,15 @@
   --outer-side: left;
 
   position: relative;
+  z-index: 1;
   display: grid;
   grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
   min-height: clamp(18.5rem, 76vw, 36rem);
   /* Room inside the torn-top/bottom masks for the photo's torn foot */
   padding-block: 0 calc(var(--hero-edge-h) + 0.5rem);
   margin-bottom: clamp(0rem, 5vw - 1.5rem, 1.5rem);
+  background: var(--canvas);
+  filter: drop-shadow(0 10px 16px rgb(52 36 20 / 0.16));
   -webkit-mask:
     var(--hero-edge) var(--hero-edge-x) 0 / var(--hero-edge-size)
       var(--hero-edge-h) no-repeat,
