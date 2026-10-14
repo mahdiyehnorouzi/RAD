@@ -35,7 +35,10 @@ export function OrderCta() {
             aria-hidden="true"
             focusable="false"
           >
-            <path pathLength={1} d="M6 60c16 6 30-4 32-18M58 10c4 10-2 18-12 18" />
+            <path
+              pathLength={1}
+              d="M6 60c16 6 30-4 32-18M58 10c4 10-2 18-12 18"
+            />
           </svg>
         </figure>
         <div className={styles.csCtaCopy}>

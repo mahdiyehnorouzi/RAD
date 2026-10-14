@@ -7,7 +7,8 @@ export const orderCopy = {
     heroHand: ["تو فکرش رو بکن،", "ما می‌سازیمش"],
     heroAlt: "آباژور سفالی قارچی‌شکل با نور گرم، روی یک جفت کتاب",
     stepsTitle: "از فکر تو تا کارگاه ما",
-    stepsLede: "لازم نیست همه‌چیز رو از قبل بدونی؛ قدم‌به‌قدم با هم جلو می‌ریم.",
+    stepsLede:
+      "لازم نیست همه‌چیز رو از قبل بدونی؛ قدم‌به‌قدم با هم جلو می‌ریم.",
     stepsCta: "شروع سفارش",
     sketchAlt: "طرح مدادی یک کاسه روی کاغذ",
     bowlAlt: "کاسه‌ی سفالی خاکی با لبه‌ی نرم",
@@ -45,7 +46,8 @@ export const orderCopy = {
     heroCta: "Start a custom order",
     heroExamples: "See examples",
     heroHand: ["Your ideas,", "our hands"],
-    heroAlt: "A mushroom-shaped ceramic lamp glowing warmly on a stack of books",
+    heroAlt:
+      "A mushroom-shaped ceramic lamp glowing warmly on a stack of books",
     stepsTitle: "How does it work?",
     stepsLede: "From idea to handmade piece, in three simple steps.",
     stepsCta: "Start an order",

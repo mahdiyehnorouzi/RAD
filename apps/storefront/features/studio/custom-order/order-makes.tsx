@@ -25,7 +25,9 @@ export function OrderMakes() {
         {ORDER_CATEGORIES.map((category) => (
           <li key={category.id}>
             <Link
-              href={href(`/studio/start?form=${encodeURIComponent(category.form)}`)}
+              href={href(
+                `/studio/start?form=${encodeURIComponent(category.form)}`,
+              )}
               className={styles.csMake}
               aria-label={c.makesPick.replace("{name}", category.title[locale])}
             >
