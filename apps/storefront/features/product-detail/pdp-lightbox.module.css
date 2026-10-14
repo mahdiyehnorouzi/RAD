@@ -103,6 +103,19 @@
   object-fit: contain;
 }
 
+/* The fallback illustration (plate-only/unphotographed works) renders via
+   `.product-photo-default`, a positioned element that product-gallery.module.css
+   fills/centers with `position: absolute; inset: 0` scoped to `.slide`/`.thumb`.
+   The lightbox reuses the same renderSlide() output inside `.image` instead,
+   where that rule never matched — leaving the fallback at its unsized
+   intrinsic box, right-aligned rather than centered. Mirrored here. */
+.image :global(.product-photo-default) {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
 .nav {
   position: absolute;
   top: 50%;

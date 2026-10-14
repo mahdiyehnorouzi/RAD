@@ -73,6 +73,10 @@ export function ProductDetail({
   // the real inline Add to Bag button (observed via `buyRef`) has scrolled
   // out of view, so the two are never both on screen at once.
   const { ref: buyRef, inView: inlineBuyInView } = useInView<HTMLDivElement>();
+  // While the inline AddToBag's confirmation sheet is open, the floating bar
+  // is suppressed (never unmounted — same pattern as its scroll-visibility
+  // hide) so the two never show a competing "go to bag" CTA at once.
+  const [sheetOpen, setSheetOpen] = useState(false);
 
   const live = useLiveProduct(product.slug);
   const resolved = overlayLiveProduct(product, live.product);
@@ -135,6 +139,7 @@ export function ProductDetail({
           qrSvg={qrSvg}
           textures={textures}
           buyRef={buyRef}
+          onSheetVisibleChange={setSheetOpen}
         />
         <div className={styles.rest}>
           <ProductStory
@@ -183,7 +188,7 @@ export function ProductDetail({
         state={state}
         live={live}
         forceBusy={devBusy}
-        visible={!inlineBuyInView}
+        visible={!inlineBuyInView && !sheetOpen}
       />
     </article>
   );
