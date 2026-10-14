@@ -25,6 +25,7 @@ import { HelpModule } from "./help/help.module";
 import { ShapeModule } from "./shape/shape.module";
 import { ContactModule } from "./contact/contact.module";
 import { DamageReportsModule } from "./damage/damage-reports.module";
+import { ArtistApplicationsModule } from "./artist-applications/artist-applications.module";
 import { MailModule } from "./mail/mail.module";
 import { HealthController } from "./health/health.controller";
 
@@ -65,6 +66,7 @@ import { HealthController } from "./health/health.controller";
     ShapeModule,
     ContactModule,
     DamageReportsModule,
+    ArtistApplicationsModule,
   ],
   controllers: [HealthController],
   providers: [

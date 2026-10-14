@@ -4,6 +4,7 @@ import { CommissionsModule } from "../commissions/commissions.module";
 import { OrdersModule } from "../orders/orders.module";
 import { ContactModule } from "../contact/contact.module";
 import { DamageReportsModule } from "../damage/damage-reports.module";
+import { ArtistApplicationsModule } from "../artist-applications/artist-applications.module";
 import { HelpModule } from "../help/help.module";
 import { ReviewsModule } from "../reviews/reviews.module";
 import { ShapeModule } from "../shape/shape.module";
@@ -19,6 +20,7 @@ import { StorageModule } from "../storage/storage.module";
     OrdersModule,
     ContactModule,
     DamageReportsModule,
+    ArtistApplicationsModule,
     ReviewsModule,
     ShapeModule,
     HelpModule,
