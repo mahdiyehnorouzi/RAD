@@ -125,29 +125,47 @@
   position: relative;
   max-width: 72rem;
   margin-inline: auto;
-  padding: 2.75rem 1.25rem;
+  padding: 1.5rem 1.1rem;
 }
 .csHead {
   display: grid;
-  gap: 0.4rem;
-  margin-bottom: 1.4rem;
+  gap: 0.3rem;
+  margin-bottom: 1rem;
 }
 .csHead h2 {
-  font-size: clamp(1.55rem, 6.6vw, 2.3rem);
-  line-height: 1.5;
+  font-size: 1.35rem;
+  line-height: 1.4;
 }
 html[dir="ltr"] .csHead h2 {
-  line-height: 1.2;
+  line-height: 1.25;
   letter-spacing: -0.015em;
 }
 .csHead p {
   max-width: 34rem;
   color: var(--cs-muted);
-  font-size: 0.97rem;
-  line-height: 1.95;
+  font-size: 0.8125rem;
+  line-height: 1.7;
 }
 html[dir="ltr"] .csHead p {
-  line-height: 1.6;
+  line-height: 1.55;
+}
+
+@media (min-width: 700px) {
+  .csHead h2 {
+    font-size: 1.6rem;
+  }
+  .csHead p {
+    font-size: 0.875rem;
+  }
+}
+
+@media (--wide) {
+  .csHead h2 {
+    font-size: 1.85rem;
+  }
+  .csHead p {
+    font-size: 0.95rem;
+  }
 } /* Photographic bands */
 .csBand {
   position: relative;
@@ -201,7 +219,7 @@ html[dir="ltr"] .csHead p {
 
 @media (min-width: 700px) {
   .csSection {
-    padding: clamp(3.5rem, 6vw, 5.5rem) var(--page);
+    padding: clamp(2rem, 4vw, 3rem) var(--page);
   }
 
   .csFlow {

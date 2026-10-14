@@ -48,6 +48,40 @@ export const ORDER_OVERVIEW: OrderOverviewStep[] = [
   },
 ];
 
+export type OrderStep = {
+  id: "idea" | "design" | "making";
+  title: LocaleCopy;
+  note: LocaleCopy;
+};
+
+/** The three-beat "how it works" timeline shown on the Studio landing page. */
+export const ORDER_STEPS: OrderStep[] = [
+  {
+    id: "idea",
+    title: { fa: "بگو چی تو ذهنته", en: "Tell us your idea" },
+    note: {
+      fa: "یه عکس، یه نقاشی یا حتی چند تا جمله کافیه.",
+      en: "A photo, a sketch, or a few lines.",
+    },
+  },
+  {
+    id: "design",
+    title: { fa: "با هم سر و شکلش می‌دیم", en: "We design it together" },
+    note: {
+      fa: "درباره‌ی رنگ، اندازه و جزئیاتش با هم تصمیم می‌گیریم.",
+      en: "We work out the details and material.",
+    },
+  },
+  {
+    id: "making",
+    title: { fa: "می‌سازیمش، می‌فرستیمش", en: "Made and shipped" },
+    note: {
+      fa: "می‌ره توی کارگاه و وقتی آماده شد، میاد پیشت.",
+      en: "Made with care, just for you.",
+    },
+  },
+];
+
 type OrderPriceTier = {
   id: string;
   label: LocaleCopy;
