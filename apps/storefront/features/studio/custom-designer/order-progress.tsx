@@ -13,10 +13,17 @@ export function OrderProgress({ phase }: { phase: OrderPhase }) {
   const fa = locale === "fa";
   const txt = (faText: string, en: string) => (fa ? faText : en);
   const index = PHASES.indexOf(phase);
-  const labels = [txt("ایده", "Idea"), txt("انتخاب‌ها", "Choices"), txt("بررسی", "Review")];
+  const labels = [
+    txt("ایده", "Idea"),
+    txt("انتخاب‌ها", "Choices"),
+    txt("بررسی", "Review"),
+  ];
 
   return (
-    <ol className={styles.progress} aria-label={txt("مراحل سفارش", "Order stages")}>
+    <ol
+      className={styles.progress}
+      aria-label={txt("مراحل سفارش", "Order stages")}
+    >
       {PHASES.map((p, i) => {
         const Icon = ICONS[i];
         return (

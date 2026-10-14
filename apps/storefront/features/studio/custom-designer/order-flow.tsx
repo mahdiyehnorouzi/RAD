@@ -213,7 +213,11 @@ export function OrderFlow({
           />
         )}
       </section>
-      <dialog ref={dialog} className={styles.dialog} onClose={() => setConfirmingReset(false)}>
+      <dialog
+        ref={dialog}
+        className={styles.dialog}
+        onClose={() => setConfirmingReset(false)}
+      >
         <h2>{txt("از اول شروع کنیم؟", "Start over?")}</h2>
         <p>
           {txt(

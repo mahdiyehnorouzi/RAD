@@ -16,7 +16,8 @@ import {
 } from "./const";
 import styles from "./review-phase.module.css";
 
-type EditTarget = "idea" | "category" | "size" | "color" | "similarity" | "budget" | "timeline";
+type EditTarget =
+  "idea" | "category" | "size" | "color" | "similarity" | "budget" | "timeline";
 
 export function ReviewPhase({
   designer: d,
@@ -111,7 +112,10 @@ export function ReviewPhase({
       </p>
       {notices}
 
-      <section className={styles.board} aria-label={txt("تخته‌ی ایده", "Idea board")}>
+      <section
+        className={styles.board}
+        aria-label={txt("تخته‌ی ایده", "Idea board")}
+      >
         <button
           type="button"
           className={styles.boardEdit}
@@ -122,7 +126,10 @@ export function ReviewPhase({
           {txt("ویرایش", "Edit")}
         </button>
         {images.length ? (
-          <div className={styles.collage} data-count={Math.min(images.length, 4)}>
+          <div
+            className={styles.collage}
+            data-count={Math.min(images.length, 4)}
+          >
             {images.slice(0, 4).map((src, i) => (
               // eslint-disable-next-line @next/next/no-img-element
               <img key={i} src={src} alt={txt("مرجع ایده", "Idea reference")} />

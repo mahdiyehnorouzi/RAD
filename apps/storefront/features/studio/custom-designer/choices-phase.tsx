@@ -18,8 +18,6 @@ import type { ChoicesSectionId as SectionId } from "./type/choices-section";
 import { sectionOrder } from "./type/choices-section";
 import styles from "./choices-phase.module.css";
 
-export type { ChoicesSectionId } from "./type/choices-section";
-
 export function ChoicesPhase({
   designer: d,
   hasReference,
@@ -99,7 +97,10 @@ export function ChoicesPhase({
       "چقدر شبیه عکسی باشه که فرستادی؟",
       "How close to your reference?",
     ),
-    budget: txt("حدوداً چقدر می‌خوای هزینه کنی؟", "What budget do you have in mind?"),
+    budget: txt(
+      "حدوداً چقدر می‌خوای هزینه کنی؟",
+      "What budget do you have in mind?",
+    ),
     timeline: txt("تا کی بهش نیاز داری؟", "When do you need it?"),
   };
 
@@ -116,8 +117,7 @@ export function ChoicesPhase({
       .join("، "),
     similarity: "",
     budget: optionLabel(BUDGET_OPTIONS, d.budget, locale),
-    timeline:
-      d.needBy || optionLabel(TIMELINE_OPTIONS, d.timeline, locale),
+    timeline: d.needBy || optionLabel(TIMELINE_OPTIONS, d.timeline, locale),
   };
 
   const rows = (
@@ -240,9 +240,7 @@ export function ChoicesPhase({
                   inputMode="decimal"
                   value={String(value)}
                   placeholder="cm"
-                  onChange={(e) =>
-                    (set as (s: string) => void)(e.target.value)
-                  }
+                  onChange={(e) => (set as (s: string) => void)(e.target.value)}
                 />
               </label>
             ))}
@@ -259,9 +257,7 @@ export function ChoicesPhase({
               key={o.id}
               type="button"
               aria-pressed={d.colors.includes(o.value)}
-              disabled={
-                !d.colors.includes(o.value) && d.colors.length >= 3
-              }
+              disabled={!d.colors.includes(o.value) && d.colors.length >= 3}
               onClick={() => d.toggleColor(o.value)}
             >
               <span
@@ -362,7 +358,10 @@ export function ChoicesPhase({
   };
 
   const hints: Partial<Record<SectionId, string>> = {
-    category: txt("یه دسته‌بندی اولیه رو انتخاب کن.", "Choose a starting category."),
+    category: txt(
+      "یه دسته‌بندی اولیه رو انتخاب کن.",
+      "Choose a starting category.",
+    ),
     color: txt("می‌تونی تا سه رنگ انتخاب کنی.", "Choose up to three colors."),
     budget: txt(
       "فقط می‌پرسیم که پیشنهادهای ما به بودجه‌ات بخوره، نگران نباش.",

@@ -115,12 +115,14 @@ export function IdeaPhase({
             onRemove={d.removeUpload}
           />
           <div className={styles.referenceExamples}>
-            {[FORM_OPTIONS[0].image, "/studio/bowl.webp", "/studio/sketch.webp"].map(
-              (src) => (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img key={src} src={src} alt="" />
-              ),
-            )}
+            {[
+              FORM_OPTIONS[0].image,
+              "/studio/bowl.webp",
+              "/studio/sketch.webp",
+            ].map((src) => (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img key={src} src={src} alt="" />
+            ))}
           </div>
           <p className={styles.note}>
             {txt(
