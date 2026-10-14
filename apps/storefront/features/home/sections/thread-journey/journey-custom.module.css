@@ -8,18 +8,32 @@
   position: relative;
   display: grid;
   grid-template-columns: clamp(3.4rem, 11vw, 4rem) minmax(0, 1fr);
-  grid-template-rows: minmax(0, 1fr);
   align-items: stretch;
-  min-height: clamp(23rem, 108vw, 40rem);
   margin: clamp(0.75rem, 2.4vw, 1.25rem) var(--journey-edge) 0;
   padding-block: clamp(0.9rem, 3vw, 2rem);
   background: color-mix(in srgb, var(--paper) 55%, var(--canvas));
   border-radius: 14px;
 }
 
+/*
+ * The photo (column 2) is written before the stepper (column 1) in markup
+ * order (the card needs to sit after the photo in the DOM, for its z-index
+ * stacking). Left to auto-placement that pushes the stepper into an implicit
+ * second row once the cursor has passed column 2 — the two would stack
+ * instead of sharing one area. Pinning both to row 1 keeps this one unified
+ * composition: the row's height follows the stepper's natural (tallest)
+ * content, and the photo (`fill`) stretches to match it, with no min-height
+ * guess needed.
+ */
+.journeyCustomPhoto,
+.journeyCustomSteps {
+  grid-row: 1;
+}
+
 .journeyCustomPhoto {
   position: relative;
   grid-column: 2;
+  min-height: 20rem;
   overflow: hidden;
   border-radius: 12px;
   background: color-mix(in srgb, var(--sand) 40%, var(--canvas));
@@ -246,9 +260,12 @@ html[dir="ltr"] .journeyCustomThreadAnchorEnd {
   .journeyCustom {
     grid-template-columns: 4.5rem minmax(0, 1fr);
     width: min(100% - 2 * var(--journey-edge), var(--journey-max));
-    min-height: clamp(28rem, 46vw, 40rem);
     margin-inline: auto;
     padding-block: 2.4rem;
+  }
+
+  .journeyCustomPhoto {
+    min-height: 26rem;
   }
 
   .journeyCustomCard {
