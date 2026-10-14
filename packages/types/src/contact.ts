@@ -33,3 +33,15 @@ export interface ContactMessageReceipt {
   createdAt: number;
   orderId?: string;
 }
+
+/** One message in a thread, as the customer who owns it may read it back. */
+export interface ContactMessageThreadItem {
+  id: string;
+  body: string;
+  status: ContactMessageStatus;
+  /** Set on a reply row — the thread's root message id. Undefined on the root message itself. */
+  parentId?: string;
+  /** True for a staff reply, false for the customer's own message. */
+  fromAdmin: boolean;
+  createdAt: number;
+}

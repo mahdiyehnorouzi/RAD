@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { AuthUser } from "@rad/types";
 import { api } from "../lib/api";
 import {
@@ -14,6 +14,7 @@ import {
   type AdminProduct,
   type AdminReview,
   type AdminRole,
+  type AdminSection,
   type AdminUser,
   type HelpQuestion,
   type HelpQuestionInput,
@@ -21,8 +22,56 @@ import {
   type ShapeQuestionInput,
 } from "../lib/admin-data";
 
+/**
+ * `initializing`: the one-time `/auth/me` session restore hasn't settled yet
+ * — never treat this as logged out (no login-page flash, no redirect).
+ * `authenticated` / `unauthenticated`: the restore resolved cleanly (a real
+ * `{user: AuthUser | null}` response, not a thrown error).
+ * `error`: the restore request itself failed (network/5xx/timeout) — this is
+ * NOT the same as "no session". A valid session must never be dropped just
+ * because one HTTP call hiccuped, so this state keeps whatever `user` was
+ * already known and lets the caller retry instead of silently logging out.
+ */
+type AuthStatus =
+  "initializing" | "authenticated" | "unauthenticated" | "error";
+
+type ResourceKey =
+  | "products"
+  | "orders"
+  | "members"
+  | "users"
+  | "commissions"
+  | "messages"
+  | "damageReports"
+  | "reviews"
+  | "shapeQuestions"
+  | "helpQuestions";
+
+/**
+ * Which resources a section actually renders. Keeps the old "fetch
+ * everything" behavior from happening on every mount — only the active
+ * section's own data (plus whatever it cross-references, e.g. order status
+ * panels needing the order's own messages/damage reports) is requested.
+ */
+const sectionResources: Record<AdminSection, ResourceKey[]> = {
+  overview: ["products", "orders", "commissions"],
+  products: ["products"],
+  orders: ["orders", "messages", "damageReports"],
+  messages: ["messages", "orders"],
+  damage: ["damageReports", "orders"],
+  commissions: ["commissions"],
+  reviews: ["reviews"],
+  shape: ["shapeQuestions"],
+  help: ["helpQuestions"],
+  users: ["users"],
+  members: ["members"],
+  account: [],
+};
+
 export function useAdminWorkspace() {
   const [user, setUser] = useState<AuthUser | null>(null);
+  const [authStatus, setAuthStatus] = useState<AuthStatus>("initializing");
+  const [error, setError] = useState("");
   const [products, setProducts] = useState<AdminProduct[]>([]);
   const [orders, setOrders] = useState<AdminOrder[]>([]);
   const [members, setMembers] = useState<AdminMember[]>([]);
@@ -33,71 +82,169 @@ export function useAdminWorkspace() {
   const [reviews, setReviews] = useState<AdminReview[]>([]);
   const [shapeQuestions, setShapeQuestions] = useState<ShapeQuestion[]>([]);
   const [helpQuestions, setHelpQuestions] = useState<HelpQuestion[]>([]);
-  const [ready, setReady] = useState(false);
-  const [error, setError] = useState("");
   const currentRole: AdminRole =
     (user?.adminRole as AdminRole | undefined) ?? "viewer";
 
-  const refresh = useCallback(async (session?: AuthUser | null) => {
-    const nextUser =
-      session === undefined
-        ? (await api<{ user: AuthUser | null }>("/auth/me")).user
-        : session;
-    setUser(nextUser);
-    if (!nextUser?.adminRole) {
-      setProducts([]);
-      setOrders([]);
-      setMembers([]);
-      setUsers([]);
-      setCommissions([]);
-      setMessages([]);
-      setDamageReports([]);
-      setReviews([]);
-      setShapeQuestions([]);
-      setHelpQuestions([]);
-      return nextUser;
+  // Tracks which resources are loaded or in flight, so switching sections
+  // back and forth — or React 18 dev-mode's double effect invocation —
+  // never issues duplicate requests for data already fetched/loading.
+  const loadedRef = useRef<Set<ResourceKey>>(new Set());
+  const inFlightRef = useRef<Map<ResourceKey, Promise<unknown>>>(new Map());
+  // Reactive mirror of `loadedRef`, so components can tell "hasn't loaded
+  // yet" (show a skeleton) apart from "loaded and genuinely zero" (show
+  // 0) — the array state alone can't distinguish those, since an empty
+  // array looks the same either way.
+  const [loadedKeys, setLoadedKeys] = useState<Set<ResourceKey>>(new Set());
+
+  // The actual fetch-and-set for one resource, with no loaded/in-flight
+  // guard — `fetchResource` below wraps this for the normal "load once per
+  // section visit" path; `pollResource` (further down) calls it directly on
+  // an interval so an already-loaded resource (messages, for the unread
+  // badge and inbox) still picks up rows written by someone else's request
+  // — there is no WebSocket/SSE layer in this app to invalidate on instead.
+  const refreshResource = useCallback(async (key: ResourceKey) => {
+    switch (key) {
+      case "products":
+        setProducts(await api<AdminProduct[]>("/admin/products"));
+        break;
+      case "orders":
+        setOrders(await api<AdminOrder[]>("/admin/orders"));
+        break;
+      case "members":
+        setMembers(await api<AdminMember[]>("/admin/members"));
+        break;
+      case "users":
+        setUsers(await api<AdminUser[]>("/admin/users"));
+        break;
+      case "commissions":
+        setCommissions(await api<AdminCommission[]>("/admin/commissions"));
+        break;
+      case "messages":
+        setMessages(await api<AdminContactMessage[]>("/admin/messages"));
+        break;
+      case "damageReports":
+          setDamageReports(
+            await api<AdminDamageReport[]>("/admin/damage-reports"),
+          );
+          break;
+        case "reviews":
+          setReviews(await api<AdminReview[]>("/admin/reviews"));
+          break;
+        case "shapeQuestions":
+          setShapeQuestions(
+            await api<ShapeQuestion[]>("/admin/shape-questions"),
+          );
+          break;
+      case "helpQuestions":
+        setHelpQuestions(await api<HelpQuestion[]>("/admin/help-questions"));
+        break;
     }
-    const [
-      productPayload,
-      orderPayload,
-      memberPayload,
-      userPayload,
-      commissionPayload,
-      messagePayload,
-      damagePayload,
-      reviewPayload,
-      shapePayload,
-      helpPayload,
-    ] = await Promise.all([
-      api<AdminProduct[]>("/admin/products"),
-      api<AdminOrder[]>("/admin/orders"),
-      api<AdminMember[]>("/admin/members"),
-      api<AdminUser[]>("/admin/users"),
-      api<AdminCommission[]>("/admin/commissions"),
-      api<AdminContactMessage[]>("/admin/messages"),
-      api<AdminDamageReport[]>("/admin/damage-reports"),
-      api<AdminReview[]>("/admin/reviews"),
-      api<ShapeQuestion[]>("/admin/shape-questions"),
-      api<HelpQuestion[]>("/admin/help-questions"),
-    ]);
-    setProducts(productPayload);
-    setOrders(orderPayload);
-    setMembers(memberPayload);
-    setUsers(userPayload);
-    setCommissions(commissionPayload);
-    setMessages(messagePayload);
-    setDamageReports(damagePayload);
-    setReviews(reviewPayload);
-    setShapeQuestions(shapePayload);
-    setHelpQuestions(helpPayload);
-    return nextUser;
+  }, []);
+
+  const fetchResource = useCallback(
+    (key: ResourceKey): Promise<unknown> => {
+      if (loadedRef.current.has(key)) return Promise.resolve();
+      const existing = inFlightRef.current.get(key);
+      if (existing) return existing;
+      const run = async () => {
+        await refreshResource(key);
+        loadedRef.current.add(key);
+        setLoadedKeys((current) => new Set(current).add(key));
+      };
+      const promise = run().finally(() => inFlightRef.current.delete(key));
+      inFlightRef.current.set(key, promise);
+      return promise;
+    },
+    [refreshResource],
+  );
+
+  // Polls the inbox so a reply the customer sends while an admin already
+  // has this tab open still shows up — there is no WebSocket/SSE channel
+  // in this app to push it instead. Only runs once messages have been
+  // loaded at least once (the global-badge effect below triggers that),
+  // and only while authenticated.
+  useEffect(() => {
+    if (authStatus !== "authenticated") return;
+    const timer = window.setInterval(() => {
+      if (loadedRef.current.has("messages")) void refreshResource("messages");
+    }, 20_000);
+    return () => window.clearInterval(timer);
+  }, [authStatus, refreshResource]);
+
+  const loadSection = useCallback(
+    (section: AdminSection) =>
+      Promise.all(sectionResources[section].map(fetchResource)),
+    [fetchResource],
+  );
+
+  // Session restore — isolated from resource fetching on purpose (see
+  // AuthStatus doc comment above): a flaky products/orders/etc. endpoint
+  // must never be able to log out an otherwise-valid session.
+  const restoreSession = useCallback(async () => {
+    try {
+      const { user: nextUser } = await api<{ user: AuthUser | null }>(
+        "/auth/me",
+      );
+      setUser(nextUser);
+      setAuthStatus(nextUser?.adminRole ? "authenticated" : "unauthenticated");
+      return nextUser;
+    } catch {
+      // The request itself failed (network/5xx/timeout) — this is not proof
+      // the session is invalid, so `user` is left untouched. One retry
+      // covers a dev server that's still mid-recompile right after a
+      // refresh; if that also fails, surface a retryable error state
+      // instead of guessing.
+      try {
+        const { user: nextUser } = await api<{ user: AuthUser | null }>(
+          "/auth/me",
+        );
+        setUser(nextUser);
+        setAuthStatus(
+          nextUser?.adminRole ? "authenticated" : "unauthenticated",
+        );
+        return nextUser;
+      } catch {
+        setAuthStatus("error");
+        return undefined;
+      }
+    }
   }, []);
 
   useEffect(() => {
-    refresh()
-      .catch(() => setUser(null))
-      .finally(() => setReady(true));
-  }, [refresh]);
+    void restoreSession();
+  }, [restoreSession]);
+
+  // Clear workspace data (not auth status) on logout or when the restored
+  // session turns out to be unauthenticated, so a later login starts clean.
+  useEffect(() => {
+    if (authStatus !== "unauthenticated") return;
+    loadedRef.current.clear();
+    inFlightRef.current.clear();
+    setLoadedKeys(new Set());
+    setProducts([]);
+    setOrders([]);
+    setMembers([]);
+    setUsers([]);
+    setCommissions([]);
+    setMessages([]);
+    setDamageReports([]);
+    setReviews([]);
+    setShapeQuestions([]);
+    setHelpQuestions([]);
+  }, [authStatus]);
+
+  // Unread-message / open-damage-report counts drive sidebar nav badges that
+  // are visible on every section, not just the Messages/Damage pages — so
+  // (like auth) these two stay a small global fetch rather than per-section.
+  // `fetchResource`'s loaded/in-flight guards mean visiting those sections
+  // later never double-fetches.
+  useEffect(() => {
+    if (authStatus !== "authenticated") return;
+    void fetchResource("messages");
+    void fetchResource("damageReports");
+  }, [authStatus, fetchResource]);
+
+  const ready = authStatus !== "initializing";
 
   const can = (permission: AdminPermission) =>
     (permissions[currentRole] as readonly string[]).includes(permission);
@@ -105,6 +252,8 @@ export function useAdminWorkspace() {
   return useMemo(
     () => ({
       ready,
+      authStatus,
+      loadedKeys,
       user,
       error,
       products,
@@ -132,9 +281,11 @@ export function useAdminWorkspace() {
         if (!payload.user.adminRole) {
           await api("/auth/logout", { method: "POST" });
           setUser(null);
+          setAuthStatus("unauthenticated");
           throw new Error("این حساب به دفتر کوره دسترسی ندارد.");
         }
-        await refresh(payload.user);
+        setUser(payload.user);
+        setAuthStatus("authenticated");
       },
       async forgotPassword(email: string) {
         return api<{ message: string }>("/auth/password/forgot", {
@@ -164,17 +315,14 @@ export function useAdminWorkspace() {
       async logout() {
         await api("/auth/logout", { method: "POST" });
         setUser(null);
-        setProducts([]);
-        setOrders([]);
-        setMembers([]);
-        setUsers([]);
-        setCommissions([]);
-        setMessages([]);
-        setDamageReports([]);
-        setReviews([]);
-        setShapeQuestions([]);
-        setHelpQuestions([]);
+        setAuthStatus("unauthenticated");
+        // Resource arrays are cleared by the authStatus effect above.
       },
+      /** Retries session restoration after an `authStatus === "error"`. */
+      retryAuth() {
+        return restoreSession();
+      },
+      loadSection,
       async setReviewHidden(id: string, hidden: boolean) {
         const saved = await api<AdminReview>(`/admin/reviews/${id}`, {
           method: "PATCH",
@@ -376,6 +524,18 @@ export function useAdminWorkspace() {
           items.map((item) => (item.id === saved.id ? saved : item)),
         );
       },
+      /** Replies as staff into a thread; `id` may be the root or any reply in it. */
+      async replyToMessage(id: string, body: string) {
+        const thread = await api<AdminContactMessage[]>(
+          `/admin/messages/${id}/reply`,
+          { method: "POST", body: JSON.stringify({ body }) },
+        );
+        setMessages((items) => {
+          const byId = new Map(items.map((item) => [item.id, item]));
+          for (const row of thread) byId.set(row.id, row);
+          return [...byId.values()];
+        });
+      },
       async reviewDamageReport(
         id: string,
         review: {
@@ -476,17 +636,20 @@ export function useAdminWorkspace() {
       },
     }),
     [
+      authStatus,
       commissions,
       currentRole,
       damageReports,
       error,
       helpQuestions,
+      loadedKeys,
+      loadSection,
       members,
       messages,
       orders,
       products,
       ready,
-      refresh,
+      restoreSession,
       reviews,
       shapeQuestions,
       user,

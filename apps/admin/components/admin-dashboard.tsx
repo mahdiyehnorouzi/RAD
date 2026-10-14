@@ -72,7 +72,7 @@ import { AdminDamageReports } from "./admin-damage-reports";
 import { AdminOrderDamage } from "./admin-order-damage";
 import { AdminOrderPolicies } from "./admin-order-policies";
 import type { DamageReview } from "./admin-damage-report";
-import { ConfirmDialog, DialogShell, Field } from "./admin-dialog";
+import { ConfirmDialog, DialogShell, Field, useBodyScrollLock } from "./admin-dialog";
 import { AdminReviews } from "./admin-reviews";
 import { AdminShapeQuestions } from "./admin-shape-questions";
 import { AdminHelpQuestions } from "./admin-help-questions";
@@ -164,7 +164,19 @@ export function AdminDashboard() {
   const go = (next: AdminSection) => {
     setSection(next);
     setMobileNav(false);
+    void workspace.loadSection(next);
   };
+
+  // Loads the starting section's data once a session is confirmed — not
+  // before (see `ready`/`authStatus` below), and not every resource.
+  useEffect(() => {
+    if (workspace.authStatus === "authenticated") {
+      void workspace.loadSection(section);
+    }
+    // Intentionally only re-runs when auth settles, not on every `section`
+    // change — `go()` above already loads the section being navigated to.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [workspace.authStatus]);
 
   const openOrder = (orderId: string) => {
     go("orders");
@@ -191,8 +203,17 @@ export function AdminDashboard() {
     }
   };
 
+  const replyToMessage = async (id: string, body: string) => {
+    try {
+      await workspace.replyToMessage(id, body);
+      announce("پاسخ برای مشتری ارسال شد.");
+    } catch (error) {
+      announce((error as Error).message);
+    }
+  };
+
   const openMessages = workspace.messages.filter(
-    (message) => message.status === "new",
+    (message) => !message.parentId && message.status === "new",
   ).length;
   const openDamage = workspace.damageReports.filter(
     (report) => report.status === "submitted" || report.status === "reviewing",
@@ -218,6 +239,28 @@ export function AdminDashboard() {
       <div className="admin-shell">
         <main className="admin-main">
           <p className="admin-loading">در حال اتصال به پایگاه داده…</p>
+        </main>
+      </div>
+    );
+  if (workspace.authStatus === "error")
+    return (
+      <div className="admin-shell">
+        <main className="admin-main">
+          <div className="auth-error-state">
+            <p>
+              اتصال به پایگاه داده برقرار نشد. اتصال اینترنت را بررسی و دوباره
+              تلاش کنید.
+            </p>
+            <button
+              className="primary-action"
+              type="button"
+              onClick={() => {
+                void workspace.retryAuth();
+              }}
+            >
+              تلاش دوباره
+            </button>
+          </div>
         </main>
       </div>
     );
@@ -363,6 +406,7 @@ export function AdminDashboard() {
             orders={workspace.orders}
             messages={workspace.messages}
             onSetMessageStatus={setMessageStatus}
+            onReplyMessage={replyToMessage}
             damageReports={workspace.damageReports}
             onReviewDamage={reviewDamage}
             canWrite={workspace.can("order.write")}
@@ -402,6 +446,7 @@ export function AdminDashboard() {
             orders={workspace.orders}
             canWrite={workspace.can("order.write")}
             onSetStatus={setMessageStatus}
+            onReply={replyToMessage}
             onOpenOrder={openOrder}
           />
         )}
@@ -644,6 +689,7 @@ function Overview({
   workspace: ReturnType<typeof useAdminWorkspace>;
   onNavigate: (section: AdminSection) => void;
 }) {
+  const statsLoading = !workspace.loadedKeys.has("products");
   const available = workspace.products.filter(
     (item) => item.status === "available",
   ).length;
@@ -675,13 +721,25 @@ function Overview({
           icon={<PackageCheck />}
           value={available}
           label="آماده فروش"
+          loading={statsLoading}
         />
-        <StatTile icon={<Hammer />} value={inWorkshop} label="در کارگاه" />
-        <StatTile icon={<Boxes />} value={sold} label="فروخته شده" />
+        <StatTile
+          icon={<Hammer />}
+          value={inWorkshop}
+          label="در کارگاه"
+          loading={statsLoading}
+        />
+        <StatTile
+          icon={<Boxes />}
+          value={sold}
+          label="فروخته شده"
+          loading={statsLoading}
+        />
         <StatTile
           icon={<CircleGauge />}
           value={workspace.products.length}
           label="اثر ثبت‌شده"
+          loading={statsLoading}
         />
       </section>
       <section className="shortcut-grid">
@@ -801,15 +859,23 @@ function StatTile({
   icon,
   value,
   label,
+  loading = false,
 }: {
   icon: React.ReactNode;
   value: number;
   label: string;
+  /** Before the first successful load only — a later background refetch
+   * keeps showing the previous number instead of reverting to this. */
+  loading?: boolean;
 }) {
   return (
     <article className="stat-tile">
       <span className="stat-icon">{icon}</span>
-      <strong>{number.format(value)}</strong>
+      {loading ? (
+        <span className="stat-skeleton" aria-hidden="true" />
+      ) : (
+        <strong>{number.format(value)}</strong>
+      )}
       <span>{label}</span>
     </article>
   );
@@ -1196,6 +1262,7 @@ function Orders({
   orders,
   messages,
   onSetMessageStatus,
+  onReplyMessage,
   damageReports,
   onReviewDamage,
   canWrite,
@@ -1209,6 +1276,7 @@ function Orders({
     id: string,
     status: AdminContactMessage["status"],
   ) => Promise<void>;
+  onReplyMessage: (id: string, body: string) => Promise<void>;
   damageReports: AdminDamageReport[];
   onReviewDamage: (id: string, review: DamageReview) => Promise<boolean>;
   canWrite: boolean;
@@ -1332,6 +1400,7 @@ function Orders({
                   )}
                   canWrite={canWrite}
                   onSetStatus={onSetMessageStatus}
+                  onReply={onReplyMessage}
                 />
                 <AdminOrderDamage
                   reports={damageReports.filter(
@@ -1548,6 +1617,7 @@ function ProductDialog({
   ) => Promise<{ storage: "cloudinary"; objectKey: string }>;
   onDelete?: () => void;
 }) {
+  useBodyScrollLock();
   const [draft, setDraft] = useState<AdminProduct>(
     product ?? {
       id: crypto.randomUUID(),

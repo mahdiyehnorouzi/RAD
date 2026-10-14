@@ -620,7 +620,7 @@ textarea:focus-visible {
   width: 100%;
   height: 100%;
   object-fit: contain;
-  padding: 15px;
+  padding: 3px;
 }
 .product-thumb > svg {
   width: 28px;
@@ -1025,6 +1025,22 @@ td select,
 .admin-loading {
   padding: 80px 0;
   color: var(--muted);
+}
+.auth-error-state {
+  min-height: 60vh;
+  display: grid;
+  place-items: center;
+  justify-items: center;
+  gap: 16px;
+  text-align: center;
+  padding: 24px;
+}
+.auth-error-state p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+  max-width: 360px;
+  line-height: 1.8;
 }
 .admin-login {
   min-height: 100vh;
@@ -1825,6 +1841,59 @@ td select,
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
+.contact-message-thread {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 10px 0 0;
+  border-top: 1px dashed var(--line);
+  display: grid;
+  gap: 8px;
+}
+.contact-message-thread li {
+  max-width: 85%;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm, 8px);
+  background: #fffaf2;
+  border: 1px solid var(--line);
+}
+.contact-message-thread li.from-admin {
+  margin-inline-start: auto;
+  background: var(--success);
+}
+.contact-message-thread li b {
+  display: block;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--muted);
+}
+.contact-message-thread li span {
+  float: inline-end;
+  color: var(--muted);
+  font-size: 10.5px;
+}
+.contact-message-thread li p {
+  margin: 4px 0 0;
+  font-size: 13px;
+  line-height: 1.8;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.contact-message-reply-box {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+  margin-top: 10px;
+}
+.contact-message-reply-box textarea {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid var(--line);
+  background: #fffaf2;
+  border-radius: var(--radius-sm, 8px);
+  padding: 8px 10px;
+  font: inherit;
+  resize: vertical;
+}
 .contact-message footer {
   display: flex;
   flex-wrap: wrap;
@@ -2376,6 +2445,32 @@ td select,
   color: var(--muted);
   font-size: 12.5px;
 }
+.stat-skeleton {
+  display: block;
+  width: 3em;
+  height: 34px;
+  border-radius: 6px;
+  /* Warm neutral pulse, not a shimmer sweep — a slow opacity breathe stays
+     calm and reads as "settling in" rather than a loading-bar animation. */
+  background: var(--sand);
+  opacity: 0.55;
+  animation: stat-skeleton-pulse 1.6s ease-in-out infinite;
+}
+@keyframes stat-skeleton-pulse {
+  0%,
+  100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .stat-skeleton {
+    animation: none;
+    opacity: 0.55;
+  }
+}
 .shortcut-grid {
   display: none;
   grid-template-columns: repeat(2, 1fr);
@@ -2652,11 +2747,20 @@ table.products-table {
   background: var(--canvas);
   display: grid;
   grid-template-columns: 260px minmax(0, 1fr);
+  /* Without an explicit row track, this single implicit row auto-sizes to
+     fit its tallest child's full content height — ignoring the dialog's own
+     max-height — so a long form just gets clipped by `overflow:hidden`
+     below instead of scrolling inside `.editor-main`. `minmax(0, 1fr)`
+     caps the row at the dialog's resolved (max-height-bound) height and
+     lets it shrink, which is what actually makes the child's own
+     `overflow-y: auto` kick in. */
+  grid-template-rows: minmax(0, 1fr);
   overflow: hidden;
   border-radius: var(--radius-lg);
   box-shadow: 0 24px 70px #0b18135e;
 }
 .editor-aside {
+  min-height: 0;
   background: var(--paper);
   padding: 22px;
   overflow-y: auto;
@@ -2738,7 +2842,10 @@ table.products-table {
   color: #8e3e31;
 }
 .editor-main {
+  min-height: 0;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
   padding: 24px clamp(18px, 3vw, 36px) 40px;
 }
 .editor-main-head {
@@ -3126,11 +3233,19 @@ table.products-table {
   }
   .editor-dialog {
     grid-template-columns: 1fr;
+    /* Two stacked rows now (aside, then main) — without naming both explicitly
+       the second (main) falls into an implicit `auto` row that ignores the
+       dialog's max-height again, same bug as the desktop single-row case.
+       `auto` lets the header row keep its natural height; `minmax(0, 1fr)`
+       caps main at whatever is left, which is what makes it scroll instead
+       of pushing the whole sheet (and the page behind it) taller. */
+    grid-template-rows: auto minmax(0, 1fr);
     width: 100%;
     max-height: 92dvh;
     border-radius: var(--radius-lg) var(--radius-lg) 0 0;
   }
   .editor-aside {
+    min-height: 0;
     border-inline-end: 0;
     border-bottom: 1px solid var(--line);
     padding: 16px;

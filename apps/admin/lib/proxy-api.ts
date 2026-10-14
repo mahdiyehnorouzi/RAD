@@ -28,6 +28,19 @@ function logTiming(fields: Record<string, string | number | undefined>) {
   console.debug("[rad:proxy-timing]", fields);
 }
 
+// `fetch()` transparently decompresses the response body (so `upstream.body`
+// is already plain bytes) but leaves `content-encoding`/`content-length` on
+// `upstream.headers` describing the ORIGINAL compressed payload. Forwarding
+// those stale headers alongside the already-decompressed body makes the
+// browser try to gunzip plain JSON and fail with ERR_CONTENT_DECODING_FAILED
+// — intermittently, depending on whether upstream happened to compress that
+// response. Both headers are dropped; the runtime recomputes a correct
+// content-length (or uses chunked transfer) for the body actually sent.
+const STALE_AFTER_DECOMPRESSION = new Set([
+  "content-encoding",
+  "content-length",
+]);
+
 function copyUpstreamHeaders(upstream: Response): Headers {
   const responseHeaders = new Headers();
   const getSetCookie = (
@@ -35,8 +48,10 @@ function copyUpstreamHeaders(upstream: Response): Headers {
   ).getSetCookie?.();
 
   upstream.headers.forEach((value, key) => {
-    if (key.toLowerCase() === "set-cookie") return;
-    if (!HOP_BY_HOP.has(key.toLowerCase())) responseHeaders.append(key, value);
+    const lower = key.toLowerCase();
+    if (lower === "set-cookie") return;
+    if (HOP_BY_HOP.has(lower) || STALE_AFTER_DECOMPRESSION.has(lower)) return;
+    responseHeaders.append(key, value);
   });
 
   if (getSetCookie?.length) {

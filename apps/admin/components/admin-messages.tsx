@@ -22,25 +22,47 @@ export function AdminMessages({
   orders,
   canWrite,
   onSetStatus,
+  onReply,
   onOpenOrder,
 }: {
   messages: AdminContactMessage[];
   orders: AdminOrder[];
   canWrite: boolean;
   onSetStatus: (id: string, status: AdminContactMessage["status"]) => Promise<void>;
+  onReply: (id: string, body: string) => Promise<void>;
   onOpenOrder: (orderId: string) => void;
 }) {
   const [filter, setFilter] = useState<Filter>("new");
-  const counts = useMemo(
-    () => ({
-      new: messages.filter((message) => message.status === "new").length,
-      resolved: messages.filter((message) => message.status === "resolved").length,
-      all: messages.length,
-    }),
+  // Threads are flat: a root message (no parentId) plus every reply that
+  // points at it. Filters/counts operate on roots only — a reply doesn't
+  // need its own status, it belongs to its root's.
+  const roots = useMemo(
+    () => messages.filter((message) => !message.parentId),
     [messages],
   );
+  const repliesByRoot = useMemo(() => {
+    const map = new Map<string, AdminContactMessage[]>();
+    for (const message of messages) {
+      if (!message.parentId) continue;
+      const list = map.get(message.parentId) ?? [];
+      list.push(message);
+      map.set(message.parentId, list);
+    }
+    // `messages` is the bulk inbox fetch (newest-first); a thread must read
+    // oldest-first like a real conversation.
+    for (const list of map.values()) list.sort((a, b) => a.createdAt - b.createdAt);
+    return map;
+  }, [messages]);
+  const counts = useMemo(
+    () => ({
+      new: roots.filter((message) => message.status === "new").length,
+      resolved: roots.filter((message) => message.status === "resolved").length,
+      all: roots.length,
+    }),
+    [roots],
+  );
   const visible =
-    filter === "all" ? messages : messages.filter((message) => message.status === filter);
+    filter === "all" ? roots : roots.filter((message) => message.status === filter);
   const orderById = useMemo(
     () => new Map(orders.map((order) => [order.id, order])),
     [orders],
@@ -79,9 +101,11 @@ export function AdminMessages({
             <AdminContactMessageItem
               key={message.id}
               message={message}
+              replies={repliesByRoot.get(message.id) ?? []}
               order={message.orderId ? orderById.get(message.orderId) : undefined}
               canWrite={canWrite}
               onSetStatus={onSetStatus}
+              onReply={onReply}
               onOpenOrder={onOpenOrder}
             />
           ))}

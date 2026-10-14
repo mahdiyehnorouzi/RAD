@@ -18,6 +18,8 @@ export function toAdminContactMessage(
     body: message.body,
     status: message.status as ContactMessageStatus,
     orderId: message.orderId ?? undefined,
+    parentId: message.parentId ?? undefined,
+    fromAdmin: message.fromAdmin,
     fromOrderOwner: message.fromOrderOwner,
     signedIn: Boolean(message.userId),
     createdAt: message.createdAt.getTime(),

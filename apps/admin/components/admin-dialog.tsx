@@ -1,6 +1,59 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { X } from "lucide-react";
+
+// Ref-counted so a second overlay opening on top of a first — or one
+// closing while another is still open — never unlocks the background: the
+// lock only lifts once every mounted caller has released it. Scroll
+// position is saved/restored explicitly (rather than relying on
+// `position:fixed` alone) because iOS Safari can still rubber-band the
+// background page behind a merely-fixed element otherwise.
+let lockCount = 0;
+let savedScrollY = 0;
+
+export function useBodyScrollLock(active = true) {
+  useEffect(() => {
+    if (!active) return;
+    if (lockCount === 0) {
+      savedScrollY = window.scrollY;
+      document.body.style.position = "fixed";
+      document.body.style.top = `-${savedScrollY}px`;
+      document.body.style.insetInlineStart = "0";
+      document.body.style.insetInlineEnd = "0";
+      document.body.style.overflow = "hidden";
+    }
+    lockCount += 1;
+    return () => {
+      lockCount -= 1;
+      if (lockCount === 0) {
+        document.body.style.position = "";
+        document.body.style.top = "";
+        document.body.style.insetInlineStart = "";
+        document.body.style.insetInlineEnd = "";
+        document.body.style.overflow = "";
+        window.scrollTo(0, savedScrollY);
+      }
+    };
+  }, [active]);
+}
+
+/** True below the admin's mobile breakpoint; updates live on resize. */
+export function useIsMobileViewport(breakpoint = 760) {
+  const query = `(max-width: ${breakpoint}px)`;
+  const getMatch = () =>
+    typeof window !== "undefined" ? window.matchMedia(query).matches : false;
+  const [matches, setMatches] = useState(getMatch);
+  useEffect(() => {
+    const mql = window.matchMedia(query);
+    const onChange = () => setMatches(mql.matches);
+    onChange();
+    mql.addEventListener("change", onChange);
+    return () => mql.removeEventListener("change", onChange);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [breakpoint]);
+  return matches;
+}
 
 export function ConfirmDialog({
   title,
@@ -47,6 +100,7 @@ export function DialogShell({
   children: React.ReactNode;
   compact?: boolean;
 }) {
+  useBodyScrollLock();
   return (
     <div
       className="dialog-backdrop"

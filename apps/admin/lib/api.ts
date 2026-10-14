@@ -38,9 +38,16 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
         proxyMs !== undefined ? Math.round(totalMs - proxyMs) : undefined,
     });
   }
-  const data = (await response.json().catch(() => ({}))) as T & ApiError;
   if (!response.ok) {
+    // Error responses are read best-effort — a non-JSON error body still
+    // needs a thrown Error, just with a generic message.
+    const data = (await response.json().catch(() => ({}))) as ApiError;
     throw new Error(data.error || data.message || "Request failed");
   }
-  return data;
+  // A 2xx response must parse as JSON — silently falling back to `{}` here
+  // previously let a decode failure (e.g. a mangled/streamed proxy body)
+  // masquerade as valid data of the wrong shape (an object where callers
+  // expect an array), corrupting state instead of surfacing the failure.
+  if (response.status === 204) return undefined as T;
+  return (await response.json()) as T;
 }
