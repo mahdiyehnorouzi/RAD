@@ -1,6 +1,6 @@
 "use client";
 import type { CSSProperties } from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
@@ -35,10 +35,12 @@ export function ProductGallery({
   const router = useRouter();
   const c = pdpCopy[locale];
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const media = product.media ?? product.images ?? [];
+  const galleryProduct = { ...product, images: media };
   const photographed = hasStudioPhotos(product);
   const slides: Slide[] = [
     ...Array.from(
-      { length: Math.max(product.images?.length ?? 0, 1) },
+      { length: Math.max(media.length, 1) },
       (_, index): Slide => ({ kind: "photo", index }),
     ),
     ...(photographed ? [{ kind: "plate" } as const] : []),
@@ -46,6 +48,9 @@ export function ProductGallery({
   const count = slides.length;
   const { trackRef, active, goTo, onScroll, onKeyDown } =
     useGalleryTrack(count);
+  useEffect(() => {
+    trackRef.current?.querySelectorAll("video").forEach(video => video.pause());
+  }, [active, trackRef]);
   const format = (value: number) =>
     locale === "fa" ? number(value) : String(value);
   const recordNumber = formatArtworkNumber(product, number, locale);
@@ -79,9 +84,13 @@ export function ProductGallery({
       context === "stage"
         ? "(max-width: 700px) 100vw, (max-width: 1100px) 55vw, 42vw"
         : "84px";
+    const item = slide.kind === "photo" ? media[slide.index] : undefined;
+    if (item?.kind === "video") {
+      return context === "thumb" ? <span>▶ ویدیو</span> : <video src={item.src} poster={item.thumbnail} controls playsInline preload="metadata" style={{width: "100%", height: "100%", objectFit: "contain"}} aria-label="ویدیوی اثر" onKeyDown={event => event.stopPropagation()} />;
+    }
     return slide.kind === "photo" ? (
       <ProductMedia
-        product={product}
+        product={galleryProduct}
         imageIndex={slide.index}
         showStatusBadge={false}
         priority={context === "stage" && slide === slides[0]}
@@ -143,7 +152,11 @@ export function ProductGallery({
           onKeyDown={onKeyDown}
           tabIndex={count > 1 ? 0 : -1}
         >
-          {slides.map((slide, index) => (
+          {slides.map((slide, index) => slide.kind === "photo" && media[slide.index]?.kind === "video" ? (
+            <div key={`video-${slide.index}`} className={`${styles.slide} ${styles.photo}`} aria-label={`ویدیو ${format(index + 1)}`} inert={index !== active}>
+              {renderSlide(slide, "stage")}
+            </div>
+          ) : (
             <button
               key={slide.kind === "photo" ? slide.index : "plate"}
               type="button"
@@ -237,7 +250,7 @@ export function ProductGallery({
                 className={styles.secondaryTile}
                 onClick={() => {
                   goTo(index);
-                  setLightboxOpen(true);
+                  if (slide.kind !== "photo" || media[slide.index]?.kind !== "video") setLightboxOpen(true);
                 }}
                 aria-label={`${c.view} ${format(index + 1)}`}
               >
@@ -249,7 +262,7 @@ export function ProductGallery({
       ) : null}
       {lightboxOpen ? (
         <PdpLightbox
-          product={product}
+          product={galleryProduct}
           slides={slides}
           active={active}
           count={count}

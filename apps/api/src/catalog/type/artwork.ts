@@ -18,6 +18,8 @@ export type ArtworkArtist = {
 };
 
 export type CatalogImage = {
+  kind?: "image" | "video";
+  thumbnail?: string;
   src?: string;
   alt: string;
   enAlt: string;
@@ -45,6 +47,7 @@ export type ArtworkResponse = {
   story: LocalizedText;
   care: LocalizedText | null;
   images: CatalogImage[];
+  media?: CatalogImage[];
   color: string;
   accent: string;
   shape: string;

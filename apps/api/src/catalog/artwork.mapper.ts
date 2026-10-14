@@ -83,6 +83,7 @@ export function toArtwork(product: ProductRecord): ArtworkResponse {
     story: { fa: product.story, en: en.story },
     care: asLocalized(product.care),
     images: toCatalogImages(product.images),
+    media: toCatalogImages(product.images, false, true),
     color: product.color,
     accent: product.accent,
     shape: product.shape,

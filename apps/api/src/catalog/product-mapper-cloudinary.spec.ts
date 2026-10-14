@@ -47,7 +47,7 @@ describe("imageSrc", () => {
     );
     assert.equal(
       result,
-      "https://res.cloudinary.com/rad-cloud/image/upload/f_auto,q_auto/rad/products/moon-vase-id/abc123",
+      "https://res.cloudinary.com/rad-cloud/image/upload/rad/products/moon-vase-id/abc123",
     );
   });
 

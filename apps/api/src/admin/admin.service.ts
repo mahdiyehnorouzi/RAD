@@ -1,3 +1,4 @@
+import { MEDIA_MIMES, validateMediaSize } from "../storage/media-policy";
 import {
   BadRequestException,
   ConflictException,
@@ -17,7 +18,6 @@ import {
 } from "../common/image-data";
 import {
   CloudinaryStorageService,
-  isAllowedProductImageMime,
   isValidProductImagePublicId,
   productImageFolder,
 } from "../storage/cloudinary-storage.service";
@@ -107,8 +107,8 @@ export class AdminService {
    * product at save time (see `cloudinary-storage.service.ts` for why no
    * migration step is needed when that image is later attached).
    */
-  async signProductImageUpload(slug: string, mime: string) {
-    if (!isAllowedProductImageMime(mime)) {
+  async signProductImageUpload(slug: string, mime: string, size?: number) {
+    if (!(MEDIA_MIMES as readonly string[]).includes(mime)) {
       throw new BadRequestException(productImageError);
     }
     const normalizedSlug = slug.trim().toLowerCase().replace(/\s+/g, "-");
@@ -116,7 +116,15 @@ export class AdminService {
       where: { slug: normalizedSlug },
     });
     const folder = productImageFolder(existing?.id ?? null);
-    return this.storage.createSignedUpload(folder);
+    const kind = mime.startsWith("video/") ? "video" : "image";
+    if (size !== undefined) validateMediaSize(size, kind);
+    return this.storage.createSignedUpload(folder, kind, size !== undefined);
+  }
+
+  async verifyProductMedia(slug: string, objectKey: string, kind: "image" | "video") {
+    const product = await this.products.findOne({ where: { slug: slug.trim().toLowerCase().replace(/\s+/g, "-") } });
+    if (!isValidProductImagePublicId(product?.id ?? "unsaved", objectKey)) throw new BadRequestException("شناسه فایل نامعتبر است.");
+    return this.storage.verifyMedia(objectKey, kind);
   }
 
   assert(role: string | undefined, permission: AdminPermission) {
@@ -141,6 +149,16 @@ export class AdminService {
       throw new ConflictException("این شناسه URL قبلاً استفاده شده است.");
     }
 
+    if (!input.images.some(image => image.storage !== "cloudinary_video")) throw new BadRequestException("حداقل یک تصویر برای اثر لازم است.");
+    // Validate before any product/vendor writes. Existing legacy references remain compatible.
+    for (const image of input.images) {
+      if (image.storage === "cloudinary" || image.storage === "cloudinary_video") {
+        if (!image.objectKey || !isValidProductImagePublicId(duplicate?.id ?? "unsaved", image.objectKey)) throw new BadRequestException("شناسه فایل نامعتبر است.");
+        await this.storage.verifyMedia(image.objectKey, image.storage === "cloudinary_video" ? "video" : "image");
+      } else if (image.storage === "legacy_base64") {
+        try { assertImageData(image.src ?? "", productImageLimit, productImageError); } catch { throw new BadRequestException(productImageError); }
+      } else if (!image.src) throw new BadRequestException(productImageError);
+    }
     const vendorId = await this.ensureVendor(input.artist);
     const usdPrice = Math.max(1, Math.round(input.price / 85_000));
     const category = toStoreCategory(input.category);
@@ -497,7 +515,7 @@ export class AdminService {
       }
       return {
         productSlug: slug,
-        storage: "cloudinary" as const,
+        storage: image.storage as "cloudinary" | "cloudinary_video",
         src: null,
         objectKey: image.objectKey,
         alt: name,
@@ -517,17 +535,17 @@ export class AdminService {
     });
     const keptObjectKeys = new Set(
       rows
-        .filter((row) => row.storage === "cloudinary")
+        .filter((row) => (row.storage === "cloudinary" || row.storage === "cloudinary_video"))
         .map((row) => row.objectKey as string),
     );
     const orphanedObjectKeys = existing
       .filter(
         (row) =>
-          row.storage === "cloudinary" &&
+          (row.storage === "cloudinary" || row.storage === "cloudinary_video") &&
           row.objectKey &&
           !keptObjectKeys.has(row.objectKey),
       )
-      .map((row) => row.objectKey as string);
+      .map((row) => ({ objectKey: row.objectKey as string, kind: row.storage === "cloudinary_video" ? "video" as const : "image" as const }));
 
     await this.dataSource.transaction(async (manager) => {
       await manager.delete(ProductImage, { productSlug: slug });
@@ -544,12 +562,12 @@ export class AdminService {
       // delete flaked is not. `destroy` treats "not found" as success, so
       // a repeated/duplicate save of the same diff never double-deletes or
       // errors.
-      for (const objectKey of orphanedObjectKeys) {
+      for (const { objectKey, kind } of orphanedObjectKeys) {
         try {
-          await this.storage.destroy(objectKey);
-        } catch (error) {
+          await this.storage.destroy(objectKey, kind);
+        } catch {
           this.logger.warn(
-            `Failed to delete orphaned Cloudinary asset ${objectKey}: ${(error as Error).message}`,
+            `Failed to delete orphaned Cloudinary asset; retry cleanup later.`,
           );
         }
       }

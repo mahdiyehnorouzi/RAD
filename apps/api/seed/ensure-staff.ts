@@ -2,6 +2,7 @@ import { randomBytes } from "node:crypto";
 import { compare, hash } from "bcryptjs";
 import type { DataSource, Repository } from "typeorm";
 import { createAppDataSource } from "../src/database/data-source";
+import { assertSafeScriptTarget } from "../src/database/safe-target";
 import { User } from "../src/database/entities";
 
 type StaffAccount = {
@@ -110,6 +111,11 @@ export async function ensureStaff(dataSource: DataSource) {
 }
 
 async function main() {
+  // Legitimate ops runs (e.g. bootstrapping the owner account against a
+  // real deploy) are still possible — they just have to name the host
+  // explicitly via RAD_ALLOW_REMOTE_DB_WRITE instead of relying on
+  // whatever DATABASE_URL happens to be set to.
+  assertSafeScriptTarget("db:ensure-staff");
   const dataSource = createAppDataSource();
   await dataSource.initialize();
   try {

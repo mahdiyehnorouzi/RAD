@@ -1,10 +1,16 @@
 import { artworkRecords, registryProblems } from "@rad/artworks";
 import { createAppDataSource } from "../src/database/data-source";
+import { assertSafeScriptTarget } from "../src/database/safe-target";
 import { backfillRadNumbers, seedArtists, seedArtworks } from "./artwork-rows";
 import { ensureStaff } from "./ensure-staff";
 import { seedCommerce } from "./seed-commerce";
 
 async function main() {
+  // This upserts known dev-only staff logins (public passwords, see
+  // ensure-staff.ts) and demo/fake orders — never something to run against
+  // a real database by accident.
+  assertSafeScriptTarget("seed.ts");
+
   const problems = registryProblems();
   if (problems.length)
     throw new Error(

@@ -39,7 +39,7 @@ function ownPhotoSrc(
  * per-request width on top of it.
  */
 const CLOUDINARY_URL_PATTERN =
-  /^https:\/\/res\.cloudinary\.com\/[^/]+\/image\/upload\/f_auto,q_auto\//;
+  /^https:\/\/res\.cloudinary\.com\/[^/]+\/image\/upload\//;
 
 function isCloudinaryUrl(src: string) {
   return CLOUDINARY_URL_PATTERN.test(src);
@@ -68,7 +68,7 @@ function isCloudinaryUrl(src: string) {
  * own `w_<width>` URL param instead of Cloudflare's resizer.
  */
 function cloudinaryLoader({ src, width }: ImageLoaderProps) {
-  return src.replace("f_auto,q_auto/", `f_auto,q_auto,w_${width}/`);
+  return src.replace(/\/image\/upload\/(?:f_auto,q_auto\/)?/, `/image/upload/c_limit,w_${width}/`);
 }
 
 export function ProductMedia({

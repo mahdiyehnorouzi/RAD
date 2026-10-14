@@ -1,12 +1,13 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsIn } from "class-validator";
-import { ALLOWED_PRODUCT_IMAGE_MIME_TYPES } from "../../storage/cloudinary-storage.service";
-
+import { IsIn, IsInt, IsOptional, Min } from "class-validator";
+import { MEDIA_MIMES } from "../../storage/media-policy";
 export class SignProductImageDto {
-  @ApiProperty({
-    example: "image/jpeg",
-    enum: ALLOWED_PRODUCT_IMAGE_MIME_TYPES,
-  })
-  @IsIn(ALLOWED_PRODUCT_IMAGE_MIME_TYPES)
+  @ApiProperty({ enum: MEDIA_MIMES })
+  @IsIn(MEDIA_MIMES, { message: "فقط تصویر JPEG، PNG، WebP یا ویدیوی MP4، WebM مجاز است." })
   mime!: string;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1, { message: "فایل خالی است." })
+  size?: number;
 }

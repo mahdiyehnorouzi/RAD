@@ -7,6 +7,7 @@ import { after, before, describe, test } from "node:test";
 import EmbeddedPostgres from "embedded-postgres";
 import type { DataSource } from "typeorm";
 import { createAppDataSource } from "../database/data-source";
+import { isLocalDatabaseUrl } from "../database/safe-target";
 import { Product, ProductImage } from "../database/entities";
 import { publicCatalogQuery } from "./catalog.query";
 import { stripImageSrc } from "./product.mapper";
@@ -43,8 +44,16 @@ before(async () => {
   await pg.start();
   await pg.createDatabase("rad_test");
 
+  const testDatabaseUrl = `postgresql://rad:rad@127.0.0.1:${port}/rad_test`;
+  // Defense-in-depth: this spec always builds its own ephemeral,
+  // localhost-only Postgres and never reads process.env.DATABASE_URL —
+  // this assertion just makes that invariant explicit and catches any
+  // future edit that accidentally wires in a real connection string.
+  if (!isLocalDatabaseUrl(testDatabaseUrl)) {
+    throw new Error("Refusing to run DB-backed tests against a non-local database.");
+  }
   dataSource = createAppDataSource({
-    url: `postgresql://rad:rad@127.0.0.1:${port}/rad_test`,
+    url: testDatabaseUrl,
     synchronize: true,
   } as never);
   await dataSource.initialize();
@@ -118,6 +127,24 @@ describe("publicCatalogQuery image src projection", () => {
         storage: "legacy_base64",
         src: base64Payload,
       }),
+      images.create({
+        product,
+        alt: "cloudinary image",
+        enAlt: "cloudinary image",
+        sortOrder: 3,
+        storage: "cloudinary",
+        objectKey: `rad/products/${product.id}/img1`,
+        src: null,
+      }),
+      images.create({
+        product,
+        alt: "cloudinary video",
+        enAlt: "cloudinary video",
+        sortOrder: 4,
+        storage: "cloudinary_video",
+        objectKey: `rad/products/${product.id}/vid1`,
+        src: null,
+      }),
     ]);
 
     const row = await publicCatalogQuery(products)
@@ -139,6 +166,23 @@ describe("publicCatalogQuery image src projection", () => {
       byStorage.get("external")?.src,
       "https://cdn.example.com/work.jpg",
     );
+
+    // Regression test: a `cloudinary_video` row has `src: null` just like a
+    // `cloudinary` row (both resolve their URL from `objectKey` at the
+    // mapper layer, not a stored `src`). The query's LEFT JOIN condition
+    // must admit BOTH storage kinds explicitly, or a src-less row for a
+    // kind it doesn't name is silently dropped from the join entirely —
+    // this is exactly the bug that made uploaded videos invisible on the
+    // storefront (see catalog.query.ts).
+    assert.ok(
+      byStorage.has("cloudinary"),
+      "expected the cloudinary image row to survive the join",
+    );
+    assert.ok(
+      byStorage.has("cloudinary_video"),
+      "expected the cloudinary_video row to survive the join — it must not be silently dropped",
+    );
+    assert.equal(byStorage.get("cloudinary_video")?.objectKey, `rad/products/${product.id}/vid1`);
 
     // `stripImageSrc` (the mapper-layer defense in depth) must agree.
     const stripped = stripImageSrc(row!.images ?? []);

@@ -1,3 +1,5 @@
+import { VerifyProductMediaDto } from "./dto/verify-product-media.dto";
+import { mediaLimits } from "../storage/media-policy";
 import {
   Body,
   Controller,
@@ -92,7 +94,16 @@ export class AdminController {
     @Req() request: AuthedRequest,
   ) {
     this.admin.assert(request.adminRole, "product.write");
-    return this.admin.signProductImageUpload(slug, body.mime);
+    return this.admin.signProductImageUpload(slug, body.mime, body.size);
+  }
+
+  @Get("media/limits")
+  mediaLimits() { return mediaLimits(); }
+
+  @Post("products/:slug/media/verify")
+  verifyMedia(@Param("slug") slug: string, @Body() body: VerifyProductMediaDto, @Req() request: AuthedRequest) {
+    this.admin.assert(request.adminRole, "product.write");
+    return this.admin.verifyProductMedia(slug, body.objectKey, body.kind);
   }
 
   @Get("orders")

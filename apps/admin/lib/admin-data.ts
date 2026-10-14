@@ -51,7 +51,7 @@ export type AdminProductStatus = ProductStatus;
 export type AdminProductImage =
   | { storage: "legacy_base64"; src: string; objectKey?: null }
   | { storage: "static" | "external"; src: string; objectKey?: null }
-  | { storage: "cloudinary"; objectKey: string; src?: string | null };
+  | { storage: "cloudinary" | "cloudinary_video"; objectKey: string; src?: string | null };
 export type AdminOrderStatus =
   | "pending_payment"
   | "pending_verification"
