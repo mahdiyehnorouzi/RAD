@@ -46,18 +46,10 @@ export function JourneyWorkshop({
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={image} alt="" loading="lazy" decoding="async" />
         <JourneySpark className={styles.journeyWorkshopSpark} />
-        {/*
-         * A permanent waypoint knot, not the scroll-synced pen bead (which
-         * only shows mid-draw and disappears once the page is fully drawn
-         * past it) - without this, "a dot in the bowl" would only be true at
-         * one specific scroll position. The thread itself keeps drawing on
-         * through to Ready Works and beyond as the page scrolls; this marks
-         * a waypoint on that continuous line, it does not cut the line.
-         */}
+        {/* The thread just passes through here on its way to Ready Works - no decorative dot. */}
         <span
           className={styles.journeyWorkshopExit}
           data-thread-anchor
-          data-thread-knot
           aria-hidden="true"
         />
       </div>
