@@ -1,96 +1,82 @@
 /*
- * Custom order: a dominant editorial photo with a torn-paper card pitching
- * the offer over its reading end, and a slim vertical stepper riding the
- * section's reading edge (the right edge in Persian), filling with scroll.
+ * The scene photo already paints its own torn paper panel (upper-left) and
+ * its own torn paper stepper strip (far right, full height) - it is shown
+ * at its natural aspect ratio (never cropped), so those shapes always land
+ * at the same fixed percentages. Nothing here recreates a paper surface,
+ * edge or shadow: the photo is the only source of truth for the paper, and
+ * the overlay elements are fully transparent.
  */
 
 .journeyCustom {
-  position: relative;
-  display: grid;
-  grid-template-columns: clamp(3.4rem, 11vw, 4rem) minmax(0, 1fr);
-  align-items: stretch;
-  min-height: clamp(26rem, 118vw, 44rem);
   margin: clamp(0.75rem, 2.4vw, 1.25rem) var(--journey-edge) 0;
-  padding-block: clamp(0.9rem, 3vw, 2rem);
-  background: color-mix(in srgb, var(--paper) 55%, var(--canvas));
+}
+
+.journeyCustomFrame {
+  position: relative;
+}
+
+/*
+ * The actual image is taller here, not the section wrapper: a fixed
+ * (viewport-independent) aspect-ratio taller than the photo's own 4:3,
+ * covered rather than contained. A constant ratio is what keeps the crop -
+ * and therefore every percentage position below - identical at every
+ * breakpoint; letting it vary with viewport width is what caused the
+ * original misalignment between the photo's baked paper and these
+ * overlays. object-position is biased right so the crop comes mostly from
+ * the photo's left margin (outside the card's own text, which sits closer
+ * to the card's inline-start/right edge) rather than from the stepper's
+ * strip on the right.
+ */
+.journeyCustomScene {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1448 / 1270;
+  object-fit: cover;
+  object-position: 62% 50%;
   border-radius: 14px;
 }
 
-.journeyCustomPhoto {
-  position: relative;
-  grid-column: 2;
-  overflow: hidden;
-  border-radius: 12px;
-  background: color-mix(in srgb, var(--sand) 40%, var(--canvas));
-  box-shadow: 0 10px 22px -12px rgb(52 36 20 / 0.45);
-}
-
-.journeyCustomPhoto img {
-  object-fit: cover;
-  object-position: 58% 50%;
-}
-
-html[dir="ltr"] .journeyCustomPhoto img {
-  object-position: 42% 50%;
-  transform: scaleX(-1);
-}
-
-/* The torn card, overlaid on the photo's reading end (left, in RTL) */
-
+/*
+ * The photo's content panel: the left ~45% of the frame, but only its upper
+ * two-thirds - its own torn lower edge ends around mid-height so the photo's
+ * sketching hand stays visible below it. Measured directly on the source
+ * image, in percent so it stays correct at any rendered width. Positioned
+ * with physical `left`, not logical start/end, since the photo is a fixed
+ * composition, not a mirrorable layout.
+ */
 .journeyCustomCard {
   position: absolute;
-  z-index: 3;
-  inset-block-start: 9%;
-  inset-inline-end: clamp(0.5rem, 4vw, 2rem);
+  z-index: 1;
+  top: 9%;
+  left: 0;
+  width: 41%;
+  height: 54%;
   display: grid;
+  align-content: start;
   justify-items: start;
-  gap: 0.55rem;
-  width: min(72%, 19rem);
-  padding: 1.6rem 1.3rem 1.9rem;
-  filter: drop-shadow(0 8px 12px rgb(40 26 12 / 0.24))
-    drop-shadow(0 1px 1px rgb(40 26 12 / 0.16));
+  gap: 0.5rem;
+  padding: 0.5rem clamp(1rem, 4vw, 1.6rem);
+  text-align: start;
+  direction: rtl;
 }
 
-.journeyCustomCard::before {
-  --card-mask:
-    var(--tear-top) top center / calc(100% - var(--tear)) var(--tear) no-repeat,
-    var(--tear-bottom) bottom center / calc(100% - var(--tear)) var(--tear)
-      no-repeat,
-    var(--tear-left) left center / var(--tear)
-      calc(100% - 2 * var(--tear) + 2px) no-repeat,
-    var(--tear-right) right center / var(--tear)
-      calc(100% - 2 * var(--tear) + 2px) no-repeat,
-    linear-gradient(#000 0 0) center / calc(100% - 2 * var(--tear) + 2px)
-      calc(100% - 2 * var(--tear) + 2px) no-repeat;
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  background:
-    radial-gradient(
-      140% 100% at 0% 0%,
-      rgb(255 255 255 / 0.65),
-      transparent 55%
-    ),
-    color-mix(in srgb, var(--paper) 88%, white);
-  -webkit-mask: var(--card-mask);
-  mask: var(--card-mask);
-  transform: rotate(-0.6deg);
+html[dir="ltr"] .journeyCustomCard {
+  direction: ltr;
 }
 
-/* Doubled class to outrank .journey h2 in thread-journey.module.css. */
 .journeyCustomCard.journeyCustomCard h2 {
   color: var(--moss);
-  font-size: clamp(1.3rem, 5.6vw, 2.3rem);
+  font-size: clamp(1.4rem, 7.2vw, 2.2rem);
   font-weight: 800;
-  line-height: 1.3;
+  line-height: 1.15;
 }
 
 .journeyCustomCard p {
   display: grid;
   color: var(--muted);
-  font-size: clamp(0.82rem, 2.8vw, 1.05rem);
-  line-height: 1.8;
+  font-size: clamp(0.74rem, 2.6vw, 0.95rem);
+  line-height: 1.6;
 }
 
 .journeyCustomCard p span:last-child {
@@ -99,70 +85,90 @@ html[dir="ltr"] .journeyCustomPhoto img {
 
 .journeyCustomCard.journeyCustomCard :global(.button) {
   justify-self: stretch;
-  min-height: 44px;
-  margin-top: 0.5rem;
+  min-height: 40px;
+  margin-top: 0.3rem;
   border-radius: 999px;
   background: var(--oxide);
   color: var(--paper);
-  font-size: clamp(0.8rem, 2.8vw, 1rem);
+  font-size: clamp(0.74rem, 2.4vw, 0.95rem);
 }
 
 .journeyCustomCard.journeyCustomCard :global(.button):hover {
   background: var(--oxide-deep);
 }
 
-/* The vertical stepper, riding the section's reading edge */
-
+/*
+ * The vertical stepper rides the photo's own torn paper strip, far right,
+ * full height. A real flex column, not a grid with one line drawn behind
+ * everything: each step is its own flow block (circle, then label), and the
+ * connector between one step and the next is a separate, dedicated flex
+ * item that only occupies the gap - it starts below the label above it and
+ * ends above the circle below it, so it can never run behind either.
+ *
+ * Inset slightly from the frame's own right edge (not flush) so there is a
+ * genuine corridor of empty space between the stepper and the frame
+ * boundary for the page-wide thread to run through without ever leaving
+ * the section's visual bounds.
+ */
 .journeyCustomSteps {
-  position: relative;
-  grid-column: 1;
-  display: grid;
-  grid-template-rows: repeat(4, 1fr);
-  justify-items: center;
-  padding-block: clamp(0.5rem, 3vw, 1.25rem);
-  list-style: none;
-}
-
-.journeyCustomStepsFill,
-.journeyCustomSteps::before {
-  content: "";
   position: absolute;
-  top: var(--track-top, 0);
-  inset-inline-start: calc(50% - 0.75px);
-  width: 1.5px;
-  height: var(--track-height, 0);
-}
-
-.journeyCustomSteps::before {
-  background: color-mix(in srgb, var(--ink) 22%, transparent);
-}
-
-.journeyCustomStepsFill {
-  transform-origin: top;
-  background: var(--oxide);
+  z-index: 1;
+  top: 0;
+  right: 0.65rem;
+  bottom: 0;
+  width: 8.5%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-block: clamp(0.3rem, 2.5vw, 1.4rem);
+  list-style: none;
 }
 
 .journeyCustomStep {
   position: relative;
   z-index: 1;
-  display: grid;
-  justify-items: center;
-  align-content: center;
-  gap: 0.35rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 0 0 auto;
+  gap: clamp(0.2rem, 1.4vw, 0.4rem);
+}
+
+/*
+ * The connector itself: a dedicated flex item between two steps, sized by
+ * the remaining space (flex: 1), never by the steps' own content. Its
+ * track (grey) spans the full segment; the fill (oxide) scales up from 0
+ * inside it as scroll passes through this gap.
+ */
+.journeyCustomConnector {
+  position: relative;
+  flex: 1 1 auto;
+  width: 1.5px;
+  min-height: 0.5rem;
+  margin-block: 0.1rem;
+  background: color-mix(in srgb, var(--ink) 22%, transparent);
+}
+
+.journeyCustomConnectorFill {
+  position: absolute;
+  inset: 0;
+  transform-origin: top;
+  background: var(--oxide);
 }
 
 .journeyCustomStepNumber {
   position: relative;
   display: grid;
   place-items: center;
-  width: 1.65rem;
-  height: 1.65rem;
-  border: 1.5px solid color-mix(in srgb, var(--ink) 45%, transparent);
+  width: clamp(1.3rem, 6vw, 1.6rem);
+  height: clamp(1.3rem, 6vw, 1.6rem);
+  border: 1.5px solid color-mix(in srgb, var(--ink) 55%, transparent);
   border-radius: 50%;
-  background: color-mix(in srgb, var(--paper) 92%, white);
-  color: var(--muted);
-  font-size: 0.78rem;
-  font-weight: 600;
+  background: color-mix(in srgb, var(--paper) 96%, white);
+  box-shadow: 0 1px 4px rgb(40 26 12 / 0.22);
+  color: var(--ink);
+  font-size: clamp(0.64rem, 3vw, 0.76rem);
+  font-weight: 700;
   line-height: 1;
   transition:
     background 0.3s ease-out,
@@ -178,15 +184,18 @@ html[dir="ltr"] .journeyCustomPhoto img {
 }
 
 .journeyCustomStep[data-current] .journeyCustomStepNumber {
-  box-shadow: 0 0 0 0.28rem color-mix(in srgb, var(--oxide) 18%, transparent);
+  box-shadow: 0 0 0 0.26rem color-mix(in srgb, var(--oxide) 18%, transparent);
 }
 
 .journeyCustomStepLabel {
-  color: var(--muted);
-  font-size: clamp(0.56rem, 2.1vw, 0.68rem);
-  font-weight: 500;
+  color: var(--ink);
+  font-size: clamp(0.56rem, 2.8vw, 0.68rem);
+  font-weight: 600;
   text-align: center;
   white-space: nowrap;
+  text-shadow:
+    0 1px 3px color-mix(in srgb, var(--paper) 80%, white),
+    0 0 6px color-mix(in srgb, var(--paper) 60%, white);
   transition: color 0.3s ease-out;
 }
 
@@ -204,30 +213,56 @@ html[dir="ltr"] .journeyCustomPhoto img {
   pointer-events: none;
 }
 
+/*
+ * The page-wide thread latches on here, not on a step circle: this sits in
+ * the corridor between the stepper and the frame's own right edge (the
+ * steps column is inset 0.65rem from that edge specifically to leave this
+ * space) - clear of the step circles, but still inside the section's
+ * visual frame, never past its boundary.
+ */
+.journeyCustomThreadAnchor {
+  position: absolute;
+  top: var(--track-top, 0);
+  right: -0.45rem;
+  width: 1px;
+  height: 1px;
+  pointer-events: none;
+}
+
+/*
+ * A second anchor past the last step, in the same corridor as the entry
+ * anchor above: with only one anchor the path drifts back toward whatever
+ * comes next and cuts back across the step circles. Pinning both ends of the
+ * run inside that corridor keeps the whole pass through this section inside
+ * the frame, beside the stepper rather than through it.
+ */
+.journeyCustomThreadAnchorEnd {
+  position: absolute;
+  top: calc(var(--track-top, 0) + var(--track-height, 0));
+  right: -0.45rem;
+  width: 1px;
+  height: 1px;
+  pointer-events: none;
+}
+
 @media (min-width: 900px) {
   .journeyCustom {
-    grid-template-columns: 4.5rem minmax(0, 1fr);
     width: min(100% - 2 * var(--journey-edge), var(--journey-max));
-    min-height: clamp(28rem, 46vw, 40rem);
     margin-inline: auto;
-    padding-block: 2.4rem;
   }
 
   .journeyCustomCard {
-    inset-block-start: 12%;
-    inset-inline-end: clamp(1.5rem, 4vw, 3.5rem);
-    width: 21rem;
-    padding: 2.1rem 1.7rem 2.3rem;
+    padding: 1rem clamp(1.5rem, 3vw, 2rem);
   }
 
   .journeyCustomStepLabel {
-    font-size: 0.78rem;
+    font-size: 0.72rem;
   }
 
   .journeyCustomStepNumber {
-    width: 1.9rem;
-    height: 1.9rem;
-    font-size: 0.86rem;
+    width: 1.8rem;
+    height: 1.8rem;
+    font-size: 0.82rem;
   }
 }
 
@@ -243,7 +278,6 @@ html[dir="ltr"] .journeyCustomPhoto img {
    * because reduced motion skipped its viewport trigger), content here
    * must never depend on it to be visible.
    */
-  .journeyCustomPhoto,
   .journeyCustomCard,
   .journeyCustomCard * {
     opacity: 1 !important;
