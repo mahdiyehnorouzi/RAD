@@ -21,9 +21,13 @@
 }
 
 /*
- * The scene's blank panel is baked in on its physical left (a fixed
- * photograph, not a mirrorable layout), so this is positioned with physical
- * `left`, not logical start/end, regardless of page direction.
+ * The scene's blank panel is baked in on its physical left, but its exact
+ * visible extent shifts with object-fit: cover's crop at each viewport - so
+ * the text also gets its own real, opaque paper background (not just relying
+ * on the photo's baked panel), sized to actually contain the heading, body
+ * and CTA with real padding, with an organic torn edge on the side that
+ * meets the photo. Positioned with physical `left`, not logical start/end,
+ * since the photo is a fixed composition, not a mirrorable layout.
  */
 .journeyCustomCard {
   position: absolute;
@@ -39,6 +43,26 @@
   padding: 1.5rem clamp(1.1rem, 4vw, 1.6rem);
   text-align: start;
   direction: rtl;
+}
+
+.journeyCustomCard::before {
+  --card-mask:
+    var(--tear-right) right center / var(--tear) 100% no-repeat,
+    linear-gradient(#000 0 0) left center / calc(100% - var(--tear) + 1px)
+      100% no-repeat;
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(
+      140% 100% at 0% 0%,
+      rgb(255 255 255 / 0.65),
+      transparent 55%
+    ),
+    color-mix(in srgb, var(--paper) 92%, white);
+  -webkit-mask: var(--card-mask);
+  mask: var(--card-mask);
 }
 
 html[dir="ltr"] .journeyCustomCard {
@@ -77,20 +101,40 @@ html[dir="ltr"] .journeyCustomCard {
   background: var(--oxide-deep);
 }
 
-/* The vertical stepper, riding the scene's thin blank strip on the physical right */
-
+/*
+ * The vertical stepper rides the scene's thin blank strip on the physical
+ * right, but - same reasoning as the card - gets its own real, opaque
+ * paper-textured background rather than trusting the photo's baked strip
+ * alone, so the numbers/labels are never legible-over-photo. Organic torn
+ * edge on the side that meets the photo (its left).
+ */
 .journeyCustomSteps {
   position: absolute;
   z-index: 1;
   top: 0;
   right: 0;
   bottom: 0;
-  width: clamp(3.4rem, 11vw, 4rem);
+  width: clamp(3.75rem, 12.5vw, 4.5rem);
   display: grid;
   grid-template-rows: repeat(4, 1fr);
   justify-items: center;
   padding-block: clamp(0.5rem, 3vw, 1.25rem);
   list-style: none;
+}
+
+.journeyCustomSteps::after {
+  --sidebar-mask:
+    var(--tear-left) left center / var(--tear) 100% no-repeat,
+    linear-gradient(#000 0 0) right center / calc(100% - var(--tear) + 1px)
+      100% no-repeat;
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: color-mix(in srgb, var(--paper) 94%, white);
+  box-shadow: -6px 0 14px -10px rgb(40 26 12 / 0.35);
+  -webkit-mask: var(--sidebar-mask);
+  mask: var(--sidebar-mask);
 }
 
 .journeyCustomStepsFill,
