@@ -17,8 +17,11 @@ const EASE: [number, number, number, number] = [0.22, 1, 0.36, 1];
  * percentages matching its baked-in paper panel (upper-left, not full
  * height - the photo's lower-left shows the sketching hand) and its baked-in
  * stepper strip (full-height, far right). Nothing here recreates a paper
- * edge the photo already paints. The first step stays the thread's anchor
- * so the page-wide thread still finds it.
+ * edge the photo already paints. The outer article adds vertical padding
+ * for a taller composition; the inner frame stays sized to the photo alone
+ * so the percentage positions below are unaffected by that padding. The
+ * first step stays the thread's anchor so the page-wide thread still finds
+ * it.
  */
 export function JourneyCustom() {
   const { locale, t, number } = useLocale();
@@ -49,96 +52,98 @@ export function JourneyCustom() {
       className={styles.journeyCustom}
       aria-labelledby="journey-custom-title"
     >
-      <Image
-        src={journeyMedia.customScene}
-        alt={copy.customPhotoAlt}
-        width={1448}
-        height={1086}
-        sizes="(max-width: 899px) 100vw, 76rem"
-        className={styles.journeyCustomScene}
-      />
+      <div className={styles.journeyCustomFrame}>
+        <Image
+          src={journeyMedia.customScene}
+          alt={copy.customPhotoAlt}
+          width={1448}
+          height={1086}
+          sizes="(max-width: 899px) 100vw, 76rem"
+          className={styles.journeyCustomScene}
+        />
 
-      <motion.div
-        className={styles.journeyCustomCard}
-        {...(reduceMotion
-          ? {}
-          : {
-              initial: { opacity: 0, y: 16 },
-              whileInView: { opacity: 1, y: 0 },
-              viewport: { once: true, amount: 0.5 },
-              transition: { duration: 0.75, ease: EASE },
-            })}
-      >
-        <motion.h2 id="journey-custom-title" {...enter(0.08)}>
-          {t("createPathTitle")}
-        </motion.h2>
-        <motion.p {...enter(0.16)}>
-          {copy.customLine.map((line) => (
-            <span key={line}>{line}</span>
-          ))}
-        </motion.p>
-        <motion.div {...enter(0.24)}>
-          <ButtonLink href="/studio">{t("startDesign")}</ButtonLink>
+        <motion.div
+          className={styles.journeyCustomCard}
+          {...(reduceMotion
+            ? {}
+            : {
+                initial: { opacity: 0, y: 16 },
+                whileInView: { opacity: 1, y: 0 },
+                viewport: { once: true, amount: 0.5 },
+                transition: { duration: 0.75, ease: EASE },
+              })}
+        >
+          <motion.h2 id="journey-custom-title" {...enter(0.08)}>
+            {t("createPathTitle")}
+          </motion.h2>
+          <motion.p {...enter(0.16)}>
+            {copy.customLine.map((line) => (
+              <span key={line}>{line}</span>
+            ))}
+          </motion.p>
+          <motion.div {...enter(0.24)}>
+            <ButtonLink href="/studio">{t("startDesign")}</ButtonLink>
+          </motion.div>
         </motion.div>
-      </motion.div>
 
-      <ol
-        ref={containerRef}
-        className={styles.journeyCustomSteps}
-        aria-label={copy.customStepsLabel}
-        style={
-          {
-            "--track-top": `${track.top}px`,
-            "--track-height": `${track.height}px`,
-          } as CSSProperties
-        }
-      >
-        <span
-          className={styles.journeyCustomThreadAnchor}
-          data-thread-anchor
-          aria-hidden="true"
-        />
-        <span
-          className={styles.journeyCustomThreadAnchorEnd}
-          data-thread-anchor
-          aria-hidden="true"
-        />
-        <motion.span
-          aria-hidden="true"
-          className={styles.journeyCustomStepsFill}
-          style={{ scaleY: fillScale }}
-        />
-        {copy.customSteps.map((step, index) => {
-          const isActive = index <= active;
-          const isCurrent = index === active;
-          return (
-            <li
-              key={step}
-              className={styles.journeyCustomStep}
-              data-active={isActive || undefined}
-              data-current={isCurrent || undefined}
-            >
-              <motion.span
-                ref={(element) => {
-                  markerRefs.current[index] = element;
-                }}
-                className={styles.journeyCustomStepNumber}
-                aria-hidden="true"
-                animate={{ scale: isCurrent ? 1.08 : 1 }}
-                transition={{ duration: reduceMotion ? 0 : 0.3, ease: EASE }}
+        <ol
+          ref={containerRef}
+          className={styles.journeyCustomSteps}
+          aria-label={copy.customStepsLabel}
+          style={
+            {
+              "--track-top": `${track.top}px`,
+              "--track-height": `${track.height}px`,
+            } as CSSProperties
+          }
+        >
+          <span
+            className={styles.journeyCustomThreadAnchor}
+            data-thread-anchor
+            aria-hidden="true"
+          />
+          <span
+            className={styles.journeyCustomThreadAnchorEnd}
+            data-thread-anchor
+            aria-hidden="true"
+          />
+          <motion.span
+            aria-hidden="true"
+            className={styles.journeyCustomStepsFill}
+            style={{ scaleY: fillScale }}
+          />
+          {copy.customSteps.map((step, index) => {
+            const isActive = index <= active;
+            const isCurrent = index === active;
+            return (
+              <li
+                key={step}
+                className={styles.journeyCustomStep}
+                data-active={isActive || undefined}
+                data-current={isCurrent || undefined}
               >
-                {number(index + 1)}
-              </motion.span>
-              <span className={styles.journeyCustomStepLabel}>{step}</span>
-              <span
-                className={styles.journeyCustomStepMark}
-                data-thread-mark
-                aria-hidden="true"
-              />
-            </li>
-          );
-        })}
-      </ol>
+                <motion.span
+                  ref={(element) => {
+                    markerRefs.current[index] = element;
+                  }}
+                  className={styles.journeyCustomStepNumber}
+                  aria-hidden="true"
+                  animate={{ scale: isCurrent ? 1.08 : 1 }}
+                  transition={{ duration: reduceMotion ? 0 : 0.3, ease: EASE }}
+                >
+                  {number(index + 1)}
+                </motion.span>
+                <span className={styles.journeyCustomStepLabel}>{step}</span>
+                <span
+                  className={styles.journeyCustomStepMark}
+                  data-thread-mark
+                  aria-hidden="true"
+                />
+              </li>
+            );
+          })}
+        </ol>
+      </div>
     </article>
   );
 }
