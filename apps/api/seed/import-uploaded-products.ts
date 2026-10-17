@@ -1,6 +1,7 @@
 import { artworkRecords } from "@rad/artworks";
 import { In } from "typeorm";
 import { createAppDataSource } from "../src/database/data-source";
+import { assertSafeScriptTarget } from "../src/database/safe-target";
 import { Product } from "../src/database/entities";
 import { seedArtists, seedArtworks } from "./artwork-rows";
 
@@ -12,6 +13,7 @@ const uploadedSlugs = new Set([
 ]);
 
 async function main() {
+  assertSafeScriptTarget("import-uploaded-products.ts");
   const records = artworkRecords.filter((record) =>
     uploadedSlugs.has(record.slug),
   );

@@ -2,7 +2,12 @@ import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { describe, test } from "node:test";
 import { ConfigService } from "@nestjs/config";
-import { InternalServerErrorException } from "@nestjs/common";
+import {
+  BadRequestException,
+  PayloadTooLargeException,
+  ServiceUnavailableException,
+} from "@nestjs/common";
+import { v2 as cloudinary } from "cloudinary";
 import {
   CloudinaryStorageService,
   isAllowedProductImageMime,
@@ -100,7 +105,7 @@ describe("CloudinaryStorageService.createSignedUpload", () => {
     const storage = service({});
     assert.throws(
       () => storage.createSignedUpload("rad/pending"),
-      InternalServerErrorException,
+      ServiceUnavailableException,
     );
   });
 
@@ -145,5 +150,204 @@ describe("CloudinaryStorageService.createSignedUpload", () => {
     const second = storage.createSignedUpload("rad/pending");
     assert.notEqual(first.timestamp, second.timestamp);
     assert.notEqual(first.signature, second.signature);
+  });
+});
+
+/**
+ * `verifyMedia` re-derives provider metadata (format/dimensions/resource
+ * type/byte size) from Cloudinary's own `api.resource` lookup rather than
+ * trusting the browser — this is the check that stood between a real
+ * upload and a 200. These tests stub `cloudinary.api.resource` (the only
+ * network call `verifyMedia` makes) to exercise every branch without a
+ * live Cloudinary account.
+ *
+ * The "video with no duration field" case is a regression test for a real
+ * bug found in manual testing: Cloudinary's admin `resource` endpoint does
+ * not reliably return `duration` for video resources on every
+ * plan/account (confirmed empty even with `video_metadata: true` against
+ * this project's own Cloudinary account), so `verifyMedia` must not
+ * require it.
+ */
+describe("CloudinaryStorageService.verifyMedia", () => {
+  function service() {
+    return new CloudinaryStorageService(
+      new ConfigService({
+        CLOUDINARY_CLOUD_NAME: "rad-cloud",
+        CLOUDINARY_API_KEY: "test-api-key",
+        CLOUDINARY_API_SECRET: "test-api-secret",
+      }),
+    );
+  }
+
+  function stubResource(
+    fn: (publicId: string, options: Record<string, unknown>) => unknown,
+  ) {
+    const original = cloudinary.api.resource;
+    cloudinary.api.resource = fn as typeof cloudinary.api.resource;
+    return () => {
+      cloudinary.api.resource = original;
+    };
+  }
+
+  test("accepts a valid jpg image (format + dimensions decoded by Cloudinary)", async () => {
+    const restore = stubResource(async () => ({
+      resource_type: "image",
+      format: "jpg",
+      width: 1200,
+      height: 900,
+      bytes: 168_000,
+    }));
+    try {
+      const result = await service().verifyMedia("rad/pending/abc", "image");
+      assert.deepEqual(result, {
+        objectKey: "rad/pending/abc",
+        storage: "cloudinary",
+      });
+    } finally {
+      restore();
+    }
+  });
+
+  test("accepts a valid mp4 video even when Cloudinary returns no `duration` field", async () => {
+    const restore = stubResource(async () => ({
+      resource_type: "video",
+      format: "mp4",
+      width: 1280,
+      height: 720,
+      bytes: 1_893_701,
+      // deliberately no `duration` key — this is the real shape Cloudinary
+      // returned for a genuine uploaded video in manual testing.
+    }));
+    try {
+      const result = await service().verifyMedia("rad/pending/vid1", "video");
+      assert.deepEqual(result, {
+        objectKey: "rad/pending/vid1",
+        storage: "cloudinary_video",
+      });
+    } finally {
+      restore();
+    }
+  });
+
+  test("accepts a valid video when Cloudinary does report a duration", async () => {
+    const restore = stubResource(async () => ({
+      resource_type: "video",
+      format: "webm",
+      width: 640,
+      height: 480,
+      bytes: 2_000_000,
+      duration: 13.4,
+    }));
+    try {
+      const result = await service().verifyMedia("rad/pending/vid2", "video");
+      assert.deepEqual(result, {
+        objectKey: "rad/pending/vid2",
+        storage: "cloudinary_video",
+      });
+    } finally {
+      restore();
+    }
+  });
+
+  test("rejects when the asset's resource_type doesn't match the claimed kind (image claimed as video, or vice versa)", async () => {
+    const restore = stubResource(async () => ({
+      resource_type: "image",
+      format: "jpg",
+      width: 1200,
+      height: 900,
+      bytes: 168_000,
+    }));
+    try {
+      await assert.rejects(
+        () => service().verifyMedia("rad/pending/abc", "video"),
+        BadRequestException,
+      );
+    } finally {
+      restore();
+    }
+  });
+
+  test("rejects a disallowed format even when the bytes decoded as the claimed resource_type", async () => {
+    const restore = stubResource(async () => ({
+      resource_type: "image",
+      format: "bmp",
+      width: 1200,
+      height: 900,
+      bytes: 168_000,
+    }));
+    try {
+      await assert.rejects(
+        () => service().verifyMedia("rad/pending/abc", "image"),
+        BadRequestException,
+      );
+    } finally {
+      restore();
+    }
+  });
+
+  test("rejects an asset with zero/missing dimensions (not a real decoded image/video)", async () => {
+    const restore = stubResource(async () => ({
+      resource_type: "image",
+      format: "jpg",
+      width: 0,
+      height: 0,
+      bytes: 168_000,
+    }));
+    try {
+      await assert.rejects(
+        () => service().verifyMedia("rad/pending/abc", "image"),
+        BadRequestException,
+      );
+    } finally {
+      restore();
+    }
+  });
+
+  test("rejects a file over the configured size limit for its kind (video over 50MB default)", async () => {
+    const restore = stubResource(async () => ({
+      resource_type: "video",
+      format: "mp4",
+      width: 1280,
+      height: 720,
+      bytes: 60 * 1024 * 1024,
+    }));
+    try {
+      await assert.rejects(
+        () => service().verifyMedia("rad/pending/vid3", "video"),
+        PayloadTooLargeException,
+      );
+    } finally {
+      restore();
+    }
+  });
+
+  test("maps a 404 from Cloudinary (asset never uploaded, or deleted) to a client-facing BadRequestException", async () => {
+    const restore = stubResource(async () => {
+      const error = new Error("not found") as Error & { http_code: number };
+      error.http_code = 404;
+      throw error;
+    });
+    try {
+      await assert.rejects(
+        () => service().verifyMedia("rad/pending/missing", "image"),
+        BadRequestException,
+      );
+    } finally {
+      restore();
+    }
+  });
+
+  test("maps any other Cloudinary API failure to a 503, never leaking the raw error to the client", async () => {
+    const restore = stubResource(async () => {
+      throw new Error("ECONNRESET");
+    });
+    try {
+      await assert.rejects(
+        () => service().verifyMedia("rad/pending/abc", "image"),
+        ServiceUnavailableException,
+      );
+    } finally {
+      restore();
+    }
   });
 });

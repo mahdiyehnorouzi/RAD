@@ -16,7 +16,7 @@ import { Product } from "./product.entity";
  * `AdminService.replaceImages` / `cloudinary-storage.service.ts`).
  */
 export type ProductImageStorage =
-  "static" | "legacy_base64" | "external" | "cloudinary";
+  "static" | "legacy_base64" | "external" | "cloudinary" | "cloudinary_video";
 
 @Entity("ProductImage")
 export class ProductImage {

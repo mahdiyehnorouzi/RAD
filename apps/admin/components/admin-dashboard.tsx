@@ -1,4 +1,5 @@
 "use client";
+import { api } from "../lib/api";
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -1619,7 +1620,12 @@ function ProductDialog({
   onUploadImage: (
     slug: string,
     file: File,
-  ) => Promise<{ storage: "cloudinary"; objectKey: string }>;
+    onProgress?: (value: number) => void,
+    signal?: AbortSignal,
+  ) => Promise<{
+    storage: "cloudinary" | "cloudinary_video";
+    objectKey: string;
+  }>;
   onDelete?: () => void;
 }) {
   useBodyScrollLock();
@@ -1638,19 +1644,47 @@ function ProductDialog({
     },
   );
   const [imageError, setImageError] = useState("");
-  const [uploadingCount, setUploadingCount] = useState(0);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  // Local blob: preview URLs created for in-flight uploads — revoked once
-  // the real objectKey is stored (or the upload fails), so we never leak
-  // them past this dialog's lifetime.
+  const [saving, setSaving] = useState(false);
+  const [limits, setLimits] = useState<{ image: number; video: number } | null>(
+    null,
+  );
+  const [uploads, setUploads] = useState<
+    Record<
+      string,
+      { file: File; progress: number; error?: string; pending: boolean }
+    >
+  >({});
+  const controllers = useRef(new Map<string, AbortController>());
   const previewUrlsRef = useRef<string[]>([]);
+  const uploadingCount = Object.values(uploads).filter(
+    (item) => item.pending,
+  ).length;
+  const unresolvedUploads = Object.values(uploads).some(
+    (item) => item.pending || item.error,
+  );
   useEffect(() => {
+    let mounted = true;
+    api<{ image: number; video: number }>("/admin/media/limits")
+      .then((value) => {
+        if (mounted) setLimits(value);
+      })
+      .catch(() => {
+        if (mounted)
+          setImageError(
+            "دریافت محدودیت فایل ممکن نشد. پنجره را دوباره باز کنید.",
+          );
+      });
+    const activeControllers = controllers.current;
     return () => {
+      mounted = false;
+      activeControllers.forEach((controller) => controller.abort());
       previewUrlsRef.current.forEach((url) => URL.revokeObjectURL(url));
     };
   }, []);
-  const submit = (event: React.FormEvent) => {
+  const submit = async (event: React.FormEvent) => {
     event.preventDefault();
+    if (saving || unresolvedUploads) return;
     const next: Record<string, string> = {};
     if (!draft.name.trim()) next.name = "نام محصول را وارد کنید.";
     if (!draft.description.trim())
@@ -1659,58 +1693,135 @@ function ProductDialog({
     if (!draft.artist.trim()) next.artist = "نام هنرمند را وارد کنید.";
     if (!Number.isFinite(draft.price) || draft.price <= 0)
       next.price = "قیمت باید بیشتر از صفر باشد.";
-    setErrors(next);
-    if (Object.keys(next).length) return;
-    void onSave({ ...draft, updatedAt: Date.now() });
-  };
-  const addImage = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    event.target.value = "";
-    if (!file) return;
-    if (
-      !["image/jpeg", "image/png", "image/webp"].includes(file.type) ||
-      file.size === 0 ||
-      file.size > 2 * 1024 * 1024
-    ) {
-      setImageError("فقط JPG، PNG یا WebP تا ۲ مگابایت مجاز است.");
+    if (!draft.images.some((image) => image.storage !== "cloudinary_video")) {
+      setImageError("حداقل یک تصویر برای اثر لازم است.");
       return;
     }
-    setImageError("");
-    const previewUrl = URL.createObjectURL(file);
-    previewUrlsRef.current.push(previewUrl);
-    // Immediate local preview while the upload is in flight.
-    setDraft((item) => ({
-      ...item,
-      images: [
-        ...item.images,
-        { storage: "cloudinary", objectKey: "", src: previewUrl },
-      ],
-    }));
-    setUploadingCount((count) => count + 1);
+    setErrors(next);
+    if (Object.keys(next).length) return;
+    setSaving(true);
     try {
-      const { objectKey } = await onUploadImage(draft.slug, file);
+      await onSave({ ...draft, updatedAt: Date.now() });
+    } finally {
+      setSaving(false);
+    }
+  };
+  const uploadFile = async (file: File, previewUrl: string) => {
+    const controller = new AbortController();
+    controllers.current.set(previewUrl, controller);
+    setUploads((items) => ({
+      ...items,
+      [previewUrl]: { file, progress: 0, pending: true },
+    }));
+    try {
+      if (
+        !limits ||
+        ![
+          "image/jpeg",
+          "image/png",
+          "image/webp",
+          "video/mp4",
+          "video/webm",
+        ].includes(file.type)
+      )
+        throw new Error(
+          "فقط تصویر JPEG، PNG، WebP یا ویدیوی MP4، WebM مجاز است.",
+        );
+      if (
+        !file.size ||
+        file.size > limits[file.type.startsWith("video/") ? "video" : "image"]
+      )
+        throw new Error(
+          "فایل خالی است یا حجم آن از محدودیت اعلام‌شده بیشتر است.",
+        );
+      const result = await onUploadImage(
+        draft.slug,
+        file,
+        (progress) =>
+          setUploads((items) =>
+            items[previewUrl]
+              ? { ...items, [previewUrl]: { ...items[previewUrl], progress } }
+              : items,
+          ),
+        controller.signal,
+      );
+      if (controller.signal.aborted) return;
       setDraft((item) => ({
         ...item,
         images: item.images.map((image) =>
-          image.src === previewUrl
-            ? { storage: "cloudinary", objectKey, src: previewUrl }
-            : image,
+          image.src === previewUrl ? { ...result, src: previewUrl } : image,
         ),
       }));
-    } catch {
-      setImageError("بارگذاری تصویر ناموفق بود.");
-      setDraft((item) => ({
-        ...item,
-        images: item.images.filter((image) => image.src !== previewUrl),
+      setUploads((items) => ({
+        ...items,
+        [previewUrl]: { file, progress: 100, pending: false },
       }));
-      URL.revokeObjectURL(previewUrl);
-      previewUrlsRef.current = previewUrlsRef.current.filter(
-        (url) => url !== previewUrl,
-      );
+    } catch (error) {
+      if (!controller.signal.aborted)
+        setUploads((items) => ({
+          ...items,
+          [previewUrl]: {
+            file,
+            progress: 0,
+            pending: false,
+            error:
+              error instanceof Error
+                ? error.message
+                : "بارگذاری ناموفق بود. دوباره تلاش کنید.",
+          },
+        }));
     } finally {
-      setUploadingCount((count) => count - 1);
+      controllers.current.delete(previewUrl);
     }
   };
+  const addImage = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files ?? []);
+    event.target.value = "";
+    setImageError("");
+    for (const file of files) {
+      const src = URL.createObjectURL(file);
+      previewUrlsRef.current.push(src);
+      setDraft((item) => ({
+        ...item,
+        images: [
+          ...item.images,
+          {
+            storage: file.type.startsWith("video/")
+              ? "cloudinary_video"
+              : "cloudinary",
+            objectKey: "",
+            src,
+          },
+        ],
+      }));
+      void uploadFile(file, src);
+    }
+  };
+  const removeMedia = (index: number) => {
+    const src = draft.images[index].src;
+    if (src) {
+      controllers.current.get(src)?.abort();
+      setUploads((items) => {
+        const copy = { ...items };
+        delete copy[src];
+        return copy;
+      });
+      if (src.startsWith("blob:")) URL.revokeObjectURL(src);
+    }
+    setDraft((item) => ({
+      ...item,
+      images: item.images.filter((_, i) => i !== index),
+    }));
+  };
+  const moveMedia = (index: number, offset: number) =>
+    setDraft((item) => {
+      const images = [...item.images];
+      [images[index], images[index + offset]] = [
+        images[index + offset],
+        images[index],
+      ];
+      return { ...item, images };
+    });
   const sections: { id: string; label: string; icon: React.ReactNode }[] = [
     { id: "section-basics", label: "اطلاعات اصلی", icon: <Pencil /> },
     { id: "section-category", label: "دسته‌بندی", icon: <Tag /> },
@@ -1719,7 +1830,7 @@ function ProductDialog({
       label: "وضعیت و قیمت",
       icon: <CircleDollarSign />,
     },
-    { id: "section-images", label: "تصاویر اثر", icon: <ImageIcon /> },
+    { id: "section-images", label: "تصویر و ویدیوی اثر", icon: <ImageIcon /> },
   ];
   const [activeSection, setActiveSection] = useState(sections[0].id);
   const goToSection = (id: string) => {
@@ -1803,10 +1914,14 @@ function ProductDialog({
             <button
               className="primary-action"
               type="submit"
-              disabled={uploadingCount > 0}
+              disabled={saving || unresolvedUploads}
             >
               <PackageCheck />
-              {uploadingCount > 0 ? "در حال بارگذاری…" : "ذخیره تغییرات"}
+              {saving
+                ? "در حال ذخیره…"
+                : uploadingCount > 0
+                  ? "در حال بارگذاری…"
+                  : "ذخیره تغییرات"}
             </button>
           </div>
 
@@ -1940,81 +2055,117 @@ function ProductDialog({
           <section id="section-images" className="editor-section-card">
             <h3>
               <ImageIcon />
-              تصاویر اثر
+              تصویر و ویدیوی اثر
             </h3>
             <div className="image-editor">
-              <div className="field-label">
-                <small>
-                  تصاویر در پایگاه داده ذخیره می‌شوند؛ اولین تصویر، تصویر اصلی
-                  است.
-                </small>
-              </div>
-              <div className="image-add">
-                <label className="upload-button">
-                  <ImagePlus />
-                  افزودن عکس
-                  <input
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp"
-                    onChange={addImage}
-                    aria-label="بارگذاری تصویر محصول"
-                    hidden
-                  />
-                </label>
-                {imageError && (
-                  <small className="field-error" role="alert">
-                    {imageError}
-                  </small>
-                )}
-              </div>
-              <div className="image-list">
+              <p>حداقل یک تصویر لازم است؛ اولین تصویر، تصویر اصلی اثر است.</p>
+              <p>
+                {limits
+                  ? `تصویر JPEG، PNG، WebP تا ${number.format(limits.image / 1024 / 1024)} مگابایت؛ ویدیوی MP4، WebM تا ${number.format(limits.video / 1024 / 1024)} مگابایت.`
+                  : "در حال دریافت محدودیت فایل…"}
+              </p>
+              <label className="upload-button">
+                <ImagePlus /> افزودن تصویر یا ویدیو
+                <input
+                  type="file"
+                  multiple
+                  accept="image/jpeg,image/png,image/webp,video/mp4,video/webm"
+                  onChange={addImage}
+                  disabled={!limits || saving}
+                  aria-label="بارگذاری تصویر یا ویدیوی اثر"
+                />
+              </label>
+              {imageError && (
+                <p className="field-error" role="alert">
+                  {imageError}
+                </p>
+              )}
+              {unresolvedUploads && (
+                <p role="status">
+                  برای ذخیره، منتظر پایان بارگذاری بمانید و فایل‌های ناموفق را
+                  دوباره بارگذاری یا حذف کنید.
+                </p>
+              )}
+              <div className="product-media-list">
                 {draft.images.map((image, index) => {
-                  const isUploading =
-                    image.storage === "cloudinary" && !image.objectKey;
+                  const upload = image.src ? uploads[image.src] : undefined;
                   return (
                     <div
-                      key={`${index}-${image.storage}-${
-                        image.storage === "cloudinary"
-                          ? image.objectKey || image.src
-                          : image.src
-                      }`}
+                      className="product-media-item"
+                      key={image.src || image.objectKey || index}
                     >
-                      {image.src ? (
-                        <img src={image.src} alt="" />
+                      {image.storage === "cloudinary_video" ? (
+                        <video
+                          src={image.src ?? undefined}
+                          controls
+                          playsInline
+                          preload="metadata"
+                        />
                       ) : (
-                        <ImagePlus />
+                        <img
+                          src={image.src ?? undefined}
+                          alt={`تصویر ${number.format(index + 1)}`}
+                        />
                       )}
-                      <span>
-                        {isUploading
-                          ? "در حال بارگذاری…"
-                          : index === 0
-                            ? "تصویر اصلی"
-                            : `تصویر ${number.format(index + 1)}`}
-                      </span>
-                      <button
-                        type="button"
-                        disabled={isUploading}
-                        onClick={() =>
-                          setDraft({
-                            ...draft,
-                            images: draft.images.filter(
-                              (_, itemIndex) => itemIndex !== index,
-                            ),
-                          })
-                        }
-                        aria-label={`حذف تصویر ${index + 1}`}
-                      >
-                        <X />
-                      </button>
+                      {upload && <small>{upload.file.name}</small>}
+                      {upload?.pending && (
+                        <>
+                          <progress
+                            max={100}
+                            value={upload.progress}
+                            aria-label="پیشرفت بارگذاری"
+                          />
+                          <small role="status">
+                            {upload.progress === 100
+                              ? "در حال بررسی فایل…"
+                              : `بارگذاری ${number.format(upload.progress)}٪`}
+                          </small>
+                        </>
+                      )}
+                      {upload?.error && (
+                        <p className="field-error" role="alert">
+                          {upload.error}
+                        </p>
+                      )}
+                      <div className="product-media-actions">
+                        {upload?.error && (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              void uploadFile(upload.file, image.src!)
+                            }
+                          >
+                            تلاش دوباره
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          disabled={saving}
+                          onClick={() => removeMedia(index)}
+                          aria-label={`حذف فایل ${number.format(index + 1)}`}
+                        >
+                          حذف
+                        </button>
+                        <button
+                          type="button"
+                          disabled={saving || index === 0}
+                          onClick={() => moveMedia(index, -1)}
+                          aria-label={`جابه‌جایی فایل ${number.format(index + 1)} به قبل`}
+                        >
+                          قبل
+                        </button>
+                        <button
+                          type="button"
+                          disabled={saving || index === draft.images.length - 1}
+                          onClick={() => moveMedia(index, 1)}
+                          aria-label={`جابه‌جایی فایل ${number.format(index + 1)} به بعد`}
+                        >
+                          بعد
+                        </button>
+                      </div>
                     </div>
                   );
                 })}
-                {!draft.images.length && (
-                  <div className="image-empty">
-                    <ImagePlus />
-                    <span>هنوز تصویری اضافه نشده است.</span>
-                  </div>
-                )}
               </div>
             </div>
           </section>

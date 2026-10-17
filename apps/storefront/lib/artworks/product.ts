@@ -37,6 +37,7 @@ export function productFromArtwork(artwork: Artwork): Product {
     story: artwork.story.fa,
     details: detailLines(artwork, "fa"),
     images: artwork.images,
+    media: artwork.media,
     vendor: {
       id: artwork.artist.id,
       displayName: artwork.artist.name.fa,

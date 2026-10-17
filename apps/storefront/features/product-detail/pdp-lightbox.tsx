@@ -70,6 +70,9 @@ export function PdpLightbox({
 
   useEffect(() => {
     resetZoom();
+    stageRef.current
+      ?.querySelectorAll("video")
+      .forEach((video) => video.pause());
   }, [active, resetZoom]);
 
   // Focus trap + body scroll lock + return focus to the trigger on close.
@@ -101,7 +104,7 @@ export function PdpLightbox({
         const node = dialogRef.current;
         if (!node) return;
         const focusables = node.querySelectorAll<HTMLElement>(
-          "button, [href], [tabindex]:not([tabindex='-1'])",
+          "button, video[controls], [href], [tabindex]:not([tabindex='-1'])",
         );
         if (!focusables.length) return;
         const first = focusables[0];
@@ -249,7 +252,15 @@ export function PdpLightbox({
       <div
         ref={stageRef}
         className={styles.stage}
-        onPointerDown={onPointerDown}
+        onPointerDown={
+          product.images?.[
+            slides[active].kind === "photo"
+              ? (slides[active] as { index: number }).index
+              : 0
+          ]?.kind === "video"
+            ? undefined
+            : onPointerDown
+        }
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerUp}

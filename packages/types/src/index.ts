@@ -117,6 +117,8 @@ export interface MaterialSpot {
 }
 
 export interface ProductImage {
+  kind?: "image" | "video";
+  thumbnail?: string;
   src?: string;
   alt: string;
   enAlt: string;
@@ -145,6 +147,7 @@ export interface Product {
   story: string;
   details: string[];
   images?: ProductImage[];
+  media?: ProductImage[];
   vendor?: Vendor;
   /** Same permanent number as `Artwork.radNumber`. */
   radNumber?: number;

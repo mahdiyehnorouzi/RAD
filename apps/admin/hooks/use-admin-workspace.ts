@@ -397,43 +397,93 @@ export function useAdminWorkspace() {
        * blindly from the client. `CLOUDINARY_API_SECRET` never reaches this
        * code; only the public `apiKey`/`cloudName` + a one-time signature do.
        */
-      async uploadProductImage(slug: string, file: File) {
-        const { cloudName, apiKey, timestamp, folder, signature } = await api<{
+      async uploadProductImage(
+        slug: string,
+        file: File,
+        onProgress?: (value: number) => void,
+        signal?: AbortSignal,
+      ) {
+        const route = `/admin/products/${encodeURIComponent(slug || "draft")}`;
+        const signed = await api<{
           cloudName: string;
           apiKey: string;
           timestamp: number;
           folder: string;
           signature: string;
-        }>(
-          `/admin/products/${encodeURIComponent(slug || "draft")}/images/sign`,
-          {
-            method: "POST",
-            body: JSON.stringify({ mime: file.type }),
-          },
-        );
+          allowed_formats: string;
+          overwrite: boolean;
+          resourceType: "image" | "video";
+        }>(`${route}/images/sign`, {
+          method: "POST",
+          body: JSON.stringify({ mime: file.type, size: file.size }),
+          signal,
+        });
         const body = new FormData();
         body.append("file", file);
-        body.append("api_key", apiKey);
-        body.append("timestamp", String(timestamp));
-        body.append("folder", folder);
-        body.append("signature", signature);
-        const uploadResponse = await fetch(
-          `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
-          { method: "POST", body },
-        );
-        if (!uploadResponse.ok) {
-          throw new Error("بارگذاری تصویر به فضای ذخیره‌سازی ناموفق بود.");
-        }
-        const uploaded = (await uploadResponse.json()) as {
-          public_id?: string;
-        };
-        if (!uploaded.public_id) {
-          throw new Error("بارگذاری تصویر به فضای ذخیره‌سازی ناموفق بود.");
-        }
-        return {
-          storage: "cloudinary" as const,
-          objectKey: uploaded.public_id,
-        };
+        body.append("api_key", signed.apiKey);
+        for (const key of [
+          "timestamp",
+          "folder",
+          "signature",
+          "allowed_formats",
+          "overwrite",
+        ] as const)
+          body.append(key, String(signed[key]));
+        const objectKey = await new Promise<string>((resolve, reject) => {
+          const xhr = new XMLHttpRequest();
+          const abort = () => xhr.abort();
+          const finish = () => signal?.removeEventListener("abort", abort);
+          xhr.open(
+            "POST",
+            `https://api.cloudinary.com/v1_1/${signed.cloudName}/${signed.resourceType}/upload`,
+          );
+          xhr.timeout = 10 * 60 * 1000;
+          xhr.upload.onprogress = (event) => {
+            if (event.lengthComputable)
+              onProgress?.(Math.round((event.loaded / event.total) * 100));
+          };
+          xhr.onload = () => {
+            finish();
+            if (xhr.status < 200 || xhr.status >= 300)
+              return reject(
+                new Error(
+                  xhr.status === 400
+                    ? "محتوای فایل معتبر نیست یا فضای ذخیره‌سازی آن را نمی‌پذیرد."
+                    : "بارگذاری ناموفق بود. دوباره تلاش کنید.",
+                ),
+              );
+            try {
+              const result = JSON.parse(xhr.responseText);
+              if (!result.public_id) throw new Error();
+              resolve(result.public_id);
+            } catch {
+              reject(new Error("پاسخ بارگذاری معتبر نیست. دوباره تلاش کنید."));
+            }
+          };
+          xhr.onerror = xhr.ontimeout = () => {
+            finish();
+            reject(new Error("ارتباط قطع شد. دوباره تلاش کنید."));
+          };
+          xhr.onabort = () => {
+            finish();
+            reject(new Error("بارگذاری لغو شد."));
+          };
+          signal?.addEventListener("abort", abort, { once: true });
+          if (signal?.aborted) {
+            finish();
+            reject(new Error("بارگذاری لغو شد."));
+            return;
+          }
+          xhr.send(body);
+        });
+        return api<{
+          storage: "cloudinary" | "cloudinary_video";
+          objectKey: string;
+        }>(`${route}/media/verify`, {
+          method: "POST",
+          body: JSON.stringify({ objectKey, kind: signed.resourceType }),
+          signal,
+        });
       },
       async saveProduct(product: AdminProduct) {
         const payload = {
@@ -448,8 +498,9 @@ export function useAdminWorkspace() {
           // never the display-only `src` the API derived for a `cloudinary`
           // row (or a local blob: URL left over from an in-flight upload).
           images: product.images.map((image) =>
-            image.storage === "cloudinary"
-              ? { storage: "cloudinary" as const, objectKey: image.objectKey }
+            image.storage === "cloudinary" ||
+            image.storage === "cloudinary_video"
+              ? { storage: image.storage, objectKey: image.objectKey }
               : { storage: image.storage, src: image.src },
           ),
         };

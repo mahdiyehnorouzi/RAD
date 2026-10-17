@@ -48,7 +48,7 @@ export const productImageSelect: (keyof ProductImage)[] = [
  * this transformation segment's exact text (`f_auto,q_auto`) in sync with
  * that loader's string replace.
  */
-function cloudinaryDeliveryUrl(objectKey: string) {
+function cloudinaryDeliveryUrl(objectKey: string, video = false) {
   const cloudName = (process.env.CLOUDINARY_CLOUD_NAME ?? "").trim();
   if (!cloudName) {
     // Not configured — fall back to the legacy proxy route so the app
@@ -56,7 +56,7 @@ function cloudinaryDeliveryUrl(objectKey: string) {
     // CLOUDINARY_CLOUD_NAME is set (see apps/api/.env.example).
     return undefined;
   }
-  return `https://res.cloudinary.com/${cloudName}/image/upload/f_auto,q_auto/${objectKey}`;
+  return `https://res.cloudinary.com/${cloudName}/${video ? "video" : "image"}/upload/${objectKey}`;
 }
 
 export function imageSrc(image: ProductImageMeta, embedImages: boolean) {
@@ -65,10 +65,14 @@ export function imageSrc(image: ProductImageMeta, embedImages: boolean) {
     case "static":
     case "external":
       return image.src ?? `/catalog/images/${image.id}`;
+    case "cloudinary_video":
     case "cloudinary":
       return (
         (image.objectKey
-          ? cloudinaryDeliveryUrl(image.objectKey)
+          ? cloudinaryDeliveryUrl(
+              image.objectKey,
+              image.storage === "cloudinary_video",
+            )
           : undefined) ?? `/catalog/images/${image.id}`
       );
     case "legacy_base64":
@@ -81,11 +85,22 @@ export function imageSrc(image: ProductImageMeta, embedImages: boolean) {
 export function toCatalogImages(
   images: ProductImageMeta[],
   embedImages = false,
+  includeVideos = false,
 ): CatalogImage[] {
   return [...images]
+    .filter((image) => includeVideos || image.storage !== "cloudinary_video")
     .sort((a, b) => a.sortOrder - b.sortOrder)
     .map((image) => ({
       src: imageSrc(image, embedImages),
+      kind:
+        image.storage === "cloudinary_video"
+          ? ("video" as const)
+          : ("image" as const),
+      thumbnail:
+        image.objectKey &&
+        (image.storage === "cloudinary" || image.storage === "cloudinary_video")
+          ? `https://res.cloudinary.com/${process.env.CLOUDINARY_CLOUD_NAME}/${image.storage === "cloudinary_video" ? "video" : "image"}/upload/c_limit,w_320/${image.objectKey}.jpg`
+          : undefined,
       alt: image.alt,
       enAlt: image.enAlt,
       color: image.color ?? undefined,
@@ -176,6 +191,7 @@ export function toProduct(
     story: product.story,
     details,
     images: toCatalogImages(product.images, embedImages),
+    media: toCatalogImages(product.images, embedImages, true),
     radNumber: product.radNumber ?? undefined,
     artworkNumber: product.radNumber
       ? formatArtworkNumber(product.radNumber)

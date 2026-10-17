@@ -4,8 +4,12 @@ import { publicProductWhere } from "./product.mapper";
 
 /**
  * Public works. `images.storage` is selected so `product.mapper.ts` can
- * resolve a real path for `static`/`external`/`cloudinary` rows directly;
- * only `legacy_base64` rows get masked behind `/catalog/images/:id` there.
+ * resolve a real path for `static`/`external`/`cloudinary`/`cloudinary_video`
+ * rows directly; only `legacy_base64` rows get masked behind
+ * `/catalog/images/:id` there. The join condition must list every
+ * `src`-less storage kind explicitly (`cloudinary` and `cloudinary_video`)
+ * — a kind missing here is silently dropped from the public response
+ * entirely, not just un-rendered, since the row never even gets fetched.
  *
  * `images.src` is a plain column select, not a raw `CASE` expression: an
  * earlier attempt to skip detoasting `legacy_base64`'s base64 payload via
@@ -32,7 +36,7 @@ export function publicCatalogQuery(
     .leftJoin(
       "product.images",
       "images",
-      "images.src IS NOT NULL OR images.storage = 'cloudinary'",
+      "images.src IS NOT NULL OR images.storage IN ('cloudinary', 'cloudinary_video')",
     )
     .addSelect([
       "images.id",

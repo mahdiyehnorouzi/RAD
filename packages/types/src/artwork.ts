@@ -131,6 +131,7 @@ export interface Artwork {
   story: LocalizedText;
   care: LocalizedText | null;
   images: ProductImage[];
+  media?: ProductImage[];
   color: string;
   accent: string;
   shape: ProductShape;

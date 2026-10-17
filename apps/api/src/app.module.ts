@@ -1,3 +1,4 @@
+import { resolve } from "node:path";
 import { MiddlewareConsumer, Module, NestModule } from "@nestjs/common";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { APP_FILTER, APP_GUARD } from "@nestjs/core";
@@ -31,7 +32,19 @@ import { HealthController } from "./health/health.controller";
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
+    // `.env.local` (gitignored, never the one carrying the shared/remote
+    // DATABASE_URL) is listed first so it overrides `.env` for whichever
+    // keys it defines — lets a developer point their own machine at the
+    // local Docker Postgres without touching the committed-workflow `.env`
+    // that may be configured for a remote database. See
+    // `apps/api/.env.local.example` and `docs/development-database.md`.
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: [
+        resolve(__dirname, "../.env.local"),
+        resolve(__dirname, "../.env"),
+      ],
+    }),
     JwtModule.registerAsync({
       global: true,
       inject: [ConfigService],
