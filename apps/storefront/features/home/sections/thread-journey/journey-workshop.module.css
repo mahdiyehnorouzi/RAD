@@ -7,6 +7,14 @@
   --inner-tear: var(--tear-right);
   --inner-side: right;
   --outer-side: left;
+  /*
+   * The top rides the hero's own edge wave (continues that transition), but
+   * the bottom needs to match the sharper torn-paper look used by the sheet
+   * and photo's own inner edges - using hero-edge-bottom here clipped the
+   * photo's own tear-bottom mask away under it, leaving a flat, untorn
+   * corner where the two (differently shallow) masks intersected.
+   */
+  --workshop-bottom-tear-h: calc(var(--tear) * 2.4);
 
   position: relative;
   z-index: 1;
@@ -14,24 +22,24 @@
   grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
   min-height: clamp(18.5rem, 76vw, 36rem);
   /* Room inside the torn-top/bottom masks for the photo's torn foot */
-  padding-block: 0 calc(var(--hero-edge-h) + 0.5rem);
+  padding-block: 0 calc(var(--workshop-bottom-tear-h) + 0.5rem);
   margin-bottom: clamp(0rem, 5vw - 1.5rem, 1.5rem);
   background: var(--canvas);
   filter: drop-shadow(0 10px 16px rgb(52 36 20 / 0.16));
   -webkit-mask:
     var(--hero-edge) var(--hero-edge-x) 0 / var(--hero-edge-size)
       var(--hero-edge-h) no-repeat,
-    var(--hero-edge-bottom) var(--hero-edge-x) 100% / var(--hero-edge-size)
-      var(--hero-edge-h) no-repeat,
+    var(--tear-bottom) 0 100% / 100% var(--workshop-bottom-tear-h) no-repeat,
     linear-gradient(#000 0 0) 0 calc(var(--hero-edge-h) - 1px) / 100%
-      calc(100% - 2 * var(--hero-edge-h) + 2px) no-repeat;
+      calc(100% - var(--hero-edge-h) - var(--workshop-bottom-tear-h) + 2px)
+      no-repeat;
   mask:
     var(--hero-edge) var(--hero-edge-x) 0 / var(--hero-edge-size)
       var(--hero-edge-h) no-repeat,
-    var(--hero-edge-bottom) var(--hero-edge-x) 100% / var(--hero-edge-size)
-      var(--hero-edge-h) no-repeat,
+    var(--tear-bottom) 0 100% / 100% var(--workshop-bottom-tear-h) no-repeat,
     linear-gradient(#000 0 0) 0 calc(var(--hero-edge-h) - 1px) / 100%
-      calc(100% - 2 * var(--hero-edge-h) + 2px) no-repeat;
+      calc(100% - var(--hero-edge-h) - var(--workshop-bottom-tear-h) + 2px)
+      no-repeat;
 }
 
 html[dir="rtl"] .journeyWorkshop {

@@ -34,7 +34,6 @@ export function JourneyReady() {
         <span
           className={styles.journeyTagEyelet}
           data-thread-anchor
-          data-thread-hide="end"
           aria-hidden="true"
         />
         <svg

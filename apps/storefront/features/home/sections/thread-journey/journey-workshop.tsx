@@ -47,19 +47,17 @@ export function JourneyWorkshop({
         <img src={image} alt="" loading="lazy" decoding="async" />
         <JourneySpark className={styles.journeyWorkshopSpark} />
         {/*
-         * The thread ties off here with a permanent knot, not the
-         * scroll-synced pen bead (which only shows mid-draw and is gone
-         * once the page has fully drawn past it) - without this, "ends in a
-         * dot in the bowl" would only be true at one specific scroll
-         * position. data-thread-hide="start" then lets the run to the next
-         * section's anchor pass invisibly behind the page, instead of
-         * visibly crossing the gap toward the Ready Works tag.
+         * A permanent waypoint knot, not the scroll-synced pen bead (which
+         * only shows mid-draw and disappears once the page is fully drawn
+         * past it) - without this, "a dot in the bowl" would only be true at
+         * one specific scroll position. The thread itself keeps drawing on
+         * through to Ready Works and beyond as the page scrolls; this marks
+         * a waypoint on that continuous line, it does not cut the line.
          */}
         <span
           className={styles.journeyWorkshopExit}
           data-thread-anchor
           data-thread-knot
-          data-thread-hide="start"
           aria-hidden="true"
         />
       </div>
