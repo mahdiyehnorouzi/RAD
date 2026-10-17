@@ -152,9 +152,7 @@ export function JourneyCustom() {
                   >
                     {number(index + 1)}
                   </motion.span>
-                  <span className={styles.journeyCustomStepLabel}>
-                    {step}
-                  </span>
+                  <span className={styles.journeyCustomStepLabel}>{step}</span>
                   <span
                     className={styles.journeyCustomStepMark}
                     data-thread-mark
