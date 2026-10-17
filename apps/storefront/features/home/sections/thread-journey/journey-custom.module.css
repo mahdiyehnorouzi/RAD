@@ -1,102 +1,53 @@
 /*
- * Custom order: a dominant editorial photo with a torn-paper card pitching
- * the offer over its reading end, and a slim vertical stepper riding the
- * section's reading edge (the right edge in Persian), filling with scroll.
+ * Custom order: one full-bleed scene photo (torn paper baked in, a blank
+ * panel on the physical left for the pitch, a thin blank strip on the
+ * physical right for the stepper), with real HTML text, CTA and stepper
+ * laid over it - same approach as the Workshop section.
  */
 
 .journeyCustom {
   position: relative;
-  display: grid;
-  grid-template-columns: clamp(3.4rem, 11vw, 4rem) minmax(0, 1fr);
-  align-items: stretch;
+  min-height: clamp(26rem, 118vw, 42rem);
   margin: clamp(0.75rem, 2.4vw, 1.25rem) var(--journey-edge) 0;
-  padding-block: clamp(0.9rem, 3vw, 2rem);
-  background: color-mix(in srgb, var(--paper) 55%, var(--canvas));
+  overflow: hidden;
   border-radius: 14px;
+  background: color-mix(in srgb, var(--paper) 55%, var(--canvas));
+}
+
+.journeyCustomScene {
+  z-index: 0;
+  object-fit: cover;
+  object-position: 42% 50%;
 }
 
 /*
- * The photo (column 2) is written before the stepper (column 1) in markup
- * order (the card needs to sit after the photo in the DOM, for its z-index
- * stacking). Left to auto-placement that pushes the stepper into an implicit
- * second row once the cursor has passed column 2 — the two would stack
- * instead of sharing one area. Pinning both to row 1 keeps this one unified
- * composition: the row's height follows the stepper's natural (tallest)
- * content, and the photo (`fill`) stretches to match it, with no min-height
- * guess needed.
+ * The scene's blank panel is baked in on its physical left (a fixed
+ * photograph, not a mirrorable layout), so this is positioned with physical
+ * `left`, not logical start/end, regardless of page direction.
  */
-.journeyCustomPhoto,
-.journeyCustomSteps {
-  grid-row: 1;
-}
-
-.journeyCustomPhoto {
-  position: relative;
-  grid-column: 2;
-  min-height: 20rem;
-  overflow: hidden;
-  border-radius: 12px;
-  background: color-mix(in srgb, var(--sand) 40%, var(--canvas));
-  box-shadow: 0 10px 22px -12px rgb(52 36 20 / 0.45);
-}
-
-.journeyCustomPhoto img {
-  object-fit: cover;
-  object-position: 58% 50%;
-}
-
-html[dir="ltr"] .journeyCustomPhoto img {
-  object-position: 42% 50%;
-  transform: scaleX(-1);
-}
-
-/* The torn card, overlaid on the photo's reading end (left, in RTL) */
-
 .journeyCustomCard {
   position: absolute;
-  z-index: 3;
-  inset-block-start: 7%;
-  inset-inline-end: clamp(0.5rem, 4vw, 2rem);
+  z-index: 1;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 46%;
   display: grid;
+  align-content: center;
   justify-items: start;
-  gap: 0.55rem;
-  width: min(62%, 17rem);
-  padding: 1.6rem 1.3rem 1.9rem;
-  filter: drop-shadow(0 8px 12px rgb(40 26 12 / 0.24))
-    drop-shadow(0 1px 1px rgb(40 26 12 / 0.16));
+  gap: 0.6rem;
+  padding: 1.5rem clamp(1.1rem, 4vw, 1.6rem);
+  text-align: start;
+  direction: rtl;
 }
 
-.journeyCustomCard::before {
-  --card-mask:
-    var(--tear-top) top center / calc(100% - var(--tear)) var(--tear) no-repeat,
-    var(--tear-bottom) bottom center / calc(100% - var(--tear)) var(--tear)
-      no-repeat,
-    var(--tear-left) left center / var(--tear)
-      calc(100% - 2 * var(--tear) + 2px) no-repeat,
-    var(--tear-right) right center / var(--tear)
-      calc(100% - 2 * var(--tear) + 2px) no-repeat,
-    linear-gradient(#000 0 0) center / calc(100% - 2 * var(--tear) + 2px)
-      calc(100% - 2 * var(--tear) + 2px) no-repeat;
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  background:
-    radial-gradient(
-      140% 100% at 0% 0%,
-      rgb(255 255 255 / 0.65),
-      transparent 55%
-    ),
-    color-mix(in srgb, var(--paper) 88%, white);
-  -webkit-mask: var(--card-mask);
-  mask: var(--card-mask);
-  transform: rotate(-0.6deg);
+html[dir="ltr"] .journeyCustomCard {
+  direction: ltr;
 }
 
-/* Doubled class to outrank .journey h2 in thread-journey.module.css. */
 .journeyCustomCard.journeyCustomCard h2 {
   color: var(--moss);
-  font-size: clamp(1.8rem, 9.5vw, 2.6rem);
+  font-size: clamp(1.7rem, 8.6vw, 2.5rem);
   font-weight: 800;
   line-height: 1.2;
 }
@@ -126,11 +77,15 @@ html[dir="ltr"] .journeyCustomPhoto img {
   background: var(--oxide-deep);
 }
 
-/* The vertical stepper, riding the section's reading edge */
+/* The vertical stepper, riding the scene's thin blank strip on the physical right */
 
 .journeyCustomSteps {
-  position: relative;
-  grid-column: 1;
+  position: absolute;
+  z-index: 1;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: clamp(3.4rem, 11vw, 4rem);
   display: grid;
   grid-template-rows: repeat(4, 1fr);
   justify-items: center;
@@ -250,29 +205,15 @@ html[dir="ltr"] .journeyCustomPhoto img {
   pointer-events: none;
 }
 
-html[dir="ltr"] .journeyCustomThreadAnchor,
-html[dir="ltr"] .journeyCustomThreadAnchorEnd {
-  right: auto;
-  left: -0.65rem;
-}
-
 @media (min-width: 900px) {
   .journeyCustom {
-    grid-template-columns: 4.5rem minmax(0, 1fr);
     width: min(100% - 2 * var(--journey-edge), var(--journey-max));
+    min-height: clamp(28rem, 46vw, 40rem);
     margin-inline: auto;
-    padding-block: 2.4rem;
-  }
-
-  .journeyCustomPhoto {
-    min-height: 26rem;
   }
 
   .journeyCustomCard {
-    inset-block-start: 12%;
-    inset-inline-end: clamp(1.5rem, 4vw, 3.5rem);
-    width: 21rem;
-    padding: 2.1rem 1.7rem 2.3rem;
+    padding: 2.1rem 1.9rem;
   }
 
   .journeyCustomStepLabel {
@@ -298,7 +239,6 @@ html[dir="ltr"] .journeyCustomThreadAnchorEnd {
    * because reduced motion skipped its viewport trigger), content here
    * must never depend on it to be visible.
    */
-  .journeyCustomPhoto,
   .journeyCustomCard,
   .journeyCustomCard * {
     opacity: 1 !important;

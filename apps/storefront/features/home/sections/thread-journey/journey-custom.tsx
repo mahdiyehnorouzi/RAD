@@ -12,10 +12,11 @@ import styles from "./journey-custom.module.css";
 const EASE: [number, number, number, number] = [0.22, 1, 0.36, 1];
 
 /**
- * Custom order: an editorial photo with a torn-paper card holding the pitch
- * over its reading end, and a vertical stepper along the section's reading
- * edge that fills with scroll. The first step stays the thread's anchor so
- * the page-wide thread still finds it.
+ * Custom order: one full-bleed scene photo (torn paper baked in, a blank
+ * panel on the physical left for the pitch, a thin blank strip on the
+ * physical right for the stepper) with real HTML text, CTA and stepper laid
+ * over it. The first step stays the thread's anchor so the page-wide thread
+ * still finds it.
  */
 export function JourneyCustom() {
   const { locale, t, number } = useLocale();
@@ -46,32 +47,21 @@ export function JourneyCustom() {
       className={styles.journeyCustom}
       aria-labelledby="journey-custom-title"
     >
-      <motion.div
-        className={styles.journeyCustomPhoto}
-        {...(reduceMotion
-          ? {}
-          : {
-              initial: { scale: 1.045 },
-              whileInView: { scale: 1 },
-              viewport: { once: true, amount: 0.4 },
-              transition: { duration: 0.9, ease: EASE },
-            })}
-      >
-        <Image
-          src={journeyMedia.custom}
-          alt={copy.customPhotoAlt}
-          fill
-          sizes="(max-width: 899px) 94vw, 76rem"
-        />
-      </motion.div>
+      <Image
+        src={journeyMedia.customScene}
+        alt={copy.customPhotoAlt}
+        fill
+        sizes="(max-width: 899px) 100vw, 76rem"
+        className={styles.journeyCustomScene}
+      />
 
       <motion.div
         className={styles.journeyCustomCard}
         {...(reduceMotion
           ? {}
           : {
-              initial: { opacity: 0, y: 16, rotate: -1 },
-              whileInView: { opacity: 1, y: 0, rotate: 0 },
+              initial: { opacity: 0, y: 16 },
+              whileInView: { opacity: 1, y: 0 },
               viewport: { once: true, amount: 0.5 },
               transition: { duration: 0.75, ease: EASE },
             })}

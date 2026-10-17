@@ -1,28 +1,15 @@
 /*
- * The bench photograph bleeding off the reading start, its inner edge and
- * foot torn, beside a torn paper sheet at the reading end.
+ * One full-bleed scene photo (torn paper baked in at top and bottom, a
+ * blank panel on the left for the heading/CTA, the bench bowl on the
+ * right), with real HTML text laid over the blank panel.
  */
 
 .journeyWorkshop {
-  --inner-tear: var(--tear-right);
-  --inner-side: right;
-  --outer-side: left;
-  /*
-   * The top rides the hero's own edge wave (continues that transition), but
-   * the bottom needs to match the sharper torn-paper look used by the sheet
-   * and photo's own inner edges - using hero-edge-bottom here clipped the
-   * photo's own tear-bottom mask away under it, leaving a flat, untorn
-   * corner where the two (differently shallow) masks intersected.
-   */
   --workshop-bottom-tear-h: calc(var(--tear) * 2.4);
 
   position: relative;
   z-index: 1;
-  display: grid;
-  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
-  min-height: clamp(18.5rem, 76vw, 36rem);
-  /* Room inside the torn-top/bottom masks for the photo's torn foot */
-  padding-block: 0 calc(var(--workshop-bottom-tear-h) + 0.5rem);
+  min-height: clamp(19rem, 78vw, 34rem);
   margin-bottom: clamp(0rem, 5vw - 1.5rem, 1.5rem);
   background: var(--canvas);
   filter: drop-shadow(0 10px 16px rgb(52 36 20 / 0.16));
@@ -42,51 +29,41 @@
       no-repeat;
 }
 
-html[dir="rtl"] .journeyWorkshop {
-  --inner-tear: var(--tear-left);
-  --inner-side: left;
-  --outer-side: right;
+.journeyWorkshopScene {
+  z-index: 0;
+  object-fit: cover;
+  /* The scene's blank panel sits on its own left third; keep that in frame over the bowl. */
+  object-position: 30% 55%;
 }
 
+/*
+ * The scene photo's blank panel is baked in on its physical left (a fixed
+ * photograph, not a mirrorable layout), so this is positioned with physical
+ * `left`/`right`, not logical start/end, regardless of page direction.
+ */
 .journeyWorkshopSheet {
-  position: relative;
+  position: absolute;
+  z-index: 1;
+  top: 0;
+  left: 0;
   display: grid;
   align-content: center;
   justify-items: start;
   gap: 0.6rem;
-  grid-column: 2;
-  grid-row: 1;
-  padding-block: calc(var(--hero-edge-h) + 1.25rem) 3rem;
-  padding-inline-start: clamp(1.4rem, 4vw, 3rem);
-  padding-inline-end: var(--journey-gutter);
-  filter: drop-shadow(0 6px 8px rgb(52 36 20 / 0.12));
+  width: 46%;
+  height: 100%;
+  padding-inline-start: clamp(1.4rem, 5vw, 2.5rem);
+  padding-inline-end: 1rem;
+  text-align: start;
+  direction: rtl;
 }
 
-.journeyWorkshopSheet::before {
-  content: "";
-  position: absolute;
-  inset-block: 0;
-  inset-inline: -2rem 0;
-  z-index: -1;
-  background:
-    radial-gradient(
-      120% 90% at 20% 10%,
-      rgb(255 255 255 / 0.6),
-      transparent 60%
-    ),
-    color-mix(in srgb, var(--paper) 82%, white);
-  -webkit-mask:
-    linear-gradient(#000 0 0) top / 100% calc(100% - var(--tear) + 1px)
-      no-repeat,
-    var(--tear-bottom) bottom / 100% var(--tear) no-repeat;
-  mask:
-    linear-gradient(#000 0 0) top / 100% calc(100% - var(--tear) + 1px)
-      no-repeat,
-    var(--tear-bottom) bottom / 100% var(--tear) no-repeat;
+html[dir="ltr"] .journeyWorkshopSheet {
+  direction: ltr;
 }
 
 .journeyWorkshopSheet p {
-  max-width: 17rem;
+  max-width: 15rem;
   color: var(--muted);
   font-size: clamp(0.86rem, 1.6vw, 1.1rem);
   line-height: 1.8;
@@ -123,53 +100,29 @@ html[dir="ltr"] .journeyWorkshopLink:hover svg {
   outline-offset: 4px;
 }
 
-.journeyWorkshopPhoto {
-  position: relative;
-  grid-column: 1;
-  grid-row: 1;
-  z-index: 1;
-  margin-bottom: calc(var(--tear) * -0.6);
-}
-
-.journeyWorkshopPhoto img {
-  --photo-mask:
-    var(--inner-tear) var(--inner-side) top / var(--tear)
-      calc(100% - var(--tear) + 1px) no-repeat,
-    linear-gradient(#000 0 0) var(--outer-side) top /
-      calc(100% - var(--tear) + 1px) calc(100% - var(--tear) + 1px) no-repeat,
-    var(--tear-bottom) bottom / 100% var(--tear) no-repeat;
-  position: absolute;
-  inset: 0;
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  background: color-mix(in srgb, var(--sand) 40%, var(--canvas));
-  -webkit-mask: var(--photo-mask);
-  mask: var(--photo-mask);
-}
-
 .journeyWorkshopSpark {
   top: 36%;
-  inset-inline-end: 22%;
+  right: 18%;
+  z-index: 1;
 }
 
 .journeyWorkshopExit {
   position: absolute;
+  z-index: 1;
   bottom: 32%;
-  inset-inline-end: 24%;
+  right: 20%;
   width: 1px;
   height: 1px;
 }
 
 @media (min-width: 900px) {
   .journeyWorkshop {
-    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
-    min-height: clamp(30rem, 41vw, 39rem);
+    min-height: clamp(26rem, 38vw, 34rem);
   }
 
   .journeyWorkshopSheet {
-    padding-block: calc(var(--hero-edge-h) + 2.5rem) 4.5rem;
+    width: 40%;
+    padding-inline-start: clamp(2rem, 4vw, 3.5rem);
   }
 }
 
