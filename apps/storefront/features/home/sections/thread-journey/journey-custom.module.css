@@ -7,28 +7,33 @@
  * the overlay elements are fully transparent.
  */
 
-/*
- * The outer section adds vertical room (padding, filled with a paper tone
- * close to the photo's own canvas) so the composition reads taller and more
- * elongated. The inner frame is sized to the image alone, unaffected by
- * that padding, so every percentage position below still lines up with the
- * photo's own baked panel/strip exactly as before.
- */
 .journeyCustom {
-  padding-block: clamp(1.25rem, 6vw, 2.75rem) clamp(1.75rem, 8vw, 3.75rem);
   margin: clamp(0.75rem, 2.4vw, 1.25rem) var(--journey-edge) 0;
-  border-radius: 14px;
-  background: color-mix(in srgb, var(--paper) 45%, var(--canvas));
 }
 
 .journeyCustomFrame {
   position: relative;
 }
 
+/*
+ * The actual image is taller here, not the section wrapper: a fixed
+ * (viewport-independent) aspect-ratio taller than the photo's own 4:3,
+ * covered rather than contained. A constant ratio is what keeps the crop -
+ * and therefore every percentage position below - identical at every
+ * breakpoint; letting it vary with viewport width is what caused the
+ * original misalignment between the photo's baked paper and these
+ * overlays. object-position is biased right so the crop comes mostly from
+ * the photo's left margin (outside the card's own text, which sits closer
+ * to the card's inline-start/right edge) rather than from the stepper's
+ * strip on the right.
+ */
 .journeyCustomScene {
   display: block;
   width: 100%;
   height: auto;
+  aspect-ratio: 1448 / 1230;
+  object-fit: cover;
+  object-position: 62% 50%;
   border-radius: 14px;
 }
 
@@ -45,7 +50,7 @@
   z-index: 1;
   top: 9%;
   left: 0;
-  width: 45%;
+  width: 42%;
   height: 54%;
   display: grid;
   align-content: start;
@@ -94,7 +99,11 @@ html[dir="ltr"] .journeyCustomCard {
 
 /*
  * The vertical stepper rides the photo's own torn paper strip, far right,
- * full height.
+ * full height. A real flex column, not a grid with one line drawn behind
+ * everything: each step is its own flow block (circle, then label), and the
+ * connector between one step and the next is a separate, dedicated flex
+ * item that only occupies the gap - it starts below the label above it and
+ * ends above the circle below it, so it can never run behind either.
  */
 .journeyCustomSteps {
   position: absolute;
@@ -102,40 +111,44 @@ html[dir="ltr"] .journeyCustomCard {
   top: 0;
   right: 0;
   bottom: 0;
-  width: 13%;
-  display: grid;
-  grid-template-rows: repeat(4, 1fr);
-  justify-items: center;
-  padding-block: clamp(0.5rem, 4vw, 1.25rem);
+  width: 10%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-block: clamp(0.6rem, 4vw, 1.4rem);
   list-style: none;
-}
-
-.journeyCustomStepsFill,
-.journeyCustomSteps::before {
-  content: "";
-  position: absolute;
-  top: var(--track-top, 0);
-  inset-inline-start: calc(50% - 0.75px);
-  width: 1.5px;
-  height: var(--track-height, 0);
-}
-
-.journeyCustomSteps::before {
-  background: color-mix(in srgb, var(--ink) 22%, transparent);
-}
-
-.journeyCustomStepsFill {
-  transform-origin: top;
-  background: var(--oxide);
 }
 
 .journeyCustomStep {
   position: relative;
   z-index: 1;
-  display: grid;
-  justify-items: center;
-  align-content: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 0 0 auto;
   gap: 0.4rem;
+}
+
+/*
+ * The connector itself: a dedicated flex item between two steps, sized by
+ * the remaining space (flex: 1), never by the steps' own content. Its
+ * track (grey) spans the full segment; the fill (oxide) scales up from 0
+ * inside it as scroll passes through this gap.
+ */
+.journeyCustomConnector {
+  position: relative;
+  flex: 1 1 auto;
+  width: 1.5px;
+  min-height: 1rem;
+  margin-block: 0.15rem;
+  background: color-mix(in srgb, var(--ink) 22%, transparent);
+}
+
+.journeyCustomConnectorFill {
+  position: absolute;
+  inset: 0;
+  transform-origin: top;
+  background: var(--oxide);
 }
 
 .journeyCustomStepNumber {
