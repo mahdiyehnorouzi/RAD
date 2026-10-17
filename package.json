@@ -37,6 +37,8 @@
     "typecheck:all": "npm run typecheck --workspaces --if-present",
     "lint": "eslint .",
     "test": "npm run test --workspaces --if-present",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "format:changed": "node scripts/prettier-changed.mjs --write",
@@ -66,7 +68,12 @@
     "app:check:isolation": "npm run check:isolation --prefix apps/Rad-App",
     "app:version:set": "npm run version:set --prefix apps/Rad-App --",
     "app:typecheck": "npm run typecheck --prefix apps/Rad-App",
-    "app:test": "npm run test --prefix apps/Rad-App"
+    "app:test": "npm run test --prefix apps/Rad-App",
+    "qa:api": "npm run build --workspace @rad/api && QA_API_ONLY=1 playwright test --project=api",
+    "qa:smoke": "npm run build --workspace @rad/api && playwright test --project=api --project=chromium-390 --grep @smoke",
+    "qa:e2e": "npm run build --workspace @rad/api && playwright test",
+    "qa:cross-app": "npm run qa:smoke",
+    "qa:report": "playwright show-report tests/reports/html"
   },
   "dependencies": {
     "@nestjs/typeorm": "^12.0.1",
@@ -84,6 +91,7 @@
   "devDependencies": {
     "@cloudflare/vite-plugin": "^1.53.1",
     "@opennextjs/cloudflare": "^1.20.2",
+    "@playwright/test": "^1.64.0",
     "@types/node": "^22",
     "@types/react": "^19",
     "@types/react-dom": "^19",

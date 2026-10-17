@@ -14,3 +14,9 @@ work/
 apps/api/data/
 pricing.config.json
 pricing-report.json
+
+# Isolated QA output
+apps/*/.next-qa/
+tests/reports/*
+test-results/
+playwright-report/
