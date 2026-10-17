@@ -31,7 +31,7 @@
   display: block;
   width: 100%;
   height: auto;
-  aspect-ratio: 1448 / 1230;
+  aspect-ratio: 1448 / 1270;
   object-fit: cover;
   object-position: 62% 50%;
   border-radius: 14px;
@@ -50,7 +50,7 @@
   z-index: 1;
   top: 9%;
   left: 0;
-  width: 42%;
+  width: 41%;
   height: 54%;
   display: grid;
   align-content: start;
@@ -104,18 +104,23 @@ html[dir="ltr"] .journeyCustomCard {
  * connector between one step and the next is a separate, dedicated flex
  * item that only occupies the gap - it starts below the label above it and
  * ends above the circle below it, so it can never run behind either.
+ *
+ * Inset slightly from the frame's own right edge (not flush) so there is a
+ * genuine corridor of empty space between the stepper and the frame
+ * boundary for the page-wide thread to run through without ever leaving
+ * the section's visual bounds.
  */
 .journeyCustomSteps {
   position: absolute;
   z-index: 1;
   top: 0;
-  right: 0;
+  right: 0.65rem;
   bottom: 0;
-  width: 10%;
+  width: 8.5%;
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding-block: clamp(0.6rem, 4vw, 1.4rem);
+  padding-block: clamp(0.3rem, 2.5vw, 1.4rem);
   list-style: none;
 }
 
@@ -126,7 +131,7 @@ html[dir="ltr"] .journeyCustomCard {
   flex-direction: column;
   align-items: center;
   flex: 0 0 auto;
-  gap: 0.4rem;
+  gap: clamp(0.2rem, 1.4vw, 0.4rem);
 }
 
 /*
@@ -139,8 +144,8 @@ html[dir="ltr"] .journeyCustomCard {
   position: relative;
   flex: 1 1 auto;
   width: 1.5px;
-  min-height: 1rem;
-  margin-block: 0.15rem;
+  min-height: 0.5rem;
+  margin-block: 0.1rem;
   background: color-mix(in srgb, var(--ink) 22%, transparent);
 }
 
@@ -155,14 +160,14 @@ html[dir="ltr"] .journeyCustomCard {
   position: relative;
   display: grid;
   place-items: center;
-  width: 1.6rem;
-  height: 1.6rem;
+  width: clamp(1.3rem, 6vw, 1.6rem);
+  height: clamp(1.3rem, 6vw, 1.6rem);
   border: 1.5px solid color-mix(in srgb, var(--ink) 55%, transparent);
   border-radius: 50%;
   background: color-mix(in srgb, var(--paper) 96%, white);
   box-shadow: 0 1px 4px rgb(40 26 12 / 0.22);
   color: var(--ink);
-  font-size: 0.76rem;
+  font-size: clamp(0.64rem, 3vw, 0.76rem);
   font-weight: 700;
   line-height: 1;
   transition:
@@ -210,29 +215,31 @@ html[dir="ltr"] .journeyCustomCard {
 
 /*
  * The page-wide thread latches on here, not on a step circle: this sits in
- * the dedicated negative space outside the track so the line runs beside the
- * stepper rather than through its numbers and labels.
+ * the corridor between the stepper and the frame's own right edge (the
+ * steps column is inset 0.65rem from that edge specifically to leave this
+ * space) - clear of the step circles, but still inside the section's
+ * visual frame, never past its boundary.
  */
 .journeyCustomThreadAnchor {
   position: absolute;
   top: var(--track-top, 0);
-  right: -1.3rem;
+  right: -0.45rem;
   width: 1px;
   height: 1px;
   pointer-events: none;
 }
 
 /*
- * A second anchor past the last step, in the same outer gutter as the entry
+ * A second anchor past the last step, in the same corridor as the entry
  * anchor above: with only one anchor the path drifts back toward whatever
  * comes next and cuts back across the step circles. Pinning both ends of the
- * run outside the track keeps the whole pass through this section in the
- * dedicated margin beside it.
+ * run inside that corridor keeps the whole pass through this section inside
+ * the frame, beside the stepper rather than through it.
  */
 .journeyCustomThreadAnchorEnd {
   position: absolute;
   top: calc(var(--track-top, 0) + var(--track-height, 0));
-  right: -1.3rem;
+  right: -0.45rem;
   width: 1px;
   height: 1px;
   pointer-events: none;
