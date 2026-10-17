@@ -98,10 +98,16 @@ export class AdminController {
   }
 
   @Get("media/limits")
-  mediaLimits() { return mediaLimits(); }
+  mediaLimits() {
+    return mediaLimits();
+  }
 
   @Post("products/:slug/media/verify")
-  verifyMedia(@Param("slug") slug: string, @Body() body: VerifyProductMediaDto, @Req() request: AuthedRequest) {
+  verifyMedia(
+    @Param("slug") slug: string,
+    @Body() body: VerifyProductMediaDto,
+    @Req() request: AuthedRequest,
+  ) {
     this.admin.assert(request.adminRole, "product.write");
     return this.admin.verifyProductMedia(slug, body.objectKey, body.kind);
   }

@@ -68,7 +68,10 @@ function isCloudinaryUrl(src: string) {
  * own `w_<width>` URL param instead of Cloudflare's resizer.
  */
 function cloudinaryLoader({ src, width }: ImageLoaderProps) {
-  return src.replace(/\/image\/upload\/(?:f_auto,q_auto\/)?/, `/image/upload/c_limit,w_${width}/`);
+  return src.replace(
+    /\/image\/upload\/(?:f_auto,q_auto\/)?/,
+    `/image/upload/c_limit,w_${width}/`,
+  );
 }
 
 export function ProductMedia({

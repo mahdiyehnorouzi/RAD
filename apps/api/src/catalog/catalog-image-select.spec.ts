@@ -50,7 +50,9 @@ before(async () => {
   // this assertion just makes that invariant explicit and catches any
   // future edit that accidentally wires in a real connection string.
   if (!isLocalDatabaseUrl(testDatabaseUrl)) {
-    throw new Error("Refusing to run DB-backed tests against a non-local database.");
+    throw new Error(
+      "Refusing to run DB-backed tests against a non-local database.",
+    );
   }
   dataSource = createAppDataSource({
     url: testDatabaseUrl,
@@ -182,7 +184,10 @@ describe("publicCatalogQuery image src projection", () => {
       byStorage.has("cloudinary_video"),
       "expected the cloudinary_video row to survive the join — it must not be silently dropped",
     );
-    assert.equal(byStorage.get("cloudinary_video")?.objectKey, `rad/products/${product.id}/vid1`);
+    assert.equal(
+      byStorage.get("cloudinary_video")?.objectKey,
+      `rad/products/${product.id}/vid1`,
+    );
 
     // `stripImageSrc` (the mapper-layer defense in depth) must agree.
     const stripped = stripImageSrc(row!.images ?? []);

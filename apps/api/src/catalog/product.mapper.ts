@@ -69,7 +69,10 @@ export function imageSrc(image: ProductImageMeta, embedImages: boolean) {
     case "cloudinary":
       return (
         (image.objectKey
-          ? cloudinaryDeliveryUrl(image.objectKey, image.storage === "cloudinary_video")
+          ? cloudinaryDeliveryUrl(
+              image.objectKey,
+              image.storage === "cloudinary_video",
+            )
           : undefined) ?? `/catalog/images/${image.id}`
       );
     case "legacy_base64":
@@ -85,12 +88,19 @@ export function toCatalogImages(
   includeVideos = false,
 ): CatalogImage[] {
   return [...images]
-    .filter(image => includeVideos || image.storage !== "cloudinary_video")
+    .filter((image) => includeVideos || image.storage !== "cloudinary_video")
     .sort((a, b) => a.sortOrder - b.sortOrder)
     .map((image) => ({
       src: imageSrc(image, embedImages),
-      kind: image.storage === "cloudinary_video" ? "video" as const : "image" as const,
-      thumbnail: image.objectKey && (image.storage === "cloudinary" || image.storage === "cloudinary_video") ? `https://res.cloudinary.com/${process.env.CLOUDINARY_CLOUD_NAME}/${image.storage === "cloudinary_video" ? "video" : "image"}/upload/c_limit,w_320/${image.objectKey}.jpg` : undefined,
+      kind:
+        image.storage === "cloudinary_video"
+          ? ("video" as const)
+          : ("image" as const),
+      thumbnail:
+        image.objectKey &&
+        (image.storage === "cloudinary" || image.storage === "cloudinary_video")
+          ? `https://res.cloudinary.com/${process.env.CLOUDINARY_CLOUD_NAME}/${image.storage === "cloudinary_video" ? "video" : "image"}/upload/c_limit,w_320/${image.objectKey}.jpg`
+          : undefined,
       alt: image.alt,
       enAlt: image.enAlt,
       color: image.color ?? undefined,

@@ -1,4 +1,9 @@
-import { Injectable, ServiceUnavailableException, BadRequestException, Logger } from "@nestjs/common";
+import {
+  Injectable,
+  ServiceUnavailableException,
+  BadRequestException,
+  Logger,
+} from "@nestjs/common";
 import { mediaLimits, validateMediaSize } from "./media-policy";
 import { ConfigService } from "@nestjs/config";
 import { v2 as cloudinary } from "cloudinary";
@@ -106,8 +111,14 @@ export class CloudinaryStorageService {
     const apiKey = this.config.get<string>("CLOUDINARY_API_KEY");
     const apiSecret = this.config.get<string>("CLOUDINARY_API_SECRET");
     if (!cloudName || !apiKey || !apiSecret) {
-      new Logger(CloudinaryStorageService.name).error("Media storage configuration missing: set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET on the API runtime.");
-      throw new ServiceUnavailableException({ code: "media_storage_unavailable", message: "فضای بارگذاری آماده نیست. با پشتیبانی تماس بگیرید و دوباره تلاش کنید." });
+      new Logger(CloudinaryStorageService.name).error(
+        "Media storage configuration missing: set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET on the API runtime.",
+      );
+      throw new ServiceUnavailableException({
+        code: "media_storage_unavailable",
+        message:
+          "فضای بارگذاری آماده نیست. با پشتیبانی تماس بگیرید و دوباره تلاش کنید.",
+      });
     }
     cloudinary.config({
       cloud_name: cloudName,
@@ -131,10 +142,21 @@ export class CloudinaryStorageService {
    * independently recomputes the same digest by hand and asserts it
    * matches, so this isn't just testing the SDK against itself.
    */
-  createSignedUpload(folder: string, kind: "image" | "video" = "image", restricted = false) {
+  createSignedUpload(
+    folder: string,
+    kind: "image" | "video" = "image",
+    restricted = false,
+  ) {
     this.ensureConfigured();
     const timestamp = Math.floor(Date.now() / 1000);
-    const paramsToSign = restricted ? { folder, timestamp, overwrite: false, allowed_formats: kind === "video" ? "mp4,webm" : "jpg,png,webp" } : { folder, timestamp };
+    const paramsToSign = restricted
+      ? {
+          folder,
+          timestamp,
+          overwrite: false,
+          allowed_formats: kind === "video" ? "mp4,webm" : "jpg,png,webp",
+        }
+      : { folder, timestamp };
     const signature = cloudinary.utils.api_sign_request(
       paramsToSign,
       this.config.get<string>("CLOUDINARY_API_SECRET") as string,
@@ -156,12 +178,19 @@ export class CloudinaryStorageService {
     try {
       asset = await cloudinary.api.resource(publicId, { resource_type: kind });
     } catch (error) {
-      if ((error as { error?: { http_code?: number }; http_code?: number }).http_code === 404 || (error as { error?: { http_code?: number } }).error?.http_code === 404) {
+      if (
+        (error as { error?: { http_code?: number }; http_code?: number })
+          .http_code === 404 ||
+        (error as { error?: { http_code?: number } }).error?.http_code === 404
+      ) {
         throw new BadRequestException("فایل پیدا نشد. دوباره بارگذاری کنید.");
       }
-      throw new ServiceUnavailableException("بررسی فایل ممکن نشد. دوباره تلاش کنید.");
+      throw new ServiceUnavailableException(
+        "بررسی فایل ممکن نشد. دوباره تلاش کنید.",
+      );
     }
-    const formats = kind === "video" ? ["mp4", "webm"] : ["jpg", "jpeg", "png", "webp"];
+    const formats =
+      kind === "video" ? ["mp4", "webm"] : ["jpg", "jpeg", "png", "webp"];
     // Note: Cloudinary's admin `resource` endpoint does not reliably return
     // `duration` for video resources on every plan/account (confirmed empty
     // even with `video_metadata: true`) — a real, successfully-transcoded
@@ -169,11 +198,23 @@ export class CloudinaryStorageService {
     // dimensions) is already sufficient proof of valid video content, since
     // Cloudinary itself rejects non-video bytes at ingest when uploaded as
     // resource_type "video".
-    if (asset.resource_type !== kind || !formats.includes(asset.format) || !(asset.width > 0 && asset.height > 0)) {
-      throw new BadRequestException("محتوای فایل معتبر نیست. تصویر JPEG، PNG، WebP یا ویدیوی MP4، WebM انتخاب کنید.");
+    if (
+      asset.resource_type !== kind ||
+      !formats.includes(asset.format) ||
+      !(asset.width > 0 && asset.height > 0)
+    ) {
+      throw new BadRequestException(
+        "محتوای فایل معتبر نیست. تصویر JPEG، PNG، WebP یا ویدیوی MP4، WebM انتخاب کنید.",
+      );
     }
     validateMediaSize(asset.bytes, kind);
-    return { objectKey: publicId, storage: kind === "video" ? "cloudinary_video" as const : "cloudinary" as const };
+    return {
+      objectKey: publicId,
+      storage:
+        kind === "video"
+          ? ("cloudinary_video" as const)
+          : ("cloudinary" as const),
+    };
   }
 
   /**

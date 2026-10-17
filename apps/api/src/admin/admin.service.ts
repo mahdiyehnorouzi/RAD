@@ -121,9 +121,16 @@ export class AdminService {
     return this.storage.createSignedUpload(folder, kind, size !== undefined);
   }
 
-  async verifyProductMedia(slug: string, objectKey: string, kind: "image" | "video") {
-    const product = await this.products.findOne({ where: { slug: slug.trim().toLowerCase().replace(/\s+/g, "-") } });
-    if (!isValidProductImagePublicId(product?.id ?? "unsaved", objectKey)) throw new BadRequestException("شناسه فایل نامعتبر است.");
+  async verifyProductMedia(
+    slug: string,
+    objectKey: string,
+    kind: "image" | "video",
+  ) {
+    const product = await this.products.findOne({
+      where: { slug: slug.trim().toLowerCase().replace(/\s+/g, "-") },
+    });
+    if (!isValidProductImagePublicId(product?.id ?? "unsaved", objectKey))
+      throw new BadRequestException("شناسه فایل نامعتبر است.");
     return this.storage.verifyMedia(objectKey, kind);
   }
 
@@ -149,14 +156,36 @@ export class AdminService {
       throw new ConflictException("این شناسه URL قبلاً استفاده شده است.");
     }
 
-    if (!input.images.some(image => image.storage !== "cloudinary_video")) throw new BadRequestException("حداقل یک تصویر برای اثر لازم است.");
+    if (!input.images.some((image) => image.storage !== "cloudinary_video"))
+      throw new BadRequestException("حداقل یک تصویر برای اثر لازم است.");
     // Validate before any product/vendor writes. Existing legacy references remain compatible.
     for (const image of input.images) {
-      if (image.storage === "cloudinary" || image.storage === "cloudinary_video") {
-        if (!image.objectKey || !isValidProductImagePublicId(duplicate?.id ?? "unsaved", image.objectKey)) throw new BadRequestException("شناسه فایل نامعتبر است.");
-        await this.storage.verifyMedia(image.objectKey, image.storage === "cloudinary_video" ? "video" : "image");
+      if (
+        image.storage === "cloudinary" ||
+        image.storage === "cloudinary_video"
+      ) {
+        if (
+          !image.objectKey ||
+          !isValidProductImagePublicId(
+            duplicate?.id ?? "unsaved",
+            image.objectKey,
+          )
+        )
+          throw new BadRequestException("شناسه فایل نامعتبر است.");
+        await this.storage.verifyMedia(
+          image.objectKey,
+          image.storage === "cloudinary_video" ? "video" : "image",
+        );
       } else if (image.storage === "legacy_base64") {
-        try { assertImageData(image.src ?? "", productImageLimit, productImageError); } catch { throw new BadRequestException(productImageError); }
+        try {
+          assertImageData(
+            image.src ?? "",
+            productImageLimit,
+            productImageError,
+          );
+        } catch {
+          throw new BadRequestException(productImageError);
+        }
       } else if (!image.src) throw new BadRequestException(productImageError);
     }
     const vendorId = await this.ensureVendor(input.artist);
@@ -535,17 +564,27 @@ export class AdminService {
     });
     const keptObjectKeys = new Set(
       rows
-        .filter((row) => (row.storage === "cloudinary" || row.storage === "cloudinary_video"))
+        .filter(
+          (row) =>
+            row.storage === "cloudinary" || row.storage === "cloudinary_video",
+        )
         .map((row) => row.objectKey as string),
     );
     const orphanedObjectKeys = existing
       .filter(
         (row) =>
-          (row.storage === "cloudinary" || row.storage === "cloudinary_video") &&
+          (row.storage === "cloudinary" ||
+            row.storage === "cloudinary_video") &&
           row.objectKey &&
           !keptObjectKeys.has(row.objectKey),
       )
-      .map((row) => ({ objectKey: row.objectKey as string, kind: row.storage === "cloudinary_video" ? "video" as const : "image" as const }));
+      .map((row) => ({
+        objectKey: row.objectKey as string,
+        kind:
+          row.storage === "cloudinary_video"
+            ? ("video" as const)
+            : ("image" as const),
+      }));
 
     await this.dataSource.transaction(async (manager) => {
       await manager.delete(ProductImage, { productSlug: slug });

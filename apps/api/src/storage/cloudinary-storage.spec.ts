@@ -199,7 +199,10 @@ describe("CloudinaryStorageService.verifyMedia", () => {
     }));
     try {
       const result = await service().verifyMedia("rad/pending/abc", "image");
-      assert.deepEqual(result, { objectKey: "rad/pending/abc", storage: "cloudinary" });
+      assert.deepEqual(result, {
+        objectKey: "rad/pending/abc",
+        storage: "cloudinary",
+      });
     } finally {
       restore();
     }
@@ -217,7 +220,10 @@ describe("CloudinaryStorageService.verifyMedia", () => {
     }));
     try {
       const result = await service().verifyMedia("rad/pending/vid1", "video");
-      assert.deepEqual(result, { objectKey: "rad/pending/vid1", storage: "cloudinary_video" });
+      assert.deepEqual(result, {
+        objectKey: "rad/pending/vid1",
+        storage: "cloudinary_video",
+      });
     } finally {
       restore();
     }
@@ -234,7 +240,10 @@ describe("CloudinaryStorageService.verifyMedia", () => {
     }));
     try {
       const result = await service().verifyMedia("rad/pending/vid2", "video");
-      assert.deepEqual(result, { objectKey: "rad/pending/vid2", storage: "cloudinary_video" });
+      assert.deepEqual(result, {
+        objectKey: "rad/pending/vid2",
+        storage: "cloudinary_video",
+      });
     } finally {
       restore();
     }

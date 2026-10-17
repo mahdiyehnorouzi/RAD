@@ -9,14 +9,25 @@ import {
 
 describe("parseDatabaseHost / isLocalDatabaseUrl", () => {
   test("recognizes localhost, 127.0.0.1 and ::1 as local", () => {
-    assert.equal(isLocalDatabaseUrl("postgresql://rad:rad@localhost:5432/rad"), true);
-    assert.equal(isLocalDatabaseUrl("postgresql://rad:rad@127.0.0.1:5432/rad"), true);
-    assert.equal(isLocalDatabaseUrl("postgresql://rad:rad@[::1]:5432/rad"), true);
+    assert.equal(
+      isLocalDatabaseUrl("postgresql://rad:rad@localhost:5432/rad"),
+      true,
+    );
+    assert.equal(
+      isLocalDatabaseUrl("postgresql://rad:rad@127.0.0.1:5432/rad"),
+      true,
+    );
+    assert.equal(
+      isLocalDatabaseUrl("postgresql://rad:rad@[::1]:5432/rad"),
+      true,
+    );
   });
 
   test("rejects a remote host, including a Postgres-hosting PaaS", () => {
     assert.equal(
-      isLocalDatabaseUrl("postgresql://root:x@olympus.liara.cloud:31444/postgres"),
+      isLocalDatabaseUrl(
+        "postgresql://root:x@olympus.liara.cloud:31444/postgres",
+      ),
       false,
     );
   });
@@ -41,7 +52,10 @@ describe("assertSafeScriptTarget", () => {
 
   test("passes silently for a local database URL", () => {
     assert.doesNotThrow(() =>
-      assertSafeScriptTarget("test-script", "postgresql://rad:rad@localhost:5432/rad"),
+      assertSafeScriptTarget(
+        "test-script",
+        "postgresql://rad:rad@localhost:5432/rad",
+      ),
     );
   });
 

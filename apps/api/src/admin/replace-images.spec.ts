@@ -76,7 +76,9 @@ before(async () => {
   // this assertion just makes that invariant explicit and catches any
   // future edit that accidentally wires in a real connection string.
   if (!isLocalDatabaseUrl(testDatabaseUrl)) {
-    throw new Error("Refusing to run DB-backed tests against a non-local database.");
+    throw new Error(
+      "Refusing to run DB-backed tests against a non-local database.",
+    );
   }
   dataSource = createAppDataSource({
     url: testDatabaseUrl,
@@ -104,7 +106,10 @@ before(async () => {
   // makes (delete of an orphaned/removed asset) so the DB-level logic can
   // be asserted without a live Cloudinary connection; it resolves
   // successfully by default.
-  storage.verifyMedia = async (objectKey, kind) => ({objectKey, storage: kind === "video" ? "cloudinary_video" : "cloudinary"});
+  storage.verifyMedia = async (objectKey, kind) => ({
+    objectKey,
+    storage: kind === "video" ? "cloudinary_video" : "cloudinary",
+  });
   deleteCalls = [];
   storage.destroy = async (publicId: string) => {
     deleteCalls.push(publicId);
@@ -170,7 +175,11 @@ describe("AdminService.saveProduct — cloudinary images (Phase 2)", () => {
 
   test("persists a new cloudinary image keyed by the product's id (post-creation edit upload)", async () => {
     const slug = `cloudinary-byid-${Date.now()}`;
-    const created = await admin.saveProduct(baseInput(slug, [{ storage: "static", src: "/catalog/test.jpg" }]) as never);
+    const created = await admin.saveProduct(
+      baseInput(slug, [
+        { storage: "static", src: "/catalog/test.jpg" },
+      ]) as never,
+    );
     const objectKey = `rad/products/${created.id}/xyz222ABC`;
     const saved = await admin.saveProduct(
       baseInput(slug, [{ storage: "cloudinary", objectKey }]) as never,
@@ -199,7 +208,11 @@ describe("AdminService.saveProduct — cloudinary images (Phase 2)", () => {
 
   test("rejects a forged objectKey that reuses another product's real id", async () => {
     const slugA = `cloudinary-forge-a-${Date.now()}`;
-    const productA = await admin.saveProduct(baseInput(slugA, [{ storage: "static", src: "/catalog/test.jpg" }]) as never);
+    const productA = await admin.saveProduct(
+      baseInput(slugA, [
+        { storage: "static", src: "/catalog/test.jpg" },
+      ]) as never,
+    );
     const slugB = `cloudinary-forge-b-${Date.now()}`;
     // An admin crafts a key that *looks* legitimate (correct pattern) but
     // targets product A's namespace while saving product B — must still
@@ -216,11 +229,17 @@ describe("AdminService.saveProduct — cloudinary images (Phase 2)", () => {
 
   test("slug rename regression: current code forbids changing slug after creation", async () => {
     const slug = `cloudinary-rename-${Date.now()}`;
-    const baseline = await admin.saveProduct(baseInput(slug, [{ storage: "static", src: "/catalog/test.jpg" }]) as never);
+    const baseline = await admin.saveProduct(
+      baseInput(slug, [
+        { storage: "static", src: "/catalog/test.jpg" },
+      ]) as never,
+    );
     await assert.rejects(
       () =>
         admin.saveProduct(
-          baseInput(`${slug}-renamed`, [{ storage: "static", src: "/catalog/test.jpg" }]) as never,
+          baseInput(`${slug}-renamed`, [
+            { storage: "static", src: "/catalog/test.jpg" },
+          ]) as never,
           baseline.id,
         ),
       /شناسه URL پس از ایجاد قابل تغییر نیست/,
@@ -229,7 +248,11 @@ describe("AdminService.saveProduct — cloudinary images (Phase 2)", () => {
 
   test("duplicate/repeated save with the same cloudinary image payload is idempotent (no duplicate rows, no delete calls)", async () => {
     const slug = `cloudinary-dup-${Date.now()}`;
-    const created = await admin.saveProduct(baseInput(slug, [{ storage: "static", src: "/catalog/test.jpg" }]) as never);
+    const created = await admin.saveProduct(
+      baseInput(slug, [
+        { storage: "static", src: "/catalog/test.jpg" },
+      ]) as never,
+    );
     const objectKey = `rad/products/${created.id}/dup444`;
     const input = baseInput(slug, [{ storage: "cloudinary", objectKey }]);
     await admin.saveProduct(input as never, created.id);
@@ -250,7 +273,11 @@ describe("AdminService.saveProduct — cloudinary images (Phase 2)", () => {
 
   test("removing one cloudinary image from a multi-image product deletes only the removed asset, post-commit", async () => {
     const slug = `cloudinary-partial-remove-${Date.now()}`;
-    const created = await admin.saveProduct(baseInput(slug, [{ storage: "static", src: "/catalog/test.jpg" }]) as never);
+    const created = await admin.saveProduct(
+      baseInput(slug, [
+        { storage: "static", src: "/catalog/test.jpg" },
+      ]) as never,
+    );
     const keyA = `rad/products/${created.id}/keep555`;
     const keyB = `rad/products/${created.id}/drop666`;
     await admin.saveProduct(
@@ -276,7 +303,11 @@ describe("AdminService.saveProduct — cloudinary images (Phase 2)", () => {
 
   test("editing a product without touching images leaves its image rows byte-for-byte unchanged, and deletes nothing", async () => {
     const slug = `cloudinary-no-image-change-${Date.now()}`;
-    const created = await admin.saveProduct(baseInput(slug, [{ storage: "static", src: "/catalog/test.jpg" }]) as never);
+    const created = await admin.saveProduct(
+      baseInput(slug, [
+        { storage: "static", src: "/catalog/test.jpg" },
+      ]) as never,
+    );
     const key = `rad/products/${created.id}/stable777`;
     await admin.saveProduct(
       baseInput(slug, [{ storage: "cloudinary", objectKey: key }]) as never,
@@ -301,7 +332,11 @@ describe("AdminService.saveProduct — cloudinary images (Phase 2)", () => {
 
   test("mixed array of legacy_base64 and cloudinary images preserves order", async () => {
     const slug = `cloudinary-mixed-${Date.now()}`;
-    const created = await admin.saveProduct(baseInput(slug, [{ storage: "static", src: "/catalog/test.jpg" }]) as never);
+    const created = await admin.saveProduct(
+      baseInput(slug, [
+        { storage: "static", src: "/catalog/test.jpg" },
+      ]) as never,
+    );
     const objectKey = `rad/products/${created.id}/mixed888`;
     const base64 = `data:image/png;base64,${Buffer.from("x").toString("base64")}`;
     const saved = await admin.saveProduct(
@@ -325,7 +360,11 @@ describe("AdminService.saveProduct — cloudinary images (Phase 2)", () => {
 
   test("a failed Cloudinary delete during cleanup is logged/non-fatal — the save itself still succeeds", async () => {
     const slug = `cloudinary-delete-fails-${Date.now()}`;
-    const created = await admin.saveProduct(baseInput(slug, [{ storage: "static", src: "/catalog/test.jpg" }]) as never);
+    const created = await admin.saveProduct(
+      baseInput(slug, [
+        { storage: "static", src: "/catalog/test.jpg" },
+      ]) as never,
+    );
     const keyA = `rad/products/${created.id}/flaky999`;
     await admin.saveProduct(
       baseInput(slug, [{ storage: "cloudinary", objectKey: keyA }]) as never,
@@ -338,7 +377,9 @@ describe("AdminService.saveProduct — cloudinary images (Phase 2)", () => {
     };
     try {
       const after = await admin.saveProduct(
-        baseInput(slug, [{ storage: "static", src: "/catalog/test.jpg" }]) as never,
+        baseInput(slug, [
+          { storage: "static", src: "/catalog/test.jpg" },
+        ]) as never,
         created.id,
       );
       assert.equal(after.images.length, 1);
