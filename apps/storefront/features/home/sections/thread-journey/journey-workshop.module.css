@@ -1,57 +1,43 @@
 /*
- * One full-bleed scene photo (torn paper baked in at top and bottom, a
- * blank panel on the left for the heading/CTA, the bench bowl on the
- * right), with real HTML text laid over the blank panel.
+ * The scene photo already paints its own torn paper, top and bottom, and its
+ * own blank panel - it is shown at its natural aspect ratio (never cropped),
+ * so those shapes always land at the same fixed percentages. Nothing here
+ * recreates a paper edge, a border or a shadow: the photo is the only source
+ * of truth for the paper, and the overlay elements are fully transparent.
  */
 
 .journeyWorkshop {
-  --workshop-bottom-tear-h: calc(var(--tear) * 2.4);
-
   position: relative;
   z-index: 1;
-  min-height: clamp(19rem, 78vw, 34rem);
   margin-bottom: clamp(0rem, 5vw - 1.5rem, 1.5rem);
-  background: var(--canvas);
-  -webkit-mask:
-    var(--hero-edge) var(--hero-edge-x) 0 / var(--hero-edge-size)
-      var(--hero-edge-h) no-repeat,
-    var(--tear-bottom) 0 100% / 100% var(--workshop-bottom-tear-h) no-repeat,
-    linear-gradient(#000 0 0) 0 calc(var(--hero-edge-h) - 1px) / 100%
-      calc(100% - var(--hero-edge-h) - var(--workshop-bottom-tear-h) + 2px)
-      no-repeat;
-  mask:
-    var(--hero-edge) var(--hero-edge-x) 0 / var(--hero-edge-size)
-      var(--hero-edge-h) no-repeat,
-    var(--tear-bottom) 0 100% / 100% var(--workshop-bottom-tear-h) no-repeat,
-    linear-gradient(#000 0 0) 0 calc(var(--hero-edge-h) - 1px) / 100%
-      calc(100% - var(--hero-edge-h) - var(--workshop-bottom-tear-h) + 2px)
-      no-repeat;
 }
 
 .journeyWorkshopScene {
-  z-index: 0;
-  object-fit: cover;
-  /* The scene's blank panel sits on its own left third; keep that in frame over the bowl. */
-  object-position: 30% 55%;
+  display: block;
+  width: 100%;
+  height: auto;
 }
 
 /*
- * The scene photo's blank panel is baked in on its physical left (a fixed
- * photograph, not a mirrorable layout), so this is positioned with physical
- * `left`/`right`, not logical start/end, regardless of page direction.
+ * The photo's blank panel: roughly the left 53% of the frame, running from
+ * just under its own top tear to just above its own bottom tear (measured
+ * directly on the source image, in percent so it stays correct at any
+ * rendered width). Positioned with physical `left`, not logical
+ * start/end, since the photo is a fixed composition, not a mirrorable
+ * layout.
  */
 .journeyWorkshopSheet {
   position: absolute;
   z-index: 1;
-  top: 0;
+  top: 11%;
   left: 0;
+  width: 51%;
+  height: 76%;
   display: grid;
   align-content: center;
   justify-items: start;
   gap: 0.6rem;
-  width: 49%;
-  height: 100%;
-  padding-inline-start: clamp(1.2rem, 4.5vw, 2.5rem);
+  padding-inline-start: clamp(1.2rem, 5.5vw, 2.5rem);
   padding-inline-end: 0.5rem;
   text-align: start;
   direction: rtl;
@@ -61,22 +47,26 @@ html[dir="ltr"] .journeyWorkshopSheet {
   direction: ltr;
 }
 
+.journeyWorkshopSheet h2 {
+  font-size: clamp(1.1rem, 4.6vw, 1.6rem);
+}
+
 .journeyWorkshopSheet p {
   max-width: 15rem;
   color: var(--muted);
-  font-size: clamp(0.86rem, 1.6vw, 1.1rem);
-  line-height: 1.8;
+  font-size: clamp(0.78rem, 3.2vw, 1.05rem);
+  line-height: 1.7;
 }
 
 .journeyWorkshopLink {
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
-  margin-top: 0.9rem;
-  padding-bottom: 0.45rem;
+  margin-top: 0.6rem;
+  padding-bottom: 0.4rem;
   border-bottom: 1.5px solid var(--oxide);
   color: var(--oxide);
-  font-size: clamp(0.72rem, 3.6vw, 0.95rem);
+  font-size: clamp(0.7rem, 3.4vw, 0.95rem);
   font-weight: 500;
   white-space: nowrap;
 }
@@ -117,13 +107,13 @@ html[dir="ltr"] .journeyWorkshopLink:hover svg {
 }
 
 @media (min-width: 900px) {
-  .journeyWorkshop {
-    min-height: clamp(26rem, 38vw, 34rem);
+  .journeyWorkshopSheet {
+    width: 46%;
+    padding-inline-start: clamp(2rem, 4vw, 3.5rem);
   }
 
-  .journeyWorkshopSheet {
-    width: 40%;
-    padding-inline-start: clamp(2rem, 4vw, 3.5rem);
+  .journeyWorkshopSheet h2 {
+    font-size: clamp(1.6rem, 2.6vw, 2.1rem);
   }
 }
 

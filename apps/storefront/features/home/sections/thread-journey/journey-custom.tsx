@@ -12,11 +12,13 @@ import styles from "./journey-custom.module.css";
 const EASE: [number, number, number, number] = [0.22, 1, 0.36, 1];
 
 /**
- * Custom order: one full-bleed scene photo (torn paper baked in, a blank
- * panel on the physical left for the pitch, a thin blank strip on the
- * physical right for the stepper) with real HTML text, CTA and stepper laid
- * over it. The first step stays the thread's anchor so the page-wide thread
- * still finds it.
+ * Custom order: one scene photo, shown at its own natural aspect ratio
+ * (never cropped), with real HTML text, CTA and stepper positioned at fixed
+ * percentages matching its baked-in paper panel (upper-left, not full
+ * height - the photo's lower-left shows the sketching hand) and its baked-in
+ * stepper strip (full-height, far right). Nothing here recreates a paper
+ * edge the photo already paints. The first step stays the thread's anchor
+ * so the page-wide thread still finds it.
  */
 export function JourneyCustom() {
   const { locale, t, number } = useLocale();
@@ -50,7 +52,8 @@ export function JourneyCustom() {
       <Image
         src={journeyMedia.customScene}
         alt={copy.customPhotoAlt}
-        fill
+        width={1448}
+        height={1086}
         sizes="(max-width: 899px) 100vw, 76rem"
         className={styles.journeyCustomScene}
       />

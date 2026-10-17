@@ -1,68 +1,46 @@
 /*
- * Custom order: one full-bleed scene photo (torn paper baked in, a blank
- * panel on the physical left for the pitch, a thin blank strip on the
- * physical right for the stepper), with real HTML text, CTA and stepper
- * laid over it - same approach as the Workshop section.
+ * The scene photo already paints its own torn paper panel (upper-left) and
+ * its own torn paper stepper strip (far right, full height) - it is shown
+ * at its natural aspect ratio (never cropped), so those shapes always land
+ * at the same fixed percentages. Nothing here recreates a paper surface,
+ * edge or shadow: the photo is the only source of truth for the paper, and
+ * the overlay elements are fully transparent.
  */
 
 .journeyCustom {
   position: relative;
-  min-height: clamp(26rem, 118vw, 42rem);
   margin: clamp(0.75rem, 2.4vw, 1.25rem) var(--journey-edge) 0;
-  overflow: hidden;
-  border-radius: 14px;
-  background: color-mix(in srgb, var(--paper) 55%, var(--canvas));
 }
 
 .journeyCustomScene {
-  z-index: 0;
-  object-fit: cover;
-  object-position: 42% 50%;
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 14px;
 }
 
 /*
- * The scene's blank panel is baked in on its physical left, but its exact
- * visible extent shifts with object-fit: cover's crop at each viewport - so
- * the text also gets its own real, opaque paper background (not just relying
- * on the photo's baked panel), sized to actually contain the heading, body
- * and CTA with real padding, with an organic torn edge on the side that
- * meets the photo. Positioned with physical `left`, not logical start/end,
- * since the photo is a fixed composition, not a mirrorable layout.
+ * The photo's content panel: the left ~45% of the frame, but only its upper
+ * two-thirds - its own torn lower edge ends around mid-height so the photo's
+ * sketching hand stays visible below it. Measured directly on the source
+ * image, in percent so it stays correct at any rendered width. Positioned
+ * with physical `left`, not logical start/end, since the photo is a fixed
+ * composition, not a mirrorable layout.
  */
 .journeyCustomCard {
   position: absolute;
   z-index: 1;
-  top: 0;
+  top: 9%;
   left: 0;
-  bottom: 0;
-  width: 46%;
+  width: 45%;
+  height: 54%;
   display: grid;
-  align-content: center;
+  align-content: start;
   justify-items: start;
-  gap: 0.6rem;
-  padding: 1.5rem clamp(1.1rem, 4vw, 1.6rem);
+  gap: 0.5rem;
+  padding: 0.5rem clamp(1rem, 4vw, 1.6rem);
   text-align: start;
   direction: rtl;
-}
-
-.journeyCustomCard::before {
-  --card-mask:
-    var(--tear-right) right center / var(--tear) 100% no-repeat,
-    linear-gradient(#000 0 0) left center / calc(100% - var(--tear) + 1px)
-      100% no-repeat;
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  background:
-    radial-gradient(
-      140% 100% at 0% 0%,
-      rgb(255 255 255 / 0.65),
-      transparent 55%
-    ),
-    color-mix(in srgb, var(--paper) 92%, white);
-  -webkit-mask: var(--card-mask);
-  mask: var(--card-mask);
 }
 
 html[dir="ltr"] .journeyCustomCard {
@@ -71,16 +49,16 @@ html[dir="ltr"] .journeyCustomCard {
 
 .journeyCustomCard.journeyCustomCard h2 {
   color: var(--moss);
-  font-size: clamp(1.7rem, 8.6vw, 2.5rem);
+  font-size: clamp(1.4rem, 7.2vw, 2.2rem);
   font-weight: 800;
-  line-height: 1.2;
+  line-height: 1.15;
 }
 
 .journeyCustomCard p {
   display: grid;
   color: var(--muted);
-  font-size: clamp(0.82rem, 2.8vw, 1.05rem);
-  line-height: 1.8;
+  font-size: clamp(0.74rem, 2.6vw, 0.95rem);
+  line-height: 1.6;
 }
 
 .journeyCustomCard p span:last-child {
@@ -89,12 +67,12 @@ html[dir="ltr"] .journeyCustomCard {
 
 .journeyCustomCard.journeyCustomCard :global(.button) {
   justify-self: stretch;
-  min-height: 44px;
-  margin-top: 0.5rem;
+  min-height: 40px;
+  margin-top: 0.3rem;
   border-radius: 999px;
   background: var(--oxide);
   color: var(--paper);
-  font-size: clamp(0.8rem, 2.8vw, 1rem);
+  font-size: clamp(0.74rem, 2.4vw, 0.95rem);
 }
 
 .journeyCustomCard.journeyCustomCard :global(.button):hover {
@@ -102,11 +80,8 @@ html[dir="ltr"] .journeyCustomCard {
 }
 
 /*
- * The vertical stepper rides the scene's thin blank strip on the physical
- * right, but - same reasoning as the card - gets its own real, opaque
- * paper-textured background rather than trusting the photo's baked strip
- * alone, so the numbers/labels are never legible-over-photo. Organic torn
- * edge on the side that meets the photo (its left).
+ * The vertical stepper rides the photo's own torn paper strip, far right,
+ * full height.
  */
 .journeyCustomSteps {
   position: absolute;
@@ -114,27 +89,12 @@ html[dir="ltr"] .journeyCustomCard {
   top: 0;
   right: 0;
   bottom: 0;
-  width: clamp(3.75rem, 12.5vw, 4.5rem);
+  width: 13%;
   display: grid;
   grid-template-rows: repeat(4, 1fr);
   justify-items: center;
-  padding-block: clamp(0.5rem, 3vw, 1.25rem);
+  padding-block: clamp(0.5rem, 4vw, 1.25rem);
   list-style: none;
-}
-
-.journeyCustomSteps::after {
-  --sidebar-mask:
-    var(--tear-left) left center / var(--tear) 100% no-repeat,
-    linear-gradient(#000 0 0) right center / calc(100% - var(--tear) + 1px)
-      100% no-repeat;
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  background: color-mix(in srgb, var(--paper) 94%, white);
-  box-shadow: -6px 0 14px -10px rgb(40 26 12 / 0.35);
-  -webkit-mask: var(--sidebar-mask);
-  mask: var(--sidebar-mask);
 }
 
 .journeyCustomStepsFill,
@@ -162,20 +122,20 @@ html[dir="ltr"] .journeyCustomCard {
   display: grid;
   justify-items: center;
   align-content: center;
-  gap: 0.35rem;
+  gap: 0.3rem;
 }
 
 .journeyCustomStepNumber {
   position: relative;
   display: grid;
   place-items: center;
-  width: 1.65rem;
-  height: 1.65rem;
+  width: 1.5rem;
+  height: 1.5rem;
   border: 1.5px solid color-mix(in srgb, var(--ink) 45%, transparent);
   border-radius: 50%;
   background: color-mix(in srgb, var(--paper) 92%, white);
   color: var(--muted);
-  font-size: 0.78rem;
+  font-size: 0.7rem;
   font-weight: 600;
   line-height: 1;
   transition:
@@ -192,12 +152,12 @@ html[dir="ltr"] .journeyCustomCard {
 }
 
 .journeyCustomStep[data-current] .journeyCustomStepNumber {
-  box-shadow: 0 0 0 0.28rem color-mix(in srgb, var(--oxide) 18%, transparent);
+  box-shadow: 0 0 0 0.26rem color-mix(in srgb, var(--oxide) 18%, transparent);
 }
 
 .journeyCustomStepLabel {
   color: var(--muted);
-  font-size: clamp(0.56rem, 2.1vw, 0.68rem);
+  font-size: clamp(0.5rem, 2.6vw, 0.64rem);
   font-weight: 500;
   text-align: center;
   white-space: nowrap;
@@ -226,7 +186,7 @@ html[dir="ltr"] .journeyCustomCard {
 .journeyCustomThreadAnchor {
   position: absolute;
   top: var(--track-top, 0);
-  right: -0.65rem;
+  right: -0.5rem;
   width: 1px;
   height: 1px;
   pointer-events: none;
@@ -237,13 +197,12 @@ html[dir="ltr"] .journeyCustomCard {
  * anchor above: with only one anchor the path drifts back toward whatever
  * comes next and cuts back across the step circles. Pinning both ends of the
  * run outside the track keeps the whole pass through this section in the
- * dedicated margin beside it (the page margin on the stepper's outer edge,
- * never the gap toward the card).
+ * dedicated margin beside it.
  */
 .journeyCustomThreadAnchorEnd {
   position: absolute;
   top: calc(var(--track-top, 0) + var(--track-height, 0));
-  right: -0.65rem;
+  right: -0.5rem;
   width: 1px;
   height: 1px;
   pointer-events: none;
@@ -252,22 +211,21 @@ html[dir="ltr"] .journeyCustomCard {
 @media (min-width: 900px) {
   .journeyCustom {
     width: min(100% - 2 * var(--journey-edge), var(--journey-max));
-    min-height: clamp(28rem, 46vw, 40rem);
     margin-inline: auto;
   }
 
   .journeyCustomCard {
-    padding: 2.1rem 1.9rem;
+    padding: 1rem clamp(1.5rem, 3vw, 2rem);
   }
 
   .journeyCustomStepLabel {
-    font-size: 0.78rem;
+    font-size: 0.72rem;
   }
 
   .journeyCustomStepNumber {
-    width: 1.9rem;
-    height: 1.9rem;
-    font-size: 0.86rem;
+    width: 1.8rem;
+    height: 1.8rem;
+    font-size: 0.82rem;
   }
 }
 

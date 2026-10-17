@@ -10,10 +10,12 @@ import { JourneySpark } from "./journey-spark";
 import styles from "./journey-workshop.module.css";
 
 /**
- * Today in the workshop: one full-bleed scene photo (torn paper at top and
- * bottom, a blank panel on the reading end for the heading/CTA, the bench
- * bowl on the other) with real HTML text laid over the panel. The thread
- * just passes through on its way to Ready Works.
+ * Today in the workshop: one scene photo, shown at its own natural aspect
+ * ratio (never cropped by object-fit, so its baked-in torn paper and blank
+ * panel always land at the same fixed percentages) with real HTML text laid
+ * directly over the panel - no CSS paper, border or tear recreates what the
+ * photo already paints. The thread just passes through on its way to Ready
+ * Works.
  *
  * `piece` only decides the CTA's destination: the live `in_workshop`
  * product's own /now/[code] page when one exists, otherwise the /now
@@ -39,7 +41,8 @@ export function JourneyWorkshop({
       <Image
         src={journeyMedia.workshopScene}
         alt=""
-        fill
+        width={1448}
+        height={1086}
         sizes="(max-width: 899px) 100vw, 76rem"
         className={styles.journeyWorkshopScene}
       />
