@@ -148,7 +148,7 @@ html[dir="ltr"] .journeyWorkshopLink:hover svg {
 
 .journeyWorkshopExit {
   position: absolute;
-  bottom: calc(var(--tear) * 0.5);
+  bottom: 32%;
   inset-inline-end: 24%;
   width: 1px;
   height: 1px;
