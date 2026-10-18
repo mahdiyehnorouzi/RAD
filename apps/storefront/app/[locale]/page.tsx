@@ -16,6 +16,13 @@ export default async function Home() {
 
   return (
     <>
+      {/* The hero's first card (the page's LCP element) — discovered and fetched before the browser parses the image tag itself. */}
+      <link
+        rel="preload"
+        as="image"
+        href="/home/hero/work-01-wall-textile.webp"
+        fetchPriority="high"
+      />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{

@@ -1,17 +1,25 @@
 "use client";
 
 import { useRef, type ReactNode } from "react";
+import dynamic from "next/dynamic";
 import type { LivePiece } from "@/components/now/type";
 import { useLocale } from "@/components/i18n";
 import { CollaborationBand } from "../collaboration-band";
 import { journeyCopy } from "./const";
 import { JourneyAbout } from "./journey-about";
-import { JourneyCustom } from "./journey-custom";
 import { JourneyReady } from "./journey-ready";
 import { JourneyWorkshop } from "./journey-workshop";
 import { RedThread } from "./red-thread";
 import { useRedThread } from "./hooks";
 import styles from "./thread-journey.module.css";
+
+// Below-the-fold, and the only home-page component pulling in the `motion`
+// library. Code-split so that library isn't parsed/evaluated as part of the
+// initial bundle the hero needs to hydrate — it still renders on the server
+// for content/SEO, it just ships in its own chunk.
+const JourneyCustom = dynamic(() =>
+  import("./journey-custom").then((mod) => mod.JourneyCustom),
+);
 
 /**
  * The home page strung on one red thread, drawn as the page scrolls: from the

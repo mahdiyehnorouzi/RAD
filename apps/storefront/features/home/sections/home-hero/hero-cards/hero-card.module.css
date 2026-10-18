@@ -65,6 +65,17 @@
   animation: hero-card-appear 0.5s ease-out calc(0.5s + var(--abs) * 0.16s) both;
 }
 
+/*
+ * The card on show at first paint (position 1, --abs: 0) carries the LCP
+ * photograph. The staggered "deal" fade-in is a flourish for the cards
+ * behind it; on the front card it only adds a guaranteed opacity:0 hold
+ * before the LCP element can paint, so it starts already visible instead.
+ */
+.heroCard[data-active="true"] .heroCardFace {
+  animation: none;
+  opacity: 1;
+}
+
 .heroCardBack {
   display: flex;
   flex-direction: column;
