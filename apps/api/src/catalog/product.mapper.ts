@@ -59,6 +59,23 @@ function cloudinaryDeliveryUrl(objectKey: string, video = false) {
   return `https://res.cloudinary.com/${cloudName}/${video ? "video" : "image"}/upload/${objectKey}`;
 }
 
+/**
+ * Delivery URL for a `seaweedfs`/`seaweedfs_video` row, derived from
+ * `objectKey` (the S3 key, durable source of truth) plus
+ * `SEAWEEDFS_PUBLIC_URL` (or, when unset, `SEAWEEDFS_ENDPOINT` +
+ * `SEAWEEDFS_BUCKET`) — never persisted itself, same rationale as
+ * `cloudinaryDeliveryUrl` above. Unlike Cloudinary, there is no
+ * on-the-fly transform API, so this is always the full-size asset.
+ */
+function seaweedfsDeliveryUrl(objectKey: string) {
+  const base = (process.env.SEAWEEDFS_PUBLIC_URL ?? "").trim();
+  const endpoint = (process.env.SEAWEEDFS_ENDPOINT ?? "").trim();
+  const bucket = (process.env.SEAWEEDFS_BUCKET ?? "").trim();
+  const baseUrl = base || (endpoint && bucket ? `${endpoint}/${bucket}` : "");
+  if (!baseUrl) return undefined;
+  return `${baseUrl.replace(/\/+$/, "")}/${objectKey}`;
+}
+
 export function imageSrc(image: ProductImageMeta, embedImages: boolean) {
   if (embedImages) return image.src ?? undefined;
   switch (image.storage) {
@@ -75,6 +92,12 @@ export function imageSrc(image: ProductImageMeta, embedImages: boolean) {
             )
           : undefined) ?? `/catalog/images/${image.id}`
       );
+    case "seaweedfs_video":
+    case "seaweedfs":
+      return (
+        (image.objectKey ? seaweedfsDeliveryUrl(image.objectKey) : undefined) ??
+        `/catalog/images/${image.id}`
+      );
     case "legacy_base64":
     default:
       // `default` also covers rows from before the Phase 0 backfill ran.
@@ -87,20 +110,24 @@ export function toCatalogImages(
   embedImages = false,
   includeVideos = false,
 ): CatalogImage[] {
+  const isVideo = (storage: ProductImageMeta["storage"]) =>
+    storage === "cloudinary_video" || storage === "seaweedfs_video";
   return [...images]
-    .filter((image) => includeVideos || image.storage !== "cloudinary_video")
+    .filter((image) => includeVideos || !isVideo(image.storage))
     .sort((a, b) => a.sortOrder - b.sortOrder)
     .map((image) => ({
       src: imageSrc(image, embedImages),
-      kind:
-        image.storage === "cloudinary_video"
-          ? ("video" as const)
-          : ("image" as const),
+      kind: isVideo(image.storage) ? ("video" as const) : ("image" as const),
       thumbnail:
         image.objectKey &&
         (image.storage === "cloudinary" || image.storage === "cloudinary_video")
           ? `https://res.cloudinary.com/${process.env.CLOUDINARY_CLOUD_NAME}/${image.storage === "cloudinary_video" ? "video" : "image"}/upload/c_limit,w_320/${image.objectKey}.jpg`
-          : undefined,
+          : // SeaweedFS has no on-the-fly transform API — fall back to the full asset.
+            image.objectKey &&
+              (image.storage === "seaweedfs" ||
+                image.storage === "seaweedfs_video")
+            ? seaweedfsDeliveryUrl(image.objectKey)
+            : undefined,
       alt: image.alt,
       enAlt: image.enAlt,
       color: image.color ?? undefined,

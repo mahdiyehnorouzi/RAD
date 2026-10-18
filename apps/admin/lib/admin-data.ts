@@ -42,20 +42,45 @@ export type AdminProductStatus = ProductStatus;
 /**
  * One product image, in the shape the API's save endpoint expects:
  * `legacy_base64`/`static`/`external` round-trip an existing `src`
- * unchanged; `cloudinary` carries only the Cloudinary `public_id` (as
- * `objectKey`) the signed upload wrote to — never raw bytes. `src` on a
- * `cloudinary` entry is a display-only URL the API derived for the
- * editor's `<img>` preview (or a local blob URL while a new upload is in
- * flight) — it is never sent back as the source of truth, `objectKey` is.
+ * unchanged; `cloudinary`/`seaweedfs` carry only the storage provider's
+ * object key (as `objectKey`) the signed upload wrote to — never raw
+ * bytes. `src` on one of those entries is a display-only URL the API
+ * derived for the editor's `<img>`/`<video>` preview (or a local blob URL
+ * while a new upload is in flight) — it is never sent back as the source
+ * of truth, `objectKey` is. Which provider is active server-side is
+ * decided by `MEDIA_STORAGE_PROVIDER` (see `apps/api/src/storage`) — the
+ * admin UI just has to handle whichever kind a successful upload returns.
  */
+export type AdminRemoteMediaStorage =
+  "cloudinary" | "cloudinary_video" | "seaweedfs" | "seaweedfs_video";
+
 export type AdminProductImage =
   | { storage: "legacy_base64"; src: string; objectKey?: null }
   | { storage: "static" | "external"; src: string; objectKey?: null }
   | {
-      storage: "cloudinary" | "cloudinary_video";
+      storage: AdminRemoteMediaStorage;
       objectKey: string;
       src?: string | null;
     };
+
+const REMOTE_MEDIA_STORAGES: readonly AdminRemoteMediaStorage[] = [
+  "cloudinary",
+  "cloudinary_video",
+  "seaweedfs",
+  "seaweedfs_video",
+];
+
+/** True for any storage kind backed by a signed-upload provider (as opposed to legacy_base64/static/external). */
+export function isRemoteMediaStorage(
+  storage: AdminProductImage["storage"],
+): storage is AdminRemoteMediaStorage {
+  return (REMOTE_MEDIA_STORAGES as readonly string[]).includes(storage);
+}
+
+/** True for the video variant of either provider's storage kind. */
+export function isVideoStorage(storage: AdminProductImage["storage"]) {
+  return storage === "cloudinary_video" || storage === "seaweedfs_video";
+}
 export type AdminOrderStatus =
   | "pending_payment"
   | "pending_verification"

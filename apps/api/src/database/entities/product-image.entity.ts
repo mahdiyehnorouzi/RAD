@@ -14,9 +14,18 @@ import { Product } from "./product.entity";
  * `cloudinary` is the Phase 2 direct-upload path (admin dashboard images
  * uploaded straight to Cloudinary via a signed upload — see
  * `AdminService.replaceImages` / `cloudinary-storage.service.ts`).
+ * `seaweedfs` is the equivalent path for the self-hosted SeaweedFS S3
+ * adapter (`seaweedfs-storage.service.ts`), used only when
+ * `MEDIA_STORAGE_PROVIDER=seaweedfs` (see `storage.module.ts`).
  */
 export type ProductImageStorage =
-  "static" | "legacy_base64" | "external" | "cloudinary" | "cloudinary_video";
+  | "static"
+  | "legacy_base64"
+  | "external"
+  | "cloudinary"
+  | "cloudinary_video"
+  | "seaweedfs"
+  | "seaweedfs_video";
 
 @Entity("ProductImage")
 export class ProductImage {

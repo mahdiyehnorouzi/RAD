@@ -3,6 +3,7 @@ import {
   BadRequestException,
   ConflictException,
   ForbiddenException,
+  Inject,
   Injectable,
   Logger,
   NotFoundException,
@@ -17,10 +18,17 @@ import {
   productImageLimit,
 } from "../common/image-data";
 import {
-  CloudinaryStorageService,
   isValidProductImagePublicId,
   productImageFolder,
 } from "../storage/cloudinary-storage.service";
+import {
+  MEDIA_STORAGE,
+  MEDIA_STORAGE_RESOLVER,
+  isRemoteMediaStorage,
+  isVideoStorage,
+  type MediaStorageResolver,
+  type MediaStorageService,
+} from "../storage/media-storage.interface";
 import type { AdminProductImageInputDto } from "./dto";
 import {
   CartItem,
@@ -33,6 +41,7 @@ import {
   User,
   Vendor,
 } from "../database/entities";
+import type { ProductImageStorage } from "../database/entities/product-image.entity";
 import { productIncludeWithSrc } from "../catalog/product.mapper";
 import { nextRadNumber } from "../catalog/rad-number";
 import { InventoryService } from "../inventory/inventory.service";
@@ -83,7 +92,9 @@ export class AdminService {
     private readonly payments: Repository<PaymentIntent>,
     private readonly inventory: InventoryService,
     private readonly paymentReview: PaymentReviewService,
-    private readonly storage: CloudinaryStorageService,
+    @Inject(MEDIA_STORAGE) private readonly storage: MediaStorageService,
+    @Inject(MEDIA_STORAGE_RESOLVER)
+    private readonly storageFor: MediaStorageResolver,
   ) {}
 
   private readonly logger = new Logger(AdminService.name);
@@ -156,14 +167,11 @@ export class AdminService {
       throw new ConflictException("این شناسه URL قبلاً استفاده شده است.");
     }
 
-    if (!input.images.some((image) => image.storage !== "cloudinary_video"))
+    if (!input.images.some((image) => !isVideoStorage(image.storage)))
       throw new BadRequestException("حداقل یک تصویر برای اثر لازم است.");
     // Validate before any product/vendor writes. Existing legacy references remain compatible.
     for (const image of input.images) {
-      if (
-        image.storage === "cloudinary" ||
-        image.storage === "cloudinary_video"
-      ) {
+      if (isRemoteMediaStorage(image.storage)) {
         if (
           !image.objectKey ||
           !isValidProductImagePublicId(
@@ -172,9 +180,9 @@ export class AdminService {
           )
         )
           throw new BadRequestException("شناسه فایل نامعتبر است.");
-        await this.storage.verifyMedia(
+        await this.storageFor(image.storage).verifyMedia(
           image.objectKey,
-          image.storage === "cloudinary_video" ? "video" : "image",
+          isVideoStorage(image.storage) ? "video" : "image",
         );
       } else if (image.storage === "legacy_base64") {
         try {
@@ -522,18 +530,20 @@ export class AdminService {
           sortOrder,
         };
       }
-      // storage === "cloudinary": never trust the client's objectKey
-      // (public_id) blindly, even though the browser uploaded the bytes
-      // directly to Cloudinary with our signature — re-validate it matches
-      // exactly what our own sign endpoint would have issued for this
-      // product (`rad/products/<productId>/<id>`, or the unassociated
+      // storage is a remote-media kind (cloudinary/cloudinary_video, or
+      // seaweedfs/seaweedfs_video when MEDIA_STORAGE_PROVIDER=seaweedfs):
+      // never trust the client's objectKey blindly, even though the
+      // browser uploaded the bytes directly to the storage provider with
+      // our signature — re-validate it matches exactly what our own sign
+      // endpoint would have issued for this product
+      // (`rad/products/<productId>/<id>`, or the unassociated
       // `rad/pending/<id>` namespace for an image attached before the
       // product existed), so a client can't point a product at an
-      // arbitrary asset elsewhere in the Cloudinary account. Namespacing
-      // by the immutable `productId` (not `slug`) means this still holds
-      // even if `slug` were ever renamed. Unlike the R2 design this
-      // replaces, a `rad/pending/...` public_id is persisted as-is — no
-      // rename/migration step — see `cloudinary-storage.service.ts`.
+      // arbitrary asset elsewhere in the provider's account/bucket.
+      // Namespacing by the immutable `productId` (not `slug`) means this
+      // still holds even if `slug` were ever renamed. Unlike the R2
+      // design this replaces, a `rad/pending/...` object key is persisted
+      // as-is — no rename/migration step — see `cloudinary-storage.service.ts`.
       if (
         !image.objectKey ||
         !isValidProductImagePublicId(productId, image.objectKey)
@@ -544,7 +554,7 @@ export class AdminService {
       }
       return {
         productSlug: slug,
-        storage: image.storage as "cloudinary" | "cloudinary_video",
+        storage: image.storage as ProductImageStorage,
         src: null,
         objectKey: image.objectKey,
         alt: name,
@@ -553,10 +563,12 @@ export class AdminService {
       };
     });
 
-    // Figure out which Cloudinary assets are being dropped (removed or
-    // replaced) before we touch the DB, so we can clean them up in
-    // Cloudinary only *after* the delete+reinsert transaction below has
-    // actually committed — never before, since deleting storage ahead of a
+    // Figure out which remote-media assets are being dropped (removed or
+    // replaced) before we touch the DB, so we can clean them up — from
+    // whichever provider each row's own `storage` kind actually lives in
+    // (`this.storageFor`), never just the currently-active one — only
+    // *after* the delete+reinsert transaction below has actually
+    // committed. Never before, since deleting storage ahead of a
     // DB write that could still roll back would leave a product.image
     // pointing at nothing.
     const existing = await this.productImages.find({
@@ -564,26 +576,22 @@ export class AdminService {
     });
     const keptObjectKeys = new Set(
       rows
-        .filter(
-          (row) =>
-            row.storage === "cloudinary" || row.storage === "cloudinary_video",
-        )
+        .filter((row) => isRemoteMediaStorage(row.storage))
         .map((row) => row.objectKey as string),
     );
     const orphanedObjectKeys = existing
       .filter(
         (row) =>
-          (row.storage === "cloudinary" ||
-            row.storage === "cloudinary_video") &&
+          isRemoteMediaStorage(row.storage) &&
           row.objectKey &&
           !keptObjectKeys.has(row.objectKey),
       )
       .map((row) => ({
         objectKey: row.objectKey as string,
-        kind:
-          row.storage === "cloudinary_video"
-            ? ("video" as const)
-            : ("image" as const),
+        storage: row.storage as ProductImageStorage,
+        kind: isVideoStorage(row.storage)
+          ? ("video" as const)
+          : ("image" as const),
       }));
 
     await this.dataSource.transaction(async (manager) => {
@@ -601,12 +609,12 @@ export class AdminService {
       // delete flaked is not. `destroy` treats "not found" as success, so
       // a repeated/duplicate save of the same diff never double-deletes or
       // errors.
-      for (const { objectKey, kind } of orphanedObjectKeys) {
+      for (const { objectKey, storage, kind } of orphanedObjectKeys) {
         try {
-          await this.storage.destroy(objectKey, kind);
+          await this.storageFor(storage).destroy(objectKey, kind);
         } catch {
           this.logger.warn(
-            `Failed to delete orphaned Cloudinary asset; retry cleanup later.`,
+            `Failed to delete orphaned ${storage} asset; retry cleanup later.`,
           );
         }
       }

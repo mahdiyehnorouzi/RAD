@@ -128,6 +128,7 @@ before(async () => {
     inventory,
     paymentReview,
     storage,
+    () => storage,
   );
 });
 

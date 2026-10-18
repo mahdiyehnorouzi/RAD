@@ -7,6 +7,8 @@ export const PRODUCT_IMAGE_STORAGES = [
   "external",
   "cloudinary",
   "cloudinary_video",
+  "seaweedfs",
+  "seaweedfs_video",
 ] as const;
 
 export type ProductImageInputStorage = (typeof PRODUCT_IMAGE_STORAGES)[number];
@@ -56,4 +58,8 @@ export class AdminProductImageInputDto {
 export type AdminProductImageInput =
   | { storage: "legacy_base64"; src: string }
   | { storage: "static" | "external"; src: string }
-  | { storage: "cloudinary" | "cloudinary_video"; objectKey: string };
+  | {
+      storage:
+        "cloudinary" | "cloudinary_video" | "seaweedfs" | "seaweedfs_video";
+      objectKey: string;
+    };
