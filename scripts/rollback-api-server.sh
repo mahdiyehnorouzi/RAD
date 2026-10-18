@@ -13,6 +13,10 @@ set -euo pipefail
 #   With no argument, rolls back to the commit recorded in the manifest
 #   from the most recent deploy attempt. Pass a commit explicitly to roll
 #   back further.
+#
+# Set RAD_API_ROLLBACK_CONFIRM=yes to skip the interactive prompt below
+# (CI has no terminal to type it into) — used by the automatic rollback
+# step in .github/workflows/deploy-api-vps.yml when a deploy fails.
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 
@@ -28,10 +32,14 @@ SSH_OPTS=(-o BatchMode=yes -o ConnectTimeout=10 -o StrictHostKeyChecking=accept-
 
 echo "Rolling back RAD API on ${SSH_TARGET}:${RAD_API_PATH}..."
 echo "This will stop the currently running '${RAD_API_PM2_PROCESS}' process and restart it at an older commit."
-read -r -p "Type 'rollback' to continue: " CONFIRM
-if [[ "$CONFIRM" != "rollback" ]]; then
-  echo "Aborted."
-  exit 1
+if [[ "${RAD_API_ROLLBACK_CONFIRM:-}" == "yes" ]]; then
+  echo "RAD_API_ROLLBACK_CONFIRM=yes set; skipping interactive confirmation."
+else
+  read -r -p "Type 'rollback' to continue: " CONFIRM
+  if [[ "$CONFIRM" != "rollback" ]]; then
+    echo "Aborted."
+    exit 1
+  fi
 fi
 
 # shellcheck disable=SC2087

@@ -1,0 +1,101 @@
+name: Deploy API (VPS)
+
+# Manual only: open GitHub → Actions → "Deploy API (VPS)" → Run workflow.
+# Builds and tests the API on the runner first (fail fast, no SSH needed
+# just to find a broken build), then runs the existing
+# scripts/deploy-api-server.sh, which SSHes to the VPS, pulls the exact
+# commit this run checked out, builds it there too (PM2 serves a build
+# made on the VPS, not an artifact copied from the runner), and only
+# swaps PM2 over once its own /health check reports the right version and
+# env=production. That script never touches Postgres, uploaded files,
+# nginx, or production .env — see scripts/deploy-api-server.sh and
+# apps/api/scripts/start-production.mjs for what it does and doesn't run.
+#
+# If the deploy step fails after it starts touching the remote host, the
+# rollback job below restores the commit that was running immediately
+# before this run, using the pre-deploy snapshot deploy-api-server.sh
+# writes on the remote before changing anything.
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-api-vps
+  cancel-in-progress: false
+
+jobs:
+  checks:
+    uses: ./.github/workflows/ci.yml
+
+  deploy:
+    name: Build, verify, and deploy
+    needs: checks
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Typecheck API
+        run: npm run typecheck --workspace @rad/api
+
+      - name: Test API
+        run: npm run test --workspace @rad/api
+
+      - name: Build API
+        run: npm run build --workspace @rad/api
+
+      - name: Check deploy secrets
+        env:
+          HAS_KEY: ${{ secrets.RAD_API_SSH_PRIVATE_KEY != '' }}
+        run: |
+          if [[ "${HAS_KEY}" != "true" ]]; then
+            echo "::error::RAD_API_SSH_PRIVATE_KEY is missing. Add it as a Repository secret (see .github/workflows/deploy-api-vps.yml for the full list)."
+            exit 1
+          fi
+
+      - name: Set up deploy SSH key
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.RAD_API_SSH_PRIVATE_KEY }}
+
+      - name: Pin VPS host key
+        env:
+          KNOWN_HOSTS: ${{ secrets.RAD_API_SSH_KNOWN_HOSTS }}
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          if [[ -n "${KNOWN_HOSTS}" ]]; then
+            printf '%s\n' "${KNOWN_HOSTS}" > ~/.ssh/known_hosts
+            chmod 600 ~/.ssh/known_hosts
+          else
+            echo "::warning::RAD_API_SSH_KNOWN_HOSTS secret not set; trusting the host key on first connect (TOFU) instead of pinning it."
+          fi
+
+      - name: Deploy API to VPS
+        id: deploy
+        env:
+          RAD_API_HOST: ${{ vars.RAD_API_HOST }}
+          RAD_API_USER: ${{ vars.RAD_API_USER }}
+          RAD_API_PATH: ${{ vars.RAD_API_PATH }}
+          RAD_API_PM2_PROCESS: ${{ vars.RAD_API_PM2_PROCESS }}
+          RAD_API_PORT: ${{ vars.RAD_API_PORT }}
+        run: bash scripts/deploy-api-server.sh
+
+      - name: Roll back (deploy failed after touching the remote host)
+        if: failure() && steps.deploy.outcome == 'failure'
+        env:
+          RAD_API_HOST: ${{ vars.RAD_API_HOST }}
+          RAD_API_USER: ${{ vars.RAD_API_USER }}
+          RAD_API_PATH: ${{ vars.RAD_API_PATH }}
+          RAD_API_PM2_PROCESS: ${{ vars.RAD_API_PM2_PROCESS }}
+          RAD_API_PORT: ${{ vars.RAD_API_PORT }}
+          RAD_API_ROLLBACK_CONFIRM: "yes"
+        run: bash scripts/rollback-api-server.sh
