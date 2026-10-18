@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import dynamic from "next/dynamic";
 import "../globals.css";
 import "@/components/ui/button-link.css";
 import "@/components/ui/section.css";
@@ -13,7 +14,6 @@ import {
   RouteTrail,
 } from "@/components/layout";
 import { CartProvider } from "@/features/cart";
-import { ProductOverlay } from "@/features/product-detail";
 import { LocaleProvider } from "@/components/i18n";
 import { CommerceProvider } from "@/components/commerce";
 import { CatalogIndexProvider } from "@/components/catalog";
@@ -34,6 +34,15 @@ import {
   siteName,
   siteUrl,
 } from "@/lib/seo";
+
+// Mounted once on every route (including the home page) but inert until a
+// product card is clicked — see product-overlay.tsx. It pulls in the
+// `motion` library and the full `ProductDetail` tree, none of which the
+// initial paint needs, so it's code-split into its own chunk instead of
+// shipping as part of every page's critical JS.
+const ProductOverlay = dynamic(() =>
+  import("@/features/product-detail").then((mod) => mod.ProductOverlay),
+);
 
 const googleVerification =
   process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION ||

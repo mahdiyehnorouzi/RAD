@@ -56,7 +56,15 @@ export function HeroCard({
           >
             <span className={styles.heroCardFrame} aria-hidden="true" />
             <span className={styles.heroCardWindow}>
-              <img src={card.src} alt={card.alt} draggable={false} />
+              <img
+                src={card.src}
+                alt={card.alt}
+                draggable={false}
+                loading={isActive ? "eager" : "lazy"}
+                // @ts-expect-error -- fetchPriority is valid on <img> but missing from React's DOM typings here.
+                fetchpriority={isActive ? "high" : "low"}
+                decoding={isActive ? "sync" : "async"}
+              />
             </span>
             <span className={styles.heroCardMark} aria-hidden="true">
               <b>{digits}</b>
@@ -97,6 +105,7 @@ export function HeroCard({
                 src={card.noteArt}
                 alt={card.note}
                 draggable={false}
+                loading="lazy"
               />
             ) : (
               <p className={styles.heroCardNote}>{card.note}</p>
