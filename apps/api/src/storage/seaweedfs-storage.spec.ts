@@ -83,6 +83,36 @@ describe("SeaweedfsStorageService.createSignedUpload", () => {
     );
     assert.equal(result.resourceType, "video");
   });
+
+  /**
+   * Regression test: S3's POST policy rejects any form field the browser
+   * sends that isn't covered by a `Conditions` entry. The admin client
+   * must be able to send the file's real `Content-Type` field (so
+   * `verifyMedia` can read it back), so the signed policy's base64
+   * `Policy` field must actually contain a condition that allows it —
+   * this decodes that policy and checks, rather than trusting the SDK
+   * call succeeded.
+   */
+  test("the signed policy allows a Content-Type field scoped to the requested kind", async () => {
+    const result = await service().createSignedUpload(
+      "rad/products/prod_1",
+      "video",
+    );
+    const policy = JSON.parse(
+      Buffer.from(result.fields.Policy, "base64").toString("utf8"),
+    );
+    const allowsContentType = policy.conditions.some(
+      (condition: unknown) =>
+        Array.isArray(condition) &&
+        condition[0] === "starts-with" &&
+        condition[1] === "$Content-Type" &&
+        condition[2] === "video/",
+    );
+    assert.ok(
+      allowsContentType,
+      "expected a starts-with Content-Type condition for 'video/'",
+    );
+  });
 });
 
 describe("SeaweedfsStorageService.verifyMedia", () => {

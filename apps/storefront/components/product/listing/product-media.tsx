@@ -74,6 +74,29 @@ function cloudinaryLoader({ src, width }: ImageLoaderProps) {
   );
 }
 
+/**
+ * Any other absolute (http/https) `src` — currently: a `seaweedfs`-storage
+ * row's delivery URL (see `apps/api/src/catalog/product.mapper.ts`), a
+ * self-hosted, arbitrary-domain URL that can't be allowlisted in
+ * `next.config.mjs`'s `images.remotePatterns` the way a fixed known host
+ * like Cloudinary's could be.
+ *
+ * A custom `loader` bypasses next/image's built-in optimizer (and the
+ * domain allowlist check that comes with it) for the one `<Image>` it's
+ * passed to, same as `cloudinaryLoader` already does — this just returns
+ * the URL unchanged since there's no transform API to ask for a smaller
+ * size from. This is the same reason `isCloudinaryUrl` exists: scope the
+ * bypass to actual remote URLs, never to the on-site `/catalog/images/:id`
+ * proxy route or a relative `static`/`external` path.
+ */
+function identityLoader({ src }: ImageLoaderProps) {
+  return src;
+}
+
+function isAbsoluteHttpUrl(src: string) {
+  return /^https?:\/\//.test(src);
+}
+
 export function ProductMedia({
   product,
   imageIndex = 0,
@@ -141,7 +164,13 @@ export function ProductMedia({
         fill
         sizes={sizes}
         priority={priority}
-        loader={isCloudinaryUrl(src) ? cloudinaryLoader : undefined}
+        loader={
+          isCloudinaryUrl(src)
+            ? cloudinaryLoader
+            : isAbsoluteHttpUrl(src)
+              ? identityLoader
+              : undefined
+        }
         onError={() => setFailedSrc(src)}
       />
       {soldBadge}

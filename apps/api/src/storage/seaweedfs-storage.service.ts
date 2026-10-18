@@ -35,6 +35,14 @@ const UPLOAD_EXPIRES_SECONDS = 5 * 60;
  *    delivery URLs from (e.g. a CDN/reverse proxy in front of the gateway);
  *    falls back to `${SEAWEEDFS_ENDPOINT}/${SEAWEEDFS_BUCKET}` when unset.
  *
+ * Operational requirement this adapter cannot configure itself: the
+ * target bucket's CORS policy must allow `POST` (and the `Content-Type`/
+ * form-field headers it sends) from the admin app's origin, or the
+ * browser's direct upload in `createSignedUpload`'s flow will be blocked
+ * by CORS before it ever reaches SeaweedFS — Cloudinary's own upload
+ * endpoint already allows this for every origin, so this had no
+ * equivalent under the previous provider.
+ *
  * Unlike Cloudinary, the S3 protocol has no asset-inspection API: `destroy`
  * and existence checks are plain object operations, and `verifyMedia`
  * cannot decode the uploaded bytes to confirm they are genuinely a valid
@@ -84,26 +92,31 @@ export class SeaweedfsStorageService implements MediaStorageService {
    * back everything needed for a direct browser → storage upload). The
    * object key is minted here — not by the browser — since the S3 POST
    * policy must name an exact key (or prefix) up front.
+   *
+   * S3's POST policy rejects any form field the browser sends that isn't
+   * covered by a `Conditions` entry — so the `Content-Type` condition
+   * below is unconditional (not gated on `restricted`, unlike Cloudinary's
+   * `allowed_formats`): the admin client always needs to be able to send
+   * the file's real `Content-Type` field for SeaweedFS to store it, and
+   * `verifyMedia` below depends on that stored value for its own check.
+   * `restricted` has no effect here; it's kept only so the interface
+   * matches `CloudinaryStorageService`.
    */
   async createSignedUpload(
     folder: string,
     kind: "image" | "video" = "image",
-    restricted = false,
   ) {
     const client = this.ensureConfigured();
     const objectKey = `${folder}/${randomBytes(16).toString("hex")}`;
     const limits = mediaLimits();
-    const conditions: Parameters<
-      typeof createPresignedPost
-    >[1]["Conditions"] = [["content-length-range", 1, limits[kind]]];
-    if (restricted) {
-      conditions.push(["starts-with", "$Content-Type", `${kind}/`]);
-    }
     const { url, fields } = await createPresignedPost(client, {
       Bucket: this.bucket,
       Key: objectKey,
       Expires: UPLOAD_EXPIRES_SECONDS,
-      Conditions: conditions,
+      Conditions: [
+        ["content-length-range", 1, limits[kind]],
+        ["starts-with", "$Content-Type", `${kind}/`],
+      ],
     });
     return {
       provider: "seaweedfs" as const,

@@ -106,6 +106,7 @@ export async function startPurchaseHarness() {
     inventory,
     paymentReview,
     new CloudinaryStorageService(new ConfigService({})),
+    () => new CloudinaryStorageService(new ConfigService({})),
   );
 
   let productCount = 0;

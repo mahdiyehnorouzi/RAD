@@ -30,8 +30,50 @@ export interface MediaStorageService {
   destroy(objectKey: string, resourceType?: "image" | "video"): Promise<void>;
 }
 
-/** DI token `AdminService` injects instead of a concrete provider class. */
+/**
+ * DI token `AdminService` injects instead of a concrete provider class —
+ * the currently *active* provider (per `MEDIA_STORAGE_PROVIDER`), used
+ * only for signing brand-new uploads. A brand-new upload's sign and
+ * verify steps always agree on which provider is active (nothing else
+ * could have signed it), so this is the right choice there.
+ */
 export const MEDIA_STORAGE = Symbol("MEDIA_STORAGE");
+
+/**
+ * DI token for a function that resolves the provider a *specific,
+ * already-persisted* row's `storage` kind actually lives in — not
+ * whichever provider is currently "active". Switching
+ * `MEDIA_STORAGE_PROVIDER` doesn't migrate existing rows: a product
+ * saved under Cloudinary keeps `storage: "cloudinary"` rows after the
+ * switch flips to `"seaweedfs"`, so verifying or deleting an *existing*
+ * row must dispatch by that row's own storage kind, never by whichever
+ * provider happens to be active right now — otherwise a provider switch
+ * would make every pre-existing Cloudinary row unverifiable (and orphan
+ * cleanup would try to delete a Cloudinary asset from the SeaweedFS
+ * bucket, or vice versa). See `AdminService.saveProduct`/`replaceImages`.
+ */
+export const MEDIA_STORAGE_RESOLVER = Symbol("MEDIA_STORAGE_RESOLVER");
+export type MediaStorageResolver = (
+  storage: ProductImageStorage,
+) => MediaStorageService;
+
+/**
+ * Builds a `MediaStorageResolver` that dispatches a `seaweedfs`/
+ * `seaweedfs_video` row to `seaweedfs` and everything else (including
+ * `null`/legacy rows that never reach a resolver call in practice) to
+ * `cloudinary` — pulled out of `storage.module.ts`'s DI factory so the
+ * dispatch rule itself has a plain unit test independent of Nest's
+ * container.
+ */
+export function createMediaStorageResolver(
+  cloudinary: MediaStorageService,
+  seaweedfs: MediaStorageService,
+): MediaStorageResolver {
+  return (storage) =>
+    storage === "seaweedfs" || storage === "seaweedfs_video"
+      ? seaweedfs
+      : cloudinary;
+}
 
 const VIDEO_STORAGES: readonly ProductImageStorage[] = [
   "cloudinary_video",

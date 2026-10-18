@@ -163,6 +163,7 @@ export class CloudinaryStorageService implements MediaStorageService {
       this.config.get<string>("CLOUDINARY_API_SECRET") as string,
     );
     return {
+      provider: "cloudinary" as const,
       cloudName: this.config.get<string>("CLOUDINARY_CLOUD_NAME") as string,
       apiKey: this.config.get<string>("CLOUDINARY_API_KEY") as string,
       ...paramsToSign,

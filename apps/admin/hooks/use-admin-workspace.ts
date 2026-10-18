@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { AuthUser } from "@rad/types";
 import { api } from "../lib/api";
 import {
+  isRemoteMediaStorage,
   permissions,
   type AdminCommission,
   type AdminContactMessage,
@@ -12,6 +13,7 @@ import {
   type AdminOrder,
   type AdminPermission,
   type AdminProduct,
+  type AdminRemoteMediaStorage,
   type AdminReview,
   type AdminRole,
   type AdminSection,
@@ -21,6 +23,11 @@ import {
   type ShapeQuestion,
   type ShapeQuestionInput,
 } from "../lib/admin-data";
+import {
+  buildUploadRequest,
+  resolveUploadedObjectKey,
+  type SignedUpload,
+} from "../lib/media-upload";
 
 /**
  * `initializing`: the one-time `/auth/me` session restore hasn't settled yet
@@ -384,18 +391,25 @@ export function useAdminWorkspace() {
         );
       },
       /**
-       * Uploads a new product image file directly to Cloudinary: get signed
-       * upload params from the API, POST the file straight to Cloudinary's
-       * upload endpoint from the browser (bytes never transit through Nest),
-       * then return the `{storage:"cloudinary", objectKey}` reference to
-       * store in `draft.images` — `slug` is just a route param the API uses
-       * to look up the product and namespace the signed folder by its
-       * immutable id; for a not-yet-created product (no id yet) the API
-       * signs an upload into an unassociated `rad/pending` folder instead.
-       * Either way the API alone decides (and signs) the destination folder,
-       * and re-validates the resulting public_id on save — never trusted
-       * blindly from the client. `CLOUDINARY_API_SECRET` never reaches this
-       * code; only the public `apiKey`/`cloudName` + a one-time signature do.
+       * Uploads a new product image file directly to the active storage
+       * provider: get signed upload params from the API, POST the file
+       * straight to the provider's upload endpoint from the browser (bytes
+       * never transit through Nest), then return the `{storage, objectKey}`
+       * reference to store in `draft.images` — `slug` is just a route param
+       * the API uses to look up the product and namespace the signed
+       * folder by its immutable id; for a not-yet-created product (no id
+       * yet) the API signs an upload into an unassociated `rad/pending`
+       * folder instead. Either way the API alone decides (and signs) the
+       * destination folder, and re-validates the resulting object key on
+       * save — never trusted blindly from the client.
+       *
+       * Which provider is active (`signed.provider`) is decided entirely
+       * server-side by `MEDIA_STORAGE_PROVIDER` (see
+       * `apps/api/src/storage`) — `buildUploadRequest`/
+       * `resolveUploadedObjectKey` (`../lib/media-upload`) do the
+       * provider-specific part (request shape, response parsing); this
+       * function only owns the XHR plumbing (progress/abort/error), which
+       * is identical either way.
        */
       async uploadProductImage(
         slug: string,
@@ -404,39 +418,17 @@ export function useAdminWorkspace() {
         signal?: AbortSignal,
       ) {
         const route = `/admin/products/${encodeURIComponent(slug || "draft")}`;
-        const signed = await api<{
-          cloudName: string;
-          apiKey: string;
-          timestamp: number;
-          folder: string;
-          signature: string;
-          allowed_formats: string;
-          overwrite: boolean;
-          resourceType: "image" | "video";
-        }>(`${route}/images/sign`, {
+        const signed = await api<SignedUpload>(`${route}/images/sign`, {
           method: "POST",
           body: JSON.stringify({ mime: file.type, size: file.size }),
           signal,
         });
-        const body = new FormData();
-        body.append("file", file);
-        body.append("api_key", signed.apiKey);
-        for (const key of [
-          "timestamp",
-          "folder",
-          "signature",
-          "allowed_formats",
-          "overwrite",
-        ] as const)
-          body.append(key, String(signed[key]));
+        const { url: uploadUrl, body } = buildUploadRequest(signed, file);
         const objectKey = await new Promise<string>((resolve, reject) => {
           const xhr = new XMLHttpRequest();
           const abort = () => xhr.abort();
           const finish = () => signal?.removeEventListener("abort", abort);
-          xhr.open(
-            "POST",
-            `https://api.cloudinary.com/v1_1/${signed.cloudName}/${signed.resourceType}/upload`,
-          );
+          xhr.open("POST", uploadUrl);
           xhr.timeout = 10 * 60 * 1000;
           xhr.upload.onprogress = (event) => {
             if (event.lengthComputable)
@@ -453,11 +445,13 @@ export function useAdminWorkspace() {
                 ),
               );
             try {
-              const result = JSON.parse(xhr.responseText);
-              if (!result.public_id) throw new Error();
-              resolve(result.public_id);
-            } catch {
-              reject(new Error("پاسخ بارگذاری معتبر نیست. دوباره تلاش کنید."));
+              resolve(resolveUploadedObjectKey(signed, xhr.responseText));
+            } catch (error) {
+              reject(
+                error instanceof Error
+                  ? error
+                  : new Error("پاسخ بارگذاری معتبر نیست. دوباره تلاش کنید."),
+              );
             }
           };
           xhr.onerror = xhr.ontimeout = () => {
@@ -476,14 +470,14 @@ export function useAdminWorkspace() {
           }
           xhr.send(body);
         });
-        return api<{
-          storage: "cloudinary" | "cloudinary_video";
-          objectKey: string;
-        }>(`${route}/media/verify`, {
-          method: "POST",
-          body: JSON.stringify({ objectKey, kind: signed.resourceType }),
-          signal,
-        });
+        return api<{ storage: AdminRemoteMediaStorage; objectKey: string }>(
+          `${route}/media/verify`,
+          {
+            method: "POST",
+            body: JSON.stringify({ objectKey, kind: signed.resourceType }),
+            signal,
+          },
+        );
       },
       async saveProduct(product: AdminProduct) {
         const payload = {
@@ -495,11 +489,10 @@ export function useAdminWorkspace() {
           status: product.status,
           artist: product.artist,
           // Only send what the API's save contract needs per storage —
-          // never the display-only `src` the API derived for a `cloudinary`
+          // never the display-only `src` the API derived for a remote-media
           // row (or a local blob: URL left over from an in-flight upload).
           images: product.images.map((image) =>
-            image.storage === "cloudinary" ||
-            image.storage === "cloudinary_video"
+            isRemoteMediaStorage(image.storage)
               ? { storage: image.storage, objectKey: image.objectKey }
               : { storage: image.storage, src: image.src },
           ),
