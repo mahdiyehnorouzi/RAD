@@ -34,6 +34,29 @@ const UPLOAD_EXPIRES_SECONDS = 5 * 60;
  *  - `SEAWEEDFS_PUBLIC_URL` — optional base URL product.mapper.ts builds
  *    delivery URLs from (e.g. a CDN/reverse proxy in front of the gateway);
  *    falls back to `${SEAWEEDFS_ENDPOINT}/${SEAWEEDFS_BUCKET}` when unset.
+ *  - `SEAWEEDFS_PUBLIC_UPLOAD_URL` — optional base URL (scheme+host, no
+ *    path) the *browser* POSTs signed uploads to, when it differs from
+ *    `SEAWEEDFS_ENDPOINT`. `SEAWEEDFS_ENDPOINT` is what the API server
+ *    itself talks to (e.g. `http://127.0.0.1:8333` on the same VPS as the
+ *    gateway) and is what every signature is computed against — SigV4
+ *    POST-policy signatures only cover the policy document (bucket/key/
+ *    size/content-type conditions), not the request host, so the `url`
+ *    field returned to the browser can safely point somewhere else
+ *    without invalidating the signature. Set this to the HTTPS reverse
+ *    proxy origin in front of the gateway (e.g.
+ *    `https://media-upload.example.com`) whenever the gateway itself is
+ *    bound to a loopback/internal address the browser can't reach
+ *    directly. Falls back to `SEAWEEDFS_ENDPOINT` when unset (same-host
+ *    deployments only).
+ *
+ * Operational requirement this adapter cannot configure itself: the
+ * reverse proxy (or bucket, if it terminates TLS itself) in front of the
+ * gateway must allow `POST` (and the `Content-Type`/form-field headers it
+ * sends, plus the `OPTIONS` preflight) from the admin app's origin, or the
+ * browser's direct upload in `createSignedUpload`'s flow will be blocked
+ * by CORS before it ever reaches SeaweedFS — Cloudinary's own upload
+ * endpoint already allows this for every origin, so this had no
+ * equivalent under the previous provider.
  *
  * Operational requirement this adapter cannot configure itself: the
  * target bucket's CORS policy must allow `POST` (and the `Content-Type`/
@@ -117,12 +140,28 @@ export class SeaweedfsStorageService implements MediaStorageService {
     });
     return {
       provider: "seaweedfs" as const,
-      url,
+      url: this.publicUploadUrl(url),
       fields,
       objectKey,
       resourceType: kind,
       limits,
     };
+  }
+
+  /**
+   * Rewrites the signed POST's host from the internal endpoint the API
+   * server signed against to the public-facing one the browser can
+   * actually reach, when `SEAWEEDFS_PUBLIC_UPLOAD_URL` is set. Safe
+   * because the signature only covers the policy document, not the
+   * request host — see the class doc comment.
+   */
+  private publicUploadUrl(signedUrl: string): string {
+    const publicBase = (
+      this.config.get<string>("SEAWEEDFS_PUBLIC_UPLOAD_URL") ?? ""
+    ).trim();
+    if (!publicBase) return signedUrl;
+    const path = new URL(signedUrl).pathname;
+    return `${publicBase.replace(/\/$/, "")}${path}`;
   }
 
   /**

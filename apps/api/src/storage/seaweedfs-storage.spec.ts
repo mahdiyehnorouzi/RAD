@@ -71,6 +71,23 @@ describe("SeaweedfsStorageService.createSignedUpload", () => {
     assert.notEqual(first.objectKey, second.objectKey);
   });
 
+  test("rewrites the signed POST host to SEAWEEDFS_PUBLIC_UPLOAD_URL when set, keeping the signed fields and path intact", async () => {
+    const result = await service({
+      SEAWEEDFS_ENDPOINT: "http://127.0.0.1:8333",
+      SEAWEEDFS_PUBLIC_UPLOAD_URL: "https://media-upload.example.com",
+    }).createSignedUpload("rad/products/prod_1");
+    assert.ok(result.url.startsWith("https://media-upload.example.com/"));
+    assert.equal(result.url.includes("127.0.0.1"), false);
+    assert.equal(result.fields.key, result.objectKey);
+  });
+
+  test("falls back to the signed (internal) URL when SEAWEEDFS_PUBLIC_UPLOAD_URL is unset", async () => {
+    const result = await service({
+      SEAWEEDFS_ENDPOINT: "http://127.0.0.1:8333",
+    }).createSignedUpload("rad/products/prod_1");
+    assert.ok(result.url.startsWith("http://127.0.0.1:8333"));
+  });
+
   test("video kind is reflected in the returned resourceType", async () => {
     const result = await service().createSignedUpload(
       "rad/products/prod_1",
