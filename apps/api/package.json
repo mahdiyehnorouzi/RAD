@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "nest start --watch",
     "predev": "node -e \"require('node:fs').existsSync('dist/main.js')||process.exit(1)\" || npm run build",
-    "build": "nest build",
+    "build": "rm -f tsconfig.build.tsbuildinfo && nest build",
     "start": "node dist/main.js",
     "start:production": "node scripts/start-production.mjs",
     "typecheck": "tsc --noEmit",
