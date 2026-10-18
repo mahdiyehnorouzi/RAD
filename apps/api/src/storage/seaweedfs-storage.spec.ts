@@ -26,9 +26,7 @@ function service(env: Record<string, string> = {}) {
   );
 }
 
-function stubSend(
-  fn: (command: unknown) => unknown,
-): () => void {
+function stubSend(fn: (command: unknown) => unknown): () => void {
   const original = S3Client.prototype.send;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   S3Client.prototype.send = fn as any;
@@ -63,10 +61,7 @@ describe("SeaweedfsStorageService.createSignedUpload", () => {
     assert.equal(result.resourceType, "image");
     assert.ok(result.url.length > 0);
     assert.ok(result.fields.key === result.objectKey);
-    assert.equal(
-      JSON.stringify(result).includes("test-secret-key"),
-      false,
-    );
+    assert.equal(JSON.stringify(result).includes("test-secret-key"), false);
   });
 
   test("two signed uploads for the same folder mint different object keys", async () => {
@@ -123,7 +118,10 @@ describe("SeaweedfsStorageService.verifyMedia", () => {
     });
     try {
       const result = await service().verifyMedia("rad/pending/abc", "image");
-      assert.deepEqual(result, { objectKey: "rad/pending/abc", storage: "seaweedfs" });
+      assert.deepEqual(result, {
+        objectKey: "rad/pending/abc",
+        storage: "seaweedfs",
+      });
     } finally {
       restore();
     }
@@ -149,7 +147,10 @@ describe("SeaweedfsStorageService.verifyMedia", () => {
     const restore = stubSend(async () => ({ ContentLength: 168_000 }));
     try {
       const result = await service().verifyMedia("rad/pending/abc", "image");
-      assert.deepEqual(result, { objectKey: "rad/pending/abc", storage: "seaweedfs" });
+      assert.deepEqual(result, {
+        objectKey: "rad/pending/abc",
+        storage: "seaweedfs",
+      });
     } finally {
       restore();
     }

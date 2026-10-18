@@ -102,10 +102,7 @@ export class SeaweedfsStorageService implements MediaStorageService {
    * `restricted` has no effect here; it's kept only so the interface
    * matches `CloudinaryStorageService`.
    */
-  async createSignedUpload(
-    folder: string,
-    kind: "image" | "video" = "image",
-  ) {
+  async createSignedUpload(folder: string, kind: "image" | "video" = "image") {
     const client = this.ensureConfigured();
     const objectKey = `${folder}/${randomBytes(16).toString("hex")}`;
     const limits = mediaLimits();
@@ -148,10 +145,7 @@ export class SeaweedfsStorageService implements MediaStorageService {
         "بررسی فایل ممکن نشد. دوباره تلاش کنید.",
       );
     }
-    if (
-      head.ContentType &&
-      !head.ContentType.startsWith(`${kind}/`)
-    ) {
+    if (head.ContentType && !head.ContentType.startsWith(`${kind}/`)) {
       throw new BadRequestException(
         "محتوای فایل معتبر نیست. تصویر JPEG، PNG، WebP یا ویدیوی MP4، WebM انتخاب کنید.",
       );

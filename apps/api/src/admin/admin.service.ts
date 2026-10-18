@@ -589,7 +589,9 @@ export class AdminService {
       .map((row) => ({
         objectKey: row.objectKey as string,
         storage: row.storage as ProductImageStorage,
-        kind: isVideoStorage(row.storage) ? ("video" as const) : ("image" as const),
+        kind: isVideoStorage(row.storage)
+          ? ("video" as const)
+          : ("image" as const),
       }));
 
     await this.dataSource.transaction(async (manager) => {

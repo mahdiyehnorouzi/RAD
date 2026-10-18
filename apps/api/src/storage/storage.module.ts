@@ -34,7 +34,11 @@ import {
         config.get<string>("MEDIA_STORAGE_PROVIDER") === "seaweedfs"
           ? seaweedfsStorage
           : cloudinaryStorage,
-      inject: [ConfigService, CloudinaryStorageService, SeaweedfsStorageService],
+      inject: [
+        ConfigService,
+        CloudinaryStorageService,
+        SeaweedfsStorageService,
+      ],
     },
     {
       provide: MEDIA_STORAGE_RESOLVER,

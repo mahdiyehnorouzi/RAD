@@ -124,7 +124,8 @@ export function toCatalogImages(
           ? `https://res.cloudinary.com/${process.env.CLOUDINARY_CLOUD_NAME}/${image.storage === "cloudinary_video" ? "video" : "image"}/upload/c_limit,w_320/${image.objectKey}.jpg`
           : // SeaweedFS has no on-the-fly transform API — fall back to the full asset.
             image.objectKey &&
-              (image.storage === "seaweedfs" || image.storage === "seaweedfs_video")
+              (image.storage === "seaweedfs" ||
+                image.storage === "seaweedfs_video")
             ? seaweedfsDeliveryUrl(image.objectKey)
             : undefined,
       alt: image.alt,

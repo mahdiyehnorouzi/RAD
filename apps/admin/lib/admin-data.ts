@@ -52,10 +52,7 @@ export type AdminProductStatus = ProductStatus;
  * admin UI just has to handle whichever kind a successful upload returns.
  */
 export type AdminRemoteMediaStorage =
-  | "cloudinary"
-  | "cloudinary_video"
-  | "seaweedfs"
-  | "seaweedfs_video";
+  "cloudinary" | "cloudinary_video" | "seaweedfs" | "seaweedfs_video";
 
 export type AdminProductImage =
   | { storage: "legacy_base64"; src: string; objectKey?: null }

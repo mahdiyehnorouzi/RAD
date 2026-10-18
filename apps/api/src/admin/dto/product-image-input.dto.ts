@@ -59,6 +59,7 @@ export type AdminProductImageInput =
   | { storage: "legacy_base64"; src: string }
   | { storage: "static" | "external"; src: string }
   | {
-      storage: "cloudinary" | "cloudinary_video" | "seaweedfs" | "seaweedfs_video";
+      storage:
+        "cloudinary" | "cloudinary_video" | "seaweedfs" | "seaweedfs_video";
       objectKey: string;
     };

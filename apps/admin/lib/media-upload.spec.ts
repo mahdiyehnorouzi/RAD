@@ -25,14 +25,14 @@ describe("buildUploadRequest — cloudinary", () => {
 
   test("targets Cloudinary's own upload endpoint for the signed resourceType", () => {
     const { url } = buildUploadRequest(signed, fakeFile("a.jpg", "image/jpeg"));
-    assert.equal(
-      url,
-      "https://api.cloudinary.com/v1_1/rad-cloud/image/upload",
-    );
+    assert.equal(url, "https://api.cloudinary.com/v1_1/rad-cloud/image/upload");
   });
 
   test("form includes the file plus every signed param Cloudinary expects", () => {
-    const { body } = buildUploadRequest(signed, fakeFile("a.jpg", "image/jpeg"));
+    const { body } = buildUploadRequest(
+      signed,
+      fakeFile("a.jpg", "image/jpeg"),
+    );
     assert.equal(body.get("api_key"), "test-api-key");
     assert.equal(body.get("timestamp"), "1700000000");
     assert.equal(body.get("folder"), "rad/pending");
@@ -77,7 +77,10 @@ describe("buildUploadRequest — seaweedfs", () => {
   });
 
   test("form includes every signed policy field plus a real Content-Type", () => {
-    const { body } = buildUploadRequest(signed, fakeFile("a.jpg", "image/jpeg"));
+    const { body } = buildUploadRequest(
+      signed,
+      fakeFile("a.jpg", "image/jpeg"),
+    );
     for (const [key, value] of Object.entries(signed.fields))
       assert.equal(body.get(key), value);
     assert.equal(body.get("Content-Type"), "image/jpeg");
@@ -92,7 +95,10 @@ describe("buildUploadRequest — seaweedfs", () => {
    * field at upload time.
    */
   test("`file` is the last field appended, as S3's POST policy requires", () => {
-    const { body } = buildUploadRequest(signed, fakeFile("a.jpg", "image/jpeg"));
+    const { body } = buildUploadRequest(
+      signed,
+      fakeFile("a.jpg", "image/jpeg"),
+    );
     const keys = Array.from(body.keys());
     assert.equal(keys.at(-1), "file");
   });
@@ -131,9 +137,7 @@ describe("resolveUploadedObjectKey", () => {
   });
 
   test("cloudinary: rejects a non-JSON response body", () => {
-    assert.throws(() =>
-      resolveUploadedObjectKey(cloudinarySigned, "not json"),
-    );
+    assert.throws(() => resolveUploadedObjectKey(cloudinarySigned, "not json"));
   });
 
   test("seaweedfs: uses the object key already minted at sign time, ignoring the response body entirely (S3 returns 204 with none)", () => {
