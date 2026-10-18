@@ -3,6 +3,7 @@ import {
   BadRequestException,
   ConflictException,
   ForbiddenException,
+  Inject,
   Injectable,
   Logger,
   NotFoundException,
@@ -17,10 +18,15 @@ import {
   productImageLimit,
 } from "../common/image-data";
 import {
-  CloudinaryStorageService,
   isValidProductImagePublicId,
   productImageFolder,
 } from "../storage/cloudinary-storage.service";
+import {
+  MEDIA_STORAGE,
+  isRemoteMediaStorage,
+  isVideoStorage,
+  type MediaStorageService,
+} from "../storage/media-storage.interface";
 import type { AdminProductImageInputDto } from "./dto";
 import {
   CartItem,
@@ -83,7 +89,7 @@ export class AdminService {
     private readonly payments: Repository<PaymentIntent>,
     private readonly inventory: InventoryService,
     private readonly paymentReview: PaymentReviewService,
-    private readonly storage: CloudinaryStorageService,
+    @Inject(MEDIA_STORAGE) private readonly storage: MediaStorageService,
   ) {}
 
   private readonly logger = new Logger(AdminService.name);
@@ -156,14 +162,11 @@ export class AdminService {
       throw new ConflictException("این شناسه URL قبلاً استفاده شده است.");
     }
 
-    if (!input.images.some((image) => image.storage !== "cloudinary_video"))
+    if (!input.images.some((image) => !isVideoStorage(image.storage)))
       throw new BadRequestException("حداقل یک تصویر برای اثر لازم است.");
     // Validate before any product/vendor writes. Existing legacy references remain compatible.
     for (const image of input.images) {
-      if (
-        image.storage === "cloudinary" ||
-        image.storage === "cloudinary_video"
-      ) {
+      if (isRemoteMediaStorage(image.storage)) {
         if (
           !image.objectKey ||
           !isValidProductImagePublicId(
@@ -174,7 +177,7 @@ export class AdminService {
           throw new BadRequestException("شناسه فایل نامعتبر است.");
         await this.storage.verifyMedia(
           image.objectKey,
-          image.storage === "cloudinary_video" ? "video" : "image",
+          isVideoStorage(image.storage) ? "video" : "image",
         );
       } else if (image.storage === "legacy_base64") {
         try {

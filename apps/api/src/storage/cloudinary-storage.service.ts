@@ -7,6 +7,7 @@ import {
 import { mediaLimits, validateMediaSize } from "./media-policy";
 import { ConfigService } from "@nestjs/config";
 import { v2 as cloudinary } from "cloudinary";
+import type { MediaStorageService } from "./media-storage.interface";
 
 /** Mime types new admin uploads may use — mirrors `assertImageData`'s allowlist. */
 export const ALLOWED_PRODUCT_IMAGE_MIME_TYPES = [
@@ -100,7 +101,7 @@ export const PENDING_UPLOAD_CLEANUP_POLICY =
   "no-automatic-expiry — see module comment";
 
 @Injectable()
-export class CloudinaryStorageService {
+export class CloudinaryStorageService implements MediaStorageService {
   private configured = false;
 
   constructor(private readonly config: ConfigService) {}

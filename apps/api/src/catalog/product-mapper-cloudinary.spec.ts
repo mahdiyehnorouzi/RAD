@@ -9,15 +9,30 @@ import type { ProductImageMeta } from "./type";
  */
 describe("imageSrc", () => {
   const previousCloudName = process.env.CLOUDINARY_CLOUD_NAME;
+  const previousSeaweedfsUrl = process.env.SEAWEEDFS_PUBLIC_URL;
+  const previousSeaweedfsEndpoint = process.env.SEAWEEDFS_ENDPOINT;
+  const previousSeaweedfsBucket = process.env.SEAWEEDFS_BUCKET;
 
   beforeEach(() => {
     delete process.env.CLOUDINARY_CLOUD_NAME;
+    delete process.env.SEAWEEDFS_PUBLIC_URL;
+    delete process.env.SEAWEEDFS_ENDPOINT;
+    delete process.env.SEAWEEDFS_BUCKET;
   });
 
   afterEach(() => {
     if (previousCloudName === undefined)
       delete process.env.CLOUDINARY_CLOUD_NAME;
     else process.env.CLOUDINARY_CLOUD_NAME = previousCloudName;
+    if (previousSeaweedfsUrl === undefined)
+      delete process.env.SEAWEEDFS_PUBLIC_URL;
+    else process.env.SEAWEEDFS_PUBLIC_URL = previousSeaweedfsUrl;
+    if (previousSeaweedfsEndpoint === undefined)
+      delete process.env.SEAWEEDFS_ENDPOINT;
+    else process.env.SEAWEEDFS_ENDPOINT = previousSeaweedfsEndpoint;
+    if (previousSeaweedfsBucket === undefined)
+      delete process.env.SEAWEEDFS_BUCKET;
+    else process.env.SEAWEEDFS_BUCKET = previousSeaweedfsBucket;
   });
 
   function image(overrides: Partial<ProductImageMeta>): ProductImageMeta {
@@ -73,6 +88,46 @@ describe("imageSrc", () => {
       true,
     );
     assert.equal(result, "whatever");
+  });
+
+  test("seaweedfs row derives its URL from SEAWEEDFS_PUBLIC_URL + objectKey", () => {
+    process.env.SEAWEEDFS_PUBLIC_URL = "https://media.example.com/rad-media";
+    const result = imageSrc(
+      image({
+        storage: "seaweedfs",
+        objectKey: "rad/products/moon-vase-id/abc123",
+      }),
+      false,
+    );
+    assert.equal(
+      result,
+      "https://media.example.com/rad-media/rad/products/moon-vase-id/abc123",
+    );
+  });
+
+  test("seaweedfs row falls back to SEAWEEDFS_ENDPOINT + SEAWEEDFS_BUCKET when no public URL is set", () => {
+    process.env.SEAWEEDFS_ENDPOINT = "http://seaweedfs.internal:8333";
+    process.env.SEAWEEDFS_BUCKET = "rad-media";
+    const result = imageSrc(
+      image({ storage: "seaweedfs_video", objectKey: "rad/pending/xyz" }),
+      false,
+    );
+    assert.equal(
+      result,
+      "http://seaweedfs.internal:8333/rad-media/rad/pending/xyz",
+    );
+  });
+
+  test("seaweedfs row without any SeaweedFS config falls back to the legacy proxy route", () => {
+    const result = imageSrc(
+      image({
+        id: "img_5",
+        storage: "seaweedfs",
+        objectKey: "rad/products/moon-vase-id/abc123",
+      }),
+      false,
+    );
+    assert.equal(result, "/catalog/images/img_5");
   });
 
   test("regression: static/external rows return src as-is", () => {
