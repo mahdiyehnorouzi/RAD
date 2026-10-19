@@ -1,6 +1,7 @@
 import type { ProductImage } from "../database/entities";
 import { HIDDEN_PRODUCT_STATUSES } from "../inventory/const/product-status";
 import { normalizeProductStatus } from "../inventory/product-status";
+import { isWellFormedS3ObjectKey } from "../storage/s3-object-key";
 import { formatArtworkNumber } from "./rad-number";
 import type {
   CatalogImage,
@@ -59,6 +60,51 @@ function cloudinaryDeliveryUrl(objectKey: string, video = false) {
   return `https://res.cloudinary.com/${cloudName}/${video ? "video" : "image"}/upload/${objectKey}`;
 }
 
+/**
+ * Delivery URL for an `s3`/`s3_video`-storage row. Not yet reachable in
+ * practice — nothing writes a row with this `storage` value until the PR
+ * that wires `S3StorageService` into `AdminService` — but the mapper
+ * needs to produce the right shape of URL once that happens, so it's
+ * implemented and tested now rather than left as a TODO.
+ *
+ * Deliberately does NOT point at the S3/SeaweedFS endpoint directly, and
+ * does NOT reuse `S3StorageService`'s internal/public upload endpoints —
+ * those are for *writing* (presigned PUT) and are not meant to be used
+ * for anonymous public *reads* of a private bucket. This builds a URL
+ * against a separate, dedicated public media origin
+ * (`S3_PUBLIC_MEDIA_BASE_URL`, e.g. `https://media.rad-object.com`) that
+ * is meant to be a controlled media proxy/CDN in front of the bucket —
+ * not configured or implemented in this PR (no Nginx/DNS changes here),
+ * so until that origin exists and is configured, this intentionally
+ * returns `undefined` (same not-configured fallback as
+ * `cloudinaryDeliveryUrl`) rather than ever pointing at an internal
+ * Docker hostname, `127.0.0.1`, or exposing the bucket directly.
+ *
+ * Takes no `video` flag, unlike `cloudinaryDeliveryUrl`: whether the
+ * future media proxy should route images/videos differently is a Phase
+ * Four infra decision, not made here. Callers pass the storage kind only
+ * to decide `kind`/filtering (`toCatalogImages`), not to this function.
+ */
+function s3DeliveryUrl(objectKey: string) {
+  // Never build a URL from a key that isn't exactly one of our own
+  // minted shapes — a row read back out of our own DB should always be
+  // well-formed already, but a URL builder must not assume that instead
+  // of checking (defense in depth against path-traversal/injection via a
+  // malformed `objectKey`, however it got there).
+  if (!isWellFormedS3ObjectKey(objectKey)) return undefined;
+  const base = (process.env.S3_PUBLIC_MEDIA_BASE_URL ?? "").trim();
+  if (!base) return undefined;
+  // Every character `isWellFormedS3ObjectKey` allows is already URL-path
+  // safe on its own, but each segment is still explicitly
+  // percent-encoded — correct regardless of charset, and future-proof if
+  // the key shape ever changes.
+  const encodedKey = objectKey
+    .split("/")
+    .map((segment) => encodeURIComponent(segment))
+    .join("/");
+  return `${base.replace(/\/+$/, "")}/${encodedKey}`;
+}
+
 export function imageSrc(image: ProductImageMeta, embedImages: boolean) {
   if (embedImages) return image.src ?? undefined;
   switch (image.storage) {
@@ -75,6 +121,12 @@ export function imageSrc(image: ProductImageMeta, embedImages: boolean) {
             )
           : undefined) ?? `/catalog/images/${image.id}`
       );
+    case "s3_video":
+    case "s3":
+      return (
+        (image.objectKey ? s3DeliveryUrl(image.objectKey) : undefined) ??
+        `/catalog/images/${image.id}`
+      );
     case "legacy_base64":
     default:
       // `default` also covers rows from before the Phase 0 backfill ran.
@@ -87,15 +139,19 @@ export function toCatalogImages(
   embedImages = false,
   includeVideos = false,
 ): CatalogImage[] {
+  const isVideo = (storage: ProductImageMeta["storage"]) =>
+    storage === "cloudinary_video" || storage === "s3_video";
   return [...images]
-    .filter((image) => includeVideos || image.storage !== "cloudinary_video")
+    .filter((image) => includeVideos || !isVideo(image.storage))
     .sort((a, b) => a.sortOrder - b.sortOrder)
     .map((image) => ({
       src: imageSrc(image, embedImages),
-      kind:
-        image.storage === "cloudinary_video"
-          ? ("video" as const)
-          : ("image" as const),
+      kind: isVideo(image.storage) ? ("video" as const) : ("image" as const),
+      // Cloudinary can derive an on-the-fly resized thumbnail from any
+      // asset via a URL transformation (`c_limit,w_320`); there is no S3
+      // equivalent yet (SeaweedFS/a media proxy would need to implement
+      // its own resizing, which isn't built) — `s3`/`s3_video` rows get
+      // no thumbnail rather than a broken or misleading one.
       thumbnail:
         image.objectKey &&
         (image.storage === "cloudinary" || image.storage === "cloudinary_video")

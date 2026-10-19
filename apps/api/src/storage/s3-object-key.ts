@@ -54,3 +54,26 @@ export function isValidS3ObjectKey(productId: string, objectKey: string) {
     PENDING_S3_OBJECT_KEY_PATTERN.test(objectKey)
   );
 }
+
+/**
+ * Shape-only check: is this *syntactically* one of our own minted keys
+ * (`rad/products/<any-id>/<32-char-token>` or `rad/pending/<token>`),
+ * with no traversal sequences and no characters outside the token
+ * alphabet — WITHOUT checking which product it belongs to.
+ *
+ * This is NOT an ownership/authorization check (use `isValidS3ObjectKey`
+ * with the resolved `productId` for that). It exists only for contexts
+ * that have an `objectKey` but no `productId` to check it against — e.g.
+ * `product.mapper.ts#s3DeliveryUrl`, which must refuse to build a URL
+ * from a key that isn't well-formed (defense in depth: a key already
+ * read back out of our own DB should always be well-formed, since
+ * nothing writes one that isn't yet, but a URL builder should never
+ * assume that rather than checking) without needing to thread a
+ * productId through read-path code that doesn't otherwise have one.
+ */
+export function isWellFormedS3ObjectKey(objectKey: string) {
+  return (
+    /^rad\/products\/[A-Za-z0-9_-]+\/[A-Za-z0-9_-]{32}$/.test(objectKey) ||
+    PENDING_S3_OBJECT_KEY_PATTERN.test(objectKey)
+  );
+}

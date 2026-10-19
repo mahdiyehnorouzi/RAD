@@ -1,6 +1,26 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { IsIn, IsOptional, IsString, MinLength } from "class-validator";
 
+/**
+ * Deliberately does NOT include `"s3"`/`"s3_video"` yet, even though
+ * `ProductImageStorage` (the DB-level read union, `product-image.entity.ts`)
+ * already does. This `@IsIn` check is the admin API's INPUT allowlist — the
+ * outermost gate a save request passes through — and it is what currently
+ * makes `storage: "s3"` fully unreachable end-to-end, before
+ * `AdminService.saveProduct` is ever called.
+ *
+ * Adding `"s3"`/`"s3_video"` here on its own, without also adding a
+ * matching explicit branch in `AdminService.saveProduct`'s per-image
+ * validation loop (one that calls `isValidS3ObjectKey` + a real
+ * `MediaStorage.verifyMedia`, exactly like the existing `cloudinary`
+ * branch does), would be unsafe: `saveProduct`'s current fallback for any
+ * storage value it doesn't explicitly recognize is
+ * `else if (!image.src) throw ...` — i.e. it would silently TRUST a
+ * client-supplied `src` for an "s3" row with no existence/ownership check
+ * at all, the exact "broad fallback that silently accepts unknown storage
+ * types" this codebase's review rules warn against. So both changes must
+ * land together in the PR that actually wires S3 uploads in — not here.
+ */
 export const PRODUCT_IMAGE_STORAGES = [
   "legacy_base64",
   "static",
