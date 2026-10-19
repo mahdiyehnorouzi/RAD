@@ -2,24 +2,15 @@ import { ApiProperty } from "@nestjs/swagger";
 import { IsIn, IsOptional, IsString, MinLength } from "class-validator";
 
 /**
- * Deliberately does NOT include `"s3"`/`"s3_video"` yet, even though
- * `ProductImageStorage` (the DB-level read union, `product-image.entity.ts`)
- * already does. This `@IsIn` check is the admin API's INPUT allowlist — the
- * outermost gate a save request passes through — and it is what currently
- * makes `storage: "s3"` fully unreachable end-to-end, before
- * `AdminService.saveProduct` is ever called.
- *
- * Adding `"s3"`/`"s3_video"` here on its own, without also adding a
- * matching explicit branch in `AdminService.saveProduct`'s per-image
- * validation loop (one that calls `isValidS3ObjectKey` + a real
- * `MediaStorage.verifyMedia`, exactly like the existing `cloudinary`
- * branch does), would be unsafe: `saveProduct`'s current fallback for any
- * storage value it doesn't explicitly recognize is
- * `else if (!image.src) throw ...` — i.e. it would silently TRUST a
- * client-supplied `src` for an "s3" row with no existence/ownership check
- * at all, the exact "broad fallback that silently accepts unknown storage
- * types" this codebase's review rules warn against. So both changes must
- * land together in the PR that actually wires S3 uploads in — not here.
+ * `"s3"`/`"s3_video"` were deliberately withheld from this allowlist in
+ * PR 3 until `AdminService.saveProduct`'s per-image validation loop had a
+ * real, matching branch for them (one that calls `isValidS3ObjectKey` +
+ * a real `MediaStorage.verifyMedia`, exactly like the existing
+ * `cloudinary` branch) — adding the allowlist entry alone would have let
+ * `saveProduct`'s fallback (`else if (!image.src) throw ...`) silently
+ * trust a client-supplied `src` with no existence/ownership check at all.
+ * PR 4 adds that matching branch (see `AdminService.saveProduct` and
+ * `replaceImages`), so both land together here.
  */
 export const PRODUCT_IMAGE_STORAGES = [
   "legacy_base64",
@@ -27,6 +18,8 @@ export const PRODUCT_IMAGE_STORAGES = [
   "external",
   "cloudinary",
   "cloudinary_video",
+  "s3",
+  "s3_video",
 ] as const;
 
 export type ProductImageInputStorage = (typeof PRODUCT_IMAGE_STORAGES)[number];
@@ -76,4 +69,5 @@ export class AdminProductImageInputDto {
 export type AdminProductImageInput =
   | { storage: "legacy_base64"; src: string }
   | { storage: "static" | "external"; src: string }
-  | { storage: "cloudinary" | "cloudinary_video"; objectKey: string };
+  | { storage: "cloudinary" | "cloudinary_video"; objectKey: string }
+  | { storage: "s3" | "s3_video"; objectKey: string };

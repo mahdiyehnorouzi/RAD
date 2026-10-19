@@ -4,6 +4,7 @@ import { ConfigService } from "@nestjs/config";
 import { BadRequestException } from "@nestjs/common";
 import { AdminService } from "./admin.service";
 import { CloudinaryStorageService } from "../storage/cloudinary-storage.service";
+import { S3StorageService } from "../storage/s3-storage.service";
 
 /**
  * Pure, no-DB coverage for the "uploaded-then-abandoned" orphan scenario:
@@ -51,6 +52,8 @@ function adminServiceWithStorageSpy() {
     null as never,
     null as never,
     storage,
+    storage,
+    new S3StorageService(new ConfigService({})),
   );
   return { admin, deleteCount: () => deleteCalls };
 }

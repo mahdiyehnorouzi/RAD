@@ -5,6 +5,7 @@ import { BadRequestException, ForbiddenException } from "@nestjs/common";
 import { AdminService } from "./admin.service";
 import { canAdmin } from "./permissions";
 import { CloudinaryStorageService } from "../storage/cloudinary-storage.service";
+import { S3StorageService } from "../storage/s3-storage.service";
 
 /**
  * Pure, no-DB coverage for the sign-upload endpoint's auth/validation
@@ -34,6 +35,8 @@ function adminServiceForUnitTests() {
     null as never,
     null as never,
     new CloudinaryStorageService(new ConfigService({})),
+    new CloudinaryStorageService(new ConfigService({})),
+    new S3StorageService(new ConfigService({})),
   );
 }
 

@@ -32,6 +32,7 @@ import {
 import { OrdersService } from "../orders.service";
 import { PaymentReviewService } from "../payment-review.service";
 import { CloudinaryStorageService } from "../../storage/cloudinary-storage.service";
+import { S3StorageService } from "../../storage/s3-storage.service";
 
 function freePort() {
   return new Promise<number>((resolve, reject) => {
@@ -106,6 +107,8 @@ export async function startPurchaseHarness() {
     inventory,
     paymentReview,
     new CloudinaryStorageService(new ConfigService({})),
+    new CloudinaryStorageService(new ConfigService({})),
+    new S3StorageService(new ConfigService({})),
   );
 
   let productCount = 0;

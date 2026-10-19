@@ -8,51 +8,62 @@ import {
 } from "./product-image-input.dto";
 
 /**
- * PR 3 baseline-safety check: proves the admin API's INPUT allowlist
- * (`@IsIn(PRODUCT_IMAGE_STORAGES)`) already rejects `storage: "s3"` /
- * `"s3_video"` today, exactly as intended — this is the outermost gate
- * that makes S3-backed product images fully unreachable through the real
- * admin API before any provider is wired in. See the doc comment on
- * `PRODUCT_IMAGE_STORAGES` for why adding these values here requires a
- * matching `AdminService.saveProduct` branch landing in the same change,
- * not independently.
+ * PR 3 proved `storage: "s3"`/`"s3_video"` were rejected at this DTO
+ * layer (the outermost gate), specifically because `AdminService
+ * .saveProduct` had no matching validation branch for them yet — adding
+ * the allowlist entry alone would have been unsafe. PR 4 adds that
+ * branch (see `admin.service.ts`), so this spec now proves the opposite:
+ * both values are accepted here, and still only here — DTO-layer shape
+ * only, not existence/ownership (that's `AdminService`'s job, covered in
+ * `admin.service.spec.ts`/`replace-images.spec.ts`).
  */
 describe("AdminProductImageInputDto — storage allowlist", () => {
-  test("PRODUCT_IMAGE_STORAGES does not yet include s3/s3_video", () => {
-    assert.equal((PRODUCT_IMAGE_STORAGES as readonly string[]).includes("s3"), false);
+  test("PRODUCT_IMAGE_STORAGES now includes s3/s3_video", () => {
+    assert.equal((PRODUCT_IMAGE_STORAGES as readonly string[]).includes("s3"), true);
     assert.equal(
       (PRODUCT_IMAGE_STORAGES as readonly string[]).includes("s3_video"),
-      false,
+      true,
     );
   });
 
-  test("rejects storage: 's3' at the DTO validation layer", async () => {
+  test("accepts storage: 's3' at the DTO validation layer (shape only)", async () => {
     const dto = plainToInstance(AdminProductImageInputDto, {
       storage: "s3",
       objectKey: "rad/products/prod_1/" + "a".repeat(32),
     });
     const errors = await validate(dto);
-    assert.ok(errors.some((error) => error.property === "storage"));
+    assert.equal(errors.some((error) => error.property === "storage"), false);
   });
 
-  test("rejects storage: 's3_video' at the DTO validation layer", async () => {
+  test("accepts storage: 's3_video' at the DTO validation layer (shape only)", async () => {
     const dto = plainToInstance(AdminProductImageInputDto, {
       storage: "s3_video",
       objectKey: "rad/products/prod_1/" + "a".repeat(32),
     });
     const errors = await validate(dto);
+    assert.equal(errors.some((error) => error.property === "storage"), false);
+  });
+
+  test("still rejects a completely unrecognized storage value", async () => {
+    const dto = plainToInstance(AdminProductImageInputDto, {
+      storage: "dropbox",
+      objectKey: "whatever",
+    });
+    const errors = await validate(dto);
     assert.ok(errors.some((error) => error.property === "storage"));
   });
 
-  test("regression: still accepts every currently-supported storage value", async () => {
+  test("regression: every currently-supported storage value still passes the allowlist check", async () => {
     for (const storage of PRODUCT_IMAGE_STORAGES) {
+      const isRemote =
+        storage === "cloudinary" ||
+        storage === "cloudinary_video" ||
+        storage === "s3" ||
+        storage === "s3_video";
       const dto = plainToInstance(AdminProductImageInputDto, {
         storage,
-        src: storage === "cloudinary" || storage === "cloudinary_video" ? undefined : "x",
-        objectKey:
-          storage === "cloudinary" || storage === "cloudinary_video"
-            ? "rad/products/prod_1/abc"
-            : undefined,
+        src: isRemote ? undefined : "x",
+        objectKey: isRemote ? "rad/products/prod_1/abc" : undefined,
       });
       const errors = await validate(dto);
       assert.equal(

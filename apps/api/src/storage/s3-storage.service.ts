@@ -137,6 +137,19 @@ export class S3StorageService implements MediaStorage {
 
   constructor(private readonly config: ConfigService) {}
 
+  /**
+   * Eagerly validates required S3 config, throwing synchronously if
+   * incomplete. Called by `StorageModule`'s provider factory ONLY when
+   * `MEDIA_STORAGE_PROVIDER=s3` is explicitly selected, so NestJS
+   * bootstrap fails fast with a clear error at startup — never silently
+   * falls back to Cloudinary, and never waits until the first real admin
+   * upload attempt to discover S3 was never configured. Reuses
+   * `ensureConfigured`'s own checks rather than duplicating them.
+   */
+  validateStartupConfig() {
+    this.ensureConfigured();
+  }
+
   private requireEnv(name: string) {
     const value = this.config.get<string>(name);
     if (!value) {

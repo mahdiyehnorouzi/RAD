@@ -26,6 +26,11 @@ import { InventoryService } from "../inventory/inventory.service";
 import { NoticesService } from "../notices/notices.service";
 import { MailService } from "../mail/mail.service";
 import { CloudinaryStorageService } from "../storage/cloudinary-storage.service";
+import { S3StorageService } from "../storage/s3-storage.service";
+import {
+  __resetIssuedS3UploadsForTests,
+  recordIssuedS3Upload,
+} from "../storage/s3-upload-intent";
 
 /**
  * DB-backed coverage for `AdminService.saveProduct`/`replaceImages` (Phase
@@ -53,6 +58,8 @@ let pg: EmbeddedPostgres;
 let databaseDir: string;
 let admin: AdminService;
 let deleteCalls: string[];
+let s3Storage: S3StorageService;
+let s3DeleteCalls: string[];
 
 before(async () => {
   databaseDir = mkdtempSync(path.join(tmpdir(), "rad-admin-images-"));
@@ -114,6 +121,17 @@ before(async () => {
   storage.destroy = async (publicId: string) => {
     deleteCalls.push(publicId);
   };
+  // Same stub pattern for the S3 provider, used by the mixed-provider
+  // tests below — no real SeaweedFS connection, only objectKey strings.
+  s3Storage = new S3StorageService(new ConfigService({}));
+  s3Storage.verifyMedia = async (objectKey, kind) => ({
+    objectKey,
+    storage: kind === "video" ? "s3_video" : "s3",
+  });
+  s3DeleteCalls = [];
+  s3Storage.destroy = async (objectKey: string) => {
+    s3DeleteCalls.push(objectKey);
+  };
   admin = new AdminService(
     dataSource,
     repo(Product),
@@ -128,6 +146,8 @@ before(async () => {
     inventory,
     paymentReview,
     storage,
+    storage,
+    s3Storage,
   );
 });
 
@@ -395,5 +415,215 @@ describe("AdminService.saveProduct — cloudinary images (Phase 2)", () => {
       "the DB-side replacement must still have committed despite the failed Cloudinary delete",
     );
     assert.equal(rows[0].storage, "static");
+  });
+});
+
+describe("AdminService.saveProduct — s3 images (PR 4)", () => {
+  test("persists a new s3 image uploaded pre-creation (rad/pending/ key) as-is", async () => {
+    __resetIssuedS3UploadsForTests();
+    const slug = `s3-new-${Date.now()}`;
+    const objectKey = `rad/pending/${"a".repeat(32)}`;
+    const saved = await admin.saveProduct(
+      baseInput(slug, [{ storage: "s3", objectKey }]) as never,
+    );
+    assert.equal(saved.images.length, 1);
+    const row = await dataSource
+      .getRepository(ProductImage)
+      .findOneOrFail({ where: { productSlug: slug } });
+    assert.equal(row.storage, "s3");
+    assert.equal(row.objectKey, objectKey);
+    assert.equal(row.src, null);
+    assert.deepEqual(s3DeleteCalls, []);
+  });
+
+  test("rejects a client-supplied s3 objectKey with a forged/short token", async () => {
+    const slug = `s3-bad-token-${Date.now()}`;
+    await assert.rejects(() =>
+      admin.saveProduct(
+        baseInput(slug, [
+          { storage: "s3", objectKey: "rad/pending/short" },
+        ]) as never,
+      ),
+    );
+  });
+
+  test("rejects a forged s3 objectKey that reuses another product's real id (cross-product claiming)", async () => {
+    const slugA = `s3-forge-a-${Date.now()}`;
+    const productA = await admin.saveProduct(
+      baseInput(slugA, [
+        { storage: "static", src: "/catalog/test.jpg" },
+      ]) as never,
+    );
+    const slugB = `s3-forge-b-${Date.now()}`;
+    const forgedKey = `rad/products/${productA.id}/${"b".repeat(32)}`;
+    await assert.rejects(() =>
+      admin.saveProduct(
+        baseInput(slugB, [{ storage: "s3", objectKey: forgedKey }]) as never,
+      ),
+    );
+  });
+
+  test("ownership intent: a pending key this process minted as a VIDEO is still accepted once correctly attached as a video", async () => {
+    __resetIssuedS3UploadsForTests();
+    const slug = `s3-intent-ok-${Date.now()}`;
+    const objectKey = `rad/pending/${"i".repeat(32)}`;
+    // Simulates signProductImageUpload having minted this key for a
+    // pending (pre-creation) upload, recorded via the real tracker.
+    recordIssuedS3Upload(objectKey, null, "video");
+    const saved = await admin.saveProduct(
+      baseInput(slug, [
+        { storage: "static", src: "/catalog/test.jpg" },
+        { storage: "s3_video", objectKey },
+      ]) as never,
+    );
+    assert.equal(saved.images.length, 1); // s3_video is excluded from the public images count
+    const rows = await dataSource
+      .getRepository(ProductImage)
+      .find({ where: { productSlug: slug } });
+    assert.equal(rows.length, 2);
+    assert.ok(rows.some((row) => row.storage === "s3_video" && row.objectKey === objectKey));
+  });
+
+  test("idempotent retry: re-saving the same s3 payload twice does not duplicate rows or delete anything", async () => {
+    __resetIssuedS3UploadsForTests();
+    const slug = `s3-dup-${Date.now()}`;
+    const created = await admin.saveProduct(
+      baseInput(slug, [
+        { storage: "static", src: "/catalog/test.jpg" },
+      ]) as never,
+    );
+    const objectKey = `rad/products/${created.id}/${"c".repeat(32)}`;
+    const input = baseInput(slug, [{ storage: "s3", objectKey }]);
+    await admin.saveProduct(input as never, created.id);
+    s3DeleteCalls.length = 0;
+    const second = await admin.saveProduct(input as never, created.id);
+    assert.equal(second.images.length, 1);
+    const rows = await dataSource
+      .getRepository(ProductImage)
+      .find({ where: { productSlug: slug } });
+    assert.equal(rows.length, 1);
+    assert.deepEqual(s3DeleteCalls, []);
+  });
+
+  test("removing one s3 image from a multi-image product deletes only the removed asset, through S3StorageService specifically", async () => {
+    const slug = `s3-partial-remove-${Date.now()}`;
+    const created = await admin.saveProduct(
+      baseInput(slug, [
+        { storage: "static", src: "/catalog/test.jpg" },
+      ]) as never,
+    );
+    const keyA = `rad/products/${created.id}/${"d".repeat(32)}`;
+    const keyB = `rad/products/${created.id}/${"e".repeat(32)}`;
+    await admin.saveProduct(
+      baseInput(slug, [
+        { storage: "s3", objectKey: keyA },
+        { storage: "s3", objectKey: keyB },
+      ]) as never,
+      created.id,
+    );
+    s3DeleteCalls.length = 0;
+    deleteCalls.length = 0;
+    const after = await admin.saveProduct(
+      baseInput(slug, [{ storage: "s3", objectKey: keyA }]) as never,
+      created.id,
+    );
+    assert.equal(after.images.length, 1);
+    assert.deepEqual(s3DeleteCalls, [keyB]);
+    assert.deepEqual(
+      deleteCalls,
+      [],
+      "an s3 object's deletion must never go through CloudinaryStorageService",
+    );
+  });
+
+  test("a failed S3 delete during cleanup is logged/non-fatal — the save itself still succeeds", async () => {
+    const slug = `s3-delete-fails-${Date.now()}`;
+    const created = await admin.saveProduct(
+      baseInput(slug, [
+        { storage: "static", src: "/catalog/test.jpg" },
+      ]) as never,
+    );
+    const keyA = `rad/products/${created.id}/${"f".repeat(32)}`;
+    await admin.saveProduct(
+      baseInput(slug, [{ storage: "s3", objectKey: keyA }]) as never,
+      created.id,
+    );
+    const originalDestroy = s3Storage.destroy;
+    s3Storage.destroy = async () => {
+      throw new Error("simulated S3 outage");
+    };
+    try {
+      const after = await admin.saveProduct(
+        baseInput(slug, [
+          { storage: "static", src: "/catalog/test.jpg" },
+        ]) as never,
+        created.id,
+      );
+      assert.equal(after.images.length, 1);
+    } finally {
+      s3Storage.destroy = originalDestroy;
+    }
+    const rows = await dataSource
+      .getRepository(ProductImage)
+      .find({ where: { productSlug: slug } });
+    assert.equal(
+      rows.length,
+      1,
+      "the DB-side replacement must still have committed despite the failed S3 delete",
+    );
+    assert.equal(rows[0].storage, "static");
+  });
+
+  test("mixed cloudinary + s3 images on the same product: each is verified and later deleted through its OWN recorded provider", async () => {
+    const slug = `mixed-providers-${Date.now()}`;
+    const created = await admin.saveProduct(
+      baseInput(slug, [
+        { storage: "static", src: "/catalog/test.jpg" },
+      ]) as never,
+    );
+    const cloudinaryKey = `rad/products/${created.id}/${"g".repeat(10)}`;
+    const s3Key = `rad/products/${created.id}/${"h".repeat(32)}`;
+    const saved = await admin.saveProduct(
+      baseInput(slug, [
+        { storage: "cloudinary", objectKey: cloudinaryKey },
+        { storage: "s3", objectKey: s3Key },
+      ]) as never,
+      created.id,
+    );
+    assert.equal(saved.images.length, 2);
+    const rows = await dataSource
+      .getRepository(ProductImage)
+      .find({ where: { productSlug: slug }, order: { sortOrder: "ASC" } });
+    assert.equal(rows[0].storage, "cloudinary");
+    assert.equal(rows[1].storage, "s3");
+
+    deleteCalls.length = 0;
+    s3DeleteCalls.length = 0;
+    // Drop both — each must be deleted through its OWN provider.
+    const after = await admin.saveProduct(
+      baseInput(slug, [{ storage: "static", src: "/catalog/test.jpg" }]) as never,
+      created.id,
+    );
+    assert.equal(after.images.length, 1);
+    assert.deepEqual(deleteCalls, [cloudinaryKey]);
+    assert.deepEqual(s3DeleteCalls, [s3Key]);
+  });
+
+  test("rejects a mismatched storage/kind pairing: a key minted for a VIDEO upload is rejected when claimed as an image, even though the namespace check alone would have passed it", async () => {
+    __resetIssuedS3UploadsForTests();
+    const slug = `s3-kind-mismatch-${Date.now()}`;
+    const objectKey = `rad/pending/${"j".repeat(32)}`;
+    recordIssuedS3Upload(objectKey, null, "video");
+    // Claimed here as a plain image ("s3", not "s3_video") — namespace
+    // validation (isValidS3ObjectKey) has no concept of "kind" at all and
+    // would pass this; only the upload-intent check catches the mismatch.
+    await assert.rejects(() =>
+      admin.saveProduct(
+        baseInput(slug, [
+          { storage: "static", src: "/catalog/test.jpg" },
+          { storage: "s3", objectKey },
+        ]) as never,
+      ),
+    );
   });
 });

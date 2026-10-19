@@ -3,6 +3,7 @@ import {
   BadRequestException,
   ConflictException,
   ForbiddenException,
+  Inject,
   Injectable,
   Logger,
   NotFoundException,
@@ -21,6 +22,15 @@ import {
   isValidProductImagePublicId,
   productImageFolder,
 } from "../storage/cloudinary-storage.service";
+import { S3StorageService } from "../storage/s3-storage.service";
+import { isValidS3ObjectKey } from "../storage/s3-object-key";
+import {
+  checkIssuedS3Upload,
+  recordIssuedS3Upload,
+} from "../storage/s3-upload-intent";
+import { MEDIA_STORAGE } from "../storage/media-storage.token";
+import type { MediaStorage } from "../storage/media-storage.interface";
+import type { ProductImageStorage } from "../database/entities/product-image.entity";
 import type { AdminProductImageInputDto } from "./dto";
 import {
   CartItem,
@@ -83,10 +93,47 @@ export class AdminService {
     private readonly payments: Repository<PaymentIntent>,
     private readonly inventory: InventoryService,
     private readonly paymentReview: PaymentReviewService,
-    private readonly storage: CloudinaryStorageService,
+    /**
+     * The currently-ACTIVE provider (`MEDIA_STORAGE_PROVIDER`), used only
+     * for NEW uploads: signing a fresh upload, and verifying what a
+     * client just uploaded through that same signature
+     * (`signProductImageUpload`/`verifyProductMedia`). Never use this to
+     * decide how to verify or delete an EXISTING `ProductImage` row — a
+     * row's own `storage` column records which provider it actually
+     * lives on, independent of whichever provider is active today (see
+     * `storageProviderFor`).
+     */
+    @Inject(MEDIA_STORAGE) private readonly storage: MediaStorage,
+    private readonly cloudinaryStorage: CloudinaryStorageService,
+    private readonly s3Storage: S3StorageService,
   ) {}
 
   private readonly logger = new Logger(AdminService.name);
+
+  /** Whether the active (`MEDIA_STORAGE_PROVIDER`) upload provider is S3 — reference equality against the same singleton StorageModule injected, not a config re-read. */
+  private isS3Active() {
+    return (this.storage as MediaStorage) === this.s3Storage;
+  }
+
+  /**
+   * The concrete provider an EXISTING (or about-to-be-saved) row's own
+   * `storage` tag actually lives on — never the currently-active one.
+   * This is what makes deletion and re-verification provider-independent:
+   * a legacy `cloudinary`/`cloudinary_video` row is always handled via
+   * `CloudinaryStorageService`, and an `s3`/`s3_video` row always via
+   * `S3StorageService`, regardless of which provider `MEDIA_STORAGE_PROVIDER`
+   * currently selects. Returns `null` for storage kinds with no remote
+   * object at all (`static`/`external`/`legacy_base64`/`null`) — nothing
+   * to verify or delete through a provider.
+   */
+  private storageProviderFor(
+    storage: ProductImageStorage | null,
+  ): MediaStorage | null {
+    if (storage === "s3" || storage === "s3_video") return this.s3Storage;
+    if (storage === "cloudinary" || storage === "cloudinary_video")
+      return this.cloudinaryStorage;
+    return null;
+  }
 
   /**
    * Issues signed Cloudinary upload params for a new admin image upload.
@@ -115,10 +162,25 @@ export class AdminService {
     const existing = await this.products.findOne({
       where: { slug: normalizedSlug },
     });
-    const folder = productImageFolder(existing?.id ?? null);
+    const productId = existing?.id ?? null;
+    const folder = productImageFolder(productId);
     const kind = mime.startsWith("video/") ? "video" : "image";
     if (size !== undefined) validateMediaSize(size, kind);
-    return this.storage.createSignedUpload(folder, kind, size !== undefined);
+    const signed = await this.storage.createSignedUpload(
+      folder,
+      kind,
+      size !== undefined,
+    );
+    if (signed.provider === "s3") {
+      // Records that THIS process actually minted this key for this
+      // product (or the shared pending namespace) — see
+      // `s3-upload-intent.ts` for why this strengthens
+      // `verifyProductMedia`/`saveProduct`'s ownership check beyond
+      // namespace-matching alone, and why it's a soft, best-effort
+      // signal rather than a new hard requirement.
+      recordIssuedS3Upload(signed.objectKey, productId, kind);
+    }
+    return signed;
   }
 
   async verifyProductMedia(
@@ -129,8 +191,23 @@ export class AdminService {
     const product = await this.products.findOne({
       where: { slug: slug.trim().toLowerCase().replace(/\s+/g, "-") },
     });
-    if (!isValidProductImagePublicId(product?.id ?? "unsaved", objectKey))
+    const productId = product?.id ?? null;
+    // This verifies a FRESH upload (the active provider just signed it a
+    // moment ago, via signProductImageUpload above) — so, unlike
+    // storageProviderFor, using the active provider here is correct.
+    if (this.isS3Active()) {
+      if (!isValidS3ObjectKey(productId ?? "unsaved", objectKey))
+        throw new BadRequestException("شناسه فایل نامعتبر است.");
+      // Soft signal: "mismatch" (this key WAS minted by us, for a
+      // different product/kind) is a hard reject; "unknown" (no record —
+      // e.g. a restart between sign and verify) falls back to the
+      // namespace check above, already passed. See s3-upload-intent.ts.
+      if (checkIssuedS3Upload(objectKey, productId, kind) === "mismatch") {
+        throw new BadRequestException("شناسه فایل نامعتبر است.");
+      }
+    } else if (!isValidProductImagePublicId(productId ?? "unsaved", objectKey)) {
       throw new BadRequestException("شناسه فایل نامعتبر است.");
+    }
     return this.storage.verifyMedia(objectKey, kind);
   }
 
@@ -156,25 +233,56 @@ export class AdminService {
       throw new ConflictException("این شناسه URL قبلاً استفاده شده است.");
     }
 
-    if (!input.images.some((image) => image.storage !== "cloudinary_video"))
+    if (
+      !input.images.some(
+        (image) =>
+          image.storage !== "cloudinary_video" && image.storage !== "s3_video",
+      )
+    )
       throw new BadRequestException("حداقل یک تصویر برای اثر لازم است.");
     // Validate before any product/vendor writes. Existing legacy references remain compatible.
+    const productIdForCheck = duplicate?.id ?? null;
     for (const image of input.images) {
       if (
         image.storage === "cloudinary" ||
-        image.storage === "cloudinary_video"
+        image.storage === "cloudinary_video" ||
+        image.storage === "s3" ||
+        image.storage === "s3_video"
       ) {
-        if (
-          !image.objectKey ||
+        const isS3 = image.storage === "s3" || image.storage === "s3_video";
+        const kind =
+          image.storage === "cloudinary_video" || image.storage === "s3_video"
+            ? "video"
+            : "image";
+        if (!image.objectKey)
+          throw new BadRequestException("شناسه فایل نامعتبر است.");
+        if (isS3) {
+          if (!isValidS3ObjectKey(productIdForCheck ?? "unsaved", image.objectKey))
+            throw new BadRequestException("شناسه فایل نامعتبر است.");
+          // Soft signal, same rationale as verifyProductMedia: "mismatch"
+          // (minted by us for a different product/kind) hard-rejects;
+          // "unknown" falls back to the namespace check above.
+          if (
+            checkIssuedS3Upload(image.objectKey, productIdForCheck, kind) ===
+            "mismatch"
+          ) {
+            throw new BadRequestException("شناسه فایل نامعتبر است.");
+          }
+        } else if (
           !isValidProductImagePublicId(
-            duplicate?.id ?? "unsaved",
+            productIdForCheck ?? "unsaved",
             image.objectKey,
           )
-        )
+        ) {
           throw new BadRequestException("شناسه فایل نامعتبر است.");
-        await this.storage.verifyMedia(
+        }
+        // Re-verifies through whichever concrete provider THIS image's own
+        // storage tag names — never the currently-active provider, which
+        // may differ (a product can legitimately mix an older cloudinary
+        // row with a newly-uploaded s3 row across a provider switch).
+        await this.storageProviderFor(image.storage)!.verifyMedia(
           image.objectKey,
-          image.storage === "cloudinary_video" ? "video" : "image",
+          kind,
         );
       } else if (image.storage === "legacy_base64") {
         try {
@@ -522,29 +630,49 @@ export class AdminService {
           sortOrder,
         };
       }
-      // storage === "cloudinary": never trust the client's objectKey
-      // (public_id) blindly, even though the browser uploaded the bytes
-      // directly to Cloudinary with our signature — re-validate it matches
-      // exactly what our own sign endpoint would have issued for this
-      // product (`rad/products/<productId>/<id>`, or the unassociated
-      // `rad/pending/<id>` namespace for an image attached before the
-      // product existed), so a client can't point a product at an
-      // arbitrary asset elsewhere in the Cloudinary account. Namespacing
-      // by the immutable `productId` (not `slug`) means this still holds
-      // even if `slug` were ever renamed. Unlike the R2 design this
-      // replaces, a `rad/pending/...` public_id is persisted as-is — no
-      // rename/migration step — see `cloudinary-storage.service.ts`.
+      // storage === "cloudinary"/"cloudinary_video"/"s3"/"s3_video": never
+      // trust the client's objectKey blindly, even though the browser
+      // uploaded the bytes directly to the provider with our signature —
+      // re-validate it matches exactly what our own sign endpoint would
+      // have issued for this product (`rad/products/<productId>/<id>`,
+      // or the unassociated `rad/pending/<id>` namespace for an image
+      // attached before the product existed), so a client can't point a
+      // product at an arbitrary asset elsewhere in the account/bucket.
+      // Namespacing by the immutable `productId` (not `slug`) means this
+      // still holds even if `slug` were ever renamed. A `rad/pending/...`
+      // key is persisted as-is — no rename/migration step — see
+      // `cloudinary-storage.service.ts`/`s3-object-key.ts`.
       if (
-        !image.objectKey ||
-        !isValidProductImagePublicId(productId, image.objectKey)
+        image.storage === "cloudinary" ||
+        image.storage === "cloudinary_video"
       ) {
+        if (
+          !image.objectKey ||
+          !isValidProductImagePublicId(productId, image.objectKey)
+        ) {
+          throw new BadRequestException(
+            "کلید تصویر نامعتبر است. تصویر را دوباره بارگذاری کنید.",
+          );
+        }
+        return {
+          productSlug: slug,
+          storage: image.storage,
+          src: null,
+          objectKey: image.objectKey,
+          alt: name,
+          enAlt: name,
+          sortOrder,
+        };
+      }
+      // storage === "s3"/"s3_video"
+      if (!image.objectKey || !isValidS3ObjectKey(productId, image.objectKey)) {
         throw new BadRequestException(
           "کلید تصویر نامعتبر است. تصویر را دوباره بارگذاری کنید.",
         );
       }
       return {
         productSlug: slug,
-        storage: image.storage as "cloudinary" | "cloudinary_video",
+        storage: image.storage,
         src: null,
         objectKey: image.objectKey,
         alt: name,
@@ -553,37 +681,44 @@ export class AdminService {
       };
     });
 
-    // Figure out which Cloudinary assets are being dropped (removed or
-    // replaced) before we touch the DB, so we can clean them up in
-    // Cloudinary only *after* the delete+reinsert transaction below has
-    // actually committed — never before, since deleting storage ahead of a
-    // DB write that could still roll back would leave a product.image
+    // Figure out which remote (cloudinary/s3) assets are being dropped
+    // (removed or replaced) before we touch the DB, so we can clean them
+    // up only *after* the delete+reinsert transaction below has actually
+    // committed — never before, since deleting storage ahead of a DB
+    // write that could still roll back would leave a product.image
     // pointing at nothing.
+    const isRemoteStorage = (storage: ProductImageStorage | null) =>
+      storage === "cloudinary" ||
+      storage === "cloudinary_video" ||
+      storage === "s3" ||
+      storage === "s3_video";
     const existing = await this.productImages.find({
       where: { productSlug: slug },
     });
     const keptObjectKeys = new Set(
       rows
-        .filter(
-          (row) =>
-            row.storage === "cloudinary" || row.storage === "cloudinary_video",
-        )
+        .filter((row) => isRemoteStorage(row.storage))
         .map((row) => row.objectKey as string),
     );
     const orphanedObjectKeys = existing
       .filter(
         (row) =>
-          (row.storage === "cloudinary" ||
-            row.storage === "cloudinary_video") &&
+          isRemoteStorage(row.storage) &&
           row.objectKey &&
           !keptObjectKeys.has(row.objectKey),
       )
       .map((row) => ({
         objectKey: row.objectKey as string,
         kind:
-          row.storage === "cloudinary_video"
+          row.storage === "cloudinary_video" || row.storage === "s3_video"
             ? ("video" as const)
             : ("image" as const),
+        // Captured from the EXISTING row's own storage tag — the row
+        // being deleted may have been written under a provider that is
+        // no longer the active one (a prior MEDIA_STORAGE_PROVIDER
+        // value). Deletion must always go through the provider that
+        // actually holds the object, never the currently-active one.
+        storage: row.storage,
       }));
 
     await this.dataSource.transaction(async (manager) => {
@@ -596,17 +731,18 @@ export class AdminService {
     });
 
     if (orphanedObjectKeys.length) {
-      // Best-effort: an orphaned Cloudinary asset left behind is an
-      // acceptable cost; failing the whole save because the Cloudinary
-      // delete flaked is not. `destroy` treats "not found" as success, so
-      // a repeated/duplicate save of the same diff never double-deletes or
-      // errors.
-      for (const { objectKey, kind } of orphanedObjectKeys) {
+      // Best-effort: an orphaned asset left behind is an acceptable cost;
+      // failing the whole save because a provider delete flaked is not.
+      // `destroy` treats "not found" as success, so a repeated/duplicate
+      // save of the same diff never double-deletes or errors.
+      for (const { objectKey, kind, storage } of orphanedObjectKeys) {
+        const provider = this.storageProviderFor(storage);
+        if (!provider) continue; // unreachable given isRemoteStorage's filter, kept for type-safety
         try {
-          await this.storage.destroy(objectKey, kind);
+          await provider.destroy(objectKey, kind);
         } catch {
           this.logger.warn(
-            `Failed to delete orphaned Cloudinary asset; retry cleanup later.`,
+            `Failed to delete orphaned ${storage} asset; retry cleanup later.`,
           );
         }
       }

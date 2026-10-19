@@ -11,14 +11,18 @@ import type { ProductImageMeta } from "./type";
  */
 describe("imageSrc — s3", () => {
   const previousBaseUrl = process.env.S3_PUBLIC_MEDIA_BASE_URL;
+  const previousPublicEndpoint = process.env.S3_PUBLIC_ENDPOINT;
 
   beforeEach(() => {
     delete process.env.S3_PUBLIC_MEDIA_BASE_URL;
+    delete process.env.S3_PUBLIC_ENDPOINT;
   });
 
   afterEach(() => {
     if (previousBaseUrl === undefined) delete process.env.S3_PUBLIC_MEDIA_BASE_URL;
     else process.env.S3_PUBLIC_MEDIA_BASE_URL = previousBaseUrl;
+    if (previousPublicEndpoint === undefined) delete process.env.S3_PUBLIC_ENDPOINT;
+    else process.env.S3_PUBLIC_ENDPOINT = previousPublicEndpoint;
   });
 
   function image(overrides: Partial<ProductImageMeta>): ProductImageMeta {
@@ -67,12 +71,25 @@ describe("imageSrc — s3", () => {
     assert.equal(result, `https://media.rad-object.com/${VALID_PENDING_KEY}`);
   });
 
-  test("s3 row with no S3_PUBLIC_MEDIA_BASE_URL configured falls back to the legacy proxy route, never an internal endpoint", () => {
+  test("s3 row with neither S3_PUBLIC_MEDIA_BASE_URL nor S3_PUBLIC_ENDPOINT configured falls back to the legacy proxy route", () => {
     const result = imageSrc(
       image({ id: "img_2", storage: "s3", objectKey: VALID_PRODUCT_KEY }),
       false,
     );
     assert.equal(result, "/catalog/images/img_2");
+  });
+
+  test("falls back to S3_PUBLIC_ENDPOINT when S3_PUBLIC_MEDIA_BASE_URL is unset (same host serves reads and writes in the common deployment)", () => {
+    process.env.S3_PUBLIC_ENDPOINT = "https://media.rad-object.com";
+    const result = imageSrc(image({ storage: "s3", objectKey: VALID_PRODUCT_KEY }), false);
+    assert.equal(result, `https://media.rad-object.com/${VALID_PRODUCT_KEY}`);
+  });
+
+  test("S3_PUBLIC_MEDIA_BASE_URL takes priority over S3_PUBLIC_ENDPOINT when both are set (separate read/write hosts)", () => {
+    process.env.S3_PUBLIC_ENDPOINT = "https://s3-upload.rad-object.com";
+    process.env.S3_PUBLIC_MEDIA_BASE_URL = "https://cdn.rad-object.com";
+    const result = imageSrc(image({ storage: "s3", objectKey: VALID_PRODUCT_KEY }), false);
+    assert.equal(result, `https://cdn.rad-object.com/${VALID_PRODUCT_KEY}`);
   });
 
   test("never falls back to an internal S3 endpoint even if one were somehow set on the same process", () => {

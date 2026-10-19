@@ -92,7 +92,20 @@ function s3DeliveryUrl(objectKey: string) {
   // of checking (defense in depth against path-traversal/injection via a
   // malformed `objectKey`, however it got there).
   if (!isWellFormedS3ObjectKey(objectKey)) return undefined;
-  const base = (process.env.S3_PUBLIC_MEDIA_BASE_URL ?? "").trim();
+  // S3_PUBLIC_MEDIA_BASE_URL falls back to S3_PUBLIC_ENDPOINT (the same
+  // var S3StorageService uses to build presigned upload URLs) because in
+  // the common deployment — one Nginx host reverse-proxying straight
+  // through to the SeaweedFS S3 gateway for both reads and writes —
+  // they're the same public host, and requiring two separate env vars
+  // for one value would just be a config footgun (set one, forget the
+  // other, media silently 404s). Set S3_PUBLIC_MEDIA_BASE_URL explicitly
+  // only when reads and writes genuinely need different public hosts
+  // (e.g. a CDN in front of reads only).
+  const base = (
+    process.env.S3_PUBLIC_MEDIA_BASE_URL ??
+    process.env.S3_PUBLIC_ENDPOINT ??
+    ""
+  ).trim();
   if (!base) return undefined;
   // Every character `isWellFormedS3ObjectKey` allows is already URL-path
   // safe on its own, but each segment is still explicitly
