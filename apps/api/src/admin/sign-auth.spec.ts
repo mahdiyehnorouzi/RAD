@@ -31,10 +31,12 @@ function adminServiceForUnitTests() {
     nullRepo,
     nullRepo,
     nullRepo,
+    nullRepo,
     null as never,
     null as never,
     new CloudinaryStorageService(new ConfigService({})),
     () => new CloudinaryStorageService(new ConfigService({})),
+    null as never,
   );
 }
 

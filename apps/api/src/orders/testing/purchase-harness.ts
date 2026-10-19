@@ -15,6 +15,7 @@ import {
   Favorite,
   Notice,
   Order,
+  PasswordResetToken,
   PaymentIntent,
   Product,
   ProductImage,
@@ -103,10 +104,12 @@ export async function startPurchaseHarness() {
     repo(Favorite),
     repo(Review),
     repo(PaymentIntent),
+    repo(PasswordResetToken),
     inventory,
     paymentReview,
     new CloudinaryStorageService(new ConfigService({})),
     () => new CloudinaryStorageService(new ConfigService({})),
+    mail,
   );
 
   let productCount = 0;

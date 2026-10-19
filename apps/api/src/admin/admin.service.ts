@@ -12,6 +12,8 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { randomBytes } from "node:crypto";
 import { hash } from "bcryptjs";
 import { DataSource, In, IsNull, Not, Repository } from "typeorm";
+import { generateVerificationCode } from "../auth/reset-token.util";
+import { MailService } from "../mail/mail.service";
 import {
   assertImageData,
   productImageError,
@@ -34,6 +36,7 @@ import {
   CartItem,
   Favorite,
   Order,
+  PasswordResetToken,
   PaymentIntent,
   Product,
   ProductImage,
@@ -68,6 +71,9 @@ import type {
   UpdateOrderDto,
 } from "./dto";
 
+/** Invitations get a longer window than a password-reset code (15 min) since the invitee may not act right away. */
+const INVITE_TOKEN_TTL_MS = 1000 * 60 * 60 * 24 * 7;
+
 @Injectable()
 export class AdminService {
   constructor(
@@ -90,11 +96,14 @@ export class AdminService {
     private readonly reviews: Repository<Review>,
     @InjectRepository(PaymentIntent)
     private readonly payments: Repository<PaymentIntent>,
+    @InjectRepository(PasswordResetToken)
+    private readonly resetTokens: Repository<PasswordResetToken>,
     private readonly inventory: InventoryService,
     private readonly paymentReview: PaymentReviewService,
     @Inject(MEDIA_STORAGE) private readonly storage: MediaStorageService,
     @Inject(MEDIA_STORAGE_RESOLVER)
     private readonly storageFor: MediaStorageResolver,
+    private readonly mail: MailService,
   ) {}
 
   private readonly logger = new Logger(AdminService.name);
@@ -394,10 +403,22 @@ export class AdminService {
     return users.map(toAdminUser);
   }
 
+  /**
+   * Creates the invited account and emails a one-time code the invitee uses
+   * on the "set password" screen (same code mechanism and endpoint as
+   * forgot-password: `POST /auth/password/reset`, which already accepts an
+   * `invited`-status account and flips it to `active`). The account and its
+   * token are created up front with an unguessable password hash (never
+   * emailed), but if the invite email fails to send we roll both back —
+   * otherwise the admin would be left with an invited member who can never
+   * find out they were invited, and no way to resend without creating a
+   * confusing duplicate-email conflict.
+   */
   async inviteMember(input: InviteMemberDto) {
     const email = input.email.trim().toLowerCase();
     const existing = await this.users.findOne({ where: { email } });
     if (existing) throw new ConflictException("این ایمیل قبلاً ثبت شده است.");
+
     const user = await this.users.save(
       this.users.create({
         name: input.name.trim(),
@@ -408,7 +429,36 @@ export class AdminService {
         status: "invited",
       }),
     );
+    try {
+      await this.issueInviteToken(user);
+    } catch (error) {
+      await this.users.delete({ id: user.id });
+      throw error;
+    }
     return toAdminMember(user);
+  }
+
+  /** Re-sends an invite (e.g. the first email bounced or expired) without creating a second account. */
+  async resendInvite(id: string) {
+    const user = await this.users.findOne({ where: { id } });
+    if (!user?.adminRole) throw new NotFoundException("عضو پیدا نشد.");
+    if (user.status !== "invited") {
+      throw new ConflictException("این حساب قبلاً فعال شده است.");
+    }
+    await this.issueInviteToken(user);
+    return toAdminMember(user);
+  }
+
+  /** Single-use (deleted on consume by `AuthService.resetPassword`), expiring, replaces any prior token for this user. */
+  private async issueInviteToken(user: User) {
+    const { code, tokenHash, expiresAt } = generateVerificationCode(
+      INVITE_TOKEN_TTL_MS,
+    );
+    await this.resetTokens.delete({ userId: user.id });
+    await this.resetTokens.save(
+      this.resetTokens.create({ userId: user.id, tokenHash, expiresAt }),
+    );
+    await this.mail.sendAdminInvite(user.email, code);
   }
 
   async updateMember(id: string, input: UpdateMemberDto) {

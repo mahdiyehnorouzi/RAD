@@ -13,6 +13,7 @@ import {
   CartItem,
   Favorite,
   Order,
+  PasswordResetToken,
   PaymentIntent,
   Product,
   ProductImage,
@@ -125,10 +126,12 @@ before(async () => {
     repo(Favorite),
     repo(Review),
     repo(PaymentIntent),
+    repo(PasswordResetToken),
     inventory,
     paymentReview,
     storage,
     () => storage,
+    mail,
   );
 });
 

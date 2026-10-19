@@ -5,6 +5,7 @@ import compression from "compression";
 import cookieParser from "cookie-parser";
 import { AppModule } from "./app.module";
 import { allowedOrigins, isAllowedOrigin } from "./common/cors-origins";
+import { MailService } from "./mail/mail.service";
 import { setupSwagger } from "./swagger";
 
 async function bootstrap() {
@@ -47,6 +48,7 @@ async function bootstrap() {
     }),
   );
   setupSwagger(app);
+  app.get(MailService).logConfigurationStatus();
   const port = Number(process.env.PORT) || 4000;
   await app.listen(port, process.env.HOST || "0.0.0.0");
 }

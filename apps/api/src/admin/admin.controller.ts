@@ -366,6 +366,12 @@ export class AdminController {
     return this.admin.inviteMember(body);
   }
 
+  @Post("members/:id/resend-invite")
+  resendInvite(@Param("id") id: string, @Req() request: AuthedRequest) {
+    this.admin.assert(request.adminRole, "member.write");
+    return this.admin.resendInvite(id);
+  }
+
   @Patch("members/:id")
   updateMember(
     @Param("id") id: string,

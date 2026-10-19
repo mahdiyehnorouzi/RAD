@@ -48,10 +48,12 @@ function adminServiceWithStorageSpy() {
     nullRepo,
     nullRepo,
     nullRepo,
+    nullRepo,
     null as never,
     null as never,
     storage,
     () => storage,
+    null as never,
   );
   return { admin, deleteCount: () => deleteCalls };
 }
