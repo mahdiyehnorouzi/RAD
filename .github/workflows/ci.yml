@@ -68,6 +68,33 @@ jobs:
       - run: npm ci
       - run: npm test
 
+  # Dedicated job for AdminService's DB-backed media/ownership specs
+  # (`apps/api`'s `test:media`, which already runs inside the broad `test`
+  # job above too — this one exists so a failure here is immediately
+  # attributable to the Cloudinary/SeaweedFS admin-upload path, not buried
+  # in the full suite). These specs provision their own ephemeral,
+  # localhost-only Postgres via `embedded-postgres` — a real standalone
+  # server process, not Docker — which runs fine on a standard GitHub-hosted
+  # runner (unlike a locked-down container sandbox). No `DATABASE_URL`
+  # or Postgres service container is wired in here on purpose: the specs
+  # (`replace-images.spec.ts`) deliberately never read `process.env`,
+  # asserting `isLocalDatabaseUrl()` on the connection string they build
+  # themselves — wiring an external service DB would only add a path for
+  # a future edit to accidentally point this at a real database, with no
+  # benefit since the specs wouldn't use it anyway.
+  test-media-db:
+    name: Test (API media/ownership, DB-backed)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run test:media --workspace @rad/api
+
   build:
     name: Build (${{ matrix.app }})
     runs-on: ubuntu-latest
@@ -106,7 +133,7 @@ jobs:
   ci-passed:
     name: CI passed
     if: always()
-    needs: [lint, typecheck, test, build]
+    needs: [lint, typecheck, test, test-media-db, build]
     runs-on: ubuntu-latest
     steps:
       - name: Fail if any job failed or was cancelled
