@@ -28,6 +28,7 @@ import { MailService } from "../mail/mail.service";
 import { CloudinaryStorageService } from "../storage/cloudinary-storage.service";
 import { S3StorageService } from "../storage/s3-storage.service";
 import {
+  UPLOAD_INTENT_MAX_AGE_MS,
   __resetIssuedS3UploadsForTests,
   recordIssuedS3Upload,
 } from "../storage/s3-upload-intent";
@@ -57,6 +58,7 @@ let dataSource: DataSource;
 let pg: EmbeddedPostgres;
 let databaseDir: string;
 let admin: AdminService;
+let adminS3Active: AdminService;
 let deleteCalls: string[];
 let s3Storage: S3StorageService;
 let s3DeleteCalls: string[];
@@ -146,6 +148,27 @@ before(async () => {
     inventory,
     paymentReview,
     storage,
+    storage,
+    s3Storage,
+  );
+  // A second instance, differing ONLY in which provider is "active"
+  // (s3Storage instead of storage/cloudinary) — needed to exercise
+  // verifyProductMedia's S3 branch (isS3Active()) through the real
+  // service, not just unit-test checkIssuedS3Upload in isolation.
+  adminS3Active = new AdminService(
+    dataSource,
+    repo(Product),
+    repo(ProductImage),
+    repo(Order),
+    repo(User),
+    repo(Vendor),
+    repo(CartItem),
+    repo(Favorite),
+    repo(Review),
+    repo(PaymentIntent),
+    inventory,
+    paymentReview,
+    s3Storage,
     storage,
     s3Storage,
   );
@@ -418,11 +441,12 @@ describe("AdminService.saveProduct — cloudinary images (Phase 2)", () => {
   });
 });
 
-describe("AdminService.saveProduct — s3 images (PR 4)", () => {
-  test("persists a new s3 image uploaded pre-creation (rad/pending/ key) as-is", async () => {
+describe("AdminService.saveProduct — s3 images (PR 4 + security review)", () => {
+  test("persists a new s3 image uploaded pre-creation (rad/pending/ key) as-is, given a matching upload intent", async () => {
     __resetIssuedS3UploadsForTests();
     const slug = `s3-new-${Date.now()}`;
     const objectKey = `rad/pending/${"a".repeat(32)}`;
+    recordIssuedS3Upload(objectKey, null, "image");
     const saved = await admin.saveProduct(
       baseInput(slug, [{ storage: "s3", objectKey }]) as never,
     );
@@ -434,6 +458,157 @@ describe("AdminService.saveProduct — s3 images (PR 4)", () => {
     assert.equal(row.objectKey, objectKey);
     assert.equal(row.src, null);
     assert.deepEqual(s3DeleteCalls, []);
+  });
+
+  test("MISSING INTENT: a brand-new s3 key with no existing row and no upload intent is rejected (fail-closed, never accepted on namespace shape alone)", async () => {
+    __resetIssuedS3UploadsForTests();
+    const slug = `s3-missing-intent-${Date.now()}`;
+    const objectKey = `rad/pending/${"m".repeat(32)}`;
+    await assert.rejects(() =>
+      admin.saveProduct(
+        baseInput(slug, [{ storage: "s3", objectKey }]) as never,
+      ),
+    );
+    const row = await dataSource
+      .getRepository(ProductImage)
+      .findOne({ where: { objectKey } });
+    assert.equal(row, null, "no row must ever be persisted for an unauthorized key");
+  });
+
+  test("EXPIRED INTENT: a key signed long enough ago that its intent has expired is rejected exactly like a missing one", async () => {
+    __resetIssuedS3UploadsForTests();
+    const slug = `s3-expired-intent-${Date.now()}`;
+    const objectKey = `rad/pending/${"n".repeat(32)}`;
+    const longAgo = Date.now() - UPLOAD_INTENT_MAX_AGE_MS - 60_000;
+    recordIssuedS3Upload(objectKey, null, "image", longAgo);
+    await assert.rejects(() =>
+      admin.saveProduct(
+        baseInput(slug, [{ storage: "s3", objectKey }]) as never,
+      ),
+    );
+  });
+
+  test("API RESTART: an intent recorded, then the process restarting (simulated by clearing the tracker) before the save ever happens, is rejected — never silently falls back to accepting the key on namespace shape", async () => {
+    const slug = `s3-restart-${Date.now()}`;
+    const objectKey = `rad/pending/${"o".repeat(32)}`;
+    recordIssuedS3Upload(objectKey, null, "image"); // "sign" happens...
+    __resetIssuedS3UploadsForTests(); // ...then the process restarts before "save"
+    await assert.rejects(() =>
+      admin.saveProduct(
+        baseInput(slug, [{ storage: "s3", objectKey }]) as never,
+      ),
+    );
+  });
+
+  test("INTENT BELONGING TO ANOTHER PRODUCT: a key minted for product A's real id is rejected when claimed for product B, even with an intent record present", async () => {
+    __resetIssuedS3UploadsForTests();
+    const slugA = `s3-intent-other-a-${Date.now()}`;
+    const productA = await admin.saveProduct(
+      baseInput(slugA, [
+        { storage: "static", src: "/catalog/test.jpg" },
+      ]) as never,
+    );
+    const slugB = `s3-intent-other-b-${Date.now()}`;
+    const productB = await admin.saveProduct(
+      baseInput(slugB, [
+        { storage: "static", src: "/catalog/test.jpg" },
+      ]) as never,
+    );
+    // A pending-style key (passes namespace shape for anyone) but the
+    // recorded intent explicitly names product A, not B.
+    const objectKey = `rad/pending/${"p".repeat(32)}`;
+    recordIssuedS3Upload(objectKey, productA.id, "image");
+    // existingId must be productB's real id — slugB already exists, so
+    // omitting it would reject on a slug conflict before ever reaching
+    // the S3 ownership check this test means to exercise.
+    await assert.rejects(() =>
+      admin.saveProduct(
+        baseInput(slugB, [{ storage: "s3", objectKey }]) as never,
+        productB.id,
+      ),
+    );
+  });
+
+  test("WRONG MEDIA KIND: an intent recorded for a video is rejected when the same key is claimed as an image", async () => {
+    __resetIssuedS3UploadsForTests();
+    const slug = `s3-wrong-kind-${Date.now()}`;
+    const objectKey = `rad/pending/${"q".repeat(32)}`;
+    recordIssuedS3Upload(objectKey, null, "video");
+    await assert.rejects(() =>
+      admin.saveProduct(
+        baseInput(slug, [
+          { storage: "static", src: "/catalog/test.jpg" },
+          { storage: "s3", objectKey },
+        ]) as never,
+      ),
+    );
+  });
+
+  test("REPEATED VERIFICATION: verifying the same freshly-signed s3 upload twice (e.g. a retried request) succeeds identically both times", async () => {
+    __resetIssuedS3UploadsForTests();
+    const slug = `s3-repeat-verify-${Date.now()}`;
+    const objectKey = `rad/pending/${"r".repeat(32)}`;
+    recordIssuedS3Upload(objectKey, null, "image");
+    const first = await adminS3Active.verifyProductMedia(slug, objectKey, "image");
+    const second = await adminS3Active.verifyProductMedia(slug, objectKey, "image");
+    assert.deepEqual(first, second);
+    assert.equal(first.storage, "s3");
+  });
+
+  test("RE-EDITING AN EXISTING VERIFIED S3 IMAGE: after the original upload intent is gone (expired/restarted), a product's already-attached s3 image survives an unrelated edit untouched", async () => {
+    __resetIssuedS3UploadsForTests();
+    const slug = `s3-reedit-${Date.now()}`;
+    const objectKey = `rad/pending/${"s".repeat(32)}`;
+    recordIssuedS3Upload(objectKey, null, "image");
+    const created = await admin.saveProduct(
+      baseInput(slug, [{ storage: "s3", objectKey }]) as never,
+    );
+    // The original intent is now gone — simulates a restart, or simply
+    // the TTL having elapsed since the first save.
+    __resetIssuedS3UploadsForTests();
+    const edited = await admin.saveProduct(
+      { ...baseInput(slug, [{ storage: "s3", objectKey }]), price: 9_999_999 } as never,
+      created.id,
+    );
+    assert.equal(edited.images.length, 1);
+    const row = await dataSource
+      .getRepository(ProductImage)
+      .findOneOrFail({ where: { productSlug: slug } });
+    assert.equal(row.objectKey, objectKey);
+    assert.deepEqual(s3DeleteCalls, []);
+  });
+
+  test("ATTACHING AN UNRELATED EXISTING S3 OBJECT: a key already durably attached to product A can never be claimed by product B, with or without an intent record", async () => {
+    __resetIssuedS3UploadsForTests();
+    const slugA = `s3-unrelated-a-${Date.now()}`;
+    const objectKey = `rad/pending/${"t".repeat(32)}`;
+    recordIssuedS3Upload(objectKey, null, "image");
+    await admin.saveProduct(
+      baseInput(slugA, [{ storage: "s3", objectKey }]) as never,
+    );
+    const slugB = `s3-unrelated-b-${Date.now()}`;
+    const productB = await admin.saveProduct(
+      baseInput(slugB, [
+        { storage: "static", src: "/catalog/test.jpg" },
+      ]) as never,
+    );
+    // No fresh intent recorded for B — if this were somehow accepted, it
+    // could only be via the namespace check alone, which this proves is
+    // never sufficient.
+    await assert.rejects(() =>
+      admin.saveProduct(
+        baseInput(slugB, [{ storage: "s3", objectKey }]) as never,
+        productB.id,
+      ),
+    );
+    const row = await dataSource
+      .getRepository(ProductImage)
+      .findOneOrFail({ where: { objectKey } });
+    assert.equal(
+      row.productSlug,
+      slugA,
+      "the object must remain attached to its original product",
+    );
   });
 
   test("rejects a client-supplied s3 objectKey with a forged/short token", async () => {
@@ -484,7 +659,7 @@ describe("AdminService.saveProduct — s3 images (PR 4)", () => {
     assert.ok(rows.some((row) => row.storage === "s3_video" && row.objectKey === objectKey));
   });
 
-  test("idempotent retry: re-saving the same s3 payload twice does not duplicate rows or delete anything", async () => {
+  test("idempotent retry: re-saving the same s3 payload twice does not duplicate rows or delete anything — and the retry needs no intent at all (durable DB row is the proof)", async () => {
     __resetIssuedS3UploadsForTests();
     const slug = `s3-dup-${Date.now()}`;
     const created = await admin.saveProduct(
@@ -493,9 +668,11 @@ describe("AdminService.saveProduct — s3 images (PR 4)", () => {
       ]) as never,
     );
     const objectKey = `rad/products/${created.id}/${"c".repeat(32)}`;
+    recordIssuedS3Upload(objectKey, created.id, "image");
     const input = baseInput(slug, [{ storage: "s3", objectKey }]);
     await admin.saveProduct(input as never, created.id);
     s3DeleteCalls.length = 0;
+    __resetIssuedS3UploadsForTests(); // the retry must not need the original intent
     const second = await admin.saveProduct(input as never, created.id);
     assert.equal(second.images.length, 1);
     const rows = await dataSource
@@ -514,6 +691,8 @@ describe("AdminService.saveProduct — s3 images (PR 4)", () => {
     );
     const keyA = `rad/products/${created.id}/${"d".repeat(32)}`;
     const keyB = `rad/products/${created.id}/${"e".repeat(32)}`;
+    recordIssuedS3Upload(keyA, created.id, "image");
+    recordIssuedS3Upload(keyB, created.id, "image");
     await admin.saveProduct(
       baseInput(slug, [
         { storage: "s3", objectKey: keyA },
@@ -523,6 +702,7 @@ describe("AdminService.saveProduct — s3 images (PR 4)", () => {
     );
     s3DeleteCalls.length = 0;
     deleteCalls.length = 0;
+    __resetIssuedS3UploadsForTests(); // editing an already-attached set needs no intent
     const after = await admin.saveProduct(
       baseInput(slug, [{ storage: "s3", objectKey: keyA }]) as never,
       created.id,
@@ -537,6 +717,7 @@ describe("AdminService.saveProduct — s3 images (PR 4)", () => {
   });
 
   test("a failed S3 delete during cleanup is logged/non-fatal — the save itself still succeeds", async () => {
+    __resetIssuedS3UploadsForTests();
     const slug = `s3-delete-fails-${Date.now()}`;
     const created = await admin.saveProduct(
       baseInput(slug, [
@@ -544,6 +725,7 @@ describe("AdminService.saveProduct — s3 images (PR 4)", () => {
       ]) as never,
     );
     const keyA = `rad/products/${created.id}/${"f".repeat(32)}`;
+    recordIssuedS3Upload(keyA, created.id, "image");
     await admin.saveProduct(
       baseInput(slug, [{ storage: "s3", objectKey: keyA }]) as never,
       created.id,
@@ -575,6 +757,7 @@ describe("AdminService.saveProduct — s3 images (PR 4)", () => {
   });
 
   test("mixed cloudinary + s3 images on the same product: each is verified and later deleted through its OWN recorded provider", async () => {
+    __resetIssuedS3UploadsForTests();
     const slug = `mixed-providers-${Date.now()}`;
     const created = await admin.saveProduct(
       baseInput(slug, [
@@ -583,6 +766,7 @@ describe("AdminService.saveProduct — s3 images (PR 4)", () => {
     );
     const cloudinaryKey = `rad/products/${created.id}/${"g".repeat(10)}`;
     const s3Key = `rad/products/${created.id}/${"h".repeat(32)}`;
+    recordIssuedS3Upload(s3Key, created.id, "image");
     const saved = await admin.saveProduct(
       baseInput(slug, [
         { storage: "cloudinary", objectKey: cloudinaryKey },

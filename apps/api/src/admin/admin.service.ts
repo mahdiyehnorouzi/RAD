@@ -136,6 +136,73 @@ export class AdminService {
   }
 
   /**
+   * Fail-closed ownership check for an `s3`/`s3_video` `objectKey` being
+   * attached to the product identified by `slug` (the same stable
+   * identity Cloudinary's checks use — `slug` is immutable once a
+   * product exists, enforced in `updateProduct`). Throws
+   * `BadRequestException` on any failure; returns normally only when
+   * ownership is actually proven. Called from `verifyProductMedia`,
+   * `saveProduct`, and `replaceImages` — every place an s3 key is
+   * trusted before being used or persisted.
+   *
+   * Namespace shape (`isValidS3ObjectKey`) is checked first but is
+   * explicitly NOT treated as sufficient on its own — see below.
+   * Ownership is proven by exactly one of two things:
+   *
+   * 1. DURABLE: this exact `objectKey` is ALREADY a persisted
+   *    `ProductImage` row belonging to THIS SAME product (`slug`). This
+   *    is a real Postgres row — survives restarts, shared across every
+   *    process, no TTL — so an already-attached s3 image never needs
+   *    its original upload intent again on a later edit (requirement:
+   *    verified media stays attached indefinitely). If the row exists
+   *    but belongs to a DIFFERENT product, this is an attempt to claim
+   *    already-consumed media and is rejected outright, regardless of
+   *    anything else — this is what actually stops a `rad/pending/...`
+   *    key (which matches ANY product by namespace shape alone) from
+   *    being re-attached elsewhere after it's already been used once.
+   *
+   * 2. IN-MEMORY, FAIL-CLOSED: for an objectKey with NO existing row
+   *    anywhere (a genuinely new attachment), this process must have a
+   *    matching record of having minted it itself
+   *    (`checkIssuedS3Upload` — `s3-upload-intent.ts`). Both `"unknown"`
+   *    (no record — a restart, a different process instance, or TTL
+   *    expiry happened since it was signed) and `"mismatch"` (minted by
+   *    us, but for a different product/kind) are hard rejections. There
+   *    is no fallback to the namespace check alone; losing the
+   *    in-memory record never silently downgrades to a weaker check —
+   *    it can only ever produce a rejection (the admin re-uploads), not
+   *    a wrongful acceptance.
+   */
+  private async authorizeS3ObjectKey(
+    slug: string,
+    productId: string | null,
+    objectKey: string | undefined,
+    kind: "image" | "video",
+  ) {
+    if (!objectKey || !isValidS3ObjectKey(productId ?? "unsaved", objectKey)) {
+      throw new BadRequestException("شناسه فایل نامعتبر است.");
+    }
+    const existingRow = await this.productImages.findOne({
+      where: { objectKey },
+    });
+    if (existingRow) {
+      if (existingRow.productSlug !== slug) {
+        throw new BadRequestException(
+          "این تصویر قبلاً به اثر دیگری متصل شده است.",
+        );
+      }
+      return; // already ours — durable DB row is the proof, no intent needed
+    }
+    const intentCheck = checkIssuedS3Upload(objectKey, productId, kind);
+    if (intentCheck !== "match") {
+      this.logger.warn(
+        `Rejected unauthorized S3 object key attachment (${intentCheck}): ${objectKey}`,
+      );
+      throw new BadRequestException("شناسه فایل نامعتبر است.");
+    }
+  }
+
+  /**
    * Issues signed Cloudinary upload params for a new admin image upload.
    * The destination folder is derived here, server-side — never from
    * anything client-supplied — so `replaceImages` can later trust a
@@ -173,11 +240,10 @@ export class AdminService {
     );
     if (signed.provider === "s3") {
       // Records that THIS process actually minted this key for this
-      // product (or the shared pending namespace) — see
-      // `s3-upload-intent.ts` for why this strengthens
-      // `verifyProductMedia`/`saveProduct`'s ownership check beyond
-      // namespace-matching alone, and why it's a soft, best-effort
-      // signal rather than a new hard requirement.
+      // product (or the shared pending namespace) — the ownership proof
+      // `authorizeS3ObjectKey` requires for a genuinely new attachment
+      // (fail-closed: no record means no attachment, see
+      // `s3-upload-intent.ts` and `authorizeS3ObjectKey`'s doc comment).
       recordIssuedS3Upload(signed.objectKey, productId, kind);
     }
     return signed;
@@ -188,23 +254,16 @@ export class AdminService {
     objectKey: string,
     kind: "image" | "video",
   ) {
+    const normalizedSlug = slug.trim().toLowerCase().replace(/\s+/g, "-");
     const product = await this.products.findOne({
-      where: { slug: slug.trim().toLowerCase().replace(/\s+/g, "-") },
+      where: { slug: normalizedSlug },
     });
     const productId = product?.id ?? null;
     // This verifies a FRESH upload (the active provider just signed it a
     // moment ago, via signProductImageUpload above) — so, unlike
     // storageProviderFor, using the active provider here is correct.
     if (this.isS3Active()) {
-      if (!isValidS3ObjectKey(productId ?? "unsaved", objectKey))
-        throw new BadRequestException("شناسه فایل نامعتبر است.");
-      // Soft signal: "mismatch" (this key WAS minted by us, for a
-      // different product/kind) is a hard reject; "unknown" (no record —
-      // e.g. a restart between sign and verify) falls back to the
-      // namespace check above, already passed. See s3-upload-intent.ts.
-      if (checkIssuedS3Upload(objectKey, productId, kind) === "mismatch") {
-        throw new BadRequestException("شناسه فایل نامعتبر است.");
-      }
+      await this.authorizeS3ObjectKey(normalizedSlug, productId, objectKey, kind);
     } else if (!isValidProductImagePublicId(productId ?? "unsaved", objectKey)) {
       throw new BadRequestException("شناسه فایل نامعتبر است.");
     }
@@ -257,17 +316,15 @@ export class AdminService {
         if (!image.objectKey)
           throw new BadRequestException("شناسه فایل نامعتبر است.");
         if (isS3) {
-          if (!isValidS3ObjectKey(productIdForCheck ?? "unsaved", image.objectKey))
-            throw new BadRequestException("شناسه فایل نامعتبر است.");
-          // Soft signal, same rationale as verifyProductMedia: "mismatch"
-          // (minted by us for a different product/kind) hard-rejects;
-          // "unknown" falls back to the namespace check above.
-          if (
-            checkIssuedS3Upload(image.objectKey, productIdForCheck, kind) ===
-            "mismatch"
-          ) {
-            throw new BadRequestException("شناسه فایل نامعتبر است.");
-          }
+          // Fail-closed: proven either by an existing ProductImage row of
+          // OURS (durable, no intent needed) or a matching in-memory
+          // upload intent — never by namespace shape alone.
+          await this.authorizeS3ObjectKey(
+            slug,
+            productIdForCheck,
+            image.objectKey,
+            kind,
+          );
         } else if (
           !isValidProductImagePublicId(
             productIdForCheck ?? "unsaved",
@@ -600,7 +657,7 @@ export class AdminService {
     name: string,
     images: AdminProductImageInputDto[],
   ) {
-    const rows = images.map((image, sortOrder) => {
+    const rows = await Promise.all(images.map(async (image, sortOrder) => {
       if (image.storage === "legacy_base64") {
         if (!image.src) throw new BadRequestException(productImageError);
         try {
@@ -664,22 +721,26 @@ export class AdminService {
           sortOrder,
         };
       }
-      // storage === "s3"/"s3_video"
-      if (!image.objectKey || !isValidS3ObjectKey(productId, image.objectKey)) {
-        throw new BadRequestException(
-          "کلید تصویر نامعتبر است. تصویر را دوباره بارگذاری کنید.",
-        );
-      }
+      // storage === "s3"/"s3_video": same fail-closed check as
+      // saveProduct's own pre-check — redundant by design (defense in
+      // depth, matching the existing cloudinary pattern just above),
+      // not merely re-validating shape.
+      await this.authorizeS3ObjectKey(
+        slug,
+        productId,
+        image.objectKey,
+        image.storage === "s3_video" ? "video" : "image",
+      );
       return {
         productSlug: slug,
         storage: image.storage,
         src: null,
-        objectKey: image.objectKey,
+        objectKey: image.objectKey as string,
         alt: name,
         enAlt: name,
         sortOrder,
       };
-    });
+    }));
 
     // Figure out which remote (cloudinary/s3) assets are being dropped
     // (removed or replaced) before we touch the DB, so we can clean them
