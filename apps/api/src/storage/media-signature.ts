@@ -49,7 +49,8 @@ export interface ImageSignature {
 const PNG_MAGIC = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
 
 function sniffPng(buffer: Buffer): ImageSignature | null {
-  if (buffer.length < 24 || !buffer.subarray(0, 8).equals(PNG_MAGIC)) return null;
+  if (buffer.length < 24 || !buffer.subarray(0, 8).equals(PNG_MAGIC))
+    return null;
   // IHDR is always the first chunk, immediately after the 8-byte signature:
   // 4-byte length, 4-byte "IHDR", 4-byte width, 4-byte height (big-endian).
   if (buffer.toString("ascii", 12, 16) !== "IHDR") return null;
@@ -66,7 +67,8 @@ function sniffPng(buffer: Buffer): ImageSignature | null {
  * guessing, so an unparsable file is rejected, not half-trusted.
  */
 function sniffJpeg(buffer: Buffer): ImageSignature | null {
-  if (buffer.length < 4 || buffer[0] !== 0xff || buffer[1] !== 0xd8) return null;
+  if (buffer.length < 4 || buffer[0] !== 0xff || buffer[1] !== 0xd8)
+    return null;
   let pos = 2;
   let guard = 0;
   while (pos + 2 <= buffer.length) {
@@ -190,7 +192,12 @@ function walkMp4Boxes(buffer: Buffer): Mp4Box[] {
     }
     if (!/^[\x20-\x7e]{4}$/.test(type) || size < 8) break;
     const end = pos + size;
-    boxes.push({ type, start: pos, bodyStart, end: Math.min(end, buffer.length) });
+    boxes.push({
+      type,
+      start: pos,
+      bodyStart,
+      end: Math.min(end, buffer.length),
+    });
     if (end > buffer.length) break; // box continues past this slice
     pos = end;
   }
@@ -240,6 +247,7 @@ const WEBM_SEGMENT_ID = Buffer.from([0x18, 0x53, 0x80, 0x67]);
  * `s3-storage.service.ts`.
  */
 export function looksLikeWebm(head: Buffer): boolean {
-  if (head.length < 4 || !head.subarray(0, 4).equals(WEBM_EBML_MAGIC)) return false;
+  if (head.length < 4 || !head.subarray(0, 4).equals(WEBM_EBML_MAGIC))
+    return false;
   return head.includes(WEBM_SEGMENT_ID, 4);
 }

@@ -61,7 +61,8 @@ const issuedUploads = new Map<string, IssuedUpload>();
 
 function sweepExpired(now: number) {
   for (const [key, intent] of issuedUploads) {
-    if (now - intent.issuedAt > UPLOAD_INTENT_MAX_AGE_MS) issuedUploads.delete(key);
+    if (now - intent.issuedAt > UPLOAD_INTENT_MAX_AGE_MS)
+      issuedUploads.delete(key);
   }
   if (issuedUploads.size > MAX_TRACKED_INTENTS) {
     const overflow = issuedUploads.size - MAX_TRACKED_INTENTS;
@@ -124,7 +125,8 @@ export function checkIssuedUpload(
   if (!intent) return "unknown";
   if (Date.now() - intent.issuedAt > UPLOAD_INTENT_MAX_AGE_MS) return "unknown";
   if (intent.kind !== kind) return "mismatch";
-  if (intent.productId !== null && intent.productId !== productId) return "mismatch";
+  if (intent.productId !== null && intent.productId !== productId)
+    return "mismatch";
   return "match";
 }
 

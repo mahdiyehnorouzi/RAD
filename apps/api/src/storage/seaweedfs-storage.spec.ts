@@ -26,7 +26,13 @@ function makePng(width = 1, height = 1): Buffer {
   ihdrBody[9] = 2;
   const length = Buffer.alloc(4);
   length.writeUInt32BE(13, 0);
-  return Buffer.concat([sig, length, Buffer.from("IHDR"), ihdrBody, Buffer.alloc(4)]);
+  return Buffer.concat([
+    sig,
+    length,
+    Buffer.from("IHDR"),
+    ihdrBody,
+    Buffer.alloc(4),
+  ]);
 }
 
 /** Minimal, structurally-valid MP4 container (ftyp + moov boxes). */
@@ -36,7 +42,10 @@ function makeMp4(): Buffer {
     size.writeUInt32BE(8 + body.length, 0);
     return Buffer.concat([size, Buffer.from(type, "ascii"), body]);
   }
-  return Buffer.concat([box("ftyp", Buffer.alloc(8)), box("moov", Buffer.alloc(0))]);
+  return Buffer.concat([
+    box("ftyp", Buffer.alloc(8)),
+    box("moov", Buffer.alloc(0)),
+  ]);
 }
 
 function service(env: Record<string, string> = {}) {
@@ -157,8 +166,12 @@ describe("SeaweedfsStorageService.verifyMedia", () => {
     const png = makePng();
     const restore = stubSend(async (command) => {
       if (command instanceof HeadObjectCommand)
-        return { ContentLength: png.length, ContentType: "application/octet-stream" };
-      if (command instanceof GetObjectCommand) return { Body: Readable.from([png]) };
+        return {
+          ContentLength: png.length,
+          ContentType: "application/octet-stream",
+        };
+      if (command instanceof GetObjectCommand)
+        return { Body: Readable.from([png]) };
       return {};
     });
     try {
@@ -175,8 +188,10 @@ describe("SeaweedfsStorageService.verifyMedia", () => {
   test("tags a real MP4 with the seaweedfs_video storage kind", async () => {
     const mp4 = makeMp4();
     const restore = stubSend(async (command) => {
-      if (command instanceof HeadObjectCommand) return { ContentLength: mp4.length };
-      if (command instanceof GetObjectCommand) return { Body: Readable.from([mp4]) };
+      if (command instanceof HeadObjectCommand)
+        return { ContentLength: mp4.length };
+      if (command instanceof GetObjectCommand)
+        return { Body: Readable.from([mp4]) };
       return {};
     });
     try {
@@ -217,7 +232,8 @@ describe("SeaweedfsStorageService.verifyMedia", () => {
     const restore = stubSend(async (command) => {
       if (command instanceof HeadObjectCommand)
         return { ContentLength: garbage.length, ContentType: "image/jpeg" };
-      if (command instanceof GetObjectCommand) return { Body: Readable.from([garbage]) };
+      if (command instanceof GetObjectCommand)
+        return { Body: Readable.from([garbage]) };
       if (command instanceof DeleteObjectCommand) deleteCalled = true;
       return {};
     });
@@ -226,7 +242,11 @@ describe("SeaweedfsStorageService.verifyMedia", () => {
         () => service().verifyMedia("rad/pending/abc", "image"),
         BadRequestException,
       );
-      assert.equal(deleteCalled, true, "an invalid upload must be cleaned up, not left behind");
+      assert.equal(
+        deleteCalled,
+        true,
+        "an invalid upload must be cleaned up, not left behind",
+      );
     } finally {
       restore();
     }
@@ -235,8 +255,10 @@ describe("SeaweedfsStorageService.verifyMedia", () => {
   test("rejects a video claim backed by non-container bytes", async () => {
     const garbage = Buffer.from("definitely not mp4 or webm");
     const restore = stubSend(async (command) => {
-      if (command instanceof HeadObjectCommand) return { ContentLength: garbage.length };
-      if (command instanceof GetObjectCommand) return { Body: Readable.from([garbage]) };
+      if (command instanceof HeadObjectCommand)
+        return { ContentLength: garbage.length };
+      if (command instanceof GetObjectCommand)
+        return { Body: Readable.from([garbage]) };
       return {};
     });
     try {
@@ -253,7 +275,8 @@ describe("SeaweedfsStorageService.verifyMedia", () => {
     let getObjectCalled = false;
     let deleteCalled = false;
     const restore = stubSend(async (command) => {
-      if (command instanceof HeadObjectCommand) return { ContentLength: 100 * 1024 * 1024 };
+      if (command instanceof HeadObjectCommand)
+        return { ContentLength: 100 * 1024 * 1024 };
       if (command instanceof GetObjectCommand) {
         getObjectCalled = true;
         return { Body: Readable.from([Buffer.alloc(0)]) };

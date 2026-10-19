@@ -51,7 +51,10 @@
  *     npx tsx scripts/db-migrate-seaweedfs-catchup.ts          (production, after review)
  */
 import { createAppDataSource } from "../src/database/data-source";
-import { assertSafeScriptTarget, parseDatabaseHost } from "../src/database/safe-target";
+import {
+  assertSafeScriptTarget,
+  parseDatabaseHost,
+} from "../src/database/safe-target";
 
 interface ExpectedColumn {
   table: string;
@@ -63,15 +66,43 @@ interface ExpectedColumn {
 /** Columns this migration is about to ADD. If one of these already exists, it must have exactly this type, or we abort rather than guess which definition is "right". */
 const NEW_COLUMNS: ExpectedColumn[] = [
   { table: "PaymentIntent", column: "receiptHash", expectedDataType: "text" },
-  { table: "PaymentIntent", column: "trackingNumber", expectedDataType: "text" },
-  { table: "PaymentIntent", column: "receiptSubmissions", expectedDataType: "integer" },
-  { table: "PaymentIntent", column: "reviewedAt", expectedDataType: "timestamp with time zone" },
+  {
+    table: "PaymentIntent",
+    column: "trackingNumber",
+    expectedDataType: "text",
+  },
+  {
+    table: "PaymentIntent",
+    column: "receiptSubmissions",
+    expectedDataType: "integer",
+  },
+  {
+    table: "PaymentIntent",
+    column: "reviewedAt",
+    expectedDataType: "timestamp with time zone",
+  },
   { table: "PaymentIntent", column: "reviewedBy", expectedDataType: "text" },
-  { table: "PaymentIntent", column: "rejectionReason", expectedDataType: "text" },
-  { table: "Order", column: "paymentDueAt", expectedDataType: "timestamp with time zone" },
-  { table: "Order", column: "deliveredAt", expectedDataType: "timestamp with time zone" },
+  {
+    table: "PaymentIntent",
+    column: "rejectionReason",
+    expectedDataType: "text",
+  },
+  {
+    table: "Order",
+    column: "paymentDueAt",
+    expectedDataType: "timestamp with time zone",
+  },
+  {
+    table: "Order",
+    column: "deliveredAt",
+    expectedDataType: "timestamp with time zone",
+  },
   { table: "Order", column: "policyVersions", expectedDataType: "jsonb" },
-  { table: "Order", column: "policiesAcceptedAt", expectedDataType: "timestamp with time zone" },
+  {
+    table: "Order",
+    column: "policiesAcceptedAt",
+    expectedDataType: "timestamp with time zone",
+  },
   { table: "ProductImage", column: "storage", expectedDataType: "text" },
   { table: "ProductImage", column: "objectKey", expectedDataType: "text" },
   { table: "ProductImage", column: "secureUrl", expectedDataType: "text" },
@@ -84,7 +115,11 @@ const NEW_COLUMNS: ExpectedColumn[] = [
   { table: "Product", column: "owner", expectedDataType: "jsonb" },
   { table: "Product", column: "passport", expectedDataType: "jsonb" },
   { table: "Product", column: "difference", expectedDataType: "jsonb" },
-  { table: "Product", column: "holdExpiresAt", expectedDataType: "timestamp with time zone" },
+  {
+    table: "Product",
+    column: "holdExpiresAt",
+    expectedDataType: "timestamp with time zone",
+  },
   { table: "Product", column: "heldBy", expectedDataType: "text" },
   { table: "CartItem", column: "tomanPriceAtAdd", expectedDataType: "integer" },
   { table: "CartItem", column: "usdPriceAtAdd", expectedDataType: "integer" },
@@ -96,7 +131,13 @@ const RELAXED_COLUMNS: ExpectedColumn[] = [
   { table: "Product", column: "usdPrice", expectedDataType: "integer" },
 ];
 
-const NEW_TABLES = ["ArtistApplication", "ContactMessage", "DamageReport", "HelpQuestion", "ShapeQuestion"];
+const NEW_TABLES = [
+  "ArtistApplication",
+  "ContactMessage",
+  "DamageReport",
+  "HelpQuestion",
+  "ShapeQuestion",
+];
 
 const NEW_TABLE_DDL: string[] = [
   `CREATE TABLE IF NOT EXISTS "ArtistApplication" ("id" text NOT NULL, "ownerKey" text, "fullName" text NOT NULL, "artistName" text, "contact" text NOT NULL, "city" text NOT NULL, "instagram" text, "artworkImages" text NOT NULL, "about" text, "categories" text NOT NULL, "shippingMethod" text NOT NULL, "availability" text, "status" text NOT NULL DEFAULT 'submitted', "reviewNote" text, "createdAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "updatedAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), CONSTRAINT "PK_e6221cd1422618e413056991cb7" PRIMARY KEY ("id"))`,
@@ -182,7 +223,11 @@ async function main() {
   const host = parseDatabaseHost(url!);
   console.log(`Target host: ${host}`);
 
-  const ds = createAppDataSource({ url, synchronize: false, logging: false } as never);
+  const ds = createAppDataSource({
+    url,
+    synchronize: false,
+    logging: false,
+  } as never);
   await ds.initialize();
 
   try {
@@ -196,16 +241,21 @@ async function main() {
     );
     for (const table of NEW_TABLES) {
       if (existingTables.has(table)) {
-        console.log(`  [notice] "${table}" already exists - CREATE TABLE IF NOT EXISTS will no-op for it, columns not re-verified here.`);
+        console.log(
+          `  [notice] "${table}" already exists - CREATE TABLE IF NOT EXISTS will no-op for it, columns not re-verified here.`,
+        );
       } else {
         console.log(`  [ok] "${table}" does not exist yet - will be created.`);
       }
     }
 
-    const columnRows: { table_name: string; column_name: string; data_type: string }[] =
-      await ds.query(
-        `SELECT table_name, column_name, data_type FROM information_schema.columns WHERE table_schema = 'public'`,
-      );
+    const columnRows: {
+      table_name: string;
+      column_name: string;
+      data_type: string;
+    }[] = await ds.query(
+      `SELECT table_name, column_name, data_type FROM information_schema.columns WHERE table_schema = 'public'`,
+    );
     const columnType = new Map<string, string>();
     for (const row of columnRows) {
       columnType.set(`${row.table_name}.${row.column_name}`, row.data_type);
@@ -216,11 +266,17 @@ async function main() {
       const key = `${table}.${column}`;
       const actual = columnType.get(key);
       if (actual === undefined) {
-        console.log(`  [ok] ${key} does not exist yet - will be added as ${expectedDataType}.`);
+        console.log(
+          `  [ok] ${key} does not exist yet - will be added as ${expectedDataType}.`,
+        );
       } else if (actual === expectedDataType) {
-        console.log(`  [ok] ${key} already exists as ${actual} (matches) - ADD COLUMN IF NOT EXISTS will no-op.`);
+        console.log(
+          `  [ok] ${key} already exists as ${actual} (matches) - ADD COLUMN IF NOT EXISTS will no-op.`,
+        );
       } else {
-        console.log(`  [ABORT] ${key} already exists as "${actual}", expected "${expectedDataType}". Refusing to guess which is right.`);
+        console.log(
+          `  [ABORT] ${key} already exists as "${actual}", expected "${expectedDataType}". Refusing to guess which is right.`,
+        );
         abort = true;
       }
     }
@@ -228,18 +284,26 @@ async function main() {
       const key = `${table}.${column}`;
       const actual = columnType.get(key);
       if (actual !== expectedDataType) {
-        console.log(`  [ABORT] ${key} is "${actual ?? "MISSING"}", expected "${expectedDataType}" before relaxing its NOT NULL constraint.`);
+        console.log(
+          `  [ABORT] ${key} is "${actual ?? "MISSING"}", expected "${expectedDataType}" before relaxing its NOT NULL constraint.`,
+        );
         abort = true;
       } else {
-        console.log(`  [ok] ${key} is ${actual} as expected - safe to drop NOT NULL.`);
+        console.log(
+          `  [ok] ${key} is ${actual} as expected - safe to drop NOT NULL.`,
+        );
       }
     }
 
     if (abort) {
-      console.error("\nPreflight found unexpected schema state. ABORTING - nothing was executed.");
+      console.error(
+        "\nPreflight found unexpected schema state. ABORTING - nothing was executed.",
+      );
       process.exit(1);
     }
-    console.log("\nPreflight passed. Proceeding inside a single transaction...");
+    console.log(
+      "\nPreflight passed. Proceeding inside a single transaction...",
+    );
 
     await ds.transaction(async (manager) => {
       for (const sql of NEW_TABLE_DDL) await manager.query(sql);
@@ -250,7 +314,9 @@ async function main() {
     });
 
     console.log("\nMigration committed successfully.");
-    console.log("Run scripts/db-schema-diff.ts now to verify zero remaining diff.");
+    console.log(
+      "Run scripts/db-schema-diff.ts now to verify zero remaining diff.",
+    );
   } finally {
     await ds.destroy();
   }

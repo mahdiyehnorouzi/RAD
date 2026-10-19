@@ -28,13 +28,21 @@ import { parseDatabaseHost } from "../src/database/safe-target";
 async function main() {
   const url = process.env.DATABASE_URL;
   if (!url) {
-    console.error("ERROR: DATABASE_URL is not set. Refusing to guess a target.");
+    console.error(
+      "ERROR: DATABASE_URL is not set. Refusing to guess a target.",
+    );
     process.exit(2);
   }
   const host = parseDatabaseHost(url!);
-  console.log(`Comparing current entities against database host: ${host || "(unparseable)"}`);
+  console.log(
+    `Comparing current entities against database host: ${host || "(unparseable)"}`,
+  );
 
-  const ds = createAppDataSource({ url, synchronize: false, logging: false } as never);
+  const ds = createAppDataSource({
+    url,
+    synchronize: false,
+    logging: false,
+  } as never);
   try {
     await ds.initialize();
   } catch (error) {
@@ -50,7 +58,9 @@ async function main() {
       console.log("No diff. Schema matches every current entity exactly.");
       process.exit(0);
     }
-    console.log(`\n${up.length} statement(s) TypeORM's synchronize would run to reconcile the schema (NOT executed by this script):\n`);
+    console.log(
+      `\n${up.length} statement(s) TypeORM's synchronize would run to reconcile the schema (NOT executed by this script):\n`,
+    );
     for (const q of up) console.log(`  ${q.query};`);
     console.log(
       "\nIf every one of these is already covered by " +

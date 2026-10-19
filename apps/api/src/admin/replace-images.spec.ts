@@ -30,7 +30,10 @@ import {
   createMediaStorageResolver,
   type MediaStorageService,
 } from "../storage/media-storage.interface";
-import { __resetIssuedUploadsForTests, recordIssuedUpload } from "../storage/upload-intent";
+import {
+  __resetIssuedUploadsForTests,
+  recordIssuedUpload,
+} from "../storage/upload-intent";
 
 /**
  * DB-backed coverage for `AdminService.saveProduct`/`replaceImages` (Phase
@@ -439,7 +442,12 @@ describe("AdminService — SeaweedFS fail-closed ownership (upload-intent audit 
       notifyPaymentRejected: async () => {},
     } as unknown as NoticesService;
     const mail = new MailService(new ConfigService({}));
-    const paymentReview = new PaymentReviewService(dataSource, inventory, notices, mail);
+    const paymentReview = new PaymentReviewService(
+      dataSource,
+      inventory,
+      notices,
+      mail,
+    );
     seaweedfsAdmin = new AdminService(
       dataSource,
       repo(Product),
@@ -488,7 +496,10 @@ describe("AdminService — SeaweedFS fail-closed ownership (upload-intent audit 
     recordIssuedUpload(objectKey, null, "image", twoHoursAndOneMinuteAgo);
     const slug = `seaweedfs-expired-${Date.now()}`;
     await assert.rejects(
-      () => seaweedfsAdmin.saveProduct(baseInput(slug, [{ storage: "seaweedfs", objectKey }]) as never),
+      () =>
+        seaweedfsAdmin.saveProduct(
+          baseInput(slug, [{ storage: "seaweedfs", objectKey }]) as never,
+        ),
       /upload_intent_expired|نشست بارگذاری/,
     );
     __resetIssuedUploadsForTests();
@@ -498,13 +509,17 @@ describe("AdminService — SeaweedFS fail-closed ownership (upload-intent audit 
     resetIntents();
     const slugA = `seaweedfs-other-product-a-${Date.now()}`;
     const productA = await seaweedfsAdmin.saveProduct(
-      baseInput(slugA, [{ storage: "static", src: "/catalog/test.jpg" }]) as never,
+      baseInput(slugA, [
+        { storage: "static", src: "/catalog/test.jpg" },
+      ]) as never,
     );
     const objectKey = `rad/products/${productA.id}/belongsToA`;
     recordIssuedUpload(objectKey, productA.id, "image");
     const slugB = `seaweedfs-other-product-b-${Date.now()}`;
-    await assert.rejects(
-      () => seaweedfsAdmin.saveProduct(baseInput(slugB, [{ storage: "seaweedfs", objectKey }]) as never),
+    await assert.rejects(() =>
+      seaweedfsAdmin.saveProduct(
+        baseInput(slugB, [{ storage: "seaweedfs", objectKey }]) as never,
+      ),
     );
     __resetIssuedUploadsForTests();
   });
@@ -514,8 +529,10 @@ describe("AdminService — SeaweedFS fail-closed ownership (upload-intent audit 
     const objectKey = "rad/pending/wrongKind";
     recordIssuedUpload(objectKey, null, "video");
     const slug = `seaweedfs-wrong-kind-${Date.now()}`;
-    await assert.rejects(
-      () => seaweedfsAdmin.saveProduct(baseInput(slug, [{ storage: "seaweedfs", objectKey }]) as never),
+    await assert.rejects(() =>
+      seaweedfsAdmin.saveProduct(
+        baseInput(slug, [{ storage: "seaweedfs", objectKey }]) as never,
+      ),
     );
     __resetIssuedUploadsForTests();
   });
@@ -526,8 +543,10 @@ describe("AdminService — SeaweedFS fail-closed ownership (upload-intent audit 
     recordIssuedUpload(objectKey, null, "image");
     __resetIssuedUploadsForTests(); // simulates the process restarting
     const slug = `seaweedfs-restart-${Date.now()}`;
-    await assert.rejects(
-      () => seaweedfsAdmin.saveProduct(baseInput(slug, [{ storage: "seaweedfs", objectKey }]) as never),
+    await assert.rejects(() =>
+      seaweedfsAdmin.saveProduct(
+        baseInput(slug, [{ storage: "seaweedfs", objectKey }]) as never,
+      ),
     );
   });
 
@@ -579,8 +598,10 @@ describe("AdminService — SeaweedFS fail-closed ownership (upload-intent audit 
     // to product A.
     recordIssuedUpload(objectKey, null, "image");
     const slugB = `seaweedfs-steal-attacker-${Date.now()}`;
-    await assert.rejects(
-      () => seaweedfsAdmin.saveProduct(baseInput(slugB, [{ storage: "seaweedfs", objectKey }]) as never),
+    await assert.rejects(() =>
+      seaweedfsAdmin.saveProduct(
+        baseInput(slugB, [{ storage: "seaweedfs", objectKey }]) as never,
+      ),
     );
     __resetIssuedUploadsForTests();
   });
@@ -590,8 +611,16 @@ describe("AdminService — SeaweedFS fail-closed ownership (upload-intent audit 
     const objectKey = "rad/pending/repeatedVerify";
     recordIssuedUpload(objectKey, null, "image");
     const slug = `seaweedfs-repeat-${Date.now()}`;
-    const first = await seaweedfsAdmin.verifyProductMedia(slug, objectKey, "image");
-    const second = await seaweedfsAdmin.verifyProductMedia(slug, objectKey, "image");
+    const first = await seaweedfsAdmin.verifyProductMedia(
+      slug,
+      objectKey,
+      "image",
+    );
+    const second = await seaweedfsAdmin.verifyProductMedia(
+      slug,
+      objectKey,
+      "image",
+    );
     assert.equal(first.objectKey, objectKey);
     assert.equal(second.objectKey, objectKey);
     __resetIssuedUploadsForTests();
