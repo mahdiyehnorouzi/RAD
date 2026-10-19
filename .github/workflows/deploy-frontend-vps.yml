@@ -1,0 +1,147 @@
+# Builds storefront + admin images on GitHub Actions (same pattern as the
+# existing deploy-storefront-liara.yml / deploy-admin-liara.yml: Liara's own
+# remote Docker build timed out on this monorepo) and, only on manual
+# dispatch, pulls them on the VPS via Docker Compose.
+#
+# This workflow is additive — it does not touch, replace, or race with the
+# existing Liara workflows. Both can run; only one should ever be the live
+# DNS target at a time (see docs/vps-frontend-deployment-plan.md).
+#
+# Pushing to main builds and publishes images (harmless, no production
+# effect). Deploying to the VPS always requires an explicit manual dispatch
+# approved against the production-frontend-vps environment.
+
+name: Frontend VPS release
+
+on:
+  workflow_dispatch:
+    inputs:
+      operation:
+        description: "Build+push only, or also deploy to the VPS"
+        type: choice
+        options: [build, deploy]
+        default: build
+  push:
+    branches: [main]
+    paths:
+      - "apps/storefront/**"
+      - "apps/admin/**"
+      - "packages/**"
+      - "package.json"
+      - "package-lock.json"
+      - "docker-compose.frontend-vps.yml"
+      - ".github/workflows/deploy-frontend-vps.yml"
+
+concurrency:
+  group: rad-frontend-vps-production
+  cancel-in-progress: false
+
+jobs:
+  checks:
+    uses: ./.github/workflows/ci.yml
+
+  build-images:
+    name: Build & push storefront + admin images
+    needs: checks
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      storefront_tag: ${{ github.sha }}
+      admin_tag: ${{ github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # NEXT_PUBLIC_* are inlined into the client bundle at build time.
+      - name: Build and push storefront (linux/amd64)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/storefront/Dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/rad-storefront:${{ github.sha }}
+            ghcr.io/${{ github.repository_owner }}/rad-storefront:latest
+          build-args: |
+            NEXT_PUBLIC_SITE_URL=${{ vars.NEXT_PUBLIC_SITE_URL || 'https://www.rad-object.com' }}
+            NEXT_PUBLIC_GA_MEASUREMENT_ID=${{ vars.NEXT_PUBLIC_GA_MEASUREMENT_ID }}
+            NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION=${{ vars.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION }}
+          cache-from: type=gha,scope=storefront-vps
+          cache-to: type=gha,mode=max,scope=storefront-vps
+
+      - name: Build and push admin (linux/amd64)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/admin/Dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/rad-admin:${{ github.sha }}
+            ghcr.io/${{ github.repository_owner }}/rad-admin:latest
+          cache-from: type=gha,scope=admin-vps
+          cache-to: type=gha,mode=max,scope=admin-vps
+
+  release:
+    name: Pull & restart on VPS
+    needs: build-images
+    if: github.event_name == 'workflow_dispatch' && inputs.operation == 'deploy' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: production-frontend-vps
+    steps:
+      - name: Configure pinned SSH identity
+        env:
+          SSH_KEY: ${{ secrets.RAD_FRONTEND_SSH_PRIVATE_KEY }}
+          KNOWN_HOSTS: ${{ secrets.RAD_FRONTEND_SSH_KNOWN_HOSTS }}
+        run: |
+          test -n "$SSH_KEY" && test -n "$KNOWN_HOSTS"
+          install -m 700 -d "$HOME/.ssh"
+          printf '%s\n' "$SSH_KEY" > "$HOME/.ssh/id_ed25519"
+          printf '%s\n' "$KNOWN_HOSTS" > "$HOME/.ssh/known_hosts"
+          chmod 600 "$HOME/.ssh/id_ed25519" "$HOME/.ssh/known_hosts"
+
+      - name: Pull new images and recreate containers
+        env:
+          STOREFRONT_IMAGE_TAG: ${{ needs.build-images.outputs.storefront_tag }}
+          ADMIN_IMAGE_TAG: ${{ needs.build-images.outputs.admin_tag }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          target=root@46.34.163.16
+          ssh_args=(-o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=15)
+          ssh "${ssh_args[@]}" "$target" \
+            "cd /root/rad-frontend-deploy && \
+             STOREFRONT_IMAGE_TAG=${STOREFRONT_IMAGE_TAG} ADMIN_IMAGE_TAG=${ADMIN_IMAGE_TAG} \
+             docker compose -f docker-compose.frontend-vps.yml pull && \
+             STOREFRONT_IMAGE_TAG=${STOREFRONT_IMAGE_TAG} ADMIN_IMAGE_TAG=${ADMIN_IMAGE_TAG} \
+             docker compose -f docker-compose.frontend-vps.yml up -d --no-deps storefront admin"
+
+      - name: Verify containers healthy
+        env:
+          STOREFRONT_IMAGE_TAG: ${{ needs.build-images.outputs.storefront_tag }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          target=root@46.34.163.16
+          ssh_args=(-o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=15)
+          for i in $(seq 1 20); do
+            status=$(ssh "${ssh_args[@]}" "$target" "docker inspect -f '{{.State.Health.Status}}' rad-storefront rad-admin" | tr '\n' ' ')
+            [[ "$status" == *"healthy healthy"* ]] && exit 0
+            sleep 5
+          done
+          echo "::error::Containers did not report healthy within timeout."
+          exit 1
+
+      - name: Remove runner SSH credentials
+        if: always()
+        run: rm -f "$HOME/.ssh/id_ed25519" "$HOME/.ssh/known_hosts"
