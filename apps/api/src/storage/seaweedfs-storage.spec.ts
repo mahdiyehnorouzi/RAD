@@ -6,13 +6,47 @@ import {
   PayloadTooLargeException,
   ServiceUnavailableException,
 } from "@nestjs/common";
+import { Readable } from "node:stream";
 import {
   DeleteObjectCommand,
+  GetObjectCommand,
   HeadObjectCommand,
   NotFound,
   S3Client,
 } from "@aws-sdk/client-s3";
 import { SeaweedfsStorageService } from "./seaweedfs-storage.service";
+
+/** Minimal, structurally-valid 1x1 PNG (real magic bytes + IHDR). */
+function makePng(width = 1, height = 1): Buffer {
+  const sig = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+  const ihdrBody = Buffer.alloc(13);
+  ihdrBody.writeUInt32BE(width, 0);
+  ihdrBody.writeUInt32BE(height, 4);
+  ihdrBody[8] = 8;
+  ihdrBody[9] = 2;
+  const length = Buffer.alloc(4);
+  length.writeUInt32BE(13, 0);
+  return Buffer.concat([
+    sig,
+    length,
+    Buffer.from("IHDR"),
+    ihdrBody,
+    Buffer.alloc(4),
+  ]);
+}
+
+/** Minimal, structurally-valid MP4 container (ftyp + moov boxes). */
+function makeMp4(): Buffer {
+  function box(type: string, body: Buffer) {
+    const size = Buffer.alloc(4);
+    size.writeUInt32BE(8 + body.length, 0);
+    return Buffer.concat([size, Buffer.from(type, "ascii"), body]);
+  }
+  return Buffer.concat([
+    box("ftyp", Buffer.alloc(8)),
+    box("moov", Buffer.alloc(0)),
+  ]);
+}
 
 function service(env: Record<string, string> = {}) {
   return new SeaweedfsStorageService(
@@ -128,10 +162,17 @@ describe("SeaweedfsStorageService.createSignedUpload", () => {
 });
 
 describe("SeaweedfsStorageService.verifyMedia", () => {
-  test("accepts an object within size limits and matching content-type prefix", async () => {
+  test("accepts a real PNG regardless of what Content-Type was reported", async () => {
+    const png = makePng();
     const restore = stubSend(async (command) => {
-      assert.ok(command instanceof HeadObjectCommand);
-      return { ContentLength: 168_000, ContentType: "image/jpeg" };
+      if (command instanceof HeadObjectCommand)
+        return {
+          ContentLength: png.length,
+          ContentType: "application/octet-stream",
+        };
+      if (command instanceof GetObjectCommand)
+        return { Body: Readable.from([png]) };
+      return {};
     });
     try {
       const result = await service().verifyMedia("rad/pending/abc", "image");
@@ -144,29 +185,20 @@ describe("SeaweedfsStorageService.verifyMedia", () => {
     }
   });
 
-  test("tags video objects with the seaweedfs_video storage kind", async () => {
-    const restore = stubSend(async () => ({
-      ContentLength: 1_893_701,
-      ContentType: "video/mp4",
-    }));
+  test("tags a real MP4 with the seaweedfs_video storage kind", async () => {
+    const mp4 = makeMp4();
+    const restore = stubSend(async (command) => {
+      if (command instanceof HeadObjectCommand)
+        return { ContentLength: mp4.length };
+      if (command instanceof GetObjectCommand)
+        return { Body: Readable.from([mp4]) };
+      return {};
+    });
     try {
       const result = await service().verifyMedia("rad/pending/vid1", "video");
       assert.deepEqual(result, {
         objectKey: "rad/pending/vid1",
         storage: "seaweedfs_video",
-      });
-    } finally {
-      restore();
-    }
-  });
-
-  test("accepts an object with no reported Content-Type (best-effort check only)", async () => {
-    const restore = stubSend(async () => ({ ContentLength: 168_000 }));
-    try {
-      const result = await service().verifyMedia("rad/pending/abc", "image");
-      assert.deepEqual(result, {
-        objectKey: "rad/pending/abc",
-        storage: "seaweedfs",
       });
     } finally {
       restore();
@@ -187,14 +219,51 @@ describe("SeaweedfsStorageService.verifyMedia", () => {
     }
   });
 
-  test("rejects when the stored content-type doesn't match the claimed kind", async () => {
-    const restore = stubSend(async () => ({
-      ContentLength: 168_000,
-      ContentType: "video/mp4",
-    }));
+  /**
+   * The actual regression this fix closes: a forged Content-Type no
+   * longer matters at all — only the real bytes do. Previously, a
+   * client could label arbitrary bytes `image/jpeg` and this would have
+   * passed, since the old check only ever compared the (client-influenced)
+   * stored Content-Type against itself.
+   */
+  test("rejects arbitrary bytes even when (a hypothetical) Content-Type claims they're an image", async () => {
+    const garbage = Buffer.from("not an image, just plain text bytes");
+    let deleteCalled = false;
+    const restore = stubSend(async (command) => {
+      if (command instanceof HeadObjectCommand)
+        return { ContentLength: garbage.length, ContentType: "image/jpeg" };
+      if (command instanceof GetObjectCommand)
+        return { Body: Readable.from([garbage]) };
+      if (command instanceof DeleteObjectCommand) deleteCalled = true;
+      return {};
+    });
     try {
       await assert.rejects(
         () => service().verifyMedia("rad/pending/abc", "image"),
+        BadRequestException,
+      );
+      assert.equal(
+        deleteCalled,
+        true,
+        "an invalid upload must be cleaned up, not left behind",
+      );
+    } finally {
+      restore();
+    }
+  });
+
+  test("rejects a video claim backed by non-container bytes", async () => {
+    const garbage = Buffer.from("definitely not mp4 or webm");
+    const restore = stubSend(async (command) => {
+      if (command instanceof HeadObjectCommand)
+        return { ContentLength: garbage.length };
+      if (command instanceof GetObjectCommand)
+        return { Body: Readable.from([garbage]) };
+      return {};
+    });
+    try {
+      await assert.rejects(
+        () => service().verifyMedia("rad/pending/vid2", "video"),
         BadRequestException,
       );
     } finally {
@@ -202,16 +271,26 @@ describe("SeaweedfsStorageService.verifyMedia", () => {
     }
   });
 
-  test("rejects when the object exceeds the configured size limit", async () => {
-    const restore = stubSend(async () => ({
-      ContentLength: 100 * 1024 * 1024,
-      ContentType: "image/jpeg",
-    }));
+  test("rejects (and cleans up) an object over the configured size limit, before ever reading its body", async () => {
+    let getObjectCalled = false;
+    let deleteCalled = false;
+    const restore = stubSend(async (command) => {
+      if (command instanceof HeadObjectCommand)
+        return { ContentLength: 100 * 1024 * 1024 };
+      if (command instanceof GetObjectCommand) {
+        getObjectCalled = true;
+        return { Body: Readable.from([Buffer.alloc(0)]) };
+      }
+      if (command instanceof DeleteObjectCommand) deleteCalled = true;
+      return {};
+    });
     try {
       await assert.rejects(
         () => service().verifyMedia("rad/pending/abc", "image"),
         PayloadTooLargeException,
       );
+      assert.equal(getObjectCalled, false);
+      assert.equal(deleteCalled, true);
     } finally {
       restore();
     }

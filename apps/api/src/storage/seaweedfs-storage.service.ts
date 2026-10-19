@@ -8,15 +8,24 @@ import { ConfigService } from "@nestjs/config";
 import { randomBytes } from "node:crypto";
 import {
   DeleteObjectCommand,
+  GetObjectCommand,
   HeadObjectCommand,
   NotFound,
   S3Client,
 } from "@aws-sdk/client-s3";
 import { createPresignedPost } from "@aws-sdk/s3-presigned-post";
 import { mediaLimits, validateMediaSize } from "./media-policy";
+import { looksLikeMp4, looksLikeWebm, sniffImage } from "./media-signature";
 import type { MediaStorageService } from "./media-storage.interface";
 
 const UPLOAD_EXPIRES_SECONDS = 5 * 60;
+
+/**
+ * Bound for how much of a video is read to check its container structure
+ * — never the whole (up to `PRODUCT_VIDEO_MAX_MB`) object, to keep memory
+ * use flat regardless of file size.
+ */
+const VIDEO_PROBE_BYTES = 256 * 1024;
 
 /**
  * S3-compatible adapter for a self-hosted SeaweedFS cluster (SeaweedFS's S3
@@ -61,15 +70,19 @@ const UPLOAD_EXPIRES_SECONDS = 5 * 60;
  * endpoint already allows this for every origin, so this had no
  * equivalent under the previous provider.
  *
- * Unlike Cloudinary, the S3 protocol has no asset-inspection API: `destroy`
- * and existence checks are plain object operations, and `verifyMedia`
- * cannot decode the uploaded bytes to confirm they are genuinely a valid
- * image/video the way `CloudinaryStorageService.verifyMedia` does (it
- * only checks the object exists, its size is within `mediaLimits()`, and
- * — when the uploader set it — its `Content-Type` matches the expected
- * kind). Callers relying on stronger content validation than that should
- * be aware of this gap before switching providers in a security-sensitive
- * flow.
+ * Unlike Cloudinary, the S3 protocol has no asset-inspection API, so
+ * `verifyMedia` can't ask the provider "is this really an image/video" —
+ * it has to decode that itself from the actual stored bytes. It never
+ * trusts the client-supplied `Content-Type` field alone (that's only a
+ * POST-policy upload condition, trivially spoofable — a client can label
+ * arbitrary bytes `image/png`): it re-derives the real format from
+ * magic-byte signatures (`media-signature.ts` — dependency-free PNG/
+ * JPEG/WebP header parsing and MP4/WebM container-structure checks,
+ * the same approach used for the equivalent S3 adapter prototype this
+ * was audited against). Reads are bounded (a full image, capped at
+ * `mediaLimits().image`; only small head/tail slices of a video, never
+ * the whole object) to keep memory flat on a small VPS regardless of
+ * file size.
  */
 @Injectable()
 export class SeaweedfsStorageService implements MediaStorageService {
@@ -160,9 +173,11 @@ export class SeaweedfsStorageService implements MediaStorageService {
   }
 
   /**
-   * Confirms the object exists and is within size limits — see the class
-   * doc comment for why this can't also decode/verify the bytes the way
-   * Cloudinary's equivalent does.
+   * Confirms the object exists, is within size limits, and is genuinely
+   * decodable media of the claimed `kind` — derived from the real bytes
+   * (see the class doc comment), never from the client-supplied
+   * `Content-Type`. Deletes the object before rejecting it, so an
+   * invalid upload doesn't linger.
    */
   async verifyMedia(objectKey: string, kind: "image" | "video") {
     const client = this.ensureConfigured();
@@ -179,12 +194,50 @@ export class SeaweedfsStorageService implements MediaStorageService {
         "بررسی فایل ممکن نشد. دوباره تلاش کنید.",
       );
     }
-    if (head.ContentType && !head.ContentType.startsWith(`${kind}/`)) {
-      throw new BadRequestException(
-        "محتوای فایل معتبر نیست. تصویر JPEG، PNG، WebP یا ویدیوی MP4، WebM انتخاب کنید.",
-      );
+    const size = head.ContentLength ?? 0;
+    try {
+      validateMediaSize(size, kind);
+    } catch (error) {
+      await this.destroy(objectKey).catch(() => {});
+      throw error;
     }
-    validateMediaSize(head.ContentLength ?? 0, kind);
+
+    if (kind === "image") {
+      const bytes = await this.getObjectRange(objectKey, 0, size - 1);
+      const signature = sniffImage(bytes);
+      if (!signature || signature.width <= 0 || signature.height <= 0) {
+        await this.destroy(objectKey).catch(() => {});
+        throw new BadRequestException(
+          "محتوای فایل معتبر نیست. تصویر JPEG، PNG یا WebP انتخاب کنید.",
+        );
+      }
+    } else {
+      const head0 = await this.getObjectRange(
+        objectKey,
+        0,
+        Math.min(size, VIDEO_PROBE_BYTES) - 1,
+      );
+      let valid = looksLikeWebm(head0);
+      if (!valid) {
+        if (size > VIDEO_PROBE_BYTES) {
+          const tail = await this.getObjectRange(
+            objectKey,
+            Math.max(0, size - VIDEO_PROBE_BYTES),
+            size - 1,
+          );
+          valid = looksLikeMp4(head0, tail);
+        } else {
+          valid = looksLikeMp4(head0);
+        }
+      }
+      if (!valid) {
+        await this.destroy(objectKey).catch(() => {});
+        throw new BadRequestException(
+          "محتوای فایل معتبر نیست. ویدیوی MP4 یا WebM انتخاب کنید.",
+        );
+      }
+    }
+
     return {
       objectKey,
       storage:
@@ -200,5 +253,43 @@ export class SeaweedfsStorageService implements MediaStorageService {
     await client.send(
       new DeleteObjectCommand({ Bucket: this.bucket, Key: objectKey }),
     );
+  }
+
+  /**
+   * Reads an inclusive byte range. Does not simply trust that the
+   * backend honored the `Range` header — a non-compliant or adversarial
+   * response that returns more than requested aborts rather than
+   * buffering unboundedly, since the whole point of ranging video reads
+   * is to never pull a large file fully into memory.
+   */
+  private async getObjectRange(objectKey: string, start: number, end: number) {
+    const client = this.ensureConfigured();
+    const budget = end - start + 1;
+    try {
+      const result = await client.send(
+        new GetObjectCommand({
+          Bucket: this.bucket,
+          Key: objectKey,
+          Range: `bytes=${start}-${end}`,
+        }),
+      );
+      const body = result.Body;
+      if (!body) throw new Error("empty body");
+      const chunks: Buffer[] = [];
+      let total = 0;
+      for await (const chunk of body as AsyncIterable<Uint8Array>) {
+        total += chunk.length;
+        if (total > budget) {
+          (body as { destroy?: () => void }).destroy?.();
+          throw new Error("range response exceeded requested byte budget");
+        }
+        chunks.push(Buffer.from(chunk));
+      }
+      return Buffer.concat(chunks);
+    } catch {
+      throw new ServiceUnavailableException(
+        "بررسی فایل ممکن نشد. دوباره تلاش کنید.",
+      );
+    }
   }
 }
