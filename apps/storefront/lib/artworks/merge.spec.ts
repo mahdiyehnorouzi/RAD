@@ -3,7 +3,10 @@ import assert from "node:assert/strict";
 import type { Artwork, ProductImage } from "@rad/types";
 import { mergeArtwork, mergeArtworks } from "./merge";
 
-function image(src: string, kind: ProductImage["kind"] = "image"): ProductImage {
+function image(
+  src: string,
+  kind: ProductImage["kind"] = "image",
+): ProductImage {
   return { src, kind, alt: "art", enAlt: "art" };
 }
 
@@ -12,7 +15,12 @@ function artwork(overrides: Partial<Artwork> & { slug: string }): Artwork {
     id: overrides.slug,
     radNumber: null,
     title: { fa: "", en: "" },
-    artist: { id: "rad-studio", name: { fa: "", en: "" }, kind: "rad", verified: true },
+    artist: {
+      id: "rad-studio",
+      name: { fa: "", en: "" },
+      kind: "rad",
+      verified: true,
+    },
     category: "ceramics",
     price: null,
     currency: "IRT",
