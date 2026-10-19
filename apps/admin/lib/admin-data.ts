@@ -42,17 +42,18 @@ export type AdminProductStatus = ProductStatus;
 /**
  * One product image, in the shape the API's save endpoint expects:
  * `legacy_base64`/`static`/`external` round-trip an existing `src`
- * unchanged; `cloudinary` carries only the Cloudinary `public_id` (as
+ * unchanged; `cloudinary`/`s3` carry only the provider object key (as
  * `objectKey`) the signed upload wrote to — never raw bytes. `src` on a
- * `cloudinary` entry is a display-only URL the API derived for the
- * editor's `<img>` preview (or a local blob URL while a new upload is in
- * flight) — it is never sent back as the source of truth, `objectKey` is.
+ * provider-backed entry is a display-only URL the API derived for the
+ * editor's `<img>`/`<video>` preview (or a local blob URL while a new
+ * upload is in flight) — it is never sent back as the source of truth,
+ * `objectKey` is.
  */
 export type AdminProductImage =
   | { storage: "legacy_base64"; src: string; objectKey?: null }
   | { storage: "static" | "external"; src: string; objectKey?: null }
   | {
-      storage: "cloudinary" | "cloudinary_video";
+      storage: "cloudinary" | "cloudinary_video" | "s3" | "s3_video";
       objectKey: string;
       src?: string | null;
     };

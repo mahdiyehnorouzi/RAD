@@ -198,7 +198,18 @@ export class AdminService {
       this.logger.warn(
         `Rejected unauthorized S3 object key attachment (${intentCheck}): ${objectKey}`,
       );
-      throw new BadRequestException("شناسه فایل نامعتبر است.");
+      // A distinct code (not the generic "invalid key" message above) so
+      // the admin UI can tell the admin specifically to re-upload rather
+      // than showing a generic failure — this is the expected, benign
+      // outcome of an API restart or a stale draft, not a sign of a
+      // corrupt file. "unknown" (no record at all — restart, TTL,
+      // another instance) and "mismatch" (recorded, wrong product/kind)
+      // both land here; either way the fix is the same: upload again.
+      throw new BadRequestException({
+        code: "upload_intent_expired",
+        message:
+          "نشست بارگذاری این فایل منقضی شده یا نامعتبر است. لطفاً فایل را دوباره بارگذاری کنید.",
+      });
     }
   }
 

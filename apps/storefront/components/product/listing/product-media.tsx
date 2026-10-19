@@ -74,6 +74,28 @@ function cloudinaryLoader({ src, width }: ImageLoaderProps) {
   );
 }
 
+/**
+ * Same bypass-the-optimizer reasoning as Cloudinary above, for S3-backed
+ * product images (`apps/api/src/catalog/product.mapper.ts#s3DeliveryUrl`).
+ * Unlike Cloudinary, S3/SeaweedFS has no on-the-fly resize URL param (see
+ * that mapper's "no thumbnail" decision) — this loader is pure
+ * passthrough, `width` is ignored. The media domain isn't a fixed,
+ * recognizable hostname the way `res.cloudinary.com` is (it's RAD's own
+ * custom domain), so recognizing it needs this public env var, mirroring
+ * the API's own `S3_PUBLIC_MEDIA_BASE_URL`/`S3_PUBLIC_ENDPOINT`.
+ */
+const S3_MEDIA_BASE_URL = (process.env.NEXT_PUBLIC_S3_MEDIA_BASE_URL ?? "")
+  .trim()
+  .replace(/\/+$/, "");
+
+function isS3MediaUrl(src: string) {
+  return S3_MEDIA_BASE_URL.length > 0 && src.startsWith(`${S3_MEDIA_BASE_URL}/`);
+}
+
+function s3Loader({ src }: ImageLoaderProps) {
+  return src;
+}
+
 export function ProductMedia({
   product,
   imageIndex = 0,
@@ -141,7 +163,13 @@ export function ProductMedia({
         fill
         sizes={sizes}
         priority={priority}
-        loader={isCloudinaryUrl(src) ? cloudinaryLoader : undefined}
+        loader={
+          isCloudinaryUrl(src)
+            ? cloudinaryLoader
+            : isS3MediaUrl(src)
+              ? s3Loader
+              : undefined
+        }
         onError={() => setFailedSrc(src)}
       />
       {soldBadge}

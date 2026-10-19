@@ -1607,6 +1607,11 @@ function Members({
   );
 }
 
+/** True for a video row from either provider (`cloudinary_video`/`s3_video`). */
+function isVideoStorage(storage: string) {
+  return storage === "cloudinary_video" || storage === "s3_video";
+}
+
 function ProductDialog({
   product,
   onClose,
@@ -1623,7 +1628,7 @@ function ProductDialog({
     onProgress?: (value: number) => void,
     signal?: AbortSignal,
   ) => Promise<{
-    storage: "cloudinary" | "cloudinary_video";
+    storage: "cloudinary" | "cloudinary_video" | "s3" | "s3_video";
     objectKey: string;
   }>;
   onDelete?: () => void;
@@ -1693,7 +1698,7 @@ function ProductDialog({
     if (!draft.artist.trim()) next.artist = "نام هنرمند را وارد کنید.";
     if (!Number.isFinite(draft.price) || draft.price <= 0)
       next.price = "قیمت باید بیشتر از صفر باشد.";
-    if (!draft.images.some((image) => image.storage !== "cloudinary_video")) {
+    if (!draft.images.some((image) => !isVideoStorage(image.storage))) {
       setImageError("حداقل یک تصویر برای اثر لازم است.");
       return;
     }
@@ -2094,7 +2099,7 @@ function ProductDialog({
                       className="product-media-item"
                       key={image.src || image.objectKey || index}
                     >
-                      {image.storage === "cloudinary_video" ? (
+                      {isVideoStorage(image.storage) ? (
                         <video
                           src={image.src ?? undefined}
                           controls

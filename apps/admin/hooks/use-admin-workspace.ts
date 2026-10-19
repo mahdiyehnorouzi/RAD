@@ -68,6 +68,140 @@ const sectionResources: Record<AdminSection, ResourceKey[]> = {
   account: [],
 };
 
+/** Shared by both provider branches of `uploadProductImage` below. */
+function xhrUpload(
+  configure: (xhr: XMLHttpRequest) => void,
+  body: XMLHttpRequestBodyInit,
+  onProgress: ((value: number) => void) | undefined,
+  signal: AbortSignal | undefined,
+  onLoad: (xhr: XMLHttpRequest, resolve: (key: string) => void, reject: (error: Error) => void) => void,
+) {
+  return new Promise<string>((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    const abort = () => xhr.abort();
+    const finish = () => signal?.removeEventListener("abort", abort);
+    configure(xhr);
+    xhr.timeout = 10 * 60 * 1000;
+    xhr.upload.onprogress = (event) => {
+      if (event.lengthComputable)
+        onProgress?.(Math.round((event.loaded / event.total) * 100));
+    };
+    xhr.onload = () => {
+      finish();
+      onLoad(xhr, resolve, reject);
+    };
+    xhr.onerror = xhr.ontimeout = () => {
+      finish();
+      reject(new Error("ارتباط قطع شد. دوباره تلاش کنید."));
+    };
+    xhr.onabort = () => {
+      finish();
+      reject(new Error("بارگذاری لغو شد."));
+    };
+    signal?.addEventListener("abort", abort, { once: true });
+    if (signal?.aborted) {
+      finish();
+      reject(new Error("بارگذاری لغو شد."));
+      return;
+    }
+    xhr.send(body);
+  });
+}
+
+/** Direct-to-Cloudinary signed upload (unchanged from before S3 support). */
+function postToCloudinary(
+  signed: {
+    cloudName: string;
+    apiKey: string;
+    timestamp: number;
+    folder: string;
+    signature: string;
+    allowed_formats: string;
+    overwrite: boolean;
+    resourceType: "image" | "video";
+  },
+  file: File,
+  onProgress: ((value: number) => void) | undefined,
+  signal: AbortSignal | undefined,
+) {
+  const body = new FormData();
+  body.append("file", file);
+  body.append("api_key", signed.apiKey);
+  for (const key of [
+    "timestamp",
+    "folder",
+    "signature",
+    "allowed_formats",
+    "overwrite",
+  ] as const)
+    body.append(key, String(signed[key]));
+  return xhrUpload(
+    (xhr) =>
+      xhr.open(
+        "POST",
+        `https://api.cloudinary.com/v1_1/${signed.cloudName}/${signed.resourceType}/upload`,
+      ),
+    body,
+    onProgress,
+    signal,
+    (xhr, resolve, reject) => {
+      if (xhr.status < 200 || xhr.status >= 300)
+        return reject(
+          new Error(
+            xhr.status === 400
+              ? "محتوای فایل معتبر نیست یا فضای ذخیره‌سازی آن را نمی‌پذیرد."
+              : "بارگذاری ناموفق بود. دوباره تلاش کنید.",
+          ),
+        );
+      try {
+        const result = JSON.parse(xhr.responseText);
+        if (!result.public_id) throw new Error();
+        resolve(result.public_id);
+      } catch {
+        reject(new Error("پاسخ بارگذاری معتبر نیست. دوباره تلاش کنید."));
+      }
+    },
+  );
+}
+
+/**
+ * Direct-to-S3 presigned PUT upload. Unlike Cloudinary's signed POST
+ * (which returns the asset's `public_id` in its response body), a
+ * presigned PUT has no response body to read the key from — the API
+ * already minted and returned the exact `objectKey` in the sign step
+ * (`signed.objectKey`), so a successful PUT (2xx) just confirms that
+ * same key now holds this file's bytes. No Content-Type header is set
+ * deliberately: the presigned URL doesn't sign or require one (see
+ * `S3StorageService`'s security-model doc comment) — the API verifies
+ * the real file signature server-side instead of trusting this header.
+ */
+function putToS3(
+  uploadUrl: string,
+  objectKey: string,
+  file: File,
+  onProgress: ((value: number) => void) | undefined,
+  signal: AbortSignal | undefined,
+) {
+  return xhrUpload(
+    (xhr) => xhr.open("PUT", uploadUrl),
+    file,
+    onProgress,
+    signal,
+    (xhr, resolve, reject) => {
+      if (xhr.status < 200 || xhr.status >= 300) {
+        return reject(
+          new Error(
+            xhr.status === 403
+              ? "نشست بارگذاری منقضی شده است. دوباره تلاش کنید."
+              : "بارگذاری ناموفق بود. دوباره تلاش کنید.",
+          ),
+        );
+      }
+      resolve(objectKey);
+    },
+  );
+}
+
 export function useAdminWorkspace() {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [authStatus, setAuthStatus] = useState<AuthStatus>("initializing");
@@ -384,18 +518,23 @@ export function useAdminWorkspace() {
         );
       },
       /**
-       * Uploads a new product image file directly to Cloudinary: get signed
-       * upload params from the API, POST the file straight to Cloudinary's
-       * upload endpoint from the browser (bytes never transit through Nest),
-       * then return the `{storage:"cloudinary", objectKey}` reference to
-       * store in `draft.images` — `slug` is just a route param the API uses
-       * to look up the product and namespace the signed folder by its
-       * immutable id; for a not-yet-created product (no id yet) the API
-       * signs an upload into an unassociated `rad/pending` folder instead.
-       * Either way the API alone decides (and signs) the destination folder,
-       * and re-validates the resulting public_id on save — never trusted
-       * blindly from the client. `CLOUDINARY_API_SECRET` never reaches this
-       * code; only the public `apiKey`/`cloudName` + a one-time signature do.
+       * Uploads a new product image/video file directly to whichever
+       * storage provider the API has signed for (Cloudinary or S3 —
+       * `signed.provider` discriminates the response shape, matching
+       * `apps/api/src/storage/media-storage.interface.ts`'s
+       * `SignedUpload` union): get signed upload params from the API,
+       * send the file straight to the provider from the browser (bytes
+       * never transit through Nest), then return the verified
+       * `{storage, objectKey}` reference to store in `draft.images`.
+       *
+       * `slug` is just a route param the API uses to look up the product
+       * and namespace the signed folder/key by its immutable id; for a
+       * not-yet-created product (no id yet) the API signs into an
+       * unassociated `rad/pending` folder/namespace instead. Either way
+       * the API alone decides (and signs) the destination, and
+       * re-validates the resulting key on save — never trusted blindly
+       * from the client. No provider secret (`CLOUDINARY_API_SECRET` /
+       * `S3_SECRET_ACCESS_KEY`) ever reaches this code.
        */
       async uploadProductImage(
         slug: string,
@@ -404,80 +543,44 @@ export function useAdminWorkspace() {
         signal?: AbortSignal,
       ) {
         const route = `/admin/products/${encodeURIComponent(slug || "draft")}`;
-        const signed = await api<{
-          cloudName: string;
-          apiKey: string;
-          timestamp: number;
-          folder: string;
-          signature: string;
-          allowed_formats: string;
-          overwrite: boolean;
-          resourceType: "image" | "video";
-        }>(`${route}/images/sign`, {
+        const signed = await api<
+          | {
+              provider: "cloudinary";
+              cloudName: string;
+              apiKey: string;
+              timestamp: number;
+              folder: string;
+              signature: string;
+              allowed_formats: string;
+              overwrite: boolean;
+              resourceType: "image" | "video";
+            }
+          | {
+              provider: "s3";
+              uploadUrl: string;
+              method: "PUT";
+              objectKey: string;
+              resourceType: "image" | "video";
+            }
+        >(`${route}/images/sign`, {
           method: "POST",
           body: JSON.stringify({ mime: file.type, size: file.size }),
           signal,
         });
-        const body = new FormData();
-        body.append("file", file);
-        body.append("api_key", signed.apiKey);
-        for (const key of [
-          "timestamp",
-          "folder",
-          "signature",
-          "allowed_formats",
-          "overwrite",
-        ] as const)
-          body.append(key, String(signed[key]));
-        const objectKey = await new Promise<string>((resolve, reject) => {
-          const xhr = new XMLHttpRequest();
-          const abort = () => xhr.abort();
-          const finish = () => signal?.removeEventListener("abort", abort);
-          xhr.open(
-            "POST",
-            `https://api.cloudinary.com/v1_1/${signed.cloudName}/${signed.resourceType}/upload`,
-          );
-          xhr.timeout = 10 * 60 * 1000;
-          xhr.upload.onprogress = (event) => {
-            if (event.lengthComputable)
-              onProgress?.(Math.round((event.loaded / event.total) * 100));
-          };
-          xhr.onload = () => {
-            finish();
-            if (xhr.status < 200 || xhr.status >= 300)
-              return reject(
-                new Error(
-                  xhr.status === 400
-                    ? "محتوای فایل معتبر نیست یا فضای ذخیره‌سازی آن را نمی‌پذیرد."
-                    : "بارگذاری ناموفق بود. دوباره تلاش کنید.",
-                ),
-              );
-            try {
-              const result = JSON.parse(xhr.responseText);
-              if (!result.public_id) throw new Error();
-              resolve(result.public_id);
-            } catch {
-              reject(new Error("پاسخ بارگذاری معتبر نیست. دوباره تلاش کنید."));
-            }
-          };
-          xhr.onerror = xhr.ontimeout = () => {
-            finish();
-            reject(new Error("ارتباط قطع شد. دوباره تلاش کنید."));
-          };
-          xhr.onabort = () => {
-            finish();
-            reject(new Error("بارگذاری لغو شد."));
-          };
-          signal?.addEventListener("abort", abort, { once: true });
-          if (signal?.aborted) {
-            finish();
-            reject(new Error("بارگذاری لغو شد."));
-            return;
-          }
-          xhr.send(body);
-        });
+
+        const objectKey =
+          signed.provider === "s3"
+            ? await putToS3(
+                signed.uploadUrl,
+                signed.objectKey,
+                file,
+                onProgress,
+                signal,
+              )
+            : await postToCloudinary(signed, file, onProgress, signal);
+
         return api<{
-          storage: "cloudinary" | "cloudinary_video";
+          storage: "cloudinary" | "cloudinary_video" | "s3" | "s3_video";
           objectKey: string;
         }>(`${route}/media/verify`, {
           method: "POST",
@@ -495,11 +598,14 @@ export function useAdminWorkspace() {
           status: product.status,
           artist: product.artist,
           // Only send what the API's save contract needs per storage —
-          // never the display-only `src` the API derived for a `cloudinary`
-          // row (or a local blob: URL left over from an in-flight upload).
+          // never the display-only `src` the API derived for a
+          // provider-backed row (or a local blob: URL left over from an
+          // in-flight upload).
           images: product.images.map((image) =>
             image.storage === "cloudinary" ||
-            image.storage === "cloudinary_video"
+            image.storage === "cloudinary_video" ||
+            image.storage === "s3" ||
+            image.storage === "s3_video"
               ? { storage: image.storage, objectKey: image.objectKey }
               : { storage: image.storage, src: image.src },
           ),
