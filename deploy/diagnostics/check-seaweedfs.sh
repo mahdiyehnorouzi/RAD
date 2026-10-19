@@ -17,11 +17,14 @@
 # Skim it yourself before sharing if you've renamed anything sensitively
 # into a container name/label, since this script can't know about that.
 #
-# Known container names, per docs/vps-frontend-deployment-plan.md's own
-# record of this host's SeaweedFS stack: seaweedfs_master_1,
-# seaweedfs_volume_1, seaweedfs_filer_1, seaweedfs_s3_1, seaweedfs_webdav_1.
-# Every lookup below also falls back to matching by image name, in case
-# the actual container names on this host differ.
+# Container names are NOT assumed. Earlier drafts of this script hardcoded
+# seaweedfs_master_1/seaweedfs_volume_1/seaweedfs_filer_1/seaweedfs_s3_1/
+# seaweedfs_webdav_1 from a secondhand doc note — verified-wrong against the
+# real host, which doesn't necessarily use that naming. Every lookup below
+# instead DISCOVERS containers by matching "seaweed" (case-insensitive)
+# against both the container name and its image, then classifies each by
+# role (master/volume/filer/s3/webdav) the same way, falling back to
+# "unclassified" rather than silently skipping an unrecognized one.
 set -uo pipefail
 
 SECTION() { printf '\n========== %s ==========\n' "$1"; }
@@ -30,55 +33,74 @@ WARN()    { printf '[warn] %s\n' "$1"; }
 FAIL()    { printf '[FAIL] %s\n' "$1"; }
 SKIP()    { printf '[skip, needs auth/credentials — not checked here] %s\n' "$1"; }
 
-EXPECTED_CONTAINERS=(seaweedfs_master_1 seaweedfs_volume_1 seaweedfs_filer_1 seaweedfs_s3_1 seaweedfs_webdav_1)
-
-find_container() {
-  local wanted="$1"
-  if docker inspect "$wanted" >/dev/null 2>&1; then
-    echo "$wanted"
-    return 0
-  fi
+# All containers (by name OR image) matching "seaweed" — never a fixed list.
+discover_seaweedfs_containers() {
   docker ps -a --format '{{.Names}}\t{{.Image}}' 2>/dev/null \
-    | awk -F'\t' -v w="$wanted" 'tolower($2) ~ tolower(w) {print $1; exit}'
+    | awk -F'\t' 'tolower($1) ~ /seaweed/ || tolower($2) ~ /seaweed/ {print $1}'
+}
+
+# Best-effort role guess from the container's own name/image — for grouping
+# in the report only; nothing downstream depends on getting this right.
+classify_role() {
+  local name="$1" image="$2" hay
+  hay="$(printf '%s %s' "$name" "$image" | tr '[:upper:]' '[:lower:]')"
+  case "$hay" in
+    *master*)  echo "master" ;;
+    *volume*)  echo "volume" ;;
+    *filer*)   echo "filer" ;;
+    *webdav*)  echo "webdav" ;;
+    *s3*)      echo "s3" ;;
+    *)         echo "unclassified" ;;
+  esac
 }
 
 echo "RAD SeaweedFS diagnostic — $(date -u +%Y-%m-%dT%H:%M:%SZ)"
 echo "Host: $(hostname) | $(uname -sr)"
 
 SECTION "1. SeaweedFS containers/processes and health"
+S3_CONTAINER=""
 if ! command -v docker >/dev/null 2>&1; then
   FAIL "docker CLI not found on this host — cannot inspect containers."
 else
-  for base in "${EXPECTED_CONTAINERS[@]}"; do
-    name=$(find_container "$base")
-    if [[ -z "${name:-}" ]]; then
-      WARN "No container found matching '$base' (by name or image)."
-      continue
+  mapfile -t found_containers < <(discover_seaweedfs_containers)
+  if [[ "${#found_containers[@]}" -eq 0 ]]; then
+    FAIL "No containers matching 'seaweed' found by name or image. If SeaweedFS runs as bare processes (not Docker) on this host, this script's container checks won't see it — check 'systemctl status' / 'ps aux | grep weed' manually instead."
+  else
+    INFO "Discovered ${#found_containers[@]} seaweed* container(s): ${found_containers[*]}"
+    for name in "${found_containers[@]}"; do
+      status=$(docker inspect -f '{{.State.Status}}' "$name" 2>/dev/null)
+      health=$(docker inspect -f '{{if .State.Health}}{{.State.Health.Status}}{{else}}(no healthcheck defined){{end}}' "$name" 2>/dev/null)
+      started=$(docker inspect -f '{{.State.StartedAt}}' "$name" 2>/dev/null)
+      restarts=$(docker inspect -f '{{.RestartCount}}' "$name" 2>/dev/null)
+      image=$(docker inspect -f '{{.Config.Image}}' "$name" 2>/dev/null)
+      role=$(classify_role "$name" "$image")
+      INFO "$name [role=$role] — image=$image status=$status health=$health restarts=$restarts startedAt=$started"
+      if [[ "$status" != "running" ]]; then
+        FAIL "$name is not running (status=$status)."
+      fi
+      if [[ "$role" == "s3" && -z "$S3_CONTAINER" ]]; then
+        S3_CONTAINER="$name"
+      fi
+    done
+    if [[ -z "$S3_CONTAINER" ]]; then
+      WARN "Could not identify which discovered container is the S3 gateway by name/image — section 2 will fall back to the documented internal port (8333) directly instead of reading a published port mapping."
     fi
-    status=$(docker inspect -f '{{.State.Status}}' "$name" 2>/dev/null)
-    health=$(docker inspect -f '{{if .State.Health}}{{.State.Health.Status}}{{else}}(no healthcheck defined){{end}}' "$name" 2>/dev/null)
-    started=$(docker inspect -f '{{.State.StartedAt}}' "$name" 2>/dev/null)
-    restarts=$(docker inspect -f '{{.RestartCount}}' "$name" 2>/dev/null)
-    image=$(docker inspect -f '{{.Config.Image}}' "$name" 2>/dev/null)
-    INFO "$name — image=$image status=$status health=$health restarts=$restarts startedAt=$started"
-    if [[ "$status" != "running" ]]; then
-      FAIL "$name is not running (status=$status)."
-    fi
-  done
+  fi
   echo
   INFO "docker stats (one-shot, no streaming):"
   docker stats --no-stream --format 'table {{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}\t{{.MemPerc}}' 2>/dev/null \
-    | grep -iE 'seaweedfs|NAME' || WARN "No seaweedfs_* containers matched docker stats."
+    | grep -iE 'seaweed|NAME' || WARN "No seaweed* containers matched docker stats."
 fi
 
 SECTION "2. S3 gateway availability (internal)"
-s3_container=$(find_container seaweedfs_s3_1)
 s3_internal_port=""
-if [[ -n "${s3_container:-}" ]]; then
+if [[ -n "${S3_CONTAINER:-}" ]]; then
   # Only reads published port mappings — never env vars (which could hold
   # credentials) and never the container's filesystem.
-  s3_internal_port=$(docker port "$s3_container" 2>/dev/null | head -n1 | sed -E 's/.*:([0-9]+)$/\1/')
+  s3_internal_port=$(docker port "$S3_CONTAINER" 2>/dev/null | head -n1 | sed -E 's/.*:([0-9]+)$/\1/')
 fi
+# Falls back to the verified-real internal gateway address (127.0.0.1:8333)
+# rather than guessing a container/port if discovery above found nothing.
 s3_internal_port=${s3_internal_port:-8333}
 INFO "Probing http://127.0.0.1:${s3_internal_port}/ (internal, loopback only)"
 if command -v curl >/dev/null 2>&1; then
@@ -199,9 +221,7 @@ EOF
 
 SECTION "10. Storage persistence and volume mounts"
 if command -v docker >/dev/null 2>&1; then
-  for base in seaweedfs_master_1 seaweedfs_volume_1 seaweedfs_filer_1; do
-    name=$(find_container "$base")
-    [[ -z "${name:-}" ]] && continue
+  for name in "${found_containers[@]}"; do
     INFO "$name mounts:"
     docker inspect -f '{{range .Mounts}}  {{.Type}} {{.Source}} -> {{.Destination}} (RW={{.RW}}){{"\n"}}{{end}}' "$name" 2>/dev/null
   done

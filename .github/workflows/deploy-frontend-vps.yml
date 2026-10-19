@@ -108,6 +108,7 @@ jobs:
       LAST_HEALTHY_FILE: /root/rad-frontend-deploy/.last-healthy-tags.env
     steps:
       - name: Configure pinned SSH identity
+        id: ssh
         env:
           SSH_KEY: ${{ secrets.RAD_FRONTEND_SSH_PRIVATE_KEY }}
           KNOWN_HOSTS: ${{ secrets.RAD_FRONTEND_SSH_KNOWN_HOSTS }}
@@ -186,14 +187,21 @@ jobs:
           echo "::error::New deploy (storefront=${{ needs.build-images.outputs.storefront_tag }}, admin=${{ needs.build-images.outputs.admin_tag }}) did not report healthy within timeout."
           exit 1
 
-      # Only reached when the health check above failed. Redeploys the
-      # exact tags captured as "currently running" before this job touched
-      # anything, then re-runs the same health-check loop against the
-      # rolled-back containers — rollback is never declared successful on
-      # faith, only on a second passing health check.
+      # Runs on ANY failure after SSH was successfully configured — not just
+      # a failed health check. "Pull new images and recreate containers" is
+      # two docker compose calls joined by `&&`; if it dies partway (e.g.
+      # pull succeeds but `up -d` only recreates one of the two services
+      # before erroring), the deploy step itself reports failure() and the
+      # live host is left in a mixed state (one service on the new image,
+      # one still on the old one, or one not recreated at all) — exactly
+      # the partial-deployment case a rollback must also cover, not only
+      # "both containers came up but failed their health check". Redeploying
+      # the previously-captured tags for BOTH services is safe and
+      # idempotent either way. Only skipped when the SSH step itself never
+      # succeeded, since then nothing on the host was touched at all.
       - name: Roll back to last known-healthy images
         id: rollback
-        if: failure() && steps.deploy.outcome == 'success'
+        if: failure() && steps.ssh.outcome == 'success'
         env:
           STOREFRONT_IMAGE_TAG: ${{ steps.previous.outputs.storefront_tag }}
           ADMIN_IMAGE_TAG: ${{ steps.previous.outputs.admin_tag }}
