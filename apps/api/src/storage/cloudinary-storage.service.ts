@@ -7,7 +7,7 @@ import {
 import { mediaLimits, validateMediaSize } from "./media-policy";
 import { ConfigService } from "@nestjs/config";
 import { v2 as cloudinary } from "cloudinary";
-import type { MediaStorage } from "./media-storage.interface";
+import type { CloudinarySignedUpload, MediaStorage } from "./media-storage.interface";
 
 /** Mime types new admin uploads may use — mirrors `assertImageData`'s allowlist. */
 export const ALLOWED_PRODUCT_IMAGE_MIME_TYPES = [
@@ -143,11 +143,16 @@ export class CloudinaryStorageService implements MediaStorage {
    * independently recomputes the same digest by hand and asserts it
    * matches, so this isn't just testing the SDK against itself.
    */
-  createSignedUpload(
+  // `async` purely to satisfy `MediaStorage.createSignedUpload`'s shared,
+  // Promise-returning signature (needed because the S3 provider's
+  // presigned-URL generation is genuinely async) — the HMAC signing below
+  // is itself synchronous, so this resolves immediately; see the
+  // module-level comment on `MediaStorage.createSignedUpload`.
+  async createSignedUpload(
     folder: string,
     kind: "image" | "video" = "image",
     restricted = false,
-  ) {
+  ): Promise<CloudinarySignedUpload> {
     this.ensureConfigured();
     const timestamp = Math.floor(Date.now() / 1000);
     const paramsToSign = restricted
@@ -163,6 +168,7 @@ export class CloudinaryStorageService implements MediaStorage {
       this.config.get<string>("CLOUDINARY_API_SECRET") as string,
     );
     return {
+      provider: "cloudinary",
       cloudName: this.config.get<string>("CLOUDINARY_CLOUD_NAME") as string,
       apiKey: this.config.get<string>("CLOUDINARY_API_KEY") as string,
       ...paramsToSign,

@@ -14,9 +14,21 @@ import { Product } from "./product.entity";
  * `cloudinary` is the Phase 2 direct-upload path (admin dashboard images
  * uploaded straight to Cloudinary via a signed upload — see
  * `AdminService.replaceImages` / `cloudinary-storage.service.ts`).
+ *
+ * `s3`/`s3_video` are reserved for the S3-compatible (SeaweedFS) provider
+ * (`S3StorageService`) — added here only as types so that service's
+ * `verifyMedia` return value type-checks without a cast; no row is ever
+ * actually written with this value yet (`StorageModule` doesn't wire that
+ * provider in, and `AdminService`/`replaceImages` don't accept it).
  */
 export type ProductImageStorage =
-  "static" | "legacy_base64" | "external" | "cloudinary" | "cloudinary_video";
+  | "static"
+  | "legacy_base64"
+  | "external"
+  | "cloudinary"
+  | "cloudinary_video"
+  | "s3"
+  | "s3_video";
 
 @Entity("ProductImage")
 export class ProductImage {

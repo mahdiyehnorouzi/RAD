@@ -13,7 +13,30 @@
  * don't need a general-purpose image/video decoding library — adding one
  * (e.g. `sharp`, which bundles native libvips binaries) for this narrow,
  * well-specified parsing job would be a disproportionate dependency for a
- * 2GB-RAM VPS. See `media-signature.spec.ts` for format fixtures.
+ * 2GB-RAM VPS. See `media-signature.spec.ts` for format fixtures,
+ * including truncated/malformed/adversarial inputs.
+ *
+ * Scope, stated plainly: every function here does FORMAT IDENTIFICATION
+ * and HEADER PARSING ONLY — reading a handful of fixed-position bytes a
+ * container format's spec guarantees are there, never decoding pixel or
+ * sample data. That is deliberately a much weaker guarantee than "this
+ * file is a well-formed, fully decodable, safe-to-render image/video":
+ * - A JPEG/PNG/WebP that passes `sniffImage` can still have a truncated or
+ *   corrupt entropy-coded body past the header — nothing here decodes
+ *   that far. A real decoder (e.g. a future thumbnailing step) can still
+ *   fail or behave unexpectedly on such a file; this module does not
+ *   protect against that, only against a file that isn't really an image
+ *   at all (the actual threat `verifyMedia` exists to stop: Cloudinary
+ *   used to decode-and-validate for us, S3 does not).
+ * - A header-declared width/height is trusted as reported (bounded only by
+ *   `media-policy.ts#MAX_IMAGE_DIMENSION_PX` at the call site) — it is not
+ *   cross-checked against the actual pixel data length, so a file could in
+ *   principle misreport its own dimensions within that bound.
+ * - MP4/WebM validation (`looksLikeMp4`/`looksLikeWebm`) checks container
+ *   *structure* only (expected top-level boxes/elements present) — not
+ *   that the video track inside actually decodes, matches any particular
+ *   codec, or is free of malformed sample data. See the limitation notes
+ *   on each function below for specifics.
  */
 
 export type SniffedImageFormat = "jpeg" | "png" | "webp";
@@ -45,9 +68,21 @@ function sniffPng(buffer: Buffer): ImageSignature | null {
 function sniffJpeg(buffer: Buffer): ImageSignature | null {
   if (buffer.length < 4 || buffer[0] !== 0xff || buffer[1] !== 0xd8) return null;
   let pos = 2;
-  while (pos + 4 <= buffer.length) {
+  let guard = 0;
+  while (pos + 2 <= buffer.length) {
+    // Bounds the loop independently of how far `pos` advances per
+    // iteration — a defensive cap against any future change here
+    // introducing a non-terminating edge case on adversarial input.
+    if (++guard > 10_000) return null;
     if (buffer[pos] !== 0xff) return null;
-    const marker = buffer[pos + 1];
+    // 0xFF is a valid fill/padding byte between markers (JPEG spec,
+    // T.81 B.1.1.2) — skip any run of them to find the real marker code,
+    // rather than rejecting a spec-legal file as malformed.
+    let markerPos = pos + 1;
+    while (markerPos < buffer.length && buffer[markerPos] === 0xff) markerPos++;
+    if (markerPos >= buffer.length) return null;
+    const marker = buffer[markerPos];
+    pos = markerPos - 1; // re-anchor to the 0xFF immediately before the real marker byte
     // Standalone markers with no length-prefixed payload.
     if (marker === 0x01 || (marker >= 0xd0 && marker <= 0xd9)) {
       if (marker === 0xd9 /* EOI */ || marker === 0xda /* SOS */) return null;

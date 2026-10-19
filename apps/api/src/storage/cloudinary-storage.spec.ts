@@ -101,27 +101,28 @@ describe("CloudinaryStorageService.createSignedUpload", () => {
     return new CloudinaryStorageService(new ConfigService(env));
   }
 
-  test("throws when Cloudinary config is missing (never silently signs with empty credentials)", () => {
+  test("throws when Cloudinary config is missing (never silently signs with empty credentials)", async () => {
     const storage = service({});
-    assert.throws(
+    await assert.rejects(
       () => storage.createSignedUpload("rad/pending"),
       ServiceUnavailableException,
     );
   });
 
-  test("signature matches an independently-computed SHA-1 digest of the sorted params + secret", () => {
+  test("signature matches an independently-computed SHA-1 digest of the sorted params + secret", async () => {
     const storage = service({
       CLOUDINARY_CLOUD_NAME: "rad-cloud",
       CLOUDINARY_API_KEY: "test-api-key",
       CLOUDINARY_API_SECRET: "test-api-secret",
     });
-    const result = storage.createSignedUpload("rad/products/prod_1");
+    const result = await storage.createSignedUpload("rad/products/prod_1");
 
     const expectedToSign = `folder=${result.folder}&timestamp=${result.timestamp}`;
     const expectedSignature = createHash("sha1")
       .update(`${expectedToSign}test-api-secret`)
       .digest("hex");
 
+    assert.equal(result.provider, "cloudinary");
     assert.equal(result.signature, expectedSignature);
     assert.equal(result.cloudName, "rad-cloud");
     assert.equal(result.apiKey, "test-api-key");
@@ -129,13 +130,13 @@ describe("CloudinaryStorageService.createSignedUpload", () => {
     assert.equal(typeof result.timestamp, "number");
   });
 
-  test("never returns the API secret itself", () => {
+  test("never returns the API secret itself", async () => {
     const storage = service({
       CLOUDINARY_CLOUD_NAME: "rad-cloud",
       CLOUDINARY_API_KEY: "test-api-key",
       CLOUDINARY_API_SECRET: "super-secret-value",
     });
-    const result = storage.createSignedUpload("rad/pending");
+    const result = await storage.createSignedUpload("rad/pending");
     assert.equal(JSON.stringify(result).includes("super-secret-value"), false);
   });
 
@@ -145,9 +146,9 @@ describe("CloudinaryStorageService.createSignedUpload", () => {
       CLOUDINARY_API_KEY: "test-api-key",
       CLOUDINARY_API_SECRET: "test-api-secret",
     });
-    const first = storage.createSignedUpload("rad/pending");
+    const first = await storage.createSignedUpload("rad/pending");
     await new Promise((resolve) => setTimeout(resolve, 1100));
-    const second = storage.createSignedUpload("rad/pending");
+    const second = await storage.createSignedUpload("rad/pending");
     assert.notEqual(first.timestamp, second.timestamp);
     assert.notEqual(first.signature, second.signature);
   });

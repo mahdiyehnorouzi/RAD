@@ -297,6 +297,106 @@ describe("S3StorageService.verifyMedia — videos", () => {
   });
 });
 
+describe("S3StorageService.verifyMedia — hardening regressions", () => {
+  test("rejects a backend response that returns MORE bytes than the requested Range, instead of buffering them unbounded", async () => {
+    // Simulates a backend that ignores (or misreports) the Range header
+    // and streams far more than requested — the exact scenario that would
+    // defeat bounded-memory video probing if `getObjectRange` trusted the
+    // Range request was honored. The generator below never terminates on
+    // its own; a correct implementation must abort well before exhausting
+    // it, so this test also fails by timing out if the budget isn't
+    // enforced.
+    const chunkSize = 64 * 1024;
+    async function* unboundedChunks() {
+      while (true) yield new Uint8Array(chunkSize).fill(0x41);
+    }
+    let deleteCalled = false;
+    const restore = stubSend((command) => {
+      if (command instanceof HeadObjectCommand) {
+        return { ContentLength: 10 * 1024 * 1024 }; // reported size is irrelevant here
+      }
+      if (command instanceof GetObjectCommand) {
+        return { Body: Readable.from(unboundedChunks()) };
+      }
+      if (command instanceof DeleteObjectCommand) deleteCalled = true;
+      return {};
+    });
+    try {
+      await assert.rejects(
+        () => service().verifyMedia("rad/pending/vid-overflow", "video"),
+        ServiceUnavailableException,
+      );
+      assert.equal(deleteCalled, false, "a range-overflow is a service error, not a validated-invalid object");
+    } finally {
+      restore();
+    }
+  });
+
+  test("rejects (and cleans up) an image whose decoded dimensions exceed the sanity bound, even with a structurally valid header", async () => {
+    const png = makePng(50_000, 50_000); // absurd but structurally well-formed IHDR
+    let deleteCalled = false;
+    const restore = stubSend((command) => {
+      if (command instanceof HeadObjectCommand) return { ContentLength: png.length };
+      if (command instanceof GetObjectCommand) return { Body: Readable.from([png]) };
+      if (command instanceof DeleteObjectCommand) deleteCalled = true;
+      return {};
+    });
+    try {
+      await assert.rejects(
+        () => service().verifyMedia("rad/pending/huge", "image"),
+        BadRequestException,
+      );
+      assert.equal(deleteCalled, true);
+    } finally {
+      restore();
+    }
+  });
+
+  test("trust boundary: verifyMedia validates ONLY the bytes at a key — it has no concept of which product a key is 'for' and will happily verify any structurally valid object regardless of its key's namespace; product ownership must be checked by the caller (isValidS3ObjectKey) before this is ever reached with a client-reported key", async () => {
+    const png = makePng(100, 100);
+    const restore = stubSend((command) => {
+      if (command instanceof HeadObjectCommand) return { ContentLength: png.length };
+      if (command instanceof GetObjectCommand) return { Body: Readable.from([png]) };
+      return {};
+    });
+    try {
+      // A key namespaced under some OTHER product's folder verifies just
+      // fine at the storage layer — this class cannot and does not know
+      // that this key "shouldn't" be claimable by a different caller.
+      const result = await service().verifyMedia(
+        "rad/products/prod_someone_elses_product/abc",
+        "image",
+      );
+      assert.equal(result.storage, "s3");
+    } finally {
+      restore();
+    }
+  });
+});
+
+describe("S3StorageService configuration — upload URL TTL clamping", () => {
+  test("clamps an excessively long configured TTL down to MAX_UPLOAD_URL_TTL_SECONDS", async () => {
+    const storage = service({ ...BASE_ENV, S3_UPLOAD_URL_TTL_SECONDS: "999999" });
+    const result = await storage.createSignedUpload("rad/pending");
+    const expiresIn = Number(new URL(result.uploadUrl).searchParams.get("X-Amz-Expires"));
+    assert.equal(expiresIn, 3600);
+  });
+
+  test("clamps an excessively short configured TTL up to MIN_UPLOAD_URL_TTL_SECONDS", async () => {
+    const storage = service({ ...BASE_ENV, S3_UPLOAD_URL_TTL_SECONDS: "1" });
+    const result = await storage.createSignedUpload("rad/pending");
+    const expiresIn = Number(new URL(result.uploadUrl).searchParams.get("X-Amz-Expires"));
+    assert.equal(expiresIn, 60);
+  });
+
+  test("a sane configured TTL is used as-is", async () => {
+    const storage = service({ ...BASE_ENV, S3_UPLOAD_URL_TTL_SECONDS: "300" });
+    const result = await storage.createSignedUpload("rad/pending");
+    const expiresIn = Number(new URL(result.uploadUrl).searchParams.get("X-Amz-Expires"));
+    assert.equal(expiresIn, 300);
+  });
+});
+
 describe("S3StorageService.destroy", () => {
   test("issues a DeleteObjectCommand for the given key", async () => {
     let deletedKey: string | undefined;

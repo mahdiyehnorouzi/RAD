@@ -14,10 +14,16 @@ import {
   S3Client,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import { mediaLimits, validateMediaSize } from "./media-policy";
+import {
+  MAX_IMAGE_DIMENSION_PX,
+  MAX_UPLOAD_URL_TTL_SECONDS,
+  MIN_UPLOAD_URL_TTL_SECONDS,
+  mediaLimits,
+  validateMediaSize,
+} from "./media-policy";
 import { mintS3ObjectKey } from "./s3-object-key";
 import { looksLikeMp4, looksLikeWebm, sniffImage } from "./media-signature";
-import type { MediaStorage } from "./media-storage.interface";
+import type { MediaStorage, S3SignedUpload } from "./media-storage.interface";
 import type { ProductImageStorage } from "../database/entities/product-image.entity";
 
 /**
@@ -36,10 +42,8 @@ const VIDEO_PROBE_CHUNK_BYTES = 256 * 1024;
  * remains the sole active provider; nothing here is reachable from
  * `AdminService`/`AdminController`/the admin or storefront frontends yet.
  * See this PR's report for the follow-up steps needed to actually switch
- * providers (`ProductImageStorage` gaining `"s3"`/`"s3_video"`, wiring
- * `isValidS3ObjectKey` into `AdminService`, and a `MediaStorage.
- * createSignedUpload` signature change — see the note on that method
- * below).
+ * providers (primarily: wiring `isValidS3ObjectKey` into `AdminService`
+ * exactly where it already calls `isValidProductImagePublicId`).
  *
  * Security model, by requirement:
  * - The object key a client ends up writing to is minted here, server-side,
@@ -69,10 +73,62 @@ const VIDEO_PROBE_CHUNK_BYTES = 256 * 1024;
  * - Reads are always bounded: `verifyMedia` never pulls more bytes into
  *   memory than `mediaLimits()` allows for that kind, and video probing
  *   reads only small head/tail slices via S3 `Range` requests — never the
- *   whole (up to 50MB+) object.
+ *   whole (up to 50MB+) object. `getObjectRange` additionally enforces
+ *   this even if the storage backend ignores the `Range` header or a
+ *   response claims more bytes than requested (see that method) — the
+ *   bound is not simply "trust the Range request was honored".
+ *
+ * What this class does NOT, and currently CANNOT, enforce — do not assume
+ * SeaweedFS matches AWS S3 feature-for-feature; none of the below has
+ * been verified against a live SeaweedFS deployment (no infra access in
+ * this session):
+ * - **Upload size cannot be bounded before the bytes land in the bucket.**
+ *   A presigned PUT (unlike a presigned POST with a
+ *   `content-length-range` policy condition) carries no server-enforced
+ *   size limit — the client could PUT an arbitrarily large body. Enforcement
+ *   here is entirely post-hoc: `HeadObject.ContentLength` is checked
+ *   against `mediaLimits()` before any body bytes are read, and an
+ *   oversized object is deleted immediately. On a 2GB-RAM, limited-disk
+ *   VPS, this means a single misbehaving/malicious upload can transiently
+ *   consume disk up to whatever the client actually sent before cleanup
+ *   runs — there is no way to reject the bytes *during* the PUT with this
+ *   mechanism alone. A presigned POST with `content-length-range` would
+ *   close this gap at the storage layer instead of after the fact, but
+ *   whether SeaweedFS's S3 gateway implements S3 POST policy documents
+ *   (as opposed to just presigned-URL query auth) needs to be verified
+ *   against the actual deployed version before relying on it — not done
+ *   here. Until verified, treat the post-hoc `HeadObject` check as the
+ *   only real enforcement, and make sure production `nginx` in front of
+ *   whatever path reaches the S3 endpoint sets `client_max_body_size` to
+ *   at least `PRODUCT_VIDEO_MAX_MB` (+ margin) so an oversized request is
+ *   rejected at the proxy rather than filling disk — a production/infra
+ *   configuration item, not something this class can set.
+ * - **No conditional-write (overwrite) protection is applied at the S3
+ *   layer.** A `PutObjectCommand` with `IfNoneMatch: "*"` would make a PUT
+ *   fail if the key already exists (S3's newer conditional-write
+ *   extension), but support for that header is not universal across
+ *   S3-compatible backends and is NOT assumed here — adding it unverified
+ *   risks breaking every upload if SeaweedFS rejects the unrecognized
+ *   header instead of ignoring it. Overwrite risk is instead made
+ *   practically negligible by construction: every key is a fresh
+ *   192-bit-random token (`mintS3ObjectKey`), so two uploads colliding on
+ *   the same key is not a realistic threat, only a theoretical one this
+ *   class does not additionally guard against at the protocol level.
+ * - **No automatic cleanup of abandoned (never-verified) uploads.** A
+ *   presigned URL that's handed out but never used (or used but never
+ *   followed by a `verifyMedia`/save step) leaves an orphaned object in
+ *   `rad/pending/` indefinitely — the storage-layer presigned TTL
+ *   (`S3_UPLOAD_URL_TTL_SECONDS`, clamped to
+ *   `[MIN_UPLOAD_URL_TTL_SECONDS, MAX_UPLOAD_URL_TTL_SECONDS]`) only
+ *   limits how long the URL is usable, not how long an already-uploaded
+ *   object survives. See `s3-lifecycle.ts` for the (currently
+ *   unexecuted — no scheduled job wired up, no infra access) decision
+ *   logic a future sweep would use, and the recommendation to also check
+ *   whether SeaweedFS supports S3 bucket lifecycle rules as a
+ *   storage-side alternative.
  */
 @Injectable()
-export class S3StorageService implements Pick<MediaStorage, "verifyMedia" | "destroy"> {
+export class S3StorageService implements MediaStorage {
   private readonly logger = new Logger(S3StorageService.name);
   private internalClient?: S3Client;
   private publicClient?: S3Client;
@@ -104,8 +160,16 @@ export class S3StorageService implements Pick<MediaStorage, "verifyMedia" | "des
     const publicEndpoint = this.requireEnv("S3_PUBLIC_ENDPOINT");
     const bucket = this.requireEnv("S3_MEDIA_BUCKET");
     const forcePathStyle = this.config.get<string>("S3_FORCE_PATH_STYLE") !== "false";
-    const ttl = Number(this.config.get<string>("S3_UPLOAD_URL_TTL_SECONDS") ?? 900);
-    if (Number.isFinite(ttl) && ttl > 0) this.uploadTtlSeconds = ttl;
+    const requestedTtl = Number(this.config.get<string>("S3_UPLOAD_URL_TTL_SECONDS") ?? 900);
+    if (Number.isFinite(requestedTtl)) {
+      // Clamp rather than trust a misconfigured env value outright — too
+      // short (near 0) breaks real uploads, too long turns a signed URL
+      // into a near-permanent, unrevocable credential.
+      this.uploadTtlSeconds = Math.min(
+        MAX_UPLOAD_URL_TTL_SECONDS,
+        Math.max(MIN_UPLOAD_URL_TTL_SECONDS, requestedTtl),
+      );
+    }
 
     const credentials = { accessKeyId, secretAccessKey };
     // Two clients, same credentials/bucket: `internalClient` is what the
@@ -137,20 +201,16 @@ export class S3StorageService implements Pick<MediaStorage, "verifyMedia" | "des
    * `productImageFolder` — so the logical namespace stays identical across
    * providers, only the backing store differs).
    *
-   * NOT declared as implementing `MediaStorage.createSignedUpload`: that
-   * method is synchronous (matching `CloudinaryStorageService`, whose
-   * HMAC signing needs no I/O), but minting a presigned S3 URL via
-   * `getSignedUrl` is inherently a `Promise`-returning call. The smallest
-   * safe fix, deferred to the PR that actually wires this provider in, is
-   * widening `MediaStorage.createSignedUpload`'s return type from
-   * `Record<string, unknown>` to `Promise<Record<string, unknown>>` —
-   * zero behavior change for `CloudinaryStorageService`, since a
-   * non-Promise value returned from an `async` method already resolves to
-   * that value, and Nest controllers already return the result of this
-   * call directly (already `await`-compatible either way). Not applied in
-   * this PR to keep PR1's interface untouched, per scope.
+   * Does NOT, and cannot, enforce a maximum upload size at the protocol
+   * level — see the class-level doc comment's "What this class does NOT
+   * enforce" section. `limits` is returned so a caller can still show/
+   * enforce a client-side expectation, but the only real enforcement is
+   * `verifyMedia`'s post-hoc `HeadObject` check.
    */
-  async createSignedUpload(folder: string, kind: "image" | "video" = "image") {
+  async createSignedUpload(
+    folder: string,
+    kind: "image" | "video" = "image",
+  ): Promise<S3SignedUpload> {
     this.ensureConfigured();
     const objectKey = mintS3ObjectKey(folder);
     const uploadUrl = await getSignedUrl(
@@ -159,9 +219,9 @@ export class S3StorageService implements Pick<MediaStorage, "verifyMedia" | "des
       { expiresIn: this.uploadTtlSeconds },
     );
     return {
-      provider: "s3" as const,
+      provider: "s3",
       uploadUrl,
-      method: "PUT" as const,
+      method: "PUT",
       objectKey,
       resourceType: kind,
       limits: mediaLimits(),
@@ -182,8 +242,21 @@ export class S3StorageService implements Pick<MediaStorage, "verifyMedia" | "des
     }
   }
 
-  /** Reads an inclusive byte range `[start, end]` of the object, bounded by the caller. */
+  /**
+   * Reads an inclusive byte range `[start, end]` of the object.
+   *
+   * Does NOT simply trust that the storage backend honored the `Range`
+   * header — a backend that ignores `Range` and returns the full object
+   * (or any response larger than requested, buggy or adversarial) would
+   * otherwise defeat the entire point of range-probing: bounding memory
+   * use on a 2GB-RAM VPS when checking a file that could be up to
+   * `PRODUCT_VIDEO_MAX_MB`. The read is capped at the requested byte
+   * budget and aborted — not silently truncated — the instant more bytes
+   * arrive than asked for, since that means this object's size can no
+   * longer be trusted for anything else in the caller either.
+   */
   private async getObjectRange(objectKey: string, start: number, end: number) {
+    const budget = end - start + 1;
     try {
       const result = await this.internalClient!.send(
         new GetObjectCommand({
@@ -195,11 +268,20 @@ export class S3StorageService implements Pick<MediaStorage, "verifyMedia" | "des
       const body = result.Body;
       if (!body) throw new Error("empty body");
       const chunks: Buffer[] = [];
+      let total = 0;
       for await (const chunk of body as AsyncIterable<Uint8Array>) {
+        total += chunk.length;
+        if (total > budget) {
+          (body as { destroy?: () => void }).destroy?.();
+          throw new Error(
+            `range response for ${objectKey} exceeded the requested ${budget}-byte budget`,
+          );
+        }
         chunks.push(Buffer.from(chunk));
       }
       return Buffer.concat(chunks);
-    } catch {
+    } catch (error) {
+      this.logger.warn(`getObjectRange failed for ${objectKey}: ${(error as Error).message}`);
       throw new ServiceUnavailableException("بررسی فایل ممکن نشد. دوباره تلاش کنید.");
     }
   }
@@ -240,13 +322,23 @@ export class S3StorageService implements Pick<MediaStorage, "verifyMedia" | "des
       // small/bounded — no need for a partial range read.
       const bytes = await this.getObjectRange(objectKey, 0, size - 1);
       const signature = sniffImage(bytes);
-      if (!signature || !(signature.width > 0 && signature.height > 0)) {
+      const dimensionsValid =
+        !!signature &&
+        signature.width > 0 &&
+        signature.height > 0 &&
+        signature.width <= MAX_IMAGE_DIMENSION_PX &&
+        signature.height <= MAX_IMAGE_DIMENSION_PX;
+      if (!dimensionsValid) {
         await this.cleanupRejected(objectKey);
         throw new BadRequestException(
           "محتوای فایل معتبر نیست. تصویر JPEG، PNG یا WebP انتخاب کنید.",
         );
       }
-      return { objectKey, storage: "s3" as ProductImageStorage };
+      // Identifying the real format/dimensions from header bytes is NOT
+      // the same guarantee Cloudinary's Admin API gave us (a full decode)
+      // — see `media-signature.ts`'s module comment for exactly what this
+      // check does and does not prove.
+      return { objectKey, storage: "s3" };
     }
 
     const head0 = await this.getObjectRange(
@@ -273,13 +365,10 @@ export class S3StorageService implements Pick<MediaStorage, "verifyMedia" | "des
         "محتوای فایل معتبر نیست. ویدیوی MP4 یا WebM انتخاب کنید.",
       );
     }
-    // `"s3" as ProductImageStorage`: `ProductImageStorage` does not yet
-    // include an S3 variant (that union is extended in the PR that wires
-    // this provider in, alongside the DB-persisted rows that would use it
-    // — not needed to type-check this standalone class, and nothing in
-    // this PR persists this value). The type-asserted literal below
-    // documents the intended value precisely so it isn't lost before then.
-    return { objectKey, storage: "s3_video" as ProductImageStorage };
+    // Structural container validation only — see `looksLikeMp4`/
+    // `looksLikeWebm`'s doc comments for exactly what is and isn't
+    // checked (no codec/decode/dimension verification for video).
+    return { objectKey, storage: "s3_video" };
   }
 
   async destroy(objectKey: string) {

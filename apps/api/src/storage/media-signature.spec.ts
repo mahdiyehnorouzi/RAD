@@ -59,6 +59,61 @@ describe("sniffImage — JPEG", () => {
     const jpeg = Buffer.concat([Buffer.from([0xff, 0xd8]), Buffer.from([0xff, 0xda]), Buffer.alloc(4)]);
     assert.equal(sniffImage(jpeg), null);
   });
+
+  test("accepts a spec-legal run of 0xFF fill/padding bytes before a marker (JPEG T.81 B.1.1.2)", () => {
+    const soi = Buffer.from([0xff, 0xd8]);
+    // Three stray 0xFF padding bytes before the real APP0 marker code.
+    const paddedApp0 = Buffer.concat([
+      Buffer.from([0xff, 0xff, 0xff, 0xe0]),
+      u16(16),
+      Buffer.alloc(14),
+    ]);
+    const sof0 = Buffer.concat([
+      Buffer.from([0xff, 0xc0]),
+      u16(17),
+      Buffer.from([0x08]),
+      u16(50),
+      u16(60),
+      Buffer.alloc(12),
+    ]);
+    const jpeg = Buffer.concat([soi, paddedApp0, sof0]);
+    assert.deepEqual(sniffImage(jpeg), { format: "jpeg", width: 60, height: 50 });
+  });
+
+  test("rejects a buffer that is nothing but repeated 0xFF bytes (no real marker ever found)", () => {
+    assert.equal(sniffImage(Buffer.concat([Buffer.from([0xff, 0xd8]), Buffer.alloc(64, 0xff)])), null);
+  });
+});
+
+describe("sniffImage — truncated/malformed inputs never crash, only reject", () => {
+  test("PNG truncated before the IHDR width/height bytes are fully present", () => {
+    const sig = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+    const truncated = Buffer.concat([sig, u32(13), Buffer.from("IHDR"), Buffer.alloc(2)]);
+    assert.equal(sniffImage(truncated), null);
+  });
+
+  test("JPEG truncated mid-marker-length field", () => {
+    const soi = Buffer.from([0xff, 0xd8]);
+    const truncatedMarker = Buffer.from([0xff, 0xc0, 0x00]); // length field cut off
+    assert.equal(sniffImage(Buffer.concat([soi, truncatedMarker])), null);
+  });
+
+  test("JPEG with a marker claiming a length that overruns the buffer", () => {
+    const soi = Buffer.from([0xff, 0xd8]);
+    const overrun = Buffer.concat([Buffer.from([0xff, 0xc0]), u16(60000), Buffer.alloc(4)]);
+    assert.equal(sniffImage(Buffer.concat([soi, overrun])), null);
+  });
+
+  test("WebP RIFF header truncated before the format chunk tag", () => {
+    const partial = Buffer.alloc(14);
+    partial.write("RIFF", 0, "ascii");
+    partial.write("WEBP", 8, "ascii");
+    assert.equal(sniffImage(partial), null);
+  });
+
+  test("a buffer of all zero bytes is rejected outright (no magic number matches)", () => {
+    assert.equal(sniffImage(Buffer.alloc(1024)), null);
+  });
 });
 
 describe("sniffImage — WebP", () => {
