@@ -1,85 +1,83 @@
-# One-time bootstrap: /opt/rad → releases + symlink layout
+# One-time bootstrap: /opt/rad/apps/api → releases + symlink layout
 
-`scripts/deploy-api-systemd.sh` (added alongside this doc) requires `/opt/rad`
-to be a **symlink** into `/opt/rad-releases/<version>-<timestamp>/`, so every
-deploy can build a brand-new release in isolation and only atomically
-repoint the symlink once it's built and health-checked. As of this task's
-verification, production's `/opt/rad` is still a **plain directory**
-(the live checkout) — the deploy script refuses to run until that's fixed,
-on purpose, because migrating the layout is itself a production change this
-automation will not perform for you.
+`scripts/deploy-api-systemd.sh` requires `/opt/rad/apps/api` (the exact
+`WorkingDirectory=` of `rad-api.service`, verified directly on the VPS) to
+be a **symlink** into `/opt/rad-releases/<release>/`. Production is
+currently a **prebuilt application directory** there instead — no `.git`,
+no `VERSION` file, just `dist/`, `node_modules/`, `scripts/`, `package.json`
+and `.env` — and `rad-api.service`'s `EnvironmentFile=` points at
+`/opt/rad/apps/api/.env`, **inside** that same directory.
 
-This is a **manual, one-time, reviewed** procedure. Read it fully, then run
-it yourself (or have an operator run it) on the VPS. Nothing here is
-destructive if followed in order — the existing checkout is copied, not
-moved, until the very last (trivially reversible) step.
+`scripts/bootstrap-api-release-layout.sh` performs this one-time migration.
+It is:
 
-## Prerequisites
+- **Idempotent** — re-running it after a successful bootstrap is a safe
+  no-op (it detects the existing symlink and exits immediately).
+- **Preflight-validated** — every assumption (the directory's shape, the
+  unit's actual `WorkingDirectory`/`EnvironmentFile`, current health) is
+  checked and printed *before* anything changes; a mismatch aborts with no
+  changes made.
+- **Explicit-approval-gated** — it always runs in read-only "plan" mode
+  first, prints exactly what it is about to do, and only proceeds after
+  you type `bootstrap` at an interactive prompt. There is no flag to skip
+  this.
+- **Non-destructive** — nothing is ever deleted. The original prebuilt
+  directory is *moved* (not copied) into `/opt/rad-releases/<captured
+  version>-bootstrap/` and kept there **permanently** (the deploy script's
+  own pruning logic never removes anything named `*-bootstrap`) as the
+  guaranteed way back to the exact state production was in before this
+  ran. The original `.env` is copied — never read, parsed, or regenerated
+  — to both a permanent snapshot and the new externalized location.
+- **Version/Git-metadata-free** — it reads the running version from the
+  live `/health` endpoint, not a `VERSION` file (which doesn't exist in
+  this prebuilt layout), and never assumes or needs a `.git` directory.
 
-- You can SSH to the VPS as the user that owns `/opt/rad` and manages
-  `rad-api.service`.
-- `rad-api.service`'s `EnvironmentFile=` is already at a path **outside**
-  `/opt/rad` (e.g. `/etc/rad/api.env`). If it currently lives *inside*
-  `/opt/rad` (e.g. `/opt/rad/.env`), move it out first and update the unit's
-  `EnvironmentFile=` line + `systemctl daemon-reload` — the deploy script
-  checks for and refuses to run against an env file still inside the
-  release tree, since swapping releases would then lose or duplicate it.
+## What it actually does, in order
 
-## Steps
+1. Reads the current version from `GET /health` (no file needed).
+2. Snapshots `/opt/rad/apps/api/.env` byte-for-byte to
+   `/opt/rad-releases/.env-snapshots/legacy-original.env` (mode 600).
+3. Copies that same `.env` to the new externalized path (`/etc/rad/api.env`
+   by default — configurable via `RAD_API_ENV_FILE`).
+4. **Moves** `/opt/rad/apps/api` to
+   `/opt/rad-releases/<captured-version>-bootstrap/` (a rename on the same
+   filesystem — the already-running process keeps working via its open
+   file descriptors throughout this and the next step; nothing needs to
+   stop first).
+5. Creates the symlink `/opt/rad/apps/api` → that same directory.
+6. Edits `rad-api.service`'s unit file to point `EnvironmentFile=` at the
+   externalized path, runs `systemctl daemon-reload`, restarts the
+   service, and verifies `/health` reports `ok:true` at the **same**
+   version as step 1 (nothing about the running code should have changed
+   — this step only changes where its config comes from).
+7. If step 6's health check fails, it **automatically reverts** the unit
+   file change, reloads, restarts, and re-verifies against the original
+   in-place `.env` (still physically present and untouched inside the now
+   relocated/symlinked directory) — so a failure here never leaves the
+   service down or confused about which env file to use.
+
+Steps 4–5 are not themselves reverted automatically if step 6 fails, since
+they are not what step 6's failure would be caused by — the directory move
+and symlink are inert with respect to `EnvironmentFile=`, and leaving them
+in place while retrying step 6 is simpler and equally safe than reverting
+and redoing them.
+
+## Running it
 
 ```bash
-# 1. Confirm current state (read-only).
-ls -la /opt/rad
-systemctl show -p EnvironmentFiles rad-api.service
-systemctl is-active rad-api.service
-
-# 2. Capture what's currently running, for your own records.
-git -C /opt/rad rev-parse HEAD
-cat /opt/rad/VERSION
-
-# 3. Create the releases directory and copy (not move) the current
-#    checkout into it as the first "release". This does not touch the
-#    running process at all — /opt/rad is untouched here.
-mkdir -p /opt/rad-releases
-FIRST_RELEASE="/opt/rad-releases/$(tr -d '[:space:]' < /opt/rad/VERSION)-bootstrap"
-cp -a /opt/rad "$FIRST_RELEASE"
-
-# 4. Rename the original directory out of the way (reversible — nothing
-#    is deleted). The running rad-api.service process already has this
-#    directory open by inode, so this rename does NOT affect it or require
-#    a restart.
-mv /opt/rad /opt/rad.pre-release-migration-backup
-
-# 5. Symlink /opt/rad to the copied release. This is the only step that
-#    changes what `/opt/rad` resolves to.
-ln -s "$FIRST_RELEASE" /opt/rad
-
-# 6. Verify the service still reports healthy against the SAME commit as
-#    before (nothing should have changed from its perspective, since the
-#    files are byte-identical copies and the process was never restarted).
-curl -s http://127.0.0.1:4000/health
-git -C /opt/rad rev-parse HEAD   # should match step 2's output
-
-# 7. Only once you're satisfied: restart the service once, confirm health
-#    again, to prove the symlinked layout actually works end-to-end before
-#    relying on it for the next real deploy.
-systemctl restart rad-api.service
-curl -s http://127.0.0.1:4000/health
-
-# 8. Keep /opt/rad.pre-release-migration-backup around for a while (it
-#    costs disk space but nothing else) until you're confident in the new
-#    layout, then remove it manually whenever you're ready — this script
-#    deliberately does not delete it for you.
+scripts/bootstrap-api-release-layout.sh
 ```
 
-After this, `scripts/deploy-api-systemd.sh` (and the `deploy-api-vps.yml`
-GitHub Actions workflow that calls it) can run against this host.
+It SSHs in, runs the read-only plan, prints it, and — only after you
+confirm — re-connects and executes. Nothing happens non-interactively; you
+will not be asked to pre-approve this in any other way (a chat approval to
+"prepare" this tooling is not the same as approving this run — the script
+itself always asks, on the host, at the moment it would act).
 
-## Why not automate this step too
+## After this succeeds
 
-The deploy script could technically detect the plain-directory case and
-perform steps 3–7 itself. It deliberately does not: this is the one
-operation in the whole release pipeline that changes production's on-disk
-layout rather than building something new alongside it, and the task
-driving this work explicitly draws the line at "no production
-infrastructure changes without approval" — this is exactly that line.
+`scripts/deploy-api-systemd.sh` and `scripts/rollback-api-systemd.sh`
+(and `deploy-api-vps.yml`) can be used for all future releases. The very
+first `scripts/rollback-api-systemd.sh` target available afterward is
+`<captured-version>-bootstrap` — the original installation, completely
+intact.

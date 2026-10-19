@@ -1,6 +1,6 @@
 # Releases the API on the real production host: systemd-managed
 # `rad-api.service`, isolated/versioned releases under /opt/rad-releases,
-# atomically symlinked into /opt/rad. See scripts/deploy-api-systemd.sh for
+# atomically symlinked into /opt/rad/apps/api. See scripts/deploy-api-systemd.sh for
 # the actual release/rollback mechanics this workflow just invokes over
 # SSH from the runner — this file does no building or deploying itself.
 #
@@ -8,9 +8,9 @@
 # deploy-frontend-vps.yml (storefront/admin, Docker/VPS) or the Liara
 # workflows. It targets a different service entirely on the same host.
 #
-# REQUIRES the one-time, manual /opt/rad bootstrap in
-# docs/opt-rad-release-bootstrap.md to have already been done on the VPS —
-# scripts/deploy-api-systemd.sh refuses to run otherwise, on purpose.
+# REQUIRES scripts/bootstrap-api-release-layout.sh to have already been
+# run once, manually, on the VPS — scripts/deploy-api-systemd.sh refuses
+# to run otherwise, on purpose. See docs/opt-rad-release-bootstrap.md.
 #
 # Pushing to main runs checks only (no deploy effect). Deploying to the VPS
 # always requires an explicit manual dispatch approved against the
@@ -25,6 +25,9 @@ on:
         description: "Type 'deploy' to actually release to production"
         required: true
         default: "build-check-only"
+      commit_sha:
+        description: "Exact commit SHA to release (never 'main' HEAD at dispatch time - pin and review it explicitly)"
+        required: true
 
 concurrency:
   group: rad-api-vps-production
@@ -42,6 +45,20 @@ jobs:
     environment: production-api-vps
     steps:
       - uses: actions/checkout@v4
+
+      - name: Verify the requested commit exists and is reachable from main
+        run: |
+          set -euo pipefail
+          git fetch --quiet origin main
+          if ! git cat-file -e '${{ inputs.commit_sha }}^{commit}' 2>/dev/null; then
+            echo "::error::'${{ inputs.commit_sha }}' is not a commit this checkout knows about."
+            exit 1
+          fi
+          if ! git merge-base --is-ancestor '${{ inputs.commit_sha }}' origin/main; then
+            echo "::error::'${{ inputs.commit_sha }}' is not an ancestor of origin/main. Refusing to release a commit that was never merged."
+            exit 1
+          fi
+          echo "Verified: ${{ inputs.commit_sha }} exists and is an ancestor of origin/main."
 
       - name: Configure pinned SSH identity
         id: ssh
@@ -65,10 +82,13 @@ jobs:
         env:
           RAD_API_HOST: ${{ vars.RAD_API_HOST || '46.34.163.16' }}
           RAD_API_USER: ${{ vars.RAD_API_USER || 'root' }}
-          RAD_API_LIVE_DIR: ${{ vars.RAD_API_LIVE_DIR || '/opt/rad' }}
+          RAD_API_LIVE_DIR: ${{ vars.RAD_API_LIVE_DIR || '/opt/rad/apps/api' }}
           RAD_API_RELEASES_DIR: ${{ vars.RAD_API_RELEASES_DIR || '/opt/rad-releases' }}
           RAD_API_SERVICE: ${{ vars.RAD_API_SERVICE || 'rad-api.service' }}
           RAD_API_PORT: ${{ vars.RAD_API_PORT || '4000' }}
+          RAD_API_ENV_FILE: ${{ vars.RAD_API_ENV_FILE || '/etc/rad/api.env' }}
+          RAD_API_GIT_URL: ${{ vars.RAD_API_GIT_URL || 'https://github.com/mahdiyehnorouzi/RAD.git' }}
+          RAD_API_COMMIT: ${{ inputs.commit_sha }}
         run: bash scripts/deploy-api-systemd.sh
 
       - name: Report outcome
