@@ -12,9 +12,19 @@
 # run once, manually, on the VPS — scripts/deploy-api-systemd.sh refuses
 # to run otherwise, on purpose. See docs/opt-rad-release-bootstrap.md.
 #
-# Pushing to main runs checks only (no deploy effect). Deploying to the VPS
-# always requires an explicit manual dispatch approved against the
-# production-api-vps environment.
+# Two ways in:
+#   - workflow_call — the normal, fully automatic path. .github/workflows/deploy.yml
+#     invokes this after a push to main whose changed files affect the API
+#     (apps/api/**, packages/artworks/**, or shared root config), passing
+#     github.sha. No human interaction.
+#   - workflow_dispatch — manual emergency path only (a deploy that must
+#     re-release an older, already-merged commit, or re-run after fixing a
+#     one-off infra issue without touching code). Still requires an
+#     explicit commit SHA and typing "deploy" to confirm.
+# Either way the `release` job runs under the production-api-vps
+# environment; see docs/cicd-pipeline.md for what that environment's
+# protection rules must (and must not) require for the automatic path to
+# actually be hands-off.
 
 name: API VPS release
 
@@ -28,6 +38,12 @@ on:
       commit_sha:
         description: "Exact commit SHA to release (never 'main' HEAD at dispatch time - pin and review it explicitly)"
         required: true
+  workflow_call:
+    inputs:
+      commit_sha:
+        description: "Exact commit SHA to release — the caller (deploy.yml) always passes github.sha."
+        required: true
+        type: string
 
 concurrency:
   group: rad-api-vps-production
@@ -40,7 +56,10 @@ jobs:
   release:
     name: Release API via rad-api.service
     needs: checks
-    if: github.event_name == 'workflow_dispatch' && inputs.confirm == 'deploy' && github.ref == 'refs/heads/main'
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      (github.event_name == 'workflow_call' ||
+       (github.event_name == 'workflow_dispatch' && inputs.confirm == 'deploy'))
     runs-on: ubuntu-latest
     environment: production-api-vps
     steps:
@@ -91,13 +110,67 @@ jobs:
           RAD_API_COMMIT: ${{ inputs.commit_sha }}
         run: bash scripts/deploy-api-systemd.sh
 
+      # The release script already verified /health on the VPS itself
+      # (127.0.0.1:${RAD_API_PORT}) before returning, including a rollback
+      # on failure — this step is an independent, external, read-only
+      # check against the PUBLIC domain (through Nginx, exactly as a real
+      # client reaches it), exercising a couple of routes beyond /health:
+      # a safe unauthenticated endpoint and a real catalog read. It never
+      # creates an order, writes anything, or touches the database beyond
+      # a read. A failure here does NOT trigger the API's own rollback
+      # (that already ran, successfully, inside the previous step) — it
+      # fails the job loudly so a public-routing/Nginx/DNS problem that
+      # the VPS-local health check can't see is never reported as success.
+      - name: Smoke test (public endpoints, read-only)
+        if: success()
+        env:
+          PUBLIC_API_URL: ${{ vars.API_URL || 'https://api.rad-object.com' }}
+        run: |
+          set -euo pipefail
+          curl_json() {
+            curl -fsS --max-time 15 --retry 3 --retry-delay 3 --retry-connrefused "$1"
+          }
+          echo "Checking ${PUBLIC_API_URL}/health ..."
+          health="$(curl_json "${PUBLIC_API_URL}/health")"
+          echo "$health" | node -e '
+            const d = JSON.parse(require("fs").readFileSync(0, "utf8"));
+            if (d.ok !== true) { console.error("FAIL: /health ok !== true:", d); process.exit(1); }
+            if (d.env && d.env !== "production") { console.error("FAIL: /health env !== production:", d); process.exit(1); }
+            if (d.db === false) { console.error("FAIL: /health reports db connectivity false:", d); process.exit(1); }
+            console.log("OK: /health ->", JSON.stringify(d));
+          '
+
+          echo "Checking ${PUBLIC_API_URL}/session (must respond, not crash — 200 authenticated or 401 anonymous are both fine) ..."
+          session_code="$(curl -sS --max-time 15 --retry 3 --retry-delay 3 --retry-connrefused -o /dev/null -w '%{http_code}' "${PUBLIC_API_URL}/session")"
+          if [[ "$session_code" != "200" && "$session_code" != "401" ]]; then
+            echo "::error::/session responded ${session_code}, expected 200 or 401."
+            exit 1
+          fi
+          echo "OK: /session -> ${session_code}"
+
+          echo "Checking ${PUBLIC_API_URL}/artworks (catalog read; verifying media isn't silently replaced by the static registry) ..."
+          artworks="$(curl_json "${PUBLIC_API_URL}/artworks")"
+          echo "$artworks" | node -e '
+            const list = JSON.parse(require("fs").readFileSync(0, "utf8"));
+            if (!Array.isArray(list)) { console.error("FAIL: /artworks did not return an array"); process.exit(1); }
+            const staleRegistryPath = /^\/catalog\/photos\//;
+            const offenders = list
+              .flatMap((a) => Array.isArray(a.images) ? a.images : [])
+              .filter((img) => typeof img.src === "string" && staleRegistryPath.test(img.src));
+            if (offenders.length > 0) {
+              console.error(`FAIL: ${offenders.length} image(s) in the live /artworks response point at the bundled static-registry path (/catalog/photos/...) — the production catalog should only ever return SeaweedFS/Cloudinary/uploaded URLs, never registry paths.`);
+              process.exit(1);
+            }
+            console.log(`OK: /artworks -> ${list.length} product(s), no stale static-registry image paths found.`);
+          '
+
       - name: Report outcome
         if: always()
         run: |
           if [[ "${{ job.status }}" == "success" ]]; then
-            echo "API release succeeded and is healthy. See the previous step's log for the exact release directory and version."
+            echo "API release succeeded, is healthy, and passed public smoke tests. See earlier steps' logs for the exact release directory and version."
           else
-            echo "::error::API release failed. scripts/deploy-api-systemd.sh attempts an automatic rollback on a failed health check — check the previous step's log for whether that rollback itself succeeded. If it also failed, SSH in immediately: systemctl status rad-api.service; journalctl -u rad-api.service -n 100."
+            echo "::error::API release or its smoke tests failed. scripts/deploy-api-systemd.sh attempts an automatic rollback on a failed health check — check the 'Run systemd release script' step's log for whether that rollback itself succeeded. If the release step succeeded but the smoke test step failed, the API is healthy internally but something public-facing (Nginx/DNS/routing) is broken — investigate before assuming rollback already handled it, since this failure mode is NOT auto-rolled-back. If the release step itself failed and its internal rollback also failed, SSH in immediately: systemctl status rad-api.service; journalctl -u rad-api.service -n 100."
           fi
 
       - name: Remove runner SSH credentials
