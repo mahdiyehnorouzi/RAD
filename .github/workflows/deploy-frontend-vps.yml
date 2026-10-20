@@ -1,0 +1,262 @@
+# Builds storefront + admin images on GitHub Actions (same pattern as the
+# existing deploy-storefront-liara.yml / deploy-admin-liara.yml: Liara's own
+# remote Docker build timed out on this monorepo) and, only on manual
+# dispatch, pulls them on the VPS via Docker Compose.
+#
+# This workflow is additive — it does not touch, replace, or race with the
+# existing Liara workflows. Both can run; only one should ever be the live
+# DNS target at a time (see docs/vps-frontend-deployment-plan.md).
+#
+# Pushing to main builds and publishes images (harmless, no production
+# effect). Deploying to the VPS always requires an explicit manual dispatch
+# approved against the production-frontend-vps environment.
+
+name: Frontend VPS release
+
+on:
+  workflow_dispatch:
+    inputs:
+      operation:
+        description: "Build+push only, or also deploy to the VPS"
+        type: choice
+        options: [build, deploy]
+        default: build
+  push:
+    branches: [main]
+    paths:
+      - "apps/storefront/**"
+      - "apps/admin/**"
+      - "packages/**"
+      - "package.json"
+      - "package-lock.json"
+      - "docker-compose.frontend-vps.yml"
+      - ".github/workflows/deploy-frontend-vps.yml"
+
+concurrency:
+  group: rad-frontend-vps-production
+  cancel-in-progress: false
+
+jobs:
+  checks:
+    uses: ./.github/workflows/ci.yml
+
+  build-images:
+    name: Build & push storefront + admin images
+    needs: checks
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      storefront_tag: ${{ github.sha }}
+      admin_tag: ${{ github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # NEXT_PUBLIC_* are inlined into the client bundle at build time.
+      - name: Build and push storefront (linux/amd64)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/storefront/Dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/rad-storefront:${{ github.sha }}
+            ghcr.io/${{ github.repository_owner }}/rad-storefront:latest
+          build-args: |
+            NEXT_PUBLIC_SITE_URL=${{ vars.NEXT_PUBLIC_SITE_URL || 'https://www.rad-object.com' }}
+            NEXT_PUBLIC_GA_MEASUREMENT_ID=${{ vars.NEXT_PUBLIC_GA_MEASUREMENT_ID }}
+            NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION=${{ vars.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION }}
+          cache-from: type=gha,scope=storefront-vps
+          cache-to: type=gha,mode=max,scope=storefront-vps
+
+      - name: Build and push admin (linux/amd64)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/admin/Dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/rad-admin:${{ github.sha }}
+            ghcr.io/${{ github.repository_owner }}/rad-admin:latest
+          cache-from: type=gha,scope=admin-vps
+          cache-to: type=gha,mode=max,scope=admin-vps
+
+  release:
+    name: Pull & restart on VPS
+    needs: build-images
+    if: github.event_name == 'workflow_dispatch' && inputs.operation == 'deploy' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: production-frontend-vps
+    # Marker file on the VPS recording the last deploy that actually passed
+    # its health check — the rollback target. Lives next to the compose
+    # file, outside git, so it survives across workflow runs without this
+    # job needing any other state store.
+    env:
+      REMOTE_TARGET: root@46.34.163.16
+      REMOTE_DIR: /root/rad-frontend-deploy
+      LAST_HEALTHY_FILE: /root/rad-frontend-deploy/.last-healthy-tags.env
+    steps:
+      - name: Configure pinned SSH identity
+        id: ssh
+        env:
+          SSH_KEY: ${{ secrets.RAD_FRONTEND_SSH_PRIVATE_KEY }}
+          KNOWN_HOSTS: ${{ secrets.RAD_FRONTEND_SSH_KNOWN_HOSTS }}
+        run: |
+          test -n "$SSH_KEY" && test -n "$KNOWN_HOSTS"
+          install -m 700 -d "$HOME/.ssh"
+          printf '%s\n' "$SSH_KEY" > "$HOME/.ssh/id_ed25519"
+          printf '%s\n' "$KNOWN_HOSTS" > "$HOME/.ssh/known_hosts"
+          chmod 600 "$HOME/.ssh/id_ed25519" "$HOME/.ssh/known_hosts"
+
+      # The rollback target. Prefers the actually-running containers' own
+      # image tags (ground truth — reflects whatever is live right now,
+      # whether or not it was ever recorded) and only falls back to the
+      # recorded last-healthy-tags file, then to "latest", when a
+      # container doesn't exist yet (first-ever deploy on a fresh host).
+      # No secrets in any of this — image tags are just git SHAs / "latest".
+      - name: Capture currently-running image tags (rollback target)
+        id: previous
+        shell: bash
+        run: |
+          set -euo pipefail
+          ssh_args=(-o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=15)
+          running_tag() {
+            local container="$1" app="$2"
+            local image
+            image=$(ssh "${ssh_args[@]}" "$REMOTE_TARGET" \
+              "docker inspect -f '{{.Config.Image}}' ${container} 2>/dev/null" || true)
+            if [[ -n "$image" && "$image" == *:* ]]; then
+              echo "${image##*:}"
+            else
+              ssh "${ssh_args[@]}" "$REMOTE_TARGET" \
+                "test -f '$LAST_HEALTHY_FILE' && grep -oP '(?<=^${app}_IMAGE_TAG=).*' '$LAST_HEALTHY_FILE' || true" \
+                | tail -n1
+            fi
+          }
+          storefront_prev=$(running_tag rad-storefront STOREFRONT)
+          admin_prev=$(running_tag rad-admin ADMIN)
+          storefront_prev=${storefront_prev:-latest}
+          admin_prev=${admin_prev:-latest}
+          echo "storefront_tag=${storefront_prev}" >> "$GITHUB_OUTPUT"
+          echo "admin_tag=${admin_prev}" >> "$GITHUB_OUTPUT"
+          echo "Rollback target captured: storefront=${storefront_prev} admin=${admin_prev}"
+
+      - name: Pull new images and recreate containers
+        id: deploy
+        env:
+          STOREFRONT_IMAGE_TAG: ${{ needs.build-images.outputs.storefront_tag }}
+          ADMIN_IMAGE_TAG: ${{ needs.build-images.outputs.admin_tag }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          ssh_args=(-o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=15)
+          ssh "${ssh_args[@]}" "$REMOTE_TARGET" \
+            "cd '$REMOTE_DIR' && \
+             STOREFRONT_IMAGE_TAG=${STOREFRONT_IMAGE_TAG} ADMIN_IMAGE_TAG=${ADMIN_IMAGE_TAG} \
+             docker compose -f docker-compose.frontend-vps.yml pull && \
+             STOREFRONT_IMAGE_TAG=${STOREFRONT_IMAGE_TAG} ADMIN_IMAGE_TAG=${ADMIN_IMAGE_TAG} \
+             docker compose -f docker-compose.frontend-vps.yml up -d --no-deps storefront admin"
+
+      # Covers both failure modes this step actually sees: a container that
+      # never leaves "starting"/"unhealthy" (health check keeps failing) and
+      # one that exits immediately (crash loop — `docker inspect` on a
+      # removed/recreated container id still answers, but a dead container
+      # never reports "healthy", so the same loop/timeout catches it too).
+      - name: Verify containers healthy
+        id: health
+        shell: bash
+        run: |
+          set -euo pipefail
+          ssh_args=(-o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=15)
+          for i in $(seq 1 20); do
+            status=$(ssh "${ssh_args[@]}" "$REMOTE_TARGET" "docker inspect -f '{{.State.Health.Status}}' rad-storefront rad-admin 2>/dev/null" | tr '\n' ' ' || true)
+            [[ "$status" == *"healthy healthy"* ]] && exit 0
+            sleep 5
+          done
+          echo "::error::New deploy (storefront=${{ needs.build-images.outputs.storefront_tag }}, admin=${{ needs.build-images.outputs.admin_tag }}) did not report healthy within timeout."
+          exit 1
+
+      # Runs on ANY failure after SSH was successfully configured — not just
+      # a failed health check. "Pull new images and recreate containers" is
+      # two docker compose calls joined by `&&`; if it dies partway (e.g.
+      # pull succeeds but `up -d` only recreates one of the two services
+      # before erroring), the deploy step itself reports failure() and the
+      # live host is left in a mixed state (one service on the new image,
+      # one still on the old one, or one not recreated at all) — exactly
+      # the partial-deployment case a rollback must also cover, not only
+      # "both containers came up but failed their health check". Redeploying
+      # the previously-captured tags for BOTH services is safe and
+      # idempotent either way. Only skipped when the SSH step itself never
+      # succeeded, since then nothing on the host was touched at all.
+      - name: Roll back to last known-healthy images
+        id: rollback
+        if: failure() && steps.ssh.outcome == 'success'
+        env:
+          STOREFRONT_IMAGE_TAG: ${{ steps.previous.outputs.storefront_tag }}
+          ADMIN_IMAGE_TAG: ${{ steps.previous.outputs.admin_tag }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          ssh_args=(-o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=15)
+          echo "::warning::Health check failed for the new deploy — rolling back to storefront=${STOREFRONT_IMAGE_TAG} admin=${ADMIN_IMAGE_TAG}"
+          ssh "${ssh_args[@]}" "$REMOTE_TARGET" \
+            "cd '$REMOTE_DIR' && \
+             STOREFRONT_IMAGE_TAG=${STOREFRONT_IMAGE_TAG} ADMIN_IMAGE_TAG=${ADMIN_IMAGE_TAG} \
+             docker compose -f docker-compose.frontend-vps.yml pull && \
+             STOREFRONT_IMAGE_TAG=${STOREFRONT_IMAGE_TAG} ADMIN_IMAGE_TAG=${ADMIN_IMAGE_TAG} \
+             docker compose -f docker-compose.frontend-vps.yml up -d --no-deps storefront admin"
+          for i in $(seq 1 20); do
+            status=$(ssh "${ssh_args[@]}" "$REMOTE_TARGET" "docker inspect -f '{{.State.Health.Status}}' rad-storefront rad-admin 2>/dev/null" | tr '\n' ' ' || true)
+            if [[ "$status" == *"healthy healthy"* ]]; then
+              echo "::notice::Rollback verified healthy (storefront=${STOREFRONT_IMAGE_TAG}, admin=${ADMIN_IMAGE_TAG})."
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "::error::ROLLBACK ITSELF FAILED to report healthy. Manual intervention required on the VPS now — the frontend may be down or serving a broken deploy."
+          exit 1
+
+      # Runs on the success path too, so the rollback target for the NEXT
+      # deploy always reflects the most recently verified-healthy tags —
+      # never the tags "currently running" at the start of this job, which
+      # this run just replaced.
+      - name: Record this deploy as last known-healthy
+        if: success()
+        env:
+          STOREFRONT_IMAGE_TAG: ${{ needs.build-images.outputs.storefront_tag }}
+          ADMIN_IMAGE_TAG: ${{ needs.build-images.outputs.admin_tag }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          ssh_args=(-o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=15)
+          ssh "${ssh_args[@]}" "$REMOTE_TARGET" \
+            "cat > '$LAST_HEALTHY_FILE' <<EOF
+          STOREFRONT_IMAGE_TAG=${STOREFRONT_IMAGE_TAG}
+          ADMIN_IMAGE_TAG=${ADMIN_IMAGE_TAG}
+          EOF"
+
+      - name: Report deploy outcome
+        if: always()
+        run: |
+          if [[ "${{ steps.rollback.outcome }}" == "success" ]]; then
+            echo "::warning::Deploy of storefront=${{ needs.build-images.outputs.storefront_tag }} admin=${{ needs.build-images.outputs.admin_tag }} FAILED health checks and was AUTOMATICALLY ROLLED BACK to storefront=${{ steps.previous.outputs.storefront_tag }} admin=${{ steps.previous.outputs.admin_tag }}. Production is back on the previous known-healthy release; investigate the failed images before retrying."
+          elif [[ "${{ steps.rollback.outcome }}" == "failure" ]]; then
+            echo "::error::Deploy FAILED and the automatic ROLLBACK ALSO FAILED. Production may be in a broken or unknown state. SSH in immediately and check 'docker compose -f docker-compose.frontend-vps.yml ps' on the VPS."
+          elif [[ "${{ steps.health.outcome }}" == "success" ]]; then
+            echo "Deploy succeeded: storefront=${{ needs.build-images.outputs.storefront_tag }} admin=${{ needs.build-images.outputs.admin_tag }}, both containers healthy."
+          fi
+
+      - name: Remove runner SSH credentials
+        if: always()
+        run: rm -f "$HOME/.ssh/id_ed25519" "$HOME/.ssh/known_hosts"

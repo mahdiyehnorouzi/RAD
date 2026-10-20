@@ -1,0 +1,73 @@
+# Production Compose file for the storefront and admin frontends on the
+# Ubuntu VPS (46.34.163.16). Not applied automatically by anything in this
+# repo — a human runs `docker compose -f docker-compose.frontend-vps.yml up -d`
+# on the VPS after reviewing it. Does not touch the existing PM2-run API,
+# SeaweedFS containers, or Postgres (which stays on Liara).
+#
+# Images are built off-VPS by .github/workflows/deploy-frontend-vps.yml and
+# pulled from GHCR here — never built on the VPS itself.
+#
+# Ports are bound to 127.0.0.1 only; the host's existing Nginx reverse-proxies
+# to them (see deploy/nginx/*.conf). Nothing here is exposed directly to the
+# public internet.
+
+services:
+  storefront:
+    image: ghcr.io/mahdiyehnorouzi/rad-storefront:${STOREFRONT_IMAGE_TAG:-latest}
+    container_name: rad-storefront
+    restart: unless-stopped
+    user: "1000:1000"
+    env_file:
+      - .env.storefront.production
+    ports:
+      - "127.0.0.1:3100:3000"
+    mem_limit: 384m
+    memswap_limit: 512m
+    cpus: "0.75"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "require('http').get('http://127.0.0.1:3000/api/health',(r)=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+  admin:
+    image: ghcr.io/mahdiyehnorouzi/rad-admin:${ADMIN_IMAGE_TAG:-latest}
+    container_name: rad-admin
+    restart: unless-stopped
+    user: "1000:1000"
+    env_file:
+      - .env.admin.production
+    ports:
+      - "127.0.0.1:3101:3000"
+    mem_limit: 384m
+    memswap_limit: 512m
+    cpus: "0.75"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "require('http').get('http://127.0.0.1:3000/api/health',(r)=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s

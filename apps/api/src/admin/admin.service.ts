@@ -24,6 +24,10 @@ import {
   productImageFolder,
 } from "../storage/cloudinary-storage.service";
 import {
+  checkIssuedUpload,
+  recordIssuedUpload,
+} from "../storage/upload-intent";
+import {
   MEDIA_STORAGE,
   MEDIA_STORAGE_RESOLVER,
   isRemoteMediaStorage,
@@ -108,6 +112,76 @@ export class AdminService {
 
   private readonly logger = new Logger(AdminService.name);
 
+  /** Whether SeaweedFS is the currently-active provider — reference equality against the resolver's own instance, not a config re-read. */
+  private isSeaweedfsActive(): boolean {
+    return this.storageFor("seaweedfs") === this.storage;
+  }
+
+  /**
+   * Ownership check for a remote-media `objectKey` being attached to the
+   * product identified by `slug`. Namespace shape
+   * (`isValidProductImagePublicId`) is always checked first.
+   *
+   * For Cloudinary, that namespace check plus Cloudinary's own
+   * account-level existence check (`verifyMedia`, called by every
+   * caller right after this) remains the accepted model — unchanged
+   * from before this fix, since Cloudinary mints its own `public_id`
+   * client-side and this API never gets a chance to record an upload
+   * intent before the fact.
+   *
+   * For SeaweedFS, namespace shape alone is NOT treated as sufficient
+   * (see `upload-intent.ts`'s module doc for the full reasoning):
+   * ownership is proven by exactly one of two things —
+   *  1. DURABLE: this `objectKey` is ALREADY a persisted `ProductImage`
+   *     row for THIS SAME product. A real Postgres row, survives
+   *     restarts, shared across every process. If the row exists for a
+   *     DIFFERENT product, this is a bid to claim already-consumed
+   *     media and is rejected outright.
+   *  2. FAIL-CLOSED, in-memory: for an objectKey with no existing row
+   *     anywhere (a genuinely new attachment), this process must have
+   *     a matching record of having minted it itself
+   *     (`checkIssuedUpload`). Both "unknown" and "mismatch" are hard
+   *     rejections — there is no fallback to namespace shape alone.
+   */
+  private async authorizeRemoteObjectKey(
+    slug: string,
+    productId: string | null,
+    objectKey: string | undefined,
+    kind: "image" | "video",
+    isSeaweedfs: boolean,
+  ) {
+    if (
+      !objectKey ||
+      !isValidProductImagePublicId(productId ?? "unsaved", objectKey)
+    ) {
+      throw new BadRequestException("شناسه فایل نامعتبر است.");
+    }
+    if (!isSeaweedfs) return;
+
+    const existingRow = await this.productImages.findOne({
+      where: { objectKey },
+    });
+    if (existingRow) {
+      if (existingRow.productSlug !== slug) {
+        throw new BadRequestException(
+          "این تصویر قبلاً به اثر دیگری متصل شده است.",
+        );
+      }
+      return; // already ours — durable DB row is the proof, no intent needed
+    }
+    const intentCheck = checkIssuedUpload(objectKey, productId, kind);
+    if (intentCheck !== "match") {
+      this.logger.warn(
+        `Rejected unauthorized object key attachment (${intentCheck}): ${objectKey}`,
+      );
+      throw new BadRequestException({
+        code: "upload_intent_expired",
+        message:
+          "نشست بارگذاری این فایل منقضی شده یا نامعتبر است. لطفاً فایل را دوباره بارگذاری کنید.",
+      });
+    }
+  }
+
   /**
    * Issues signed Cloudinary upload params for a new admin image upload.
    * The destination folder is derived here, server-side — never from
@@ -135,10 +209,25 @@ export class AdminService {
     const existing = await this.products.findOne({
       where: { slug: normalizedSlug },
     });
-    const folder = productImageFolder(existing?.id ?? null);
+    const productId = existing?.id ?? null;
+    const folder = productImageFolder(productId);
     const kind = mime.startsWith("video/") ? "video" : "image";
     if (size !== undefined) validateMediaSize(size, kind);
-    return this.storage.createSignedUpload(folder, kind, size !== undefined);
+    const signed = await this.storage.createSignedUpload(
+      folder,
+      kind,
+      size !== undefined,
+    );
+    if (this.isSeaweedfsActive()) {
+      // Records that THIS process minted this key for this product (or
+      // the shared pending namespace) — the proof
+      // `authorizeRemoteObjectKey` requires for a genuinely new
+      // SeaweedFS attachment. Cloudinary mints its own key client-side,
+      // so there is nothing to record for that branch.
+      const { objectKey } = signed as { objectKey: string };
+      recordIssuedUpload(objectKey, productId, kind);
+    }
+    return signed;
   }
 
   async verifyProductMedia(
@@ -146,11 +235,17 @@ export class AdminService {
     objectKey: string,
     kind: "image" | "video",
   ) {
+    const normalizedSlug = slug.trim().toLowerCase().replace(/\s+/g, "-");
     const product = await this.products.findOne({
-      where: { slug: slug.trim().toLowerCase().replace(/\s+/g, "-") },
+      where: { slug: normalizedSlug },
     });
-    if (!isValidProductImagePublicId(product?.id ?? "unsaved", objectKey))
-      throw new BadRequestException("شناسه فایل نامعتبر است.");
+    await this.authorizeRemoteObjectKey(
+      normalizedSlug,
+      product?.id ?? null,
+      objectKey,
+      kind,
+      this.isSeaweedfsActive(),
+    );
     return this.storage.verifyMedia(objectKey, kind);
   }
 
@@ -181,17 +276,17 @@ export class AdminService {
     // Validate before any product/vendor writes. Existing legacy references remain compatible.
     for (const image of input.images) {
       if (isRemoteMediaStorage(image.storage)) {
-        if (
-          !image.objectKey ||
-          !isValidProductImagePublicId(
-            duplicate?.id ?? "unsaved",
-            image.objectKey,
-          )
-        )
-          throw new BadRequestException("شناسه فایل نامعتبر است.");
-        await this.storageFor(image.storage).verifyMedia(
+        const imageKind = isVideoStorage(image.storage) ? "video" : "image";
+        await this.authorizeRemoteObjectKey(
+          slug,
+          duplicate?.id ?? null,
           image.objectKey,
-          isVideoStorage(image.storage) ? "video" : "image",
+          imageKind,
+          image.storage === "seaweedfs" || image.storage === "seaweedfs_video",
+        );
+        await this.storageFor(image.storage).verifyMedia(
+          image.objectKey as string,
+          imageKind,
         );
       } else if (image.storage === "legacy_base64") {
         try {

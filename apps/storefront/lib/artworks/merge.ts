@@ -1,18 +1,22 @@
-import type { Artwork } from "@rad/types";
+import type { Artwork, ProductImage } from "@rad/types";
 
-function hasFileImage(artwork?: Artwork) {
-  return Boolean(artwork?.images.some((image) => image.src?.startsWith("/")));
+function hasUsableMedia(items?: ProductImage[]) {
+  return Boolean(items?.some((item) => Boolean(item.src)));
 }
 
 /**
- * The API owns every field. The registry only lends its static photography
- * (and editorial JSON if an older API omits it).
+ * The API owns every field, including photography — it's the only side
+ * that knows about admin-uploaded media (SeaweedFS, Cloudinary, legacy
+ * base64, external URLs). The registry's bundled photography is a fallback
+ * for when the API has nothing real to show yet (and lends editorial JSON
+ * if an older API omits it).
  */
 export function mergeArtwork(live: Artwork, display?: Artwork): Artwork {
   if (!display) return live;
   return {
     ...live,
-    images: hasFileImage(display) ? display.images : live.images,
+    images: hasUsableMedia(live.images) ? live.images : display.images,
+    media: hasUsableMedia(live.media) ? live.media : display.media,
     passport: live.passport ?? display.passport,
     difference: live.difference ?? display.difference,
   };

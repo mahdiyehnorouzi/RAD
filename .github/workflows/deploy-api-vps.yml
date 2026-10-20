@@ -1,0 +1,105 @@
+# Releases the API on the real production host: systemd-managed
+# `rad-api.service`, isolated/versioned releases under /opt/rad-releases,
+# atomically symlinked into /opt/rad/apps/api. See scripts/deploy-api-systemd.sh for
+# the actual release/rollback mechanics this workflow just invokes over
+# SSH from the runner — this file does no building or deploying itself.
+#
+# This is additive: it does not touch, replace, or race with
+# deploy-frontend-vps.yml (storefront/admin, Docker/VPS) or the Liara
+# workflows. It targets a different service entirely on the same host.
+#
+# REQUIRES scripts/bootstrap-api-release-layout.sh to have already been
+# run once, manually, on the VPS — scripts/deploy-api-systemd.sh refuses
+# to run otherwise, on purpose. See docs/opt-rad-release-bootstrap.md.
+#
+# Pushing to main runs checks only (no deploy effect). Deploying to the VPS
+# always requires an explicit manual dispatch approved against the
+# production-api-vps environment.
+
+name: API VPS release
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: "Type 'deploy' to actually release to production"
+        required: true
+        default: "build-check-only"
+      commit_sha:
+        description: "Exact commit SHA to release (never 'main' HEAD at dispatch time - pin and review it explicitly)"
+        required: true
+
+concurrency:
+  group: rad-api-vps-production
+  cancel-in-progress: false
+
+jobs:
+  checks:
+    uses: ./.github/workflows/ci.yml
+
+  release:
+    name: Release API via rad-api.service
+    needs: checks
+    if: github.event_name == 'workflow_dispatch' && inputs.confirm == 'deploy' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: production-api-vps
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify the requested commit exists and is reachable from main
+        run: |
+          set -euo pipefail
+          git fetch --quiet origin main
+          if ! git cat-file -e '${{ inputs.commit_sha }}^{commit}' 2>/dev/null; then
+            echo "::error::'${{ inputs.commit_sha }}' is not a commit this checkout knows about."
+            exit 1
+          fi
+          if ! git merge-base --is-ancestor '${{ inputs.commit_sha }}' origin/main; then
+            echo "::error::'${{ inputs.commit_sha }}' is not an ancestor of origin/main. Refusing to release a commit that was never merged."
+            exit 1
+          fi
+          echo "Verified: ${{ inputs.commit_sha }} exists and is an ancestor of origin/main."
+
+      - name: Configure pinned SSH identity
+        id: ssh
+        env:
+          SSH_KEY: ${{ secrets.RAD_API_SSH_PRIVATE_KEY }}
+          KNOWN_HOSTS: ${{ secrets.RAD_API_SSH_KNOWN_HOSTS }}
+        run: |
+          test -n "$SSH_KEY" && test -n "$KNOWN_HOSTS"
+          install -m 700 -d "$HOME/.ssh"
+          printf '%s\n' "$SSH_KEY" > "$HOME/.ssh/id_ed25519"
+          printf '%s\n' "$KNOWN_HOSTS" > "$HOME/.ssh/known_hosts"
+          chmod 600 "$HOME/.ssh/id_ed25519" "$HOME/.ssh/known_hosts"
+
+      # scripts/deploy-api-systemd.sh does everything from here: preflight,
+      # remote clone-build-swap, health check, and automatic rollback on
+      # failure (code + env-file safety checks only — it never touches the
+      # database). RAD_API_HOST/USER/etc. below must match the verified
+      # production topology; override via repository/environment variables
+      # if any of these ever change.
+      - name: Run systemd release script
+        env:
+          RAD_API_HOST: ${{ vars.RAD_API_HOST || '46.34.163.16' }}
+          RAD_API_USER: ${{ vars.RAD_API_USER || 'root' }}
+          RAD_API_LIVE_DIR: ${{ vars.RAD_API_LIVE_DIR || '/opt/rad/apps/api' }}
+          RAD_API_RELEASES_DIR: ${{ vars.RAD_API_RELEASES_DIR || '/opt/rad-releases' }}
+          RAD_API_SERVICE: ${{ vars.RAD_API_SERVICE || 'rad-api.service' }}
+          RAD_API_PORT: ${{ vars.RAD_API_PORT || '4000' }}
+          RAD_API_ENV_FILE: ${{ vars.RAD_API_ENV_FILE || '/etc/rad/api.env' }}
+          RAD_API_GIT_URL: ${{ vars.RAD_API_GIT_URL || 'https://github.com/mahdiyehnorouzi/RAD.git' }}
+          RAD_API_COMMIT: ${{ inputs.commit_sha }}
+        run: bash scripts/deploy-api-systemd.sh
+
+      - name: Report outcome
+        if: always()
+        run: |
+          if [[ "${{ job.status }}" == "success" ]]; then
+            echo "API release succeeded and is healthy. See the previous step's log for the exact release directory and version."
+          else
+            echo "::error::API release failed. scripts/deploy-api-systemd.sh attempts an automatic rollback on a failed health check — check the previous step's log for whether that rollback itself succeeded. If it also failed, SSH in immediately: systemctl status rad-api.service; journalctl -u rad-api.service -n 100."
+          fi
+
+      - name: Remove runner SSH credentials
+        if: always()
+        run: rm -f "$HOME/.ssh/id_ed25519" "$HOME/.ssh/known_hosts"

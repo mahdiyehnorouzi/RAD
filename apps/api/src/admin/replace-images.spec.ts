@@ -27,6 +27,14 @@ import { InventoryService } from "../inventory/inventory.service";
 import { NoticesService } from "../notices/notices.service";
 import { MailService } from "../mail/mail.service";
 import { CloudinaryStorageService } from "../storage/cloudinary-storage.service";
+import {
+  createMediaStorageResolver,
+  type MediaStorageService,
+} from "../storage/media-storage.interface";
+import {
+  __resetIssuedUploadsForTests,
+  recordIssuedUpload,
+} from "../storage/upload-intent";
 
 /**
  * DB-backed coverage for `AdminService.saveProduct`/`replaceImages` (Phase
@@ -399,5 +407,227 @@ describe("AdminService.saveProduct — cloudinary images (Phase 2)", () => {
       "the DB-side replacement must still have committed despite the failed Cloudinary delete",
     );
     assert.equal(rows[0].storage, "static");
+  });
+});
+
+describe("AdminService — SeaweedFS fail-closed ownership (upload-intent audit fix)", () => {
+  let seaweedfsAdmin: AdminService;
+  let seaweedfsDeleteCalls: string[];
+
+  before(() => {
+    const seaweedfsStub: MediaStorageService = {
+      createSignedUpload: () => {
+        throw new Error("not used directly in these tests");
+      },
+      verifyMedia: async (objectKey, kind) => ({
+        objectKey,
+        storage: kind === "video" ? "seaweedfs_video" : "seaweedfs",
+      }),
+      destroy: async (objectKey: string) => {
+        seaweedfsDeleteCalls.push(objectKey);
+      },
+    };
+    const cloudinaryStub: MediaStorageService = {
+      createSignedUpload: () => {
+        throw new Error("not used in these tests");
+      },
+      verifyMedia: async (objectKey, kind) => ({
+        objectKey,
+        storage: kind === "video" ? "cloudinary_video" : "cloudinary",
+      }),
+      destroy: async () => {},
+    };
+    const resolver = createMediaStorageResolver(cloudinaryStub, seaweedfsStub);
+    const repo = dataSource.getRepository.bind(dataSource);
+    const inventory = new InventoryService(dataSource);
+    const notices = {
+      notifyPaymentVerified: async () => {},
+      notifyPaymentRejected: async () => {},
+    } as unknown as NoticesService;
+    const mail = new MailService(new ConfigService({}));
+    const paymentReview = new PaymentReviewService(
+      dataSource,
+      inventory,
+      notices,
+      mail,
+    );
+    seaweedfsAdmin = new AdminService(
+      dataSource,
+      repo(Product),
+      repo(ProductImage),
+      repo(Order),
+      repo(User),
+      repo(Vendor),
+      repo(CartItem),
+      repo(Favorite),
+      repo(Review),
+      repo(PaymentIntent),
+      repo(PasswordResetToken),
+      inventory,
+      paymentReview,
+      seaweedfsStub,
+      resolver,
+      mail,
+    );
+  });
+
+  // Every test starts and ends with a clean in-memory intent map — the
+  // whole point of these tests is to control exactly which keys this
+  // "process" claims to have minted.
+  function resetIntents() {
+    seaweedfsDeleteCalls = [];
+    __resetIssuedUploadsForTests();
+  }
+
+  test("rejects a brand-new objectKey with no recorded upload intent at all (never attached before, never signed by this process)", async () => {
+    resetIntents();
+    const slug = `seaweedfs-no-intent-${Date.now()}`;
+    await assert.rejects(
+      () =>
+        seaweedfsAdmin.saveProduct(
+          baseInput(slug, [
+            { storage: "seaweedfs", objectKey: "rad/pending/noIntentAtAll" },
+          ]) as never,
+        ),
+      /upload_intent_expired|نشست بارگذاری/,
+    );
+    __resetIssuedUploadsForTests();
+  });
+
+  test("rejects an expired upload intent (minted long enough ago to fall outside UPLOAD_INTENT_MAX_AGE_MS)", async () => {
+    resetIntents();
+    const objectKey = "rad/pending/expiredIntent";
+    const twoHoursAndOneMinuteAgo = Date.now() - (2 * 60 * 60 * 1000 + 60_000);
+    recordIssuedUpload(objectKey, null, "image", twoHoursAndOneMinuteAgo);
+    const slug = `seaweedfs-expired-${Date.now()}`;
+    await assert.rejects(
+      () =>
+        seaweedfsAdmin.saveProduct(
+          baseInput(slug, [{ storage: "seaweedfs", objectKey }]) as never,
+        ),
+      /upload_intent_expired|نشست بارگذاری/,
+    );
+    __resetIssuedUploadsForTests();
+  });
+
+  test("rejects an intent recorded for a different, already-real product id", async () => {
+    resetIntents();
+    const slugA = `seaweedfs-other-product-a-${Date.now()}`;
+    const productA = await seaweedfsAdmin.saveProduct(
+      baseInput(slugA, [
+        { storage: "static", src: "/catalog/test.jpg" },
+      ]) as never,
+    );
+    const objectKey = `rad/products/${productA.id}/belongsToA`;
+    recordIssuedUpload(objectKey, productA.id, "image");
+    const slugB = `seaweedfs-other-product-b-${Date.now()}`;
+    await assert.rejects(() =>
+      seaweedfsAdmin.saveProduct(
+        baseInput(slugB, [{ storage: "seaweedfs", objectKey }]) as never,
+      ),
+    );
+    __resetIssuedUploadsForTests();
+  });
+
+  test("rejects when the recorded intent's kind (image/video) doesn't match what's being claimed", async () => {
+    resetIntents();
+    const objectKey = "rad/pending/wrongKind";
+    recordIssuedUpload(objectKey, null, "video");
+    const slug = `seaweedfs-wrong-kind-${Date.now()}`;
+    await assert.rejects(() =>
+      seaweedfsAdmin.saveProduct(
+        baseInput(slug, [{ storage: "seaweedfs", objectKey }]) as never,
+      ),
+    );
+    __resetIssuedUploadsForTests();
+  });
+
+  test("simulated API restart: an intent recorded, then the in-memory map cleared (as on process restart), is rejected — never falls back to namespace shape alone", async () => {
+    resetIntents();
+    const objectKey = "rad/pending/restartCase";
+    recordIssuedUpload(objectKey, null, "image");
+    __resetIssuedUploadsForTests(); // simulates the process restarting
+    const slug = `seaweedfs-restart-${Date.now()}`;
+    await assert.rejects(() =>
+      seaweedfsAdmin.saveProduct(
+        baseInput(slug, [{ storage: "seaweedfs", objectKey }]) as never,
+      ),
+    );
+  });
+
+  test("a valid, matching intent for a brand-new (pre-creation) upload is accepted", async () => {
+    resetIntents();
+    const objectKey = "rad/pending/validNewUpload";
+    recordIssuedUpload(objectKey, null, "image");
+    const slug = `seaweedfs-valid-new-${Date.now()}`;
+    const saved = await seaweedfsAdmin.saveProduct(
+      baseInput(slug, [{ storage: "seaweedfs", objectKey }]) as never,
+    );
+    assert.equal(saved.images.length, 1);
+    const row = await dataSource
+      .getRepository(ProductImage)
+      .findOneOrFail({ where: { productSlug: slug } });
+    assert.equal(row.objectKey, objectKey);
+    __resetIssuedUploadsForTests();
+  });
+
+  test("re-editing a product whose image is ALREADY a persisted ProductImage row needs no intent — the durable DB row alone is proof, even after a simulated restart", async () => {
+    resetIntents();
+    const objectKey = "rad/pending/alreadyAttached";
+    recordIssuedUpload(objectKey, null, "image");
+    const slug = `seaweedfs-reedit-${Date.now()}`;
+    const created = await seaweedfsAdmin.saveProduct(
+      baseInput(slug, [{ storage: "seaweedfs", objectKey }]) as never,
+    );
+    __resetIssuedUploadsForTests(); // simulate restart — no intent survives
+    // Re-saving the SAME product with the SAME already-attached image must
+    // still succeed: the durable ProductImage row (not the in-memory
+    // intent) is what proves ownership here.
+    const resaved = await seaweedfsAdmin.saveProduct(
+      baseInput(slug, [{ storage: "seaweedfs", objectKey }]) as never,
+      created.id,
+    );
+    assert.equal(resaved.images.length, 1);
+  });
+
+  test("rejects an attempt to attach an object that is ALREADY attached to a DIFFERENT product (no intent can override an existing row's ownership)", async () => {
+    resetIntents();
+    const objectKey = "rad/pending/stolenFromOther";
+    recordIssuedUpload(objectKey, null, "image");
+    const slugA = `seaweedfs-steal-victim-${Date.now()}`;
+    await seaweedfsAdmin.saveProduct(
+      baseInput(slugA, [{ storage: "seaweedfs", objectKey }]) as never,
+    );
+    // A second product tries to claim the same objectKey. Even recording a
+    // *fresh* intent for product B must not help — the row already belongs
+    // to product A.
+    recordIssuedUpload(objectKey, null, "image");
+    const slugB = `seaweedfs-steal-attacker-${Date.now()}`;
+    await assert.rejects(() =>
+      seaweedfsAdmin.saveProduct(
+        baseInput(slugB, [{ storage: "seaweedfs", objectKey }]) as never,
+      ),
+    );
+    __resetIssuedUploadsForTests();
+  });
+
+  test("repeated verification of the same objectKey against the same product (re-submitting the form without changes) stays authorized", async () => {
+    resetIntents();
+    const objectKey = "rad/pending/repeatedVerify";
+    recordIssuedUpload(objectKey, null, "image");
+    const slug = `seaweedfs-repeat-${Date.now()}`;
+    const first = await seaweedfsAdmin.verifyProductMedia(
+      slug,
+      objectKey,
+      "image",
+    );
+    const second = await seaweedfsAdmin.verifyProductMedia(
+      slug,
+      objectKey,
+      "image",
+    );
+    assert.equal(first.objectKey, objectKey);
+    assert.equal(second.objectKey, objectKey);
+    __resetIssuedUploadsForTests();
   });
 });

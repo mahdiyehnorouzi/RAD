@@ -80,7 +80,10 @@ export function toAdminProduct(
       .map((image) => ({
         storage: image.storage ?? "legacy_base64",
         src:
-          image.storage === "cloudinary" || image.storage === "cloudinary_video"
+          image.storage === "cloudinary" ||
+          image.storage === "cloudinary_video" ||
+          image.storage === "seaweedfs" ||
+          image.storage === "seaweedfs_video"
             ? (imageSrc(image, false) ?? null)
             : image.src,
         objectKey: image.objectKey ?? null,
