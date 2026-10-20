@@ -20,6 +20,47 @@ Day-to-day workflow is now exactly:
 This document is the one-time setup checklist, the dependency map the automatic path uses,
 and the emergency manual-recovery procedures — not a description of application behavior.
 
+## Correctness fixes from review (read this if you're re-reviewing)
+
+Three bugs were found and fixed in the initial version of this pipeline, before any of it had
+been exercised against the real VPS:
+
+1. **`github.event_name == 'workflow_call'` doesn't mean what it looks like it means.** Inside a
+   workflow invoked via `workflow_call`, `github.event_name` is NOT `"workflow_call"` — it's
+   *inherited* from whatever triggered the top-level caller (here, `deploy.yml`'s own `push`
+   trigger). The original `release` job conditions checked for `== 'workflow_call'` directly,
+   which never matches — the job would have silently shown as **skipped**, and because a
+   skipped job doesn't fail a GitHub Actions run by default, `deploy.yml` would have reported
+   **success** on every single push, having deployed nothing. Fixed by keying every `if:`
+   condition off the `inputs` context instead (verified genuinely reliable — a bare `push` event
+   carries no `inputs` context at all, so a required `workflow_call` input reads as empty/false
+   there, while an actual `workflow_call` invocation always supplies it as a real boolean) and,
+   for the one workflow where it's unambiguous (`deploy-api-vps.yml` has no direct `push`
+   trigger of its own), `github.event_name == 'workflow_dispatch'` to detect the manual path.
+   Both decisions are now centralized in a single `should-release`/`should-deploy` job per
+   workflow, reused everywhere else, instead of re-derived (and risking drifting out of sync) in
+   multiple places.
+2. **A silently-skipped required release wasn't failing the run.** Added a `verify-outcome` job
+   to both `deploy-api-vps.yml` and `deploy-frontend-vps.yml` that independently recomputes
+   "was a release required" and explicitly fails if `release`'s result isn't `success` when it
+   was. This is deliberately a second, simple check of the same question the (now-fixed)
+   `release` job's own condition already answers — not because duplicating the predicate is
+   elegant, but because a condition that goes silently wrong again in the future should still be
+   caught here.
+3. **The API's automatic rollback didn't cover the new external smoke test.** The release
+   script's own internal rollback only triggered on its own (VPS-local) health-check failure.
+   Added a separate "Roll back after failed smoke test" step that fires when the release script
+   itself succeeded but the subsequent public smoke test failed — it reuses the exact same
+   rollback mechanics as the existing manual rollback tooling
+   (`scripts/lib/rollback-api-remote.sh`, invoked non-interactively, bypassing only its
+   interactive confirmation wrapper), restoring whatever the deploy's own manifest recorded as
+   the pre-deploy release.
+
+All three were verified by simulating the exact decision logic (push-direct, workflow_call-via-
+push, workflow_dispatch-deploy, workflow_dispatch-build-only) standalone and confirming each
+produces the intended boolean outcome — see "Validation performed" below for the exact cases
+checked.
+
 ## Phase A — what was already there vs. what this adds
 
 **Already working, reused as-is (per the mission's "reuse existing scripts/workflows"):**
@@ -61,6 +102,21 @@ and the emergency manual-recovery procedures — not a description of applicatio
   (`/catalog/photos/...`), since that would mean stale demo media is reaching a real customer);
   Storefront's homepage, PLP, a PDP discovered from the PLP's own HTML, and `/backend/session`;
   Admin's `/login` page. None of this writes anything or touches a database.
+- **Routine API deploys cloned the whole monorepo and ran a full `npm ci && npm run build` on
+  the VPS itself** (`scripts/deploy-api-remote.sh`), every single release. The API's release job
+  now has a `build-artifact` job that checks out the exact requested commit, builds it, and
+  packages a production-only `node_modules` + `dist/` + `VERSION` into a single tarball **on the
+  GitHub Actions runner** (`scripts/lib/deploy-api-remote-artifact.sh` +
+  `scripts/deploy-api-systemd-artifact.sh`); the VPS only ever receives that already-built,
+  already-verified, commit-SHA-named artifact over the existing SSH connection and extracts it —
+  no git, no npm, no TypeScript compiler, no network access to the npm registry on the VPS, ever,
+  for a routine release. The systemd service, the atomic release/symlink swap, the environment
+  guard checks (`TYPEORM_SYNCHRONIZE`, `NODE_ENV=production`), the pre-deploy
+  manifest/env-snapshot, and the auto-rollback-on-failed-health-check are all otherwise
+  byte-for-byte the same mechanics as before, just fed a prebuilt artifact instead of a fresh
+  clone. The original clone-and-build script (`scripts/deploy-api-systemd.sh`) is kept, unused by
+  the automatic path, as the disaster-recovery fallback for when a pre-built artifact genuinely
+  isn't an option (e.g. GitHub Actions itself is unavailable).
 
 ## Known infra gaps this pipeline does **not** attempt to resolve
 
@@ -227,8 +283,19 @@ This implementation was built and syntax-checked in a sandboxed environment with
 the production VPS, GitHub Secrets, or GitHub Environment settings, and no SSH connectivity to
 anything. That means:
 
-- The workflow YAML has been validated for syntax and reviewed step-by-step for logic, but **has
-  not been run end-to-end against the real VPS**.
+- The workflow YAML has been validated for syntax (`python3 -c "import yaml; ..."` against all
+  three files) and reviewed step-by-step for logic, but **has not been run end-to-end against
+  the real VPS**.
+- The `should-release`/`should-deploy` decision logic (the thing that was actually broken in the
+  first version of this PR) was additionally checked by extracting its exact boolean logic into
+  a standalone shell simulation and running it against every realistic caller context: a direct
+  push to `main` (must not deploy), `workflow_call` from `deploy.yml` with only storefront
+  affected, with both affected, and with neither (must not deploy), a manual
+  `workflow_dispatch` with `confirm=deploy`/`operation=deploy`, and a manual
+  `workflow_dispatch` left at its build-only default (must not deploy even though the
+  `deploy_storefront`/`deploy_admin` checkboxes still default to true). All six produced the
+  intended outcome. This is not the same as GitHub Actions actually evaluating the real `${{ }}`
+  expressions, which still only happens on a real run.
 - The SSH authentication fix above is written as exact one-time instructions because it
   **requires direct VPS/GitHub-admin access this session doesn't have** — generating a keypair
   and pretending it was installed would be fabricating success, which this was explicitly told

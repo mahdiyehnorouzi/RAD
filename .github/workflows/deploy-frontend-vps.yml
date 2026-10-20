@@ -8,18 +8,31 @@
 # DNS target at a time (see docs/vps-frontend-deployment-plan.md).
 #
 # Three ways in:
-#   - push to main (automatic, normal path) — builds+pushes both images
-#     (cheap, cached, and keeps every main commit's images available in
-#     GHCR even if that commit only touched one app) and then deploys,
-#     but only RECREATES the container(s) deploy.yml says actually
-#     changed (deploy_storefront/deploy_admin inputs) — "avoid restarting
-#     unrelated healthy services".
-#   - workflow_call from deploy.yml — same as above, explicit inputs,
-#     used when deploy.yml is doing the API-then-frontend ordering for a
-#     push that touched both.
+#   - push to main (automatic, normal path, BUILD ONLY) — builds+pushes
+#     both images (cheap, cached, and keeps every main commit's images
+#     available in GHCR even if that commit only touched one app) but
+#     never deploys by itself.
+#   - workflow_call from deploy.yml — deploy.yml is what actually decides
+#     to deploy and calls this workflow with explicit deploy_storefront/
+#     deploy_admin inputs, for a push that touched the frontend.
 #   - workflow_dispatch — manual emergency path only (redeploy a specific
 #     already-built tag, or force both services when you're not sure
 #     what changed). Still requires choosing build-only vs deploy.
+#
+# IMPORTANT: `github.event_name` inside a reusable (workflow_call) run is
+# NOT "workflow_call" — it's inherited from whatever triggered the
+# TOP-LEVEL caller. Since deploy.yml's own trigger is `push`, a run of
+# THIS workflow reached via workflow_call reports `github.event_name ==
+# 'push'` — identical to a direct push straight to this workflow's own
+# `push:` trigger above. Event name alone cannot tell those two apart, so
+# `should-deploy` below keys off whether `inputs.deploy_storefront`/
+# `deploy_admin` are actually present instead: a bare `push` event (the
+# build-only path) carries NO `inputs` context at all (that trigger type
+# declares none), so they read as empty/false there, while workflow_call
+# declares them `required: true` — always real booleans when that path is
+# taken. This is the one reliable signal; never add an `== 'workflow_call'`
+# check back in.
+#
 # See docs/cicd-pipeline.md for the production-frontend-vps environment's
 # required protection-rule shape for the automatic path to be hands-off.
 
@@ -69,6 +82,38 @@ concurrency:
 jobs:
   checks:
     uses: ./.github/workflows/ci.yml
+
+  # See the file-level note above on why this can't use
+  # `github.event_name == 'workflow_call'`. Computed once here and reused
+  # by release/verify-outcome so the "should we deploy, and what" decision
+  # exists in exactly one place.
+  should-deploy:
+    name: Determine whether and what to deploy
+    needs: checks
+    runs-on: ubuntu-latest
+    outputs:
+      storefront: ${{ steps.decide.outputs.storefront }}
+      admin: ${{ steps.decide.outputs.admin }}
+      any: ${{ steps.decide.outputs.any }}
+    steps:
+      - id: decide
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            storefront="${{ inputs.operation == 'deploy' && inputs.deploy_storefront == true }}"
+            admin="${{ inputs.operation == 'deploy' && inputs.deploy_admin == true }}"
+          else
+            # Reached via a bare push (build-only — inputs is empty, both
+            # read false below) or via workflow_call from deploy.yml
+            # (inputs are real, required booleans).
+            storefront="${{ inputs.deploy_storefront == true }}"
+            admin="${{ inputs.deploy_admin == true }}"
+          fi
+          any=false
+          [[ "$storefront" == "true" || "$admin" == "true" ]] && any=true
+          echo "storefront=${storefront}" >> "$GITHUB_OUTPUT"
+          echo "admin=${admin}" >> "$GITHUB_OUTPUT"
+          echo "any=${any}" >> "$GITHUB_OUTPUT"
+          echo "storefront=${storefront} admin=${admin} any=${any}"
 
   build-images:
     name: Build & push storefront + admin images
@@ -124,17 +169,16 @@ jobs:
 
   release:
     name: Pull & restart on VPS
-    needs: build-images
-    # Only an explicit deploy intent ever reaches this job — a plain push
-    # to main only builds+publishes images above (build-images), it never
-    # deploys by itself; deploy.yml is what decides whether to deploy, by
-    # calling this workflow with workflow_call. This avoids two separate
-    # triggers (a raw push here, and deploy.yml's own push trigger) both
-    # racing to deploy the same commit.
-    if: >-
-      github.ref == 'refs/heads/main' &&
-      (github.event_name == 'workflow_call' ||
-       (github.event_name == 'workflow_dispatch' && inputs.operation == 'deploy'))
+    needs: [should-deploy, build-images]
+    # should-deploy.outputs.any is the one reliable signal (see the
+    # file-level note on why github.event_name can't be used here) — a
+    # plain push to main (should-deploy.any == 'false') only builds+
+    # publishes images above, it never deploys by itself; deploy.yml is
+    # what decides whether to deploy, by calling this workflow with
+    # workflow_call. This avoids two separate triggers (a raw push here,
+    # and deploy.yml's own push trigger) both racing to deploy the same
+    # commit.
+    if: needs.should-deploy.outputs.any == 'true' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     environment: production-frontend-vps
     # Marker file on the VPS recording the last deploy that actually passed
@@ -155,8 +199,8 @@ jobs:
         run: |
           set -euo pipefail
           services=()
-          [[ "${{ inputs.deploy_storefront }}" == "true" ]] && services+=("storefront")
-          [[ "${{ inputs.deploy_admin }}" == "true" ]] && services+=("admin")
+          [[ "${{ needs.should-deploy.outputs.storefront }}" == "true" ]] && services+=("storefront")
+          [[ "${{ needs.should-deploy.outputs.admin }}" == "true" ]] && services+=("admin")
           if [[ ${#services[@]} -eq 0 ]]; then
             echo "::error::Neither deploy_storefront nor deploy_admin is true — nothing to deploy. This job should not have been called with both false."
             exit 1
@@ -381,3 +425,26 @@ jobs:
       - name: Remove runner SSH credentials
         if: always()
         run: rm -f "$HOME/.ssh/id_ed25519" "$HOME/.ssh/known_hosts"
+
+  # Independent of whatever the `release` job's own `if:` condition
+  # concluded — catches a reusable-workflow trigger condition that
+  # silently evaluates false (so `release` shows as "skipped", which does
+  # NOT fail a workflow run by default) when a deploy genuinely should
+  # have happened. Recomputes "should this have deployed" from the same
+  # should-deploy output and fails loudly if release's result disagrees.
+  verify-outcome:
+    name: Verify a required deploy actually ran
+    needs: [should-deploy, release]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check
+        run: |
+          should="${{ needs.should-deploy.outputs.any }}"
+          result="${{ needs.release.result }}"
+          echo "should-deploy.any=${should} release.result=${result}"
+          if [[ "$should" == "true" && "$result" != "success" ]]; then
+            echo "::error::A deploy was required (should-deploy.any=true) but the release job's result was '${result}', not 'success'. This must never be silently reported as a successful deployment — investigate the release job's conditions and logs."
+            exit 1
+          fi
+          echo "OK: release outcome matches what was required."
