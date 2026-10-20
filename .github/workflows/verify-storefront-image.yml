@@ -1,0 +1,88 @@
+#  Builds the storefront's production Dockerfile and verifies, as the exact
+# non-root uid:gid docker-compose.frontend-vps.yml runs it with (1000:1000),
+# that the Next.js image-optimizer cache directory
+# (apps/storefront/.next/cache) can actually be created/written/read/deleted
+# at runtime. This is CI-only verification for the fix in this branch (the
+# VPS was logging `EACCES: permission denied, mkdir
+# '/app/apps/storefront/.next/cache'` before it) — it never pushes an image
+# anywhere and never touches any deployment.
+#
+# Manual-trigger only for now (workflow_dispatch) plus a push trigger scoped
+# to this fix branch and the exact files it changes, so pushing the branch
+# is enough to get a CI run without affecting any other branch or PR.
+name: Verify storefront image (cache permissions)
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - claude/fix-image-loading-and-core-web-vitals-9a0871
+    paths:
+      - "apps/storefront/Dockerfile"
+      - "apps/storefront/next.config.mjs"
+      - "deploy/nginx/rad-storefront.conf"
+      - ".github/workflows/verify-storefront-image.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-verify:
+    name: Build image + verify uid 1000 can write the cache dir
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      # Build-only — no registry login, no push, no deploy. Same Dockerfile
+      # and build context docker-compose.frontend-vps.yml's image is built
+      # from (apps/storefront/Dockerfile, repo root context).
+      - name: Build storefront image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/storefront/Dockerfile
+          push: false
+          load: true
+          tags: rad-storefront-verify:ci
+          build-args: |
+            NEXT_PUBLIC_SITE_URL=https://www.rad-object.com
+
+      - name: Inspect ownership of the cache directory
+        run: |
+          docker run --rm rad-storefront-verify:ci \
+            sh -c "ls -la apps/storefront/.next/ && ls -la apps/storefront/.next/cache"
+
+      # The actual regression test: docker-compose.frontend-vps.yml runs the
+      # container as `user: "1000:1000"` — reproduce that exactly and do a
+      # real create -> write -> read -> delete cycle under the cache dir, the
+      # same operation Next's image optimizer performs at request time.
+      - name: uid 1000 create/write/read/delete test
+        run: |
+          docker run --rm --user 1000:1000 rad-storefront-verify:ci sh -c '
+            set -e
+            dir="apps/storefront/.next/cache/images/ci-test"
+            file="$dir/probe.txt"
+            mkdir -p "$dir"
+            echo "rad-ci-probe-$(date +%s)" > "$file"
+            echo "--- write OK, reading back ---"
+            cat "$file"
+            rm -f "$file"
+            rmdir "$dir"
+            echo "--- create/write/read/delete all succeeded as uid $(id -u):$(id -g) ---"
+          '
+
+      # Negative control: confirm the test above was actually exercising the
+      # fix, not succeeding by accident because the whole tree is
+      # world-writable — root-owned siblings outside .next/cache must still
+      # reject a uid-1000 write.
+      - name: Negative control — uid 1000 must NOT be able to write outside .next/cache
+        run: |
+          docker run --rm --user 1000:1000 rad-storefront-verify:ci sh -c '
+            if touch apps/storefront/server.js.probe 2>/dev/null; then
+              echo "::error::uid 1000 could write outside .next/cache — ownership is broader than intended"
+              exit 1
+            fi
+            echo "--- confirmed: uid 1000 cannot write root-owned files outside .next/cache ---"
+          '

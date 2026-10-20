@@ -6,6 +6,13 @@ const monorepoRoot = path.resolve(appRoot, "../..");
 const nextConfig = {
   transpilePackages: ["@rad/ui", "@rad/types", "@rad/artworks", "@rad/i18n"],
   turbopack: { root: monorepoRoot },
+  // Next's default (60s) means the on-demand image optimizer re-resizes
+  // the same url+width+quality from scratch once a minute, all day, for
+  // local/public images (Cloudinary/SeaweedFS photos bypass this route
+  // entirely via product-media.tsx's custom loaders). These are static
+  // product/marketing photos that don't change in place — a day-long
+  // cache removes the repeat resize cost without real staleness risk.
+  images: { minimumCacheTTL: 60 * 60 * 24 },
   // Only for the plain `next build` path (Docker/Liara) — gated behind an
   // env var so `vinext build` (Cloudflare) never sees it; vinext has its
   // own output pipeline and standalone's bundled server.js makes no sense

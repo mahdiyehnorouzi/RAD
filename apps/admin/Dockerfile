@@ -36,5 +36,11 @@ ENV NODE_ENV=production \
 COPY --from=builder /repo/apps/admin/.next/standalone ./
 COPY --from=builder /repo/apps/admin/.next/static ./apps/admin/.next/static
 COPY --from=builder /repo/apps/admin/public ./apps/admin/public
+# docker-compose.frontend-vps.yml runs this container as uid:gid 1000:1000;
+# targeted to this one subtree, not a recursive chown of /app — see the
+# matching comment in apps/storefront/Dockerfile for the full explanation.
+# Must stay the LAST instruction touching apps/admin/.next.
+RUN mkdir -p apps/admin/.next/cache && \
+    chown -R 1000:1000 apps/admin/.next/cache
 EXPOSE 3000
 CMD ["node", "apps/admin/server.js"]

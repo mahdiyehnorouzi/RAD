@@ -22,7 +22,14 @@ import "@/components/product/listing/product-card/product-card.css";
 import "./catalog-card.css";
 
 /** Shop-floor card: photograph with a pencilled number, a torn paper label beneath. */
-export function CatalogCard({ product }: { product: Product }) {
+export function CatalogCard({
+  product,
+  priority = false,
+}: {
+  product: Product;
+  /** The card is in the first visible grid row: skip lazy-loading its image. */
+  priority?: boolean;
+}) {
   const { locale, href, number } = useLocale();
   const c = productCardCopy[locale];
   const copy = productCopy(product, locale);
@@ -65,7 +72,7 @@ export function CatalogCard({ product }: { product: Product }) {
           aria-hidden="true"
           onClick={openTransition}
         >
-          <ProductCardArtwork product={product} />
+          <ProductCardArtwork product={product} priority={priority} />
           <LinkPending />
         </Link>
         {markDigits ? (
