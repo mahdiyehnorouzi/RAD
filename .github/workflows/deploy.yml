@@ -1,0 +1,176 @@
+# The single automatic entry point for "merge to main -> production
+# deploys itself". Nothing else in this repo auto-deploys: deploy-api-vps.yml
+# and deploy-frontend-vps.yml only release when called from here (or, for
+# a human-triggered emergency redeploy, via their own workflow_dispatch —
+# see docs/cicd-pipeline.md).
+#
+# Flow: wait for CI (ci.yml, the same required check PRs already run) to
+# pass on this exact push, work out which of api/storefront/admin the push
+# actually touched (dependency-aware: a shared package used by several
+# apps affects all of them, not just the one whose path a naive filter
+# would match), then release API first (if affected) and only once that
+# finishes successfully, the frontend (if affected) — never the two racing
+# each other, and never an older commit's run clobbering a newer one
+# (the concurrency group + each sub-workflow's own group serialize this
+# per target).
+#
+# This workflow deploys. It does not decide whether the code is good
+# enough to deploy — ci.yml, re-run as part of it (and separately, already
+# required on the PR itself), is what blocks a broken push from reaching
+# any of this.
+
+name: Deploy (automatic, on push to main)
+
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: rad-deploy-main
+  cancel-in-progress: false
+
+jobs:
+  checks:
+    uses: ./.github/workflows/ci.yml
+
+  detect:
+    name: Detect affected services
+    needs: checks
+    runs-on: ubuntu-latest
+    outputs:
+      api: ${{ steps.filter.outputs.api }}
+      storefront: ${{ steps.filter.outputs.storefront }}
+      admin: ${{ steps.filter.outputs.admin }}
+      any: ${{ steps.filter.outputs.any }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Compute changed files since the previous main commit
+        id: diff
+        run: |
+          set -euo pipefail
+          before="${{ github.event.before }}"
+          # A force-push, a brand-new branch history, or a before-sha this
+          # checkout doesn't have (rewritten history) can't be diffed
+          # safely — fall back to "everything changed" rather than risk
+          # silently skipping a real deploy. A normal fast-forward merge
+          # commit (the overwhelmingly common case) always has a valid,
+          # present `before`.
+          if [[ -z "$before" || "$before" == "0000000000000000000000000000000000000000" ]] \
+             || ! git cat-file -e "${before}^{commit}" 2>/dev/null; then
+            echo "::warning::Could not safely diff against the previous commit (before=${before:-<empty>}) — treating every path as changed."
+            git ls-files > /tmp/changed-files.txt
+          else
+            git diff --name-only "${before}" "${{ github.sha }}" > /tmp/changed-files.txt
+          fi
+          echo "Changed files:"
+          cat /tmp/changed-files.txt
+
+      # Dependency map (see apps/*/package.json "dependencies" for the
+      # ground truth this mirrors):
+      #   apps/api/**         -> api
+      #   apps/storefront/**  -> storefront
+      #   apps/admin/**       -> admin
+      #   packages/artworks/**-> api, storefront      (both depend on @rad/artworks)
+      #   packages/types/**   -> storefront, admin    (both depend on @rad/types)
+      #   packages/ui/**      -> storefront, admin    (both depend on @rad/ui)
+      #   packages/i18n/**    -> storefront           (only storefront depends on @rad/i18n)
+      #   packages/state/**   -> storefront, admin    (not yet declared as a dependency by
+      #                                                 either app's package.json — conservatively
+      #                                                 treated as affecting both per "if impact
+      #                                                 cannot safely be determined, deploy all
+      #                                                 potentially affected services")
+      #   root package.json / package-lock.json / tsconfig*.json / this
+      #   workflow file / Dockerfiles / docker-compose.frontend-vps.yml
+      #                        -> all three (shared build/deploy infra)
+      #   anything else (docs/**, *.md, .github/workflows/ci.yml only, etc.)
+      #                        -> none
+      - name: Map changed files to affected services
+        id: filter
+        run: |
+          set -euo pipefail
+          api=false
+          storefront=false
+          admin=false
+
+          matches() { grep -qE "$1" /tmp/changed-files.txt; }
+
+          matches '^apps/api/'                    && api=true
+          matches '^apps/storefront/'              && storefront=true
+          matches '^apps/admin/'                   && admin=true
+          matches '^packages/artworks/'             && { api=true; storefront=true; }
+          matches '^packages/types/'                && { storefront=true; admin=true; }
+          matches '^packages/ui/'                   && { storefront=true; admin=true; }
+          matches '^packages/i18n/'                 && storefront=true
+          matches '^packages/state/'                && { storefront=true; admin=true; }
+
+          # Shared root-level config/infra that any app's build could
+          # depend on — conservative on purpose.
+          if matches '^(package\.json|package-lock\.json|tsconfig.*\.json|apps/api/Dockerfile|apps/api/Dockerfile\..*|apps/storefront/Dockerfile|apps/admin/Dockerfile|docker-compose\.frontend-vps\.yml|scripts/deploy-api-systemd\.sh|scripts/lib/deploy-api-remote\.sh|\.github/workflows/deploy\.yml|\.github/workflows/deploy-api-vps\.yml|\.github/workflows/deploy-frontend-vps\.yml)$'; then
+            api=true; storefront=true; admin=true
+          fi
+
+          any=false
+          [[ "$api" == "true" || "$storefront" == "true" || "$admin" == "true" ]] && any=true
+
+          echo "api=${api}" >> "$GITHUB_OUTPUT"
+          echo "storefront=${storefront}" >> "$GITHUB_OUTPUT"
+          echo "admin=${admin}" >> "$GITHUB_OUTPUT"
+          echo "any=${any}" >> "$GITHUB_OUTPUT"
+          echo "Affected: api=${api} storefront=${storefront} admin=${admin} (any=${any})"
+
+      - name: No deployable service affected
+        if: steps.filter.outputs.any == 'false'
+        run: echo "This push only touched docs/unrelated files — nothing to deploy."
+
+  # API first. Frontend consumes the API's response shape; releasing it
+  # first and verifying it (deploy-api-vps.yml's own health check + public
+  # smoke test) before touching the frontend means a frontend deploy never
+  # goes out against an API that's mid-rollback or unhealthy.
+  deploy-api:
+    name: Deploy API
+    needs: detect
+    if: needs.detect.outputs.api == 'true'
+    uses: ./.github/workflows/deploy-api-vps.yml
+    with:
+      commit_sha: ${{ github.sha }}
+    secrets: inherit
+
+  deploy-frontend:
+    name: Deploy Storefront/Admin
+    needs: [detect, deploy-api]
+    # Runs when storefront and/or admin is affected, and only after the API
+    # deploy has either succeeded or wasn't needed at all — never after a
+    # failed API deploy (an unhealthy/rolled-back API is not something to
+    # build a frontend release on top of; investigate the API failure
+    # first, then re-push or manually re-dispatch once it's fixed).
+    if: |
+      always() &&
+      (needs.detect.outputs.storefront == 'true' || needs.detect.outputs.admin == 'true') &&
+      (needs.detect.outputs.api != 'true' || needs.deploy-api.result == 'success')
+    uses: ./.github/workflows/deploy-frontend-vps.yml
+    with:
+      deploy_storefront: ${{ needs.detect.outputs.storefront == 'true' }}
+      deploy_admin: ${{ needs.detect.outputs.admin == 'true' }}
+    secrets: inherit
+
+  summary:
+    name: Deployment summary
+    needs: [detect, deploy-api, deploy-frontend]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Report
+        run: |
+          echo "## Deploy summary for ${{ github.sha }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Service | Affected | Result |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|---|---|---|" >> "$GITHUB_STEP_SUMMARY"
+          echo "| API | ${{ needs.detect.outputs.api }} | ${{ needs.deploy-api.result || 'skipped' }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Storefront/Admin | ${{ needs.detect.outputs.storefront }}/${{ needs.detect.outputs.admin }} | ${{ needs.deploy-frontend.result || 'skipped' }} |" >> "$GITHUB_STEP_SUMMARY"
+          if [[ "${{ needs.deploy-api.result }}" == "failure" || "${{ needs.deploy-frontend.result }}" == "failure" ]]; then
+            echo "::error::One or more deployments failed. Check the linked job logs above — each release job reports whether its own automatic rollback succeeded."
+            exit 1
+          fi
