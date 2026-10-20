@@ -51,11 +51,21 @@ ENV NODE_ENV=production \
 COPY --from=builder /repo/apps/storefront/.next/standalone ./
 COPY --from=builder /repo/apps/storefront/.next/static ./apps/storefront/.next/static
 COPY --from=builder /repo/apps/storefront/public ./apps/storefront/public
-# docker-compose.frontend-vps.yml runs this container as uid:gid 1000:1000,
-# but every COPY above lands root-owned (Docker's default) — without this,
-# the server can't create apps/storefront/.next/cache/images at runtime
-# (Next's on-demand image-optimizer cache dir), so every /_next/image
-# request MISSes forever and re-runs the full resize/encode every time.
-RUN chown -R 1000:1000 /app
+# docker-compose.frontend-vps.yml runs this container as uid:gid 1000:1000
+# (node:22-slim's built-in `node` user), but every COPY above lands
+# root-owned (Docker's default) with no write bit for "other" — confirmed
+# on the VPS as `EACCES: permission denied, mkdir
+# '/app/apps/storefront/.next/cache'`. Next creates that directory itself
+# at runtime (image-optimizer cache, ISR/fetch-cache) — it doesn't exist
+# at build time — so it must be created and owned here, not chowned after
+# the fact. Targeted to this one subtree, not a recursive chown of /app:
+# the parent directories COPY already created are world-executable
+# (standard 755 dirs), so uid 1000 can already traverse into `.next/`
+# without owning it; only this leaf needs to be writable by it. This must
+# stay the LAST instruction that touches apps/storefront/.next — a COPY
+# added after it in a future edit would land root-owned again and silently
+# reintroduce the bug.
+RUN mkdir -p apps/storefront/.next/cache && \
+    chown -R 1000:1000 apps/storefront/.next/cache
 EXPOSE 3000
 CMD ["node", "apps/storefront/server.js"]
