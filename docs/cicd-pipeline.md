@@ -1,3 +1,6 @@
+> Replacement under review: [self-hosted production release migration](self-hosted-production-release.md).
+> The SSH-based procedures below describe the previous path; do not mix them with the new broker.
+
 # CI/CD pipeline: merge to `main` → automatic production deploy
 
 ## What this is
