@@ -21,6 +21,10 @@
 
 name: Deploy (automatic, on push to main)
 
+permissions:
+  contents: read
+  packages: write
+
 on:
   push:
     branches: [main]
