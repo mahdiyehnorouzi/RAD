@@ -27,6 +27,22 @@ export type ProductImageStorage =
   | "seaweedfs"
   | "seaweedfs_video";
 
+/**
+ * Storage kinds that legitimately persist `src: null` and resolve their
+ * delivery URL from `objectKey` instead (see `product.mapper.ts#imageSrc`).
+ * `catalog.query.ts`'s public `leftJoin` must allow every kind listed here
+ * through, or rows of that kind are silently dropped from the public API
+ * before they ever reach the mapper — this happened in production for
+ * `seaweedfs`/`seaweedfs_video` rows, which were missing from that join's
+ * whitelist while only `cloudinary`/`cloudinary_video` were listed.
+ */
+export const SRC_LESS_IMAGE_STORAGE_KINDS: ProductImageStorage[] = [
+  "cloudinary",
+  "cloudinary_video",
+  "seaweedfs",
+  "seaweedfs_video",
+];
+
 @Entity("ProductImage")
 export class ProductImage {
   @PrimaryColumn("text")

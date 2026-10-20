@@ -204,4 +204,99 @@ describe("publicCatalogQuery image src projection", () => {
       "https://cdn.example.com/work.jpg",
     );
   });
+
+  /**
+   * Regression test for the production bug: `seaweedfs`/`seaweedfs_video`
+   * rows also persist `src: null` (resolving their URL from `objectKey`,
+   * same as `cloudinary`), but were missing from the public query's join
+   * whitelist — so they were silently dropped from the result entirely,
+   * not just left un-rendered. Confirmed against `woven-garden` (RAD-060)
+   * in production: Admin's unfiltered `relations: { images: true }` load
+   * showed these rows, the public API never did.
+   */
+  test("seaweedfs/seaweedfs_video rows survive the join, with ordering and cover-image preserved", async () => {
+    const products = dataSource.getRepository(Product);
+    const images = dataSource.getRepository(ProductImage);
+
+    const slug = `catalog-seaweedfs-test-${Date.now()}`;
+    const product = await products.save(
+      products.create({
+        slug,
+        name: "دیوارکوب بافته",
+        subtitle: "نقاشی و سوزن‌دوزی روی کتان",
+        tomanPrice: 2_000_000,
+        usdPrice: 24,
+        color: "#8a4938",
+        accent: "#ead9bd",
+        shape: "tall",
+        category: "textile",
+        status: "available",
+        story: "دیوارکوب بافته",
+        details: [],
+        en: { name: slug, subtitle: "", story: "", details: [] },
+      }),
+    );
+
+    await images.save([
+      // Out of sortOrder on purpose: row creation order must not leak into
+      // result order — only sortOrder (and the query's addOrderBy) may.
+      images.create({
+        product,
+        alt: "seaweedfs video",
+        enAlt: "seaweedfs video",
+        sortOrder: 2,
+        storage: "seaweedfs_video",
+        objectKey: `products/${product.id}/clip.mp4`,
+        src: null,
+      }),
+      images.create({
+        product,
+        alt: "cover image",
+        enAlt: "cover image",
+        sortOrder: 0,
+        storage: "seaweedfs",
+        objectKey: `products/${product.id}/cover.webp`,
+        src: null,
+      }),
+      images.create({
+        product,
+        alt: "second image",
+        enAlt: "second image",
+        sortOrder: 1,
+        storage: "seaweedfs",
+        objectKey: `products/${product.id}/second.webp`,
+        src: null,
+      }),
+    ]);
+
+    const row = await publicCatalogQuery(products)
+      .andWhere("product.slug = :slug", { slug })
+      .getOne();
+    assert.ok(row, "expected the seeded product to be returned");
+
+    const rowImages = row!.images ?? [];
+    assert.equal(
+      rowImages.length,
+      3,
+      "expected all three seaweedfs-backed rows to survive the join",
+    );
+
+    const bySortOrder = [...rowImages].sort(
+      (a, b) => a.sortOrder - b.sortOrder,
+    );
+    assert.deepEqual(
+      bySortOrder.map((image) => image.objectKey),
+      [
+        `products/${product.id}/cover.webp`,
+        `products/${product.id}/second.webp`,
+        `products/${product.id}/clip.mp4`,
+      ],
+      "expected sortOrder to determine ordering, not insertion order",
+    );
+    assert.equal(
+      bySortOrder[0]?.storage,
+      "seaweedfs",
+      "expected the lowest-sortOrder row (the cover image) to be the seaweedfs image, not the video",
+    );
+  });
 });
