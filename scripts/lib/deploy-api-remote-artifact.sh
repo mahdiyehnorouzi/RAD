@@ -146,17 +146,39 @@ mkdir -p "$NEW_RELEASE_DIR"
 tar -xzf "$ARTIFACT_PATH" -C "$NEW_RELEASE_DIR"
 
 NEW_RELEASE_API_DIR="${NEW_RELEASE_DIR}/apps/api"
-for required in dist/main.js scripts/start-production.mjs package.json; do
+# start-production.mjs's own prerequisites, not just dist/main.js: it runs
+# scripts/sync-schema.ts and seed/ensure-staff.ts via `tsx` directly
+# against TypeScript SOURCE (src/, seed/) and needs the real tsconfig
+# files for that to resolve correctly (TypeORM ships raw .ts decorator
+# sources alongside its compiled .js, which tsx can misresolve without
+# them) — confirmed by actually running start-production.mjs against an
+# extracted artifact and a disposable test Postgres before this check was
+# written.
+for required in \
+  dist/main.js scripts/start-production.mjs package.json \
+  seed/ensure-staff.ts tsconfig.json tsconfig.build.json; do
   if [[ ! -e "${NEW_RELEASE_API_DIR}/${required}" ]]; then
     echo "ERROR: ${NEW_RELEASE_API_DIR}/${required} missing from the extracted artifact. Aborting; live symlink untouched."
     exit 1
   fi
 done
+if [[ ! -d "${NEW_RELEASE_API_DIR}/src/database" ]]; then
+  echo "ERROR: ${NEW_RELEASE_API_DIR}/src is missing or incomplete — start-production.mjs's sync-schema/ensure-staff steps run against this source tree directly, not dist/. Aborting; live symlink untouched."
+  exit 1
+fi
+if [[ ! -f "${NEW_RELEASE_DIR}/tsconfig.json" ]]; then
+  echo "ERROR: ${NEW_RELEASE_DIR}/tsconfig.json (repo root) missing from the extracted artifact. Aborting; live symlink untouched."
+  exit 1
+fi
+if [[ ! -e "${NEW_RELEASE_DIR}/node_modules/@rad/artworks" ]]; then
+  echo "ERROR: ${NEW_RELEASE_DIR}/node_modules/@rad/artworks is missing or a dangling symlink — apps/api depends on @rad/artworks and packages/artworks must be shipped alongside it. Aborting; live symlink untouched."
+  exit 1
+fi
 if [[ ! -d "${NEW_RELEASE_DIR}/node_modules/@nestjs" ]]; then
   echo "ERROR: ${NEW_RELEASE_DIR}/node_modules does not look like a real production install (no @nestjs packages found). Aborting; live symlink untouched."
   exit 1
 fi
-echo "Verified: ${NEW_RELEASE_API_DIR} has a built dist/, start-production.mjs, and a populated node_modules. Live install at ${LIVE_DIR} (-> ${PRE_DEPLOY_RELEASE}) has not been touched yet."
+echo "Verified: ${NEW_RELEASE_API_DIR} has a built dist/, start-production.mjs and its src/seed/tsconfig prerequisites, and a populated node_modules with no dangling @rad/* symlinks. Live install at ${LIVE_DIR} (-> ${PRE_DEPLOY_RELEASE}) has not been touched yet."
 
 # Done with the staged tarball — don't let repeated deploys accumulate disk usage.
 rm -f "$ARTIFACT_PATH"

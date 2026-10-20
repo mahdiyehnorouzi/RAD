@@ -61,6 +61,59 @@ push, workflow_dispatch-deploy, workflow_dispatch-build-only) standalone and con
 produces the intended boolean outcome — see "Validation performed" below for the exact cases
 checked.
 
+## Artifact-packaging bugs found by actually extracting and running the artifact
+
+Before the artifact-based deploy could be trusted, the exact tarball the `build-artifact` job
+produces was built, extracted into an isolated directory, and actually run — `node
+dist/main.js` first, then the real production entrypoint
+(`scripts/start-production.mjs`) — against a disposable, throwaway local Postgres instance (never
+anything shared or persistent). This surfaced three real defects a "does the tarball contain
+`dist/` and `node_modules`" check would have missed entirely:
+
+1. **Broken workspace symlinks.** `node_modules/@rad/*` are symlinks to sibling workspace
+   directories (`packages/artworks`, `packages/types`, ...); the original package list never
+   included `packages/` at all, so every one of those was left dangling after extraction. Fixed
+   by including `packages/` in the tarball. `@rad/admin` and `@rad/storefront` are hoisted into
+   `node_modules/@rad/` purely because the OTHER two workspaces need them — api's own
+   `package.json` depends on none of the workspace packages except `@rad/artworks` — so those two
+   symlinks are removed explicitly before archiving rather than shipped (wasteful) or left
+   dangling (the thing being fixed).
+2. **A dependency hoisted outside the root `node_modules`.** npm workspaces doesn't guarantee
+   every dependency lands in the shared root — `@aws-sdk/client-s3` (a real, directly-used
+   dependency of `apps/api`) was hoisted into `apps/api/node_modules` instead, which Node checks
+   *before* the root when resolving a `require()` from `apps/api/dist/...`. Shipping only the root
+   `node_modules` produced `Error: Cannot find module '@aws-sdk/client-s3'` the moment the storage
+   module loaded — confirmed by actually running the extracted artifact, not by inspecting the
+   tarball's contents. Fixed by including `apps/api/node_modules` in the tarball whenever it
+   exists (it's a lockfile-dependent hoisting outcome, not guaranteed to exist on every future
+   lockfile change, so this is included opportunistically rather than required).
+3. **`start-production.mjs` runs against TypeScript source, not `dist/`.** Its
+   `sync-schema.ts`/`seed/ensure-staff.ts` steps run via `tsx` directly against
+   `apps/api/src/...` and `apps/api/seed/...` — neither of which the original artifact shipped at
+   all — and `tsx`'s own module resolution for a dependency that ships raw `.ts` alongside its
+   compiled `.js` (TypeORM does) silently misresolved without the real `tsconfig.json`/
+   `tsconfig.build.json` (api's own and the repo root's) present, throwing an opaque
+   `Reflect.getMetadata` `TypeError` with no mention of a missing file. Fixed by shipping
+   `apps/api/src`, `apps/api/seed`, and both sets of tsconfig files.
+
+With all three fixed, `scripts/start-production.mjs` was re-run end to end from the corrected,
+extracted artifact against a fresh disposable Postgres with its schema already applied (matching
+real production's "schema already exists, never auto-synced" state — `TYPEORM_SYNCHRONIZE` was
+deliberately left unset, exactly as the deploy script's own guard requires): schema sync correctly
+reported skipped, `ensure-staff.ts` succeeded, NestJS mapped every route, and `/health` reported
+`{"ok":true,...,"db":true}`. (Pointed at a genuinely schema-less database instead — no tables at
+all — `ensure-staff.ts` fails fast with `relation "User" does not exist` and the whole process
+exits; this is correct, pre-existing, intentional behavior matching this repo's own rule against
+ever auto-provisioning a production schema, not a packaging bug, and was confirmed to be
+identical regardless of whether the code arrived via this artifact or the original git-clone path
+— it would never occur against the real production database, which already has its schema.)
+
+`scripts/lib/rollback-api-remote.sh` (unchanged by this PR, reused as-is by the post-smoke-test
+rollback step) was separately verified by staging two fake "releases" and a manifest recording
+the first as pre-deploy, running the script non-interactively with `systemctl`/`curl` stubbed out,
+and confirming it read the manifest, swapped the symlink back to exactly the release the manifest
+named, and restored the matching env snapshot.
+
 ## Phase A — what was already there vs. what this adds
 
 **Already working, reused as-is (per the mission's "reuse existing scripts/workflows"):**

@@ -136,16 +136,64 @@ jobs:
       # running API actually needs, never TypeScript/ESLint/test tooling.
       - run: npm prune --omit=dev
 
+      # What actually has to be in this tarball, confirmed by extracting a
+      # real build and running scripts/start-production.mjs against a
+      # disposable throwaway Postgres (not just `node dist/main.js`) end to
+      # end — a naive "node_modules + dist" package LOOKS complete but
+      # fails at runtime in three distinct ways:
+      #   1. npm workspaces hoists SOME dependencies into
+      #      apps/api/node_modules instead of the root (e.g. this repo's
+      #      @aws-sdk/client-s3 landed there) — Node's resolution checks
+      #      apps/api/node_modules BEFORE the root, so a package missing
+      #      from root but present only at apps/api/node_modules throws
+      #      MODULE_NOT_FOUND if that nested directory isn't shipped too.
+      #   2. node_modules/@rad/* are symlinks to sibling workspace
+      #      directories (packages/artworks, packages/types, ...) — only
+      #      shipping apps/api/dist leaves every one of those dangling.
+      #      api's own package.json only actually depends on
+      #      @rad/artworks, so packages/ covers every symlink that can
+      #      matter; @rad/admin and @rad/storefront (hoisted purely
+      #      because OTHER workspaces need them) are removed explicitly
+      #      below rather than shipped or left dangling.
+      #   3. start-production.mjs runs scripts/sync-schema.ts and
+      #      seed/ensure-staff.ts via `tsx` directly against TypeScript
+      #      SOURCE (they import from ../src/...), not the compiled dist/
+      #      — and tsx's module resolution for a dependency like TypeORM
+      #      (which ships raw .ts decorator sources alongside its
+      #      compiled .js) silently misresolves without the real
+      #      tsconfig.json files present. apps/api/src, apps/api/seed, and
+      #      both tsconfig files are therefore load-bearing, not optional.
       - name: Package artifact
         run: |
           set -euo pipefail
-          for required in node_modules apps/api/dist/main.js apps/api/package.json apps/api/scripts/start-production.mjs VERSION; do
+          for required in \
+            node_modules packages \
+            apps/api/dist/main.js apps/api/src apps/api/seed/ensure-staff.ts \
+            apps/api/package.json apps/api/scripts/start-production.mjs \
+            apps/api/tsconfig.json apps/api/tsconfig.build.json tsconfig.json \
+            VERSION; do
             if [[ ! -e "$required" ]]; then
               echo "::error::${required} missing before packaging — build or prune step above did not produce what was expected."
               exit 1
             fi
           done
-          tar -czf api-release.tar.gz node_modules apps/api/dist apps/api/package.json apps/api/scripts VERSION
+          # Hoisted purely for OTHER workspaces (admin/storefront) — api
+          # depends on neither, and their targets are intentionally not
+          # shipped, so remove these two specific symlinks rather than
+          # leave them dangling in the artifact.
+          rm -f node_modules/@rad/admin node_modules/@rad/storefront
+          # apps/api/node_modules is npm workspace hoisting's overflow —
+          # present whenever the lockfile puts one of api's own
+          # dependencies there instead of the shared root (confirmed for
+          # @aws-sdk/client-s3 as of this writing); included whenever it
+          # exists, never required to, since a future lockfile change
+          # could legitimately hoist everything to the root instead.
+          tar_paths=(node_modules apps/api/dist apps/api/src apps/api/seed \
+            apps/api/package.json apps/api/scripts \
+            apps/api/tsconfig.json apps/api/tsconfig.build.json tsconfig.json \
+            packages VERSION)
+          [[ -d apps/api/node_modules ]] && tar_paths+=(apps/api/node_modules)
+          tar -czf api-release.tar.gz "${tar_paths[@]}"
           ls -lh api-release.tar.gz
 
       - uses: actions/upload-artifact@v4
