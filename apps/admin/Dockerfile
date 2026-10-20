@@ -36,5 +36,10 @@ ENV NODE_ENV=production \
 COPY --from=builder /repo/apps/admin/.next/standalone ./
 COPY --from=builder /repo/apps/admin/.next/static ./apps/admin/.next/static
 COPY --from=builder /repo/apps/admin/public ./apps/admin/public
+# docker-compose.frontend-vps.yml runs this container as uid:gid 1000:1000,
+# but every COPY above lands root-owned (Docker's default) — without this,
+# the server can't write its runtime image-optimizer cache dir. See the
+# matching comment in apps/storefront/Dockerfile for the full explanation.
+RUN chown -R 1000:1000 /app
 EXPOSE 3000
 CMD ["node", "apps/admin/server.js"]

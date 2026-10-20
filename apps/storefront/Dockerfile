@@ -51,5 +51,11 @@ ENV NODE_ENV=production \
 COPY --from=builder /repo/apps/storefront/.next/standalone ./
 COPY --from=builder /repo/apps/storefront/.next/static ./apps/storefront/.next/static
 COPY --from=builder /repo/apps/storefront/public ./apps/storefront/public
+# docker-compose.frontend-vps.yml runs this container as uid:gid 1000:1000,
+# but every COPY above lands root-owned (Docker's default) — without this,
+# the server can't create apps/storefront/.next/cache/images at runtime
+# (Next's on-demand image-optimizer cache dir), so every /_next/image
+# request MISSes forever and re-runs the full resize/encode every time.
+RUN chown -R 1000:1000 /app
 EXPOSE 3000
 CMD ["node", "apps/storefront/server.js"]
