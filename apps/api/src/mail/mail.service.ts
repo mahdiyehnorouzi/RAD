@@ -1,12 +1,14 @@
-import { Injectable, InternalServerErrorException, Logger } from "@nestjs/common";
+import {
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+} from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import nodemailer from "nodemailer";
 import type { Transporter } from "nodemailer";
 import type SMTPTransport from "nodemailer/lib/smtp-transport";
 
-type TransportFactory = (
-  options: SMTPTransport.Options,
-) => Transporter;
+type TransportFactory = (options: SMTPTransport.Options) => Transporter;
 
 @Injectable()
 export class MailService {
@@ -51,8 +53,8 @@ export class MailService {
   isConfigured() {
     return Boolean(
       this.config.get<string>("SMTP_HOST") &&
-        this.config.get<string>("SMTP_USER") &&
-        this.config.get<string>("SMTP_PASS"),
+      this.config.get<string>("SMTP_USER") &&
+      this.config.get<string>("SMTP_PASS"),
     );
   }
 

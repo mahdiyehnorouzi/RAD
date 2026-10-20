@@ -78,7 +78,9 @@ after(async () => {
 });
 
 beforeEach(async () => {
-  await users.clear();
+  // cascade: PasswordResetToken FKs to users, so a plain TRUNCATE is
+  // refused by Postgres once that table exists in the synced schema.
+  await users.clear({ cascade: true });
   process.env.ADMIN_EMAIL = ADMIN_EMAIL;
   process.env.ADMIN_PASSWORD = ORIGINAL_PASSWORD;
   delete process.env.EDITOR_EMAIL;

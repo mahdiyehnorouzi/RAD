@@ -35,10 +35,7 @@ function fakeTransport(sendMail: (options: unknown) => Promise<unknown>) {
 
 describe("MailService: configuration validation", () => {
   test("isConfigured() is false when any of SMTP_HOST/SMTP_USER/SMTP_PASS is missing", () => {
-    assert.equal(
-      new MailService(new ConfigService({})).isConfigured(),
-      false,
-    );
+    assert.equal(new MailService(new ConfigService({})).isConfigured(), false);
     assert.equal(
       new MailService(new ConfigService({ SMTP_HOST: "h" })).isConfigured(),
       false,

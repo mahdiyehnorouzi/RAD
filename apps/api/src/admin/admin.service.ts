@@ -546,9 +546,8 @@ export class AdminService {
 
   /** Single-use (deleted on consume by `AuthService.resetPassword`), expiring, replaces any prior token for this user. */
   private async issueInviteToken(user: User) {
-    const { code, tokenHash, expiresAt } = generateVerificationCode(
-      INVITE_TOKEN_TTL_MS,
-    );
+    const { code, tokenHash, expiresAt } =
+      generateVerificationCode(INVITE_TOKEN_TTL_MS);
     await this.resetTokens.delete({ userId: user.id });
     await this.resetTokens.save(
       this.resetTokens.create({ userId: user.id, tokenHash, expiresAt }),

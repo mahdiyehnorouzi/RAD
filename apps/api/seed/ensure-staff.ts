@@ -39,7 +39,9 @@ async function upsertStaff(
     return;
   }
   const passwordHash = await hash(password, 12);
-  await users.save(users.create({ ...account, passwordHash, status: "active" }));
+  await users.save(
+    users.create({ ...account, passwordHash, status: "active" }),
+  );
 }
 
 /** Replaces a password that matches the public dev default with an unknowable one. */

@@ -188,7 +188,11 @@ describe("inviting a new admin member", () => {
     const user = await dataSource
       .getRepository(User)
       .findOne({ where: { email: "broken@rad.test" } });
-    assert.equal(user, null, "the account must not survive a failed invite send");
+    assert.equal(
+      user,
+      null,
+      "the account must not survive a failed invite send",
+    );
 
     // Retrying after the transient failure clears must work cleanly —
     // proves there's no leftover conflict from the rolled-back attempt.
@@ -299,9 +303,11 @@ describe("resending an invite", () => {
     const firstCode = sentInvites[0].code;
 
     const resent = await admin.resendInvite(
-      (await dataSource
-        .getRepository(User)
-        .findOneOrFail({ where: { email: "slow@rad.test" } })).id,
+      (
+        await dataSource
+          .getRepository(User)
+          .findOneOrFail({ where: { email: "slow@rad.test" } })
+      ).id,
     );
     assert.equal(resent.email, "slow@rad.test");
     assert.equal(sentInvites.length, 2);
@@ -343,9 +349,6 @@ describe("resending an invite", () => {
     const user = await dataSource
       .getRepository(User)
       .findOneOrFail({ where: { email: "active@rad.test" } });
-    await assert.rejects(
-      () => admin.resendInvite(user.id),
-      ConflictException,
-    );
+    await assert.rejects(() => admin.resendInvite(user.id), ConflictException);
   });
 });
