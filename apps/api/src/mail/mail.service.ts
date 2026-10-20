@@ -1,7 +1,9 @@
 import {
+  Inject,
   Injectable,
   InternalServerErrorException,
   Logger,
+  Optional,
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import nodemailer from "nodemailer";
@@ -10,20 +12,35 @@ import type SMTPTransport from "nodemailer/lib/smtp-transport";
 
 type TransportFactory = (options: SMTPTransport.Options) => Transporter;
 
+/**
+ * Injection token for `createTransport`. A plain `TransportFactory`-typed
+ * constructor param has no runtime type Nest can resolve (TS erases the
+ * function-type alias to `Function` in emitted `design:paramtypes`
+ * metadata) — Nest's DI container tried to inject a `Function` provider
+ * that no module registers, throwing `UnknownDependenciesException` on
+ * boot. An explicit token sidesteps that; `@Optional()` lets the default
+ * (real nodemailer) apply whenever nothing overrides the token, which is
+ * every environment except tests.
+ */
+export const MAIL_TRANSPORT_FACTORY = Symbol("MAIL_TRANSPORT_FACTORY");
+
 @Injectable()
 export class MailService {
   private readonly logger = new Logger(MailService.name);
   private transporter: Transporter | null = null;
 
-  /**
-   * `createTransport` is injectable (defaults to nodemailer's real one) so
-   * tests can supply a fake transport instead of opening real sockets —
-   * nodemailer's `createTransport` doesn't touch the network itself, but a
-   * fake lets tests assert on what would have been sent and simulate
-   * send-time failures deterministically.
-   */
   constructor(
-    private readonly config: ConfigService,
+    // Explicit @Inject(ConfigService) rather than relying on the reflected
+    // type: this repo's test runner (`tsx --test`, see AGENTS.md) transpiles
+    // via esbuild, which does not implement `emitDecoratorMetadata` — under
+    // it, implicit type-based params silently resolve to `undefined`
+    // instead of throwing, which is exactly the class of bug fixed below.
+    // Explicit tokens make DI resolution runner-independent, so a real
+    // Nest DI container can be exercised in tests (see mail.module.spec.ts)
+    // the same way production (`nest build`) already resolves it correctly.
+    @Inject(ConfigService) private readonly config: ConfigService,
+    @Optional()
+    @Inject(MAIL_TRANSPORT_FACTORY)
     private readonly createTransport: TransportFactory = nodemailer.createTransport.bind(
       nodemailer,
     ),
