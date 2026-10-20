@@ -1,0 +1,18 @@
+# Install as /etc/sudoers.d/rad-runner on the production VPS (46.34.163.16),
+# mode 0440, owned by root:root. Validate with `visudo -cf` before and after
+# installing.
+#
+# Grants the UNPRIVILEGED `rad-runner` account (the GitHub Actions
+# self-hosted runner service user, label `rad-production`) exactly three
+# privileged operations, each a fixed, root-owned, non-rad-runner-writable
+# wrapper script under /usr/local/bin that itself hardcodes the production
+# paths/host/service/port and strictly validates its own arguments (see the
+# wrapper scripts in this directory). No other command, no shell, and no
+# interactive sudo session is ever granted to rad-runner. In particular:
+#   - rad-runner is NOT in the `docker` group (that is root-equivalent).
+#   - rad-runner has NO general sudo rule, no `sudo -i`, no `/bin/bash`.
+#   - rad-runner cannot edit the wrapper scripts themselves (root-owned,
+#     0750, group rad-runner for read+execute only).
+rad-runner ALL=(root) NOPASSWD: /usr/local/bin/rad-release-api.sh
+rad-runner ALL=(root) NOPASSWD: /usr/local/bin/rad-rollback-api.sh
+rad-runner ALL=(root) NOPASSWD: /usr/local/bin/rad-release-frontend.sh

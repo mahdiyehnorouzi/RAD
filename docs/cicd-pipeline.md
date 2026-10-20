@@ -209,7 +209,19 @@ Everything above is implemented and will run automatically once the following ex
 it can be done from a CI workflow or from this coding session** — it needs direct VPS access
 and/or GitHub repository admin access.
 
-### 1. Fix SSH authentication (`Permission denied (publickey,password)`)
+### 1. Fix SSH authentication (`Permission denied (publickey,password)`) — **superseded, see Phase F**
+
+**Superseded by Phase F below.** This section described provisioning SSH keys so a
+GitHub-hosted runner could reach the VPS; that approach is what's actually broken (GitHub-hosted
+runners cannot reach the VPS on port 22 at all) and has been replaced by moving the release jobs
+to the self-hosted `rad-production` runner, which needs no inbound SSH. Kept here only as
+historical context for why the workflows looked the way they did; do not provision these SSH
+keys/secrets as part of the current setup — follow "Phase F — self-hosted `rad-production` runner
+migration" instead.
+
+<details>
+<summary>Original (superseded) SSH-based instructions</summary>
+
 
 Do this **on the VPS itself**, so the private key never has to be typed, pasted, or transit
 through anything other than the VPS → GitHub Secrets:
@@ -258,7 +270,9 @@ only for the exact commands it needs (`systemctl restart rad-api.service`,
 real minimal set turns out to be), and set `RAD_API_USER` (repository/environment variable) to
 that user. This is a meaningful hardening step but a separate piece of work from "fix the
 failing deploy", since it requires deciding and testing the exact sudo rule set against a real
-host.
+host. (This is now exactly what Phase F's scoped sudo wrappers do.)
+
+</details>
 
 ### 2. Make the two GitHub Environments hands-off
 
@@ -329,6 +343,138 @@ a way that's blocking a hotfix) or you need to re-release an older, already-merg
   commit SHA you want, run directly on the VPS (or via the same manual `workflow_dispatch` path
   if that commit's images are still in GHCR, which they are unless GHCR's own retention has
   pruned them).
+
+## Phase F — self-hosted `rad-production` runner migration (SSH removal)
+
+**Problem this fixes:** GitHub-hosted runners cannot reach the VPS on port 22 (no inbound
+SSH), so both release workflows' `release` jobs failed outright. **Fix:** only the release
+stage (the job that actually touches production) moves to the already-registered self-hosted
+runner (`rad-production`, user `rad-runner`, `/opt/actions-runner`) — CI, build, and
+artifact/image publishing stay on GitHub-hosted `ubuntu-latest` runners, unchanged. The runner
+already lives on the VPS and reaches GitHub over an **outbound** connection (the same mechanism
+it already uses to report Idle); nothing about inbound firewall rules changes, and no port is
+opened.
+
+### What changed
+
+- `deploy-api-vps.yml`'s and `deploy-frontend-vps.yml`'s `release` jobs: `runs-on` changed from
+  `ubuntu-latest` to `[self-hosted, rad-production]`. Every other job in both workflows
+  (`checks`, `should-release`/`should-deploy`, `build-artifact`/`build-images`,
+  `verify-outcome`) is unchanged and still runs on `ubuntu-latest`.
+- All SSH steps (`Configure pinned SSH identity`, `Remove runner SSH credentials`, and every
+  `ssh`/`scp` invocation) are removed from both workflows. The release steps now run as **local**
+  shell commands on the runner, since the runner already is the production host.
+- The one privileged operation each release job needs (extract-and-restart for the API;
+  `docker compose pull`/`up` for the frontend) is delegated to a narrowly-scoped, root-owned
+  wrapper script invoked via a sudoers rule restricted to that exact script path — see
+  `infra/rad-production-runner/` (three wrapper scripts, a sudoers file, and a setup `README.md`).
+  `rad-runner` itself is granted **no** general sudo rule, **no** Docker-socket/`docker`-group
+  membership, and no ability to modify the wrapper scripts it's allowed to invoke (root-owned,
+  mode `0750`).
+- Artifact integrity: the API artifact's SHA-256 checksum is computed and uploaded alongside the
+  tarball, and re-verified on the runner (`sha256sum -c`) before the privileged extraction step
+  runs. Both the API artifact and both frontend images now get a GitHub-native **build
+  provenance attestation** (`actions/attest-build-provenance`), independently re-verified
+  (`gh attestation verify`) on the self-hosted runner before anything privileged touches them —
+  this is the "validate artifact integrity and image provenance before release" requirement.
+- Frontend images are deployed by **digest**, not by the mutable `:<sha>`/`:latest` tags alone —
+  `build-images` now exposes `storefront_ref`/`admin_ref` (`ghcr.io/.../rad-storefront@sha256:...`)
+  and `docker-compose.frontend-vps.yml` was changed to accept `STOREFRONT_IMAGE_REF`/
+  `ADMIN_IMAGE_REF` (falling back to the old `:latest` tag only for a manual, interactive
+  `docker compose up`). The frontend wrapper script refuses any ref that isn't a
+  `ghcr.io/<owner>/rad-(storefront|admin)@sha256:<64-hex>` reference.
+- Everything this task's requirement 5 names — exact commit SHA deployment, affected-service
+  detection, API-first sequencing, health checks, automatic rollback, concurrency protection — is
+  **unchanged in behavior**, only in *where* it runs (local commands on `rad-production` instead
+  of commands sent over SSH from `ubuntu-latest`). The concurrency groups
+  (`rad-api-vps-production`, `rad-frontend-vps-production`), `should-release`/`should-deploy`
+  logic, `verify-outcome` jobs, and all three deploy scripts' actual release/rollback mechanics
+  are untouched.
+- Database/environment files: still never touched by any part of this migration — the wrapper
+  scripts only ever call the pre-existing `deploy-api-remote-artifact.sh`/`rollback-api-remote.sh`
+  (pinned at a root-owned path outside the git workspace, see below) and `docker compose`; neither
+  runs a migration, a seed, or any destructive database operation. No change here.
+
+### Why untrusted PR code can never reach `rad-production`
+
+- `ci.yml` (the only workflow any `pull_request` trigger runs) uses `runs-on: ubuntu-latest`
+  everywhere — grepped and confirmed; it never references the `rad-production` label.
+- Both release workflows' `release` jobs are reached only via `workflow_call` from `deploy.yml`
+  (triggered by `push` to `main`, never `pull_request`) or a manual `workflow_dispatch` — both
+  require the change to already be on `main` or require a human with repository write access to
+  dispatch it explicitly with the exact commit SHA.
+- The `production-api-vps`/`production-frontend-vps` GitHub Environments' **Deployment branches**
+  restriction (`main` only) is a second, independent gate on top of the label match.
+- **Recommended, requires a paid plan:** a dedicated runner group scoped to this repository and to
+  exactly these two workflow files (see `infra/rad-production-runner/README.md` §1) — defense in
+  depth beyond the label/environment checks above, which are sufficient on their own but don't
+  rely on a single mechanism.
+
+### Why `rad-runner` never gets unrestricted sudo, root, or the Docker socket
+
+Docker-socket access (via the `docker` group) is root-equivalent — a process that can talk to the
+Docker daemon can bind-mount the host filesystem into a container and read/write anything as
+root. Unrestricted `sudo` is root, full stop. Neither is granted. Instead:
+
+- `rad-runner` can run exactly three fixed, root-owned scripts via `sudo`, each accepting only the
+  specific arguments it independently re-validates (see each script's own header comment in
+  `infra/rad-production-runner/`): `rad-release-api.sh` (artifact path must resolve under a fixed
+  staging directory; commit SHA must be 40 hex chars), `rad-rollback-api.sh` (no arguments at
+  all — always restores whatever the deploy manifest recorded), `rad-release-frontend.sh` (image
+  refs must be digest-pinned GHCR references matching a fixed pattern; services must be a subset
+  of `{storefront, admin}`).
+- The scripts these wrappers `exec` (`deploy-api-remote-artifact.sh`, `rollback-api-remote.sh`)
+  are pinned at `/opt/rad-releases/.bin/`, **not** inside the runner's own git-workspace checkout
+  — root only ever executes code a human with VPS access explicitly reviewed and installed there,
+  never whatever happens to be in the latest `main` checkout the CI job pulled.
+- `docker compose pull`/`up` only ever run inside the root-owned `rad-release-frontend.sh`
+  wrapper; `rad-runner` itself never touches Docker directly for any mutating operation (reading
+  container health via `docker inspect` is safe and unprivileged, and is the only Docker command
+  `rad-runner` runs directly).
+
+See `infra/rad-production-runner/README.md` for the complete one-time setup this depends on
+(runner labels/group, the unprivileged `rad-runner` account, installing the three wrapper
+scripts + sudoers rule + pinned release-script copies, the GHCR pull-credential setup, and the
+GitHub Environment settings).
+
+### Migration plan (order of operations)
+
+This session **did not** touch the live VPS or GitHub repository settings — all of the following
+is a one-time setup a human with VPS root access and GitHub repository admin access must perform,
+in this order, before merging/relying on this PR's workflow changes:
+
+1. Confirm/create the dedicated `rad-runner` account (not root, not in the `docker` group) and
+   confirm the runner service runs as that user (`infra/rad-production-runner/README.md` §2).
+2. Install the three wrapper scripts (§3) and the sudoers rule (§4).
+3. Pin `deploy-api-remote-artifact.sh`/`rollback-api-remote.sh` at `/opt/rad-releases/.bin/` (§5)
+   and create the `rad-runner`-owned `/opt/rad-releases/.incoming` staging directory (§6).
+4. Provision read-only GHCR pull credentials and `docker login` as root (§7).
+5. Confirm the runner's labels include `rad-production` (and, if available, scope its runner
+   group to this repo + these two workflow files) (§1).
+6. Merge this PR's workflow changes to `main`.
+7. Trigger one real release of each workflow (a real push that touches `apps/api/**` for the API
+   path; one that touches `apps/storefront/**`/`apps/admin/**` for the frontend path, or the
+   `workflow_dispatch` emergency path for either) and watch it end-to-end in the Actions tab.
+8. Only once both have been verified healthy: delete the now-unused
+   `RAD_API_SSH_PRIVATE_KEY`/`RAD_API_SSH_KNOWN_HOSTS`/`RAD_FRONTEND_SSH_PRIVATE_KEY`/
+   `RAD_FRONTEND_SSH_KNOWN_HOSTS` secrets from **Settings → Secrets and variables → Actions** — a
+   stale, unused private key is still a credential someone could leak, and keeping it serves no
+   purpose once nothing reads it.
+
+### Rollback plan (for this migration itself)
+
+If the self-hosted release path misbehaves after cutover, reverting is a single `git revert` of
+the commit(s) in this PR — the previous SSH-based workflows still worked mechanically (the only
+thing broken was GitHub-hosted runners' inbound SSH being blocked), so a revert restores them
+exactly, **as long as the SSH secrets from step 8 above have not yet been deleted**. For that
+reason: do not delete the SSH keys/secrets until the self-hosted path has had at least one fully
+verified real release on *each* workflow (API and frontend) — keep both paths viable until this
+migration is proven, then clean up.
+
+If only the self-hosted *runner* itself is unhealthy (not the workflow logic) while a release is
+in-flight, nothing about the existing automatic/manual rollback behavior changes: `release_script`
+failing still triggers the artifact script's own internal rollback; a failed smoke test still
+triggers `rad-rollback-api.sh`/the frontend rollback step, exactly as before this migration.
 
 ## What still needs a real, live verification (Phase E)
 

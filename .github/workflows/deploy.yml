@@ -24,6 +24,8 @@ name: Deploy (automatic, on push to main)
 permissions:
   contents: read
   packages: write
+  id-token: write      # required by actions/attest-build-provenance in the called release workflows
+  attestations: write  # required to publish build-provenance attestations
 
 on:
   push:

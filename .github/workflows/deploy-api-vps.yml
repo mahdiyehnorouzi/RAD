@@ -16,6 +16,16 @@
 # run once, manually, on the VPS — scripts/deploy-api-systemd(-artifact).sh
 # refuses to run otherwise, on purpose. See docs/opt-rad-release-bootstrap.md.
 #
+# The `release` job below runs on the dedicated `rad-production` SELF-HOSTED
+# runner (not ubuntu-latest) — it lives on the VPS itself, so no inbound SSH
+# is needed at all; the runner polls GitHub outbound, the same way it
+# already does while Idle. `build-artifact` (above) still runs on
+# ubuntu-latest, as does every PR/CI job — untrusted PR code never runs on
+# `rad-production`. See infra/rad-production-runner/README.md for the
+# required one-time VPS setup (wrapper scripts, sudoers rule, runner
+# labels/group) and docs/cicd-pipeline.md for the full migration/rollback
+# plan.
+#
 # Two ways in:
 #   - workflow_call — the normal, fully automatic path. .github/workflows/deploy.yml
 #     invokes this after a push to main whose changed files affect the API
@@ -41,6 +51,11 @@
 # actually be hands-off.
 
 name: API VPS release
+
+permissions:
+  contents: read
+  id-token: write      # required by actions/attest-build-provenance
+  attestations: write  # required to publish the build-provenance attestation
 
 on:
   workflow_dispatch:
@@ -196,58 +211,94 @@ jobs:
           tar -czf api-release.tar.gz "${tar_paths[@]}"
           ls -lh api-release.tar.gz
 
+      - name: Compute artifact checksum (integrity attestation)
+        run: |
+          set -euo pipefail
+          sha256sum api-release.tar.gz > api-release.tar.gz.sha256
+          cat api-release.tar.gz.sha256
+
       - uses: actions/upload-artifact@v4
         with:
           name: api-release-${{ inputs.commit_sha }}
-          path: api-release.tar.gz
+          path: |
+            api-release.tar.gz
+            api-release.tar.gz.sha256
           retention-days: 7
           if-no-files-found: error
 
+      # Generates a GitHub-native build-provenance attestation (signed,
+      # verifiable via `gh attestation verify`) binding this exact artifact
+      # to this exact workflow run and commit — part of requirement 8
+      # ("validate artifact integrity and image provenance before
+      # release"). Verified again, independently, on the runner right
+      # before extraction (see the release job below) rather than trusted
+      # here.
+      - name: Attest artifact build provenance
+        uses: actions/attest-build-provenance@v1
+        with:
+          subject-path: api-release.tar.gz
+
+  # Everything from here on runs on the dedicated `rad-production`
+  # self-hosted runner, which lives ON the production VPS itself — this is
+  # the one change that fixes "GitHub-hosted runners cannot SSH to the VPS
+  # on port 22": there is no SSH hop left, inbound or outbound. The runner
+  # polls GitHub over an outbound connection for work (same mechanism as
+  # its existing Idle state) and then runs these steps as LOCAL commands.
+  # No PR-triggered workflow ever uses this runner label (ci.yml only runs
+  # on ubuntu-latest), and the production-api-vps GitHub Environment's
+  # deployment-branch restriction (main only) plus the optional
+  # workflow-scoped runner group (see infra/rad-production-runner/README.md)
+  # are the two things that keep an untrusted branch/workflow from ever
+  # landing a job here.
+  #
+  # `rad-runner` (the runner's service account) is NOT root and has no
+  # general sudo rule, no Docker socket access. The one privileged
+  # operation this job needs — extracting a verified artifact and
+  # restarting rad-api.service — goes through a single fixed, root-owned,
+  # argument-validating wrapper script
+  # (infra/rad-production-runner/rad-release-api.sh), invoked via a sudoers
+  # rule scoped to exactly that one script path with no extra arguments
+  # accepted beyond what the script itself validates. See
+  # infra/rad-production-runner/README.md for the one-time VPS setup this
+  # depends on.
   release:
     name: Release API via rad-api.service
     needs: [should-release, build-artifact]
     if: needs.should-release.outputs.yes == 'true' && github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, rad-production]
     environment: production-api-vps
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/download-artifact@v4
+      - name: Download verified artifact (unprivileged — rad-runner owns this directory only)
+        uses: actions/download-artifact@v4
         with:
           name: api-release-${{ inputs.commit_sha }}
+          path: /opt/rad-releases/.incoming
 
-      - name: Configure pinned SSH identity
-        id: ssh
+      - name: Verify artifact checksum and build provenance before touching anything privileged
         env:
-          SSH_KEY: ${{ secrets.RAD_API_SSH_PRIVATE_KEY }}
-          KNOWN_HOSTS: ${{ secrets.RAD_API_SSH_KNOWN_HOSTS }}
+          GH_TOKEN: ${{ github.token }}
         run: |
-          test -n "$SSH_KEY" && test -n "$KNOWN_HOSTS"
-          install -m 700 -d "$HOME/.ssh"
-          printf '%s\n' "$SSH_KEY" > "$HOME/.ssh/id_ed25519"
-          printf '%s\n' "$KNOWN_HOSTS" > "$HOME/.ssh/known_hosts"
-          chmod 600 "$HOME/.ssh/id_ed25519" "$HOME/.ssh/known_hosts"
+          set -euo pipefail
+          cd /opt/rad-releases/.incoming
+          sha256sum -c api-release.tar.gz.sha256
+          gh attestation verify api-release.tar.gz \
+            --repo "${{ github.repository }}" \
+            --predicate-type https://slsa.dev/provenance/v1
+          echo "OK: checksum matches and build-provenance attestation verified for api-release.tar.gz (commit ${{ inputs.commit_sha }})."
 
-      # Transfers the artifact built above and extracts it — preflight,
-      # atomic symlink swap, health check, and automatic rollback on
-      # failure (code + env-file safety checks only — it never touches
-      # the database), all identical to the previous clone-and-build
-      # script, just without the clone-and-build. RAD_API_HOST/USER/etc.
-      # below must match the verified production topology; override via
-      # repository/environment variables if any of these ever change.
-      - name: Run systemd release script (artifact path)
+      # The ONLY privileged step in this job. rad-runner has sudo rights to
+      # run exactly this one root-owned script with exactly these two
+      # arguments (both independently re-validated by the script itself —
+      # see its header). Everything about the release mechanics (atomic
+      # symlink swap, env-file guard checks, health poll, automatic
+      # rollback on a failed restart or failed health check) is unchanged
+      # from before this migration — see scripts/lib/deploy-api-remote-artifact.sh.
+      - name: Run systemd release script (artifact path, via scoped sudo wrapper)
         id: release_script
-        env:
-          RAD_API_HOST: ${{ vars.RAD_API_HOST || '46.34.163.16' }}
-          RAD_API_USER: ${{ vars.RAD_API_USER || 'root' }}
-          RAD_API_LIVE_DIR: ${{ vars.RAD_API_LIVE_DIR || '/opt/rad/apps/api' }}
-          RAD_API_RELEASES_DIR: ${{ vars.RAD_API_RELEASES_DIR || '/opt/rad-releases' }}
-          RAD_API_SERVICE: ${{ vars.RAD_API_SERVICE || 'rad-api.service' }}
-          RAD_API_PORT: ${{ vars.RAD_API_PORT || '4000' }}
-          RAD_API_ENV_FILE: ${{ vars.RAD_API_ENV_FILE || '/etc/rad/api.env' }}
-          RAD_API_COMMIT: ${{ inputs.commit_sha }}
-          RAD_API_ARTIFACT_PATH: api-release.tar.gz
-        run: bash scripts/deploy-api-systemd-artifact.sh
+        run: |
+          sudo -n /usr/local/bin/rad-release-api.sh \
+            /opt/rad-releases/.incoming/api-release.tar.gz \
+            "${{ inputs.commit_sha }}"
 
       # The release script already verified /health on the VPS itself
       # (127.0.0.1:${RAD_API_PORT}) before returning, including a rollback
@@ -321,24 +372,12 @@ jobs:
       # deploy" — exactly the one this specific run needs to undo.
       - name: Roll back after failed smoke test
         id: post_smoke_rollback
-        if: failure() && steps.release_script.outcome == 'success' && steps.ssh.outcome == 'success'
-        env:
-          RAD_API_HOST: ${{ vars.RAD_API_HOST || '46.34.163.16' }}
-          RAD_API_USER: ${{ vars.RAD_API_USER || 'root' }}
-          RAD_API_LIVE_DIR: ${{ vars.RAD_API_LIVE_DIR || '/opt/rad/apps/api' }}
-          RAD_API_RELEASES_DIR: ${{ vars.RAD_API_RELEASES_DIR || '/opt/rad-releases' }}
-          RAD_API_SERVICE: ${{ vars.RAD_API_SERVICE || 'rad-api.service' }}
-          RAD_API_PORT: ${{ vars.RAD_API_PORT || '4000' }}
-          RAD_API_ENV_FILE: ${{ vars.RAD_API_ENV_FILE || '/etc/rad/api.env' }}
+        if: failure() && steps.release_script.outcome == 'success'
         run: |
           set -euo pipefail
-          echo "::warning::Smoke test failed after a healthy-looking deploy — rolling back to the pre-deploy release recorded in ${RAD_API_RELEASES_DIR}/.rollback-manifest.json"
-          SSH_OPTS=(-o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10)
-          ssh "${SSH_OPTS[@]}" "${RAD_API_USER}@${RAD_API_HOST}" bash -s -- \
-            "$RAD_API_LIVE_DIR" "$RAD_API_RELEASES_DIR" "$RAD_API_SERVICE" "$RAD_API_PORT" \
-            "$RAD_API_ENV_FILE" "" "" \
-            < scripts/lib/rollback-api-remote.sh
-          echo "::notice::Post-smoke-test rollback completed and was verified healthy (the remote script itself exits non-zero and fails this step otherwise)."
+          echo "::warning::Smoke test failed after a healthy-looking deploy — rolling back to the pre-deploy release recorded in the release manifest."
+          sudo -n /usr/local/bin/rad-rollback-api.sh
+          echo "::notice::Post-smoke-test rollback completed and was verified healthy (the wrapped script itself exits non-zero and fails this step otherwise)."
 
       - name: Report outcome
         if: always()
@@ -348,14 +387,14 @@ jobs:
           elif [[ "${{ steps.post_smoke_rollback.outcome }}" == "success" ]]; then
             echo "::warning::API release passed its internal health check but FAILED the external smoke test, and was AUTOMATICALLY ROLLED BACK to the previous release. Production is back on the previous known-healthy release; investigate the failed commit before retrying."
           elif [[ "${{ steps.post_smoke_rollback.outcome }}" == "failure" ]]; then
-            echo "::error::Smoke test failed AND the automatic post-smoke-test rollback ALSO FAILED. Production may be in a broken or unknown state. SSH in immediately: systemctl status rad-api.service; journalctl -u rad-api.service -n 100."
+            echo "::error::Smoke test failed AND the automatic post-smoke-test rollback ALSO FAILED. Production may be in a broken or unknown state. Log in to the VPS directly: systemctl status rad-api.service; journalctl -u rad-api.service -n 100."
           else
-            echo "::error::API release failed. scripts/deploy-api-systemd-artifact.sh attempts an automatic rollback on a failed health check — check the 'Run systemd release script (artifact path)' step's log for whether that rollback itself succeeded. If it also failed, SSH in immediately: systemctl status rad-api.service; journalctl -u rad-api.service -n 100."
+            echo "::error::API release failed. The release wrapper attempts an automatic rollback on a failed health check — check the 'Run systemd release script (artifact path, via scoped sudo wrapper)' step's log for whether that rollback itself succeeded. If it also failed, log in to the VPS directly: systemctl status rad-api.service; journalctl -u rad-api.service -n 100."
           fi
 
-      - name: Remove runner SSH credentials
+      - name: Clean up staged artifact (unprivileged — rad-runner's own directory)
         if: always()
-        run: rm -f "$HOME/.ssh/id_ed25519" "$HOME/.ssh/known_hosts"
+        run: rm -rf /opt/rad-releases/.incoming/*
 
   # Independent of whatever the `release` job's own `if:` condition
   # concluded — catches exactly the class of bug this was added for: a

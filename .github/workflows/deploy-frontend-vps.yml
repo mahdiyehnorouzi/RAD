@@ -35,6 +35,12 @@
 #
 # See docs/cicd-pipeline.md for the production-frontend-vps environment's
 # required protection-rule shape for the automatic path to be hands-off.
+#
+# The `release` job runs on the dedicated `rad-production` SELF-HOSTED
+# runner (not ubuntu-latest) — it lives on the VPS itself, so no inbound SSH
+# is needed at all. `build-images` still runs on ubuntu-latest, as does
+# every PR/CI job — untrusted PR code never runs on `rad-production`. See
+# infra/rad-production-runner/README.md for the required one-time VPS setup.
 
 name: Frontend VPS release
 
@@ -122,9 +128,20 @@ jobs:
     permissions:
       contents: read
       packages: write
+      id-token: write      # required by actions/attest-build-provenance
+      attestations: write  # required to publish the build-provenance attestation
     outputs:
       storefront_tag: ${{ github.sha }}
       admin_tag: ${{ github.sha }}
+      # Digest-pinned references — what the release job actually deploys.
+      # A tag (even the commit-SHA tag) can in principle be repushed to
+      # point at different bytes later; the digest cannot. This is the
+      # "validate image provenance before release" boundary: the release
+      # job never trusts "whatever :<sha> currently resolves to in GHCR",
+      # it deploys exactly the digest this build produced, after
+      # independently re-verifying that digest's attestation.
+      storefront_ref: ${{ steps.storefront_build.outputs.digest && format('ghcr.io/{0}/rad-storefront@{1}', github.repository_owner, steps.storefront_build.outputs.digest) }}
+      admin_ref: ${{ steps.admin_build.outputs.digest && format('ghcr.io/{0}/rad-admin@{1}', github.repository_owner, steps.admin_build.outputs.digest) }}
     steps:
       - uses: actions/checkout@v4
 
@@ -138,6 +155,7 @@ jobs:
 
       # NEXT_PUBLIC_* are inlined into the client bundle at build time.
       - name: Build and push storefront (linux/amd64)
+        id: storefront_build
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -154,7 +172,15 @@ jobs:
           cache-from: type=gha,scope=storefront-vps
           cache-to: type=gha,mode=max,scope=storefront-vps
 
+      - name: Attest storefront image build provenance
+        uses: actions/attest-build-provenance@v1
+        with:
+          subject-name: ghcr.io/${{ github.repository_owner }}/rad-storefront
+          subject-digest: ${{ steps.storefront_build.outputs.digest }}
+          push-to-registry: true
+
       - name: Build and push admin (linux/amd64)
+        id: admin_build
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -167,6 +193,26 @@ jobs:
           cache-from: type=gha,scope=admin-vps
           cache-to: type=gha,mode=max,scope=admin-vps
 
+      - name: Attest admin image build provenance
+        uses: actions/attest-build-provenance@v1
+        with:
+          subject-name: ghcr.io/${{ github.repository_owner }}/rad-admin
+          subject-digest: ${{ steps.admin_build.outputs.digest }}
+          push-to-registry: true
+
+  # Runs on the dedicated `rad-production` SELF-HOSTED runner — it lives on
+  # the VPS itself, so there is no inbound SSH left to fix: the runner polls
+  # GitHub outbound (the same mechanism it already uses while Idle) and
+  # these steps run as LOCAL commands. `build-images` above still runs on
+  # ubuntu-latest, as does every PR/CI job (ci.yml never uses this label) —
+  # untrusted PR code never touches `rad-production`. `rad-runner` (the
+  # runner's service account) has no Docker socket access and no general
+  # sudo rule; `docker compose pull`/`up` only ever runs through the single
+  # fixed, root-owned, argument-validating wrapper script
+  # (infra/rad-production-runner/rad-release-frontend.sh), invoked via a
+  # sudoers rule scoped to exactly that one script. See
+  # infra/rad-production-runner/README.md for the required one-time VPS
+  # setup and docs/cicd-pipeline.md for the full migration/rollback plan.
   release:
     name: Pull & restart on VPS
     needs: [should-deploy, build-images]
@@ -179,17 +225,32 @@ jobs:
     # and deploy.yml's own push trigger) both racing to deploy the same
     # commit.
     if: needs.should-deploy.outputs.any == 'true' && github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, rad-production]
     environment: production-frontend-vps
-    # Marker file on the VPS recording the last deploy that actually passed
-    # its health check — the rollback target. Lives next to the compose
-    # file, outside git, so it survives across workflow runs without this
-    # job needing any other state store.
+    # Marker file recording the last deploy that actually passed its health
+    # check — the rollback target. Owned by rad-runner itself (not root):
+    # it's advisory bookkeeping only, never trusted blindly — the sudo
+    # wrapper re-validates any ref read from it against the same
+    # digest-pinned-GHCR-image regex as a freshly-built ref before ever
+    # touching Docker.
     env:
-      REMOTE_TARGET: root@46.34.163.16
-      REMOTE_DIR: /root/rad-frontend-deploy
-      LAST_HEALTHY_FILE: /root/rad-frontend-deploy/.last-healthy-tags.env
+      LAST_HEALTHY_FILE: /opt/rad-releases/.last-healthy-frontend-refs.env
     steps:
+      - name: Verify image build provenance before touching anything privileged
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          for ref in \
+            "${{ needs.should-deploy.outputs.storefront == 'true' && needs.build-images.outputs.storefront_ref || '' }}" \
+            "${{ needs.should-deploy.outputs.admin == 'true' && needs.build-images.outputs.admin_ref || '' }}"; do
+            [[ -z "$ref" ]] && continue
+            echo "Verifying build provenance for ${ref} ..."
+            gh attestation verify "oci://${ref}" \
+              --repo "${{ github.repository }}" \
+              --predicate-type https://slsa.dev/provenance/v1
+          done
+          echo "OK: build-provenance attestation verified for every image this run will deploy."
       # "avoid restarting unrelated healthy services" — compute which
       # compose service names actually need recreating from the caller's
       # deploy_storefront/deploy_admin inputs, once, reused by every later
@@ -209,67 +270,53 @@ jobs:
           echo "list=${list}" >> "$GITHUB_OUTPUT"
           echo "Will deploy: ${list}"
 
-      - name: Configure pinned SSH identity
-        id: ssh
-        env:
-          SSH_KEY: ${{ secrets.RAD_FRONTEND_SSH_PRIVATE_KEY }}
-          KNOWN_HOSTS: ${{ secrets.RAD_FRONTEND_SSH_KNOWN_HOSTS }}
-        run: |
-          test -n "$SSH_KEY" && test -n "$KNOWN_HOSTS"
-          install -m 700 -d "$HOME/.ssh"
-          printf '%s\n' "$SSH_KEY" > "$HOME/.ssh/id_ed25519"
-          printf '%s\n' "$KNOWN_HOSTS" > "$HOME/.ssh/known_hosts"
-          chmod 600 "$HOME/.ssh/id_ed25519" "$HOME/.ssh/known_hosts"
-
       # The rollback target. Prefers the actually-running containers' own
-      # image tags (ground truth — reflects whatever is live right now,
-      # whether or not it was ever recorded) and only falls back to the
-      # recorded last-healthy-tags file, then to "latest", when a
-      # container doesn't exist yet (first-ever deploy on a fresh host).
-      # No secrets in any of this — image tags are just git SHAs / "latest".
-      - name: Capture currently-running image tags (rollback target)
+      # image references (ground truth — reflects whatever is live right
+      # now, whether or not it was ever recorded) and only falls back to
+      # the recorded last-healthy-refs file, then to "-" (meaning: let the
+      # compose file's own `:latest` default apply), when a container
+      # doesn't exist yet (first-ever deploy on a fresh host). No secrets
+      # in any of this — image refs are just GHCR digests, which are public
+      # alongside the (public) images themselves.
+      - name: Capture currently-running image refs (rollback target)
         id: previous
         shell: bash
         run: |
           set -euo pipefail
-          ssh_args=(-o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=15)
-          running_tag() {
+          running_ref() {
             local container="$1" app="$2"
             local image
-            image=$(ssh "${ssh_args[@]}" "$REMOTE_TARGET" \
-              "docker inspect -f '{{.Config.Image}}' ${container} 2>/dev/null" || true)
-            if [[ -n "$image" && "$image" == *:* ]]; then
-              echo "${image##*:}"
+            image=$(docker inspect -f '{{.Config.Image}}' "$container" 2>/dev/null || true)
+            if [[ -n "$image" && "$image" == *@sha256:* ]]; then
+              echo "$image"
             else
-              ssh "${ssh_args[@]}" "$REMOTE_TARGET" \
-                "test -f '$LAST_HEALTHY_FILE' && grep -oP '(?<=^${app}_IMAGE_TAG=).*' '$LAST_HEALTHY_FILE' || true" \
-                | tail -n1
+              grep -oP "(?<=^${app}_IMAGE_REF=).*" "$LAST_HEALTHY_FILE" 2>/dev/null | tail -n1 || true
             fi
           }
-          storefront_prev=$(running_tag rad-storefront STOREFRONT)
-          admin_prev=$(running_tag rad-admin ADMIN)
-          storefront_prev=${storefront_prev:-latest}
-          admin_prev=${admin_prev:-latest}
-          echo "storefront_tag=${storefront_prev}" >> "$GITHUB_OUTPUT"
-          echo "admin_tag=${admin_prev}" >> "$GITHUB_OUTPUT"
+          storefront_prev=$(running_ref rad-storefront STOREFRONT)
+          admin_prev=$(running_ref rad-admin ADMIN)
+          storefront_prev=${storefront_prev:--}
+          admin_prev=${admin_prev:--}
+          echo "storefront_ref=${storefront_prev}" >> "$GITHUB_OUTPUT"
+          echo "admin_ref=${admin_prev}" >> "$GITHUB_OUTPUT"
           echo "Rollback target captured: storefront=${storefront_prev} admin=${admin_prev}"
 
-      - name: Pull new images and recreate containers
+      # The ONLY privileged step in the normal path. rad-runner has sudo
+      # rights to run exactly this one root-owned script, which itself
+      # re-validates both image refs are digest-pinned GHCR images and that
+      # the service list is a subset of {storefront, admin} before ever
+      # touching Docker — rad-runner itself holds no Docker socket access.
+      - name: Pull new images and recreate containers (via scoped sudo wrapper)
         id: deploy
         env:
-          STOREFRONT_IMAGE_TAG: ${{ needs.build-images.outputs.storefront_tag }}
-          ADMIN_IMAGE_TAG: ${{ needs.build-images.outputs.admin_tag }}
+          STOREFRONT_IMAGE_REF: ${{ needs.should-deploy.outputs.storefront == 'true' && needs.build-images.outputs.storefront_ref || '-' }}
+          ADMIN_IMAGE_REF: ${{ needs.should-deploy.outputs.admin == 'true' && needs.build-images.outputs.admin_ref || '-' }}
           SERVICES: ${{ steps.services.outputs.list }}
         shell: bash
         run: |
           set -euo pipefail
-          ssh_args=(-o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=15)
-          ssh "${ssh_args[@]}" "$REMOTE_TARGET" \
-            "cd '$REMOTE_DIR' && \
-             STOREFRONT_IMAGE_TAG=${STOREFRONT_IMAGE_TAG} ADMIN_IMAGE_TAG=${ADMIN_IMAGE_TAG} \
-             docker compose -f docker-compose.frontend-vps.yml pull ${SERVICES} && \
-             STOREFRONT_IMAGE_TAG=${STOREFRONT_IMAGE_TAG} ADMIN_IMAGE_TAG=${ADMIN_IMAGE_TAG} \
-             docker compose -f docker-compose.frontend-vps.yml up -d --no-deps ${SERVICES}"
+          sudo -n /usr/local/bin/rad-release-frontend.sh \
+            "$STOREFRONT_IMAGE_REF" "$ADMIN_IMAGE_REF" "$SERVICES"
 
       # Covers both failure modes this step actually sees: a container that
       # never leaves "starting"/"unhealthy" (health check keeps failing) and
@@ -278,6 +325,10 @@ jobs:
       # never reports "healthy", so the same loop/timeout catches it too).
       # Only polls the container(s) actually touched this run — an
       # untouched, already-healthy sibling container is irrelevant here.
+      # `docker inspect`/`ps` are read-only and safe for rad-runner itself
+      # to run directly (no socket write capability is needed to read
+      # state) — only mutating compose operations go through the sudo
+      # wrapper above.
       - name: Verify containers healthy
         id: health
         env:
@@ -285,56 +336,48 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          ssh_args=(-o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=15)
           containers=()
           for s in $SERVICES; do containers+=("rad-${s}"); done
           expected="$(printf 'healthy %.0s' "${containers[@]}")"
           expected="${expected% }"
           for i in $(seq 1 20); do
-            status=$(ssh "${ssh_args[@]}" "$REMOTE_TARGET" "docker inspect -f '{{.State.Health.Status}}' ${containers[*]} 2>/dev/null" | tr '\n' ' ' | sed 's/ $//' || true)
+            status=$(docker inspect -f '{{.State.Health.Status}}' "${containers[@]}" 2>/dev/null | tr '\n' ' ' | sed 's/ $//' || true)
             [[ "$status" == "$expected" ]] && exit 0
             sleep 5
           done
-          echo "::error::New deploy (services=${SERVICES}, storefront=${{ needs.build-images.outputs.storefront_tag }}, admin=${{ needs.build-images.outputs.admin_tag }}) did not report healthy within timeout (last status: ${status:-<none>})."
+          echo "::error::New deploy (services=${SERVICES}) did not report healthy within timeout (last status: ${status:-<none>})."
           exit 1
 
-      # Runs on ANY failure after SSH was successfully configured — not just
-      # a failed health check. "Pull new images and recreate containers" may
-      # die partway through a multi-service deploy (e.g. pull succeeds but
-      # `up -d` only recreates one of two services before erroring), leaving
-      # the host in a mixed state — exactly the partial-deployment case a
-      # rollback must also cover, not only "the container(s) came up but
-      # failed their health check". Redeploying the previously-captured tags
-      # for the SAME service(s) this run touched is safe and idempotent
-      # either way; an untouched sibling service was never part of this
-      # deploy and is left alone. Only skipped when the SSH step itself
-      # never succeeded, since then nothing on the host was touched at all.
+      # "Pull new images and recreate containers" may die partway through a
+      # multi-service deploy (e.g. pull succeeds but `up -d` only recreates
+      # one of two services before erroring), leaving the host in a mixed
+      # state — exactly the partial-deployment case a rollback must also
+      # cover, not only "the container(s) came up but failed their health
+      # check". Redeploying the previously-captured refs for the SAME
+      # service(s) this run touched is safe and idempotent either way; an
+      # untouched sibling service was never part of this deploy and is left
+      # alone.
       - name: Roll back to last known-healthy images
         id: rollback
-        if: failure() && steps.ssh.outcome == 'success'
+        if: failure()
         env:
-          STOREFRONT_IMAGE_TAG: ${{ steps.previous.outputs.storefront_tag }}
-          ADMIN_IMAGE_TAG: ${{ steps.previous.outputs.admin_tag }}
+          STOREFRONT_IMAGE_REF: ${{ steps.previous.outputs.storefront_ref }}
+          ADMIN_IMAGE_REF: ${{ steps.previous.outputs.admin_ref }}
           SERVICES: ${{ steps.services.outputs.list }}
         shell: bash
         run: |
           set -euo pipefail
-          ssh_args=(-o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=15)
+          echo "::warning::Health check failed for the new deploy (services=${SERVICES}) — rolling back to storefront=${STOREFRONT_IMAGE_REF} admin=${ADMIN_IMAGE_REF}"
+          sudo -n /usr/local/bin/rad-release-frontend.sh \
+            "$STOREFRONT_IMAGE_REF" "$ADMIN_IMAGE_REF" "$SERVICES"
           containers=()
           for s in $SERVICES; do containers+=("rad-${s}"); done
           expected="$(printf 'healthy %.0s' "${containers[@]}")"
           expected="${expected% }"
-          echo "::warning::Health check failed for the new deploy (services=${SERVICES}) — rolling back to storefront=${STOREFRONT_IMAGE_TAG} admin=${ADMIN_IMAGE_TAG}"
-          ssh "${ssh_args[@]}" "$REMOTE_TARGET" \
-            "cd '$REMOTE_DIR' && \
-             STOREFRONT_IMAGE_TAG=${STOREFRONT_IMAGE_TAG} ADMIN_IMAGE_TAG=${ADMIN_IMAGE_TAG} \
-             docker compose -f docker-compose.frontend-vps.yml pull ${SERVICES} && \
-             STOREFRONT_IMAGE_TAG=${STOREFRONT_IMAGE_TAG} ADMIN_IMAGE_TAG=${ADMIN_IMAGE_TAG} \
-             docker compose -f docker-compose.frontend-vps.yml up -d --no-deps ${SERVICES}"
           for i in $(seq 1 20); do
-            status=$(ssh "${ssh_args[@]}" "$REMOTE_TARGET" "docker inspect -f '{{.State.Health.Status}}' ${containers[*]} 2>/dev/null" | tr '\n' ' ' | sed 's/ $//' || true)
+            status=$(docker inspect -f '{{.State.Health.Status}}' "${containers[@]}" 2>/dev/null | tr '\n' ' ' | sed 's/ $//' || true)
             if [[ "$status" == "$expected" ]]; then
-              echo "::notice::Rollback verified healthy (services=${SERVICES}, storefront=${STOREFRONT_IMAGE_TAG}, admin=${ADMIN_IMAGE_TAG})."
+              echo "::notice::Rollback verified healthy (services=${SERVICES}, storefront=${STOREFRONT_IMAGE_REF}, admin=${ADMIN_IMAGE_REF})."
               exit 0
             fi
             sleep 5
@@ -393,38 +436,32 @@ jobs:
           fi
 
       # Runs on the success path too, so the rollback target for the NEXT
-      # deploy always reflects the most recently verified-healthy tags —
-      # never the tags "currently running" at the start of this job, which
+      # deploy always reflects the most recently verified-healthy refs —
+      # never the refs "currently running" at the start of this job, which
       # this run just replaced.
       - name: Record this deploy as last known-healthy
         if: success()
         env:
-          STOREFRONT_IMAGE_TAG: ${{ needs.build-images.outputs.storefront_tag }}
-          ADMIN_IMAGE_TAG: ${{ needs.build-images.outputs.admin_tag }}
+          STOREFRONT_IMAGE_REF: ${{ needs.should-deploy.outputs.storefront == 'true' && needs.build-images.outputs.storefront_ref || steps.previous.outputs.storefront_ref }}
+          ADMIN_IMAGE_REF: ${{ needs.should-deploy.outputs.admin == 'true' && needs.build-images.outputs.admin_ref || steps.previous.outputs.admin_ref }}
         shell: bash
         run: |
           set -euo pipefail
-          ssh_args=(-o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=15)
-          ssh "${ssh_args[@]}" "$REMOTE_TARGET" \
-            "cat > '$LAST_HEALTHY_FILE' <<EOF
-          STOREFRONT_IMAGE_TAG=${STOREFRONT_IMAGE_TAG}
-          ADMIN_IMAGE_TAG=${ADMIN_IMAGE_TAG}
-          EOF"
+          cat > "$LAST_HEALTHY_FILE" <<EOF
+          STOREFRONT_IMAGE_REF=${STOREFRONT_IMAGE_REF}
+          ADMIN_IMAGE_REF=${ADMIN_IMAGE_REF}
+          EOF
 
       - name: Report deploy outcome
         if: always()
         run: |
           if [[ "${{ steps.rollback.outcome }}" == "success" ]]; then
-            echo "::warning::Deploy of storefront=${{ needs.build-images.outputs.storefront_tag }} admin=${{ needs.build-images.outputs.admin_tag }} FAILED health checks and was AUTOMATICALLY ROLLED BACK to storefront=${{ steps.previous.outputs.storefront_tag }} admin=${{ steps.previous.outputs.admin_tag }}. Production is back on the previous known-healthy release; investigate the failed images before retrying."
+            echo "::warning::Deploy of storefront=${{ needs.build-images.outputs.storefront_ref }} admin=${{ needs.build-images.outputs.admin_ref }} FAILED health checks and was AUTOMATICALLY ROLLED BACK to storefront=${{ steps.previous.outputs.storefront_ref }} admin=${{ steps.previous.outputs.admin_ref }}. Production is back on the previous known-healthy release; investigate the failed images before retrying."
           elif [[ "${{ steps.rollback.outcome }}" == "failure" ]]; then
-            echo "::error::Deploy FAILED and the automatic ROLLBACK ALSO FAILED. Production may be in a broken or unknown state. SSH in immediately and check 'docker compose -f docker-compose.frontend-vps.yml ps' on the VPS."
+            echo "::error::Deploy FAILED and the automatic ROLLBACK ALSO FAILED. Production may be in a broken or unknown state. Log in to the VPS directly and check 'docker compose -f docker-compose.frontend-vps.yml ps'."
           elif [[ "${{ steps.health.outcome }}" == "success" ]]; then
-            echo "Deploy succeeded: storefront=${{ needs.build-images.outputs.storefront_tag }} admin=${{ needs.build-images.outputs.admin_tag }}, both containers healthy."
+            echo "Deploy succeeded: storefront=${{ needs.build-images.outputs.storefront_ref }} admin=${{ needs.build-images.outputs.admin_ref }}, both containers healthy."
           fi
-
-      - name: Remove runner SSH credentials
-        if: always()
-        run: rm -f "$HOME/.ssh/id_ed25519" "$HOME/.ssh/known_hosts"
 
   # Independent of whatever the `release` job's own `if:` condition
   # concluded — catches a reusable-workflow trigger condition that

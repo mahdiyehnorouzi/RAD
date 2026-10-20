@@ -13,7 +13,12 @@
 
 services:
   storefront:
-    image: ghcr.io/mahdiyehnorouzi/rad-storefront:${STOREFRONT_IMAGE_TAG:-latest}
+    # STOREFRONT_IMAGE_REF pins by digest (ghcr.io/.../rad-storefront@sha256:<digest>)
+    # for the automated release path, so the exact image that was built,
+    # signed-for-provenance, and verified is the exact image that runs --
+    # never a mutable tag that could be silently repushed. Falls back to
+    # the `latest` tag only for a manual, interactive `docker compose up`.
+    image: ${STOREFRONT_IMAGE_REF:-ghcr.io/mahdiyehnorouzi/rad-storefront:latest}
     container_name: rad-storefront
     restart: unless-stopped
     user: "1000:1000"
@@ -43,7 +48,8 @@ services:
       start_period: 15s
 
   admin:
-    image: ghcr.io/mahdiyehnorouzi/rad-admin:${ADMIN_IMAGE_TAG:-latest}
+    # See the storefront service's image comment above -- same digest-pin rationale.
+    image: ${ADMIN_IMAGE_REF:-ghcr.io/mahdiyehnorouzi/rad-admin:latest}
     container_name: rad-admin
     restart: unless-stopped
     user: "1000:1000"
