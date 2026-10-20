@@ -117,8 +117,12 @@ export function CatalogResults({
       <>
         {staleNotice}
         <div className="product-grid product-grid--catalog">
-          {visible.map((product) => (
-            <CatalogCard product={product} key={product.slug} />
+          {visible.map((product, index) => (
+            <CatalogCard
+              product={product}
+              priority={index < 2}
+              key={product.slug}
+            />
           ))}
         </div>
       </>

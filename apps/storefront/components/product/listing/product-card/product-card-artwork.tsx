@@ -10,12 +10,15 @@ export function ProductCardArtwork({
   slide = { kind: "photo", index: 0 },
   forceCategoryArtwork = false,
   sizes = "(max-width: 600px) 100vw, (max-width: 900px) 50vw, 33vw",
+  priority = false,
 }: {
   product: Product;
   slide?: ProductCardSlide;
   forceCategoryArtwork?: boolean;
   /** Pass a smaller value for a thumbnail-rail usage; defaults to a full PLP grid card. */
   sizes?: string;
+  /** The card is above the fold on first load: skip lazy-loading its image. */
+  priority?: boolean;
 }) {
   const plate = slide.kind === "plate";
   const imageIndex = slide.kind === "photo" ? slide.index : 0;
@@ -41,6 +44,7 @@ export function ProductCardArtwork({
               forceCategoryArtwork={forceCategoryArtwork}
               showStatusBadge={false}
               sizes={sizes}
+              priority={priority}
             />
           )}
         </span>
@@ -53,6 +57,7 @@ export function ProductCardArtwork({
           showStatusBadge={false}
           preserveTransparentBackground={plate}
           sizes={sizes}
+          priority={priority}
         />
       </span>
     </span>
