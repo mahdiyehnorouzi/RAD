@@ -13,6 +13,7 @@ import {
   CartItem,
   Favorite,
   Order,
+  PasswordResetToken,
   PaymentIntent,
   Product,
   ProductImage,
@@ -133,10 +134,12 @@ before(async () => {
     repo(Favorite),
     repo(Review),
     repo(PaymentIntent),
+    repo(PasswordResetToken),
     inventory,
     paymentReview,
     storage,
     () => storage,
+    mail,
   );
 });
 
@@ -459,10 +462,12 @@ describe("AdminService — SeaweedFS fail-closed ownership (upload-intent audit 
       repo(Favorite),
       repo(Review),
       repo(PaymentIntent),
+      repo(PasswordResetToken),
       inventory,
       paymentReview,
       seaweedfsStub,
       resolver,
+      mail,
     );
   });
 

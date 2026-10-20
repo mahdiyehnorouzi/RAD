@@ -18,16 +18,30 @@ const DEV_LOGINS = {
   editor: { email: "sahar@rad.studio", password: "rad-editor-2026" },
 } as const;
 
+/**
+ * Creates the staff account with the configured bootstrap password on first
+ * boot only. On every later boot the account already exists, so its
+ * `passwordHash` is never touched here — otherwise a real admin changing
+ * their password through the app would get silently logged out of their
+ * own, deliberately-chosen password on the next deploy/restart, since
+ * `ADMIN_PASSWORD` / `EDITOR_PASSWORD` typically stay fixed in the
+ * deployment's env across many boots. Non-security fields (name, role,
+ * adminRole, status) still get upserted every boot, same as before.
+ */
 async function upsertStaff(
   users: Repository<User>,
   account: StaffAccount,
   password: string,
 ) {
-  const passwordHash = await hash(password, 12);
   const existing = await users.findOne({ where: { email: account.email } });
-  const fields = { ...account, passwordHash, status: "active" };
-  if (existing) await users.update({ id: existing.id }, fields);
-  else await users.save(users.create(fields));
+  if (existing) {
+    await users.update({ id: existing.id }, account);
+    return;
+  }
+  const passwordHash = await hash(password, 12);
+  await users.save(
+    users.create({ ...account, passwordHash, status: "active" }),
+  );
 }
 
 /** Replaces a password that matches the public dev default with an unknowable one. */
@@ -48,8 +62,13 @@ async function lockPublicPassword(
 
 /**
  * Upserts the owner + editor accounts without reseeding catalog media.
- * Runs on every production boot: ADMIN_PASSWORD / EDITOR_PASSWORD are the
- * source of truth, and an unset password leaves that account untouched.
+ * Runs on every production boot. `ADMIN_PASSWORD` / `EDITOR_PASSWORD` set
+ * the password only when the account doesn't exist yet (first boot ever,
+ * or after a DB reset) — an unset password, or an already-existing
+ * account, leaves the stored password hash untouched. To change an
+ * existing admin's password, use the in-app "change password"/"forgot
+ * password" flow, not this env var; see `seed/recover-admin-password.ts`
+ * for the break-glass procedure when neither is possible.
  */
 export async function ensureStaff(dataSource: DataSource) {
   const users = dataSource.getRepository(User);
