@@ -47,9 +47,27 @@ self-hosted runner as the *transport* only:
 
 ## Trust model for the new `rad-deploy` SSH path
 
-- `rad-deploy` is a dedicated, non-root, SSH-only account. It cannot log in
-  interactively (no usable shell, no port/agent/X11 forwarding), and its
-  `authorized_keys` entry is pinned with `command=` to one fixed script:
+- `rad-deploy` is a dedicated, non-root, SSH-only account with its password
+  locked (no password authentication to this account at all - key-based
+  only). Its login shell is **not** `/usr/sbin/nologin` -
+  `nologin` ignores its arguments and refuses unconditionally, and OpenSSH's
+  `command=` forced-command restriction works by re-invoking the account's
+  *own login shell* as `<shell> -c "<forced command>"` (this is documented
+  sshd behaviour, not an implementation detail of this design) - so with
+  `nologin` as the shell, the forced command would **never actually run** and
+  every deploy would fail. Instead, `rad-deploy`'s shell is a small,
+  purpose-built restricted shell,
+  [`scripts/production/rad-deploy-shell.sh`](../scripts/production/rad-deploy-shell.sh)
+  (the same idea as `git-shell`): it accepts being invoked as exactly
+  `-c /usr/local/libexec/rad-deploy-ssh-entrypoint.sh` and nothing else -
+  no interactive shell, no other command, no extra arguments. This is
+  deliberate defense-in-depth on top of the `authorized_keys` restriction
+  below, not a replacement for it: if that restriction were ever accidentally
+  dropped from the key, this shell alone would still only run the one fixed
+  entrypoint.
+- Its `authorized_keys` entry is pinned with `command=` (plus `restrict`,
+  which implies `no-pty`, `no-port-forwarding`, `no-X11-forwarding`,
+  `no-agent-forwarding`, `no-user-rc`) to one fixed script:
   [`scripts/production/rad-deploy-ssh-entrypoint.sh`](../scripts/production/rad-deploy-ssh-entrypoint.sh).
   `command=` overrides whatever command the SSH client asks for — the client's
   request only reaches the forced script as the `$SSH_ORIGINAL_COMMAND`
@@ -57,15 +75,35 @@ self-hosted runner as the *transport* only:
   validates against one fixed grammar (`deploy kind=(api|frontend)
   commit=<40 hex> run_id=<int> run_attempt=<int>`) before using any part of it.
   There is no mode in which this key can run an arbitrary remote command.
-- That entrypoint extracts a tar stream (the signed `release.json` +
-  `release.sigstore.json`, plus `api-release.tar.gz` for the API path) from
-  its own stdin into a fresh `/var/lib/rad-release/incoming/release-*`
-  directory — the exact convention the broker already expects — rejecting
-  anything other than the fixed, flat file set it validates by name. It then
-  builds the broker's JSON request from the *validated* `SSH_ORIGINAL_COMMAND*
-  fields (never from anything else the client sent) and pipes it to
-  `sudo -n /usr/local/sbin/rad-release ""`, the exact same invocation the
-  self-hosted-runner design used.
+- The entrypoint script is root-owned, mode `0750`, **group-owned by
+  `rad-deploy`** (so the account can read+execute it but never write to it —
+  root remains the only account that can modify it), and lives in a
+  root-owned, non-group/world-writable directory (`/usr/local/libexec`, mode
+  `0755`) so `rad-deploy` cannot delete or replace it either, even though it
+  can't write the file itself.
+- The entrypoint reads a **size-bounded** copy of its own stdin to a temp
+  file, then hands it to
+  [`scripts/production/rad_deploy_entrypoint.py`](../scripts/production/rad_deploy_entrypoint.py)
+  for member-by-member validation *before* extracting anything: every member
+  must be an ordinary regular file (no symlinks, hard links, directories,
+  devices, or FIFOs), with one of exactly the expected flat names
+  (`release.json`, `release.sigstore.json`, and `api-release.tar.gz` only for
+  the API path), no duplicates, no path traversal, and under the broker's own
+  per-file size caps — the whole upload is rejected, with nothing written to
+  disk, if any member doesn't match exactly. Only after that does the fixed
+  set of files land in a fresh `/var/lib/rad-release/incoming/release-*`
+  directory — the exact convention the broker already expects. The entrypoint
+  then builds the broker's JSON request from the *validated*
+  `SSH_ORIGINAL_COMMAND` fields (never from anything else the client sent) and
+  pipes it to `sudo -n /usr/local/sbin/rad-release` — **with no trailing
+  argument**. (The `""` in `rad-deploy.sudoers` is sudoers' own syntax for
+  "this command must be invoked with zero arguments"; it is not a literal
+  argument to pass on the command line. Passing a literal empty-string
+  argument there, which an earlier draft of this entrypoint did, would make
+  both the sudoers argument-count match *and* `rad_release.py`'s own
+  `len(sys.argv) == 1` check reject every single release attempt.) See
+  [`scripts/test/test-rad-deploy-ssh.sh`](../scripts/test/test-rad-deploy-ssh.sh)
+  for a regression test of this exact invocation shape.
 - The `rad-deploy` → root privilege boundary is the same narrow sudoers rule
   already reviewed for `rad-runner`
   ([`rad-runner.sudoers`](../scripts/production/rad-runner.sudoers)), now also
@@ -80,6 +118,24 @@ self-hosted runner as the *transport* only:
   `RAD_API_SSH_PRIVATE_KEY` / `RAD_FRONTEND_SSH_PRIVATE_KEY` environment
   secrets (root@46.34.163.16, public IP, no forced command) predate this
   change and are **not reused**. See "Cleanup of the old SSH secrets" below.
+
+## Testing this locally (no VPS, no root/sudo required)
+
+```bash
+python3 -B -m unittest discover -s scripts/production -p 'test_*.py'
+bash scripts/test/test-rad-deploy-ssh.sh
+```
+
+The first covers `rad_deploy_entrypoint.py`'s tar validation (traversal,
+symlinks, hard links, directories, FIFOs, duplicates, oversized/undersized
+uploads, wrong kind, etc.) as pure unit tests. The second drives
+`rad-deploy-shell.sh` and `rad-deploy-ssh-entrypoint.sh` together, using the
+*exact* invocation shape OpenSSH's sshd actually uses for a `command=`
+restriction (`<shell> -c "<forced command>"`), with a fake `sudo` on `PATH`
+(same technique as `scripts/test/fake-systemctl.sh`) standing in for the real
+privilege boundary so it can run as an ordinary user. It does not start a
+real sshd — that is the one part of this design a disposable sshd instance
+would otherwise be needed to prove, and isn't available in this environment.
 
 ## What stays exactly as reviewed
 
@@ -111,17 +167,40 @@ unchanged by this document.
 
 ### 1. Create the restricted `rad-deploy` account
 
+Its shell is the restricted shell installed in step 2 below, not
+`/usr/sbin/nologin` — see "Trust model" above for why `nologin` silently
+breaks the forced command entirely.
+
 ```bash
-useradd --system --create-home --home-dir /home/rad-deploy --shell /usr/sbin/nologin rad-deploy
+useradd --system --create-home --home-dir /home/rad-deploy --user-group \
+  --shell /usr/local/libexec/rad-deploy-shell.sh rad-deploy
 install -m 700 -d -o rad-deploy -g rad-deploy /home/rad-deploy/.ssh
+passwd -l rad-deploy   # lock the password outright: key-based auth only
+echo "/usr/local/libexec/rad-deploy-shell.sh" >> /etc/shells
 ```
 
-### 2. Install the forced-command entrypoint (root-owned, not writable by rad-deploy)
+Separately, confirm `PasswordAuthentication no` is set in `/etc/ssh/sshd_config`
+(global or at minimum via a `Match User rad-deploy` block) — a locked password
+plus a restricted shell is strong, but password auth being disabled at the
+sshd level entirely is what actually guarantees there is no other way into
+this account.
+
+### 2. Install the forced-command entrypoint, its Python validator, and the restricted shell
+
+All three must be **root-owned and not writable by `rad-deploy`** — only
+readable/executable by it (via the `rad-deploy` group), so the account that
+is reachable over the network can run them but never modify them. The
+containing directory must not be group/world-writable either, so
+`rad-deploy` can't delete or replace them that way instead.
 
 ```bash
 install -d -o root -g root -m 0755 /usr/local/libexec
-install -o root -g root -m 0750 scripts/production/rad-deploy-ssh-entrypoint.sh \
+install -o root -g rad-deploy -m 0750 scripts/production/rad-deploy-ssh-entrypoint.sh \
   /usr/local/libexec/rad-deploy-ssh-entrypoint.sh
+install -o root -g rad-deploy -m 0640 scripts/production/rad_deploy_entrypoint.py \
+  /usr/local/libexec/rad_deploy_entrypoint.py
+install -o root -g rad-deploy -m 0750 scripts/production/rad-deploy-shell.sh \
+  /usr/local/libexec/rad-deploy-shell.sh
 ```
 
 ### 3. Grant the same narrow sudo rule already reviewed for `rad-runner`
@@ -142,16 +221,18 @@ On the VPS:
 
 ```bash
 cat <<'EOF' > /home/rad-deploy/.ssh/authorized_keys
-command="/usr/local/libexec/rad-deploy-ssh-entrypoint.sh",no-pty,no-agent-forwarding,no-X11-forwarding,no-port-forwarding,no-user-rc,restrict ssh-ed25519 AAAA...REPLACE-WITH-rad-deploy-key.pub-CONTENTS... github-actions-rad-deploy
+restrict,command="/usr/local/libexec/rad-deploy-ssh-entrypoint.sh" ssh-ed25519 AAAA...REPLACE-WITH-rad-deploy-key.pub-CONTENTS... github-actions-rad-deploy
 EOF
 chown rad-deploy:rad-deploy /home/rad-deploy/.ssh/authorized_keys
 chmod 600 /home/rad-deploy/.ssh/authorized_keys
 ```
 
 Replace the `ssh-ed25519 AAAA...` portion with the exact contents of
-`rad-deploy-key.pub`, keeping the `command="..."` prefix and all the `no-*`
-options exactly as shown — those are what make the key unable to do anything
-except invoke the one entrypoint script.
+`rad-deploy-key.pub`, keeping the `restrict,command="..."` prefix exactly as
+shown. `restrict` (OpenSSH 7.2+) disables pty allocation, port/X11/agent
+forwarding, and `~/.ssh/rc` execution in one keyword; `command=` is what
+makes the key unable to do anything except invoke the one entrypoint script
+regardless of what the connecting client asks for.
 
 ### 5. Pin the host key
 
