@@ -154,11 +154,94 @@ jobs:
           cd "$GITHUB_WORKSPACE"
           "$RUNNER_TEMP/actionlint" -shellcheck= .github/workflows/ci.yml .github/workflows/deploy.yml .github/workflows/deploy-api-vps.yml .github/workflows/deploy-frontend-vps.yml
 
+  release-signatures:
+    name: Release signature verification (real cryptography)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      # Official signed fixture; never executes artifact contents, accesses VPS,
+      # requests OIDC, or inherits production secrets. Safe for fork PR CI too.
+      - name: Verify valid, tampered and unsigned artifacts with live Sigstore trust
+        id: signatures
+        shell: bash
+        run: |
+          set -euo pipefail
+          check_dir=$(mktemp -d "$RUNNER_TEMP/rad-signatures.XXXXXXXX")
+          echo "path=$check_dir" >> "$GITHUB_OUTPUT"
+          cd "$check_dir"
+          curl -fsSL --proto '=https' --tlsv1.2 https://github.com/cli/cli/releases/download/v2.83.2/gh_2.83.2_linux_amd64.tar.gz -o gh.tar.gz
+          echo 'ca6e7641214fbd0e21429cec4b64a7ba626fd946d8f9d6d191467545b092015e  gh.tar.gz' | sha256sum -c -
+          tar -xzf gh.tar.gz gh_2.83.2_linux_amd64/bin/gh
+          cli="$check_dir/gh_2.83.2_linux_amd64/bin/gh"
+          fixture=https://raw.githubusercontent.com/cli/cli/560ea94fc7d63ab1f56ca47713599be5e8966fd3/pkg/cmd/attestation/test/data
+          curl -fsSL --proto '=https' --tlsv1.2 "$fixture/github_provenance_demo-0.0.12-py3-none-any.whl" -o signed.whl
+          curl -fsSL --proto '=https' --tlsv1.2 "$fixture/github_provenance_demo-0.0.12-py3-none-any-bundle.jsonl" -o signed.jsonl
+          echo 'ae57936def59bc4c75edd3a837d89bcefc6d3a5e31d55a6fa7a71624f92c3c3b  signed.whl' | sha256sum -c -
+          echo '4f8c096e38a0eee242574ab100d16701928605409225e59784a3636f742bb27e  signed.jsonl' | sha256sum -c -
+          policy=(--repo actions/attest-demo
+            --signer-workflow actions/attest-demo/.github/workflows/build-python.yml
+            --source-digest a6c23b9806c593664f68637c8f9d45dfcf98b2db
+            --signer-digest a6c23b9806c593664f68637c8f9d45dfcf98b2db
+            --deny-self-hosted-runners)
+          verify() {
+            "$cli" attestation verify "$1" --bundle "$2" "${policy[@]}" --source-ref "${3:-refs/heads/main}"
+          }
+          # This MUST succeed first. Network/TUF/auth failures are never accepted
+          # as evidence that a negative cryptographic test succeeded.
+          verify signed.whl signed.jsonl > valid.log 2>&1
+          cat valid.log
+          cp signed.whl tampered.whl
+          printf '\ntampered\n' >> tampered.whl
+          python3 - <<'PY_FIXTURE'
+          import base64, copy, json
+          from pathlib import Path
+          original = json.loads(Path('signed.jsonl').read_text().splitlines()[0])
+          altered = copy.deepcopy(original)
+          envelope = altered.get('bundle', altered)['dsseEnvelope']
+          signature = bytearray(base64.b64decode(envelope['signatures'][0]['sig']))
+          signature[0] ^= 1
+          envelope['signatures'][0]['sig'] = base64.b64encode(signature).decode()
+          Path('altered-signature.jsonl').write_text(json.dumps(altered) + '\n')
+          unsigned = copy.deepcopy(original)
+          unsigned.get('bundle', unsigned)['dsseEnvelope']['signatures'] = []
+          Path('unsigned.jsonl').write_text(json.dumps(unsigned) + '\n')
+          PY_FIXTURE
+          expect_rejected() {
+            local label="$1"
+            shift
+            if "$@" > "$label.log" 2>&1; then
+              cat "$label.log"
+              echo "::error::$label was incorrectly accepted"
+              exit 1
+            fi
+            if grep -Ei 'no valid Sigstore|error creating Sigstore verifier|failed to create TUF|CONNECT tunnel|network is unreachable|unknown flag|unknown command' "$label.log"; then
+              echo "::error::$label failed on infrastructure/tool initialization, not signature policy"
+              exit 1
+            fi
+            echo "PASS: $label rejected"
+            cat "$label.log"
+          }
+          expect_rejected tampered-artifact verify tampered.whl signed.jsonl
+          expect_rejected altered-signature verify signed.whl altered-signature.jsonl
+          expect_rejected unsigned-artifact verify signed.whl unsigned.jsonl
+          expect_rejected wrong-source-ref verify signed.whl signed.jsonl refs/pull/1/merge
+          echo 'Real signature verification passed; tampered bytes, altered/missing signatures and wrong source ref rejected. No VPS access or production activation.' >> "$GITHUB_STEP_SUMMARY"
+      - name: Retain cryptographic verification evidence
+        if: always() && steps.signatures.outputs.path != ''
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: release-signature-verification
+          path: ${{ steps.signatures.outputs.path }}/*.log
+          if-no-files-found: warn
+          retention-days: 7
+
   # Single required status check for branch protection.
   ci-passed:
     name: CI passed
     if: always()
-    needs: [lint, typecheck, test, test-media-db, build, release-policy]
+    needs: [lint, typecheck, test, test-media-db, build, release-policy, release-signatures]
     runs-on: ubuntu-latest
     steps:
       - name: Fail if any job failed or was cancelled
