@@ -410,6 +410,53 @@ describe("AdminService.saveProduct — cloudinary images (Phase 2)", () => {
   });
 });
 
+describe("AdminService.saveProduct — subtitle preservation (description/subtitle/story naming fix)", () => {
+  /**
+   * Regression test: `updateProduct` previously re-derived `subtitle` from
+   * Admin's "description" textarea (truncated to 48 chars) on EVERY save,
+   * silently discarding whatever `subtitle` held — including a value the
+   * public API's `/artworks/:key` `description` field reads directly (see
+   * `artwork.mapper.ts`). A new product still gets a sane `subtitle`
+   * derived once at creation (nothing to preserve yet); an update must
+   * never touch it again.
+   */
+  test("subtitle survives an update that only changes the admin description/story", async () => {
+    const slug = `subtitle-preserve-${Date.now()}`;
+    const created = await admin.saveProduct(
+      baseInput(slug, [
+        { storage: "static", src: "/catalog/test.jpg" },
+      ]) as never,
+    );
+    const createdRow = await dataSource
+      .getRepository(Product)
+      .findOneOrFail({ where: { id: created.id } });
+    const originalSubtitle = createdRow.subtitle;
+    assert.ok(originalSubtitle, "expected a derived subtitle on creation");
+
+    await admin.saveProduct(
+      {
+        ...baseInput(slug, [{ storage: "static", src: "/catalog/test.jpg" }]),
+        description: "متن کاملاً متفاوت و طولانی‌تر برای داستان این اثر هنری",
+      } as never,
+      created.id,
+    );
+
+    const updatedRow = await dataSource
+      .getRepository(Product)
+      .findOneOrFail({ where: { id: created.id } });
+    assert.equal(
+      updatedRow.subtitle,
+      originalSubtitle,
+      "subtitle must not be silently overwritten by an unrelated description/story edit",
+    );
+    assert.equal(
+      updatedRow.story,
+      "متن کاملاً متفاوت و طولانی‌تر برای داستان این اثر هنری",
+      "story must still update normally from the description field",
+    );
+  });
+});
+
 describe("AdminService — SeaweedFS fail-closed ownership (upload-intent audit fix)", () => {
   let seaweedfsAdmin: AdminService;
   let seaweedfsDeleteCalls: string[];

@@ -303,8 +303,12 @@ export class AdminService {
     const vendorId = await this.ensureVendor(input.artist);
     const usdPrice = Math.max(1, Math.round(input.price / 85_000));
     const category = toStoreCategory(input.category);
-    const subtitle = input.description.trim().slice(0, 48);
     const details = ["تنها یک نسخه"];
+    // Only a brand-new product needs a `subtitle` derived here — it has no
+    // existing value to preserve. An update must never re-derive and
+    // overwrite `subtitle` from `story` (see `updateProduct`): that was
+    // silently discarding whatever `subtitle` held on every single save.
+    const subtitle = input.description.trim().slice(0, 48);
     const en = {
       name: input.name,
       subtitle,
@@ -316,7 +320,6 @@ export class AdminService {
       ? await this.updateProduct(existingId, {
           slug,
           name: input.name.trim(),
-          subtitle,
           tomanPrice: input.price,
           usdPrice,
           category,
@@ -607,7 +610,6 @@ export class AdminService {
     data: {
       slug: string;
       name: string;
-      subtitle: string;
       tomanPrice: number;
       usdPrice: number;
       category: string;
@@ -626,7 +628,14 @@ export class AdminService {
       { id },
       {
         name: data.name,
-        subtitle: data.subtitle,
+        // `subtitle` is intentionally left untouched here: it is a
+        // separate, shorter field from Admin's "description" (which maps
+        // to `story` below) and is shown as-is on the storefront's public
+        // `/artworks/:key` response. Admin has no UI to edit it directly
+        // today, so re-deriving and overwriting it from `story` on every
+        // save was silently discarding whatever value it held — never do
+        // that again (see admin.mapper.ts / artwork.mapper.ts for the full
+        // `description`/`story`/`subtitle` naming history).
         tomanPrice: data.tomanPrice,
         usdPrice: data.usdPrice,
         category: data.category,
