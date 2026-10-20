@@ -1,0 +1,33 @@
+name: Verify RAD Tailscale Connection
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  connection-test:
+    name: Private connectivity only (no deployment)
+    if: github.repository == 'mahdiyehnorouzi/RAD' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: production-api-vps
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Connect to RAD tailnet using GitHub OIDC
+        uses: tailscale/github-action@v4
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          audience: ${{ secrets.TS_AUDIENCE }}
+          tags: tag:rad-deploy
+          ping: 100.103.104.79
+
+      - name: Verify private SSH TCP connectivity (no login)
+        shell: bash
+        run: |
+          set -euo pipefail
+          timeout 15 bash -c 'echo > /dev/tcp/100.103.104.79/22'
+          echo "RAD VPS private SSH port is reachable. No deployment performed."
