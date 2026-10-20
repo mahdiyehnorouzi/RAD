@@ -60,3 +60,35 @@ test("registryFallbackAllowed is false in production and true otherwise", () => 
     assert.equal(registryFallbackAllowed(), true);
   });
 });
+
+test("catalogSource and registryFallbackAllowed treat next build's static-generation phase as non-runtime, even though NODE_ENV is 'production' there too", () => {
+  withEnv(
+    {
+      NODE_ENV: "production",
+      NEXT_PHASE: "phase-production-build",
+      CATALOG_SOURCE: undefined,
+    },
+    () => {
+      assert.equal(
+        catalogSource(),
+        "auto",
+        "generateStaticParams' build-time prerender must still be able to fall back to the registry",
+      );
+      assert.equal(registryFallbackAllowed(), true);
+    },
+  );
+});
+
+test("catalogSource still hard-gates to 'api' once NEXT_PHASE is unset again (actual production runtime, after the build finished)", () => {
+  withEnv(
+    {
+      NODE_ENV: "production",
+      NEXT_PHASE: undefined,
+      CATALOG_SOURCE: "registry",
+    },
+    () => {
+      assert.equal(catalogSource(), "api");
+      assert.equal(registryFallbackAllowed(), false);
+    },
+  );
+});
