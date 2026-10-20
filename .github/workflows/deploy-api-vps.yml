@@ -1,382 +1,130 @@
-# Releases the API on the real production host: systemd-managed
-# `rad-api.service`, isolated/versioned releases under /opt/rad-releases,
-# atomically symlinked into /opt/rad/apps/api. The routine path builds the
-# release ARTIFACT here, on the GitHub Actions runner (see build-artifact
-# below), and only transfers + extracts it on the VPS — no git clone, no
-# npm install, no TypeScript build ever runs on the VPS itself for a
-# normal deploy. scripts/deploy-api-systemd.sh (clone-and-build on the
-# VPS) is kept as the emergency/disaster-recovery fallback only; it is
-# never invoked by the automatic path.
-#
-# This is additive: it does not touch, replace, or race with
-# deploy-frontend-vps.yml (storefront/admin, Docker/VPS) or the Liara
-# workflows. It targets a different service entirely on the same host.
-#
-# REQUIRES scripts/bootstrap-api-release-layout.sh to have already been
-# run once, manually, on the VPS — scripts/deploy-api-systemd(-artifact).sh
-# refuses to run otherwise, on purpose. See docs/opt-rad-release-bootstrap.md.
-#
-# Two ways in:
-#   - workflow_call — the normal, fully automatic path. .github/workflows/deploy.yml
-#     invokes this after a push to main whose changed files affect the API
-#     (apps/api/**, packages/artworks/**, or shared root config), passing
-#     github.sha. No human interaction.
-#   - workflow_dispatch — manual emergency path only (a deploy that must
-#     re-release an older, already-merged commit, or re-run after fixing a
-#     one-off infra issue without touching code). Still requires an
-#     explicit commit SHA and typing "deploy" to confirm.
-#
-# IMPORTANT: `github.event_name` inside a reusable (workflow_call) run is
-# NOT "workflow_call" — it's inherited from whatever triggered the TOP-LEVEL
-# caller (deploy.yml, which triggers on `push`). So every `if:` below keys
-# off `inputs.*` (which genuinely differs — a plain run always carries the
-# inputs its trigger declared) and `github.event_name == 'workflow_dispatch'`
-# (reliable: only an actual manual dispatch of a run whose OWN `on:` block
-# never includes `push` sets this, and this workflow's `on:` has none),
-# never `== 'workflow_call'`.
-#
-# Either way the `release` job runs under the production-api-vps
-# environment; see docs/cicd-pipeline.md for what that environment's
-# protection rules must (and must not) require for the automatic path to
-# actually be hands-off.
-
+# Builds/signs on GitHub-hosted infrastructure; production only consumes verified output.
 name: API VPS release
-
 on:
-  workflow_dispatch:
-    inputs:
-      confirm:
-        description: "Type 'deploy' to actually release to production"
-        required: true
-        default: "build-check-only"
-      commit_sha:
-        description: "Exact commit SHA to release (never 'main' HEAD at dispatch time - pin and review it explicitly)"
-        required: true
   workflow_call:
     inputs:
       commit_sha:
-        description: "Exact commit SHA to release — the caller (deploy.yml) always passes github.sha."
         required: true
         type: string
-
-concurrency:
-  group: rad-api-vps-production
-  cancel-in-progress: false
-
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: "Type deploy to release the selected main commit"
+        required: true
+        default: build-check-only
+      commit_sha:
+        description: "Full SHA; must equal this main workflow run's commit"
+        required: true
+permissions:
+  contents: read
 jobs:
   checks:
+    if: github.repository == 'mahdiyehnorouzi/RAD' && github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && inputs.commit_sha == github.sha
     uses: ./.github/workflows/ci.yml
-
-  # True exactly when this run should actually release — computed once,
-  # reused by build-artifact/release/verify-outcome, so the "should we
-  # deploy" predicate exists in one place, not re-derived with any risk of
-  # the copies drifting apart.
-  should-release:
-    name: Determine whether to release
-    needs: checks
-    runs-on: ubuntu-latest
-    outputs:
-      yes: ${{ steps.decide.outputs.yes }}
-    steps:
-      - id: decide
-        run: |
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            yes="${{ inputs.confirm == 'deploy' }}"
-          else
-            # Any non-workflow_dispatch run of THIS workflow only ever
-            # happens via workflow_call (see the note above on why
-            # github.event_name can't be checked directly) — commit_sha is
-            # a required input on both trigger types, so its presence
-            # alone doesn't distinguish them, but the event type does,
-            # reliably, since this workflow's `on:` has no bare `push`.
-            yes=true
-          fi
-          echo "yes=${yes}" >> "$GITHUB_OUTPUT"
-          echo "Should release: ${yes}"
-
-  # Build the deployable artifact on the runner — the exact commit,
-  # checked out explicitly (workflow_dispatch can target an older,
-  # already-merged commit, not just HEAD), built once, verified here, then
-  # shipped as an immutable, content-addressed (by commit SHA) tarball.
-  # The VPS never runs npm/tsc/git for a routine deploy; it only extracts
-  # this exact artifact.
   build-artifact:
-    name: Build API release artifact
-    needs: should-release
-    if: needs.should-release.outputs.yes == 'true' && github.ref == 'refs/heads/main'
+    needs: checks
+    if: github.repository == 'mahdiyehnorouzi/RAD' && github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && inputs.commit_sha == github.sha && (github.event_name != 'workflow_dispatch' || inputs.confirm == 'deploy')
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
-          ref: ${{ inputs.commit_sha }}
-
-      - name: Verify the requested commit exists and is reachable from main
-        run: |
-          set -euo pipefail
-          git fetch --quiet origin main
-          if ! git cat-file -e '${{ inputs.commit_sha }}^{commit}' 2>/dev/null; then
-            echo "::error::'${{ inputs.commit_sha }}' is not a commit this checkout knows about."
-            exit 1
-          fi
-          if ! git merge-base --is-ancestor '${{ inputs.commit_sha }}' origin/main; then
-            echo "::error::'${{ inputs.commit_sha }}' is not an ancestor of origin/main. Refusing to release a commit that was never merged."
-            exit 1
-          fi
-          echo "Verified: ${{ inputs.commit_sha }} exists and is an ancestor of origin/main."
-
-      - uses: actions/setup-node@v4
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Refuse a stale main run
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: test "$(gh api repos/mahdiyehnorouzi/RAD/git/ref/heads/main --jq .object.sha)" = "$GITHUB_SHA"
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: 22
           cache: npm
-
       - run: npm ci
       - run: npm run build --workspace @rad/api
-      # Removes devDependencies from the (workspace-hoisted) root
-      # node_modules before packaging — the artifact ships only what the
-      # running API actually needs, never TypeScript/ESLint/test tooling.
       - run: npm prune --omit=dev
-
-      # What actually has to be in this tarball, confirmed by extracting a
-      # real build and running scripts/start-production.mjs against a
-      # disposable throwaway Postgres (not just `node dist/main.js`) end to
-      # end — a naive "node_modules + dist" package LOOKS complete but
-      # fails at runtime in three distinct ways:
-      #   1. npm workspaces hoists SOME dependencies into
-      #      apps/api/node_modules instead of the root (e.g. this repo's
-      #      @aws-sdk/client-s3 landed there) — Node's resolution checks
-      #      apps/api/node_modules BEFORE the root, so a package missing
-      #      from root but present only at apps/api/node_modules throws
-      #      MODULE_NOT_FOUND if that nested directory isn't shipped too.
-      #   2. node_modules/@rad/* are symlinks to sibling workspace
-      #      directories (packages/artworks, packages/types, ...) — only
-      #      shipping apps/api/dist leaves every one of those dangling.
-      #      api's own package.json only actually depends on
-      #      @rad/artworks, so packages/ covers every symlink that can
-      #      matter; @rad/admin and @rad/storefront (hoisted purely
-      #      because OTHER workspaces need them) are removed explicitly
-      #      below rather than shipped or left dangling.
-      #   3. start-production.mjs runs scripts/sync-schema.ts and
-      #      seed/ensure-staff.ts via `tsx` directly against TypeScript
-      #      SOURCE (they import from ../src/...), not the compiled dist/
-      #      — and tsx's module resolution for a dependency like TypeORM
-      #      (which ships raw .ts decorator sources alongside its
-      #      compiled .js) silently misresolves without the real
-      #      tsconfig.json files present. apps/api/src, apps/api/seed, and
-      #      both tsconfig files are therefore load-bearing, not optional.
-      - name: Package artifact
-        run: |
-          set -euo pipefail
-          for required in \
-            node_modules packages \
-            apps/api/dist/main.js apps/api/src apps/api/seed/ensure-staff.ts \
-            apps/api/package.json apps/api/scripts/start-production.mjs \
-            apps/api/tsconfig.json apps/api/tsconfig.build.json tsconfig.json \
-            VERSION; do
-            if [[ ! -e "$required" ]]; then
-              echo "::error::${required} missing before packaging — build or prune step above did not produce what was expected."
-              exit 1
-            fi
-          done
-          # Hoisted purely for OTHER workspaces (admin/storefront) — api
-          # depends on neither, and their targets are intentionally not
-          # shipped, so remove these two specific symlinks rather than
-          # leave them dangling in the artifact.
-          rm -f node_modules/@rad/admin node_modules/@rad/storefront
-          # apps/api/node_modules is npm workspace hoisting's overflow —
-          # present whenever the lockfile puts one of api's own
-          # dependencies there instead of the shared root (confirmed for
-          # @aws-sdk/client-s3 as of this writing); included whenever it
-          # exists, never required to, since a future lockfile change
-          # could legitimately hoist everything to the root instead.
-          tar_paths=(node_modules apps/api/dist apps/api/src apps/api/seed \
-            apps/api/package.json apps/api/scripts \
-            apps/api/tsconfig.json apps/api/tsconfig.build.json tsconfig.json \
-            packages VERSION)
-          [[ -d apps/api/node_modules ]] && tar_paths+=(apps/api/node_modules)
-          tar -czf api-release.tar.gz "${tar_paths[@]}"
-          ls -lh api-release.tar.gz
-
-      - uses: actions/upload-artifact@v4
+      - run: bash scripts/production/package-api.sh
+      - name: Bind artifact digest to this exact source and run
+        env:
+          RELEASE_KIND: api
+        run: python3 scripts/production/make-manifest.py
+      - uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a
+        id: attest
         with:
-          name: api-release-${{ inputs.commit_sha }}
-          path: api-release.tar.gz
-          retention-days: 7
+          subject-path: release.json
+      - run: cp "$BUNDLE" release.sigstore.json
+        env:
+          BUNDLE: ${{ steps.attest.outputs.bundle-path }}
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: api-release-${{ github.sha }}-${{ github.run_attempt }}
+          path: |
+            api-release.tar.gz
+            release.json
+            release.sigstore.json
           if-no-files-found: error
+          retention-days: 7
 
   release:
-    name: Release API via rad-api.service
-    needs: [should-release, build-artifact]
-    if: needs.should-release.outputs.yes == 'true' && github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
+    needs: build-artifact
+    if: vars.RAD_SELF_HOSTED_RELEASE_ENABLED == 'true' && github.repository == 'mahdiyehnorouzi/RAD' && github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && inputs.commit_sha == github.sha && (github.event_name != 'workflow_dispatch' || inputs.confirm == 'deploy')
+    runs-on: [self-hosted, Linux, X64, rad-production]
+    timeout-minutes: 20
     environment: production-api-vps
+    permissions:
+      contents: read
+      actions: read
+    concurrency:
+      group: rad-production-release
+      cancel-in-progress: false
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/download-artifact@v4
+      # Deliberately no checkout, setup-node, shell from artifacts, SSH or Docker.
+      - name: Allocate incoming data directory
+        id: stage
+        run: |
+          set -euo pipefail
+          stage=$(mktemp -d /var/lib/rad-release/incoming/release-XXXXXXXXXXXX)
+          echo "path=$stage" >> "$GITHUB_OUTPUT"
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
-          name: api-release-${{ inputs.commit_sha }}
-
-      - name: Configure pinned SSH identity
-        id: ssh
+          name: api-release-${{ github.sha }}-${{ github.run_attempt }}
+          path: ${{ steps.stage.outputs.path }}
+      - name: Invoke installed root-owned verifier and release broker
         env:
-          SSH_KEY: ${{ secrets.RAD_API_SSH_PRIVATE_KEY }}
-          KNOWN_HOSTS: ${{ secrets.RAD_API_SSH_KNOWN_HOSTS }}
-        run: |
-          test -n "$SSH_KEY" && test -n "$KNOWN_HOSTS"
-          install -m 700 -d "$HOME/.ssh"
-          printf '%s\n' "$SSH_KEY" > "$HOME/.ssh/id_ed25519"
-          printf '%s\n' "$KNOWN_HOSTS" > "$HOME/.ssh/known_hosts"
-          chmod 600 "$HOME/.ssh/id_ed25519" "$HOME/.ssh/known_hosts"
-
-      # Transfers the artifact built above and extracts it — preflight,
-      # atomic symlink swap, health check, and automatic rollback on
-      # failure (code + env-file safety checks only — it never touches
-      # the database), all identical to the previous clone-and-build
-      # script, just without the clone-and-build. RAD_API_HOST/USER/etc.
-      # below must match the verified production topology; override via
-      # repository/environment variables if any of these ever change.
-      - name: Run systemd release script (artifact path)
-        id: release_script
-        env:
-          RAD_API_HOST: ${{ vars.RAD_API_HOST || '46.34.163.16' }}
-          RAD_API_USER: ${{ vars.RAD_API_USER || 'root' }}
-          RAD_API_LIVE_DIR: ${{ vars.RAD_API_LIVE_DIR || '/opt/rad/apps/api' }}
-          RAD_API_RELEASES_DIR: ${{ vars.RAD_API_RELEASES_DIR || '/opt/rad-releases' }}
-          RAD_API_SERVICE: ${{ vars.RAD_API_SERVICE || 'rad-api.service' }}
-          RAD_API_PORT: ${{ vars.RAD_API_PORT || '4000' }}
-          RAD_API_ENV_FILE: ${{ vars.RAD_API_ENV_FILE || '/etc/rad/api.env' }}
-          RAD_API_COMMIT: ${{ inputs.commit_sha }}
-          RAD_API_ARTIFACT_PATH: api-release.tar.gz
-        run: bash scripts/deploy-api-systemd-artifact.sh
-
-      # The release script already verified /health on the VPS itself
-      # (127.0.0.1:${RAD_API_PORT}) before returning, including a rollback
-      # on failure — this step is an independent, external, read-only
-      # check against the PUBLIC domain (through Nginx, exactly as a real
-      # client reaches it), exercising a couple of routes beyond /health:
-      # a safe unauthenticated endpoint and a real catalog read. It never
-      # creates an order, writes anything, or touches the database beyond
-      # a read. A failure here is a DIFFERENT failure mode than the
-      # release script's own health check (that one already passed, or
-      # this step wouldn't run) — something public-facing (Nginx/DNS/
-      # routing) could be broken even though the API is healthy
-      # internally, or the API could be healthy-but-wrong (e.g. serving
-      # stale data). Either way it's rolled back explicitly by the next
-      # step, same target release+env the script itself would have used.
-      - name: Smoke test (public endpoints, read-only)
-        id: smoke_test
-        if: success()
-        env:
-          PUBLIC_API_URL: ${{ vars.API_URL || 'https://api.rad-object.com' }}
+          STAGE: ${{ steps.stage.outputs.path }}
+          RELEASE_KIND: api
         run: |
           set -euo pipefail
-          curl_json() {
-            curl -fsS --max-time 15 --retry 3 --retry-delay 3 --retry-connrefused "$1"
-          }
-          echo "Checking ${PUBLIC_API_URL}/health ..."
-          health="$(curl_json "${PUBLIC_API_URL}/health")"
-          echo "$health" | node -e '
-            const d = JSON.parse(require("fs").readFileSync(0, "utf8"));
-            if (d.ok !== true) { console.error("FAIL: /health ok !== true:", d); process.exit(1); }
-            if (d.env && d.env !== "production") { console.error("FAIL: /health env !== production:", d); process.exit(1); }
-            if (d.db === false) { console.error("FAIL: /health reports db connectivity false:", d); process.exit(1); }
-            console.log("OK: /health ->", JSON.stringify(d));
-          '
-
-          echo "Checking ${PUBLIC_API_URL}/session (must respond, not crash — 200 authenticated or 401 anonymous are both fine) ..."
-          session_code="$(curl -sS --max-time 15 --retry 3 --retry-delay 3 --retry-connrefused -o /dev/null -w '%{http_code}' "${PUBLIC_API_URL}/session")"
-          if [[ "$session_code" != "200" && "$session_code" != "401" ]]; then
-            echo "::error::/session responded ${session_code}, expected 200 or 401."
-            exit 1
-          fi
-          echo "OK: /session -> ${session_code}"
-
-          echo "Checking ${PUBLIC_API_URL}/artworks (catalog read; verifying media isn't silently replaced by the static registry) ..."
-          artworks="$(curl_json "${PUBLIC_API_URL}/artworks")"
-          echo "$artworks" | node -e '
-            const list = JSON.parse(require("fs").readFileSync(0, "utf8"));
-            if (!Array.isArray(list)) { console.error("FAIL: /artworks did not return an array"); process.exit(1); }
-            const staleRegistryPath = /^\/catalog\/photos\//;
-            const offenders = list
-              .flatMap((a) => Array.isArray(a.images) ? a.images : [])
-              .filter((img) => typeof img.src === "string" && staleRegistryPath.test(img.src));
-            if (offenders.length > 0) {
-              console.error(`FAIL: ${offenders.length} image(s) in the live /artworks response point at the bundled static-registry path (/catalog/photos/...) — the production catalog should only ever return SeaweedFS/Cloudinary/uploaded URLs, never registry paths.`);
-              process.exit(1);
-            }
-            console.log(`OK: /artworks -> ${list.length} product(s), no stale static-registry image paths found.`);
-          '
-
-      # The release script's OWN internal rollback (health-check failure)
-      # already happened, if needed, inside the previous step — that path
-      # needs nothing further here. This step only covers the NEW failure
-      # mode: the release script reported success (new code is live and
-      # passed its internal health check), but the external smoke test
-      # above then failed. Reuses the exact same rollback mechanics as the
-      # manual rollback script (scripts/lib/rollback-api-remote.sh, called
-      # here non-interactively — bypassing only its interactive
-      # confirmation wrapper, not its logic), with no release/snapshot
-      # arguments so it restores whatever the deploy script's own manifest
-      # recorded as "the release that was live immediately before this
-      # deploy" — exactly the one this specific run needs to undo.
-      - name: Roll back after failed smoke test
-        id: post_smoke_rollback
-        if: failure() && steps.release_script.outcome == 'success' && steps.ssh.outcome == 'success'
+          # Only fixed-format data crosses the privilege boundary. The root-owned
+          # broker independently verifies the signed manifest, source SHA/ref,
+          # hosted builder, run identity, payload digest and allowed operations.
+          python3 - <<'PY_REQUEST' | sudo -n /usr/local/sbin/rad-release
+          import json, os
+          print(json.dumps(dict(stage=os.path.basename(os.environ["STAGE"]),
+            kind=os.environ["RELEASE_KIND"], commit=os.environ["GITHUB_SHA"],
+            run_id=int(os.environ["GITHUB_RUN_ID"]), run_attempt=int(os.environ["GITHUB_RUN_ATTEMPT"]))))
+          PY_REQUEST
+      - name: Remove incoming data
+        if: always() && steps.stage.outcome == 'success'
         env:
-          RAD_API_HOST: ${{ vars.RAD_API_HOST || '46.34.163.16' }}
-          RAD_API_USER: ${{ vars.RAD_API_USER || 'root' }}
-          RAD_API_LIVE_DIR: ${{ vars.RAD_API_LIVE_DIR || '/opt/rad/apps/api' }}
-          RAD_API_RELEASES_DIR: ${{ vars.RAD_API_RELEASES_DIR || '/opt/rad-releases' }}
-          RAD_API_SERVICE: ${{ vars.RAD_API_SERVICE || 'rad-api.service' }}
-          RAD_API_PORT: ${{ vars.RAD_API_PORT || '4000' }}
-          RAD_API_ENV_FILE: ${{ vars.RAD_API_ENV_FILE || '/etc/rad/api.env' }}
+          STAGE: ${{ steps.stage.outputs.path }}
         run: |
-          set -euo pipefail
-          echo "::warning::Smoke test failed after a healthy-looking deploy — rolling back to the pre-deploy release recorded in ${RAD_API_RELEASES_DIR}/.rollback-manifest.json"
-          SSH_OPTS=(-o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10)
-          ssh "${SSH_OPTS[@]}" "${RAD_API_USER}@${RAD_API_HOST}" bash -s -- \
-            "$RAD_API_LIVE_DIR" "$RAD_API_RELEASES_DIR" "$RAD_API_SERVICE" "$RAD_API_PORT" \
-            "$RAD_API_ENV_FILE" "" "" \
-            < scripts/lib/rollback-api-remote.sh
-          echo "::notice::Post-smoke-test rollback completed and was verified healthy (the remote script itself exits non-zero and fails this step otherwise)."
+          case "$STAGE" in /var/lib/rad-release/incoming/release-*) rm -rf -- "$STAGE" ;; *) exit 1 ;; esac
 
-      - name: Report outcome
-        if: always()
-        run: |
-          if [[ "${{ job.status }}" == "success" ]]; then
-            echo "API release succeeded, is healthy, and passed public smoke tests. See earlier steps' logs for the exact release directory and version."
-          elif [[ "${{ steps.post_smoke_rollback.outcome }}" == "success" ]]; then
-            echo "::warning::API release passed its internal health check but FAILED the external smoke test, and was AUTOMATICALLY ROLLED BACK to the previous release. Production is back on the previous known-healthy release; investigate the failed commit before retrying."
-          elif [[ "${{ steps.post_smoke_rollback.outcome }}" == "failure" ]]; then
-            echo "::error::Smoke test failed AND the automatic post-smoke-test rollback ALSO FAILED. Production may be in a broken or unknown state. SSH in immediately: systemctl status rad-api.service; journalctl -u rad-api.service -n 100."
-          else
-            echo "::error::API release failed. scripts/deploy-api-systemd-artifact.sh attempts an automatic rollback on a failed health check — check the 'Run systemd release script (artifact path)' step's log for whether that rollback itself succeeded. If it also failed, SSH in immediately: systemctl status rad-api.service; journalctl -u rad-api.service -n 100."
-          fi
-
-      - name: Remove runner SSH credentials
-        if: always()
-        run: rm -f "$HOME/.ssh/id_ed25519" "$HOME/.ssh/known_hosts"
-
-  # Independent of whatever the `release` job's own `if:` condition
-  # concluded — catches exactly the class of bug this was added for: a
-  # reusable-workflow trigger condition that silently evaluates false (so
-  # `release` shows as "skipped", which does NOT fail a workflow run by
-  # default) when a release genuinely should have happened. Recomputes
-  # "should this have deployed" independently and fails loudly if the
-  # `release` job's result doesn't match.
   verify-outcome:
-    name: Verify a required release actually ran
-    needs: [should-release, release]
+    needs: [checks, build-artifact, release]
     if: always()
     runs-on: ubuntu-latest
     steps:
-      - name: Check
+      - name: Fail on rejected, skipped or unsuccessful requested release
+        env:
+          TRUSTED: ${{ github.repository == 'mahdiyehnorouzi/RAD' && github.ref == 'refs/heads/main' && inputs.commit_sha == github.sha && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') }}
+          REQUESTED: ${{ github.event_name != 'workflow_dispatch' || inputs.confirm == 'deploy' }}
+          CHECKS: ${{ needs.checks.result }}
+          RELEASE: ${{ needs.release.result }}
         run: |
-          should="${{ needs.should-release.outputs.yes }}"
-          result="${{ needs.release.result }}"
-          echo "should-release=${should} release.result=${result}"
-          if [[ "$should" == "true" && "$result" != "success" ]]; then
-            echo "::error::A release was required (should-release=true) but the release job's result was '${result}', not 'success'. This must never be silently reported as a successful deployment — investigate the release job's conditions and logs."
-            exit 1
-          fi
-          echo "OK: release outcome matches what was required."
+          test "$TRUSTED" = true
+          test "$CHECKS" = success
+          if test "$REQUESTED" = true; then test "$RELEASE" = success; fi

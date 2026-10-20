@@ -129,11 +129,36 @@ jobs:
           LIARA_BUILD: ${{ matrix.liara }}
         run: npm run ${{ matrix.script }} --workspace @rad/${{ matrix.app }}
 
+  release-policy:
+    name: Release broker and workflow policy
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Privilege boundary and rollback regressions (isolated fixtures)
+        run: python3 -B -m unittest discover -s scripts/production -p 'test_*.py' -v
+      - name: Shell syntax
+        run: |
+          bash -n scripts/production/package-api.sh
+          sh -n scripts/production/rad-release
+      - name: Validate production workflows with pinned actionlint
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP"
+          curl -fsSL --proto '=https' --tlsv1.2 https://github.com/rhysd/actionlint/releases/download/v1.7.7/actionlint_1.7.7_linux_amd64.tar.gz -o actionlint.tar.gz
+          echo '023070a287cd8cccd71515fedc843f1985bf96c436b7effaecce67290e7e0757  actionlint.tar.gz' | sha256sum -c -
+          tar -xzf actionlint.tar.gz actionlint
+          cd "$GITHUB_WORKSPACE"
+          "$RUNNER_TEMP/actionlint" -shellcheck= .github/workflows/ci.yml .github/workflows/deploy.yml .github/workflows/deploy-api-vps.yml .github/workflows/deploy-frontend-vps.yml
+
   # Single required status check for branch protection.
   ci-passed:
     name: CI passed
     if: always()
-    needs: [lint, typecheck, test, test-media-db, build]
+    needs: [lint, typecheck, test, test-media-db, build, release-policy]
     runs-on: ubuntu-latest
     steps:
       - name: Fail if any job failed or was cancelled

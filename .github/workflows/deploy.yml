@@ -23,7 +23,6 @@ name: Deploy (automatic, on push to main)
 
 permissions:
   contents: read
-  packages: write
 
 on:
   push:
@@ -35,6 +34,7 @@ concurrency:
 
 jobs:
   checks:
+    if: github.repository == 'mahdiyehnorouzi/RAD' && github.ref == 'refs/heads/main'
     uses: ./.github/workflows/ci.yml
 
   detect:
@@ -47,9 +47,10 @@ jobs:
       admin: ${{ steps.filter.outputs.admin }}
       any: ${{ steps.filter.outputs.any }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Compute changed files since the previous main commit
         id: diff
@@ -112,7 +113,7 @@ jobs:
 
           # Shared root-level config/infra that any app's build could
           # depend on — conservative on purpose.
-          if matches '^(package\.json|package-lock\.json|tsconfig.*\.json|apps/api/Dockerfile|apps/api/Dockerfile\..*|apps/storefront/Dockerfile|apps/admin/Dockerfile|docker-compose\.frontend-vps\.yml|scripts/deploy-api-systemd\.sh|scripts/lib/deploy-api-remote\.sh|\.github/workflows/deploy\.yml|\.github/workflows/deploy-api-vps\.yml|\.github/workflows/deploy-frontend-vps\.yml)$'; then
+          if matches '^(package\.json|package-lock\.json|tsconfig.*\.json|apps/api/Dockerfile|apps/api/Dockerfile\..*|apps/storefront/Dockerfile|apps/admin/Dockerfile|docker-compose\.frontend-vps\.yml|scripts/production/.*|scripts/deploy-api-systemd-artifact\.sh|scripts/lib/deploy-api-remote-artifact\.sh|scripts/deploy-api-systemd\.sh|scripts/lib/deploy-api-remote\.sh|\.github/workflows/deploy\.yml|\.github/workflows/deploy-api-vps\.yml|\.github/workflows/deploy-frontend-vps\.yml)$'; then
             api=true; storefront=true; admin=true
           fi
 
@@ -140,7 +141,11 @@ jobs:
     uses: ./.github/workflows/deploy-api-vps.yml
     with:
       commit_sha: ${{ github.sha }}
-    secrets: inherit
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+      actions: read
 
   deploy-frontend:
     name: Deploy Storefront/Admin
@@ -151,14 +156,19 @@ jobs:
     # build a frontend release on top of; investigate the API failure
     # first, then re-push or manually re-dispatch once it's fixed).
     if: |
-      always() &&
+      always() && !cancelled() && needs.detect.result == 'success' &&
       (needs.detect.outputs.storefront == 'true' || needs.detect.outputs.admin == 'true') &&
       (needs.detect.outputs.api != 'true' || needs.deploy-api.result == 'success')
     uses: ./.github/workflows/deploy-frontend-vps.yml
     with:
       deploy_storefront: ${{ needs.detect.outputs.storefront == 'true' }}
       deploy_admin: ${{ needs.detect.outputs.admin == 'true' }}
-    secrets: inherit
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+      attestations: write
+      actions: read
 
   summary:
     name: Deployment summary
