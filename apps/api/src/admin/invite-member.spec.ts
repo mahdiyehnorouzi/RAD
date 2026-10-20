@@ -152,8 +152,10 @@ after(async () => {
 });
 
 beforeEach(async () => {
+  // cascade: Review also FKs to users, so a plain TRUNCATE of users is
+  // refused by Postgres once that table exists in the synced schema.
   await dataSource.getRepository(PasswordResetToken).clear();
-  await dataSource.getRepository(User).clear();
+  await dataSource.getRepository(User).clear({ cascade: true });
   sentInvites = [];
   failNextSend = false;
 });
