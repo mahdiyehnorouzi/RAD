@@ -1,5 +1,9 @@
-> Replacement under review: [self-hosted production release migration](self-hosted-production-release.md).
-> The SSH-based procedures below describe the previous path; do not mix them with the new broker.
+> Release transport: [GitHub-hosted runner + Tailscale + restricted SSH](vps-tailscale-ssh-deploy.md)
+> reaches the VPS; the broker itself is documented in
+> [self-hosted production release migration](self-hosted-production-release.md) (that
+> document's own self-hosted-runner transport is stopped/disabled and not used).
+> The SSH-based procedures below describe an earlier, unrestricted-root-key path; do not
+> mix them with either of the above.
 
 # CI/CD pipeline: merge to `main` → automatic production deploy
 

@@ -1,0 +1,17 @@
+# Install with visudo as /etc/sudoers.d/rad-deploy. Grants the SSH-only
+# `rad-deploy` account the exact same narrow privilege already reviewed for
+# `rad-runner` in rad-runner.sudoers - invoking the release broker with no
+# arguments (the broker reads its request from stdin only). The empty
+# argument string is essential (not a wildcard): it is what forces every
+# invocation through scripts/production/rad_release.py's stdin-JSON path and
+# blocks the separate (and intentionally sudoers-forbidden) `rollback
+# <transaction>` argv mode - that mode is reserved for a root operator typing
+# it directly, never for an account reachable over SSH.
+#
+# rad-deploy itself has no other privileges: no shell login beyond this one
+# forced SSH command (see rad-deploy-ssh-entrypoint.sh and the
+# authorized_keys line in docs/vps-tailscale-ssh-deploy.md), no group
+# memberships beyond its own, and no access to /opt/rad*, /etc/rad*, or
+# Docker except through this exact sudo rule.
+Defaults:rad-deploy env_reset, !setenv
+rad-deploy ALL=(root) NOPASSWD: /usr/local/sbin/rad-release ""

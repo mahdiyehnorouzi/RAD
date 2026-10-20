@@ -1,3 +1,16 @@
+> **Superseded as the release transport.** The self-hosted runner this
+> document migrates releases onto is stopped and disabled, and stays that
+> way — see [`vps-tailscale-ssh-deploy.md`](vps-tailscale-ssh-deploy.md) for
+> the transport actually wired into `deploy-api-vps.yml` /
+> `deploy-frontend-vps.yml` now (GitHub-hosted runner + Tailscale + a
+> narrowly-restricted SSH account). Everything in this document about the
+> release/health-check/rollback broker itself
+> (`scripts/production/rad_release.py`) is unchanged and still accurate — only
+> "runs on a self-hosted runner on the VPS" is replaced by "reached over SSH
+> from a GitHub-hosted runner." Read this document for the broker's trust
+> model and the VPS prerequisites that are not runner-specific; read the
+> other one for how the VPS is actually reached today.
+
 # Self-hosted production release migration — review and operations
 
 Status: gated implementation authorized for Draft PR review; **not deployed, merged, or host-configured**.

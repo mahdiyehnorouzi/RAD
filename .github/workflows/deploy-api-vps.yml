@@ -1,4 +1,16 @@
 # Builds/signs on GitHub-hosted infrastructure; production only consumes verified output.
+#
+# Release transport: GitHub-hosted `ubuntu-latest` (never self-hosted - that
+# path is stopped/disabled, see docs/vps-tailscale-ssh-deploy.md) joins the
+# RAD tailnet over GitHub OIDC (tailscale/github-action@v4, no long-lived
+# Tailscale credential in this repo) and reaches the VPS at its private
+# Tailscale address only. It authenticates as the narrowly-restricted
+# `rad-deploy` account (forced SSH command, no shell, no arbitrary remote
+# commands - see scripts/production/rad-deploy-ssh-entrypoint.sh) and pins
+# the VPS host key via RAD_VPS_SSH_HOST_KEY. The actual release, health
+# check, and rollback logic is scripts/production/rad_release.py, completely
+# unchanged from the self-hosted-runner design it was reviewed under - only
+# how the signed artifact and the trigger reach the VPS has changed.
 name: API VPS release
 on:
   workflow_call:
@@ -69,49 +81,66 @@ jobs:
 
   release:
     needs: build-artifact
-    if: vars.RAD_SELF_HOSTED_RELEASE_ENABLED == 'true' && github.repository == 'mahdiyehnorouzi/RAD' && github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && inputs.commit_sha == github.sha && (github.event_name != 'workflow_dispatch' || inputs.confirm == 'deploy')
-    runs-on: [self-hosted, Linux, X64, rad-production]
+    if: github.repository == 'mahdiyehnorouzi/RAD' && github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && inputs.commit_sha == github.sha && (github.event_name != 'workflow_dispatch' || inputs.confirm == 'deploy')
+    runs-on: ubuntu-latest
     timeout-minutes: 20
     environment: production-api-vps
     permissions:
       contents: read
-      actions: read
+      id-token: write
     concurrency:
       group: rad-production-release
       cancel-in-progress: false
+    env:
+      RAD_VPS_TAILSCALE_IP: "100.103.104.79"
     steps:
-      # Deliberately no checkout, setup-node, shell from artifacts, SSH or Docker.
-      - name: Allocate incoming data directory
-        id: stage
-        run: |
-          set -euo pipefail
-          stage=$(mktemp -d /var/lib/rad-release/incoming/release-XXXXXXXXXXXX)
-          echo "path=$stage" >> "$GITHUB_OUTPUT"
-      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+      - name: Download signed artifact (this exact run/attempt only)
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
           name: api-release-${{ github.sha }}-${{ github.run_attempt }}
-          path: ${{ steps.stage.outputs.path }}
-      - name: Invoke installed root-owned verifier and release broker
+          path: stage
+
+      - name: Connect to RAD tailnet using GitHub OIDC
+        uses: tailscale/github-action@v4
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          audience: ${{ secrets.TS_AUDIENCE }}
+          tags: tag:rad-deploy
+
+      - name: Configure pinned SSH identity for the restricted rad-deploy account
         env:
-          STAGE: ${{ steps.stage.outputs.path }}
-          RELEASE_KIND: api
+          SSH_KEY: ${{ secrets.RAD_DEPLOY_SSH_PRIVATE_KEY }}
+          HOST_KEY: ${{ secrets.RAD_VPS_SSH_HOST_KEY }}
         run: |
           set -euo pipefail
-          # Only fixed-format data crosses the privilege boundary. The root-owned
-          # broker independently verifies the signed manifest, source SHA/ref,
-          # hosted builder, run identity, payload digest and allowed operations.
-          python3 - <<'PY_REQUEST' | sudo -n /usr/local/sbin/rad-release
-          import json, os
-          print(json.dumps(dict(stage=os.path.basename(os.environ["STAGE"]),
-            kind=os.environ["RELEASE_KIND"], commit=os.environ["GITHUB_SHA"],
-            run_id=int(os.environ["GITHUB_RUN_ID"]), run_attempt=int(os.environ["GITHUB_RUN_ATTEMPT"]))))
-          PY_REQUEST
-      - name: Remove incoming data
-        if: always() && steps.stage.outcome == 'success'
-        env:
-          STAGE: ${{ steps.stage.outputs.path }}
+          test -n "$SSH_KEY" && test -n "$HOST_KEY"
+          install -m 700 -d "$HOME/.ssh"
+          printf '%s\n' "$SSH_KEY" > "$HOME/.ssh/id_ed25519"
+          printf '%s %s\n' "$RAD_VPS_TAILSCALE_IP" "$HOST_KEY" > "$HOME/.ssh/known_hosts"
+          chmod 600 "$HOME/.ssh/id_ed25519" "$HOME/.ssh/known_hosts"
+
+      # The only thing this step does is get the signed artifact + a fixed-grammar
+      # trigger string onto the VPS over the tailnet, as the `rad-deploy` account,
+      # whose SSH key can run exactly one forced command
+      # (scripts/production/rad-deploy-ssh-entrypoint.sh) and nothing else - no
+      # shell, no other remote command, no root key. That entrypoint hands the
+      # request to the exact same root-owned broker
+      # (scripts/production/rad_release.py) the self-hosted-runner design used,
+      # unchanged, which performs the real verification, release, health check
+      # and rollback. A broker rejection (health check failure, activation not
+      # enabled, manifest mismatch, etc.) makes this ssh command exit non-zero,
+      # which fails this step and this job - never a silent skip.
+      - name: Ship artifact and trigger release over the tailnet
         run: |
-          case "$STAGE" in /var/lib/rad-release/incoming/release-*) rm -rf -- "$STAGE" ;; *) exit 1 ;; esac
+          set -euo pipefail
+          ssh_args=(-o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=15)
+          tar -cf - -C stage release.json release.sigstore.json api-release.tar.gz \
+            | ssh "${ssh_args[@]}" "rad-deploy@${RAD_VPS_TAILSCALE_IP}" \
+              "deploy kind=api commit=${GITHUB_SHA} run_id=${GITHUB_RUN_ID} run_attempt=${GITHUB_RUN_ATTEMPT}"
+
+      - name: Remove runner SSH credentials
+        if: always()
+        run: rm -f "$HOME/.ssh/id_ed25519" "$HOME/.ssh/known_hosts"
 
   verify-outcome:
     needs: [checks, build-artifact, release]
