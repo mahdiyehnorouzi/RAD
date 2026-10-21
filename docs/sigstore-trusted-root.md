@@ -68,9 +68,6 @@ auth login` done nor any credential stored anywhere. It:
 
 - Fetches `trusted_root.jsonl` the same way the local script does, computes
   its SHA256, and validates every line is well-formed JSON.
-- Optionally (`verify_against_commit` input) self-checks the freshly-fetched
-  trust root against a real signed artifact in this repo with
-  `--custom-trusted-root`, the same validation described below.
 - Publishes a GitHub build-provenance attestation **for the trusted-root
   file itself** (`actions/attest-build-provenance`), so anyone with `gh` and
   normal internet access (any machine except the VPS) can independently
@@ -85,6 +82,20 @@ This workflow only **produces** the file — it never touches the VPS, never
 installs anything, and is not part of any deploy/release path. Installing
 and root-approving it is still the separate manual procedure in "Installing
 on the VPS" below.
+
+**It deliberately does NOT verify the fetched trust root against any real RAD
+release artifact.** An earlier draft of this workflow included an automated
+"self-check" step, which was removed before merge because it was wrong in
+exactly the ways that matter for a trust-root verification step: it never
+actually bound the check to the operator-supplied commit (it queried a
+generic, unparameterized image reference regardless of which commit was
+given), it checked a generic OCI reference rather than a specific RAD release
+manifest, and — worst — a verification **failure** only printed a warning and
+still let the artifact publish, i.e. it was fail-open exactly where this kind
+of check must be fail-closed. Rather than ship a half-correct check that
+looks like real verification but isn't, that step was deleted outright. See
+"Independent verification required before installing" immediately below for
+what to do instead.
 
 ### Option B — a local machine with `gh` auth (laptop, bastion, anywhere but the VPS)
 
@@ -104,6 +115,48 @@ real signed release artifact (run `39565872506`) with `--custom-trusted-root`,
 and correctly rejects both a tampered manifest and a wrong `--source-digest`
 (fail-closed, not just "accepts everything offline"). See the PR description
 for exact commands and output.
+
+## Independent verification required before installing
+
+**Neither production method above verifies the fetched trust root against a
+real RAD release artifact for you.** Whichever option produced the file
+(Option A's GitHub Actions run, or Option B's local `fetch-trusted-root.sh`),
+before it goes anywhere near `scripts/production/rad-install-broker-trusted-root.sh`
+the operator installing it MUST independently confirm it against one
+specific, real, already-published RAD release — commit-bound and
+fail-closed, exactly the two properties a correct check needs:
+
+```bash
+# Pick ONE exact commit/run you already trust is a genuine RAD release
+# (e.g. one you just watched deploy-api-vps.yml or deploy-frontend-vps.yml
+# publish), and bind the verification to it explicitly — never a bare
+# "does some attestation exist for this image name" check:
+gh attestation verify "oci://ghcr.io/<owner>/rad-api@sha256:<digest-from-that-exact-build>" \
+  --repo <owner>/RAD \
+  --custom-trusted-root /path/to/trusted_root-<timestamp>.jsonl \
+  --predicate-type https://slsa.dev/provenance/v1 \
+  --source-ref refs/heads/main \
+  --source-digest <the-same-commit-sha> \
+  --signer-workflow <owner>/RAD/.github/workflows/deploy-frontend-vps.yml
+```
+
+(Use the API artifact's own tarball + checksum, or any image/commit you can
+name exactly, in place of `rad-api` above — what matters is that the subject
+is one specific digest you already know is a real release, not a bare image
+repository reference.) The command must **exit non-zero and print a clear
+failure** if you deliberately corrupt the trust-root file, change the digest
+by one character, or point `--source-digest` at a different commit — if it
+doesn't, something is wrong with the trust root (or the command), and it
+must not be installed. A command that only warns on failure is not
+verification; treat anything short of a hard, non-zero exit on a bad input
+as disqualifying.
+
+Only once this independent, fail-closed check passes against a real
+artifact should the file be transferred to the VPS and installed via
+`rad-install-broker-trusted-root.sh` below. This step is intentionally
+manual and not automated into either production method above — see Option
+A's note on why an automated version of this check was removed rather than
+shipped half-correct.
 
 ## Installing on the VPS (atomic, with automatic rollback)
 

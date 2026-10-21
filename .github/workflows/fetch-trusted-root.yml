@@ -30,20 +30,11 @@ name: Fetch Sigstore trusted root (offline broker verification)
 
 permissions:
   contents: read
-  id-token: write      # required by actions/attest-build-provenance
-  attestations: write  # required to publish the build-provenance attestation
+  id-token: write # required by actions/attest-build-provenance
+  attestations: write # required to publish the build-provenance attestation
 
 on:
-  workflow_dispatch:
-    inputs:
-      verify_against_commit:
-        description: >-
-          Optional: a commit SHA on this repo that already has a real
-          build-provenance attestation (e.g. from a past deploy-api-vps.yml
-          or deploy-frontend-vps.yml run) to self-check the fetched trust
-          root against before publishing it. Leave empty to skip (the
-          trusted root is still structurally validated either way).
-        required: false
+  workflow_dispatch: {}
 
 jobs:
   fetch:
@@ -104,29 +95,21 @@ jobs:
             console.log(`OK: ${lines.length} well-formed JSON line(s).`);
           ' "$OUT_FILE"
 
-      # Optional, extra confidence: if a known-good commit's attestation
-      # was given, prove the freshly-fetched trust root can actually verify
-      # a REAL signed RAD artifact with --custom-trusted-root, exactly as
-      # docs/sigstore-trusted-root.md's own "Producing the file" section
-      # describes doing by hand. Skipped (not failed) if no input was
-      # given — this workflow still produces a usable file either way.
-      - name: Self-check against a known-good attested commit (optional)
-        if: inputs.verify_against_commit != ''
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -uo pipefail
-          OUT_FILE="${{ steps.fetch.outputs.out_file }}"
-          COMMIT="${{ inputs.verify_against_commit }}"
-          echo "Verifying ${COMMIT} has a real build-provenance attestation, using the freshly-fetched trust root (never the live TUF endpoint this workflow exists to work around)..."
-          if gh attestation verify "oci://ghcr.io/${{ github.repository_owner }}/rad-storefront" \
-              --repo "${{ github.repository }}" \
-              --custom-trusted-root "$OUT_FILE" \
-              --predicate-type https://slsa.dev/provenance/v1; then
-            echo "OK: freshly-fetched trusted root successfully verified a real attestation for this repository."
-          else
-            echo "::warning::Self-check against ${COMMIT} did not pass verification. This does not necessarily mean the trusted root is bad (the referenced commit/image may simply not have a matching attestation for rad-storefront) — review the log above before deciding whether to install this file."
-          fi
+      # No automated "self-check against a real release" step here on
+      # purpose (see docs/sigstore-trusted-root.md's "Independent
+      # verification required before installing" section for why a
+      # half-correct version of this check was removed rather than kept):
+      # doing this honestly requires binding the check to one exact,
+      # caller-chosen commit's own release manifest/digest, verified
+      # fail-closed (a verification failure must block publishing the
+      # artifact, not just warn and continue) - not a generic image
+      # reference that happens to exist in this repo's GHCR namespace.
+      # Getting that binding right is exactly the kind of thing that must
+      # not be faked to make this workflow look more complete than it is.
+      # The REQUIRED independent verification therefore happens manually,
+      # after download, per docs/sigstore-trusted-root.md - this workflow
+      # only fetches, structurally validates, and attests provenance for
+      # the raw TUF output.
 
       # Attested so the eventual VPS operator (or anyone else) can
       # independently confirm, from any machine with `gh` and normal
@@ -149,7 +132,8 @@ jobs:
 
       - name: Next steps
         run: |
-          echo "Download this run's artifact (Actions tab -> this run -> Artifacts, or 'gh run download ${{ github.run_id }}' from any machine with gh auth — never the VPS), then follow 'Installing on the VPS' in docs/sigstore-trusted-root.md:"
-          echo "  1. Verify the downloaded file's SHA256 matches ${{ steps.checksum.outputs.sha256 }} (and/or 'gh attestation verify' the file itself against this repo) before transferring it anywhere."
-          echo "  2. Transfer it to the VPS out-of-band (e.g. scp over the existing Tailscale path), never by having the VPS fetch it."
-          echo "  3. Install + root-approve via scripts/production/rad-install-broker-trusted-root.sh, exactly as documented — this workflow does not install or approve anything itself."
+          echo "This workflow does NOT verify the fetched trust root against any real RAD release artifact — that independent verification is REQUIRED before production install, per docs/sigstore-trusted-root.md. Download this run's artifact (Actions tab -> this run -> Artifacts, or 'gh run download ${{ github.run_id }}' from any machine with gh auth — never the VPS), then:"
+          echo "  1. Verify the downloaded file's SHA256 matches ${{ steps.checksum.outputs.sha256 }}, and/or 'gh attestation verify' the file itself against this repo, before trusting it came from this run unmodified."
+          echo "  2. Independently verify a real, specific RAD release artifact against this trust root with --custom-trusted-root, bound to the exact commit/digest you intend to trust — see 'Independent verification required before installing' in docs/sigstore-trusted-root.md. Do not skip this step."
+          echo "  3. Transfer it to the VPS out-of-band (e.g. scp over the existing Tailscale path), never by having the VPS fetch it."
+          echo "  4. Install + root-approve via scripts/production/rad-install-broker-trusted-root.sh, exactly as documented — this workflow does not install or approve anything itself."
