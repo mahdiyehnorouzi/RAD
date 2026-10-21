@@ -140,7 +140,7 @@ def verify_manifest(directory, request):
     workflow = f"{REPO}/.github/workflows/deploy-{request['kind'] if request['kind'] == 'api' else 'frontend'}-vps.yml"
     # Fail closed if gh is old, Sigstore trust is unavailable, or the signer,
     # source commit/ref, runner type or subject hash does not match policy.
-    run(GH, "attestation", "verify", path, "--no-public-good", "--bundle", directory / "release.sigstore.json",
+    run(GH, "attestation", "verify", path, "--bundle", directory / "release.sigstore.json",
         "--repo", REPO, "--signer-workflow", workflow, "--source-ref", "refs/heads/main",
         "--source-digest", request["commit"], "--signer-digest", request["commit"],
         "--deny-self-hosted-runners")
