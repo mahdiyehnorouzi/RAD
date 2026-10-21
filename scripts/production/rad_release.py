@@ -371,7 +371,10 @@ def frontend_smoke(services):
             request_url(base + link[1])
         request_url(base + "/backend/session", (200, 401))
     if "admin" in services:
-        request_url("https://admin.rad-object.com/login")
+        # The admin app has no standalone /login route; authentication is
+        # handled client-side on the root page itself, which is served
+        # without requiring a session and returns 200 directly (no redirect).
+        request_url("https://admin.rad-object.com/")
 
 
 def release_frontend(manifest, directory, transaction):
