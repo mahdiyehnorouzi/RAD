@@ -1,10 +1,15 @@
 # VPS release transport: GitHub-hosted runner + Tailscale + restricted SSH
 
-Status: **code only, not installed, not activated.** This document and the
-workflow changes it describes do not deploy anything, grant anything, or
-change anything on the VPS by themselves. Everything under "VPS one-time
-preparation" below is for a human operator to read, adapt if needed, and run
-themselves after review — nothing in this repository executes it.
+Status: **VPS-side setup is done and verified working for the API path;
+production release is still not activated.** The `rad-deploy` account,
+entrypoint, shell, and sudoers rule described below are installed on the real
+VPS and have been exercised end to end against `production-api-vps` (see §8)
+— real Tailscale OIDC, real SSH auth, real forced command, real broker
+invocation, correctly rejected only by the still-disabled activation gate.
+`production-frontend-vps` is confirmed broken at the Tailscale OIDC step
+(§8) and needs one Tailscale admin-console change before it will work.
+Nothing in this repository flips the activation gate or merges/activates a
+real release — that remains a deliberate, separate operator action.
 
 ## Why this exists
 
@@ -275,24 +280,45 @@ corresponding key on the VPS (`authorized_keys` for whichever account that
 old key logged into), since an unused unrestricted root key sitting in
 secrets storage is pure residual risk with no corresponding benefit anymore.
 
-### 8. Confirm the Tailscale OIDC grant covers both GitHub Environments — true blocker if not verified
+### 8. Tailscale OIDC grant for `production-frontend-vps` — CONFIRMED BROKEN, true blocker
 
-`TS_OAUTH_CLIENT_ID` / `TS_AUDIENCE` are plain repository secrets (not scoped
-to an Environment), and the already-verified connectivity run used no
-`environment:` at all beyond `production-api-vps` for its own job. This
-repository's two release jobs run under **two different** GitHub Environments
-(`production-api-vps`, `production-frontend-vps`), which GitHub's OIDC token
-expresses as two different `environment:` claims in the token subject. If the
-Tailscale admin console's OAuth client grant for `TS_OAUTH_CLIENT_ID` is scoped
-to accept only one specific subject pattern (for example one that names
-`environment:production-api-vps` explicitly, rather than matching the
-repository generally), the frontend release job will fail to authenticate to
-Tailscale even with every other step correct.
+This was flagged as a theoretical risk before the `rad-deploy` account existed
+on the VPS; it has now been verified for real, against the actual Tailscale
+tenant, via
+[`verify-rad-deploy-ssh.yml`](../.github/workflows/verify-rad-deploy-ssh.yml)
+(manual-dispatch, no production effect) run on main:
 
-**This needs manual confirmation in the Tailscale admin console** (OAuth
-clients → the client behind `TS_OAUTH_CLIENT_ID` → its grant's subject
-condition) before relying on this for the frontend path — it cannot be
-verified from this repository or from a workflow run.
+- **`production-api-vps`: works end to end.** Tailscale OIDC connected, SSH
+  authenticated as `rad-deploy`, the forced command and tar validation ran,
+  and the broker gave its own real response: `Release failed (RuntimeError):
+  Host release approval missing: enabled` - the exact, expected rejection
+  while `/etc/rad-release/activation.json` stays disabled. Every layer of
+  this design is confirmed working for this Environment.
+- **`production-frontend-vps`: fails before SSH is even attempted.** The
+  `tailscale/github-action@v4` step itself fails its OIDC token exchange:
+
+  ```
+  failed to exchange JWT for access token: token exchange failed with status 403:
+  {"message":"Unauthorized. Visit https://login.tailscale.com/admin/settings/trust-credentials/view/*** for details"}
+  ```
+
+  This confirms the OAuth client behind `TS_OAUTH_CLIENT_ID` has a trust
+  grant that accepts the GitHub OIDC subject for `environment:production-api-vps`
+  but rejects the one for `environment:production-frontend-vps`.
+
+**Operator action required** (cannot be done from this repository or from a
+workflow — it is entirely inside Tailscale's own admin console, which this
+session has no credentials for): open
+<https://login.tailscale.com/admin/settings/trust-credentials> (the exact URL
+printed in the error, with the credential ID filled in), find the trust
+credential backing `TS_OAUTH_CLIENT_ID`, and broaden its subject condition to
+also accept `environment:production-frontend-vps` for this repository (or
+drop the environment restriction entirely and rely on the repository/ref
+condition alone, if that is the simpler fix for how this tenant's trust
+credentials are structured). Re-run
+`verify-rad-deploy-ssh.yml` with `target: frontend` afterward to confirm —
+a clean run should end the same way the API one did, with the broker's own
+`Host release approval missing: enabled` rejection, not a Tailscale 403.
 
 ## Not done by this change
 
