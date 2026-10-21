@@ -1,0 +1,139 @@
+# On-demand: produce a fresh, authentic Sigstore trusted_root.jsonl for the
+# RAD release broker's offline attestation verification
+# (scripts/production/rad_release.py's --custom-trusted-root path — see
+# docs/sigstore-trusted-root.md for the full picture).
+#
+# Why this exists: scripts/production/fetch-trusted-root.sh already does
+# this (it just shells out to `gh attestation trusted-root`), but it has to
+# run somewhere with (a) normal internet egress to Sigstore's/GitHub's TUF
+# endpoints and (b) an authenticated `gh` CLI — and the production VPS has
+# NEITHER (that's the entire reason this offline trust root exists: the VPS
+# can't reach tuf-repo-cdn.sigstore.dev, and it was never given a `gh`
+# login). Previously this meant running the script from an operator's own
+# laptop. This workflow runs the exact same script on a GitHub-hosted
+# runner instead — normal internet access, and `gh` is already
+# authenticated via the job's own GITHUB_TOKEN, no PAT or laptop required.
+#
+# This workflow NEVER touches the VPS, the broker, or any production file —
+# it only produces a downloadable artifact. Installing it on the VPS is
+# still the separate, manual, root-approved procedure in
+# docs/sigstore-trusted-root.md (scripts/production/rad-install-broker-trusted-root.sh)
+# — this workflow does not shortcut that approval step, it only removes the
+# "needs a laptop with internet + gh auth" prerequisite for producing the
+# input to it.
+#
+# workflow_dispatch only — this is a periodic maintenance action (see
+# "Refresh / rotation procedure" in docs/sigstore-trusted-root.md), never
+# triggered automatically, and never part of any deploy/release path.
+
+name: Fetch Sigstore trusted root (offline broker verification)
+
+permissions:
+  contents: read
+  id-token: write # required by actions/attest-build-provenance
+  attestations: write # required to publish the build-provenance attestation
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  fetch:
+    name: Fetch and validate trusted_root.jsonl
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # `gh` on a GitHub Actions runner is already authenticated via
+      # GITHUB_TOKEN for calls scoped to this repo/run — exactly the
+      # "without requiring my laptop" property this workflow exists for.
+      # No PAT, no `gh auth login`, nothing stored.
+      - name: Fetch trusted_root.jsonl (gh attestation trusted-root, live TUF)
+        id: fetch
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p out
+          bash scripts/production/fetch-trusted-root.sh out
+          OUT_FILE="$(ls out/trusted_root-*.jsonl)"
+          echo "out_file=${OUT_FILE}" >> "$GITHUB_OUTPUT"
+          echo "filename=$(basename "$OUT_FILE")" >> "$GITHUB_OUTPUT"
+
+      - name: Compute and record checksum
+        id: checksum
+        run: |
+          set -euo pipefail
+          OUT_FILE="${{ steps.fetch.outputs.out_file }}"
+          sha256sum "$OUT_FILE" | awk '{print $1}' > "${OUT_FILE}.sha256"
+          SHA256="$(cat "${OUT_FILE}.sha256")"
+          echo "sha256=${SHA256}" >> "$GITHUB_OUTPUT"
+          echo "## Fetched Sigstore trusted root" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "- File: \`${{ steps.fetch.outputs.filename }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- SHA256: \`${SHA256}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "This is the exact value that must go into \`activation.json\`'s" >> "$GITHUB_STEP_SUMMARY"
+          echo "\`trusted_root_sha256\` field once this file is installed — see" >> "$GITHUB_STEP_SUMMARY"
+          echo "\`docs/sigstore-trusted-root.md\`." >> "$GITHUB_STEP_SUMMARY"
+
+      # Belt-and-suspenders structural check beyond fetch-trusted-root.sh's
+      # own non-empty check: every line must be valid JSON (a malformed or
+      # truncated TUF response should never reach "ready to install"
+      # status just because the file wasn't literally zero bytes).
+      - name: Validate every line is well-formed JSON
+        run: |
+          set -euo pipefail
+          OUT_FILE="${{ steps.fetch.outputs.out_file }}"
+          node -e '
+            const fs = require("fs");
+            const lines = fs.readFileSync(process.argv[1], "utf8").split("\n").filter(Boolean);
+            if (lines.length === 0) { console.error("No lines in trusted root output."); process.exit(1); }
+            for (const [i, line] of lines.entries()) {
+              try { JSON.parse(line); }
+              catch (e) { console.error(`Line ${i + 1} is not valid JSON: ${e.message}`); process.exit(1); }
+            }
+            console.log(`OK: ${lines.length} well-formed JSON line(s).`);
+          ' "$OUT_FILE"
+
+      # No automated "self-check against a real release" step here on
+      # purpose (see docs/sigstore-trusted-root.md's "Independent
+      # verification required before installing" section for why a
+      # half-correct version of this check was removed rather than kept):
+      # doing this honestly requires binding the check to one exact,
+      # caller-chosen commit's own release manifest/digest, verified
+      # fail-closed (a verification failure must block publishing the
+      # artifact, not just warn and continue) - not a generic image
+      # reference that happens to exist in this repo's GHCR namespace.
+      # Getting that binding right is exactly the kind of thing that must
+      # not be faked to make this workflow look more complete than it is.
+      # The REQUIRED independent verification therefore happens manually,
+      # after download, per docs/sigstore-trusted-root.md - this workflow
+      # only fetches, structurally validates, and attests provenance for
+      # the raw TUF output.
+
+      # Attested so the eventual VPS operator (or anyone else) can
+      # independently confirm, from any machine with `gh` and normal
+      # internet access (never the VPS), that this exact file came from
+      # this exact workflow run on this exact commit — not from a tampered
+      # download link or a compromised intermediate transfer step.
+      - name: Attest trusted-root artifact provenance
+        uses: actions/attest-build-provenance@v1
+        with:
+          subject-path: ${{ steps.fetch.outputs.out_file }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sigstore-trusted-root-${{ github.run_id }}
+          path: |
+            ${{ steps.fetch.outputs.out_file }}
+            ${{ steps.fetch.outputs.out_file }}.sha256
+          retention-days: 14
+          if-no-files-found: error
+
+      - name: Next steps
+        run: |
+          echo "This workflow does NOT verify the fetched trust root against any real RAD release artifact — that independent verification is REQUIRED before production install, per docs/sigstore-trusted-root.md. Download this run's artifact (Actions tab -> this run -> Artifacts, or 'gh run download ${{ github.run_id }}' from any machine with gh auth — never the VPS), then:"
+          echo "  1. Verify the downloaded file's SHA256 matches ${{ steps.checksum.outputs.sha256 }}, and/or 'gh attestation verify' the file itself against this repo, before trusting it came from this run unmodified."
+          echo "  2. Independently verify a real, specific RAD release artifact against this trust root with --custom-trusted-root, bound to the exact commit/digest you intend to trust — see 'Independent verification required before installing' in docs/sigstore-trusted-root.md. Do not skip this step."
+          echo "  3. Transfer it to the VPS out-of-band (e.g. scp over the existing Tailscale path), never by having the VPS fetch it."
+          echo "  4. Install + root-approve via scripts/production/rad-install-broker-trusted-root.sh, exactly as documented — this workflow does not install or approve anything itself."

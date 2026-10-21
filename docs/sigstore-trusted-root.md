@@ -57,6 +57,48 @@ now:
 
 ## Producing the file (never on the VPS)
 
+### Option A — GitHub Actions, no laptop/`gh` auth required (recommended)
+
+Run **Actions → "Fetch Sigstore trusted root (offline broker verification)" →
+Run workflow** (`.github/workflows/fetch-trusted-root.yml`). This runs the
+exact same `scripts/production/fetch-trusted-root.sh` on a GitHub-hosted
+runner — which has normal internet egress and an already-authenticated `gh`
+CLI via the job's own `GITHUB_TOKEN` — so it needs neither a laptop with `gh
+auth login` done nor any credential stored anywhere. It:
+
+- Fetches `trusted_root.jsonl` the same way the local script does, computes
+  its SHA256, and validates every line is well-formed JSON.
+- Publishes a GitHub build-provenance attestation **for the trusted-root
+  file itself** (`actions/attest-build-provenance`), so anyone with `gh` and
+  normal internet access (any machine except the VPS) can independently
+  confirm the downloaded file came from this exact workflow run on this
+  exact commit — `gh attestation verify trusted_root-<timestamp>.jsonl
+  --repo <owner>/RAD` — before transferring it anywhere.
+- Uploads `trusted_root-<timestamp>.jsonl` + its `.sha256` as a workflow run
+  artifact (14-day retention), downloadable from the Actions UI or via
+  `gh run download <run-id>` from any authenticated machine.
+
+This workflow only **produces** the file — it never touches the VPS, never
+installs anything, and is not part of any deploy/release path. Installing
+and root-approving it is still the separate manual procedure in "Installing
+on the VPS" below.
+
+**It deliberately does NOT verify the fetched trust root against any real RAD
+release artifact.** An earlier draft of this workflow included an automated
+"self-check" step, which was removed before merge because it was wrong in
+exactly the ways that matter for a trust-root verification step: it never
+actually bound the check to the operator-supplied commit (it queried a
+generic, unparameterized image reference regardless of which commit was
+given), it checked a generic OCI reference rather than a specific RAD release
+manifest, and — worst — a verification **failure** only printed a warning and
+still let the artifact publish, i.e. it was fail-open exactly where this kind
+of check must be fail-closed. Rather than ship a half-correct check that
+looks like real verification but isn't, that step was deleted outright. See
+"Independent verification required before installing" immediately below for
+what to do instead.
+
+### Option B — a local machine with `gh` auth (laptop, bastion, anywhere but the VPS)
+
 ```bash
 scripts/production/fetch-trusted-root.sh /some/local/dir
 ```
@@ -64,14 +106,57 @@ scripts/production/fetch-trusted-root.sh /some/local/dir
 This shells out to `gh attestation trusted-root` — GitHub CLI's own command
 for this, which performs real TUF verification against the live root of
 trust — and writes `trusted_root-<timestamp>.jsonl` plus its SHA256. Run it
-on a machine with normal internet access (a laptop, CI, anywhere that isn't
-the VPS — the VPS is specifically the host that can't reach the CDN).
+on a machine with normal internet access and `gh` already authenticated
+(a laptop, CI, anywhere that isn't the VPS — the VPS is specifically the
+host that can't reach the CDN AND has no `gh` login).
 
 Verified locally for this PR: the fetched file successfully verifies RAD's
 real signed release artifact (run `39565872506`) with `--custom-trusted-root`,
 and correctly rejects both a tampered manifest and a wrong `--source-digest`
 (fail-closed, not just "accepts everything offline"). See the PR description
 for exact commands and output.
+
+## Independent verification required before installing
+
+**Neither production method above verifies the fetched trust root against a
+real RAD release artifact for you.** Whichever option produced the file
+(Option A's GitHub Actions run, or Option B's local `fetch-trusted-root.sh`),
+before it goes anywhere near `scripts/production/rad-install-broker-trusted-root.sh`
+the operator installing it MUST independently confirm it against one
+specific, real, already-published RAD release — commit-bound and
+fail-closed, exactly the two properties a correct check needs:
+
+```bash
+# Pick ONE exact commit/run you already trust is a genuine RAD release
+# (e.g. one you just watched deploy-api-vps.yml or deploy-frontend-vps.yml
+# publish), and bind the verification to it explicitly — never a bare
+# "does some attestation exist for this image name" check:
+gh attestation verify "oci://ghcr.io/<owner>/rad-api@sha256:<digest-from-that-exact-build>" \
+  --repo <owner>/RAD \
+  --custom-trusted-root /path/to/trusted_root-<timestamp>.jsonl \
+  --predicate-type https://slsa.dev/provenance/v1 \
+  --source-ref refs/heads/main \
+  --source-digest <the-same-commit-sha> \
+  --signer-workflow <owner>/RAD/.github/workflows/deploy-frontend-vps.yml
+```
+
+(Use the API artifact's own tarball + checksum, or any image/commit you can
+name exactly, in place of `rad-api` above — what matters is that the subject
+is one specific digest you already know is a real release, not a bare image
+repository reference.) The command must **exit non-zero and print a clear
+failure** if you deliberately corrupt the trust-root file, change the digest
+by one character, or point `--source-digest` at a different commit — if it
+doesn't, something is wrong with the trust root (or the command), and it
+must not be installed. A command that only warns on failure is not
+verification; treat anything short of a hard, non-zero exit on a bad input
+as disqualifying.
+
+Only once this independent, fail-closed check passes against a real
+artifact should the file be transferred to the VPS and installed via
+`rad-install-broker-trusted-root.sh` below. This step is intentionally
+manual and not automated into either production method above — see Option
+A's note on why an automated version of this check was removed rather than
+shipped half-correct.
 
 ## Installing on the VPS (atomic, with automatic rollback)
 
@@ -147,9 +232,11 @@ Sigstore's TUF root rotates infrequently (key material, not every release),
 but the pinned file should still be refreshed periodically rather than left
 to go stale indefinitely:
 
-- **Routine refresh**: re-run `fetch-trusted-root.sh` every 3 months, or
-  immediately if Sigstore or GitHub announce a key rotation
-  (https://blog.sigstore.dev or the `sigstore/root-signing` repo).
+- **Routine refresh**: re-run the "Fetch Sigstore trusted root" GitHub Actions
+  workflow (Option A above; or `fetch-trusted-root.sh` from any authenticated
+  machine, Option B) every 3 months, or immediately if Sigstore or GitHub
+  announce a key rotation (https://blog.sigstore.dev or the
+  `sigstore/root-signing` repo).
 - Each refresh is a full repeat of "Producing the file" → "Installing on the
   VPS" → updating `trusted_root_sha256` in `activation.json` → root
   re-approval. There is no partial/automatic update path by design — this is
