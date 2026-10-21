@@ -57,6 +57,37 @@ now:
 
 ## Producing the file (never on the VPS)
 
+### Option A — GitHub Actions, no laptop/`gh` auth required (recommended)
+
+Run **Actions → "Fetch Sigstore trusted root (offline broker verification)" →
+Run workflow** (`.github/workflows/fetch-trusted-root.yml`). This runs the
+exact same `scripts/production/fetch-trusted-root.sh` on a GitHub-hosted
+runner — which has normal internet egress and an already-authenticated `gh`
+CLI via the job's own `GITHUB_TOKEN` — so it needs neither a laptop with `gh
+auth login` done nor any credential stored anywhere. It:
+
+- Fetches `trusted_root.jsonl` the same way the local script does, computes
+  its SHA256, and validates every line is well-formed JSON.
+- Optionally (`verify_against_commit` input) self-checks the freshly-fetched
+  trust root against a real signed artifact in this repo with
+  `--custom-trusted-root`, the same validation described below.
+- Publishes a GitHub build-provenance attestation **for the trusted-root
+  file itself** (`actions/attest-build-provenance`), so anyone with `gh` and
+  normal internet access (any machine except the VPS) can independently
+  confirm the downloaded file came from this exact workflow run on this
+  exact commit — `gh attestation verify trusted_root-<timestamp>.jsonl
+  --repo <owner>/RAD` — before transferring it anywhere.
+- Uploads `trusted_root-<timestamp>.jsonl` + its `.sha256` as a workflow run
+  artifact (14-day retention), downloadable from the Actions UI or via
+  `gh run download <run-id>` from any authenticated machine.
+
+This workflow only **produces** the file — it never touches the VPS, never
+installs anything, and is not part of any deploy/release path. Installing
+and root-approving it is still the separate manual procedure in "Installing
+on the VPS" below.
+
+### Option B — a local machine with `gh` auth (laptop, bastion, anywhere but the VPS)
+
 ```bash
 scripts/production/fetch-trusted-root.sh /some/local/dir
 ```
@@ -64,8 +95,9 @@ scripts/production/fetch-trusted-root.sh /some/local/dir
 This shells out to `gh attestation trusted-root` — GitHub CLI's own command
 for this, which performs real TUF verification against the live root of
 trust — and writes `trusted_root-<timestamp>.jsonl` plus its SHA256. Run it
-on a machine with normal internet access (a laptop, CI, anywhere that isn't
-the VPS — the VPS is specifically the host that can't reach the CDN).
+on a machine with normal internet access and `gh` already authenticated
+(a laptop, CI, anywhere that isn't the VPS — the VPS is specifically the
+host that can't reach the CDN AND has no `gh` login).
 
 Verified locally for this PR: the fetched file successfully verifies RAD's
 real signed release artifact (run `39565872506`) with `--custom-trusted-root`,
@@ -147,9 +179,11 @@ Sigstore's TUF root rotates infrequently (key material, not every release),
 but the pinned file should still be refreshed periodically rather than left
 to go stale indefinitely:
 
-- **Routine refresh**: re-run `fetch-trusted-root.sh` every 3 months, or
-  immediately if Sigstore or GitHub announce a key rotation
-  (https://blog.sigstore.dev or the `sigstore/root-signing` repo).
+- **Routine refresh**: re-run the "Fetch Sigstore trusted root" GitHub Actions
+  workflow (Option A above; or `fetch-trusted-root.sh` from any authenticated
+  machine, Option B) every 3 months, or immediately if Sigstore or GitHub
+  announce a key rotation (https://blog.sigstore.dev or the
+  `sigstore/root-signing` repo).
 - Each refresh is a full repeat of "Producing the file" → "Installing on the
   VPS" → updating `trusted_root_sha256` in `activation.json` → root
   re-approval. There is no partial/automatic update path by design — this is
