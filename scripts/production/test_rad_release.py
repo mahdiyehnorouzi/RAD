@@ -400,6 +400,7 @@ class ReleaseTests(unittest.TestCase):
         with patch.object(broker, "frontend_smoke", side_effect=RuntimeError("still broken")):
             with self.assertRaisesRegex(RuntimeError, "still broken"):
                 broker.release_frontend(manifest, directory, transaction)
+        self.assertFalse((transaction / "rolled-back.json").exists())
 
     def test_frontend_smoke_checks_admin_root_not_login(self):
         # The admin app has no /login route; it serves its login UI from the
