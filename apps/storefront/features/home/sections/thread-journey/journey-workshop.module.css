@@ -12,6 +12,22 @@
   margin-bottom: clamp(0rem, 5vw - 1.5rem, 1.5rem);
 }
 
+/* Desktop-only: the photo is shown uncropped at its own natural aspect
+   ratio (no object-fit), so its height is purely a function of its
+   rendered width - at full viewport width that's ~1080px tall at 1440px.
+   76rem is the same content-width ceiling collaboration-band.module.css
+   already uses elsewhere on this page, so this isn't a new idiom; it just
+   stops the photo from growing past it on wide screens. The overlay sheet
+   and spark are positioned in percent of this same box, so they scale
+   down with it and stay correctly placed. */
+@media (min-width: 1024px) {
+  .journeyWorkshop {
+    width: 100%;
+    max-width: 76rem;
+    margin-inline: auto;
+  }
+}
+
 .journeyWorkshopScene {
   display: block;
   width: 100%;

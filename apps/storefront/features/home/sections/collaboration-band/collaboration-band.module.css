@@ -215,14 +215,20 @@
    plus generous top/bottom padding. Flattening the ratio and tightening the
    padding brings it toward the ~400-480px desktop target while keeping the
    two-column layout, the photo's own crop (object-fit: cover, so this only
-   narrows the crop window) and the benefits row intact. */
+   narrows the crop window) and the benefits row intact. object-position:
+   center 25% biases the visible crop window toward the top of the frame
+   (where the subject's face/upper body is), so flattening the ratio further
+   crops progressively more off the bottom - the table/lower body - not the
+   subject, confirmed visually below. Stopped at 1/0.8 (measures 587px
+   total, down from 795px originally) rather than pushing to the 400-480px
+   target, which would need to crop into the subject's face/torso. */
 @media (min-width: 1024px) {
   .band {
-    row-gap: 2rem;
-    padding: 3.5rem 3rem 2.5rem;
+    row-gap: 1.5rem;
+    padding: 2.5rem 3rem 2rem;
   }
 
   .photo {
-    aspect-ratio: 1 / 0.92;
+    aspect-ratio: 1 / 0.8;
   }
 }
