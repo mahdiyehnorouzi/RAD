@@ -81,11 +81,16 @@ class ReleaseTests(unittest.TestCase):
 
     def test_host_activation_requires_separate_root_approval(self):
         policy_path = self.root / "activation.json"
+        trusted_root_path = self.root / "trusted_root.jsonl"
+        trusted_root_path.write_text('{"mediaType": "fixture"}\n')
+        trusted_root_path.chmod(0o644)
         policy = dict(schema=1, repository=broker.REPO, enabled=True,
                       runner_workflow_policy_verified=True, production_environments_verified=True,
                       host_preflight_verified=True, nonproduction_rehearsal_verified=True,
-                      broker_sha256=broker.file_hash(Path(broker.__file__)))
-        with patch.object(broker, "ACTIVATION", policy_path), patch.object(broker, "protected"):
+                      broker_sha256=broker.file_hash(Path(broker.__file__)),
+                      trusted_root_sha256=broker.file_hash(trusted_root_path))
+        with patch.object(broker, "ACTIVATION", policy_path), patch.object(broker, "TRUSTED_ROOT", trusted_root_path), \
+             patch.object(broker, "protected"):
             with self.assertRaises(FileNotFoundError):
                 broker.validate_activation()
             policy_path.write_text(json.dumps(policy))
@@ -99,7 +104,20 @@ class ReleaseTests(unittest.TestCase):
             policy_path.write_text(json.dumps({**policy, "broker_sha256": "0" * 64}))
             with self.assertRaisesRegex(RuntimeError, "re-approval"):
                 broker.validate_activation()
+            policy_path.write_text(json.dumps({**policy, "trusted_root_sha256": "0" * 64}))
+            with self.assertRaisesRegex(RuntimeError, "Sigstore trusted root requires root re-approval"):
+                broker.validate_activation()
+            # Rotating the trusted root's content without re-approving its hash
+            # must fail closed too, not just a missing/wrong field.
             policy_path.write_text(json.dumps(policy))
+            trusted_root_path.write_text('{"mediaType": "fixture", "rotated": true}\n')
+            with self.assertRaisesRegex(RuntimeError, "Sigstore trusted root requires root re-approval"):
+                broker.validate_activation()
+            trusted_root_path.write_text('{"mediaType": "fixture"}\n')
+            trusted_root_path.chmod(0o664)
+            with self.assertRaisesRegex(RuntimeError, "group/world writable"):
+                broker.validate_activation()
+            trusted_root_path.chmod(0o644)
             policy_path.chmod(0o644)
             with self.assertRaisesRegex(RuntimeError, "root-private"):
                 broker.validate_activation()
@@ -130,14 +148,19 @@ class ReleaseTests(unittest.TestCase):
 
     def test_attestation_policy_and_fail_closed(self):
         (self.root / "release.json").write_text(json.dumps(self.manifest))
-        with patch.object(broker, "run") as run:
+        trusted_root_path = self.root / "trusted_root.jsonl"
+        trusted_root_path.write_text('{"mediaType": "fixture"}\n')
+        with patch.object(broker, "TRUSTED_ROOT", trusted_root_path), patch.object(broker, "protected"), \
+             patch.object(broker, "run") as run:
             broker.verify_manifest(self.root, self.request)
             args = run.call_args.args
             for required in ("--bundle", "--repo", broker.REPO, "--source-ref", "refs/heads/main",
                              "--source-digest", "--signer-digest", self.request["commit"], "--deny-self-hosted-runners",
+                             "--custom-trusted-root", trusted_root_path,
                              "mahdiyehnorouzi/RAD/.github/workflows/deploy-api-vps.yml"):
                 self.assertIn(required, args)
-        with patch.object(broker, "run", side_effect=subprocess.CalledProcessError(1, "gh")):
+        with patch.object(broker, "TRUSTED_ROOT", trusted_root_path), patch.object(broker, "protected"), \
+             patch.object(broker, "run", side_effect=subprocess.CalledProcessError(1, "gh")):
             with self.assertRaises(subprocess.CalledProcessError):
                 broker.verify_manifest(self.root, self.request)
 

@@ -35,6 +35,14 @@ COMPOSE = FRONTEND / "docker-compose.frontend-vps.yml"
 SERVICE = "rad-api.service"
 GH = "/usr/local/bin/gh"
 ACTIVATION = Path("/etc/rad-release/activation.json")
+# Offline Sigstore trust root. This host's egress to the live public-good TUF
+# CDN (tuf-repo-cdn.sigstore.dev) returns HTTP 403 even with no local firewall
+# or proxy blocking it (verified: iptables OUTPUT policy ACCEPT, ufw allows
+# outgoing, no proxy env) - the block is upstream of this host, not fixable
+# here. `gh attestation verify` can use a pinned trusted_root.jsonl instead of
+# fetching live TUF metadata; see docs/sigstore-trusted-root.md for how this
+# file is produced, refreshed, and installed.
+TRUSTED_ROOT = Path("/etc/rad-release/trusted_root.jsonl")
 SAFE_ENV = {"PATH": "/usr/local/bin:/usr/bin:/bin", "HOME": "/root", "LANG": "C.UTF-8"}
 SHA = re.compile(r"[0-9a-f]{40}")
 DIGEST = re.compile(r"sha256:[0-9a-f]{64}")
@@ -82,6 +90,9 @@ def validate_activation():
     This file is installed separately by the root operator only after verifying
     scheduling, Environment restrictions, host preflight and a safe rehearsal.
     Pinning the installed broker forces re-approval when privileged code changes.
+    The same applies to the pinned Sigstore trusted root: rotating it (see
+    docs/sigstore-trusted-root.md) requires root to re-approve the new hash
+    here too, exactly like a broker update does.
     """
     protected(ACTIVATION)
     require(ACTIVATION.stat().st_mode & 0o077 == 0, "Activation policy must be root-private")
@@ -93,6 +104,10 @@ def validate_activation():
                         "host_preflight_verified", "nonproduction_rehearsal_verified"):
         require(policy.get(requirement) is True, f"Host release approval missing: {requirement}")
     require(policy.get("broker_sha256") == file_hash(Path(__file__)), "Installed broker requires root re-approval")
+    protected(TRUSTED_ROOT)
+    require(TRUSTED_ROOT.stat().st_mode & 0o022 == 0, "Trusted root must not be group/world writable")
+    require(policy.get("trusted_root_sha256") == file_hash(TRUSTED_ROOT),
+            "Installed Sigstore trusted root requires root re-approval")
 
 
 def snapshot_input(stage, name, destination, limit):
@@ -140,10 +155,18 @@ def verify_manifest(directory, request):
     workflow = f"{REPO}/.github/workflows/deploy-{request['kind'] if request['kind'] == 'api' else 'frontend'}-vps.yml"
     # Fail closed if gh is old, Sigstore trust is unavailable, or the signer,
     # source commit/ref, runner type or subject hash does not match policy.
+    # --custom-trusted-root: this host's egress to the live public-good TUF
+    # CDN is blocked upstream (see TRUSTED_ROOT comment above), so verification
+    # uses a pinned, hash-approved trusted_root.jsonl instead of a live TUF
+    # fetch. validate_activation() already required this file to be
+    # root-protected and hash-matched to the activation policy before any
+    # release request reaches here - this does not weaken what is verified,
+    # only where the trust root comes from.
+    protected(TRUSTED_ROOT)
     run(GH, "attestation", "verify", path, "--bundle", directory / "release.sigstore.json",
         "--repo", REPO, "--signer-workflow", workflow, "--source-ref", "refs/heads/main",
         "--source-digest", request["commit"], "--signer-digest", request["commit"],
-        "--deny-self-hosted-runners")
+        "--deny-self-hosted-runners", "--custom-trusted-root", TRUSTED_ROOT)
     return manifest
 
 
