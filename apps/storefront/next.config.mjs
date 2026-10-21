@@ -12,7 +12,9 @@ const nextConfig = {
   // entirely via product-media.tsx's custom loaders). These are static
   // product/marketing photos that don't change in place — a day-long
   // cache removes the repeat resize cost without real staleness risk.
-  images: { minimumCacheTTL: 60 * 60 * 24 },
+  // certificate-scene.tsx requests quality 80 (vs. the 75 default) for its
+  // wide/tall hero photos, so both must be allowed or the optimizer 400s.
+  images: { minimumCacheTTL: 60 * 60 * 24, qualities: [75, 80] },
   // Only for the plain `next build` path (Docker/Liara) — gated behind an
   // env var so `vinext build` (Cloudflare) never sees it; vinext has its
   // own output pipeline and standalone's bundled server.js makes no sense

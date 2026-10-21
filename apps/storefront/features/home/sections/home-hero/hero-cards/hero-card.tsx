@@ -61,8 +61,7 @@ export function HeroCard({
                 alt={card.alt}
                 draggable={false}
                 loading={isActive ? "eager" : "lazy"}
-                // @ts-expect-error -- fetchPriority is valid on <img> but missing from React's DOM typings here.
-                fetchpriority={isActive ? "high" : "low"}
+                fetchPriority={isActive ? "high" : "low"}
                 decoding={isActive ? "sync" : "async"}
               />
             </span>
