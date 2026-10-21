@@ -73,25 +73,55 @@ and correctly rejects both a tampered manifest and a wrong `--source-digest`
 (fail-closed, not just "accepts everything offline"). See the PR description
 for exact commands and output.
 
-## Installing on the VPS (atomic)
+## Installing on the VPS (atomic, with automatic rollback)
+
+**Update, 2026-10-21 (PR #78 production review):** `activation.json` on
+RAD's production VPS is already `enabled:true` and already approved by a
+separate, prior human review. The install procedure below does **not**
+assume or require `enabled:false`, does not touch the database, and does
+not re-derive any of the four approval flags — it only installs the new
+broker and/or trusted root and updates `broker_sha256`/`trusted_root_sha256`
+to match, preserving every other field exactly as already approved. Use
+[`scripts/production/rad-install-broker-trusted-root.sh`](../scripts/production/rad-install-broker-trusted-root.sh)
+rather than hand-running `install`/`mv` — it backs up every file it's about
+to touch first, verifies the copied hash before swapping anything into
+place, and **automatically rolls back every file it touched** if the new
+broker fails its own test suite beforehand or fails
+`validate_activation()` against the real installed files afterward.
 
 ```bash
-# As root, after transferring trusted_root-<timestamp>.jsonl to the VPS
-# out-of-band (e.g. scp over the existing Tailscale path):
-install -d -o root -g root -m 0700 /etc/rad-release
-install -o root -g root -m 0644 trusted_root-<timestamp>.jsonl /etc/rad-release/trusted_root.jsonl.new
-sha256sum /etc/rad-release/trusted_root.jsonl.new   # confirm this matches the value
-                                                      # fetch-trusted-root.sh printed
-mv -f /etc/rad-release/trusted_root.jsonl.new /etc/rad-release/trusted_root.jsonl   # same filesystem -> atomic rename
+# As root, after transferring the new trusted_root-<timestamp>.jsonl
+# and/or reviewed rad_release.py to the VPS out-of-band (e.g. scp over the
+# existing Tailscale path):
+sudo RAD_INSTALL_CONFIRM=yes-install-live \
+  NEW_BROKER_SOURCE=/root/rad-reviewed-release/scripts/production/rad_release.py \
+  NEW_TRUSTED_ROOT_SOURCE=/root/trusted_root-<timestamp>.jsonl \
+  scripts/production/rad-install-broker-trusted-root.sh
 ```
 
-Then, in `activation.json` (edit the candidate, never the live file directly —
-see the activation prep procedure already in use): set `trusted_root_sha256`
-to that exact hash, and get it root-approved along with the file's
-installation. The broker will refuse to run (`validate_activation()`) until
-both match.
+Either `NEW_BROKER_SOURCE` or `NEW_TRUSTED_ROOT_SOURCE` may be omitted to
+leave that file as currently installed. `RAD_INSTALL_CONFIRM=yes-install-live`
+is required and is not a rubber stamp: because `enabled` is already true,
+a successful run makes the new file(s) live for the very next real release —
+there is no further approval stage after this script exits 0.
 
-## Rollback
+See `scripts/production/rad-install-broker-trusted-root.sh`'s own header
+for exactly what it checks and in what order, and
+`scripts/test/test-install-broker-trusted-root.sh` for the isolated test
+proving the rollback path actually fires on failure.
+
+### If you still need the database-restore / full activation-prep flow
+
+[`rad-activation-prep.sh`](../scripts/production/rad-activation-prep.sh)
+(the fuller procedure, including a fresh backup/restore-check) is for a
+*future* activation cycle starting from `enabled:false` — not for installing
+an update onto an already-approved, already-enabled policy. Its
+`RESTORE_DATABASE_URL` / schema-reset step currently has a known gap
+(hostname-string inequality doesn't prove real isolation) and must not be
+pointed at any shared or persistent database; see that script's own header
+for the full caution.
+
+## Manual rollback (if you installed by hand instead)
 
 Keep the previous `trusted_root.jsonl` and the `activation.json` that
 referenced it, timestamped, before replacing either:

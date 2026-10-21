@@ -5,6 +5,24 @@
 # is no network path to the VPS from a dev machine, and flipping activation
 # is a security-setting change that stays a human, explicit action.
 #
+# CAUTION (per PR #78 production review, 2026-10-21): this script's
+# RESTORE_DATABASE_URL / DROP SCHEMA step is NOT currently in use and has a
+# known gap - comparing hostnames alone does not prove the target is
+# actually isolated (DNS aliases, a proxy, or mistaken credentials could
+# all share a hostname with something that isn't disposable). The backup/
+# restore for the current activation cycle already succeeded separately,
+# against a one-off `docker run --network none` container that was deleted
+# after the test (Product=38, Order=9) - there is no persistent, verified
+# RESTORE_DATABASE_URL to point this at, and this script must NOT be
+# pointed at any shared/persistent database to satisfy that requirement.
+# Do not use the database-restore steps below (sections 4) until a
+# disposable target with verifiable identity (e.g. a freshly `docker run`
+# container, checked by container ID, not by hostname string comparison)
+# is provisioned again for a future cycle. For installing an updated
+# broker/trusted root onto an already-`enabled:true` activation policy,
+# use scripts/production/rad-install-broker-trusted-root.sh instead - it
+# does not touch the database at all.
+#
 # What it does:
 #   1. Aborts immediately if any prerequisite it can check from the host
 #      doesn't hold.
