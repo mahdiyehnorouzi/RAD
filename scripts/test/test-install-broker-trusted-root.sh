@@ -291,6 +291,20 @@ check "no stray .trusted_root.jsonl.* temp file was left behind" \
   "$([[ -z "$(find "$TMPROOT" -maxdepth 1 -name '.trusted_root.jsonl.*' 2>/dev/null)" ]] && echo true || echo false)"
 
 echo
+# NOTE: this scenario simulates the backup being unusable at the moment
+# rollback needs it by REMOVING the file (a genuinely missing backup),
+# never by chmod'ing it unreadable. This test (like the real install
+# script) is run as root in CI/on the VPS, and root transparently bypasses
+# a file's own permission bits (DAC_OVERRIDE) - `chmod 000` on a file root
+# then reads/copies is a no-op as far as root is concerned, so the
+# previous version of this scenario did not reliably exercise the failure
+# path it claims to test. Deleting the file is unaffected by who owns it
+# or what its mode bits are: `install`'s source argument either exists or
+# it doesn't, root included - so this is the one simulation that actually
+# forces the same "source backup is not there to restore from" condition
+# the install script's own rollback step is guarding against (e.g. the
+# backup directory living on a filesystem that filled up or was unmounted
+# between backup and restore).
 echo "== Scenario: the restore-from-backup step itself failing is reported as INCOMPLETE ROLLBACK, not a crash or loop =="
 rm -rf "$BACKUP_DIR"
 seed_activation
@@ -318,17 +332,24 @@ while [[ ! -e "${PAUSE_MARKER}.ready" && $waited -lt 100 ]]; do
 done
 
 # While it's paused (broker already backed up AND already installed),
-# make the broker backup unreadable - the exact thing rollback would need
-# to restore from once we interrupt it.
+# remove the broker backup - the exact file rollback would need to
+# restore from once we interrupt it. A genuinely missing file, not a
+# chmod'd-unreadable one: root (which this test, like the real install
+# script, runs as) bypasses a file's permission bits entirely, so
+# `chmod 000` followed by a root-run `cp`/`install` would have silently
+# succeeded here, never exercising the failure path this scenario exists
+# to test. Deletion has no such escape hatch - the backup is either
+# present or it isn't, for root exactly as for anyone else.
 BROKER_BACKUP="$(find "$BACKUP_DIR" -maxdepth 1 -name 'rad-release.py.pre-install-*' | head -1)"
 check "broker backup exists at the pause point (precondition for this scenario)" \
   "$([[ -n "$BROKER_BACKUP" ]] && echo true || echo false)"
-chmod 000 "$BROKER_BACKUP" 2>/dev/null || true
+rm -f "$BROKER_BACKUP"
+check "broker backup is genuinely gone before rollback runs (precondition for this scenario)" \
+  "$([[ ! -e "$BROKER_BACKUP" ]] && echo true || echo false)"
 
 kill -TERM "$INSTALL_PID" 2>/dev/null || true
 if wait "$INSTALL_PID" 2>/dev/null; then INCOMPLETE_EXIT=0; else INCOMPLETE_EXIT=$?; fi
 OUT="$(cat "$TMPROOT/incomplete-output.log")"
-chmod 0644 "$BROKER_BACKUP" 2>/dev/null || true
 
 check "a restore failure during rollback exits non-zero (not success)" "$([[ $INCOMPLETE_EXIT -ne 0 ]] && echo true || echo false)"
 check "output explicitly reports INCOMPLETE ROLLBACK" "$(echo "$OUT" | grep -q "INCOMPLETE ROLLBACK" && echo true || echo false)"
