@@ -1,0 +1,156 @@
+# Manual-only, no-release verification of the rad-deploy SSH transport
+# (see docs/vps-tailscale-ssh-deploy.md). Same spirit as
+# verify-rad-tailscale.yml - private connectivity only - one layer deeper:
+# this also exercises SSH authentication as the restricted `rad-deploy`
+# account, its forced command, and one real (expected-to-be-rejected)
+# invocation of the production release broker.
+#
+# Why this is safe to run against the real VPS at any time: the payload
+# sent is deliberately not a real release (an all-zero commit SHA that can
+# never match a signed manifest), and scripts/production/rad_release.py's
+# own activation gate (/etc/rad-release/activation.json) is checked FIRST,
+# before anything else, on every normal invocation - so as long as that
+# gate stays disabled (its current, default state), this cannot get far
+# enough to touch /opt/rad, systemd, or Docker even if every other check
+# somehow passed. This workflow does not flip that gate, and does not
+# release anything for either service.
+#
+# This file does not require deploy-api-vps.yml / deploy-frontend-vps.yml
+# to be merged first - it is independent, and intentionally not restricted
+# to `refs/heads/main`, so it is dispatchable the moment it exists on the
+# default branch.
+
+name: Verify RAD deploy SSH path (no release)
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: "Which production Environment's Tailscale/SSH path to test"
+        type: choice
+        options: [api, frontend, both]
+        default: both
+
+permissions:
+  contents: read
+
+jobs:
+  verify-api-environment:
+    name: Verify via production-api-vps Environment
+    if: github.repository == 'mahdiyehnorouzi/RAD' && (inputs.target == 'api' || inputs.target == 'both')
+    runs-on: ubuntu-latest
+    environment: production-api-vps
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Connect to RAD tailnet using GitHub OIDC
+        uses: tailscale/github-action@v4
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          audience: ${{ secrets.TS_AUDIENCE }}
+          tags: tag:rad-deploy
+
+      - name: Configure pinned SSH identity for the restricted rad-deploy account
+        env:
+          SSH_KEY: ${{ secrets.RAD_DEPLOY_SSH_PRIVATE_KEY }}
+          HOST_KEY: ${{ secrets.RAD_VPS_SSH_HOST_KEY }}
+        run: |
+          set -euo pipefail
+          test -n "$SSH_KEY" && test -n "$HOST_KEY"
+          install -m 700 -d "$HOME/.ssh"
+          printf '%s\n' "$SSH_KEY" > "$HOME/.ssh/id_ed25519"
+          printf '100.103.104.79 %s\n' "$HOST_KEY" > "$HOME/.ssh/known_hosts"
+          chmod 600 "$HOME/.ssh/id_ed25519" "$HOME/.ssh/known_hosts"
+
+      - name: "Attempt SSH auth + forced command + broker invocation (expected: broker rejects - activation is disabled)"
+        run: |
+          set +e
+          mkdir -p stage
+          echo '{"note":"verify-rad-deploy-ssh test payload - not a real release manifest"}' > stage/release.json
+          echo 'not-a-real-sigstore-bundle' > stage/release.sigstore.json
+          ssh_args=(-o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=15)
+          tar -cf - -C stage release.json release.sigstore.json \
+            | ssh "${ssh_args[@]}" "rad-deploy@100.103.104.79" \
+              "deploy kind=frontend commit=0000000000000000000000000000000000000000 run_id=999999999 run_attempt=1" \
+              > ssh-output.log 2>&1
+          code=$?
+          set -e
+          {
+            echo "## production-api-vps Environment: rad-deploy SSH result"
+            echo '```'
+            cat ssh-output.log
+            echo '```'
+            echo "exit code: ${code}"
+          } >> "$GITHUB_STEP_SUMMARY"
+          cat ssh-output.log
+          if grep -qiE "permission denied|authenticated with partial success|no matching host key|host key verification failed|could not resolve hostname|connection refused|no route to host|connection timed out" ssh-output.log; then
+            echo "::error::SSH-level failure (authentication, host key, or network) - not a broker rejection. See the log above."
+            exit 1
+          fi
+          echo "::notice::No SSH-level failure detected - the SSH session reached the forced command. See the job summary for the broker's own response (a rejection here is expected while activation is disabled)."
+
+      - name: Remove runner SSH credentials
+        if: always()
+        run: rm -f "$HOME/.ssh/id_ed25519" "$HOME/.ssh/known_hosts"
+
+  verify-frontend-environment:
+    name: Verify via production-frontend-vps Environment
+    if: github.repository == 'mahdiyehnorouzi/RAD' && (inputs.target == 'frontend' || inputs.target == 'both')
+    runs-on: ubuntu-latest
+    environment: production-frontend-vps
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Connect to RAD tailnet using GitHub OIDC
+        uses: tailscale/github-action@v4
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          audience: ${{ secrets.TS_AUDIENCE }}
+          tags: tag:rad-deploy
+
+      - name: Configure pinned SSH identity for the restricted rad-deploy account
+        env:
+          SSH_KEY: ${{ secrets.RAD_DEPLOY_SSH_PRIVATE_KEY }}
+          HOST_KEY: ${{ secrets.RAD_VPS_SSH_HOST_KEY }}
+        run: |
+          set -euo pipefail
+          test -n "$SSH_KEY" && test -n "$HOST_KEY"
+          install -m 700 -d "$HOME/.ssh"
+          printf '%s\n' "$SSH_KEY" > "$HOME/.ssh/id_ed25519"
+          printf '100.103.104.79 %s\n' "$HOST_KEY" > "$HOME/.ssh/known_hosts"
+          chmod 600 "$HOME/.ssh/id_ed25519" "$HOME/.ssh/known_hosts"
+
+      - name: "Attempt SSH auth + forced command + broker invocation (expected: broker rejects - activation is disabled)"
+        run: |
+          set +e
+          mkdir -p stage
+          echo '{"note":"verify-rad-deploy-ssh test payload - not a real release manifest"}' > stage/release.json
+          echo 'not-a-real-sigstore-bundle' > stage/release.sigstore.json
+          ssh_args=(-o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=15)
+          tar -cf - -C stage release.json release.sigstore.json \
+            | ssh "${ssh_args[@]}" "rad-deploy@100.103.104.79" \
+              "deploy kind=frontend commit=0000000000000000000000000000000000000000 run_id=999999999 run_attempt=1" \
+              > ssh-output.log 2>&1
+          code=$?
+          set -e
+          {
+            echo "## production-frontend-vps Environment: rad-deploy SSH result"
+            echo '```'
+            cat ssh-output.log
+            echo '```'
+            echo "exit code: ${code}"
+          } >> "$GITHUB_STEP_SUMMARY"
+          cat ssh-output.log
+          if grep -qiE "permission denied|authenticated with partial success|no matching host key|host key verification failed|could not resolve hostname|connection refused|no route to host|connection timed out" ssh-output.log; then
+            echo "::error::SSH-level failure (authentication, host key, or network) - not a broker rejection. See the log above."
+            exit 1
+          fi
+          echo "::notice::No SSH-level failure detected - the SSH session reached the forced command. See the job summary for the broker's own response (a rejection here is expected while activation is disabled)."
+
+      - name: Remove runner SSH credentials
+        if: always()
+        run: rm -f "$HOME/.ssh/id_ed25519" "$HOME/.ssh/known_hosts"
