@@ -208,3 +208,21 @@
     font-size: 0.88rem;
   }
 }
+
+/* Desktop-only, on top of the 900px block above (which also covers tablet
+   and must stay untouched): the photo column was measuring ~795px total
+   section height at 1440px, almost all of it the near-square 1/1.08 photo
+   plus generous top/bottom padding. Flattening the ratio and tightening the
+   padding brings it toward the ~400-480px desktop target while keeping the
+   two-column layout, the photo's own crop (object-fit: cover, so this only
+   narrows the crop window) and the benefits row intact. */
+@media (min-width: 1024px) {
+  .band {
+    row-gap: 2rem;
+    padding: 3.5rem 3rem 2.5rem;
+  }
+
+  .photo {
+    aspect-ratio: 1 / 0.92;
+  }
+}

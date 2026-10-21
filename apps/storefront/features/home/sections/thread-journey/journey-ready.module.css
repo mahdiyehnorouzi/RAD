@@ -10,6 +10,17 @@
   margin-inline: var(--journey-edge);
 }
 
+/* Desktop-only: the mobile/tablet clamp above already tops out at 35rem
+   (560px) once the viewport is wide enough to no longer need 66vw to grow
+   it - this just lowers that flat ceiling toward the ~420-520px desktop
+   target. object-fit: cover on the photo means this only narrows the crop
+   window, it never stretches or distorts the image. */
+@media (min-width: 1024px) {
+  .journeyReady {
+    min-height: clamp(25rem, 40vw, 30rem);
+  }
+}
+
 /* Without a workshop piece, ready opens the journey and clears the hero edge. */
 .journeyReady:first-child {
   margin-top: calc(var(--hero-edge-h) + 1rem);

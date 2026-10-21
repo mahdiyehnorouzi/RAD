@@ -23,6 +23,27 @@
   aspect-ratio: 350 / 590;
 }
 
+/* Desktop-only: the mobile/tablet padding and letter-size clamps above are
+   tuned for narrow screens, where 10-11vw stays small; at desktop widths
+   those same vw figures blow straight through their rem ceilings (10vw is
+   144px at 1440px, well past the 6rem/96px cap), which is most of why this
+   section ran ~725px tall at 1440px. These lower ceilings close that gap
+   without touching the mobile/tablet values above. The letter's own strokes
+   are positioned in percent of its own box (see journeyLetterEntry), so
+   shrinking the box keeps the thread handoff point correct automatically.
+   Placed after the base rules above (same specificity) so it actually wins
+   the cascade at desktop widths. */
+@media (min-width: 1024px) {
+  .journeyAbout {
+    gap: clamp(0.875rem, 1.5vw, 1.25rem);
+    padding: clamp(1.75rem, 4vw, 2.5rem) var(--page) clamp(2rem, 4vw, 2.75rem);
+  }
+
+  .journeyLetter {
+    width: clamp(6rem, 12vw, 7.5rem);
+  }
+}
+
 .journeyLetter svg {
   display: block;
   width: 100%;
