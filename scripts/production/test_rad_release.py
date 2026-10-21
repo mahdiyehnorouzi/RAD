@@ -402,6 +402,48 @@ class ReleaseTests(unittest.TestCase):
                 broker.release_frontend(manifest, directory, transaction)
         self.assertFalse((transaction / "rolled-back.json").exists())
 
+    def test_frontend_smoke_checks_admin_root_not_login(self):
+        # The admin app has no /login route; it serves its login UI from the
+        # root page itself. Simulate the old (broken) /login URL 404ing and
+        # assert the admin smoke still succeeds by hitting "/" instead.
+        requested = []
+        def fake_request_url(url, accepted=(200,)):
+            requested.append(url)
+            if url == "https://admin.rad-object.com/login":
+                raise RuntimeError("Unexpected HTTP status")
+            if url == "https://www.rad-object.com/fa/products":
+                return b""
+            return b""
+        with patch.object(broker, "request_url", fake_request_url):
+            broker.frontend_smoke({"storefront": "x", "admin": "y"})
+        self.assertIn("https://admin.rad-object.com/", requested)
+        self.assertNotIn("https://admin.rad-object.com/login", requested)
+
+    def test_rollback_verification_succeeds_without_admin_login_route(self):
+        transaction = self.root / "transaction"
+        transaction.mkdir()
+        image = "sha256:" + "1" * 64
+        broker.atomic_json(transaction / "rollback.json", {
+            "kind": "frontend",
+            "previous": {"admin": {"image": image, "reference": "old-tag"}},
+        })
+        def compose(images, directory, *args):
+            return subprocess.CompletedProcess([], 0, "")
+        def inspect(service):
+            return {"image": image, "reference": "old-tag"}
+        def fake_request_url(url, accepted=(200,)):
+            if url == "https://admin.rad-object.com/login":
+                raise RuntimeError("Unexpected HTTP status")
+            return b""
+        for name, value in (("compose", compose), ("inspect_container", inspect),
+                            ("request_url", fake_request_url)):
+            patcher = patch.object(broker, name, value)
+            patcher.start()
+            self.addCleanup(patcher.stop)
+        broker.rollback(transaction)
+        self.assertTrue((transaction / "rolled-back.json").exists())
+        self.assertEqual(json.loads((transaction / "rolled-back.json").read_text()), {"verified": True})
+
 
 if __name__ == "__main__":
     unittest.main()
