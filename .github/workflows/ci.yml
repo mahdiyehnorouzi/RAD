@@ -144,6 +144,7 @@ jobs:
         run: |
           bash -n scripts/production/package-api.sh
           bash -n scripts/production/fetch-trusted-root.sh
+          bash -n scripts/production/rad-activation-prep.sh
           sh -n scripts/production/rad-release
       - name: Validate production workflows with pinned actionlint
         run: |
