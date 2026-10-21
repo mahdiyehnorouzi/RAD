@@ -141,6 +141,18 @@ jobs:
     uses: ./.github/workflows/deploy-api-vps.yml
     with:
       commit_sha: ${{ github.sha }}
+    # Without this, a reusable workflow call receives NONE of the caller's
+    # repository or Environment secrets - deploy-api-vps.yml's own
+    # `secrets.TS_OAUTH_CLIENT_ID` / `secrets.TS_AUDIENCE` /
+    # `secrets.RAD_DEPLOY_SSH_PRIVATE_KEY` / `secrets.RAD_VPS_SSH_HOST_KEY`
+    # would all read as empty strings when invoked from here (they only
+    # worked in manual testing because that was a direct workflow_dispatch
+    # of deploy-api-vps.yml itself, never through this workflow_call
+    # boundary). Confirmed by a real automatic run failing at the Tailscale
+    # step with "Please provide either an auth key, OAuth secret and tags,
+    # or federated identity client ID and audience with tags." - exactly
+    # what tailscale/github-action@v4 reports when given empty values.
+    secrets: inherit
     permissions:
       contents: read
       id-token: write
@@ -163,6 +175,9 @@ jobs:
     with:
       deploy_storefront: ${{ needs.detect.outputs.storefront == 'true' }}
       deploy_admin: ${{ needs.detect.outputs.admin == 'true' }}
+    # Same reason as deploy-api's secrets: inherit above - a reusable
+    # workflow call otherwise receives none of this caller's secrets.
+    secrets: inherit
     permissions:
       contents: read
       packages: write
