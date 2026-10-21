@@ -34,6 +34,21 @@
 #      script automatically rolls back every file it touched, from the
 #      backups taken in step 2, and reports ROLLED BACK.
 #
+# Rollback is a single trap on EXIT/INT/TERM/ERR (set -E propagates ERR
+# into functions and command substitutions), not scattered explicit calls:
+# any unexpected failing command, or Ctrl-C/SIGTERM at any point after
+# modifications begin, runs the exact same handler a planned failure does.
+# The handler is a no-op if nothing was written yet (a pre-install check
+# failing just exits cleanly). Per file it tracks whether that file
+# existed before this run: if it did, rollback restores it from the
+# backup taken in step 2; if it didn't (a brand-new install), rollback
+# removes it instead of leaving an orphaned new file. The handler disarms
+# itself (`trap -`) as its first line, so a second failure or signal
+# during rollback itself cannot recurse into it - it is instead reported
+# as an INCOMPLETE ROLLBACK with the exact backup paths for manual
+# recovery, never silently swallowed. A normal, successful run disarms the
+# trap entirely before exiting, so success never triggers rollback.
+#
 # WARNING: if activation.json's `enabled` is already true (as it is on
 # RAD's production VPS right now), a successful run of this script makes
 # the new broker/trusted root IMMEDIATELY live for the next real release -
@@ -57,7 +72,7 @@
 #   REVIEWED_REPO (for the pre-install test suite), TEST_TIMEOUT,
 #   RAD_INSTALL_ALLOW_NON_ROOT (test-only - never for a real run).
 
-set -euo pipefail
+set -Eeuo pipefail
 
 BROKER_INSTALLED="${BROKER_INSTALLED:-/usr/local/libexec/rad-release.py}"
 TRUSTED_ROOT_INSTALLED="${TRUSTED_ROOT_INSTALLED:-/etc/rad-release/trusted_root.jsonl}"
@@ -145,49 +160,165 @@ assert isinstance(policy, dict) and policy.get('schema') == 1 and policy.get('re
 
 # --- 2. Backup everything this run could touch, before writing anything ---
 install_dir_root 0700 "$BACKUP_DIR"
-[[ -f "$BROKER_INSTALLED" ]] && cp -p "$BROKER_INSTALLED" "$BACKUP_DIR/rad-release.py.pre-install-$STAMP"
-[[ -f "$TRUSTED_ROOT_INSTALLED" ]] && cp -p "$TRUSTED_ROOT_INSTALLED" "$BACKUP_DIR/trusted_root.jsonl.pre-install-$STAMP"
+BROKER_EXISTED_BEFORE=false
+TRUSTED_ROOT_EXISTED_BEFORE=false
+[[ -f "$BROKER_INSTALLED" ]] && { cp -p "$BROKER_INSTALLED" "$BACKUP_DIR/rad-release.py.pre-install-$STAMP"; BROKER_EXISTED_BEFORE=true; }
+[[ -f "$TRUSTED_ROOT_INSTALLED" ]] && { cp -p "$TRUSTED_ROOT_INSTALLED" "$BACKUP_DIR/trusted_root.jsonl.pre-install-$STAMP"; TRUSTED_ROOT_EXISTED_BEFORE=true; }
 cp -p "$ACTIVATION_LIVE" "$BACKUP_DIR/activation.json.pre-install-$STAMP"
 echo "Backed up current state with suffix: pre-install-$STAMP"
 
-ROLLBACK_NEEDED=false
-rollback() {
-  echo "Rolling back to pre-install-$STAMP ..." >&2
-  [[ -f "$BACKUP_DIR/rad-release.py.pre-install-$STAMP" ]] && install_root 0755 "$BACKUP_DIR/rad-release.py.pre-install-$STAMP" "$BROKER_INSTALLED"
-  [[ -f "$BACKUP_DIR/trusted_root.jsonl.pre-install-$STAMP" ]] && install_root 0644 "$BACKUP_DIR/trusted_root.jsonl.pre-install-$STAMP" "$TRUSTED_ROOT_INSTALLED"
-  install_root 0600 "$BACKUP_DIR/activation.json.pre-install-$STAMP" "$ACTIVATION_LIVE"
-  echo "ROLLED BACK to pre-install-$STAMP state." >&2
-}
+# --- Unified rollback: one trap, covers unexpected errors and signals -----
+# alike, from the moment modifications begin. See the header comment for
+# the design; this is intentionally the ONLY place rollback happens -
+# every install step below just does its work (or calls abort), and lets
+# this handler decide what to roll back based on what actually changed.
+MODIFICATIONS_STARTED=false
+ROLLBACK_IN_PROGRESS=false
+BROKER_TOUCHED=false
+TRUSTED_ROOT_TOUCHED=false
+ACTIVATION_TOUCHED=false
+BROKER_TMP=""
+TRUSTED_ROOT_TMP=""
+ACTIVATION_TMP=""
 
-fail_and_rollback() {
-  echo "ABORT: $1" >&2
-  rollback
-  exit 1
+cleanup_on_signal() {
+  # $? is only meaningful for EXIT/ERR (the failing command's own status);
+  # INT/TERM are asynchronous signals with no such status, so the trap
+  # registrations below pass the conventional 128+signum explicitly rather
+  # than relying on whatever $? happened to be at the moment the signal
+  # arrived.
+  local exit_code="${1:-$?}"
+  # Disarm immediately: prevents this handler from recursing into itself
+  # if a command inside it fails, or if a second signal arrives mid-rollback.
+  trap - EXIT INT TERM ERR
+
+  # Always remove our own stray temp files, even if nothing was swapped
+  # into a live path yet - harmless either way, never partial/live state.
+  [[ -n "$BROKER_TMP" && -e "$BROKER_TMP" ]] && rm -f "$BROKER_TMP" 2>/dev/null
+  [[ -n "$TRUSTED_ROOT_TMP" && -e "$TRUSTED_ROOT_TMP" ]] && rm -f "$TRUSTED_ROOT_TMP" 2>/dev/null
+  [[ -n "$ACTIVATION_TMP" && -e "$ACTIVATION_TMP" ]] && rm -f "$ACTIVATION_TMP" 2>/dev/null
+
+  if [[ "$MODIFICATIONS_STARTED" != "true" ]]; then
+    # Pre-install check failed, or we were interrupted before touching any
+    # live path - nothing to roll back.
+    exit "$exit_code"
+  fi
+
+  if [[ "$ROLLBACK_IN_PROGRESS" == "true" ]]; then
+    # We were already rolling back when this fired again - do not recurse.
+    echo "FATAL: failure during rollback itself. Manual recovery required from:" >&2
+    echo "  $BACKUP_DIR/{rad-release.py,trusted_root.jsonl,activation.json}.pre-install-$STAMP" >&2
+    exit 3
+  fi
+  ROLLBACK_IN_PROGRESS=true
+
+  echo "Interrupted or failed after modifications began - rolling back..." >&2
+  local rollback_failed=false
+
+  if [[ "$BROKER_TOUCHED" == "true" ]]; then
+    if [[ "$BROKER_EXISTED_BEFORE" == "true" ]]; then
+      if install_root 0755 "$BACKUP_DIR/rad-release.py.pre-install-$STAMP" "$BROKER_INSTALLED" 2>/dev/null; then
+        echo "  Restored broker from backup." >&2
+      else
+        echo "  FAILED to restore broker from backup." >&2
+        rollback_failed=true
+      fi
+    else
+      if rm -f "$BROKER_INSTALLED" 2>/dev/null; then
+        echo "  Removed newly-installed broker (none existed before this run)." >&2
+      else
+        echo "  FAILED to remove newly-installed broker." >&2
+        rollback_failed=true
+      fi
+    fi
+  fi
+
+  if [[ "$TRUSTED_ROOT_TOUCHED" == "true" ]]; then
+    if [[ "$TRUSTED_ROOT_EXISTED_BEFORE" == "true" ]]; then
+      if install_root 0644 "$BACKUP_DIR/trusted_root.jsonl.pre-install-$STAMP" "$TRUSTED_ROOT_INSTALLED" 2>/dev/null; then
+        echo "  Restored trusted root from backup." >&2
+      else
+        echo "  FAILED to restore trusted root from backup." >&2
+        rollback_failed=true
+      fi
+    else
+      if rm -f "$TRUSTED_ROOT_INSTALLED" 2>/dev/null; then
+        echo "  Removed newly-installed trusted root (none existed before this run)." >&2
+      else
+        echo "  FAILED to remove newly-installed trusted root." >&2
+        rollback_failed=true
+      fi
+    fi
+  fi
+
+  if [[ "$ACTIVATION_TOUCHED" == "true" ]]; then
+    # activation.json is required to already exist (checked in step 1), so
+    # it is always "restore from backup," never "remove."
+    if install_root 0600 "$BACKUP_DIR/activation.json.pre-install-$STAMP" "$ACTIVATION_LIVE" 2>/dev/null; then
+      echo "  Restored activation.json from backup." >&2
+    else
+      echo "  FAILED to restore activation.json from backup." >&2
+      rollback_failed=true
+    fi
+  fi
+
+  if [[ "$rollback_failed" == "true" ]]; then
+    echo "INCOMPLETE ROLLBACK: one or more files could not be restored automatically." >&2
+    echo "Backups remain at: $BACKUP_DIR/{rad-release.py,trusted_root.jsonl,activation.json}.pre-install-$STAMP" >&2
+    echo "Compare current state against those backups and restore by hand." >&2
+    exit 2
+  fi
+
+  echo "ROLLED BACK to pre-install-$STAMP state." >&2
+  exit "$exit_code"
 }
+trap 'cleanup_on_signal "$?"' EXIT
+trap 'cleanup_on_signal "$?"' ERR
+trap 'cleanup_on_signal 130' INT
+trap 'cleanup_on_signal 143' TERM
+
+MODIFICATIONS_STARTED=true
 
 # --- 3. Atomic install of whichever files were requested ------------------
 if [[ -n "${NEW_BROKER_SOURCE:-}" ]]; then
   NEW_BROKER_SHA="$(sha256sum "$NEW_BROKER_SOURCE" | awk '{print $1}')"
-  TMP="$(mktemp "$(dirname "$BROKER_INSTALLED")/.rad-release.py.XXXXXX")"
-  cp "$NEW_BROKER_SOURCE" "$TMP"
-  [[ "$(sha256sum "$TMP" | awk '{print $1}')" == "$NEW_BROKER_SHA" ]] || fail_and_rollback "copied broker hash mismatch before install - refusing."
-  chmod 0755 "$TMP"; [[ "${RAD_INSTALL_ALLOW_NON_ROOT:-}" == "1" ]] || chown root:root "$TMP"
-  mv -f "$TMP" "$BROKER_INSTALLED"
+  BROKER_TMP="$(mktemp "$(dirname "$BROKER_INSTALLED")/.rad-release.py.XXXXXX")"
+  cp "$NEW_BROKER_SOURCE" "$BROKER_TMP"
+  [[ "$(sha256sum "$BROKER_TMP" | awk '{print $1}')" == "$NEW_BROKER_SHA" ]] || abort "copied broker hash mismatch before install - refusing."
+  chmod 0755 "$BROKER_TMP"; [[ "${RAD_INSTALL_ALLOW_NON_ROOT:-}" == "1" ]] || chown root:root "$BROKER_TMP"
+  mv -f "$BROKER_TMP" "$BROKER_INSTALLED"
+  BROKER_TOUCHED=true
+  BROKER_TMP=""
   echo "Installed broker: $BROKER_INSTALLED (sha256 $NEW_BROKER_SHA)"
+fi
+
+# Test-only synchronization point (never set in a real run): lets the test
+# harness send a signal at a precise, deterministic moment - right after
+# the broker is installed but before the trusted root step - instead of
+# racing against real timing. See scripts/test/test-install-broker-trusted-root.sh.
+if [[ -n "${RAD_INSTALL_TEST_PAUSE_AFTER_BROKER:-}" ]]; then
+  touch "${RAD_INSTALL_TEST_PAUSE_AFTER_BROKER}.ready"
+  waited=0
+  while [[ ! -e "$RAD_INSTALL_TEST_PAUSE_AFTER_BROKER" && $waited -lt 50 ]]; do
+    sleep 0.1
+    waited=$(( waited + 1 ))
+  done
 fi
 if [[ -n "${NEW_TRUSTED_ROOT_SOURCE:-}" ]]; then
   NEW_TRUSTED_ROOT_SHA="$(sha256sum "$NEW_TRUSTED_ROOT_SOURCE" | awk '{print $1}')"
-  TMP="$(mktemp "$(dirname "$TRUSTED_ROOT_INSTALLED")/.trusted_root.jsonl.XXXXXX")"
-  cp "$NEW_TRUSTED_ROOT_SOURCE" "$TMP"
-  [[ "$(sha256sum "$TMP" | awk '{print $1}')" == "$NEW_TRUSTED_ROOT_SHA" ]] || fail_and_rollback "copied trusted root hash mismatch before install - refusing."
-  chmod 0644 "$TMP"; [[ "${RAD_INSTALL_ALLOW_NON_ROOT:-}" == "1" ]] || chown root:root "$TMP"
-  mv -f "$TMP" "$TRUSTED_ROOT_INSTALLED"
+  TRUSTED_ROOT_TMP="$(mktemp "$(dirname "$TRUSTED_ROOT_INSTALLED")/.trusted_root.jsonl.XXXXXX")"
+  cp "$NEW_TRUSTED_ROOT_SOURCE" "$TRUSTED_ROOT_TMP"
+  [[ "$(sha256sum "$TRUSTED_ROOT_TMP" | awk '{print $1}')" == "$NEW_TRUSTED_ROOT_SHA" ]] || abort "copied trusted root hash mismatch before install - refusing."
+  chmod 0644 "$TRUSTED_ROOT_TMP"; [[ "${RAD_INSTALL_ALLOW_NON_ROOT:-}" == "1" ]] || chown root:root "$TRUSTED_ROOT_TMP"
+  mv -f "$TRUSTED_ROOT_TMP" "$TRUSTED_ROOT_INSTALLED"
+  TRUSTED_ROOT_TOUCHED=true
+  TRUSTED_ROOT_TMP=""
   echo "Installed trusted root: $TRUSTED_ROOT_INSTALLED (sha256 $NEW_TRUSTED_ROOT_SHA)"
 fi
 
 # --- 4. Update ONLY the two hash fields in activation.json, atomically -----
 ACTIVATION_TMP="$(mktemp "$(dirname "$ACTIVATION_LIVE")/.activation.json.XXXXXX")"
-python3 - "$ACTIVATION_LIVE" "$ACTIVATION_TMP" "$BROKER_INSTALLED" "$TRUSTED_ROOT_INSTALLED" <<'PY' || fail_and_rollback "failed to write updated activation.json."
+python3 - "$ACTIVATION_LIVE" "$ACTIVATION_TMP" "$BROKER_INSTALLED" "$TRUSTED_ROOT_INSTALLED" <<'PY'
 import hashlib, json, sys
 live_path, tmp_path, broker_path, trusted_root_path = sys.argv[1:5]
 
@@ -206,6 +337,8 @@ with open(tmp_path, "w") as out:
 PY
 chmod 0600 "$ACTIVATION_TMP"; [[ "${RAD_INSTALL_ALLOW_NON_ROOT:-}" == "1" ]] || chown root:root "$ACTIVATION_TMP"
 mv -f "$ACTIVATION_TMP" "$ACTIVATION_LIVE"
+ACTIVATION_TOUCHED=true
+ACTIVATION_TMP=""
 echo "Updated activation.json: broker_sha256/trusted_root_sha256 only, every other field unchanged."
 
 # --- 5. Post-install validation: the broker's OWN fail-closed check -------
@@ -230,7 +363,11 @@ module.validate_activation()
 print("validate_activation(): OK")
 PY
 check "installed broker's own validate_activation() passes against the real installed files" "$VALIDATE_OK"
-[[ "$VALIDATE_OK" == "true" ]] || fail_and_rollback "post-install validate_activation() failed - rolling back."
+[[ "$VALIDATE_OK" == "true" ]] || abort "post-install validate_activation() failed."
+
+# Success: disarm the trap BEFORE exiting, so this clean exit can never be
+# mistaken for a failure and trigger a rollback of a successful install.
+trap - EXIT INT TERM ERR
 
 echo
 echo "== Result: $PASS passed, $FAIL failed =="

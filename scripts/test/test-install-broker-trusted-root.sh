@@ -217,5 +217,125 @@ if OUT="$(env -i PATH="$PATH" RAD_INSTALL_ALLOW_NON_ROOT=1 \
 check "missing RAD_INSTALL_CONFIRM refuses to run" "$([[ $NOCONFIRM_EXIT -ne 0 ]] && echo true || echo false)"
 
 echo
+echo "== Scenario: unexpected (not explicitly checked-for) failure after broker is already installed =="
+# Nothing in the script explicitly checks that TRUSTED_ROOT_INSTALLED
+# exists before computing its hash for activation.json - deleting it out
+# from under the script simulates a genuinely unanticipated failure (a
+# Python FileNotFoundError, not a guarded `|| abort`), occurring AFTER the
+# broker has already been swapped. This must still roll the broker back.
+rm -rf "$BACKUP_DIR"
+seed_activation
+BEFORE_BROKER_SHA="$(sha256sum "$BROKER_INSTALLED" | awk '{print $1}')"
+BEFORE_ACTIVATION="$(cat "$ACTIVATION_LIVE")"
+rm -f "$TRUSTED_ROOT_INSTALLED"   # the thing nothing explicitly checks for
+if OUT="$(NEW_BROKER_SOURCE="$NEW_BROKER" run_install 2>&1)"; then UNEXPECTED_EXIT=0; else UNEXPECTED_EXIT=$?; fi
+check "unexpected failure (missing trusted root) exits non-zero" "$([[ $UNEXPECTED_EXIT -ne 0 ]] && echo true || echo false)"
+check "output reports a rollback, not a silent exit" "$(echo "$OUT" | grep -q "ROLLED BACK\|rolling back" && echo true || echo false)"
+check "broker already installed before the failure was rolled back" \
+  "$([[ "$(sha256sum "$BROKER_INSTALLED" | awk '{print $1}')" == "$BEFORE_BROKER_SHA" ]] && echo true || echo false)"
+check "activation.json, never reached, is byte-for-byte unchanged" \
+  "$([[ "$(cat "$ACTIVATION_LIVE")" == "$BEFORE_ACTIVATION" ]] && echo true || echo false)"
+check "no stray .activation.json.* temp file was left behind" \
+  "$([[ -z "$(find "$TMPROOT" -maxdepth 1 -name '.activation.json.*' 2>/dev/null)" ]] && echo true || echo false)"
+printf '{"mediaType":"fixture-current"}\n' > "$TRUSTED_ROOT_INSTALLED"   # restore for later scenarios
+chmod 0644 "$TRUSTED_ROOT_INSTALLED"
+
+echo
+echo "== Scenario: SIGTERM after the broker is installed but before the trusted root step =="
+rm -rf "$BACKUP_DIR"
+seed_activation
+BEFORE_BROKER_SHA="$(sha256sum "$BROKER_INSTALLED" | awk '{print $1}')"
+BEFORE_TRUSTED_ROOT_SHA="$(sha256sum "$TRUSTED_ROOT_INSTALLED" | awk '{print $1}')"
+BEFORE_ACTIVATION="$(cat "$ACTIVATION_LIVE")"
+NEW_TRUSTED_ROOT="$TMPROOT/new-trusted-root.jsonl"
+printf '{"mediaType":"fixture-new"}\n' > "$NEW_TRUSTED_ROOT"
+PAUSE_MARKER="$TMPROOT/pause-marker"
+rm -f "$PAUSE_MARKER" "$PAUSE_MARKER.ready"
+
+env -i \
+  PATH="$PATH" \
+  RAD_INSTALL_ALLOW_NON_ROOT=1 \
+  RAD_INSTALL_CONFIRM=yes-install-live \
+  BROKER_INSTALLED="$BROKER_INSTALLED" \
+  TRUSTED_ROOT_INSTALLED="$TRUSTED_ROOT_INSTALLED" \
+  ACTIVATION_LIVE="$ACTIVATION_LIVE" \
+  BACKUP_DIR="$BACKUP_DIR" \
+  REVIEWED_REPO="$REVIEWED_REPO" \
+  TEST_TIMEOUT=30 \
+  NEW_BROKER_SOURCE="$NEW_BROKER" \
+  NEW_TRUSTED_ROOT_SOURCE="$NEW_TRUSTED_ROOT" \
+  RAD_INSTALL_TEST_PAUSE_AFTER_BROKER="$PAUSE_MARKER" \
+  bash "$SCRIPT" > "$TMPROOT/sigterm-output.log" 2>&1 &
+INSTALL_PID=$!
+
+waited=0
+while [[ ! -e "${PAUSE_MARKER}.ready" && $waited -lt 100 ]]; do
+  sleep 0.05
+  waited=$(( waited + 1 ))
+done
+check "install actually reached the post-broker pause point" "$([[ -e "${PAUSE_MARKER}.ready" ]] && echo true || echo false)"
+
+kill -TERM "$INSTALL_PID" 2>/dev/null || true
+if wait "$INSTALL_PID" 2>/dev/null; then SIGTERM_EXIT=0; else SIGTERM_EXIT=$?; fi
+OUT="$(cat "$TMPROOT/sigterm-output.log")"
+
+check "interrupted install exits non-zero" "$([[ $SIGTERM_EXIT -ne 0 ]] && echo true || echo false)"
+check "output reports a rollback" "$(echo "$OUT" | grep -q "rolling back\|ROLLED BACK" && echo true || echo false)"
+check "broker (already installed, existed before) was restored from backup" \
+  "$([[ "$(sha256sum "$BROKER_INSTALLED" | awk '{print $1}')" == "$BEFORE_BROKER_SHA" ]] && echo true || echo false)"
+check "trusted root (never reached) is byte-for-byte unchanged" \
+  "$([[ "$(sha256sum "$TRUSTED_ROOT_INSTALLED" | awk '{print $1}')" == "$BEFORE_TRUSTED_ROOT_SHA" ]] && echo true || echo false)"
+check "activation.json (never reached) is byte-for-byte unchanged" \
+  "$([[ "$(cat "$ACTIVATION_LIVE")" == "$BEFORE_ACTIVATION" ]] && echo true || echo false)"
+check "no stray .trusted_root.jsonl.* temp file was left behind" \
+  "$([[ -z "$(find "$TMPROOT" -maxdepth 1 -name '.trusted_root.jsonl.*' 2>/dev/null)" ]] && echo true || echo false)"
+
+echo
+echo "== Scenario: the restore-from-backup step itself failing is reported as INCOMPLETE ROLLBACK, not a crash or loop =="
+rm -rf "$BACKUP_DIR"
+seed_activation
+rm -f "$PAUSE_MARKER" "$PAUSE_MARKER.ready"
+
+env -i \
+  PATH="$PATH" \
+  RAD_INSTALL_ALLOW_NON_ROOT=1 \
+  RAD_INSTALL_CONFIRM=yes-install-live \
+  BROKER_INSTALLED="$BROKER_INSTALLED" \
+  TRUSTED_ROOT_INSTALLED="$TRUSTED_ROOT_INSTALLED" \
+  ACTIVATION_LIVE="$ACTIVATION_LIVE" \
+  BACKUP_DIR="$BACKUP_DIR" \
+  REVIEWED_REPO="$REVIEWED_REPO" \
+  TEST_TIMEOUT=30 \
+  NEW_BROKER_SOURCE="$NEW_BROKER" \
+  RAD_INSTALL_TEST_PAUSE_AFTER_BROKER="$PAUSE_MARKER" \
+  bash "$SCRIPT" > "$TMPROOT/incomplete-output.log" 2>&1 &
+INSTALL_PID=$!
+
+waited=0
+while [[ ! -e "${PAUSE_MARKER}.ready" && $waited -lt 100 ]]; do
+  sleep 0.05
+  waited=$(( waited + 1 ))
+done
+
+# While it's paused (broker already backed up AND already installed),
+# make the broker backup unreadable - the exact thing rollback would need
+# to restore from once we interrupt it.
+BROKER_BACKUP="$(find "$BACKUP_DIR" -maxdepth 1 -name 'rad-release.py.pre-install-*' | head -1)"
+check "broker backup exists at the pause point (precondition for this scenario)" \
+  "$([[ -n "$BROKER_BACKUP" ]] && echo true || echo false)"
+chmod 000 "$BROKER_BACKUP" 2>/dev/null || true
+
+kill -TERM "$INSTALL_PID" 2>/dev/null || true
+if wait "$INSTALL_PID" 2>/dev/null; then INCOMPLETE_EXIT=0; else INCOMPLETE_EXIT=$?; fi
+OUT="$(cat "$TMPROOT/incomplete-output.log")"
+chmod 0644 "$BROKER_BACKUP" 2>/dev/null || true
+
+check "a restore failure during rollback exits non-zero (not success)" "$([[ $INCOMPLETE_EXIT -ne 0 ]] && echo true || echo false)"
+check "output explicitly reports INCOMPLETE ROLLBACK" "$(echo "$OUT" | grep -q "INCOMPLETE ROLLBACK" && echo true || echo false)"
+check "output tells the operator where the backups are for manual recovery" \
+  "$(echo "$OUT" | grep -q "pre-install" && echo true || echo false)"
+check "the script did not hang or recurse - it exited" "true"
+
+echo
 echo "== Result: $PASS passed, $FAIL failed =="
 exit $(( FAIL > 0 ? 1 : 0 ))
