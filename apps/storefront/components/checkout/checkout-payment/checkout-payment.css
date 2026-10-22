@@ -380,6 +380,39 @@ html[dir="rtl"] .checkout-flow .payment-card-number {
   margin: 0;
 }
 
+.payment-gateway-hint {
+  color: var(--muted);
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+.payment-result.is-pending {
+  justify-items: start;
+  text-align: start;
+}
+
+.payment-result-spinner {
+  width: 2rem;
+  height: 2rem;
+  margin-bottom: 0.4rem;
+  border: 2px solid color-mix(in srgb, var(--ink) 14%, transparent);
+  border-inline-start-color: var(--moss);
+  border-radius: 50%;
+  animation: payment-spin 900ms linear infinite;
+}
+
+@keyframes payment-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .payment-result-spinner {
+    animation-duration: 2.4s;
+  }
+}
+
 .payment-cancel {
   display: grid;
   justify-items: center;

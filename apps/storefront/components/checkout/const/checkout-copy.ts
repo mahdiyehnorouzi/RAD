@@ -38,7 +38,7 @@ export const checkoutCopy = {
     summaryTitle: "خلاصه‌ی سفارش",
     subtotal: "جمع آثار",
     shipping: "هزینه‌ی ارسال",
-    free: "رایگان",
+    shippingUnset: "پس از بررسی مشخص می‌شود",
     total: "مبلغ نهایی",
     quantity: "تعداد: {count}",
 
@@ -60,8 +60,19 @@ export const checkoutCopy = {
     deadlineExpired: "مهلت پرداخت تمام شد.",
     noCard:
       "شماره کارت این سفارش هنوز آماده نیست. از راه پیام به رَد بپرسید؛ سفارش شما ثبت شده است.",
-    gatewayHint: "برای تکمیل خرید به درگاه امن پرداخت منتقل می‌شوید.",
-    gatewayGo: "ورود به درگاه پرداخت",
+    securePayTitle: "پرداخت امن",
+    securePayLede: "برای تکمیل خرید، به صفحه امن پرداخت منتقل می‌شی.",
+    gatewayHint: "بعد از پرداخت، به سایت رَد برمی‌گردی.",
+    gatewayGo: "پرداخت و تکمیل خرید",
+    gatewayRedirecting: "داریم به صفحه پرداخت منتقلت می‌کنیم…",
+    verifyingTitle: "داریم پرداختت رو بررسی می‌کنیم",
+    verifyingBody:
+      "هنوز نتیجه قطعی پرداخت مشخص نشده. به محض تأیید، وضعیت سفارشت به‌روز می‌شه.",
+    verifyErrorTitle: "بررسی پرداخت ممکن نشد",
+    verifyErrorBody:
+      "ارتباط با سرور برقرار نشد. اگر پولی کسر شده نگران نباش؛ دوباره بررسی کن یا بعداً از صفحه سفارش‌ها ببین.",
+    verifyRetry: "بررسی دوباره",
+    retryPay: "تلاش دوباره برای پرداخت",
 
     receiptTitle: "ارسال رسید",
     receiptDrop: "انتخاب عکس رسید",
@@ -149,7 +160,7 @@ export const checkoutCopy = {
     summaryTitle: "Order summary",
     subtotal: "Works",
     shipping: "Delivery",
-    free: "Free",
+    shippingUnset: "Confirmed after review",
     total: "Total",
     quantity: "Qty: {count}",
 
@@ -171,8 +182,19 @@ export const checkoutCopy = {
     deadlineExpired: "The payment window has closed.",
     noCard:
       "The card for this order isn't ready yet. Message RAD and ask; your order is placed.",
-    gatewayHint: "You'll be taken to the secure payment gateway to finish.",
-    gatewayGo: "Go to payment gateway",
+    securePayTitle: "Secure payment",
+    securePayLede: "You'll be taken to a secure payment page to finish your order.",
+    gatewayHint: "You'll return to RAD once payment is done.",
+    gatewayGo: "Pay and complete order",
+    gatewayRedirecting: "Taking you to the payment page…",
+    verifyingTitle: "We're checking your payment",
+    verifyingBody:
+      "The final result isn't in yet. Your order updates the moment it is.",
+    verifyErrorTitle: "Couldn't check your payment",
+    verifyErrorBody:
+      "The connection failed. If money was taken, don't worry — try checking again, or see your orders page later.",
+    verifyRetry: "Check again",
+    retryPay: "Try payment again",
 
     receiptTitle: "After the transfer",
     receiptDrop: "Upload the receipt image",

@@ -50,7 +50,7 @@ export function CheckoutSummary({
         </div>
         <div>
           <dt>{c.shipping}</dt>
-          <dd>{c.free}</dd>
+          <dd>{c.shippingUnset}</dd>
         </div>
         <div className="checkout-summary-total">
           <dt>{c.total}</dt>

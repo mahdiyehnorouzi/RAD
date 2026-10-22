@@ -69,6 +69,15 @@ export class OrdersController {
     );
   }
 
+  /** Starts a fresh gateway session for an existing pending order (never a new order). */
+  @Post(":id/payment/retry")
+  async retryPayment(@Param("id") id: string, @Req() request: AuthedRequest) {
+    return this.orders.retryGatewayPayment(
+      await this.identity.fromRequest(request),
+      id,
+    );
+  }
+
   @Post(":id/cancel")
   async cancel(@Param("id") id: string, @Req() request: AuthedRequest) {
     return this.orders.cancel(await this.identity.fromRequest(request), id);

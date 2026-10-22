@@ -455,6 +455,58 @@ export class OrdersService implements OnModuleInit {
     return toOrder(await this.ownedOrder(actor, id));
   }
 
+  /**
+   * Buyer's gateway attempt failed, was cancelled, or needs a fresh
+   * Authority (e.g. after `verify_error`). Starts a new ZarinPal session for
+   * the SAME order — never a duplicate order — as long as it's still
+   * `pending_payment` and the works are still held for this buyer.
+   */
+  async retryGatewayPayment(actor: Actor, id: string) {
+    await this.inventory.releaseExpiredHolds();
+    const ownerKey = this.identity.key(actor);
+    const order = await this.ownedOrder(actor, id);
+    if (normalizeStoreOrderStatus(order.status) !== "pending_payment") {
+      throw new BadRequestException({
+        message: "این سفارش دیگر در انتظار پرداخت نیست.",
+        code: "order_not_payable",
+      });
+    }
+    if (order.payment?.provider !== "zarinpal") {
+      throw new BadRequestException({
+        message: "این سفارش از درگاه آنلاین پرداخت نمی‌شود.",
+        code: "payment_not_gateway",
+      });
+    }
+    const items = await this.orders.manager
+      .getRepository(OrderItem)
+      .find({ where: { orderId: id }, select: { productSlug: true } });
+    await this.inventory.assertReservedFor(
+      this.orders.manager,
+      ownerKey,
+      items.map((item) => item.productSlug),
+    );
+
+    const session = await startPaymentSession({
+      orderId: id,
+      amount: order.payment.amount ?? order.total,
+      currency: "IRR",
+      callbackUrl: `${process.env.STOREFRONT_ORIGIN || "http://localhost:3000"}/checkout/${id}`,
+      mobile: order.phone,
+    });
+    if (session.kind !== "redirect") {
+      throw new ServiceUnavailableException("شروع پرداخت ممکن نیست.");
+    }
+    await this.payments.update(
+      { orderId: id },
+      {
+        status: "redirected",
+        provider: session.provider,
+        gatewayAuthority: session.authority,
+      },
+    );
+    return toOrder(await this.ownedOrder(actor, id), session.redirectUrl);
+  }
+
   /** @deprecated Alias kept so existing clients keep working until renamed. */
   confirmDemoPayment(
     actor: Actor,
