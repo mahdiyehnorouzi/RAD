@@ -8,6 +8,149 @@ body:has(.purchase-bag) .route-trail {
 }
 
 /*
+ * The manual-transfer card and the receipt-remove button have no styling
+ * anywhere else in the codebase (unlike the rules below, which override an
+ * already-responsive base from checkout-flow.css / checkout-payment.css),
+ * so they stay unconditional — they're the only source of truth for these
+ * components at every screen width, not a mobile-only override.
+ */
+.transfer-details {
+  display: grid;
+}
+.transfer-card {
+  padding: 24px 20px 18px;
+  min-height: 180px;
+  background: #173d31 url("/studio/leaf.webp") center/cover;
+  background-blend-mode: multiply;
+  color: white;
+  border-radius: 16px;
+}
+.transfer-bank,
+.transfer-holder {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+}
+.transfer-bank svg {
+  width: 22px;
+}
+.transfer-number {
+  direction: ltr;
+  unicode-bidi: isolate;
+  text-align: center;
+  letter-spacing: 1.6px;
+  font-size: clamp(16px, 4.2vw, 22px);
+  font-family: monospace;
+  margin: 32px 0 15px;
+  user-select: all;
+}
+.transfer-holder {
+  justify-content: space-between;
+}
+.transfer-holder svg {
+  width: 18px;
+}
+.transfer-copy {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 43px;
+  border: 0;
+  border-radius: 12px;
+  background: #e5e7dc;
+  color: #254737;
+  padding: 9px;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  margin-top: 9px;
+}
+.transfer-copy svg {
+  width: 18px;
+  height: 18px;
+}
+.transfer-feedback {
+  min-height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #31533e;
+  margin: 10px 0;
+}
+.transfer-feedback svg {
+  width: 17px;
+}
+.transfer-amount {
+  display: grid;
+  text-align: center;
+  gap: 12px;
+  padding: 18px 12px 10px;
+  border: 1px solid #ded7c9;
+  border-radius: 15px;
+  margin-bottom: 20px;
+}
+.transfer-amount > span {
+  font-size: 14px;
+}
+.transfer-amount > b {
+  font-size: 21px;
+}
+.transfer-next {
+  display: grid;
+  gap: 13px;
+  text-align: center;
+}
+.transfer-next > p {
+  font-size: 14px;
+  margin: 0;
+}
+.transfer-next > .button {
+  background: none !important;
+  color: #284737 !important;
+  text-decoration: underline;
+  text-underline-offset: 5px;
+}
+.transfer-back {
+  display: block;
+  margin: 15px auto;
+  padding: 8px;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 12px;
+  color: #46624f;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.payment-result-art {
+  width: 230px;
+  height: 230px;
+  margin: 5px auto 30px;
+  object-fit: cover;
+  border-radius: 50% 50% 15px 15px;
+}
+.receipt-remove {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  padding: 6px;
+  font: inherit;
+  font-size: 12px;
+  background: none;
+  border: 0;
+  color: #875340;
+  cursor: pointer;
+}
+.receipt-remove svg {
+  width: 15px;
+}
+
+/*
  * Everything below is the compact single-column mobile design. It used to
  * apply unconditionally, which forced every checkout screen — including
  * desktop — into a 460px mobile card (the "mobile checkout inside a narrow
@@ -230,119 +373,6 @@ body:has(.purchase-bag) .route-trail {
 .checkout-flow.section .checkout-pay {
   display: block;
 }
-.transfer-details {
-  display: grid;
-}
-.transfer-card {
-  padding: 24px 20px 18px;
-  min-height: 180px;
-  background: #173d31 url("/studio/leaf.webp") center/cover;
-  background-blend-mode: multiply;
-  color: white;
-  border-radius: 16px;
-}
-.transfer-bank,
-.transfer-holder {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  font-size: 14px;
-}
-.transfer-bank svg {
-  width: 22px;
-}
-.transfer-number {
-  direction: ltr;
-  unicode-bidi: isolate;
-  text-align: center;
-  letter-spacing: 1.6px;
-  font-size: clamp(16px, 4.2vw, 22px);
-  font-family: monospace;
-  margin: 32px 0 15px;
-  user-select: all;
-}
-.transfer-holder {
-  justify-content: space-between;
-}
-.transfer-holder svg {
-  width: 18px;
-}
-.transfer-copy {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  min-height: 43px;
-  border: 0;
-  border-radius: 12px;
-  background: #e5e7dc;
-  color: #254737;
-  padding: 9px;
-  font: inherit;
-  font-size: 13px;
-  cursor: pointer;
-  margin-top: 9px;
-}
-.transfer-copy svg {
-  width: 18px;
-  height: 18px;
-}
-.transfer-feedback {
-  min-height: 22px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  font-size: 12px;
-  color: #31533e;
-  margin: 10px 0;
-}
-.transfer-feedback svg {
-  width: 17px;
-}
-.transfer-amount {
-  display: grid;
-  text-align: center;
-  gap: 12px;
-  padding: 18px 12px 10px;
-  border: 1px solid #ded7c9;
-  border-radius: 15px;
-  margin-bottom: 20px;
-}
-.transfer-amount > span {
-  font-size: 14px;
-}
-.transfer-amount > b {
-  font-size: 21px;
-}
-.transfer-next {
-  display: grid;
-  gap: 13px;
-  text-align: center;
-}
-.transfer-next > p {
-  font-size: 14px;
-  margin: 0;
-}
-.transfer-next > .button {
-  background: none !important;
-  color: #284737 !important;
-  text-decoration: underline;
-  text-underline-offset: 5px;
-}
-.transfer-back {
-  display: block;
-  margin: 15px auto;
-  padding: 8px;
-  border: 0;
-  background: none;
-  font: inherit;
-  font-size: 12px;
-  color: #46624f;
-  text-decoration: underline;
-  cursor: pointer;
-}
 .checkout-flow.section .payment-cancel {
   margin-top: 25px;
   text-align: center;
@@ -396,13 +426,6 @@ body:has(.purchase-bag) .route-trail {
   text-align: center;
   border: 0;
   background: none;
-}
-.checkout-flow.section .payment-result-art {
-  width: 230px;
-  height: 230px;
-  margin: 5px auto 30px;
-  object-fit: cover;
-  border-radius: 50% 50% 15px 15px;
 }
 .checkout-flow.section .payment-result h1 {
   font-size: 23px;
@@ -496,19 +519,4 @@ body:has(.purchase-bag) .route-trail {
   padding-top: 18px;
 }
 
-.receipt-remove {
-  display: flex;
-  gap: 6px;
-  align-items: center;
-  padding: 6px;
-  font: inherit;
-  font-size: 12px;
-  background: none;
-  border: 0;
-  color: #875340;
-  cursor: pointer;
-}
-.receipt-remove svg {
-  width: 15px;
-}
 } /* @media (--tablet) */
