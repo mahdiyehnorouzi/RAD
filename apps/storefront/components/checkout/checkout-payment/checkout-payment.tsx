@@ -96,7 +96,7 @@ export function CheckoutPayment({ id }: { id: string }) {
   if (!ready && !order) {
     return (
       <section className="checkout-flow section" aria-busy="true">
-        <CheckoutSteps current={1} />
+        <CheckoutSteps current={2} />
         <CardListSkeleton count={2} />
       </section>
     );
@@ -119,6 +119,7 @@ export function CheckoutPayment({ id }: { id: string }) {
   if (verifying) {
     return (
       <section className="checkout-flow section">
+        <CheckoutSteps current={3} />
         <div className="payment-result is-pending" role="status" aria-busy="true">
           <span className="payment-result-spinner" aria-hidden="true" />
           <h1>{c.verifyingTitle}</h1>
@@ -131,6 +132,7 @@ export function CheckoutPayment({ id }: { id: string }) {
   if (verifyFailed) {
     return (
       <section className="checkout-flow section">
+        <CheckoutSteps current={3} />
         <div className="payment-result is-pending" role="alert">
           <h1>{c.verifyErrorTitle}</h1>
           <p>{c.verifyErrorBody}</p>
@@ -164,6 +166,7 @@ export function CheckoutPayment({ id }: { id: string }) {
   if (order.status !== "pending_payment") {
     return (
       <section className="checkout-flow section">
+        <CheckoutSteps current={3} />
         <div className="checkout-flow-body is-result">
           <div className="checkout-flow-main">
             <PaymentResult order={order} amount={tomanLabel} />
@@ -216,7 +219,7 @@ export function CheckoutPayment({ id }: { id: string }) {
 
   return (
     <section className="checkout-flow section">
-      <CheckoutSteps current={receiptStep ? 2 : 1} />
+      <CheckoutSteps current={2} />
       <header className="checkout-flow-head">
         <h1 ref={headingRef} tabIndex={-1}>
           {receiptStep ? c.receiptTitle : redirectUrl ? c.securePayTitle : c.payTitle}

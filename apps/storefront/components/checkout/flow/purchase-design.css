@@ -6,6 +6,15 @@ body:has(.checkout-flow) .route-trail,
 body:has(.purchase-bag) .route-trail {
   display: none;
 }
+
+/*
+ * Everything below is the compact single-column mobile design. It used to
+ * apply unconditionally, which forced every checkout screen — including
+ * desktop — into a 460px mobile card (the "mobile checkout inside a narrow
+ * centered container" bug). Desktop instead gets checkout-flow.css's own
+ * two-column grid; this file now only takes over at tablet/phone widths.
+ */
+@media (--tablet) {
 .checkout-flow.section {
   width: min(100%, 460px);
   min-height: calc(100svh - 68px);
@@ -502,3 +511,4 @@ body:has(.purchase-bag) .route-trail {
 .receipt-remove svg {
   width: 15px;
 }
+} /* @media (--tablet) */

@@ -1,7 +1,7 @@
 export const checkoutCopy = {
   fa: {
     stepsLabel: "مراحل خرید",
-    steps: ["اطلاعات", "پرداخت", "رسید"],
+    steps: ["کیسه خرید", "اطلاعات ارسال", "بررسی و پرداخت", "نتیجه"],
     stepDone: "انجام شد",
     stepCurrent: "مرحله‌ی فعلی",
 
@@ -122,7 +122,7 @@ export const checkoutCopy = {
   },
   en: {
     stepsLabel: "Checkout steps",
-    steps: ["Information", "Payment", "Receipt"],
+    steps: ["Bag", "Delivery", "Review & payment", "Result"],
     stepDone: "done",
     stepCurrent: "current step",
 
