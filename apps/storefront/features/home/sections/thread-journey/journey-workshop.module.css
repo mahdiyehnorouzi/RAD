@@ -12,19 +12,57 @@
   margin-bottom: clamp(0rem, 5vw - 1.5rem, 1.5rem);
 }
 
-/* Desktop-only: the photo is shown uncropped at its own natural aspect
-   ratio (no object-fit), so its height is purely a function of its
-   rendered width - at full viewport width that's ~1080px tall at 1440px.
-   76rem is the same content-width ceiling collaboration-band.module.css
-   already uses elsewhere on this page, so this isn't a new idiom; it just
-   stops the photo from growing past it on wide screens. The overlay sheet
-   and spark are positioned in percent of this same box, so they scale
-   down with it and stay correctly placed. */
+/* Desktop-only: full-bleed photographic editorial composition, replacing
+   the mobile/tablet overlay above. The mobile overlay photo bakes its own
+   blank panel into the shot; the desktop photo
+   (journeyWorkshopSceneDesktop, below) is a plain standalone photograph
+   with no baked panel, filling the entire section edge to edge, with the
+   paper panel layered on top as a real HTML overlay (not a grid column -
+   no outer max-width/margin, no gap to the photo). */
 @media (min-width: 1024px) {
   .journeyWorkshop {
     width: 100%;
-    max-width: 76rem;
-    margin-inline: auto;
+    /* vw-scaled, not a flat rem value: a fixed height would hold its
+       actual pixel size at any desktop width, so on a narrower desktop
+       window (close to the 1024px floor) the section reads far taller
+       relative to its own width than the reference's ~2.3/1 band ratio -
+       this keeps that ratio roughly constant from 1024px up to the 40rem
+       ceiling (reached around 1600px). */
+    min-height: clamp(28rem, 46vw, 42rem);
+    overflow: clip;
+  }
+
+  /* Top and bottom torn-paper edges, matching the mobile/tablet photo's
+     own baked-in treatment (see the file-top comment) now that the
+     desktop photo is a plain standalone image with no baked border of
+     its own - same paper texture as the vertical tears elsewhere in this
+     file, just masked with the horizontal tear variables instead. */
+  .journeyWorkshop::before,
+  .journeyWorkshop::after {
+    content: "";
+    position: absolute;
+    z-index: 3;
+    left: 0;
+    right: 0;
+    height: 28px;
+    background:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .35 0 0 0 0 .28 0 0 0 0 .18 0 0 0 .07 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),
+      linear-gradient(168deg, var(--paper), var(--canvas));
+    pointer-events: none;
+  }
+
+  .journeyWorkshop::before {
+    top: -1px;
+    -webkit-mask: var(--tear-bottom);
+    mask: var(--tear-bottom);
+    filter: drop-shadow(0 3px 3px rgb(74 52 28 / 0.22));
+  }
+
+  .journeyWorkshop::after {
+    bottom: -1px;
+    -webkit-mask: var(--tear-top);
+    mask: var(--tear-top);
+    filter: drop-shadow(0 -3px 3px rgb(74 52 28 / 0.22));
   }
 }
 
@@ -32,6 +70,27 @@
   display: block;
   width: 100%;
   height: auto;
+}
+
+.journeyWorkshopSceneDesktop {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .journeyWorkshopScene {
+    display: none;
+  }
+
+  .journeyWorkshopSceneDesktop {
+    display: block;
+    position: absolute;
+    z-index: 0;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: 68% 45%;
+  }
 }
 
 /*
@@ -61,6 +120,55 @@
 
 html[dir="ltr"] .journeyWorkshopSheet {
   direction: ltr;
+}
+
+/* Desktop-only: still an overlay, like the mobile/tablet rule above, but
+   on top of the plain desktop photo (journeyWorkshopSceneDesktop) instead
+   of a baked-in blank panel - a real paper-colored HTML layer, full
+   section height, with its own torn right edge (::after, below) where it
+   overlaps the photo. Always physically left (no direction flip): the
+   reference pins the panel to the same physical side regardless of
+   locale, same technique collaboration-band.module.css uses elsewhere. */
+@media (min-width: 1024px) {
+  .journeyWorkshopSheet {
+    position: absolute;
+    z-index: 1;
+    top: 0;
+    left: 0;
+    width: 45%;
+    height: 100%;
+    padding-inline-start: clamp(2rem, 4vw, 3.5rem);
+    padding-inline-end: clamp(1.5rem, 3vw, 2.5rem);
+    /* Same grain-noise generator hero-card.module.css uses for its paper
+       card front, recolored toward --paper's warm ivory rather than
+       flat-filling with --canvas - a genuine (if subtle) handmade-paper
+       texture, not a gradient standing in for one. */
+    background:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .35 0 0 0 0 .28 0 0 0 0 .18 0 0 0 .07 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),
+      linear-gradient(168deg, var(--paper), var(--canvas));
+    box-shadow: 10px 0 24px -16px rgb(74 52 28 / 0.35);
+  }
+
+  /* The torn edge itself: wider than a hairline (32px, not 16) so the
+     SVG tear path's own jagged amplitude actually reads at this scale,
+     same grain fill as the panel so the tear's "ink" looks like paper,
+     not a flat color key. */
+  .journeyWorkshopSheet::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: -16px;
+    bottom: 0;
+    z-index: 2;
+    width: 32px;
+    background:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .35 0 0 0 0 .28 0 0 0 0 .18 0 0 0 .07 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),
+      linear-gradient(168deg, var(--paper), var(--canvas));
+    -webkit-mask: var(--tear-right);
+    mask: var(--tear-right);
+    filter: drop-shadow(3px 0 3px rgb(74 52 28 / 0.22));
+    pointer-events: none;
+  }
 }
 
 .journeyWorkshopSheet h2 {
@@ -122,6 +230,31 @@ html[dir="ltr"] .journeyWorkshopLink:hover svg {
   height: 1px;
 }
 
+/* Desktop-only: both marks are positioned in percent of the full-bleed
+   .journeyWorkshop section (same as the mobile rule above). The curve
+   runs from the hero's own anchor (upper area, right of the panel) down
+   to this exit point - moving the exit point LEFT, into the text
+   column, pulls the whole curve left with it and drags it straight
+   through the heading. Keeping it to the right of the CTA button's own
+   right edge (~42% of the section width) keeps the whole curve clear of
+   both the heading and the button, passing down the panel/photo
+   boundary instead. The pencil-tick spark moves onto the photo itself,
+   clear of the panel's now-larger heading/paragraph. */
+@media (min-width: 1024px) {
+  .journeyWorkshopSpark {
+    top: 6%;
+    right: auto;
+    left: 48%;
+  }
+
+  .journeyWorkshopExit {
+    top: auto;
+    bottom: 10%;
+    right: auto;
+    left: 44%;
+  }
+}
+
 @media (min-width: 900px) {
   .journeyWorkshopSheet {
     width: 46%;
@@ -130,6 +263,32 @@ html[dir="ltr"] .journeyWorkshopLink:hover svg {
 
   .journeyWorkshopSheet h2 {
     font-size: clamp(1.6rem, 2.6vw, 2.1rem);
+  }
+}
+
+/* Desktop-only: a larger paragraph, and a solid button in the same
+   moss/paper colors as .button elsewhere on the site
+   (components/ui/button-link.css) instead of an underlined text link, so
+   the CTA reads as clearly actionable inside the paper panel. */
+@media (min-width: 1024px) {
+  .journeyWorkshopSheet p {
+    max-width: 19rem;
+    font-size: 1.05rem;
+  }
+
+  .journeyWorkshopLink {
+    margin-top: 1.1rem;
+    padding: 0.8rem 1.6rem;
+    border-radius: 2px;
+    border-bottom: 0;
+    background: var(--moss);
+    color: var(--paper);
+    font-size: 0.95rem;
+    font-weight: 500;
+  }
+
+  .journeyWorkshopLink:hover {
+    background: var(--clay);
   }
 }
 

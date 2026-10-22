@@ -23,11 +23,22 @@ export function JourneyReady() {
       aria-labelledby="journey-ready-title"
     >
       <div className={styles.journeyReadyPhoto}>
+        {/* Mobile/tablet only (<1024px). */}
         <Image
           src={journeyMedia.ready}
           alt=""
           fill
-          sizes="(max-width: 899px) 94vw, 76rem"
+          sizes="(max-width: 1023px) 94vw, 0px"
+          className={styles.journeyReadyPhotoMobile}
+        />
+        {/* Desktop only (>=1024px): the tag/thread stay independent DOM/
+            SVG elements below, never baked into this photo. */}
+        <Image
+          src={journeyMedia.readyDesktop}
+          alt=""
+          fill
+          sizes="(max-width: 1023px) 0px, 76rem"
+          className={styles.journeyReadyPhotoDesktop}
         />
       </div>
       <div ref={tagRef} className={styles.journeyTag}>

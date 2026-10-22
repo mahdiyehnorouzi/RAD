@@ -17,7 +17,7 @@
    window, it never stretches or distorts the image. */
 @media (min-width: 1024px) {
   .journeyReady {
-    min-height: clamp(25rem, 40vw, 30rem);
+    min-height: clamp(27rem, 42vw, 36rem);
   }
 }
 
@@ -35,6 +35,16 @@
   box-shadow: 0 10px 22px -12px rgb(52 36 20 / 0.45);
 }
 
+/* Desktop-only: full-bleed photographic band, not a rounded card - no
+   corner radius or shadow. The width/margin override lives further down,
+   after the 900px tablet rule it needs to outrank. */
+@media (min-width: 1024px) {
+  .journeyReadyPhoto {
+    border-radius: 0;
+    box-shadow: none;
+  }
+}
+
 .journeyReadyPhoto img {
   object-fit: cover;
   object-position: 30% 55%;
@@ -43,6 +53,23 @@
 html[dir="ltr"] .journeyReadyPhoto img {
   object-position: 70% 55%;
   transform: scaleX(-1);
+}
+
+/* Desktop-only asset swap: the tag/thread (below) are already independent
+   DOM/SVG elements at every breakpoint, never baked into either photo, so
+   this is a plain source swap, not a layout change. */
+.journeyReadyPhotoDesktop {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .journeyReadyPhotoMobile {
+    display: none;
+  }
+
+  .journeyReadyPhotoDesktop {
+    display: block;
+  }
 }
 
 /*
@@ -218,6 +245,47 @@ html[dir="ltr"] .journeyTag {
   .journeyTag {
     inset-inline-start: 7%;
     width: 16.5rem;
+  }
+}
+
+/* Outranks the 900px rule above at >=1024px: full-bleed, no side margin,
+   no max-width cap - placed after it in source order for that reason. */
+@media (min-width: 1024px) {
+  .journeyReady {
+    width: 100%;
+    margin-inline: 0;
+  }
+
+  /* A small terracotta torn-paper wedge in the physical bottom-right
+     corner, the same accent color as the CTA buttons elsewhere in this
+     journey (--oxide). clip-path approximates a torn edge with an
+     irregular multi-point line rather than a single straight diagonal.
+     Sits behind the tag (lower z-index) per "keep decoration behind
+     interactive content." */
+  .journeyReady::after {
+    content: "";
+    position: absolute;
+    z-index: 2;
+    right: 0;
+    bottom: 0;
+    width: clamp(7rem, 12vw, 10rem);
+    height: clamp(5rem, 9vw, 7.5rem);
+    background: var(--oxide);
+    clip-path: polygon(
+      100% 0,
+      100% 100%,
+      0 100%,
+      14% 88%,
+      22% 91%,
+      31% 80%,
+      40% 85%,
+      48% 74%,
+      57% 79%,
+      66% 66%,
+      75% 72%,
+      100% 0
+    );
+    pointer-events: none;
   }
 }
 

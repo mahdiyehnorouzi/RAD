@@ -4,8 +4,14 @@ import { createContext, useContext, useEffect, useMemo } from "react";
 import { usePublicPathname } from "@/hooks/use-public-pathname";
 import type { Locale } from "@rad/types";
 import { brand } from "@/lib/brand";
-import { fa, type MessageKey } from "@/i18n/fa";
-import { en } from "@/i18n/en";
+import {
+  buildHref,
+  formatNumber,
+  interpolate,
+  messages,
+  type MessageKey,
+  type Vars,
+} from "@/lib/i18n-messages";
 import {
   DEFAULT_LOCALE,
   LOCALE_COOKIE,
@@ -15,9 +21,6 @@ import {
 
 export type { MessageKey };
 
-const messages = { fa, en } as const;
-
-type Vars = Record<string, string | number>;
 type LocaleContextValue = {
   locale: Locale;
   t: (key: MessageKey, vars?: Vars) => string;
@@ -27,13 +30,6 @@ type LocaleContextValue = {
 };
 const LocaleContext = createContext<LocaleContextValue | null>(null);
 const oneYear = 60 * 60 * 24 * 365;
-
-function interpolate(template: string, vars?: Vars) {
-  if (!vars) return template;
-  return template.replace(/\{(\w+)\}/g, (_, key: string) =>
-    String(vars[key] ?? `{${key}}`),
-  );
-}
 
 function saveLocale(locale: Locale) {
   document.cookie = `${LOCALE_COOKIE}=${locale}; path=/; max-age=${oneYear}; samesite=lax`;
@@ -137,16 +133,8 @@ export function LocaleProvider({
       setLocale: (next) => {
         if (next !== locale) switchLocale(next);
       },
-      href: (path) => {
-        if (locale !== "en") return path;
-        const [base, hash] = path.split("#");
-        const localized = `${base}${base.includes("?") ? "&" : "?"}lang=en`;
-        return hash ? `${localized}#${hash}` : localized;
-      },
-      number: (value) =>
-        new Intl.NumberFormat(locale === "fa" ? "fa-IR" : "en-US").format(
-          value,
-        ),
+      href: (path) => buildHref(locale, path),
+      number: (value) => formatNumber(locale, value),
     }),
     [locale],
   );

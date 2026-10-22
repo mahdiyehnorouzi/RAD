@@ -74,13 +74,25 @@ export function JourneyCustom() {
       aria-labelledby="journey-custom-title"
     >
       <div className={styles.journeyCustomFrame}>
+        {/* Mobile/tablet only (<1024px): the baked panel+stepper overlay
+            photo. */}
         <Image
           src={journeyMedia.customScene}
           alt={copy.customPhotoAlt}
           width={1448}
           height={1086}
-          sizes="(max-width: 899px) 100vw, 76rem"
+          sizes="100vw"
           className={styles.journeyCustomScene}
+        />
+        {/* Desktop only (>=1024px): a plain standalone photo - the card
+            and stepper beside it are real HTML, not baked into it. */}
+        <Image
+          src={journeyMedia.customSceneDesktop}
+          alt={copy.customPhotoAlt}
+          width={1672}
+          height={941}
+          sizes="(max-width: 1023px) 0px, 55vw"
+          className={styles.journeyCustomSceneDesktop}
         />
 
         <motion.div

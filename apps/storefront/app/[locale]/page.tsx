@@ -5,6 +5,11 @@ import {
   CertificateSection,
   ThreadJourney,
 } from "@/features/home";
+// Imported from its own file, not the shared `@/features/home` barrel:
+// that barrel is also reachable from client components elsewhere (e.g.
+// components/making/making-process.tsx), and bundling JourneyWorkshop's
+// next/root-params dependency into a client bundle is a build error.
+import { JourneyWorkshop } from "@/features/home/sections/thread-journey/journey-workshop";
 import { getCatalog } from "@/lib/catalog/get-catalog-works";
 import { livePiecesFrom, workshopToday } from "@/lib/now";
 import { productListJsonLd, safeJsonLd } from "@/lib/seo";
@@ -34,7 +39,12 @@ export default async function Home() {
         hero={<HomeHero key="hero" />}
         works={<ArchiveSection key="works" products={featured} />}
         closing={<CertificateSection key="closing" />}
-        workshop={today && { code: today.code, image: today.image }}
+        workshopSlot={
+          <JourneyWorkshop
+            key="workshop"
+            piece={today && { code: today.code, image: today.image }}
+          />
+        }
       />
     </>
   );

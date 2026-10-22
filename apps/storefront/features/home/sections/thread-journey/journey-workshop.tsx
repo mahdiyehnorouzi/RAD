@@ -1,10 +1,8 @@
-"use client";
-
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import type { LivePiece } from "@/components/now/type";
-import { useLocale } from "@/components/i18n";
+import { getTranslations } from "@/lib/i18n-server";
 import { journeyCopy, journeyMedia } from "./const";
 import { JourneySpark } from "./journey-spark";
 import styles from "./journey-workshop.module.css";
@@ -22,13 +20,22 @@ import styles from "./journey-workshop.module.css";
  * journal index. The scene photo itself is the approved static reference
  * image, not the live piece's listing photo - this is a teaser into the
  * workshop, not a claim about which exact piece is on the bench today.
+ *
+ * A Server Component, not "use client": its only prior client dependency
+ * was useLocale() for text/links, which getTranslations() now resolves
+ * from the route's own `[locale]` segment (next/root-params) - nothing
+ * here is interactive. It's instantiated from page.tsx (a true Server
+ * Component) and handed into ThreadJourney as the `workshopSlot` prop,
+ * the same composition pattern already used there for `hero`/`works`/
+ * `closing`, since a Client Component can't directly render a Server
+ * Component in its own body.
  */
-export function JourneyWorkshop({
+export async function JourneyWorkshop({
   piece,
 }: {
   piece?: Pick<LivePiece, "code" | "image"> | null;
 }) {
-  const { locale, t, href } = useLocale();
+  const { locale, t, href } = await getTranslations();
   const copy = journeyCopy[locale];
   const Arrow = locale === "fa" ? ArrowLeft : ArrowRight;
   const linkHref = piece?.code ? href(`/now/${piece.code}`) : href("/now");
@@ -38,13 +45,24 @@ export function JourneyWorkshop({
       className={styles.journeyWorkshop}
       aria-labelledby="journey-workshop-title"
     >
+      {/* Mobile/tablet only (<1024px): the baked-panel overlay photo. */}
       <Image
         src={journeyMedia.workshopScene}
         alt=""
         width={1448}
         height={1086}
-        sizes="(max-width: 899px) 100vw, 76rem"
+        sizes="100vw"
         className={styles.journeyWorkshopScene}
+      />
+      {/* Desktop only (>=1024px): a plain standalone photo, no baked
+          panel - the text panel beside it is real HTML. */}
+      <Image
+        src={journeyMedia.workshopSceneDesktop}
+        alt=""
+        width={1672}
+        height={941}
+        sizes="(max-width: 1023px) 0px, 55vw"
+        className={styles.journeyWorkshopSceneDesktop}
       />
       <div className={styles.journeyWorkshopSheet}>
         <h2 id="journey-workshop-title">{t("todayWorkshop")}</h2>

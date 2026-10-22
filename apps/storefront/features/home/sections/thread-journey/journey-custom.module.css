@@ -15,6 +15,22 @@
   position: relative;
 }
 
+/* Desktop-only: a full-bleed photographic band, replacing the mobile/
+   tablet overlay above with the same overlay idea at a bigger scale - the
+   card and steps (below) are absolutely positioned HTML layers on top of
+   journeyCustomSceneDesktop, not grid columns, so the photo reaches both
+   edges with no gap or card frame around it. */
+@media (min-width: 1024px) {
+  .journeyCustomFrame {
+    /* vw-scaled for the same reason as journey-workshop's min-height: a
+       flat rem value holds its pixel size at any width, so a narrower
+       desktop window reads disproportionately tall against the
+       reference's ~2.3/1 band ratio. */
+    min-height: clamp(26rem, 42vw, 42rem);
+    overflow: clip;
+  }
+}
+
 /*
  * The actual image is taller here, not the section wrapper: a fixed
  * (viewport-independent) aspect-ratio taller than the photo's own 4:3,
@@ -35,6 +51,27 @@
   object-fit: cover;
   object-position: 62% 50%;
   border-radius: 14px;
+}
+
+.journeyCustomSceneDesktop {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .journeyCustomScene {
+    display: none;
+  }
+
+  .journeyCustomSceneDesktop {
+    display: block;
+    position: absolute;
+    z-index: 0;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: 70% 42%;
+  }
 }
 
 /*
@@ -63,6 +100,49 @@
 
 html[dir="ltr"] .journeyCustomCard {
   direction: ltr;
+}
+
+/* Desktop-only: still an overlay, like the mobile/tablet rule above, but
+   full section height on top of the plain desktop photo
+   (journeyCustomSceneDesktop) instead of the baked panel (see the
+   file-top comment, which only describes the mobile/tablet photo) - with
+   its own torn right edge (::after, below) where it meets the photo. */
+@media (min-width: 1024px) {
+  .journeyCustomCard {
+    top: 0;
+    left: 0;
+    width: 38%;
+    height: 100%;
+    align-content: center;
+    gap: 0.9rem;
+    padding-inline-start: clamp(2rem, 4vw, 3.5rem);
+    padding-inline-end: clamp(1.5rem, 3vw, 2.5rem);
+    /* Same grain-noise generator as journey-workshop's panel (itself
+       reused from hero-card.module.css's paper card front) - a genuine
+       handmade-paper texture, not a flat color or an arbitrary
+       gradient. */
+    background:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .35 0 0 0 0 .28 0 0 0 0 .18 0 0 0 .07 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),
+      linear-gradient(168deg, var(--paper), var(--canvas));
+    box-shadow: 10px 0 24px -16px rgb(74 52 28 / 0.35);
+  }
+
+  .journeyCustomCard::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: -16px;
+    bottom: 0;
+    z-index: 2;
+    width: 32px;
+    background:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .35 0 0 0 0 .28 0 0 0 0 .18 0 0 0 .07 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),
+      linear-gradient(168deg, var(--paper), var(--canvas));
+    -webkit-mask: var(--tear-right);
+    mask: var(--tear-right);
+    filter: drop-shadow(3px 0 3px rgb(74 52 28 / 0.22));
+    pointer-events: none;
+  }
 }
 
 .journeyCustomCard.journeyCustomCard h2 {
@@ -122,6 +202,55 @@ html[dir="ltr"] .journeyCustomCard {
   align-items: center;
   padding-block: clamp(0.3rem, 2.5vw, 1.4rem);
   list-style: none;
+}
+
+/* Desktop-only: the reference sits the stepper inside its own light
+   paper-colored vertical strip, not floating directly on the photo - a
+   real overlay panel (same paper texture as the two side panels), not
+   just text-shadow for legibility over the image. right: 0 (not 0.65rem
+   like mobile) so the strip itself reaches the frame's physical edge; the
+   thread still has its own corridor because the step circles/labels stay
+   inset from the strip's own edges via padding-inline. */
+@media (min-width: 1024px) {
+  .journeyCustomSteps {
+    right: 0;
+    width: clamp(5.5rem, 7vw, 7rem);
+    padding-inline: 0;
+    padding-block: 2rem;
+    justify-content: center;
+    background:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .35 0 0 0 0 .28 0 0 0 0 .18 0 0 0 .07 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),
+      linear-gradient(168deg, var(--paper), var(--canvas));
+    box-shadow: -10px 0 24px -16px rgb(74 52 28 / 0.35);
+  }
+
+  /* The anchors below are positioned right: -0.45rem for the mobile/
+     tablet rule above, where .journeyCustomSteps sits inset 0.65rem from
+     the frame's edge (so -0.45rem is still inside the frame, in the
+     thread's corridor). At desktop the strip itself now reaches right: 0,
+     so that same offset would land past the frame's clipped edge -
+     pulled back inside the strip instead. */
+  .journeyCustomThreadAnchor,
+  .journeyCustomThreadAnchorEnd {
+    right: 0.75rem;
+  }
+
+  .journeyCustomSteps::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -16px;
+    bottom: 0;
+    z-index: 2;
+    width: 32px;
+    background:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .35 0 0 0 0 .28 0 0 0 0 .18 0 0 0 .07 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),
+      linear-gradient(168deg, var(--paper), var(--canvas));
+    -webkit-mask: var(--tear-left);
+    mask: var(--tear-left);
+    filter: drop-shadow(-3px 0 3px rgb(74 52 28 / 0.22));
+    pointer-events: none;
+  }
 }
 
 .journeyCustomStep {
@@ -263,6 +392,53 @@ html[dir="ltr"] .journeyCustomCard {
     width: 1.8rem;
     height: 1.8rem;
     font-size: 0.82rem;
+  }
+}
+
+/* Outranks the 900px rule above at >=1024px: full-bleed, no side margin,
+   no max-width cap - placed after it in source order for that reason. */
+@media (min-width: 1024px) {
+  .journeyCustom {
+    width: 100%;
+    margin-inline: 0;
+  }
+}
+
+/* Desktop-only: the card and stepper positions are fixed by the photo's own
+   baked panel/stepper strip (see the file-top comment) - they can't move
+   without breaking the photo's own composition. What's achievable without
+   touching that is giving both more visual weight in place: larger card
+   typography/CTA so the intro reads as a real desktop headline rather than
+   a mobile-sized card left unscaled, and a bigger, bolder stepper rail so
+   it carries as a genuine piece of wayfinding rather than a thin
+   afterthought beside a large photo. */
+@media (min-width: 1024px) {
+  .journeyCustomCard.journeyCustomCard h2 {
+    font-size: 2.6rem;
+  }
+
+  .journeyCustomCard p {
+    font-size: 1.05rem;
+  }
+
+  .journeyCustomCard.journeyCustomCard :global(.button) {
+    min-height: 52px;
+    padding-inline: 1.75rem;
+    font-size: 1rem;
+  }
+
+  .journeyCustomStepNumber {
+    width: 2.3rem;
+    height: 2.3rem;
+    font-size: 1rem;
+  }
+
+  .journeyCustomStepLabel {
+    font-size: 0.85rem;
+  }
+
+  .journeyCustomConnector {
+    width: 2px;
   }
 }
 
