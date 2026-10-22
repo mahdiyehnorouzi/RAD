@@ -39,6 +39,57 @@ export function AdminOrderPayment({
   const amount = order.paymentAmount ?? order.amount;
   const reviewable = order.status === "pending_verification" && canWrite;
   const reason = (preset === "other" ? custom : preset).trim();
+  const gateway = order.paymentProvider === "zarinpal";
+
+  if (gateway) {
+    return (
+      <section
+        className={`order-payment is-${order.status} is-gateway`}
+        aria-labelledby={`${id}-title`}
+      >
+        <h4 id={`${id}-title`}>پرداخت آنلاین</h4>
+        <dl className="order-facts">
+          <div>
+            <dt>مبلغ سفارش</dt>
+            <dd>{money(amount)}</dd>
+          </div>
+          <div>
+            <dt>شماره پیگیری درگاه</dt>
+            <dd dir="ltr">{order.paymentGatewayRefId ?? "—"}</dd>
+          </div>
+          <div>
+            <dt>وضعیت</dt>
+            <dd>
+              {order.paymentStatus === "verified"
+                ? "پرداخت تأیید شد"
+                : order.paymentStatus === "verify_conflict"
+                  ? "پرداخت تأیید شد ولی اثر رزرو را از دست داده — نیاز به بررسی دستی و بازگشت وجه"
+                  : order.paymentStatus === "verify_error"
+                    ? "خطا در تأیید با درگاه — مشتری می‌تواند دوباره امتحان کند"
+                    : order.paymentStatus === "failed"
+                      ? "پرداخت ناموفق یا لغو شد"
+                      : order.status === "pending_payment"
+                        ? "در انتظار بازگشت از درگاه"
+                        : "—"}
+            </dd>
+          </div>
+          {order.paymentVerifiedAt ? (
+            <div>
+              <dt>زمان تأیید</dt>
+              <dd>{dateTime(order.paymentVerifiedAt)}</dd>
+            </div>
+          ) : null}
+        </dl>
+        {order.paymentStatus === "verify_conflict" ? (
+          <p className="order-payment-note is-verified" role="alert">
+            این پرداخت از درگاه تأیید شده اما رزرو اثر قبل از تأیید منقضی یا به
+            سفارش دیگری منتقل شده است. اثر فروخته‌شده ثبت نشد؛ برای بازگشت وجه
+            مشتری پیگیری کنید.
+          </p>
+        ) : null}
+      </section>
+    );
+  }
 
   const run = async (action: () => Promise<boolean>) => {
     setBusy(true);

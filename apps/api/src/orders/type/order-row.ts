@@ -21,8 +21,10 @@ export type OrderRow = {
     amount: number;
     receiptImage?: string | null;
     trackingNumber?: string | null;
+    gatewayRefId?: string | null;
     submittedAt?: Date | null;
     reviewedAt?: Date | null;
+    verifiedAt?: Date | null;
     rejectionReason?: string | null;
   } | null;
 };

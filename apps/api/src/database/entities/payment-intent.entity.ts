@@ -47,6 +47,18 @@ export class PaymentIntent {
   @Column("text", { nullable: true })
   trackingNumber!: string | null;
 
+  /** ZarinPal `Authority` token for this payment's gateway session. */
+  @Index()
+  @Column("text", { nullable: true })
+  gatewayAuthority!: string | null;
+
+  /** ZarinPal `ref_id` returned once the gateway verifies the transaction. */
+  @Column("text", { nullable: true })
+  gatewayRefId!: string | null;
+
+  @Column({ type: "timestamptz", nullable: true })
+  verifiedAt!: Date | null;
+
   /** How many receipts the customer has submitted for this order. */
   @Column("int", { default: 0 })
   receiptSubmissions!: number;

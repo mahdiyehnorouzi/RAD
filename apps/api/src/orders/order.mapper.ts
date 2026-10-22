@@ -54,8 +54,10 @@ function toPayment(
     amount: order.payment.amount,
     receiptImage: order.payment.receiptImage || undefined,
     trackingNumber: order.payment.trackingNumber || undefined,
+    gatewayRefId: order.payment.gatewayRefId || undefined,
     submittedAt: order.payment.submittedAt?.getTime(),
     reviewedAt: order.payment.reviewedAt?.getTime(),
+    verifiedAt: order.payment.verifiedAt?.getTime(),
     rejectionReason: order.payment.rejectionReason || undefined,
   };
 

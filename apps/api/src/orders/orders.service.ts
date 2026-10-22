@@ -24,6 +24,7 @@ import {
   paymentProvider,
   startPaymentSession,
 } from "../payment/payment-session";
+import { verifyZarinpalPayment } from "../payment/zarinpal.adapter";
 import {
   assertImageData,
   receiptImageError,
@@ -203,17 +204,22 @@ export class OrdersService implements OnModuleInit {
 
     let redirectUrl: string | undefined;
     try {
-      const session = startPaymentSession({
+      const session = await startPaymentSession({
         orderId: order.id,
         amount: order.total,
         currency: "IRR",
-        callbackUrl: `${process.env.STOREFRONT_ORIGIN || "http://localhost:3000"}/orders/${order.id}`,
+        callbackUrl: `${process.env.STOREFRONT_ORIGIN || "http://localhost:3000"}/checkout/${order.id}`,
+        mobile: phone,
       });
       if (session.kind === "redirect") {
         redirectUrl = session.redirectUrl;
         await this.payments.update(
           { orderId: order.id },
-          { status: "redirected", provider: session.provider },
+          {
+            status: "redirected",
+            provider: session.provider,
+            gatewayAuthority: session.authority,
+          },
         );
       }
     } catch (error) {
@@ -334,6 +340,118 @@ export class OrdersService implements OnModuleInit {
       }
     });
 
+    return toOrder(await this.ownedOrder(actor, id));
+  }
+
+  /**
+   * ZarinPal redirected the buyer back with `Authority` + `Status`. Verifies
+   * server-to-server before trusting anything, then — for a genuine success —
+   * confirms the order and sells the work in the same transaction used for a
+   * manually-reviewed receipt (`PaymentReviewService.approve`).
+   *
+   * Idempotent: a duplicate callback (refresh, double submit, browser back)
+   * on an already-verified payment is a no-op that re-reads the stored state
+   * rather than calling ZarinPal again.
+   */
+  async verifyGatewayPayment(
+    actor: Actor,
+    id: string,
+    input: { authority?: string; status?: string },
+  ) {
+    await this.inventory.releaseExpiredHolds();
+    const ownerKey = this.identity.key(actor);
+    const authority = input.authority?.trim() ?? "";
+    const gatewayOk = input.status?.trim().toUpperCase() === "OK";
+
+    await this.dataSource.transaction(async (manager) => {
+      const order = await this.lockOwnedOrder(manager, ownerKey, id);
+      const payments = manager.getRepository(PaymentIntent);
+      const payment = await payments.findOne({ where: { orderId: order.id } });
+      if (!payment) {
+        throw new NotFoundException({
+          message: "پرداخت این سفارش پیدا نشد.",
+          code: "payment_missing",
+        });
+      }
+
+      // Already settled (verified or in permanent conflict): nothing to do.
+      if (payment.status === "verified" || payment.status === "verify_conflict") {
+        return;
+      }
+      if (!authority || payment.gatewayAuthority !== authority) {
+        throw new BadRequestException({
+          message: "این بازگشت از درگاه پرداخت برای این سفارش معتبر نیست.",
+          code: "payment_authority_mismatch",
+        });
+      }
+      if (!gatewayOk) {
+        await payments.update({ orderId: order.id }, { status: "failed" });
+        return;
+      }
+
+      const items = await manager.getRepository(OrderItem).find({
+        where: { orderId: order.id },
+        select: { productSlug: true },
+      });
+      const slugs = items.map((item) => item.productSlug);
+
+      let verified: Awaited<ReturnType<typeof verifyZarinpalPayment>>;
+      try {
+        verified = await verifyZarinpalPayment({
+          amountToman: payment.amount,
+          authority,
+        });
+      } catch (error) {
+        this.logger.error(
+          `Zarinpal verify failed for order ${order.id}: ${
+            error instanceof Error ? error.message : error
+          }`,
+        );
+        await payments.update({ orderId: order.id }, { status: "verify_error" });
+        return;
+      }
+
+      try {
+        await this.inventory.assertReservedFor(manager, ownerKey, slugs);
+      } catch {
+        // Money was captured but the hold is gone (e.g. verify arrived after
+        // the payment window expired and the work was resold). RAD must not
+        // double-sell a 1/1 work — leave it unsold and flag for a refund.
+        this.logger.error(
+          `Zarinpal verified order ${order.id} (ref ${verified.refId}) but its ` +
+            `reservation was already lost — needs manual refund/reconciliation.`,
+        );
+        await payments.update(
+          { orderId: order.id },
+          {
+            status: "verify_conflict",
+            gatewayRefId: verified.refId,
+            verifiedAt: new Date(),
+          },
+        );
+        return;
+      }
+
+      await this.inventory.markSold(manager, slugs);
+      await payments.update(
+        { orderId: order.id },
+        {
+          status: "verified",
+          gatewayRefId: verified.refId,
+          verifiedAt: new Date(),
+        },
+      );
+      await manager.getRepository(Order).update(
+        { id: order.id },
+        {
+          status: "confirmed",
+          paymentDueAt: null,
+          estimatedDeliveryAt: new Date(Date.now() + 6 * 24 * 60 * 60 * 1000),
+        },
+      );
+    });
+
+    await this.notices.create(actor, "order_confirmed", undefined);
     return toOrder(await this.ownedOrder(actor, id));
   }
 
