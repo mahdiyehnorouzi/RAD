@@ -390,8 +390,10 @@ export const en = {
   orderExpiredNote:
     "The payment window ended and the work went back to the shop. If it's still available you can order again.",
   gatewayPaymentHint:
-    "You will continue to a secure payment gateway to finish this purchase.",
-  continueToGateway: "Continue to payment gateway",
+    "You'll be taken to a secure payment page to finish this purchase.",
+  continueToGateway: "Pay and complete order",
+  gatewayRetryHint: "The last payment attempt didn't go through. Try again.",
+  gatewayRetryAction: "Try payment again",
   cancelDemoOrder: "Cancel order",
   copyTracking: "Copy tracking code",
   trackingCopied: "Tracking code copied.",

@@ -62,12 +62,14 @@ export function OrderNextAction({
   order,
   busy,
   onConfirmPayment,
+  onRetryGateway,
   onCancel,
 }: {
   id: string;
   order: Order;
   busy: boolean;
   onConfirmPayment: (receipt: PaymentReceiptInput) => void;
+  onRetryGateway: () => void;
   onCancel: () => void;
 }) {
   const { locale, t, number } = useLocale();
@@ -88,6 +90,7 @@ export function OrderNextAction({
     : "/products";
   const manualCard = order.payment?.manualCard;
   const redirectUrl = order.payment?.redirectUrl;
+  const gatewayOrder = order.payment?.provider === "zarinpal";
   const amountDue = order.payment?.amount ?? order.total;
   const amountLabel =
     locale === "fa"
@@ -121,6 +124,27 @@ export function OrderNextAction({
               disabled={busy}
             >
               {t("continueToGateway")}
+            </Button>
+            <Button type="button" outline onClick={onCancel} disabled={busy}>
+              {t("cancelDemoOrder")}
+            </Button>
+          </div>
+        </NextCard>
+      );
+    }
+
+    if (gatewayOrder) {
+      return (
+        <NextCard
+          id={id}
+          icon={CreditCard}
+          tone="stop"
+          title={t("gatewayRetryHint")}
+          note={deadline}
+        >
+          <div className="order-next-actions">
+            <Button type="button" onClick={onRetryGateway} disabled={busy}>
+              {t("gatewayRetryAction")}
             </Button>
             <Button type="button" outline onClick={onCancel} disabled={busy}>
               {t("cancelDemoOrder")}
