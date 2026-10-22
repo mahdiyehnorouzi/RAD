@@ -2,13 +2,11 @@
 
 import { useRef, type ReactNode } from "react";
 import dynamic from "next/dynamic";
-import type { LivePiece } from "@/components/now/type";
 import { useLocale } from "@/components/i18n";
 import { CollaborationBand } from "../collaboration-band";
 import { journeyCopy } from "./const";
 import { JourneyAbout } from "./journey-about";
 import { JourneyReady } from "./journey-ready";
-import { JourneyWorkshop } from "./journey-workshop";
 import { RedThread } from "./red-thread";
 import { useRedThread } from "./hooks";
 import styles from "./thread-journey.module.css";
@@ -31,13 +29,17 @@ export function ThreadJourney({
   hero,
   works,
   closing,
-  workshop,
+  workshopSlot,
 }: {
   hero: ReactNode;
   works: ReactNode;
   closing: ReactNode;
-  /** Today's piece on the workbench, if any work is being made. */
-  workshop?: Pick<LivePiece, "code" | "image">;
+  /** The <JourneyWorkshop> Server Component, rendered and passed down from
+   * page.tsx - a Client Component can't import and render a Server
+   * Component directly in its own body, only receive one as children/a
+   * prop from a true Server Component ancestor (same pattern as
+   * hero/works/closing above). */
+  workshopSlot: ReactNode;
 }) {
   const { locale } = useLocale();
   const ref = useRef<HTMLDivElement>(null);
@@ -47,7 +49,7 @@ export function ThreadJourney({
     <div ref={ref} className={styles.threadHome}>
       {hero}
       <section className={styles.journey} aria-label={journeyCopy[locale].aria}>
-        <JourneyWorkshop piece={workshop} />
+        {workshopSlot}
         <JourneyReady />
         <JourneyCustom />
       </section>

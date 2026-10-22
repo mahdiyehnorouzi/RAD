@@ -117,6 +117,29 @@
   grid-column: span 2;
 }
 
+/* Desktop-only: the shared .rad-card--featured plate's own min-height
+   (components/product/.../product-card.css: clamp(28rem, 72cqi, 36rem))
+   is tuned for its usual single-column listing context; spanning 2 of 3
+   homepage columns gives it a much wider container, so 72cqi pushed it to
+   its 36rem ceiling and, with the grid row's default align-items: stretch,
+   forced the solo card beside it to match - stretching a card that would
+   otherwise be visually equal to the row-2 cards into an oddly tall, mostly
+   empty shape. Switching to align-items: start stops that forced stretch
+   (cards keep their own natural height, independent of their row-mates),
+   and the lower cqi ceiling scoped to just this grid keeps the featured
+   plate a comfortably large "hero" without dwarfing its neighbor. Nothing
+   here touches .rad-card--featured elsewhere (PLP etc.) - both rules are
+   scoped under .homeProducts, a homepage-local class. */
+@media (min-width: 1024px) {
+  .homeProducts {
+    align-items: start;
+  }
+
+  .homeProducts :global(.rad-card-main) {
+    min-height: clamp(22rem, 52cqi, 27rem);
+  }
+}
+
 /* Above the home's red thread, which runs on behind the works */
 
 .archiveSection .homeProducts {
