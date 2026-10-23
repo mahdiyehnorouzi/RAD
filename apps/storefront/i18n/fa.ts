@@ -387,6 +387,13 @@ export const fa = {
   continueToGateway: "پرداخت و تکمیل خرید",
   gatewayRetryHint: "تلاش قبلی برای پرداخت کامل نشد. دوباره امتحان کن.",
   gatewayRetryAction: "تلاش دوباره برای پرداخت",
+  gatewayPendingReviewTitle: "نتیجه پرداخت هنوز نامشخص است",
+  gatewayPendingReviewBody:
+    "داریم تلاش قبلی رو با درگاه بررسی می‌کنیم. اگر مبلغی کسر شده از بین نمی‌ره؛ دوباره بررسی کن.",
+  gatewayRecheckAction: "بررسی دوباره وضعیت پرداخت",
+  gatewayConflictTitle: "پرداختت دریافت شد؛ نیاز به بررسی تیم رَد داره",
+  gatewayConflictBody:
+    "درگاه پرداختت رو تأیید کرده، اما رزرو این اثر از بین رفته. برای بازگشت وجه با پشتیبانی رَد تماس بگیر.",
   cancelDemoOrder: "لغو سفارش",
   copyTracking: "کپی کد پیگیری",
   trackingCopied: "کد پیگیری کپی شد.",

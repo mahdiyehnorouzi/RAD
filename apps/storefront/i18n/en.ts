@@ -394,6 +394,13 @@ export const en = {
   continueToGateway: "Pay and complete order",
   gatewayRetryHint: "The last payment attempt didn't go through. Try again.",
   gatewayRetryAction: "Try payment again",
+  gatewayPendingReviewTitle: "Payment result not yet clear",
+  gatewayPendingReviewBody:
+    "We're checking the last attempt with the gateway. If money was taken it isn't lost — check again.",
+  gatewayRecheckAction: "Check payment status again",
+  gatewayConflictTitle: "Your payment went through; RAD needs to review it",
+  gatewayConflictBody:
+    "The gateway confirmed your payment, but this work's reservation was lost. Contact RAD support for a refund.",
   cancelDemoOrder: "Cancel order",
   copyTracking: "Copy tracking code",
   trackingCopied: "Tracking code copied.",

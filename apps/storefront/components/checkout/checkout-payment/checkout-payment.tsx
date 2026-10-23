@@ -210,6 +210,14 @@ export function CheckoutPayment({ id }: { id: string }) {
   // A revisit (verify_error, verify_conflict, or just a stale tab) needs a
   // fresh session rather than the manual-transfer UI.
   const gatewayOrder = order.payment?.provider === "zarinpal";
+  // The backend refuses to retry a verify_conflict payment (money already
+  // captured, reservation lost — needs a human refund) and treats
+  // verify_error as "reconcile first": retryPayment safely re-checks the
+  // ORIGINAL attempt before ever starting a new charge, so the same call
+  // works for both, but the copy must not promise "pay again" when nothing
+  // new is actually being charged.
+  const paymentConflict = order.payment?.status === "verify_conflict";
+  const paymentAmbiguous = order.payment?.status === "verify_error";
   const retry = () =>
     run("retry", async () => {
       const updated = await retryPayment(order.id);
@@ -249,6 +257,30 @@ export function CheckoutPayment({ id }: { id: string }) {
                   <ArrowIcon aria-hidden="true" />
                 </button>
                 <p className="payment-gateway-hint">{c.gatewayHint}</p>
+              </div>
+            ) : gatewayOrder && paymentConflict ? (
+              <div className="payment-gateway">
+                <h2>{c.conflictTitle}</h2>
+                <p className="checkout-alert" role="alert">
+                  {c.conflictBody}
+                </p>
+              </div>
+            ) : gatewayOrder && paymentAmbiguous && !expired ? (
+              <div className="payment-gateway">
+                <h2>{c.pendingReviewTitle}</h2>
+                <p className="checkout-alert" role="status">
+                  {c.pendingReviewBody}
+                </p>
+                <button
+                  type="button"
+                  className="checkout-submit"
+                  disabled={busy !== null}
+                  aria-busy={busy === "retry" || undefined}
+                  onClick={() => void retry()}
+                >
+                  <span>{busy === "retry" ? c.submitting : c.recheckPayment}</span>
+                  <ArrowIcon aria-hidden="true" />
+                </button>
               </div>
             ) : gatewayOrder && !expired ? (
               <div className="payment-gateway">

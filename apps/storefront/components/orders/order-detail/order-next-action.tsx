@@ -133,6 +133,42 @@ export function OrderNextAction({
       );
     }
 
+    if (gatewayOrder && order.payment?.status === "verify_conflict") {
+      // The gateway confirmed this charge, but the reservation was lost
+      // before we could apply it — money was captured, so there is nothing
+      // safe to retry. Only RAD support can resolve this with a refund.
+      return (
+        <NextCard
+          id={id}
+          icon={CircleAlert}
+          tone="stop"
+          title={t("gatewayConflictTitle")}
+          note={t("gatewayConflictBody")}
+        />
+      );
+    }
+
+    if (gatewayOrder && order.payment?.status === "verify_error") {
+      // We don't yet know whether the last attempt actually charged the
+      // buyer — retrying re-checks that same attempt first and never
+      // starts a second charge on top of an unresolved one.
+      return (
+        <NextCard
+          id={id}
+          icon={Clock3}
+          tone="wait"
+          title={t("gatewayPendingReviewTitle")}
+          note={t("gatewayPendingReviewBody")}
+        >
+          <div className="order-next-actions">
+            <Button type="button" onClick={onRetryGateway} disabled={busy}>
+              {t("gatewayRecheckAction")}
+            </Button>
+          </div>
+        </NextCard>
+      );
+    }
+
     if (gatewayOrder) {
       return (
         <NextCard

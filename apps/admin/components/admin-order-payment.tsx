@@ -65,7 +65,7 @@ export function AdminOrderPayment({
                 : order.paymentStatus === "verify_conflict"
                   ? "پرداخت تأیید شد ولی اثر رزرو را از دست داده — نیاز به بررسی دستی و بازگشت وجه"
                   : order.paymentStatus === "verify_error"
-                    ? "خطا در تأیید با درگاه — مشتری می‌تواند دوباره امتحان کند"
+                    ? "خطا در تأیید با درگاه — نامشخص که پرداخت انجام شده یا نه؛ مشتری تا تعیین‌تکلیف نمی‌تواند پرداخت جدید شروع کند"
                     : order.paymentStatus === "failed"
                       ? "پرداخت ناموفق یا لغو شد"
                       : order.status === "pending_payment"
