@@ -193,7 +193,8 @@ export const checkoutCopy = {
     noCard:
       "The card for this order isn't ready yet. Message RAD and ask; your order is placed.",
     securePayTitle: "Secure payment",
-    securePayLede: "You'll be taken to a secure payment page to finish your order.",
+    securePayLede:
+      "You'll be taken to a secure payment page to finish your order.",
     gatewayHint: "You'll return to RAD once payment is done.",
     gatewayGo: "Pay and complete order",
     gatewayRedirecting: "Taking you to the payment page…",

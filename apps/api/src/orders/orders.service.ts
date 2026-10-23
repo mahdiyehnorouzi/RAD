@@ -8,7 +8,14 @@ import {
   ServiceUnavailableException,
 } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { DataSource, In, Not, Repository, type EntityManager } from "typeorm";
+import {
+  DataSource,
+  In,
+  IsNull,
+  Not,
+  Repository,
+  type EntityManager,
+} from "typeorm";
 import {
   CartItem,
   Order,
@@ -383,7 +390,10 @@ export class OrdersService implements OnModuleInit {
         });
       }
       // Already settled (verified or in permanent conflict): nothing to do.
-      if (payment.status === "verified" || payment.status === "verify_conflict") {
+      if (
+        payment.status === "verified" ||
+        payment.status === "verify_conflict"
+      ) {
         return "noop" as const;
       }
       if (!authority || payment.gatewayAuthority !== authority) {
@@ -421,7 +431,9 @@ export class OrdersService implements OnModuleInit {
     actor: Actor,
     id: string,
     authority: string,
+    options: { onUnreachable?: "verify_error" | "leave" } = {},
   ): Promise<{ confirmed: boolean; conflict: boolean; reachable: boolean }> {
+    const onUnreachable = options.onUnreachable ?? "verify_error";
     const ownerKey = this.identity.key(actor);
     const paymentRow = await this.payments.findOne({ where: { orderId: id } });
     if (!paymentRow) {
@@ -467,7 +479,18 @@ export class OrdersService implements OnModuleInit {
       }
 
       if (!reachable) {
-        await payments.update({ orderId: order.id }, { status: "verify_error" });
+        if (onUnreachable === "verify_error") {
+          await payments.update(
+            { orderId: order.id },
+            { status: "verify_error" },
+          );
+        }
+        // "leave" is for a precautionary check before replacing an Authority
+        // nobody has used (see retryGatewayPayment): ZarinPal returns the
+        // same error for "never visited" as for "cancelled", so a failed
+        // precheck here is the ordinary case, not new evidence of a problem
+        // — writing verify_error would wrongly make an about-to-be-replaced
+        // order look like it needs reconciliation.
         return;
       }
 
@@ -489,7 +512,11 @@ export class OrdersService implements OnModuleInit {
         );
         await payments.update(
           { orderId: order.id },
-          { status: "verify_conflict", gatewayRefId: refId, verifiedAt: new Date() },
+          {
+            status: "verify_conflict",
+            gatewayRefId: refId,
+            verifiedAt: new Date(),
+          },
         );
         conflict = true;
         return;
@@ -523,18 +550,31 @@ export class OrdersService implements OnModuleInit {
    * duplicate order — as long as it's still `pending_payment` and the works
    * are still held for this buyer.
    *
-   * Safety-critical exception: a payment stuck in `verify_error` means we
-   * genuinely don't know whether ZarinPal captured the charge — our own
-   * verify call failed, not the payment itself. Starting a brand-new gateway
+   * Safety-critical exception: a payment in `verify_error`, or still
+   * `redirected` with a real Authority, means we genuinely don't know
+   * whether ZarinPal captured the charge. Starting a brand-new gateway
    * session in that state risks the buyer paying twice. So instead of
    * retrying blindly, this re-attempts verification against the ORIGINAL
    * Authority first (ZarinPal's verify is idempotent — safe to call again):
    * if that resolves to success, the order is confirmed here and no new
    * session is started; if it resolves to a lost reservation, it's flagged
-   * for manual refund same as above; if it's still ambiguous, the retry is
-   * refused outright rather than risk a double charge. `verify_conflict`
-   * (money already captured, reservation lost) can never be retried — it
-   * needs a human refund, not another payment attempt.
+   * for manual refund; if it's still ambiguous, the retry is refused
+   * outright rather than risk a double charge. `verify_conflict` (money
+   * already captured, reservation lost) can never be retried — it needs a
+   * human refund, not another payment attempt.
+   *
+   * Concurrency: two simultaneous retry calls for the same order must never
+   * both reach ZarinPal's request.json — that creates two live, independent
+   * sessions and whichever authority we save last silently orphans the
+   * other (if the buyer pays through the orphaned one, our stored Authority
+   * no longer matches and the real callback gets rejected). Before calling
+   * out, this claims the retry by flipping the payment row to
+   * `redirected` with a null Authority *inside* the same row-locked
+   * transaction that validated it — an atomic claim, not a check-then-act.
+   * A second concurrent call sees that claim (status `redirected`, no
+   * Authority yet) and is refused immediately rather than racing to the
+   * network too. If the gateway call then fails, the claim is released
+   * back to `failed` so the buyer isn't stuck.
    */
   async retryGatewayPayment(actor: Actor, id: string) {
     await this.inventory.releaseExpiredHolds();
@@ -546,51 +586,101 @@ export class OrdersService implements OnModuleInit {
           "این سفارش قبلاً از درگاه پرداخت تأیید شده یا نیاز به بررسی دستی دارد؛ امکان پرداخت دوباره نیست. برای بازگشت وجه با پشتیبانی رَد تماس بگیرید.",
         code: "payment_needs_reconciliation",
       });
-
-    const prep = await this.dataSource.transaction(async (manager) => {
-      const order = await this.lockOwnedOrder(manager, ownerKey, id);
-      if (normalizeStoreOrderStatus(order.status) !== "pending_payment") {
-        throw new BadRequestException({
-          message: "این سفارش دیگر در انتظار پرداخت نیست.",
-          code: "order_not_payable",
-        });
-      }
-      const payments = manager.getRepository(PaymentIntent);
-      const payment = await payments.findOne({ where: { orderId: id } });
-      if (!payment || payment.provider !== "zarinpal") {
-        throw new BadRequestException({
-          message: "این سفارش از درگاه آنلاین پرداخت نمی‌شود.",
-          code: "payment_not_gateway",
-        });
-      }
-      if (payment.status === "verify_conflict" || payment.status === "verified") {
-        throw needsReconciliation();
-      }
-      if (payment.status === "verify_error") {
-        return {
-          needsReconcile: true as const,
-          authority: payment.gatewayAuthority ?? "",
-        };
-      }
-      const items = await manager.getRepository(OrderItem).find({
-        where: { orderId: id },
-        select: { productSlug: true },
+    const inProgress = () =>
+      new BadRequestException({
+        message:
+          "یک تلاش پرداخت دیگر برای این سفارش در حال انجام است؛ چند لحظه صبر کن و دوباره امتحان کن.",
+        code: "payment_in_progress",
       });
-      await this.inventory.assertReservedFor(
-        manager,
-        ownerKey,
-        items.map((item) => item.productSlug),
-      );
-      return {
-        needsReconcile: false as const,
-        amount: payment.amount,
-        phone: order.phone,
-      };
-    });
 
-    if (prep.needsReconcile) {
+    /**
+     * Locked read of current state, branching into exactly one of:
+     * - `blocked`: verified/verify_conflict — never retryable.
+     * - `reconcile`: verify_error — genuine ambiguity from an earlier
+     *   verify attempt; must be resolved via the original Authority.
+     * - `replaceCheck`: redirected with a real Authority nobody has
+     *   verified yet. Empirically (tested live against ZarinPal's sandbox),
+     *   `verify.json` returns the identical error for an Authority that was
+     *   never visited and one the buyer actively cancelled — there is no
+     *   way to tell those apart. So this isn't routed through the
+     *   `reconcile` (blocking) path; instead a *precautionary* verify is
+     *   attempted next (catches the one case that matters: the buyer
+     *   already completed THIS session in another tab), and only if that
+     *   comes back inconclusive — the common case — does it fall through
+     *   to replacing it, exactly like `start`.
+     * - `claimed`: created/failed, or a stale unauthenticated claim — the
+     *   retry is atomically claimed here (status -> redirected, Authority
+     *   -> null) in the SAME locked transaction, so a concurrent second
+     *   call sees the claim and is refused by the `inProgress` branch
+     *   instead of also racing to ZarinPal.
+     */
+    const readState = () =>
+      this.dataSource.transaction(async (manager) => {
+        const order = await this.lockOwnedOrder(manager, ownerKey, id);
+        if (normalizeStoreOrderStatus(order.status) !== "pending_payment") {
+          throw new BadRequestException({
+            message: "این سفارش دیگر در انتظار پرداخت نیست.",
+            code: "order_not_payable",
+          });
+        }
+        const payments = manager.getRepository(PaymentIntent);
+        const payment = await payments.findOne({ where: { orderId: id } });
+        if (!payment || payment.provider !== "zarinpal") {
+          throw new BadRequestException({
+            message: "این سفارش از درگاه آنلاین پرداخت نمی‌شود.",
+            code: "payment_not_gateway",
+          });
+        }
+        if (
+          payment.status === "verify_conflict" ||
+          payment.status === "verified"
+        ) {
+          throw needsReconciliation();
+        }
+        if (payment.status === "verify_error") {
+          return {
+            kind: "reconcile" as const,
+            authority: payment.gatewayAuthority ?? "",
+          };
+        }
+        if (payment.status === "redirected") {
+          if (payment.gatewayAuthority) {
+            return {
+              kind: "replaceCheck" as const,
+              authority: payment.gatewayAuthority,
+            };
+          }
+          throw inProgress();
+        }
+        const items = await manager.getRepository(OrderItem).find({
+          where: { orderId: id },
+          select: { productSlug: true },
+        });
+        await this.inventory.assertReservedFor(
+          manager,
+          ownerKey,
+          items.map((item) => item.productSlug),
+        );
+        await payments.update(
+          { orderId: id },
+          { status: "redirected", gatewayAuthority: null },
+        );
+        return {
+          kind: "claimed" as const,
+          amount: payment.amount,
+          phone: order.phone,
+        };
+      });
+
+    let prep = await readState();
+
+    if (prep.kind === "reconcile") {
       if (!prep.authority) throw needsReconciliation();
-      const result = await this.verifyAndApplyGatewayResult(actor, id, prep.authority);
+      const result = await this.verifyAndApplyGatewayResult(
+        actor,
+        id,
+        prep.authority,
+      );
       if (result.confirmed || result.conflict) {
         return toOrder(await this.ownedOrder(actor, id));
       }
@@ -601,14 +691,85 @@ export class OrdersService implements OnModuleInit {
       });
     }
 
-    const session = await startPaymentSession({
-      orderId: id,
-      amount: prep.amount,
-      currency: "IRR",
-      callbackUrl: `${process.env.STOREFRONT_ORIGIN || "http://localhost:3000"}/checkout/${id}`,
-      mobile: prep.phone,
-    });
+    if (prep.kind === "replaceCheck") {
+      const precheck = await this.verifyAndApplyGatewayResult(
+        actor,
+        id,
+        prep.authority,
+        { onUnreachable: "leave" },
+      );
+      if (precheck.confirmed || precheck.conflict) {
+        return toOrder(await this.ownedOrder(actor, id));
+      }
+      // Inconclusive, as expected for an unused/cancelled Authority — claim
+      // the retry now, but only if nothing changed since the precheck (a
+      // concurrent call may have already claimed or resolved it).
+      const claim = await this.dataSource.transaction(async (manager) => {
+        const order = await this.lockOwnedOrder(manager, ownerKey, id);
+        const payments = manager.getRepository(PaymentIntent);
+        const payment = await payments.findOne({ where: { orderId: id } });
+        if (
+          !payment ||
+          payment.status !== "redirected" ||
+          payment.gatewayAuthority !== prep.authority
+        ) {
+          return { kind: "raced" as const };
+        }
+        await payments.update(
+          { orderId: id },
+          { status: "redirected", gatewayAuthority: null },
+        );
+        return {
+          kind: "claimed" as const,
+          amount: payment.amount,
+          phone: order.phone,
+        };
+      });
+      if (claim.kind === "raced") {
+        // Another call resolved or claimed it between our precheck and now
+        // — reflect whatever is true now instead of guessing.
+        const current = await this.ownedOrder(actor, id);
+        if (current.status !== "pending_payment") return toOrder(current);
+        throw inProgress();
+      }
+      prep = claim;
+    }
+
+    let session: Awaited<ReturnType<typeof startPaymentSession>>;
+    try {
+      session = await startPaymentSession({
+        orderId: id,
+        amount: prep.amount,
+        currency: "IRR",
+        callbackUrl: `${process.env.STOREFRONT_ORIGIN || "http://localhost:3000"}/checkout/${id}`,
+        mobile: prep.phone,
+      });
+    } catch (error) {
+      // Release the claim we took above so the buyer isn't stuck forever —
+      // only if it's still ours (status redirected, no Authority yet).
+      await this.dataSource.transaction(async (manager) => {
+        await this.lockOwnedOrder(manager, ownerKey, id);
+        await manager
+          .getRepository(PaymentIntent)
+          .update(
+            { orderId: id, status: "redirected", gatewayAuthority: IsNull() },
+            { status: "failed" },
+          );
+      });
+      throw error instanceof Error
+        ? new ServiceUnavailableException(error.message)
+        : new ServiceUnavailableException("شروع پرداخت ممکن نیست.");
+    }
     if (session.kind !== "redirect") {
+      await this.dataSource.transaction(async (manager) => {
+        await this.lockOwnedOrder(manager, ownerKey, id);
+        await manager
+          .getRepository(PaymentIntent)
+          .update(
+            { orderId: id, status: "redirected", gatewayAuthority: IsNull() },
+            { status: "failed" },
+          );
+      });
       throw new ServiceUnavailableException("شروع پرداخت ممکن نیست.");
     }
 
@@ -660,10 +821,28 @@ export class OrdersService implements OnModuleInit {
       const payment = await manager
         .getRepository(PaymentIntent)
         .findOne({ where: { orderId: order.id } });
-      // A gateway payment that may already have been charged (verify_conflict:
-      // confirmed captured; verify_error: unknown) must never be silently
-      // cancelled — that would close the order while hiding that RAD may owe
-      // the buyer a refund. Block it the same way retryGatewayPayment does.
+      // A gateway payment with actual EVIDENCE it may have been charged —
+      // verify_conflict (confirmed captured) or verify_error (a verify call
+      // was attempted and came back ambiguous) — must never be silently
+      // cancelled; that would close the order and restock the work while
+      // hiding that RAD may owe a refund.
+      //
+      // `redirected` alone (an Authority exists, but nobody has tried to
+      // verify it) is deliberately NOT blocked here: verified live against
+      // ZarinPal's sandbox, `verify.json` returns the identical error
+      // (code -51, "session is not active paid try") for an Authority that
+      // was never visited and one the buyer actively cancelled on — there
+      // is no signal that lets us tell "definitely never touched" apart
+      // from "definitely safe to cancel", so pre-checking here would only
+      // block ordinary cancellations of a just-placed order without adding
+      // real safety. The actual race (a payment landing while cancel() is
+      // in flight) is already handled by lock ordering: whichever of
+      // cancel() or verifyAndApplyGatewayResult takes the Order row's lock
+      // first wins — a cancel that loses the race is rejected below
+      // (status is no longer pending_payment); a verify that loses the
+      // race finds the work already restocked and lands in verify_conflict
+      // instead of silently double-selling it. Nothing is ever lost
+      // silently either way.
       if (
         payment?.status === "verify_conflict" ||
         payment?.status === "verify_error"

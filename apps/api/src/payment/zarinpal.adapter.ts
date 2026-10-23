@@ -116,7 +116,11 @@ export async function requestZarinpalPayment(input: {
   };
 }
 
-type VerifyResult = { refId: string; cardPan?: string; alreadyVerified: boolean };
+type VerifyResult = {
+  refId: string;
+  cardPan?: string;
+  alreadyVerified: boolean;
+};
 
 /**
  * Verifies a completed payment. Throws {@link ZarinpalError} for anything
@@ -173,7 +177,11 @@ async function post<T>(url: string, body: unknown): Promise<T> {
     throw new ZarinpalError("ارتباط با درگاه پرداخت برقرار نشد.");
   }
 
-  type ZarinpalErrorBody = { code?: number; message?: string; validations?: unknown };
+  type ZarinpalErrorBody = {
+    code?: number;
+    message?: string;
+    validations?: unknown;
+  };
   let json: { data?: T; errors?: ZarinpalErrorBody | unknown[] } | null = null;
   try {
     json = (await response.json()) as {

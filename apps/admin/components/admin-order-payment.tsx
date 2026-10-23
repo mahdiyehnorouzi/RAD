@@ -2,10 +2,7 @@
 
 import { useId, useState } from "react";
 import { Check, X } from "lucide-react";
-import {
-  paymentRejectionReasons,
-  type AdminOrder,
-} from "../lib/admin-data";
+import { paymentRejectionReasons, type AdminOrder } from "../lib/admin-data";
 
 const number = new Intl.NumberFormat("fa-IR");
 const money = (value: number) => `${number.format(value)} تومان`;
@@ -156,8 +153,8 @@ export function AdminOrderPayment({
 
       {order.paymentStatus === "verified" && order.paymentReviewedAt ? (
         <p className="order-payment-note is-verified">
-          <Check aria-hidden="true" /> پرداخت در {dateTime(order.paymentReviewedAt)}{" "}
-          تأیید شد.
+          <Check aria-hidden="true" /> پرداخت در{" "}
+          {dateTime(order.paymentReviewedAt)} تأیید شد.
         </p>
       ) : null}
 
@@ -194,7 +191,11 @@ export function AdminOrderPayment({
       ) : null}
 
       {reviewable && mode === "approve" ? (
-        <div className="order-payment-confirm" role="group" aria-label="تأیید پرداخت">
+        <div
+          className="order-payment-confirm"
+          role="group"
+          aria-label="تأیید پرداخت"
+        >
           <p>
             مبلغ روی رسید دقیقاً <b>{money(amount)}</b> است و واریز با شماره
             پیگیری <b dir="ltr">{order.paymentTrackingNumber ?? "—"}</b> در حساب
@@ -267,7 +268,8 @@ export function AdminOrderPayment({
             ) : null}
           </fieldset>
           <p className="order-payment-note">
-            با رد پرداخت، سفارش بسته می‌شود و اثر دوباره در فروشگاه قابل خرید است.
+            با رد پرداخت، سفارش بسته می‌شود و اثر دوباره در فروشگاه قابل خرید
+            است.
           </p>
           <div className="order-payment-actions">
             <button

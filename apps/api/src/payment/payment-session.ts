@@ -47,8 +47,7 @@ export function manualCardDetails(): ManualCardDetails {
   const cardNumber = formatCardNumber(
     process.env.PAYMENT_CARD_NUMBER || "6037998155667788",
   );
-  const cardHolder =
-    process.env.PAYMENT_CARD_HOLDER?.trim() || "استودیو رَد";
+  const cardHolder = process.env.PAYMENT_CARD_HOLDER?.trim() || "استودیو رَد";
   const bankName = process.env.PAYMENT_CARD_BANK?.trim() || undefined;
   return { cardNumber, cardHolder, bankName };
 }
