@@ -407,4 +407,49 @@ describe("ZarinPal gateway payment", () => {
       assert.notEqual(secondAuthority, firstAuthority());
     });
   });
+
+  describe("a possibly-charged gateway payment can never be silently cancelled", () => {
+    test("cancel() is refused once a payment is verify_conflict", async () => {
+      const { buyer, order, slug, authority } = await gatewayCheckout("cancel-conflict");
+      await rad.dataSource.transaction((manager) =>
+        rad.inventory.restock(manager, [slug]),
+      );
+      stubZarinpal(() => ({ data: { code: 100, message: "Verified", ref_id: 11 } }));
+      await rad.orders.verifyGatewayPayment(buyer, order.id, {
+        authority: authority(),
+        status: "OK",
+      });
+      await assert.rejects(
+        () => rad.orders.cancel(buyer, order.id),
+        BadRequestException,
+      );
+      const after = await rad.orders.get(buyer, order.id);
+      assert.notEqual(after.status, "cancelled");
+    });
+
+    test("cancel() is refused while a payment is still verify_error (unresolved)", async () => {
+      const { buyer, order, authority } = await gatewayCheckout("cancel-error");
+      stubZarinpal(() => {
+        throw new Error("network down");
+      });
+      await rad.orders.verifyGatewayPayment(buyer, order.id, {
+        authority: authority(),
+        status: "OK",
+      });
+      await assert.rejects(
+        () => rad.orders.cancel(buyer, order.id),
+        BadRequestException,
+      );
+      const after = await rad.orders.get(buyer, order.id);
+      assert.equal(after.status, "pending_payment");
+    });
+
+    test("cancel() still works normally for a plain, never-attempted gateway order", async () => {
+      const { buyer, order, slug } = await gatewayCheckout("cancel-ok");
+      const cancelled = await rad.orders.cancel(buyer, order.id);
+      assert.equal(cancelled.status, "cancelled");
+      const product = await rad.productRow(slug);
+      assert.equal(product.status, "available");
+    });
+  });
 });

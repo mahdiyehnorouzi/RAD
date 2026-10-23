@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { Logger } from "@nestjs/common";
 
 /**
@@ -7,16 +8,30 @@ import { Logger } from "@nestjs/common";
  *
  * `verify.json`'s own docs page does not state whether it honours `currency`
  * the way `request.json` does; we send it on both calls for consistency, but
- * this should be confirmed against sandbox behaviour before go-live.
+ * — like everything else here — this is UNVERIFIED against a real ZarinPal
+ * round trip. No sandbox request has actually been made against ZarinPal's
+ * servers from this codebase; everything above the `fetch()` call in `post()`
+ * is read from https://www.zarinpal.com/docs/paymentGateway/connectToGateway
+ * and https://www.zarinpal.com/docs/paymentGateway/sandBox, not confirmed by
+ * running it. Do not enable `PAYMENT_MODE=gateway` in production, or treat
+ * this adapter as load-bearing, until a full sandbox round trip (request →
+ * redirect → pay on ZarinPal's sandbox page → callback → verify) has
+ * actually been run and the response shapes checked against what this file
+ * assumes.
  */
 
 const logger = new Logger("ZarinpalAdapter");
 
 const LIVE_HOST = "https://payment.zarinpal.com";
+/** Confirmed at https://www.zarinpal.com/docs/paymentGateway/sandBox. */
 const SANDBOX_HOST = "https://sandbox.zarinpal.com";
 
-/** ZarinPal's published always-accepted sandbox merchant id. */
-const SANDBOX_MERCHANT_ID = "00000000-0000-0000-0000-000000000000";
+/**
+ * The sandbox docs say any v4 UUID works as `merchant_id` — there is no
+ * single published "sandbox merchant id" to hardcode, so generate a fresh
+ * one each boot. Sandbox authorities are documented to start with "S".
+ */
+const SANDBOX_MERCHANT_ID = randomUUID();
 
 export class ZarinpalError extends Error {
   constructor(
@@ -62,6 +77,14 @@ export async function requestZarinpalPayment(input: {
   orderId: string;
   mobile?: string;
 }): Promise<RequestResult> {
+  if (sandboxMode()) {
+    logger.warn(
+      `Starting a SANDBOX ZarinPal session for order ${input.orderId} — ` +
+        "no real money moves. This adapter has not been confirmed against a " +
+        "real ZarinPal round trip; do not set ZARINPAL_MERCHANT_ID in " +
+        "production until one has been run.",
+    );
+  }
   const body = {
     merchant_id: merchantId(),
     amount: input.amountToman,
@@ -150,18 +173,41 @@ async function post<T>(url: string, body: unknown): Promise<T> {
     throw new ZarinpalError("ارتباط با درگاه پرداخت برقرار نشد.");
   }
 
-  let json: { data?: T; errors?: unknown } | null = null;
+  type ZarinpalErrorBody = { code?: number; message?: string; validations?: unknown };
+  let json: { data?: T; errors?: ZarinpalErrorBody | unknown[] } | null = null;
   try {
-    json = (await response.json()) as { data?: T; errors?: unknown };
+    json = (await response.json()) as {
+      data?: T;
+      errors?: ZarinpalErrorBody | unknown[];
+    };
   } catch {
     // fall through to the generic error below
   }
 
   if (!response.ok || !json?.data) {
+    // ZarinPal returns the structured { code, message } that explains *why*
+    // under `errors` (confirmed live against the sandbox: e.g. verify.json
+    // on an unpaid session returns HTTP 401 with
+    // errors: { code: -51, message: "Session is not active paid try." }).
+    // None of ZarinPal's documented verify error codes are stated to mean
+    // "definitely never paid" (https://www.zarinpal.com/docs/paymentGateway/errorList
+    // explicitly recommends an inquiry/support check before letting the
+    // customer pay again for any of them) — every one of these is still
+    // "ambiguous" for retry-safety purposes, by design; this only improves
+    // what gets logged, it does not change that.
+    const errorBody =
+      json?.errors && !Array.isArray(json.errors)
+        ? (json.errors as ZarinpalErrorBody)
+        : undefined;
     logger.error(
       `Zarinpal ${url} returned ${response.status}: ${JSON.stringify(json ?? {})}`,
     );
-    throw new ZarinpalError("پاسخ نامعتبر از درگاه پرداخت دریافت شد.");
+    throw new ZarinpalError(
+      errorBody?.message
+        ? `پاسخ نامعتبر از درگاه پرداخت: ${errorBody.message}`
+        : "پاسخ نامعتبر از درگاه پرداخت دریافت شد.",
+      errorBody?.code,
+    );
   }
 
   return json.data;

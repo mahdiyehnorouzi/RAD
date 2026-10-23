@@ -73,6 +73,9 @@ export const checkoutCopy = {
       "ارتباط با سرور برقرار نشد. اگر پولی کسر شده نگران نباش؛ دوباره بررسی کن یا بعداً از صفحه سفارش‌ها ببین.",
     verifyRetry: "بررسی دوباره",
     retryPay: "تلاش دوباره برای پرداخت",
+    paymentFailedTitle: "پرداخت انجام نشد",
+    paymentFailedBody:
+      "متأسفانه این بار پرداخت کامل نشد. هیچ مبلغی از حساب شما کسر نشده؛ می‌تونی دوباره امتحان کنی.",
     pendingReviewTitle: "نتیجه پرداخت هنوز نامشخص است",
     pendingReviewBody:
       "داریم وضعیت تلاش قبلی رو با درگاه بررسی می‌کنیم. اگر مبلغی کسر شده باشه از بین نمی‌ره؛ همین حالا دوباره بررسی کن یا کمی بعد سر بزن.",
@@ -202,6 +205,9 @@ export const checkoutCopy = {
       "The connection failed. If money was taken, don't worry — try checking again, or see your orders page later.",
     verifyRetry: "Check again",
     retryPay: "Try payment again",
+    paymentFailedTitle: "Payment didn't go through",
+    paymentFailedBody:
+      "The payment wasn't completed this time. Nothing was charged — feel free to try again.",
     pendingReviewTitle: "Payment result not yet clear",
     pendingReviewBody:
       "We're checking the last attempt with the gateway. If money was taken it isn't lost — check again now, or come back in a bit.",

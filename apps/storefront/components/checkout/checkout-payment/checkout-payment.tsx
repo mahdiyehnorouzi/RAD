@@ -34,9 +34,7 @@ export function CheckoutPayment({ id }: { id: string }) {
   const { locale, number } = useLocale();
   const c = checkoutCopy[locale];
   const remaining = useCountdown(order?.payment?.dueAt);
-  const [busy, setBusy] = useState<"receipt" | "cancel" | "retry" | null>(
-    null,
-  );
+  const [busy, setBusy] = useState<"receipt" | "cancel" | "retry" | null>(null);
   const [error, setError] = useState("");
   const [asking, setAsking] = useState(false);
   const [receiptStep, setReceiptStep] = useState(false);
@@ -120,7 +118,11 @@ export function CheckoutPayment({ id }: { id: string }) {
     return (
       <section className="checkout-flow section">
         <CheckoutSteps current={3} />
-        <div className="payment-result is-pending" role="status" aria-busy="true">
+        <div
+          className="payment-result is-pending"
+          role="status"
+          aria-busy="true"
+        >
           <span className="payment-result-spinner" aria-hidden="true" />
           <h1>{c.verifyingTitle}</h1>
           <p>{c.verifyingBody}</p>
@@ -230,7 +232,11 @@ export function CheckoutPayment({ id }: { id: string }) {
       <CheckoutSteps current={2} />
       <header className="checkout-flow-head">
         <h1 ref={headingRef} tabIndex={-1}>
-          {receiptStep ? c.receiptTitle : redirectUrl ? c.securePayTitle : c.payTitle}
+          {receiptStep
+            ? c.receiptTitle
+            : redirectUrl
+              ? c.securePayTitle
+              : c.payTitle}
         </h1>
         <p>
           {receiptStep
@@ -278,14 +284,17 @@ export function CheckoutPayment({ id }: { id: string }) {
                   aria-busy={busy === "retry" || undefined}
                   onClick={() => void retry()}
                 >
-                  <span>{busy === "retry" ? c.submitting : c.recheckPayment}</span>
+                  <span>
+                    {busy === "retry" ? c.submitting : c.recheckPayment}
+                  </span>
                   <ArrowIcon aria-hidden="true" />
                 </button>
               </div>
             ) : gatewayOrder && !expired ? (
               <div className="payment-gateway">
+                <h2>{c.paymentFailedTitle}</h2>
                 <p className="checkout-alert" role="status">
-                  {c.verifyErrorTitle}
+                  {c.paymentFailedBody}
                 </p>
                 <button
                   type="button"
@@ -395,44 +404,46 @@ export function CheckoutPayment({ id }: { id: string }) {
             </button>
           )}
 
-          <div className="payment-cancel">
-            {asking ? (
-              <>
-                <p role="status">{c.cancelAsk}</p>
-                <div>
-                  <button
-                    type="button"
-                    className="payment-cancel-yes"
-                    disabled={busy !== null}
-                    onClick={() =>
-                      void run("cancel", () => cancelOrder(order.id)).then(() =>
-                        setAsking(false),
-                      )
-                    }
-                  >
-                    {c.cancelYes}
-                  </button>
-                  <button
-                    type="button"
-                    className="payment-cancel-no"
-                    disabled={busy !== null}
-                    onClick={() => setAsking(false)}
-                  >
-                    {c.cancelNo}
-                  </button>
-                </div>
-              </>
-            ) : (
-              <button
-                type="button"
-                className="payment-cancel-open"
-                disabled={busy !== null}
-                onClick={() => setAsking(true)}
-              >
-                {c.cancel}
-              </button>
-            )}
-          </div>
+          {paymentConflict || paymentAmbiguous ? null : (
+            <div className="payment-cancel">
+              {asking ? (
+                <>
+                  <p role="status">{c.cancelAsk}</p>
+                  <div>
+                    <button
+                      type="button"
+                      className="payment-cancel-yes"
+                      disabled={busy !== null}
+                      onClick={() =>
+                        void run("cancel", () => cancelOrder(order.id)).then(
+                          () => setAsking(false),
+                        )
+                      }
+                    >
+                      {c.cancelYes}
+                    </button>
+                    <button
+                      type="button"
+                      className="payment-cancel-no"
+                      disabled={busy !== null}
+                      onClick={() => setAsking(false)}
+                    >
+                      {c.cancelNo}
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <button
+                  type="button"
+                  className="payment-cancel-open"
+                  disabled={busy !== null}
+                  onClick={() => setAsking(true)}
+                >
+                  {c.cancel}
+                </button>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="checkout-flow-help">

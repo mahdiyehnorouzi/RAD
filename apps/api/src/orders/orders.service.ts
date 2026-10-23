@@ -657,6 +657,23 @@ export class OrdersService implements OnModuleInit {
           "فقط سفارش در انتظار پرداخت را می‌توان لغو کرد.",
         );
       }
+      const payment = await manager
+        .getRepository(PaymentIntent)
+        .findOne({ where: { orderId: order.id } });
+      // A gateway payment that may already have been charged (verify_conflict:
+      // confirmed captured; verify_error: unknown) must never be silently
+      // cancelled — that would close the order while hiding that RAD may owe
+      // the buyer a refund. Block it the same way retryGatewayPayment does.
+      if (
+        payment?.status === "verify_conflict" ||
+        payment?.status === "verify_error"
+      ) {
+        throw new BadRequestException({
+          message:
+            "این سفارش ممکن است قبلاً از درگاه پرداخت تأیید شده باشد؛ برای لغو یا بازگشت وجه با پشتیبانی رَد تماس بگیرید.",
+          code: "payment_needs_reconciliation",
+        });
+      }
       const items = await manager.getRepository(OrderItem).find({
         where: { orderId: order.id },
         select: { productSlug: true },
