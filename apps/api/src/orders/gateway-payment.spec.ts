@@ -87,7 +87,7 @@ describe("ZarinPal gateway payment", () => {
   test("a duplicate callback on an already-verified payment is a no-op (idempotent)", async () => {
     const { buyer, order, authority } = await gatewayCheckout("idempotent");
     let verifyCalls = 0;
-    stubZarinpal((url) => {
+    stubZarinpal(() => {
       verifyCalls += 1;
       return { data: { code: 100, message: "Verified", ref_id: 1 } };
     });
@@ -200,4 +200,211 @@ describe("ZarinPal gateway payment", () => {
       assert.equal(product.status, "available"); // never silently marked sold
     },
   );
+
+  describe("order_confirmed notice only fires for an actual, committed confirmation", () => {
+    test("NOK never notifies order_confirmed", async () => {
+      const { buyer, order, authority } = await gatewayCheckout("notice-nok");
+      await rad.orders.verifyGatewayPayment(buyer, order.id, {
+        authority: authority(),
+        status: "NOK",
+      });
+      assert.ok(!(await rad.noticeKinds(buyer)).includes("order_confirmed"));
+    });
+
+    test("an unreachable gateway (verify_error) never notifies order_confirmed", async () => {
+      const { buyer, order, authority } = await gatewayCheckout("notice-error");
+      stubZarinpal(() => {
+        throw new Error("network down");
+      });
+      const result = await rad.orders.verifyGatewayPayment(buyer, order.id, {
+        authority: authority(),
+        status: "OK",
+      });
+      assert.equal(result.payment?.status, "verify_error");
+      assert.ok(!(await rad.noticeKinds(buyer)).includes("order_confirmed"));
+    });
+
+    test("a late-success reservation conflict never notifies order_confirmed", async () => {
+      const { buyer, order, slug, authority } = await gatewayCheckout("notice-conflict");
+      await rad.dataSource.transaction((manager) =>
+        rad.inventory.restock(manager, [slug]),
+      );
+      stubZarinpal(() => ({ data: { code: 100, message: "Verified", ref_id: 1 } }));
+      const result = await rad.orders.verifyGatewayPayment(buyer, order.id, {
+        authority: authority(),
+        status: "OK",
+      });
+      assert.equal(result.payment?.status, "verify_conflict");
+      assert.ok(!(await rad.noticeKinds(buyer)).includes("order_confirmed"));
+    });
+
+    test("an idempotent duplicate callback on an already-confirmed order notifies exactly once", async () => {
+      const { buyer, order, authority } = await gatewayCheckout("notice-once");
+      stubZarinpal(() => ({ data: { code: 100, message: "Verified", ref_id: 2 } }));
+      await rad.orders.verifyGatewayPayment(buyer, order.id, {
+        authority: authority(),
+        status: "OK",
+      });
+      await rad.orders.verifyGatewayPayment(buyer, order.id, {
+        authority: authority(),
+        status: "OK",
+      });
+      const confirmations = (await rad.noticeKinds(buyer)).filter(
+        (kind) => kind === "order_confirmed",
+      );
+      assert.equal(confirmations.length, 1);
+    });
+
+    test("a genuine confirmation does notify order_confirmed", async () => {
+      const { buyer, order, authority } = await gatewayCheckout("notice-success");
+      stubZarinpal(() => ({ data: { code: 100, message: "Verified", ref_id: 3 } }));
+      const result = await rad.orders.verifyGatewayPayment(buyer, order.id, {
+        authority: authority(),
+        status: "OK",
+      });
+      assert.equal(result.status, "confirmed");
+      assert.ok((await rad.noticeKinds(buyer)).includes("order_confirmed"));
+    });
+  });
+
+  describe("retrying after an ambiguous verification never risks a double charge", () => {
+    test("retryGatewayPayment refuses outright once a payment is verify_conflict", async () => {
+      const { buyer, order, slug, authority } = await gatewayCheckout("retry-conflict");
+      await rad.dataSource.transaction((manager) =>
+        rad.inventory.restock(manager, [slug]),
+      );
+      stubZarinpal(() => ({ data: { code: 100, message: "Verified", ref_id: 9 } }));
+      await rad.orders.verifyGatewayPayment(buyer, order.id, {
+        authority: authority(),
+        status: "OK",
+      });
+
+      let requestCalled = false;
+      stubZarinpal((url) => {
+        if (url.includes("request.json")) requestCalled = true;
+        throw new Error(`unexpected request to ${url}`);
+      });
+      await assert.rejects(
+        () => rad.orders.retryGatewayPayment(buyer, order.id),
+        BadRequestException,
+      );
+      assert.equal(requestCalled, false); // never starts a new gateway session
+    });
+
+    test(
+      "retryGatewayPayment on verify_error reconciles via the ORIGINAL Authority; " +
+        "if ZarinPal now confirms success, no new gateway session is started",
+      async () => {
+        const { buyer, order, slug, authority } = await gatewayCheckout("retry-reconcile-ok");
+        stubZarinpal(() => {
+          throw new Error("network down");
+        });
+        const errored = await rad.orders.verifyGatewayPayment(buyer, order.id, {
+          authority: authority(),
+          status: "OK",
+        });
+        assert.equal(errored.payment?.status, "verify_error");
+
+        let requestJsonCalled = false;
+        let verifiedAuthority: string | undefined;
+        stubZarinpal((url, body) => {
+          if (url.includes("request.json")) {
+            requestJsonCalled = true;
+            return { data: { code: 100, message: "Success", authority: "SHOULD-NOT-HAPPEN" } };
+          }
+          verifiedAuthority = (body as { authority?: string }).authority;
+          return { data: { code: 100, message: "Verified", ref_id: 55 } };
+        });
+        const retried = await rad.orders.retryGatewayPayment(buyer, order.id);
+
+        assert.equal(retried.status, "confirmed");
+        assert.equal(retried.payment?.redirectUrl, undefined);
+        assert.equal(requestJsonCalled, false); // reconciled, never re-requested a session
+        assert.equal(verifiedAuthority, authority()); // re-verified the SAME original Authority
+        const product = await rad.productRow(slug);
+        assert.equal(product.status, "sold");
+      },
+    );
+
+    test(
+      "retryGatewayPayment on verify_error refuses a new session while still ambiguous",
+      async () => {
+        const { buyer, order, authority } = await gatewayCheckout("retry-still-ambiguous");
+        stubZarinpal(() => {
+          throw new Error("network down");
+        });
+        await rad.orders.verifyGatewayPayment(buyer, order.id, {
+          authority: authority(),
+          status: "OK",
+        });
+
+        let requestJsonCalled = false;
+        stubZarinpal((url) => {
+          if (url.includes("request.json")) requestJsonCalled = true;
+          throw new Error("still down");
+        });
+        await assert.rejects(
+          () => rad.orders.retryGatewayPayment(buyer, order.id),
+          BadRequestException,
+        );
+        assert.equal(requestJsonCalled, false); // never starts a second payment attempt
+
+        const order2 = await rad.orders.get(buyer, order.id);
+        assert.equal(order2.payment?.status, "verify_error");
+        assert.equal(order2.status, "pending_payment");
+      },
+    );
+
+    test(
+      "retryGatewayPayment on verify_error that reconciles to a lost reservation " +
+        "returns verify_conflict instead of starting a new session",
+      async () => {
+        const { buyer, order, slug, authority } = await gatewayCheckout("retry-reconcile-conflict");
+        stubZarinpal(() => {
+          throw new Error("network down");
+        });
+        await rad.orders.verifyGatewayPayment(buyer, order.id, {
+          authority: authority(),
+          status: "OK",
+        });
+
+        await rad.dataSource.transaction((manager) =>
+          rad.inventory.restock(manager, [slug]),
+        );
+        let requestJsonCalled = false;
+        stubZarinpal((url) => {
+          if (url.includes("request.json")) requestJsonCalled = true;
+          return { data: { code: 100, message: "Verified", ref_id: 66 } };
+        });
+        const retried = await rad.orders.retryGatewayPayment(buyer, order.id);
+        assert.equal(retried.payment?.status, "verify_conflict");
+        assert.notEqual(retried.status, "confirmed");
+        assert.equal(requestJsonCalled, false);
+        const product = await rad.productRow(slug);
+        assert.equal(product.status, "available");
+      },
+    );
+
+    test("a plain failed (NOK) payment can still retry normally and start a fresh session", async () => {
+      const { buyer, order, authority: firstAuthority } = await gatewayCheckout(
+        "retry-after-nok",
+      );
+      await rad.orders.verifyGatewayPayment(buyer, order.id, {
+        authority: firstAuthority(),
+        status: "NOK",
+      });
+
+      let secondAuthority = "";
+      stubZarinpal((url) => {
+        if (url.includes("request.json")) {
+          secondAuthority = "A-after-nok";
+          return { data: { code: 100, message: "Success", authority: secondAuthority } };
+        }
+        throw new Error(`unexpected request to ${url}`);
+      });
+      const retried = await rad.orders.retryGatewayPayment(buyer, order.id);
+      assert.ok(retried.payment?.redirectUrl?.includes(secondAuthority));
+      assert.notEqual(secondAuthority, firstAuthority());
+    });
+  });
 });
