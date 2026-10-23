@@ -94,7 +94,16 @@ export type AdminOrderStatus =
   | "returned";
 
 export type AdminPaymentStatus =
-  "created" | "redirected" | "submitted" | "verified" | "rejected" | "failed";
+  | "created"
+  | "redirected"
+  | "submitted"
+  | "verified"
+  | "rejected"
+  | "failed"
+  | "verify_error"
+  | "verify_conflict";
+
+export type AdminPaymentProvider = "manual_card" | "zarinpal" | "sandbox";
 
 export interface AdminProduct {
   id: string;
@@ -128,14 +137,18 @@ export interface AdminOrder {
   createdAt: number;
   /** `pending_payment` orders expire after this. */
   paymentDueAt?: number;
+  paymentProvider?: AdminPaymentProvider;
   paymentStatus?: AdminPaymentStatus;
   paymentAmount?: number;
   receiptImage?: string;
   /** Bank transfer tracking number the customer entered with the receipt. */
   paymentTrackingNumber?: string;
+  /** ZarinPal reference number once an online payment is verified. */
+  paymentGatewayRefId?: string;
   paymentSubmittedAt?: number;
   receiptSubmissions?: number;
   paymentReviewedAt?: number;
+  paymentVerifiedAt?: number;
   rejectionReason?: string;
   /** Stamped when staff mark the order delivered; starts the damage and return windows. */
   deliveredAt?: number;

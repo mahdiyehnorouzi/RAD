@@ -4,8 +4,8 @@ import "./checkout-flow.css";
 import { useLocale } from "@/components/i18n";
 import { checkoutCopy } from "../const";
 
-/** 0 = delivery details, 1 = payment, 2 = receipt. */
-export function CheckoutSteps({ current }: { current: 0 | 1 | 2 }) {
+/** 0 = bag, 1 = delivery details, 2 = review & payment, 3 = result. */
+export function CheckoutSteps({ current }: { current: 0 | 1 | 2 | 3 }) {
   const { locale } = useLocale();
   const c = checkoutCopy[locale];
 

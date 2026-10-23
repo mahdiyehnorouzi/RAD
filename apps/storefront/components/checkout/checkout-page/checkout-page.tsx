@@ -215,7 +215,7 @@ export function CheckoutPage() {
   if (leaving) {
     return (
       <section className="checkout-flow section" aria-busy="true">
-        <CheckoutSteps current={1} />
+        <CheckoutSteps current={2} />
         <p className="checkout-flow-leaving" role="status">
           {c.leaving}
         </p>
@@ -226,7 +226,7 @@ export function CheckoutPage() {
   if (!ready) {
     return (
       <section className="checkout-flow section" aria-busy="true">
-        <CheckoutSteps current={0} />
+        <CheckoutSteps current={1} />
         <CardListSkeleton count={2} />
       </section>
     );
@@ -239,7 +239,7 @@ export function CheckoutPage() {
   if (!items.length) {
     return (
       <section className="checkout-flow section">
-        <CheckoutSteps current={0} />
+        <CheckoutSteps current={1} />
         <div className="checkout-alert" role="alert">
           <p>{c.holdGone}</p>
           <ButtonLink href="/cart" outline>
@@ -265,7 +265,7 @@ export function CheckoutPage() {
 
   return (
     <section className="checkout-flow section">
-      <CheckoutSteps current={0} />
+      <CheckoutSteps current={1} />
       <header className="checkout-flow-head">
         <h1>{c.detailsTitle}</h1>
         <p>{c.detailsLede}</p>

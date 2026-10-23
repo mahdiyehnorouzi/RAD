@@ -390,8 +390,17 @@ export const en = {
   orderExpiredNote:
     "The payment window ended and the work went back to the shop. If it's still available you can order again.",
   gatewayPaymentHint:
-    "You will continue to a secure payment gateway to finish this purchase.",
-  continueToGateway: "Continue to payment gateway",
+    "You'll be taken to a secure payment page to finish this purchase.",
+  continueToGateway: "Pay and complete order",
+  gatewayRetryHint: "The last payment attempt didn't go through. Try again.",
+  gatewayRetryAction: "Try payment again",
+  gatewayPendingReviewTitle: "Payment result not yet clear",
+  gatewayPendingReviewBody:
+    "We're checking the last attempt with the gateway. If money was taken it isn't lost — check again.",
+  gatewayRecheckAction: "Check payment status again",
+  gatewayConflictTitle: "Your payment went through; RAD needs to review it",
+  gatewayConflictBody:
+    "The gateway confirmed your payment, but this work's reservation was lost. Contact RAD support for a refund.",
   cancelDemoOrder: "Cancel order",
   copyTracking: "Copy tracking code",
   trackingCopied: "Tracking code copied.",

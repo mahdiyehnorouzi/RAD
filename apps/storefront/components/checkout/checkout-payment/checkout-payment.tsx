@@ -28,20 +28,50 @@ const RECEIPT_FORM_ID = "checkout-receipt";
 
 export function CheckoutPayment({ id }: { id: string }) {
   const { order, ready } = useCheckoutOrder(id);
-  const { confirmDemoPayment, cancelOrder } = useCommerce();
+  const { confirmDemoPayment, verifyPayment, retryPayment, cancelOrder } =
+    useCommerce();
   const { getProduct } = useCatalog();
   const { locale, number } = useLocale();
   const c = checkoutCopy[locale];
   const remaining = useCountdown(order?.payment?.dueAt);
-  const [busy, setBusy] = useState<"receipt" | "cancel" | null>(null);
+  const [busy, setBusy] = useState<"receipt" | "cancel" | "retry" | null>(null);
   const [error, setError] = useState("");
   const [asking, setAsking] = useState(false);
   const [receiptStep, setReceiptStep] = useState(false);
+  const [verifying, setVerifying] = useState(false);
+  const [verifyFailed, setVerifyFailed] = useState(false);
   useEffect(() => {
     setReceiptStep(
       new URLSearchParams(window.location.search).get("step") === "receipt",
     );
   }, []);
+
+  // ZarinPal lands the buyer back here with `Authority` + `Status` in the
+  // query string. Verify server-to-server exactly once per landing, then
+  // scrub those params so a refresh re-checks state instead of re-posting.
+  const verifyOnReturn = async () => {
+    const params = new URLSearchParams(window.location.search);
+    const authority = params.get("Authority") ?? undefined;
+    const status = params.get("Status") ?? undefined;
+    if (!authority) return;
+    const url = new URL(window.location.href);
+    url.searchParams.delete("Authority");
+    url.searchParams.delete("Status");
+    window.history.replaceState(window.history.state, "", url);
+    setVerifying(true);
+    setVerifyFailed(false);
+    try {
+      await verifyPayment(id, { authority, status });
+    } catch {
+      setVerifyFailed(true);
+    } finally {
+      setVerifying(false);
+    }
+  };
+  useEffect(() => {
+    void verifyOnReturn();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
   const showReceipt = (value: boolean) => {
     setReceiptStep(value);
     const url = new URL(window.location.href);
@@ -64,7 +94,7 @@ export function CheckoutPayment({ id }: { id: string }) {
   if (!ready && !order) {
     return (
       <section className="checkout-flow section" aria-busy="true">
-        <CheckoutSteps current={1} />
+        <CheckoutSteps current={2} />
         <CardListSkeleton count={2} />
       </section>
     );
@@ -84,6 +114,47 @@ export function CheckoutPayment({ id }: { id: string }) {
     );
   }
 
+  if (verifying) {
+    return (
+      <section className="checkout-flow section">
+        <CheckoutSteps current={3} />
+        <div
+          className="payment-result is-pending"
+          role="status"
+          aria-busy="true"
+        >
+          <span className="payment-result-spinner" aria-hidden="true" />
+          <h1>{c.verifyingTitle}</h1>
+          <p>{c.verifyingBody}</p>
+        </div>
+      </section>
+    );
+  }
+
+  if (verifyFailed) {
+    return (
+      <section className="checkout-flow section">
+        <CheckoutSteps current={3} />
+        <div className="payment-result is-pending" role="alert">
+          <h1>{c.verifyErrorTitle}</h1>
+          <p>{c.verifyErrorBody}</p>
+          <div className="payment-result-actions">
+            <button
+              type="button"
+              className="checkout-submit"
+              onClick={() => void verifyOnReturn()}
+            >
+              {c.verifyRetry}
+            </button>
+            <ButtonLink href={`/orders/${encodeURIComponent(id)}`} outline>
+              {c.trackOrder}
+            </ButtonLink>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   const items = order.slugs
     .map((slug) => getProduct(slug))
     .filter((item): item is Product => Boolean(item));
@@ -97,6 +168,7 @@ export function CheckoutPayment({ id }: { id: string }) {
   if (order.status !== "pending_payment") {
     return (
       <section className="checkout-flow section">
+        <CheckoutSteps current={3} />
         <div className="checkout-flow-body is-result">
           <div className="checkout-flow-main">
             <PaymentResult order={order} amount={tomanLabel} />
@@ -110,7 +182,7 @@ export function CheckoutPayment({ id }: { id: string }) {
   }
 
   const run = async (
-    kind: "receipt" | "cancel",
+    kind: "receipt" | "cancel" | "retry",
     action: () => Promise<unknown>,
   ) => {
     try {
@@ -135,20 +207,45 @@ export function CheckoutPayment({ id }: { id: string }) {
   const expired = remaining !== null && remaining <= 0;
   const manualCard = order.payment?.manualCard;
   const redirectUrl = order.payment?.redirectUrl;
+  // A gateway order can land here with no *live* redirectUrl — it's only
+  // ever returned once, right after checkout() or retryGatewayPayment().
+  // A revisit (verify_error, verify_conflict, or just a stale tab) needs a
+  // fresh session rather than the manual-transfer UI.
+  const gatewayOrder = order.payment?.provider === "zarinpal";
+  // The backend refuses to retry a verify_conflict payment (money already
+  // captured, reservation lost — needs a human refund) and treats
+  // verify_error as "reconcile first": retryPayment safely re-checks the
+  // ORIGINAL attempt before ever starting a new charge, so the same call
+  // works for both, but the copy must not promise "pay again" when nothing
+  // new is actually being charged.
+  const paymentConflict = order.payment?.status === "verify_conflict";
+  const paymentAmbiguous = order.payment?.status === "verify_error";
+  const retry = () =>
+    run("retry", async () => {
+      const updated = await retryPayment(order.id);
+      const url = updated.payment?.redirectUrl;
+      if (url) window.location.assign(url);
+    });
 
   return (
     <section className="checkout-flow section">
-      <CheckoutSteps current={receiptStep ? 2 : 1} />
+      <CheckoutSteps current={2} />
       <header className="checkout-flow-head">
         <h1 ref={headingRef} tabIndex={-1}>
-          {receiptStep ? c.receiptTitle : c.payTitle}
+          {receiptStep
+            ? c.receiptTitle
+            : redirectUrl
+              ? c.securePayTitle
+              : c.payTitle}
         </h1>
         <p>
           {receiptStep
             ? locale === "fa"
               ? "عکس یا اسکرین‌شات رسید پرداخت را اینجا بفرستید."
               : "Upload a photo or screenshot of your payment receipt."
-            : c.payLede}
+            : redirectUrl
+              ? c.securePayLede
+              : c.payLede}
         </p>
       </header>
 
@@ -157,13 +254,56 @@ export function CheckoutPayment({ id }: { id: string }) {
           {!receiptStep &&
             (redirectUrl ? (
               <div className="payment-gateway">
-                <p>{c.gatewayHint}</p>
                 <button
                   type="button"
                   className="checkout-submit"
                   onClick={() => window.location.assign(redirectUrl)}
                 >
                   <span>{c.gatewayGo}</span>
+                  <ArrowIcon aria-hidden="true" />
+                </button>
+                <p className="payment-gateway-hint">{c.gatewayHint}</p>
+              </div>
+            ) : gatewayOrder && paymentConflict ? (
+              <div className="payment-gateway">
+                <h2>{c.conflictTitle}</h2>
+                <p className="checkout-alert" role="alert">
+                  {c.conflictBody}
+                </p>
+              </div>
+            ) : gatewayOrder && paymentAmbiguous && !expired ? (
+              <div className="payment-gateway">
+                <h2>{c.pendingReviewTitle}</h2>
+                <p className="checkout-alert" role="status">
+                  {c.pendingReviewBody}
+                </p>
+                <button
+                  type="button"
+                  className="checkout-submit"
+                  disabled={busy !== null}
+                  aria-busy={busy === "retry" || undefined}
+                  onClick={() => void retry()}
+                >
+                  <span>
+                    {busy === "retry" ? c.submitting : c.recheckPayment}
+                  </span>
+                  <ArrowIcon aria-hidden="true" />
+                </button>
+              </div>
+            ) : gatewayOrder && !expired ? (
+              <div className="payment-gateway">
+                <h2>{c.paymentFailedTitle}</h2>
+                <p className="checkout-alert" role="status">
+                  {c.paymentFailedBody}
+                </p>
+                <button
+                  type="button"
+                  className="checkout-submit"
+                  disabled={busy !== null}
+                  aria-busy={busy === "retry" || undefined}
+                  onClick={() => void retry()}
+                >
+                  <span>{busy === "retry" ? c.submitting : c.retryPay}</span>
                   <ArrowIcon aria-hidden="true" />
                 </button>
               </div>
@@ -189,7 +329,7 @@ export function CheckoutPayment({ id }: { id: string }) {
             />
           ) : null}
 
-          {redirectUrl || expired ? null : (
+          {redirectUrl || expired || gatewayOrder ? null : (
             <div hidden={!receiptStep}>
               <PaymentReceipt
                 id={RECEIPT_FORM_ID}
@@ -215,7 +355,7 @@ export function CheckoutPayment({ id }: { id: string }) {
               {error}
             </p>
           ) : null}
-          {redirectUrl || expired ? null : receiptStep ? (
+          {redirectUrl || expired || gatewayOrder ? null : receiptStep ? (
             <button
               type="submit"
               form={RECEIPT_FORM_ID}
@@ -264,44 +404,46 @@ export function CheckoutPayment({ id }: { id: string }) {
             </button>
           )}
 
-          <div className="payment-cancel">
-            {asking ? (
-              <>
-                <p role="status">{c.cancelAsk}</p>
-                <div>
-                  <button
-                    type="button"
-                    className="payment-cancel-yes"
-                    disabled={busy !== null}
-                    onClick={() =>
-                      void run("cancel", () => cancelOrder(order.id)).then(() =>
-                        setAsking(false),
-                      )
-                    }
-                  >
-                    {c.cancelYes}
-                  </button>
-                  <button
-                    type="button"
-                    className="payment-cancel-no"
-                    disabled={busy !== null}
-                    onClick={() => setAsking(false)}
-                  >
-                    {c.cancelNo}
-                  </button>
-                </div>
-              </>
-            ) : (
-              <button
-                type="button"
-                className="payment-cancel-open"
-                disabled={busy !== null}
-                onClick={() => setAsking(true)}
-              >
-                {c.cancel}
-              </button>
-            )}
-          </div>
+          {paymentConflict || paymentAmbiguous ? null : (
+            <div className="payment-cancel">
+              {asking ? (
+                <>
+                  <p role="status">{c.cancelAsk}</p>
+                  <div>
+                    <button
+                      type="button"
+                      className="payment-cancel-yes"
+                      disabled={busy !== null}
+                      onClick={() =>
+                        void run("cancel", () => cancelOrder(order.id)).then(
+                          () => setAsking(false),
+                        )
+                      }
+                    >
+                      {c.cancelYes}
+                    </button>
+                    <button
+                      type="button"
+                      className="payment-cancel-no"
+                      disabled={busy !== null}
+                      onClick={() => setAsking(false)}
+                    >
+                      {c.cancelNo}
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <button
+                  type="button"
+                  className="payment-cancel-open"
+                  disabled={busy !== null}
+                  onClick={() => setAsking(true)}
+                >
+                  {c.cancel}
+                </button>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="checkout-flow-help">

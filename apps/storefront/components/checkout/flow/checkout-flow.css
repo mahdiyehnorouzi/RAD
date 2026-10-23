@@ -35,8 +35,8 @@ html[dir="rtl"] .checkout-flow {
 
 .checkout-steps ol {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  width: min(100%, 34rem);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  width: min(100%, 40rem);
   margin: 0 0 clamp(1.75rem, 4vw, 2.75rem);
   padding: 0;
   list-style: none;

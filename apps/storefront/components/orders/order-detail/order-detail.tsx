@@ -42,7 +42,8 @@ function formatTime(value: number, locale: "fa" | "en") {
 }
 
 export function OrderDetail({ id }: { id: string }) {
-  const { user, orders, confirmDemoPayment, cancelOrder } = useCommerce();
+  const { user, orders, confirmDemoPayment, retryPayment, cancelOrder } =
+    useCommerce();
   const { locale, t, number } = useLocale();
   const { products, getProduct } = useCatalog();
   const [error, setError] = useState("");
@@ -171,6 +172,14 @@ export function OrderDetail({ id }: { id: string }) {
               onConfirmPayment={(receipt) =>
                 run(() => confirmDemoPayment(order.id, receipt))
               }
+              onRetryGateway={() => {
+                void run(async () => {
+                  const updated = await retryPayment(order.id);
+                  if (updated.payment?.redirectUrl) {
+                    window.location.assign(updated.payment.redirectUrl);
+                  }
+                });
+              }}
               onCancel={() => run(() => cancelOrder(order.id))}
             />
             <DamageReportPanel order={order} />

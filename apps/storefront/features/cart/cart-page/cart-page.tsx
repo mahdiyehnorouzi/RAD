@@ -11,6 +11,7 @@ import { StateNotice } from "@/components/ui/state-panel";
 import { useLocale } from "@/components/i18n";
 import { useCatalog } from "@/components/catalog";
 import "@/components/checkout/flow/purchase-design.css";
+import { CheckoutSteps } from "@/components/checkout/flow";
 import { ErrorState } from "@/components/states";
 import {
   availableWorks,
@@ -148,88 +149,95 @@ export function CartPage() {
   const many = slugs.length > 1;
   return (
     <section className={`${styles.page} section purchase-bag`}>
+      <CheckoutSteps current={0} />
       <h1 className={styles.title}>
         {locale === "fa" ? "کیسه خرید" : "Shopping bag"} ({number(slugs.length)}
         )
       </h1>
       <div className={styles.body}>
-        {loadError ? (
-          <StateNotice tone="error" action={retryButton}>
-            <p>{t("cartErrorBody")}</p>
-          </StateNotice>
-        ) : null}
-        {actionError ? (
-          <StateNotice tone="error">
-            <p>{actionError}</p>
-          </StateNotice>
-        ) : null}
-        {priceMoved ? (
-          <StateNotice>
-            <p>{t("cartPriceChangedAlert")}</p>
-          </StateNotice>
-        ) : null}
-        {releasedNotice}
+        <div className={styles.mainCol}>
+          {loadError ? (
+            <StateNotice tone="error" action={retryButton}>
+              <p>{t("cartErrorBody")}</p>
+            </StateNotice>
+          ) : null}
+          {actionError ? (
+            <StateNotice tone="error">
+              <p>{actionError}</p>
+            </StateNotice>
+          ) : null}
+          {priceMoved ? (
+            <StateNotice>
+              <p>{t("cartPriceChangedAlert")}</p>
+            </StateNotice>
+          ) : null}
+          {releasedNotice}
 
-        <ul className={styles.lines} aria-label={c.listLabel}>
-          {lines.map((line) => (
-            <li key={line.slug}>
-              <CartLine
-                slug={line.slug}
-                product={line.product}
-                issue={line.issue}
-                changed={line.changed}
-                removing={removing === line.slug}
-                onRemove={async () => {
-                  setRemoving(line.slug);
-                  await runAction(() => remove(line.slug));
-                  setRemoving(null);
-                }}
-              />
-            </li>
-          ))}
-        </ul>
-
-        {!blocked ? (
-          <div className={styles.total}>
-            <div>
-              <span>{t("finalTotal")}</span>
-              <small>{c.shipping}</small>
-            </div>
-            <b>{formatTotal(total, locale)}</b>
-          </div>
-        ) : null}
-
-        {blocked ? null : <CartHold endsAt={holdEndsAt} count={slugs.length} />}
-
-        <div className={styles.actions}>
-          {blocked || loadError ? (
-            <Button disabled>
-              {c.checkout}
-              <ArrowIcon aria-hidden="true" />
-            </Button>
-          ) : (
-            <ButtonLink href="/checkout">{c.checkout}</ButtonLink>
-          )}
-          <Link className="button outline" href={href("/products")}>
-            <Store aria-hidden="true" />
-            {c.browse}
-          </Link>
+          <ul className={styles.lines} aria-label={c.listLabel}>
+            {lines.map((line) => (
+              <li key={line.slug}>
+                <CartLine
+                  slug={line.slug}
+                  product={line.product}
+                  issue={line.issue}
+                  changed={line.changed}
+                  removing={removing === line.slug}
+                  onRemove={async () => {
+                    setRemoving(line.slug);
+                    await runAction(() => remove(line.slug));
+                    setRemoving(null);
+                  }}
+                />
+              </li>
+            ))}
+          </ul>
         </div>
 
-        {many ? (
-          <button
-            type="button"
-            className={styles.clear}
-            disabled={clearing}
-            onClick={async () => {
-              setClearing(true);
-              await runAction(clear);
-              setClearing(false);
-            }}
-          >
-            {clearing ? t("removing") : t("clearBag")}
-          </button>
-        ) : null}
+        <div className={styles.asideCol}>
+          {!blocked ? (
+            <div className={styles.total}>
+              <div>
+                <span>{t("finalTotal")}</span>
+                <small>{c.shipping}</small>
+              </div>
+              <b>{formatTotal(total, locale)}</b>
+            </div>
+          ) : null}
+
+          {blocked ? null : (
+            <CartHold endsAt={holdEndsAt} count={slugs.length} />
+          )}
+
+          <div className={styles.actions}>
+            {blocked || loadError ? (
+              <Button disabled>
+                {c.checkout}
+                <ArrowIcon aria-hidden="true" />
+              </Button>
+            ) : (
+              <ButtonLink href="/checkout">{c.checkout}</ButtonLink>
+            )}
+            <Link className="button outline" href={href("/products")}>
+              <Store aria-hidden="true" />
+              {c.browse}
+            </Link>
+          </div>
+
+          {many ? (
+            <button
+              type="button"
+              className={styles.clear}
+              disabled={clearing}
+              onClick={async () => {
+                setClearing(true);
+                await runAction(clear);
+                setClearing(false);
+              }}
+            >
+              {clearing ? t("removing") : t("clearBag")}
+            </button>
+          ) : null}
+        </div>
       </div>
     </section>
   );

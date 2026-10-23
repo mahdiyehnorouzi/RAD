@@ -2,6 +2,7 @@ import { Body, Controller, Get, Param, Post, Req } from "@nestjs/common";
 import { OrdersService } from "./orders.service";
 import { CheckoutDto } from "./dto/checkout.dto";
 import { ConfirmPaymentDto } from "./dto/confirm-payment.dto";
+import { VerifyPaymentDto } from "./dto/verify-payment.dto";
 import { IdentityService } from "../common/identity.service";
 import type { AuthedRequest } from "../common/session.middleware";
 
@@ -51,6 +52,29 @@ export class OrdersController {
       await this.identity.fromRequest(request),
       id,
       body,
+    );
+  }
+
+  /** Storefront calls this after ZarinPal redirects back with Authority/Status. */
+  @Post(":id/payment/verify")
+  async verifyPayment(
+    @Param("id") id: string,
+    @Body() body: VerifyPaymentDto,
+    @Req() request: AuthedRequest,
+  ) {
+    return this.orders.verifyGatewayPayment(
+      await this.identity.fromRequest(request),
+      id,
+      body,
+    );
+  }
+
+  /** Starts a fresh gateway session for an existing pending order (never a new order). */
+  @Post(":id/payment/retry")
+  async retryPayment(@Param("id") id: string, @Req() request: AuthedRequest) {
+    return this.orders.retryGatewayPayment(
+      await this.identity.fromRequest(request),
+      id,
     );
   }
 
