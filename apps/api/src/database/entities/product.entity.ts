@@ -15,6 +15,7 @@ import { CartItem } from "./cart-item.entity";
 import { Favorite } from "./favorite.entity";
 import { OrderItem } from "./order-item.entity";
 import { ProductImage } from "./product-image.entity";
+import { ProductAttributeValue } from "./product-attribute-value.entity";
 import { Review } from "./review.entity";
 import { Vendor } from "./vendor.entity";
 
@@ -130,6 +131,9 @@ export class Product {
 
   @OneToMany(() => OrderItem, (item) => item.product)
   orderItems!: OrderItem[];
+
+  @OneToMany(() => ProductAttributeValue, (value) => value.product)
+  attributeValues!: ProductAttributeValue[];
 
   @BeforeInsert()
   assignId() {

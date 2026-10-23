@@ -34,6 +34,7 @@ import {
   Search,
   ShieldCheck,
   ShoppingBag,
+  SlidersHorizontal,
   Tag,
   Trash2,
   UserRound,
@@ -55,6 +56,7 @@ import {
   productStatusLabel,
   productStatusLabels,
   productStatusOptions,
+  PRODUCT_CATEGORY_LABELS,
   roleLabels,
   stageCountLabel,
   type AdminContactMessage,
@@ -66,6 +68,8 @@ import {
   type AdminRole,
   type AdminSection,
   type AdminUser,
+  type ProductAttribute,
+  type ProductAttributeValue,
 } from "../lib/admin-data";
 import { AdminCommissions } from "./admin-commissions";
 import { AdminOrderPayment } from "./admin-order-payment";
@@ -84,6 +88,8 @@ import {
 import { AdminReviews } from "./admin-reviews";
 import { AdminShapeQuestions } from "./admin-shape-questions";
 import { AdminHelpQuestions } from "./admin-help-questions";
+import { AdminProductAttributes } from "./admin-product-attributes";
+import { ProductAttributeFields } from "./admin-product-attribute-fields";
 import { StageMeter } from "@rad/ui";
 
 const navItems: { id: AdminSection; label: string; icon: typeof Package }[] = [
@@ -96,6 +102,7 @@ const navItems: { id: AdminSection; label: string; icon: typeof Package }[] = [
   { id: "reviews", label: "نظر مشتریان", icon: MessageSquareQuote },
   { id: "shape", label: "پرسشنامه‌ی شکل", icon: Shapes },
   { id: "help", label: "پرسش‌های راهنما", icon: CircleHelp },
+  { id: "attributes", label: "ویژگی‌های محصول", icon: SlidersHorizontal },
   { id: "users", label: "مشتریان", icon: UserRound },
   { id: "members", label: "افراد و دسترسی", icon: Users },
   { id: "account", label: "حساب کاربری", icon: KeyRound },
@@ -596,6 +603,39 @@ export function AdminDashboard() {
             }}
           />
         )}
+        {section === "attributes" && (
+          <AdminProductAttributes
+            attributes={workspace.productAttributes}
+            canWrite={workspace.can("product.write")}
+            onSave={async (input, id) => {
+              try {
+                await workspace.saveProductAttribute(input, id);
+                announce(id ? "ویژگی ذخیره شد." : "ویژگی تازه اضافه شد.");
+                return true;
+              } catch (error) {
+                announce((error as Error).message);
+                return false;
+              }
+            }}
+            onDelete={async (id) => {
+              try {
+                await workspace.deleteProductAttribute(id);
+                announce("ویژگی حذف شد.");
+                return true;
+              } catch (error) {
+                announce((error as Error).message);
+                return false;
+              }
+            }}
+            onReorder={async (ids) => {
+              try {
+                await workspace.reorderProductAttributes(ids);
+              } catch (error) {
+                announce((error as Error).message);
+              }
+            }}
+          />
+        )}
         {section === "users" && <UsersPanel users={workspace.users} />}
         {section === "members" && (
           <Members
@@ -625,6 +665,7 @@ export function AdminDashboard() {
         <ProductDialog
           product={productEditor === "new" ? null : productEditor}
           onUploadImage={workspace.uploadProductImage}
+          onFetchAttributes={workspace.fetchAttributesForCategory}
           onClose={() => setProductEditor(null)}
           onDelete={
             productEditor !== "new"
@@ -1614,6 +1655,7 @@ function ProductDialog({
   onClose,
   onSave,
   onUploadImage,
+  onFetchAttributes,
   onDelete,
 }: {
   product: AdminProduct | null;
@@ -1628,6 +1670,7 @@ function ProductDialog({
     storage: AdminRemoteMediaStorage;
     objectKey: string;
   }>;
+  onFetchAttributes: (category: string) => Promise<ProductAttribute[]>;
   onDelete?: () => void;
 }) {
   useBodyScrollLock();
@@ -1643,14 +1686,40 @@ function ProductDialog({
       artist: "استودیو رَد",
       images: [],
       updatedAt: Date.now(),
+      attributeValues: {},
     },
   );
   const [imageError, setImageError] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [attributeErrors, setAttributeErrors] = useState<Record<string, string>>(
+    {},
+  );
   const [saving, setSaving] = useState(false);
   const [limits, setLimits] = useState<{ image: number; video: number } | null>(
     null,
   );
+  const [categoryAttributes, setCategoryAttributes] = useState<
+    ProductAttribute[]
+  >([]);
+  const [attributesLoading, setAttributesLoading] = useState(true);
+  useEffect(() => {
+    let active = true;
+    setAttributesLoading(true);
+    onFetchAttributes(draft.category)
+      .then((list) => {
+        if (active) setCategoryAttributes(list);
+      })
+      .catch(() => {
+        if (active) setCategoryAttributes([]);
+      })
+      .finally(() => {
+        if (active) setAttributesLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draft.category]);
   const [uploads, setUploads] = useState<
     Record<
       string,
@@ -1699,8 +1768,21 @@ function ProductDialog({
       setImageError("حداقل یک تصویر برای اثر لازم است.");
       return;
     }
+    const nextAttributeErrors: Record<string, string> = {};
+    for (const attribute of categoryAttributes) {
+      if (!attribute.required) continue;
+      const value = draft.attributeValues?.[attribute.id];
+      const empty =
+        value === undefined ||
+        value === null ||
+        value === "" ||
+        (Array.isArray(value) && value.length === 0);
+      if (empty) nextAttributeErrors[attribute.id] = "این ویژگی الزامی است.";
+    }
     setErrors(next);
-    if (Object.keys(next).length) return;
+    setAttributeErrors(nextAttributeErrors);
+    if (Object.keys(next).length || Object.keys(nextAttributeErrors).length)
+      return;
     setSaving(true);
     try {
       await onSave({ ...draft, updatedAt: Date.now() });
@@ -1708,6 +1790,16 @@ function ProductDialog({
       setSaving(false);
     }
   };
+  const setAttributeValue = (
+    attributeId: string,
+    value: ProductAttributeValue | undefined,
+  ) =>
+    setDraft((item) => {
+      const attributeValues = { ...(item.attributeValues ?? {}) };
+      if (value === undefined) delete attributeValues[attributeId];
+      else attributeValues[attributeId] = value;
+      return { ...item, attributeValues };
+    });
   const uploadFile = async (file: File, previewUrl: string) => {
     const controller = new AbortController();
     controllers.current.set(previewUrl, controller);
@@ -1827,6 +1919,11 @@ function ProductDialog({
   const sections: { id: string; label: string; icon: React.ReactNode }[] = [
     { id: "section-basics", label: "اطلاعات اصلی", icon: <Pencil /> },
     { id: "section-category", label: "دسته‌بندی", icon: <Tag /> },
+    {
+      id: "section-attributes",
+      label: "ویژگی‌های محصول",
+      icon: <SlidersHorizontal />,
+    },
     {
       id: "section-pricing",
       label: "وضعیت و قیمت",
@@ -1996,18 +2093,26 @@ function ProductDialog({
                     })
                   }
                 >
-                  <option>گلدان</option>
-                  <option>ظروف</option>
-                  <option>مجسمه</option>
-                  <option>سفال و سرامیک</option>
-                  <option>نقاشی</option>
-                  <option>پارچه و بافت</option>
-                  <option>آثار چوبی</option>
-                  <option>زیورآلات هنری</option>
-                  <option>چاپ دستی و تصویر</option>
+                  {PRODUCT_CATEGORY_LABELS.map((label) => (
+                    <option key={label}>{label}</option>
+                  ))}
                 </select>
               </Field>
             </div>
+          </section>
+
+          <section id="section-attributes" className="editor-section-card">
+            <h3>
+              <SlidersHorizontal />
+              ویژگی‌های محصول
+            </h3>
+            <ProductAttributeFields
+              attributes={categoryAttributes}
+              loading={attributesLoading}
+              values={draft.attributeValues ?? {}}
+              errors={attributeErrors}
+              onChange={setAttributeValue}
+            />
           </section>
 
           <section id="section-pricing" className="editor-section-card">

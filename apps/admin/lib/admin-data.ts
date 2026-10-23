@@ -9,6 +9,7 @@ import {
   type DamageResolution,
   type PolicyAcceptance,
   type PolicySlug,
+  type ProductAttributeValue,
   type ProductStatus,
   type ShapeTrait,
 } from "@rad/types";
@@ -17,11 +18,18 @@ export type {
   AdminReview,
   HelpQuestion,
   HelpQuestionInput,
+  ProductAttribute,
+  ProductAttributeInput,
+  ProductAttributeInputType,
+  ProductAttributeOption,
+  ProductAttributeOptionInput,
+  ProductAttributeValue,
   ShapeChoice,
   ShapeQuestion,
   ShapeQuestionInput,
   ShapeTrait,
 } from "@rad/types";
+export { PRODUCT_ATTRIBUTE_INPUT_TYPES } from "@rad/types";
 
 export type AdminRole = "owner" | "manager" | "editor" | "viewer";
 export type AdminSection =
@@ -34,10 +42,24 @@ export type AdminSection =
   | "reviews"
   | "shape"
   | "help"
+  | "attributes"
   | "users"
   | "members"
   | "account";
 export type AdminProductStatus = ProductStatus;
+
+/** Mirrors `ADMIN_CATEGORIES` in `apps/api/src/catalog/category.ts`. */
+export const PRODUCT_CATEGORY_LABELS = [
+  "گلدان",
+  "ظروف",
+  "مجسمه",
+  "سفال و سرامیک",
+  "نقاشی",
+  "پارچه و بافت",
+  "آثار چوبی",
+  "زیورآلات هنری",
+  "چاپ دستی و تصویر",
+];
 
 /**
  * One product image, in the shape the API's save endpoint expects:
@@ -111,6 +133,8 @@ export interface AdminProduct {
   artist: string;
   images: AdminProductImage[];
   updatedAt: number;
+  /** This product's saved attribute values, keyed by attribute id. */
+  attributeValues?: Record<string, ProductAttributeValue>;
 }
 
 export interface AdminOrder {

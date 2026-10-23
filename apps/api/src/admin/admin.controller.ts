@@ -43,6 +43,8 @@ import { ShapeService } from "../shape/shape.service";
 import { SaveShapeQuestionDto } from "../shape/dto";
 import { HelpService } from "../help/help.service";
 import { SaveHelpQuestionDto } from "../help/dto";
+import { ProductAttributesService } from "../product-attributes/product-attributes.service";
+import { SaveProductAttributeDto } from "../product-attributes/dto";
 import { ReorderDto } from "../common/dto";
 import type { AuthedRequest } from "../common/session.middleware";
 
@@ -58,6 +60,7 @@ export class AdminController {
     private readonly reviews: ReviewsService,
     private readonly shape: ShapeService,
     private readonly help: HelpService,
+    private readonly productAttributes: ProductAttributesService,
   ) {}
 
   @Get("products")
@@ -299,6 +302,54 @@ export class AdminController {
   deleteHelpQuestion(@Param("id") id: string, @Req() request: AuthedRequest) {
     this.admin.assert(request.adminRole, "content.write");
     return this.help.remove(id);
+  }
+
+  @Get("product-attributes")
+  listProductAttributes() {
+    return this.productAttributes.list();
+  }
+
+  /** `category` is the admin's Persian category label (as shown in the product form). */
+  @Get("product-attributes/by-category/:category")
+  productAttributesByCategory(@Param("category") category: string) {
+    return this.productAttributes.byCategory(category);
+  }
+
+  @Post("product-attributes")
+  createProductAttribute(
+    @Body() body: SaveProductAttributeDto,
+    @Req() request: AuthedRequest,
+  ) {
+    this.admin.assert(request.adminRole, "product.write");
+    return this.productAttributes.create(body);
+  }
+
+  @Put("product-attributes/order")
+  reorderProductAttributes(
+    @Body() body: ReorderDto,
+    @Req() request: AuthedRequest,
+  ) {
+    this.admin.assert(request.adminRole, "product.write");
+    return this.productAttributes.reorder(body.ids);
+  }
+
+  @Patch("product-attributes/:id")
+  updateProductAttribute(
+    @Param("id") id: string,
+    @Body() body: SaveProductAttributeDto,
+    @Req() request: AuthedRequest,
+  ) {
+    this.admin.assert(request.adminRole, "product.write");
+    return this.productAttributes.update(id, body);
+  }
+
+  @Delete("product-attributes/:id")
+  deleteProductAttribute(
+    @Param("id") id: string,
+    @Req() request: AuthedRequest,
+  ) {
+    this.admin.assert(request.adminRole, "product.delete");
+    return this.productAttributes.remove(id);
   }
 
   @Get("commissions")

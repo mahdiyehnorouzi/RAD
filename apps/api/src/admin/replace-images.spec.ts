@@ -16,12 +16,17 @@ import {
   PasswordResetToken,
   PaymentIntent,
   Product,
+  ProductAttribute,
+  ProductAttributeCategory,
+  ProductAttributeOption,
+  ProductAttributeValue,
   ProductImage,
   Review,
   User,
   Vendor,
 } from "../database/entities";
 import { AdminService } from "./admin.service";
+import { ProductAttributesService } from "../product-attributes/product-attributes.service";
 import { PaymentReviewService } from "../orders/payment-review.service";
 import { InventoryService } from "../inventory/inventory.service";
 import { NoticesService } from "../notices/notices.service";
@@ -137,6 +142,12 @@ before(async () => {
     repo(PasswordResetToken),
     inventory,
     paymentReview,
+    new ProductAttributesService(
+      repo(ProductAttribute),
+      repo(ProductAttributeOption),
+      repo(ProductAttributeCategory),
+      repo(ProductAttributeValue),
+    ),
     storage,
     () => storage,
     mail,
@@ -512,6 +523,12 @@ describe("AdminService — SeaweedFS fail-closed ownership (upload-intent audit 
       repo(PasswordResetToken),
       inventory,
       paymentReview,
+      new ProductAttributesService(
+        repo(ProductAttribute),
+        repo(ProductAttributeOption),
+        repo(ProductAttributeCategory),
+        repo(ProductAttributeValue),
+      ),
       seaweedfsStub,
       resolver,
       mail,

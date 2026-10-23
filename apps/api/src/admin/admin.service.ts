@@ -54,6 +54,7 @@ import { nextRadNumber } from "../catalog/rad-number";
 import { InventoryService } from "../inventory/inventory.service";
 import type { ProductStatus } from "../inventory/type";
 import { PaymentReviewService } from "../orders/payment-review.service";
+import { ProductAttributesService } from "../product-attributes/product-attributes.service";
 import {
   canManuallyTransitionOrder,
   normalizeStoreOrderStatus,
@@ -104,6 +105,7 @@ export class AdminService {
     private readonly resetTokens: Repository<PasswordResetToken>,
     private readonly inventory: InventoryService,
     private readonly paymentReview: PaymentReviewService,
+    private readonly productAttributes: ProductAttributesService,
     @Inject(MEDIA_STORAGE) private readonly storage: MediaStorageService,
     @Inject(MEDIA_STORAGE_RESOLVER)
     private readonly storageFor: MediaStorageResolver,
@@ -261,7 +263,14 @@ export class AdminService {
       relations: productIncludeWithSrc,
       order: { sortOrder: "ASC", updatedAt: "DESC" },
     });
-    return products.map(toAdminProduct);
+    const valuesByProduct = new Map(
+      await this.productAttributes.valuesForProducts(
+        products.map((product) => product.id),
+      ),
+    );
+    return products.map((product) =>
+      toAdminProduct(product, valuesByProduct.get(product.id) ?? {}),
+    );
   }
 
   async saveProduct(input: SaveProductDto, existingId?: string) {
@@ -355,11 +364,19 @@ export class AdminService {
       input.name.trim(),
       input.images,
     );
+    await this.productAttributes.saveValuesForProduct(
+      product.id,
+      category,
+      input.attributeValues,
+    );
     const saved = await this.products.findOneOrFail({
       where: { id: product.id },
       relations: productIncludeWithSrc,
     });
-    return toAdminProduct(saved);
+    return toAdminProduct(
+      saved,
+      await this.productAttributes.valuesForProduct(product.id),
+    );
   }
 
   async deleteProduct(id: string) {

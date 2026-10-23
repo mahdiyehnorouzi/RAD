@@ -4,6 +4,7 @@ import {
   IsArray,
   IsIn,
   IsInt,
+  IsObject,
   IsOptional,
   IsString,
   Min,
@@ -12,19 +13,9 @@ import {
 } from "class-validator";
 import { PRODUCT_STATUSES } from "../../inventory/const/product-status";
 import type { ProductStatus } from "../../inventory/type";
+import { ADMIN_CATEGORIES } from "../../catalog/category";
 import { AdminProductImageInputDto } from "./product-image-input.dto";
-
-const ADMIN_CATEGORIES = [
-  "گلدان",
-  "ظروف",
-  "مجسمه",
-  "سفال و سرامیک",
-  "نقاشی",
-  "پارچه و بافت",
-  "آثار چوبی",
-  "زیورآلات هنری",
-  "چاپ دستی و تصویر",
-];
+import type { ProductAttributeValue } from "@rad/types";
 
 export class SaveProductDto {
   @ApiPropertyOptional({ example: "clx123abc456" })
@@ -83,4 +74,15 @@ export class SaveProductDto {
   @ValidateNested({ each: true })
   @Type(() => AdminProductImageInputDto)
   images!: AdminProductImageInputDto[];
+
+  @ApiPropertyOptional({
+    description:
+      "Attribute values keyed by attribute id. Structurally validated here " +
+      "only; required/type/option checks run against the live attribute " +
+      "definitions in ProductAttributesService.",
+    example: { clx_attr_color: "سفید" },
+  })
+  @IsOptional()
+  @IsObject()
+  attributeValues?: Record<string, ProductAttributeValue>;
 }

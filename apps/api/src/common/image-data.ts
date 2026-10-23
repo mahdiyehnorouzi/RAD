@@ -15,9 +15,9 @@ export function assertImageData(src: string, maxBytes: number, message: string) 
   }
 }
 
-export const productImageLimit = 2 * 1024 * 1024;
+export const productImageLimit = 3 * 1024 * 1024;
 export const productImageError =
-  "فقط تصویر JPEG، PNG یا WebP تا ۲ مگابایت مجاز است.";
+  "حجم هر تصویر نباید بیشتر از ۳ مگابایت باشد.";
 
 export const receiptImageLimit = 1 * 1024 * 1024;
 export const receiptImageError =
