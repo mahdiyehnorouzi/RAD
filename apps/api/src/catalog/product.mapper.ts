@@ -193,7 +193,10 @@ export function asEnCopy(value: unknown, fallback: EnCopy): EnCopy {
 
 export function toProduct(
   product: ProductRecord,
-  options?: { embedImages?: boolean },
+  options?: {
+    embedImages?: boolean;
+    attributes?: { key: string; label: string; value: string }[];
+  },
 ) {
   const embedImages = options?.embedImages ?? false;
   const details = asStringArray(product.details);
@@ -239,6 +242,7 @@ export function toProduct(
       story: product.story,
       details,
     }),
+    attributes: options?.attributes ?? [],
   };
 }
 

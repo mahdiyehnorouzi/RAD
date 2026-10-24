@@ -18,6 +18,10 @@ import {
   PasswordResetToken,
   PaymentIntent,
   Product,
+  ProductAttribute,
+  ProductAttributeCategory,
+  ProductAttributeOption,
+  ProductAttributeValue,
   ProductImage,
   Review,
   User,
@@ -29,6 +33,7 @@ import { InventoryService } from "../inventory/inventory.service";
 import { NoticesService } from "../notices/notices.service";
 import { MailService } from "../mail/mail.service";
 import { PaymentReviewService } from "../orders/payment-review.service";
+import { ProductAttributesService } from "../product-attributes/product-attributes.service";
 import { CloudinaryStorageService } from "../storage/cloudinary-storage.service";
 
 /**
@@ -126,6 +131,12 @@ before(async () => {
     repo(PasswordResetToken),
     inventory,
     paymentReview,
+    new ProductAttributesService(
+      repo(ProductAttribute),
+      repo(ProductAttributeOption),
+      repo(ProductAttributeCategory),
+      repo(ProductAttributeValue),
+    ),
     storage,
     () => storage,
     mail,

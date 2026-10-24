@@ -18,6 +18,10 @@ import {
   PasswordResetToken,
   PaymentIntent,
   Product,
+  ProductAttribute,
+  ProductAttributeCategory,
+  ProductAttributeOption,
+  ProductAttributeValue,
   ProductImage,
   Review,
   User,
@@ -32,6 +36,7 @@ import {
 } from "../../policies/const";
 import { OrdersService } from "../orders.service";
 import { PaymentReviewService } from "../payment-review.service";
+import { ProductAttributesService } from "../../product-attributes/product-attributes.service";
 import { CloudinaryStorageService } from "../../storage/cloudinary-storage.service";
 
 function freePort() {
@@ -107,6 +112,12 @@ export async function startPurchaseHarness() {
     repo(PasswordResetToken),
     inventory,
     paymentReview,
+    new ProductAttributesService(
+      repo(ProductAttribute),
+      repo(ProductAttributeOption),
+      repo(ProductAttributeCategory),
+      repo(ProductAttributeValue),
+    ),
     new CloudinaryStorageService(new ConfigService({})),
     () => new CloudinaryStorageService(new ConfigService({})),
     mail,
