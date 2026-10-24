@@ -62,6 +62,34 @@ export const PRODUCT_CATEGORY_LABELS = [
 ];
 
 /**
+ * Store category values (mirrors `STORE_CATEGORIES` in
+ * `apps/api/src/catalog/category.ts`) with a Persian label for display.
+ * This is what attribute-category assignment (`ProductAttribute.categories`)
+ * uses — deliberately not `PRODUCT_CATEGORY_LABELS`: that list is the
+ * admin's lossy product-category labels (several labels, e.g. "گلدان" and
+ * "ظروف", collapse into the one store value "ceramics"), so storing an
+ * attribute against a label that doesn't map back to itself would silently
+ * "lose" the assignment on reload. `vases`/`tableware` are omitted — no
+ * admin category label reaches them today (see `toStoreCategory`).
+ */
+export const ATTRIBUTE_CATEGORY_OPTIONS: { value: string; label: string }[] = [
+  { value: "ceramics", label: "سفال و سرامیک" },
+  { value: "sculpture", label: "مجسمه" },
+  { value: "painting", label: "نقاشی" },
+  { value: "textile", label: "پارچه و بافت" },
+  { value: "woodwork", label: "آثار چوبی" },
+  { value: "jewelry", label: "زیورآلات هنری" },
+  { value: "print", label: "چاپ دستی و تصویر" },
+];
+
+export function attributeCategoryLabel(value: string) {
+  return (
+    ATTRIBUTE_CATEGORY_OPTIONS.find((option) => option.value === value)
+      ?.label ?? value
+  );
+}
+
+/**
  * One product image, in the shape the API's save endpoint expects:
  * `legacy_base64`/`static`/`external` round-trip an existing `src`
  * unchanged; `cloudinary`/`seaweedfs` carry only the storage provider's

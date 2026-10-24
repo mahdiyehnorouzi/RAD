@@ -1,6 +1,11 @@
 import assert from "node:assert/strict";
 import { describe, test } from "node:test";
-import { assertImageData, imageDataBytes, productImageError, productImageLimit } from "./image-data";
+import {
+  assertImageData,
+  imageDataBytes,
+  productImageError,
+  productImageLimit,
+} from "./image-data";
 
 function dataUrlOfSize(bytes: number) {
   // base64 encodes 3 bytes as 4 chars, so (bytes/3)*4 chars (rounded) yields `bytes` after decoding.
@@ -19,25 +24,41 @@ describe("assertImageData (product image boundary)", () => {
 
   test("accepts a 2.7MB image", () => {
     assert.doesNotThrow(() =>
-      assertImageData(dataUrlOfSize(2.7 * MB), productImageLimit, productImageError),
+      assertImageData(
+        dataUrlOfSize(2.7 * MB),
+        productImageLimit,
+        productImageError,
+      ),
     );
   });
 
   test("accepts a 2.9MB image", () => {
     assert.doesNotThrow(() =>
-      assertImageData(dataUrlOfSize(2.9 * MB), productImageLimit, productImageError),
+      assertImageData(
+        dataUrlOfSize(2.9 * MB),
+        productImageLimit,
+        productImageError,
+      ),
     );
   });
 
   test("accepts an image at exactly 3MB", () => {
     assert.doesNotThrow(() =>
-      assertImageData(dataUrlOfSize(3 * MB), productImageLimit, productImageError),
+      assertImageData(
+        dataUrlOfSize(3 * MB),
+        productImageLimit,
+        productImageError,
+      ),
     );
   });
 
   test("rejects an image over 3MB", () => {
     assert.throws(() =>
-      assertImageData(dataUrlOfSize(3 * MB + 100), productImageLimit, productImageError),
+      assertImageData(
+        dataUrlOfSize(3 * MB + 100),
+        productImageLimit,
+        productImageError,
+      ),
     );
   });
 });

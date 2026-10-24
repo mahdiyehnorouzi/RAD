@@ -19,7 +19,10 @@ import {
   formatAttributeDisplayValue,
   toProductAttributeView,
 } from "./product-attributes.mapper";
-import type { ProductAttributeDisplayValue, ProductAttributeView } from "./type";
+import type {
+  ProductAttributeDisplayValue,
+  ProductAttributeView,
+} from "./type";
 
 const attributeRelations = { options: true, categoryLinks: true } as const;
 
@@ -45,7 +48,9 @@ export class ProductAttributesService {
   }
 
   /** Active attributes assigned to one admin category label, in display order. */
-  async byCategory(adminCategoryLabel: string): Promise<ProductAttributeView[]> {
+  async byCategory(
+    adminCategoryLabel: string,
+  ): Promise<ProductAttributeView[]> {
     const storeCategory = toStoreCategory(adminCategoryLabel);
     const rows = await this.attributes
       .createQueryBuilder("attribute")
@@ -74,7 +79,9 @@ export class ProductAttributesService {
       throw new ConflictException("کلید ویژگی تکراری است.");
   }
 
-  private assertUniqueOptionValues(options: SaveProductAttributeDto["options"]) {
+  private assertUniqueOptionValues(
+    options: SaveProductAttributeDto["options"],
+  ) {
     const values = (options ?? []).map((option) => option.value);
     if (values.length !== new Set(values).size)
       throw new BadRequestException("کلید گزینه‌ها باید یکتا باشد.");
@@ -124,15 +131,19 @@ export class ProductAttributesService {
       );
 
     await this.attributes.manager.transaction(async (manager) => {
-      await manager.update(ProductAttribute, { id }, {
-        key: input.key.trim(),
-        label: input.label.trim(),
-        inputType: input.inputType,
-        unit: input.unit?.trim() || null,
-        required: input.required,
-        active: input.active,
-        sortOrder: input.sortOrder ?? current.sortOrder,
-      });
+      await manager.update(
+        ProductAttribute,
+        { id },
+        {
+          key: input.key.trim(),
+          label: input.label.trim(),
+          inputType: input.inputType,
+          unit: input.unit?.trim() || null,
+          required: input.required,
+          active: input.active,
+          sortOrder: input.sortOrder ?? current.sortOrder,
+        },
+      );
       // Options/categories are replaced wholesale on every save — simpler
       // than diffing, and safe because a product's stored value keeps the
       // option's stable `value` string, never the option row's db id.
@@ -158,7 +169,12 @@ export class ProductAttributesService {
     );
     if (options.length) await manager.save(options);
 
-    const storeCategories = [...new Set(input.categories.map(toStoreCategory))];
+    // `input.categories` are already store category values (validated by
+    // `SaveProductAttributeDto` against `STORE_CATEGORIES`) — never run
+    // through `toStoreCategory`, which maps the admin's lossy *Persian
+    // label* and would not round-trip back via `toAdminCategory` to the
+    // same value.
+    const storeCategories = [...new Set(input.categories)];
     const links = storeCategories.map((category) =>
       manager.create(ProductAttributeCategory, { attributeId, category }),
     );
@@ -251,9 +267,13 @@ export class ProductAttributesService {
           where: { productId, attributeId },
         });
         if (existing) {
-          await manager.update(ProductAttributeValue, { id: existing.id }, {
-            value: coerced,
-          });
+          await manager.update(
+            ProductAttributeValue,
+            { id: existing.id },
+            {
+              value: coerced,
+            },
+          );
         } else {
           await manager.save(
             manager.create(ProductAttributeValue, {
@@ -278,7 +298,9 @@ export class ProductAttributesService {
     productIds: string[],
   ): Promise<[string, Record<string, unknown>][]> {
     if (!productIds.length) return [];
-    const rows = await this.values.find({ where: { productId: In(productIds) } });
+    const rows = await this.values.find({
+      where: { productId: In(productIds) },
+    });
     const byProduct = new Map<string, Record<string, unknown>>(
       productIds.map((id) => [id, {}]),
     );
@@ -310,7 +332,10 @@ export class ProductAttributesService {
 
     const byProduct = new Map<string, typeof rows>();
     for (const row of rows) {
-      byProduct.set(row.productId, [...(byProduct.get(row.productId) ?? []), row]);
+      byProduct.set(row.productId, [
+        ...(byProduct.get(row.productId) ?? []),
+        row,
+      ]);
     }
 
     for (const productId of productIds) {
@@ -331,8 +356,12 @@ export class ProductAttributesService {
           };
         })
         .filter(
-          (entry): entry is { sortOrder: number; display: ProductAttributeDisplayValue } =>
-            Boolean(entry?.display),
+          (
+            entry,
+          ): entry is {
+            sortOrder: number;
+            display: ProductAttributeDisplayValue;
+          } => Boolean(entry?.display),
         )
         .sort((a, b) => a.sortOrder - b.sortOrder)
         .map((entry) => entry.display);

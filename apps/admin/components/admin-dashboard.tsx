@@ -1691,9 +1691,9 @@ function ProductDialog({
   );
   const [imageError, setImageError] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [attributeErrors, setAttributeErrors] = useState<Record<string, string>>(
-    {},
-  );
+  const [attributeErrors, setAttributeErrors] = useState<
+    Record<string, string>
+  >({});
   const [saving, setSaving] = useState(false);
   const [limits, setLimits] = useState<{ image: number; video: number } | null>(
     null,

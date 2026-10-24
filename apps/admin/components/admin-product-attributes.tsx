@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import { Plus } from "lucide-react";
-import type {
-  ProductAttribute,
-  ProductAttributeInput,
+import {
+  attributeCategoryLabel,
+  type ProductAttribute,
+  type ProductAttributeInput,
 } from "../lib/admin-data";
 import { ConfirmDialog } from "./admin-dialog";
 import { AdminRowActions, movedIds } from "./admin-row-actions";
@@ -34,9 +35,7 @@ export function AdminProductAttributes({
   onDelete: (id: string) => Promise<boolean>;
   onReorder: (ids: string[]) => Promise<void>;
 }) {
-  const [editing, setEditing] = useState<ProductAttribute | "new" | null>(
-    null,
-  );
+  const [editing, setEditing] = useState<ProductAttribute | "new" | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<ProductAttribute | null>(
     null,
   );
@@ -55,8 +54,8 @@ export function AdminProductAttributes({
           <h2>ویژگی‌های محصول</h2>
           <p>
             مشخصاتی مثل رنگ، جنس یا ابعاد که هنگام ساخت یا ویرایش یک اثر، بر
-            اساس دسته‌بندی آن، در فرم محصول نشان داده می‌شوند و در صفحه‌ی
-            محصول فروشگاه دیده می‌شوند.
+            اساس دسته‌بندی آن، در فرم محصول نشان داده می‌شوند و در صفحه‌ی محصول
+            فروشگاه دیده می‌شوند.
           </p>
         </div>
         <button
@@ -89,7 +88,9 @@ export function AdminProductAttributes({
                 </div>
               </header>
               <p className="contact-message-body">
-                دسته‌بندی‌ها: {attribute.categories.join("، ") || "—"}
+                دسته‌بندی‌ها:{" "}
+                {attribute.categories.map(attributeCategoryLabel).join("، ") ||
+                  "—"}
                 {attribute.options.length
                   ? ` · گزینه‌ها: ${attribute.options
                       .map((option) => option.label)
@@ -112,8 +113,8 @@ export function AdminProductAttributes({
         </ol>
       ) : (
         <p className="contact-message-empty">
-          هنوز ویژگی‌ای تعریف نشده است؛ فرم محصول بخش «ویژگی‌های محصول» را
-          خالی نشان می‌دهد.
+          هنوز ویژگی‌ای تعریف نشده است؛ فرم محصول بخش «ویژگی‌های محصول» را خالی
+          نشان می‌دهد.
         </p>
       )}
 

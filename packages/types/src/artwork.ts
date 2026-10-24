@@ -4,6 +4,7 @@ import type {
   ProductShape,
   ProductStatus,
 } from "./index";
+import type { ProductSpecAttribute } from "./product-attribute";
 
 export interface LocalizedText {
   fa: string;
@@ -141,6 +142,8 @@ export interface Artwork {
   owner: LocalizedText | null;
   createdAt?: number;
   updatedAt?: number;
+  /** Admin-defined specs for this work's category, already formatted for display; hidden when empty. */
+  attributes?: ProductSpecAttribute[];
 }
 
 export function formatRadCode(radNumber: number) {

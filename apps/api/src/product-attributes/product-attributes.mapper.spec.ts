@@ -16,8 +16,20 @@ const colorAttribute = {
   active: true,
   sortOrder: 0,
   options: [
-    { id: "opt_1", attributeId: "attr_color", value: "white", label: "سفید", sortOrder: 0 },
-    { id: "opt_2", attributeId: "attr_color", value: "black", label: "مشکی", sortOrder: 1 },
+    {
+      id: "opt_1",
+      attributeId: "attr_color",
+      value: "white",
+      label: "سفید",
+      sortOrder: 0,
+    },
+    {
+      id: "opt_2",
+      attributeId: "attr_color",
+      value: "black",
+      label: "مشکی",
+      sortOrder: 1,
+    },
   ],
   categoryLinks: [],
 } as const;
@@ -58,15 +70,30 @@ const materialsAttribute = {
   active: true,
   sortOrder: 3,
   options: [
-    { id: "opt_a", attributeId: "attr_materials", value: "clay", label: "سفال", sortOrder: 0 },
-    { id: "opt_b", attributeId: "attr_materials", value: "glass", label: "شیشه", sortOrder: 1 },
+    {
+      id: "opt_a",
+      attributeId: "attr_materials",
+      value: "clay",
+      label: "سفال",
+      sortOrder: 0,
+    },
+    {
+      id: "opt_b",
+      attributeId: "attr_materials",
+      value: "glass",
+      label: "شیشه",
+      sortOrder: 1,
+    },
   ],
   categoryLinks: [],
 } as const;
 
 describe("coerceAttributeValue", () => {
   test("accepts a known select option", () => {
-    assert.equal(coerceAttributeValue(colorAttribute as never, "white"), "white");
+    assert.equal(
+      coerceAttributeValue(colorAttribute as never, "white"),
+      "white",
+    );
   });
 
   test("rejects a select value outside the defined options", () => {
@@ -92,12 +119,19 @@ describe("coerceAttributeValue", () => {
       () => coerceAttributeValue(washableAttribute as never, "true"),
       BadRequestException,
     );
-    assert.equal(coerceAttributeValue(washableAttribute as never, false), false);
+    assert.equal(
+      coerceAttributeValue(washableAttribute as never, false),
+      false,
+    );
   });
 
   test("de-duplicates and validates a multiselect against its options", () => {
     assert.deepEqual(
-      coerceAttributeValue(materialsAttribute as never, ["clay", "clay", "glass"]),
+      coerceAttributeValue(materialsAttribute as never, [
+        "clay",
+        "clay",
+        "glass",
+      ]),
       ["clay", "glass"],
     );
     assert.throws(
@@ -109,37 +143,55 @@ describe("coerceAttributeValue", () => {
 
 describe("formatAttributeDisplayValue", () => {
   test("renders a select value as its option label", () => {
-    assert.deepEqual(formatAttributeDisplayValue(colorAttribute as never, "white"), {
-      key: "color",
-      label: "رنگ",
-      value: "سفید",
-    });
+    assert.deepEqual(
+      formatAttributeDisplayValue(colorAttribute as never, "white"),
+      {
+        key: "color",
+        label: "رنگ",
+        value: "سفید",
+      },
+    );
   });
 
   test("renders a number with Persian digits and the configured unit", () => {
-    assert.deepEqual(formatAttributeDisplayValue(heightAttribute as never, 12), {
-      key: "height",
-      label: "ارتفاع",
-      value: "۱۲ سانتی‌متر",
-    });
+    assert.deepEqual(
+      formatAttributeDisplayValue(heightAttribute as never, 12),
+      {
+        key: "height",
+        label: "ارتفاع",
+        value: "۱۲ سانتی‌متر",
+      },
+    );
   });
 
   test("renders a boolean as بله/خیر", () => {
-    assert.deepEqual(formatAttributeDisplayValue(washableAttribute as never, false), {
-      key: "washable",
-      label: "قابل شست‌وشو",
-      value: "خیر",
-    });
-    assert.deepEqual(formatAttributeDisplayValue(washableAttribute as never, true)?.value, "بله");
+    assert.deepEqual(
+      formatAttributeDisplayValue(washableAttribute as never, false),
+      {
+        key: "washable",
+        label: "قابل شست‌وشو",
+        value: "خیر",
+      },
+    );
+    assert.deepEqual(
+      formatAttributeDisplayValue(washableAttribute as never, true)?.value,
+      "بله",
+    );
   });
 
   test("hides an attribute with no stored value", () => {
-    assert.equal(formatAttributeDisplayValue(heightAttribute as never, undefined), null);
+    assert.equal(
+      formatAttributeDisplayValue(heightAttribute as never, undefined),
+      null,
+    );
   });
 
   test("joins a multiselect's option labels", () => {
     assert.deepEqual(
-      formatAttributeDisplayValue(materialsAttribute as never, ["clay", "glass"])?.value,
+      formatAttributeDisplayValue(materialsAttribute as never, [
+        "clay",
+        "glass",
+      ])?.value,
       "سفال، شیشه",
     );
   });

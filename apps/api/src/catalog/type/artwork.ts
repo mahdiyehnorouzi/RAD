@@ -57,4 +57,5 @@ export type ArtworkResponse = {
   owner: LocalizedText | null;
   createdAt: number;
   updatedAt: number;
+  attributes: { key: string; label: string; value: string }[];
 };

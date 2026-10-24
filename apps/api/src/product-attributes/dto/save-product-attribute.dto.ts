@@ -14,11 +14,8 @@ import {
   MinLength,
   ValidateNested,
 } from "class-validator";
-import { ADMIN_CATEGORIES } from "../../catalog/category";
-import {
-  MAX_ATTRIBUTE_OPTIONS,
-  PRODUCT_ATTRIBUTE_INPUT_TYPES,
-} from "../const";
+import { STORE_CATEGORIES } from "../../catalog/category";
+import { MAX_ATTRIBUTE_OPTIONS, PRODUCT_ATTRIBUTE_INPUT_TYPES } from "../const";
 import type { ProductAttributeInputType } from "../type";
 
 export class ProductAttributeOptionInputDto {
@@ -28,7 +25,8 @@ export class ProductAttributeOptionInputDto {
   })
   @IsString()
   @Matches(/^[a-z0-9_-]+$/, {
-    message: "کلید گزینه باید فقط حروف انگلیسی کوچک، عدد، خط فاصله یا زیرخط باشد.",
+    message:
+      "کلید گزینه باید فقط حروف انگلیسی کوچک، عدد، خط فاصله یا زیرخط باشد.",
   })
   @MinLength(1)
   value!: string;
@@ -53,7 +51,8 @@ export class SaveProductAttributeDto {
   })
   @IsString()
   @Matches(/^[a-z0-9_-]+$/, {
-    message: "کلید ویژگی باید فقط حروف انگلیسی کوچک، عدد، خط فاصله یا زیرخط باشد.",
+    message:
+      "کلید ویژگی باید فقط حروف انگلیسی کوچک، عدد، خط فاصله یا زیرخط باشد.",
   })
   @MinLength(1)
   key!: string;
@@ -88,13 +87,16 @@ export class SaveProductAttributeDto {
   sortOrder?: number;
 
   @ApiProperty({
-    example: ["گلدان", "ماگ"],
-    enum: ADMIN_CATEGORIES,
-    description: "Admin category labels this attribute applies to.",
+    example: ["ceramics"],
+    enum: STORE_CATEGORIES,
+    description:
+      "Store category values (Product.category) this attribute applies to — " +
+      "not the admin's Persian category labels, which are lossy (several " +
+      "labels collapse into one store value).",
   })
   @IsArray()
   @ArrayUnique()
-  @IsIn(ADMIN_CATEGORIES, { each: true })
+  @IsIn(STORE_CATEGORIES, { each: true })
   categories!: string[];
 
   @ApiPropertyOptional({ type: [ProductAttributeOptionInputDto] })

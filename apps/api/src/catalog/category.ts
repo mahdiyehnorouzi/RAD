@@ -48,3 +48,26 @@ export function toStoreCategory(label: string) {
 export function toAdminCategory(value: string) {
   return storeToCategory[value] ?? "سفال و سرامیک";
 }
+
+/**
+ * The canonical English `Product.category` values (mirrors `ProductCategory`
+ * in `@rad/types`). Unlike `ADMIN_CATEGORIES`, this set has no duplicate
+ * labels collapsing into the same value, so attribute-category assignment
+ * (`product-attributes`) is keyed on these directly instead of on
+ * `ADMIN_CATEGORIES`'s lossy Persian labels — `toStoreCategory` is a
+ * many-to-one map (e.g. "گلدان" and "ظروف" both resolve to "ceramics"), so
+ * storing an attribute's category as the admin's chosen *label* and later
+ * reading it back via `toAdminCategory` does not round-trip to that same
+ * label. Storing the already-resolved store value sidesteps that entirely.
+ */
+export const STORE_CATEGORIES = [
+  "ceramics",
+  "painting",
+  "textile",
+  "woodwork",
+  "sculpture",
+  "jewelry",
+  "print",
+  "vases",
+  "tableware",
+] as const;

@@ -26,7 +26,9 @@ export class CatalogService implements OnModuleInit {
   ) {}
 
   /** Resolves display-ready attributes for a batch of products in one pass. */
-  private async attributesResolver(products: { id: string; category: string }[]) {
+  private async attributesResolver(
+    products: { id: string; category: string }[],
+  ) {
     const attributesByProduct =
       await this.productAttributes.displayAttributesForProducts(products);
     return (productId: string) => attributesByProduct.get(productId) ?? [];
@@ -56,9 +58,12 @@ export class CatalogService implements OnModuleInit {
     const products = await qb.getMany();
     const attributesFor = await this.attributesResolver(products);
     return products.map((product) =>
-      toProduct({ ...product, images: stripImageSrc(product.images ?? []) }, {
-        attributes: attributesFor(product.id),
-      }),
+      toProduct(
+        { ...product, images: stripImageSrc(product.images ?? []) },
+        {
+          attributes: attributesFor(product.id),
+        },
+      ),
     );
   }
 
@@ -84,9 +89,12 @@ export class CatalogService implements OnModuleInit {
       .getMany();
     const attributesFor = await this.attributesResolver(products);
     return products.map((product) =>
-      toProduct({ ...product, images: stripImageSrc(product.images ?? []) }, {
-        attributes: attributesFor(product.id),
-      }),
+      toProduct(
+        { ...product, images: stripImageSrc(product.images ?? []) },
+        {
+          attributes: attributesFor(product.id),
+        },
+      ),
     );
   }
 

@@ -3,8 +3,8 @@
 import { useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import {
+  ATTRIBUTE_CATEGORY_OPTIONS,
   PRODUCT_ATTRIBUTE_INPUT_TYPES,
-  PRODUCT_CATEGORY_LABELS,
   type ProductAttribute,
   type ProductAttributeInput,
   type ProductAttributeInputType,
@@ -71,8 +71,11 @@ export function AdminProductAttributeDialog({
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
-  const setOptions = (change: (options: ProductAttributeOptionInput[]) => ProductAttributeOptionInput[]) =>
-    setDraft((item) => ({ ...item, options: change(item.options) }));
+  const setOptions = (
+    change: (
+      options: ProductAttributeOptionInput[],
+    ) => ProductAttributeOptionInput[],
+  ) => setDraft((item) => ({ ...item, options: change(item.options) }));
 
   const toggleCategory = (label: string) =>
     setDraft((item) => ({
@@ -85,7 +88,9 @@ export function AdminProductAttributeDialog({
   const submit = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!draft.key.trim() || !/^[a-z0-9_-]+$/.test(draft.key.trim())) {
-      setError("کلید ویژگی را فقط با حروف انگلیسی کوچک، عدد، خط فاصله یا زیرخط بنویسید.");
+      setError(
+        "کلید ویژگی را فقط با حروف انگلیسی کوچک، عدد، خط فاصله یا زیرخط بنویسید.",
+      );
       return;
     }
     if (!draft.label.trim()) {
@@ -97,9 +102,13 @@ export function AdminProductAttributeDialog({
       return;
     }
     if (needsOptions(draft.inputType)) {
-      const options = draft.options.filter((option) => option.value.trim() && option.label.trim());
+      const options = draft.options.filter(
+        (option) => option.value.trim() && option.label.trim(),
+      );
       if (!options.length) {
-        setError("ویژگی‌های تک‌انتخابی و چندانتخابی به دست‌کم یک گزینه نیاز دارند.");
+        setError(
+          "ویژگی‌های تک‌انتخابی و چندانتخابی به دست‌کم یک گزینه نیاز دارند.",
+        );
         return;
       }
       const values = options.map((option) => option.value.trim());
@@ -142,7 +151,9 @@ export function AdminProductAttributeDialog({
           <Field label="نام نمایشی (مثل رنگ)">
             <input
               value={draft.label}
-              onChange={(event) => setDraft({ ...draft, label: event.target.value })}
+              onChange={(event) =>
+                setDraft({ ...draft, label: event.target.value })
+              }
             />
           </Field>
           <Field label="کلید داخلی (مثل color)">
@@ -178,14 +189,18 @@ export function AdminProductAttributeDialog({
           <Field label="واحد (اختیاری، مثل سانتی‌متر)">
             <input
               value={draft.unit ?? ""}
-              onChange={(event) => setDraft({ ...draft, unit: event.target.value })}
+              onChange={(event) =>
+                setDraft({ ...draft, unit: event.target.value })
+              }
             />
           </Field>
           <label className="attribute-switch">
             <input
               type="checkbox"
               checked={draft.required}
-              onChange={(event) => setDraft({ ...draft, required: event.target.checked })}
+              onChange={(event) =>
+                setDraft({ ...draft, required: event.target.checked })
+              }
             />
             <span>الزامی</span>
           </label>
@@ -193,7 +208,9 @@ export function AdminProductAttributeDialog({
             <input
               type="checkbox"
               checked={draft.active}
-              onChange={(event) => setDraft({ ...draft, active: event.target.checked })}
+              onChange={(event) =>
+                setDraft({ ...draft, active: event.target.checked })
+              }
             />
             <span>فعال</span>
           </label>
@@ -201,12 +218,12 @@ export function AdminProductAttributeDialog({
 
         <Field label="دسته‌بندی‌های مرتبط">
           <div className="attribute-categories">
-            {PRODUCT_CATEGORY_LABELS.map((label) => (
-              <label key={label}>
+            {ATTRIBUTE_CATEGORY_OPTIONS.map(({ value, label }) => (
+              <label key={value}>
                 <input
                   type="checkbox"
-                  checked={draft.categories.includes(label)}
-                  onChange={() => toggleCategory(label)}
+                  checked={draft.categories.includes(value)}
+                  onChange={() => toggleCategory(value)}
                 />
                 <span>{label}</span>
               </label>
@@ -225,7 +242,9 @@ export function AdminProductAttributeDialog({
                     onChange={(event) =>
                       setOptions((options) =>
                         options.map((item, i) =>
-                          i === index ? { ...item, label: event.target.value } : item,
+                          i === index
+                            ? { ...item, label: event.target.value }
+                            : item,
                         ),
                       )
                     }
@@ -238,7 +257,10 @@ export function AdminProductAttributeDialog({
                       setOptions((options) =>
                         options.map((item, i) =>
                           i === index
-                            ? { ...item, value: event.target.value.trim().toLowerCase() }
+                            ? {
+                                ...item,
+                                value: event.target.value.trim().toLowerCase(),
+                              }
                             : item,
                         ),
                       )
@@ -248,7 +270,9 @@ export function AdminProductAttributeDialog({
                     type="button"
                     className="secondary-action content-danger"
                     onClick={() =>
-                      setOptions((options) => options.filter((_, i) => i !== index))
+                      setOptions((options) =>
+                        options.filter((_, i) => i !== index),
+                      )
                     }
                     aria-label="حذف گزینه"
                   >
@@ -259,7 +283,9 @@ export function AdminProductAttributeDialog({
               <button
                 type="button"
                 className="secondary-action"
-                onClick={() => setOptions((options) => [...options, blankOption()])}
+                onClick={() =>
+                  setOptions((options) => [...options, blankOption()])
+                }
               >
                 <Plus /> افزودن گزینه
               </button>

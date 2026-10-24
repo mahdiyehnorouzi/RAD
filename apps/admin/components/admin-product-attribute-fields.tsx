@@ -1,6 +1,9 @@
 "use client";
 
-import type { ProductAttribute, ProductAttributeValue } from "../lib/admin-data";
+import type {
+  ProductAttribute,
+  ProductAttributeValue,
+} from "../lib/admin-data";
 import { Field } from "./admin-dialog";
 
 function fieldLabel(attribute: ProductAttribute) {
@@ -27,7 +30,9 @@ function AttributeInput({
           value={typeof value === "number" ? value : ""}
           onChange={(event) =>
             onChange(
-              event.target.value === "" ? undefined : Number(event.target.value),
+              event.target.value === ""
+                ? undefined
+                : Number(event.target.value),
             )
           }
         />
@@ -103,7 +108,10 @@ export function ProductAttributeFields({
   loading: boolean;
   values: Record<string, ProductAttributeValue>;
   errors: Record<string, string>;
-  onChange: (attributeId: string, value: ProductAttributeValue | undefined) => void;
+  onChange: (
+    attributeId: string,
+    value: ProductAttributeValue | undefined,
+  ) => void;
 }) {
   if (loading) return <p>در حال بار گذاری ویژگی‌ها…</p>;
   if (!attributes.length)

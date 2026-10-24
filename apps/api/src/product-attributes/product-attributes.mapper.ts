@@ -4,8 +4,10 @@ import type {
   ProductAttributeCategory,
   ProductAttributeOption,
 } from "../database/entities";
-import { toAdminCategory } from "../catalog/category";
-import type { ProductAttributeDisplayValue, ProductAttributeView } from "./type";
+import type {
+  ProductAttributeDisplayValue,
+  ProductAttributeView,
+} from "./type";
 
 type FullAttribute = ProductAttribute & {
   options: ProductAttributeOption[];
@@ -24,8 +26,12 @@ export function toProductAttributeView(
     required: attribute.required,
     active: attribute.active,
     sortOrder: attribute.sortOrder,
+    // Raw store category values (see `SaveProductAttributeDto.categories`),
+    // never run through `toAdminCategory` — the frontend owns mapping these
+    // to Persian labels for display, since that mapping has nothing to do
+    // with the admin's lossy product-category label system.
     categories: [...attribute.categoryLinks]
-      .map((link) => toAdminCategory(link.category))
+      .map((link) => link.category)
       .sort(),
     options: [...attribute.options]
       .sort((a, b) => a.sortOrder - b.sortOrder)
@@ -68,7 +74,9 @@ export function coerceAttributeValue(
     }
     case "boolean": {
       if (typeof raw !== "boolean")
-        throw new BadRequestException(`مقدار «${label}» باید درست یا نادرست باشد.`);
+        throw new BadRequestException(
+          `مقدار «${label}» باید درست یا نادرست باشد.`,
+        );
       return raw;
     }
     case "select": {
@@ -105,7 +113,11 @@ export function formatAttributeDisplayValue(
   switch (attribute.inputType) {
     case "boolean": {
       if (typeof value !== "boolean") return null;
-      return { key: attribute.key, label: attribute.label, value: value ? "بله" : "خیر" };
+      return {
+        key: attribute.key,
+        label: attribute.label,
+        value: value ? "بله" : "خیر",
+      };
     }
     case "number": {
       if (typeof value !== "number" || !Number.isFinite(value)) return null;
@@ -118,7 +130,11 @@ export function formatAttributeDisplayValue(
     case "select": {
       if (typeof value !== "string" || !value) return null;
       const option = attribute.options.find((item) => item.value === value);
-      return { key: attribute.key, label: attribute.label, value: option?.label ?? value };
+      return {
+        key: attribute.key,
+        label: attribute.label,
+        value: option?.label ?? value,
+      };
     }
     case "multiselect": {
       if (!Array.isArray(value) || !value.length) return null;
@@ -127,12 +143,20 @@ export function formatAttributeDisplayValue(
           attribute.options.find((option) => option.value === item)?.label ??
           String(item),
       );
-      return { key: attribute.key, label: attribute.label, value: labels.join("، ") };
+      return {
+        key: attribute.key,
+        label: attribute.label,
+        value: labels.join("، "),
+      };
     }
     case "text":
     default: {
       if (typeof value !== "string" || !value.trim()) return null;
-      return { key: attribute.key, label: attribute.label, value: `${value}${unitSuffix}` };
+      return {
+        key: attribute.key,
+        label: attribute.label,
+        value: `${value}${unitSuffix}`,
+      };
     }
   }
 }

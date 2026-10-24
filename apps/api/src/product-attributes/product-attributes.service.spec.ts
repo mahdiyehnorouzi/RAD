@@ -63,9 +63,14 @@ before(async () => {
 
   const testDatabaseUrl = `postgresql://rad:rad@127.0.0.1:${port}/rad_test`;
   if (!isLocalDatabaseUrl(testDatabaseUrl)) {
-    throw new Error("Refusing to run DB-backed tests against a non-local database.");
+    throw new Error(
+      "Refusing to run DB-backed tests against a non-local database.",
+    );
   }
-  dataSource = createAppDataSource({ url: testDatabaseUrl, synchronize: true } as never);
+  dataSource = createAppDataSource({
+    url: testDatabaseUrl,
+    synchronize: true,
+  } as never);
   await dataSource.initialize();
   service = new ProductAttributesService(
     dataSource.getRepository(ProductAttribute),
@@ -112,17 +117,26 @@ describe("ProductAttributesService", () => {
       unit: null,
       required: true,
       active: true,
-      categories: ["گلدان"],
-      options: [{ value: "white", label: "سفید" }, { value: "black", label: "مشکی" }],
+      categories: ["jewelry"],
+      options: [
+        { value: "white", label: "سفید" },
+        { value: "black", label: "مشکی" },
+      ],
     });
-    assert.equal(attribute.categories.includes("گلدان"), true);
+    // Must round-trip exactly, not through the admin's lossy Persian-label
+    // mapping (several labels collapse into one store value) — this is the
+    // regression this assertion guards against.
+    assert.deepEqual(attribute.categories, ["jewelry"]);
     assert.equal(attribute.options.length, 2);
 
-    const forVase = await service.byCategory("گلدان");
+    const forVase = await service.byCategory("زیورآلات هنری");
     assert.ok(forVase.some((item) => item.id === attribute.id));
 
     const forOther = await service.byCategory("مجسمه");
-    assert.equal(forOther.some((item) => item.id === attribute.id), false);
+    assert.equal(
+      forOther.some((item) => item.id === attribute.id),
+      false,
+    );
   });
 
   test("saveValuesForProduct: rejects a save missing a required attribute for the product's category", async () => {
@@ -133,7 +147,7 @@ describe("ProductAttributesService", () => {
       unit: "سانتی‌متر",
       required: true,
       active: true,
-      categories: ["مجسمه"],
+      categories: ["sculpture"],
       options: [],
     });
     const product = await makeProduct("sculpture");
@@ -156,7 +170,7 @@ describe("ProductAttributesService", () => {
       unit: null,
       required: false,
       active: true,
-      categories: ["گلدان"],
+      categories: ["ceramics"],
       options: [],
     });
     const product = await makeProduct("ceramics");
@@ -164,14 +178,15 @@ describe("ProductAttributesService", () => {
       [vaseAttribute.id]: "مات",
     });
 
-    // Product's category changes to one this attribute is not assigned to;
-    // no values are submitted for it, but the stored row must survive.
-    await service.saveValuesForProduct(product.id, "sculpture", {});
+    // Product's category changes to one this attribute is not assigned to
+    // (and with no required attribute of its own); no values are submitted
+    // for it, but the stored row must survive.
+    await service.saveValuesForProduct(product.id, "textile", {});
     const stored = await service.valuesForProduct(product.id);
     assert.equal(stored[vaseAttribute.id], "مات");
 
     const display = await service.displayAttributesForProducts([
-      { id: product.id, category: "sculpture" },
+      { id: product.id, category: "textile" },
     ]);
     assert.equal(display.get(product.id)?.length, 0);
 
@@ -191,7 +206,7 @@ describe("ProductAttributesService", () => {
       unit: null,
       required: false,
       active: true,
-      categories: ["گلدان"],
+      categories: ["ceramics"],
       options: [],
     });
     const product = await makeProduct("ceramics");
@@ -207,7 +222,7 @@ describe("ProductAttributesService", () => {
       unit: null,
       required: false,
       active: true,
-      categories: ["گلدان"],
+      categories: ["ceramics"],
       options: [],
     });
     assert.deepEqual(await service.remove(other.id), { ok: true });

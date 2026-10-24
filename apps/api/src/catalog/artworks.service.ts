@@ -3,6 +3,7 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { Product } from "../database/entities";
 import { InventoryService } from "../inventory/inventory.service";
+import { ProductAttributesService } from "../product-attributes/product-attributes.service";
 import { toArtwork } from "./artwork.mapper";
 import { publicCatalogQuery } from "./catalog.query";
 import { stripImageSrc } from "./product.mapper";
@@ -13,6 +14,7 @@ export class ArtworksService {
     @InjectRepository(Product)
     private readonly products: Repository<Product>,
     private readonly inventory: InventoryService,
+    private readonly productAttributes: ProductAttributesService,
   ) {}
 
   /**
@@ -26,8 +28,15 @@ export class ArtworksService {
    */
   async list() {
     const rows = await publicCatalogQuery(this.products).getMany();
+    const attributesByProduct =
+      await this.productAttributes.displayAttributesForProducts(
+        rows.map((row) => ({ id: row.id, category: row.category })),
+      );
     return rows.map((row) =>
-      toArtwork({ ...row, images: stripImageSrc(row.images ?? []) }),
+      toArtwork(
+        { ...row, images: stripImageSrc(row.images ?? []) },
+        attributesByProduct.get(row.id) ?? [],
+      ),
     );
   }
 
@@ -43,6 +52,13 @@ export class ArtworksService {
     else qb.andWhere("product.slug = :slug", { slug: key });
     const row = await qb.getOne();
     if (!row) throw new NotFoundException("اثر پیدا نشد.");
-    return toArtwork({ ...row, images: stripImageSrc(row.images ?? []) });
+    const attributesByProduct =
+      await this.productAttributes.displayAttributesForProducts([
+        { id: row.id, category: row.category },
+      ]);
+    return toArtwork(
+      { ...row, images: stripImageSrc(row.images ?? []) },
+      attributesByProduct.get(row.id) ?? [],
+    );
   }
 }

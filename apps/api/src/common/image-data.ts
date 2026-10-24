@@ -5,7 +5,11 @@ export function imageDataBytes(src: string) {
   return Math.floor((base64.length * 3) / 4);
 }
 
-export function assertImageData(src: string, maxBytes: number, message: string) {
+export function assertImageData(
+  src: string,
+  maxBytes: number,
+  message: string,
+) {
   if (!allowedImage.test(src)) {
     throw new Error(message);
   }
@@ -16,8 +20,7 @@ export function assertImageData(src: string, maxBytes: number, message: string) 
 }
 
 export const productImageLimit = 3 * 1024 * 1024;
-export const productImageError =
-  "حجم هر تصویر نباید بیشتر از ۳ مگابایت باشد.";
+export const productImageError = "حجم هر تصویر نباید بیشتر از ۳ مگابایت باشد.";
 
 export const receiptImageLimit = 1 * 1024 * 1024;
 export const receiptImageError =
