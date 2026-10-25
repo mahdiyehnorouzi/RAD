@@ -195,10 +195,12 @@ export function CheckoutPage() {
       });
       setLeaving(true);
       clearDraft();
-      if (created.payment?.redirectUrl) {
-        window.location.assign(created.payment.redirectUrl);
-        return;
-      }
+      // Always land on the Review & Payment screen next — even for a
+      // gateway order, which already has a live redirectUrl at this point.
+      // Jumping straight to the external gateway from here would skip the
+      // approved "review your order, then pay" step entirely; checkout-
+      // payment.tsx is what actually shows the summary and the "پرداخت و
+      // تکمیل خرید" button that starts the real redirect.
       router.push(href(`/checkout/${encodeURIComponent(created.id)}`));
       void clear().catch(() => {});
     } catch (err) {

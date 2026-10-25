@@ -3,6 +3,7 @@ import "./checkout-payment.css";
 import "../flow/purchase-design.css";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { ORDER_PAYMENT_WINDOW_MINUTES, type Product } from "@rad/types";
 import type { PaymentReceiptInput } from "@/types/api";
@@ -31,7 +32,7 @@ export function CheckoutPayment({ id }: { id: string }) {
   const { confirmDemoPayment, verifyPayment, retryPayment, cancelOrder } =
     useCommerce();
   const { getProduct } = useCatalog();
-  const { locale, number } = useLocale();
+  const { locale, number, href } = useLocale();
   const c = checkoutCopy[locale];
   const remaining = useCountdown(order?.payment?.dueAt);
   const [busy, setBusy] = useState<"receipt" | "cancel" | "retry" | null>(null);
@@ -220,6 +221,13 @@ export function CheckoutPayment({ id }: { id: string }) {
   // new is actually being charged.
   const paymentConflict = order.payment?.status === "verify_conflict";
   const paymentAmbiguous = order.payment?.status === "verify_error";
+  // A live session exists (status redirected) but we don't have its URL in
+  // hand — e.g. the buyer refreshed this page instead of clicking through,
+  // or came back without ever visiting the gateway. Nothing has failed;
+  // retryPayment safely re-checks it (and only replaces it if it's truly
+  // unused), so this must not show "payment didn't go through" copy.
+  const sessionStale =
+    gatewayOrder && !redirectUrl && order.payment?.status === "redirected";
   const retry = () =>
     run("retry", async () => {
       const updated = await retryPayment(order.id);
@@ -236,7 +244,9 @@ export function CheckoutPayment({ id }: { id: string }) {
             ? c.receiptTitle
             : redirectUrl
               ? c.securePayTitle
-              : c.payTitle}
+              : gatewayOrder
+                ? c.reviewTitle
+                : c.payTitle}
         </h1>
         <p>
           {receiptStep
@@ -245,12 +255,39 @@ export function CheckoutPayment({ id }: { id: string }) {
               : "Upload a photo or screenshot of your payment receipt."
             : redirectUrl
               ? c.securePayLede
-              : c.payLede}
+              : gatewayOrder
+                ? ""
+                : c.payLede}
         </p>
       </header>
 
       <div className="checkout-flow-body">
-        <div className="checkout-flow-main checkout-pay">
+        <div
+          className={`checkout-flow-main checkout-pay${receiptStep ? " checkout-receipt-step" : ""}`}
+        >
+          {!receiptStep && gatewayOrder ? (
+            <section
+              className="delivery-recap"
+              aria-labelledby="delivery-recap-title"
+            >
+              <div className="delivery-recap-head">
+                <h2 id="delivery-recap-title">{c.deliveryRecapTitle}</h2>
+                <Link href={href("/checkout")} className="delivery-recap-edit">
+                  {c.deliveryRecapEdit}
+                </Link>
+              </div>
+              <address>
+                <span>{order.delivery.name}</span>
+                <span dir="ltr">{order.delivery.phone}</span>
+                <span>
+                  {[order.delivery.city, order.delivery.address]
+                    .map((part) => part?.trim())
+                    .filter(Boolean)
+                    .join("، ")}
+                </span>
+              </address>
+            </section>
+          ) : null}
           {!receiptStep &&
             (redirectUrl ? (
               <div className="payment-gateway">
@@ -290,6 +327,21 @@ export function CheckoutPayment({ id }: { id: string }) {
                   <ArrowIcon aria-hidden="true" />
                 </button>
               </div>
+            ) : sessionStale && !expired ? (
+              <div className="payment-gateway">
+                <h2>{c.securePayTitle}</h2>
+                <p>{c.securePayLede}</p>
+                <button
+                  type="button"
+                  className="checkout-submit"
+                  disabled={busy !== null}
+                  aria-busy={busy === "retry" || undefined}
+                  onClick={() => void retry()}
+                >
+                  <span>{busy === "retry" ? c.submitting : c.gatewayGo}</span>
+                  <ArrowIcon aria-hidden="true" />
+                </button>
+              </div>
             ) : gatewayOrder && !expired ? (
               <div className="payment-gateway">
                 <h2>{c.paymentFailedTitle}</h2>
@@ -321,7 +373,13 @@ export function CheckoutPayment({ id }: { id: string }) {
 
           {remaining !== null ? (
             <CheckoutMeter
-              title={expired ? c.deadlineExpired : c.deadlineLabel}
+              title={
+                expired
+                  ? c.deadlineExpired
+                  : gatewayOrder
+                    ? c.deadlineLabelGateway
+                    : c.deadlineLabel
+              }
               time={
                 expired ? undefined : formatCountdown(remaining, locale, number)
               }
@@ -447,7 +505,11 @@ export function CheckoutPayment({ id }: { id: string }) {
         </div>
 
         <div className="checkout-flow-help">
-          <HelpPanel context="order" tone="payment" orderId={order.id} />
+          <HelpPanel
+            context="order"
+            tone={gatewayOrder ? "gatewayPayment" : "payment"}
+            orderId={order.id}
+          />
         </div>
       </div>
     </section>

@@ -2,6 +2,7 @@ export const helpPanelCopy = {
   fa: {
     orderEyebrow: "پشتیبانی سفارش",
     paymentTitle: "برای پرداخت یا ارسال فیش مشکلی داری؟",
+    gatewayPaymentTitle: "در پرداخت مشکلی پیش اومده؟",
     checkoutTitle: "موقع ثبت سفارش گیر کردی؟",
     orderTitle: "سؤالی درباره‌ی این سفارش داری؟",
     checkoutBody:
@@ -31,6 +32,7 @@ export const helpPanelCopy = {
   en: {
     orderEyebrow: "Order support",
     paymentTitle: "Trouble paying or sending the receipt?",
+    gatewayPaymentTitle: "Trouble with the payment?",
     checkoutTitle: "Stuck while placing your order?",
     orderTitle: "A question about this order?",
     checkoutBody:

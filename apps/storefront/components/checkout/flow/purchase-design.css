@@ -367,7 +367,15 @@ body:has(.purchase-bag) .route-trail {
     margin-top: 15px;
     font-size: 12px;
   }
-  .checkout-flow:has(.checkout-pay) .checkout-flow-aside {
+  /*
+   * The order summary used to be hidden for the whole payment step,
+   * including the gateway's "Review & Payment" screen — but that screen's
+   * entire job is to let the buyer review the order before paying, so
+   * hiding the summary defeated the point. Still hidden specifically
+   * during the manual-transfer receipt sub-step, where the payment card
+   * itself is the thing to focus on.
+   */
+  .checkout-flow:has(.checkout-receipt-step) .checkout-flow-aside {
     display: none;
   }
   .checkout-flow.section .checkout-pay {

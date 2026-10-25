@@ -2,4 +2,4 @@
 export type HelpContext = "checkout" | "order";
 
 /** Payment help leads while money or a receipt is still in motion. */
-export type HelpTone = "payment" | "general";
+export type HelpTone = "payment" | "gatewayPayment" | "general";
