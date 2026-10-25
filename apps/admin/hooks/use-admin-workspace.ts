@@ -20,6 +20,8 @@ import {
   type AdminUser,
   type HelpQuestion,
   type HelpQuestionInput,
+  type ProductAttribute,
+  type ProductAttributeInput,
   type ShapeQuestion,
   type ShapeQuestionInput,
 } from "../lib/admin-data";
@@ -52,7 +54,8 @@ type ResourceKey =
   | "damageReports"
   | "reviews"
   | "shapeQuestions"
-  | "helpQuestions";
+  | "helpQuestions"
+  | "productAttributes";
 
 /**
  * Which resources a section actually renders. Keeps the old "fetch
@@ -70,6 +73,7 @@ const sectionResources: Record<AdminSection, ResourceKey[]> = {
   reviews: ["reviews"],
   shape: ["shapeQuestions"],
   help: ["helpQuestions"],
+  attributes: ["productAttributes"],
   users: ["users"],
   members: ["members"],
   account: [],
@@ -89,6 +93,9 @@ export function useAdminWorkspace() {
   const [reviews, setReviews] = useState<AdminReview[]>([]);
   const [shapeQuestions, setShapeQuestions] = useState<ShapeQuestion[]>([]);
   const [helpQuestions, setHelpQuestions] = useState<HelpQuestion[]>([]);
+  const [productAttributes, setProductAttributes] = useState<
+    ProductAttribute[]
+  >([]);
   const currentRole: AdminRole =
     (user?.adminRole as AdminRole | undefined) ?? "viewer";
 
@@ -142,6 +149,11 @@ export function useAdminWorkspace() {
         break;
       case "helpQuestions":
         setHelpQuestions(await api<HelpQuestion[]>("/admin/help-questions"));
+        break;
+      case "productAttributes":
+        setProductAttributes(
+          await api<ProductAttribute[]>("/admin/product-attributes"),
+        );
         break;
     }
   }, []);
@@ -236,6 +248,7 @@ export function useAdminWorkspace() {
     setReviews([]);
     setShapeQuestions([]);
     setHelpQuestions([]);
+    setProductAttributes([]);
   }, [authStatus]);
 
   // Unread-message / open-damage-report counts drive sidebar nav badges that
@@ -271,6 +284,7 @@ export function useAdminWorkspace() {
       reviews,
       shapeQuestions,
       helpQuestions,
+      productAttributes,
       currentRole,
       can,
       async login(input: {
@@ -390,6 +404,35 @@ export function useAdminWorkspace() {
           }),
         );
       },
+      async saveProductAttribute(input: ProductAttributeInput, id?: string) {
+        const saved = await api<ProductAttribute>(
+          id ? `/admin/product-attributes/${id}` : "/admin/product-attributes",
+          { method: id ? "PATCH" : "POST", body: JSON.stringify(input) },
+        );
+        setProductAttributes((items) =>
+          id
+            ? items.map((item) => (item.id === saved.id ? saved : item))
+            : [...items, saved],
+        );
+      },
+      async deleteProductAttribute(id: string) {
+        await api(`/admin/product-attributes/${id}`, { method: "DELETE" });
+        setProductAttributes((items) => items.filter((item) => item.id !== id));
+      },
+      async reorderProductAttributes(ids: string[]) {
+        setProductAttributes(
+          await api<ProductAttribute[]>("/admin/product-attributes/order", {
+            method: "PUT",
+            body: JSON.stringify({ ids }),
+          }),
+        );
+      },
+      /** Active attributes assigned to one (Persian-label) product category, in display order. */
+      async fetchAttributesForCategory(category: string) {
+        return api<ProductAttribute[]>(
+          `/admin/product-attributes/by-category/${encodeURIComponent(category)}`,
+        );
+      },
       /**
        * Uploads a new product image file directly to the active storage
        * provider: get signed upload params from the API, POST the file
@@ -496,6 +539,7 @@ export function useAdminWorkspace() {
               ? { storage: image.storage, objectKey: image.objectKey }
               : { storage: image.storage, src: image.src },
           ),
+          attributeValues: product.attributeValues ?? {},
         };
         const exists = products.some((item) => item.id === product.id);
         const saved = exists
@@ -689,6 +733,7 @@ export function useAdminWorkspace() {
       members,
       messages,
       orders,
+      productAttributes,
       products,
       ready,
       restoreSession,

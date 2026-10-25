@@ -41,7 +41,10 @@ function asMaterials(
   };
 }
 
-export function toArtwork(product: ProductRecord): ArtworkResponse {
+export function toArtwork(
+  product: ProductRecord,
+  attributes: { key: string; label: string; value: string }[] = [],
+): ArtworkResponse {
   const details = asStringArray(product.details);
   const en = asEnCopy(product.en, {
     name: product.name,
@@ -92,5 +95,6 @@ export function toArtwork(product: ProductRecord): ArtworkResponse {
     owner: asLocalized(product.owner),
     createdAt: product.createdAt.getTime(),
     updatedAt: product.updatedAt.getTime(),
+    attributes,
   };
 }

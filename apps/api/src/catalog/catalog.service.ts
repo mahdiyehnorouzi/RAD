@@ -8,6 +8,7 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { DataSource, Repository } from "typeorm";
 import { Product } from "../database/entities";
 import { InventoryService } from "../inventory/inventory.service";
+import { ProductAttributesService } from "../product-attributes/product-attributes.service";
 import { pricedCatalogQuery } from "./catalog.query";
 import { migrateProductImageStorage } from "./product-image-storage.migration";
 import { stripImageSrc, toProduct } from "./product.mapper";
@@ -21,7 +22,17 @@ export class CatalogService implements OnModuleInit {
     @InjectRepository(Product)
     private readonly products: Repository<Product>,
     private readonly inventory: InventoryService,
+    private readonly productAttributes: ProductAttributesService,
   ) {}
+
+  /** Resolves display-ready attributes for a batch of products in one pass. */
+  private async attributesResolver(
+    products: { id: string; category: string }[],
+  ) {
+    const attributesByProduct =
+      await this.productAttributes.displayAttributesForProducts(products);
+    return (productId: string) => attributesByProduct.get(productId) ?? [];
+  }
 
   async onModuleInit() {
     // Same reasoning as OrdersService: a one-time backfill must not be able
@@ -45,8 +56,14 @@ export class CatalogService implements OnModuleInit {
       qb.andWhere("product.category = :category", { category });
     }
     const products = await qb.getMany();
+    const attributesFor = await this.attributesResolver(products);
     return products.map((product) =>
-      toProduct({ ...product, images: stripImageSrc(product.images ?? []) }),
+      toProduct(
+        { ...product, images: stripImageSrc(product.images ?? []) },
+        {
+          attributes: attributesFor(product.id),
+        },
+      ),
     );
   }
 
@@ -58,10 +75,11 @@ export class CatalogService implements OnModuleInit {
     if (!product || !this.inventory.isPublic(product.status)) {
       throw new NotFoundException("اثر پیدا نشد.");
     }
-    return toProduct({
-      ...product,
-      images: stripImageSrc(product.images ?? []),
-    });
+    const attributesFor = await this.attributesResolver([product]);
+    return toProduct(
+      { ...product, images: stripImageSrc(product.images ?? []) },
+      { attributes: attributesFor(product.id) },
+    );
   }
 
   async related(slug: string) {
@@ -69,8 +87,14 @@ export class CatalogService implements OnModuleInit {
     const products = await pricedCatalogQuery(this.products)
       .andWhere("product.slug != :slug", { slug })
       .getMany();
+    const attributesFor = await this.attributesResolver(products);
     return products.map((product) =>
-      toProduct({ ...product, images: stripImageSrc(product.images ?? []) }),
+      toProduct(
+        { ...product, images: stripImageSrc(product.images ?? []) },
+        {
+          attributes: attributesFor(product.id),
+        },
+      ),
     );
   }
 

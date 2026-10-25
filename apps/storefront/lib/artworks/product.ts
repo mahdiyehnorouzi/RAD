@@ -50,6 +50,7 @@ export function productFromArtwork(artwork: Artwork): Product {
       ? `RAD-${formatRadCode(artwork.radNumber)}`
       : undefined,
     listedAt: artwork.createdAt,
+    attributes: artwork.attributes,
     en: {
       name: artwork.title.en,
       subtitle: artwork.description.en,

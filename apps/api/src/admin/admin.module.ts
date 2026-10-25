@@ -8,6 +8,7 @@ import { ArtistApplicationsModule } from "../artist-applications/artist-applicat
 import { HelpModule } from "../help/help.module";
 import { ReviewsModule } from "../reviews/reviews.module";
 import { ShapeModule } from "../shape/shape.module";
+import { ProductAttributesModule } from "../product-attributes/product-attributes.module";
 import { AdminController } from "./admin.controller";
 import { AdminService } from "./admin.service";
 import { AdminGuard } from "../common/guards/admin.guard";
@@ -25,6 +26,7 @@ import { StorageModule } from "../storage/storage.module";
     ShapeModule,
     HelpModule,
     StorageModule,
+    ProductAttributesModule,
   ],
   controllers: [AdminController],
   providers: [AdminService, AdminGuard],
