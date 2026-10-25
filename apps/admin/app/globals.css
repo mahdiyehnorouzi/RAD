@@ -907,6 +907,64 @@ td select,
 .field-error {
   color: #9b4034;
 }
+.attribute-switch {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+}
+.attribute-switch input {
+  width: auto;
+}
+.attribute-option-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  border: 1px solid var(--line);
+  background: #fffaf2;
+  padding: 10px 12px;
+}
+.attribute-option {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+}
+.attribute-option input {
+  width: auto;
+}
+.attribute-categories {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  border: 1px solid var(--line);
+  background: #fffaf2;
+  padding: 10px 12px;
+}
+.attribute-categories label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+}
+.attribute-categories input {
+  width: auto;
+}
+.attribute-option-editor {
+  display: grid;
+  gap: 10px;
+}
+.attribute-option-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 8px;
+  align-items: center;
+}
+@media (max-width: 760px) {
+  .attribute-option-row {
+    grid-template-columns: 1fr;
+  }
+}
 .field-label {
   display: grid;
   gap: 3px;

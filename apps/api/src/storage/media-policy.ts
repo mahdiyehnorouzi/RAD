@@ -12,7 +12,7 @@ export function mediaLimits() {
   if (!Number.isFinite(videoMB) || videoMB <= 0 || videoMB > 100) {
     throw new Error("PRODUCT_VIDEO_MAX_MB must be between 0 and 100");
   }
-  return { image: 2 * 1024 * 1024, video: Math.floor(videoMB * 1024 * 1024) };
+  return { image: 3 * 1024 * 1024, video: Math.floor(videoMB * 1024 * 1024) };
 }
 export function validateMediaSize(bytes: number, kind: "image" | "video") {
   if (!Number.isSafeInteger(bytes) || bytes <= 0)

@@ -3,9 +3,11 @@ export * from "./contact";
 export * from "./content";
 export * from "./damage-report";
 export * from "./policy";
+export * from "./product-attribute";
 
 import type { LocalizedText, WorkMark } from "./artwork";
 import type { PolicyAcceptance } from "./policy";
+import type { ProductSpecAttribute } from "./product-attribute";
 
 export type Locale = "fa" | "en";
 export type ProductShape = "tall" | "round" | "wide";
@@ -155,6 +157,8 @@ export interface Product {
   /** Epoch ms the work entered the catalogue; absent in static fallback data. */
   listedAt?: number;
   en: { name: string; subtitle: string; story: string; details: string[] };
+  /** Admin-defined specs for this product's category, already formatted for display; hidden when empty. */
+  attributes?: ProductSpecAttribute[];
 }
 
 export interface AuthUser {

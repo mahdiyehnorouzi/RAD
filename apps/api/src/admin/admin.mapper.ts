@@ -7,42 +7,13 @@ import type {
   Vendor,
 } from "../database/entities";
 import { imageSrc } from "../catalog/product.mapper";
+import { toAdminCategory, toStoreCategory } from "../catalog/category";
 import { normalizeProductStatus } from "../inventory/product-status";
 import { normalizeStoreOrderStatus } from "../orders/store-order-status";
 import { toPolicyAcceptance } from "../policies/policy-acceptance";
 import type { OrderPaymentProvider, OrderPaymentStatus } from "../orders/type";
 
-const categoryToStore: Record<string, string> = {
-  گلدان: "ceramics",
-  ظروف: "ceramics",
-  مجسمه: "sculpture",
-  "سفال و سرامیک": "ceramics",
-  نقاشی: "painting",
-  "پارچه و بافت": "textile",
-  "آثار چوبی": "woodwork",
-  "زیورآلات هنری": "jewelry",
-  "چاپ دستی و تصویر": "print",
-};
-
-const storeToCategory: Record<string, string> = {
-  vases: "گلدان",
-  tableware: "ظروف",
-  ceramics: "سفال و سرامیک",
-  sculpture: "مجسمه",
-  painting: "نقاشی",
-  textile: "پارچه و بافت",
-  woodwork: "آثار چوبی",
-  jewelry: "زیورآلات هنری",
-  print: "چاپ دستی و تصویر",
-};
-
-export function toStoreCategory(label: string) {
-  return categoryToStore[label] ?? "ceramics";
-}
-
-export function toAdminCategory(value: string) {
-  return storeToCategory[value] ?? "سفال و سرامیک";
-}
+export { toAdminCategory, toStoreCategory };
 
 export function artistVendorId(artist: string) {
   const name = artist.trim();
@@ -57,6 +28,7 @@ export function artistVendorId(artist: string) {
 
 export function toAdminProduct(
   product: Product & { images: ProductImage[]; vendor: Vendor | null },
+  attributeValues: Record<string, unknown> = {},
 ) {
   return {
     id: product.id,
@@ -89,6 +61,7 @@ export function toAdminProduct(
         objectKey: image.objectKey ?? null,
       })),
     updatedAt: product.updatedAt.getTime(),
+    attributeValues,
   };
 }
 

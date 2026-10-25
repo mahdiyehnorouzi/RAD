@@ -7,6 +7,7 @@ import {
   Paintbrush,
   Ruler,
   ScrollText,
+  SlidersHorizontal,
   SquareStack,
 } from "lucide-react";
 import type { Artwork, Locale, Product } from "@rad/types";
@@ -108,6 +109,18 @@ function specRows(
           icon: <ScrollText />,
         }));
 
+  // Admin-defined specs (رنگ، جنس، ابعاد، …) for this product's category,
+  // already formatted for display by the API; hidden when empty so
+  // products saved before this feature existed render unchanged.
+  const dynamicAttributes: SpecRow[] = (product.attributes ?? []).map(
+    (attribute) => ({
+      key: `attribute-${attribute.key}`,
+      label: attribute.label,
+      value: attribute.value,
+      icon: <SlidersHorizontal />,
+    }),
+  );
+
   return [
     {
       key: "category",
@@ -116,6 +129,7 @@ function specRows(
       icon: <Category />,
     },
     ...recorded,
+    ...dynamicAttributes,
     {
       key: "maker",
       label: c.specMaker,

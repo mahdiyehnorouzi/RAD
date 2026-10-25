@@ -12,6 +12,10 @@ import { PasswordResetToken } from "./password-reset-token.entity";
 import { PaymentIntent } from "./payment-intent.entity";
 import { Product } from "./product.entity";
 import { ProductImage } from "./product-image.entity";
+import { ProductAttribute } from "./product-attribute.entity";
+import { ProductAttributeOption } from "./product-attribute-option.entity";
+import { ProductAttributeCategory } from "./product-attribute-category.entity";
+import { ProductAttributeValue } from "./product-attribute-value.entity";
 import { Review } from "./review.entity";
 import { ShapeQuestion } from "./shape-question.entity";
 import { User } from "./user.entity";
@@ -23,6 +27,10 @@ export const entities = [
   Vendor,
   Product,
   ProductImage,
+  ProductAttribute,
+  ProductAttributeOption,
+  ProductAttributeCategory,
+  ProductAttributeValue,
   CartItem,
   Favorite,
   Review,
@@ -55,6 +63,10 @@ export {
   PaymentIntent,
   Product,
   ProductImage,
+  ProductAttribute,
+  ProductAttributeOption,
+  ProductAttributeCategory,
+  ProductAttributeValue,
   Review,
   ShapeQuestion,
   User,
