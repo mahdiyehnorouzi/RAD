@@ -5,10 +5,27 @@ import { MigrationInterface, QueryRunner } from "typeorm";
  * (ProductAttribute/Option/Category/Value) — purely additive: no existing
  * table, column, or row is touched. Generated via `typeorm migration:generate`
  * by diffing the entities against a database that already had every other
- * table, then hand-reviewed; `down` drops exactly these four tables and
- * nothing else. Run explicitly with `npm run migration:run` (see
- * `apps/api/src/database/cli-data-source.ts`) rather than relying on
- * `TYPEORM_SYNCHRONIZE` in production.
+ * table, then hand-reviewed. Run explicitly with `npm run migration:run`
+ * (see `apps/api/src/database/cli-data-source.ts` and
+ * `docs/db-migration-runbook-product-attributes.md`) rather than relying
+ * on `TYPEORM_SYNCHRONIZE` in production — the real VPS release path
+ * (`scripts/production/rad_release.py`) already refuses to release with
+ * `TYPEORM_SYNCHRONIZE=true` set, so this is the only way these tables
+ * get created there.
+ *
+ * `down` unconditionally DROPs all four tables — safe only for undoing
+ * this migration before it has ever shipped to a database admins use (a
+ * local/dev/CI database, or a production run you are reverting within the
+ * same change window, before any attribute has been created). Once an
+ * admin may have created a real attribute or a product may have a real
+ * saved value, `migration:revert` must NEVER be run against that database
+ * — per this repo's established migration philosophy (see
+ * `docs/db-migration-runbook.md`), the only safe "undo" for an additive
+ * migration that real data may already depend on is restoring from a
+ * point-in-time backup taken before `up()` ran, never an automated DROP.
+ * Old application code is unaffected either way: it never references
+ * these tables, so leaving them in place (populated or not) after a
+ * code-only rollback is always safe and requires no action.
  */
 export class AddProductAttributes1792865771843 implements MigrationInterface {
   name = "AddProductAttributes1792865771843";
