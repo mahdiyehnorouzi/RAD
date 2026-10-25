@@ -18,8 +18,13 @@
 # there is no mode in which this account can run an arbitrary remote
 # command or get an interactive shell.
 #
-# Protocol (one SSH session = one release attempt):
+# Protocol (one SSH session = one release/migrate attempt):
 #   client runs:  ssh rad-deploy@<host> "deploy kind=<api|frontend> commit=<40-hex> run_id=<int> run_attempt=<int>"
+#             or: ssh rad-deploy@<host> "migrate commit=<40-hex> run_id=<int> run_attempt=<int>"
+#                 (migrate is always kind=api - there is nothing to migrate for
+#                 the frontend - and ships the exact same signed artifact
+#                 {release.json, release.sigstore.json, api-release.tar.gz} a
+#                 "deploy kind=api" of the same commit would)
 #                 with a tar stream of exactly { release.json, release.sigstore.json[, api-release.tar.gz] }
 #                 piped to that session's stdin.
 #   this script:  validates SSH_ORIGINAL_COMMAND, reads a SIZE-BOUNDED copy of stdin to a temp
@@ -62,15 +67,23 @@ fail() {
 
 [[ -n "${SSH_ORIGINAL_COMMAND:-}" ]] || fail "no command given (interactive access is not permitted for this key)"
 
-# Fixed grammar only: "deploy kind=(api|frontend) commit=<40 hex> run_id=<int> run_attempt=<int>".
+# Fixed grammar only: "deploy kind=(api|frontend) commit=<40 hex> run_id=<int> run_attempt=<int>"
+# or "migrate commit=<40 hex> run_id=<int> run_attempt=<int>" (always kind=api).
 # Anything else - extra words, shell metacharacters, a different verb - is rejected outright.
 if [[ "$SSH_ORIGINAL_COMMAND" =~ ^deploy\ kind=(api|frontend)\ commit=([0-9a-f]{40})\ run_id=([0-9]{1,18})\ run_attempt=([0-9]{1,18})$ ]]; then
+  ACTION="deploy"
   KIND="${BASH_REMATCH[1]}"
   COMMIT="${BASH_REMATCH[2]}"
   RUN_ID="${BASH_REMATCH[3]}"
   RUN_ATTEMPT="${BASH_REMATCH[4]}"
+elif [[ "$SSH_ORIGINAL_COMMAND" =~ ^migrate\ commit=([0-9a-f]{40})\ run_id=([0-9]{1,18})\ run_attempt=([0-9]{1,18})$ ]]; then
+  ACTION="migrate"
+  KIND="api"
+  COMMIT="${BASH_REMATCH[1]}"
+  RUN_ID="${BASH_REMATCH[2]}"
+  RUN_ATTEMPT="${BASH_REMATCH[3]}"
 else
-  fail "rejected command (does not match the fixed 'deploy kind=... commit=... run_id=... run_attempt=...' grammar)"
+  fail "rejected command (does not match the fixed 'deploy kind=... commit=... run_id=... run_attempt=...' or 'migrate commit=... run_id=... run_attempt=...' grammar)"
 fi
 
 WORKDIR="$(mktemp -d)"
@@ -110,6 +123,7 @@ STAGE_NAME="$(basename "$STAGE_DIR")"
 python3 - <<PY_REQUEST | sudo -n "$BROKER"
 import json
 print(json.dumps({
+    "action": "${ACTION}",
     "stage": "${STAGE_NAME}",
     "kind": "${KIND}",
     "commit": "${COMMIT}",

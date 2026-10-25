@@ -240,6 +240,13 @@ with open(broker, "rb") as source:
 
 runner_workflow_policy_verified = False
 production_environments_verified = False
+# Whether an operator has separately reviewed and approved the migrate
+# action (scripts/production/rad_release.py's migrate_api) for THIS
+# repository's migrations — see docs/automated-migrations.md. Like the two
+# flags above, this script cannot verify that review itself (it's a human
+# judgment about reviewed migration files, not something host state proves),
+# so it only ever preserves an existing value — never sets it true.
+migrations_verified = False
 existing = Path(candidate)
 if existing.exists():
     try:
@@ -247,6 +254,7 @@ if existing.exists():
         if isinstance(prior, dict):
             runner_workflow_policy_verified = prior.get("runner_workflow_policy_verified") is True
             production_environments_verified = prior.get("production_environments_verified") is True
+            migrations_verified = prior.get("migrations_verified") is True
     except (json.JSONDecodeError, OSError):
         pass  # no prior candidate to preserve from — start false, as before.
 
@@ -258,6 +266,7 @@ policy = dict(
     production_environments_verified=production_environments_verified,
     host_preflight_verified=(host_ok == "true"),
     nonproduction_rehearsal_verified=(rehearsal_ok == "true"),
+    migrations_verified=migrations_verified,
 )
 with open(candidate, "w") as out:
     json.dump(policy, out, indent=2); out.write("\n")

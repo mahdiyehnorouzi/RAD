@@ -23,6 +23,7 @@ import tempfile
 import time
 import urllib.error
 import urllib.request
+from urllib.parse import urlsplit
 
 REPO = "mahdiyehnorouzi/RAD"
 BASE = Path("/var/lib/rad-release")
@@ -35,6 +36,21 @@ COMPOSE = FRONTEND / "docker-compose.frontend-vps.yml"
 SERVICE = "rad-api.service"
 GH = "/usr/local/bin/gh"
 ACTIVATION = Path("/etc/rad-release/activation.json")
+# Where the migrate action writes its pre-migration pg_dump before running
+# anything. Root-private, same tree as every other release-time state this
+# broker owns — never shipped off-host from here (see
+# docs/automated-migrations.md for why that stays a separate, already-
+# existing operator backup pipeline rather than new broker-held credentials).
+BACKUP_DIR = BASE / "backups"
+# A migration filename is always "<13-digit-ms-timestamp>-<ClassName>.ts"
+# (TypeORM's own `migration:generate` convention, unchanged by this repo —
+# see apps/api/src/database/migrations/*.ts). TypeORM's `migrations` table
+# stores the *class* name, which is that same ClassName with the timestamp
+# appended, e.g. file "1792865771843-AddProductAttributes.ts" is recorded as
+# "AddProductAttributes1792865771843". MIGRATION_FILE matches the filename
+# form (what the signed manifest lists); migration_record_name() derives the
+# stored-table form from it.
+MIGRATION_FILE = re.compile(r"([0-9]{13})-([A-Za-z0-9_]+)\.ts")
 # Offline Sigstore trust root. This host's egress to the live public-good TUF
 # CDN (tuf-repo-cdn.sigstore.dev) returns HTTP 403 even with no local firewall
 # or proxy blocking it (verified: iptables OUTPUT policy ACCEPT, ufw allows
@@ -54,10 +70,18 @@ def require(condition, message):
         raise RuntimeError(message)
 
 
-def run(*args, capture=True, check=True):
-    return subprocess.run([str(a) for a in args], env=SAFE_ENV, check=check,
+def run(*args, capture=True, check=True, env=None, cwd=None, timeout=600):
+    return subprocess.run([str(a) for a in args], env=env if env is not None else SAFE_ENV, check=check,
                           stdout=subprocess.PIPE if capture else None,
-                          stderr=subprocess.PIPE, text=True, timeout=600)
+                          stderr=subprocess.PIPE, text=True, timeout=timeout, cwd=cwd)
+
+
+def migration_record_name(filename):
+    """"<timestamp>-<ClassName>.ts" -> "<ClassName><timestamp>", TypeORM's stored name."""
+    match = MIGRATION_FILE.fullmatch(filename)
+    require(match, f"Unexpected migration filename: {filename}")
+    timestamp, class_name = match.groups()
+    return f"{class_name}{timestamp}"
 
 
 def atomic_json(path, data):
@@ -108,6 +132,7 @@ def validate_activation():
     require(TRUSTED_ROOT.stat().st_mode & 0o022 == 0, "Trusted root must not be group/world writable")
     require(policy.get("trusted_root_sha256") == file_hash(TRUSTED_ROOT),
             "Installed Sigstore trusted root requires root re-approval")
+    return policy
 
 
 def snapshot_input(stage, name, destination, limit):
@@ -139,6 +164,9 @@ def validate_manifest(manifest, request):
     if request["kind"] == "api":
         require(re.fullmatch(r"[0-9a-f]{64}", manifest.get("archive_sha256", "")), "Invalid archive digest")
         require(re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+(?:[-+][A-Za-z0-9.-]+)?", manifest.get("version", "")), "Invalid version")
+        migrations = manifest.get("migrations")
+        require(isinstance(migrations, list) and all(isinstance(m, str) and MIGRATION_FILE.fullmatch(m) for m in migrations),
+                "Invalid migrations list")
     else:
         images = manifest.get("images", {})
         require(isinstance(images, dict) and 1 <= len(images) <= 2, "No images selected")
@@ -301,6 +329,105 @@ def api_preflight():
     require(not service_property("Environment"), "Review/remove inline service Environment overrides first")
     before = health("http://127.0.0.1:4000/health")
     return {"previous": str(previous), "version": before["version"], "env_sha256": file_hash(ENV_FILE)}
+
+
+def database_url_from_env():
+    """Read DATABASE_URL from the same root-protected env file api_preflight()
+    already requires — never from this process's own environment, and never
+    printed or included in any exception message."""
+    protected(ENV_FILE)
+    environment = ENV_FILE.read_text()
+    matches = re.findall(r'^\s*DATABASE_URL\s*=\s*"?([^"\n]*?)"?\s*$', environment, re.MULTILINE)
+    require(matches and matches[-1].strip(), "DATABASE_URL not set in production env file")
+    return matches[-1].strip()
+
+
+def migrate_preflight():
+    """Mirrors api_preflight()'s Node/arch checks; migrations run from the
+    same verified artifact, over the same DATABASE_URL api_preflight()
+    protects, but never touch systemd/the live release symlink."""
+    require(os.uname().machine == "x86_64", "API artifact requires Linux x86_64")
+    node_version = run("/usr/bin/node", "--version").stdout.strip()
+    require(re.fullmatch(r"v[0-9]+\.[0-9]+\.[0-9]+", node_version) and int(node_version.split(".")[0][1:]) >= 22,
+            "API requires Node.js 22 or newer at /usr/bin/node")
+    npm = shutil.which("npm")
+    require(npm, "npm not found on PATH")
+    database_url = database_url_from_env()
+    environment = ENV_FILE.read_text()
+    def value(key):
+        values = re.findall(rf'^\s*{key}\s*=\s*["\']?([^"\'\n]*?)["\']?\s*$', environment, re.MULTILINE)
+        return values[-1].strip() if values else None
+    require(value("NODE_ENV") == "production" and value("TYPEORM_SYNCHRONIZE") == "false",
+            "Explicit production/no-schema-sync settings required before migrating")
+    host = urlsplit(database_url).hostname or ""
+    require(host, "Could not parse database host from DATABASE_URL")
+    return npm, database_url, host
+
+
+def applied_migration_records(database_url):
+    """The exact set of names TypeORM's own `migrations` table reports as
+    already executed. An absent table (never migrated before) means none."""
+    try:
+        result = run("/usr/bin/psql", database_url, "-tAc", 'SELECT name FROM migrations ORDER BY id;')
+    except subprocess.CalledProcessError as error:
+        if "does not exist" in (error.stderr or ""):
+            return set()
+        raise
+    return {line.strip() for line in result.stdout.splitlines() if line.strip()}
+
+
+def pending_migrations(manifest, database_url):
+    applied = applied_migration_records(database_url)
+    return [name for name in manifest["migrations"] if migration_record_name(name) not in applied]
+
+
+def backup_database(database_url, label):
+    protected(BASE)
+    BACKUP_DIR.mkdir(mode=0o700, exist_ok=True)
+    protected(BACKUP_DIR)
+    stamp = time.strftime("%Y%m%dT%H%M%SZ", time.gmtime())
+    dump = BACKUP_DIR / f"rad-pre-migration-{label}-{stamp}.dump"
+    require(not dump.exists(), "Backup target already exists")
+    run("/usr/bin/pg_dump", database_url, "--format=custom", f"--file={dump}", timeout=1200)
+    dump.chmod(0o600)
+    require(dump.stat().st_size > 0, "Backup produced an empty file")
+    # Prove the dump is at least structurally readable before trusting it as
+    # the migration's rollback path — never a real restore near production;
+    # see docs/automated-migrations.md for the separate, already-existing
+    # off-server/encrypted retention this directory feeds into.
+    run("/usr/bin/pg_restore", "--list", dump, timeout=300)
+    return dump
+
+
+def run_pending_migrations(npm, api_dir, database_url, host):
+    env = {**SAFE_ENV, "DATABASE_URL": database_url, "RAD_ALLOW_REMOTE_DB_WRITE": host}
+    return run(npm, "run", "migration:run", env=env, cwd=api_dir, timeout=1800)
+
+
+def migrate_api(manifest, directory, transaction, migrations_verified):
+    npm, database_url, host = migrate_preflight()
+    pending = pending_migrations(manifest, database_url)
+    if not pending:
+        atomic_json(transaction / "migrate-result.json", {"pending": [], "backup": None})
+        print("No pending migrations; nothing to do.")
+        return
+    require(migrations_verified,
+            "Pending migrations require operator approval: set migrations_verified=true in "
+            "/etc/rad-release/activation.json after reviewing this release (see docs/automated-migrations.md)")
+    archive = directory / "api-release.tar.gz"
+    require(file_hash(archive) == manifest["archive_sha256"], "API artifact checksum mismatch")
+    with tempfile.TemporaryDirectory(prefix="migrate-", dir=BASE) as extracted:
+        target = Path(extracted)
+        unpack_api(archive, target)
+        api_dir = target / "apps/api"
+        require((api_dir / "src/database/cli-data-source.ts").exists(), "Incomplete artifact: cli-data-source.ts")
+        dump = backup_database(database_url, manifest["commit"][:12])
+        atomic_json(transaction / "migrate-result.json", {"pending": pending, "backup": str(dump), "status": "attempting"})
+        run_pending_migrations(npm, api_dir, database_url, host)
+        still_pending = pending_migrations(manifest, database_url)
+        require(not still_pending, f"Migration run did not apply everything expected: {still_pending}")
+    atomic_json(transaction / "migrate-result.json", {"pending": pending, "backup": str(dump), "status": "applied"})
+    print(f"Applied {len(pending)} migration(s): {', '.join(pending)}")
 
 
 def swap_release(path):
@@ -478,8 +605,9 @@ def main():
     protected(Path(GH))
     # A caller cannot hold the production lock by keeping stdin open. Refuse
     # concurrent broker processes instead of accumulating privileged waiters.
+    policy = None
     if len(sys.argv) == 1:
-        validate_activation()
+        policy = validate_activation()
     request = read_request() if len(sys.argv) == 1 else None
     with open(BASE / "release.lock", "a") as lock:
         try:
@@ -493,7 +621,10 @@ def main():
             rollback(BASE / "transactions" / name)
             return
         require(len(sys.argv) == 1, "Arguments are not accepted")
+        action = request.get("action", "deploy")
+        require(action in ("deploy", "migrate"), "Invalid action")
         require(request.get("kind") in ("api", "frontend"), "Invalid release kind")
+        require(action == "deploy" or request["kind"] == "api", "Only API artifacts can be migrated")
         require(isinstance(request.get("stage"), str) and STAGE.fullmatch(request["stage"]), "Invalid staging directory")
         require(isinstance(request.get("commit"), str) and SHA.fullmatch(request["commit"]), "Invalid commit")
         for key in ("run_id", "run_attempt"):
@@ -503,6 +634,21 @@ def main():
             snapshot_input(request["stage"], "release.json", directory / "release.json", 65536)
             snapshot_input(request["stage"], "release.sigstore.json", directory / "release.sigstore.json", 4 * 1024**2)
             manifest = verify_manifest(directory, request)
+            if request["kind"] == "api":
+                snapshot_input(request["stage"], "api-release.tar.gz", directory / "api-release.tar.gz", 2 * 1024**3)
+            if action == "migrate":
+                # Deliberately NOT the same high-water mark as deploys (a
+                # commit's migrations stay the same across many later,
+                # unrelated deploys) - migrate's own idempotency (it only
+                # ever applies migrations missing from the live database,
+                # verified against its own history, not a local counter) is
+                # what makes replays/retries safe, not a sequence number.
+                transaction = BASE / "transactions" / f"{manifest['run_id']}-{manifest['run_attempt']}-migrate"
+                transaction.mkdir(parents=True, mode=0o700)
+                atomic_json(transaction / "release.json", manifest)
+                migrate_api(manifest, directory, transaction, policy.get("migrations_verified") is True)
+                print(f"Migration check complete for {manifest['commit']}")
+                return
             state_path = BASE / f"last-{request['kind']}.json"
             state = json.loads(state_path.read_text()) if state_path.exists() else {}
             sequence = validate_sequence(manifest, state)
@@ -512,7 +658,6 @@ def main():
             # Burn this sequence BEFORE activation; retry requires a new attempt.
             atomic_json(state_path, {"sequence": sequence, "status": "attempting", "commit": manifest["commit"]})
             if request["kind"] == "api":
-                snapshot_input(request["stage"], "api-release.tar.gz", directory / "api-release.tar.gz", 2 * 1024**3)
                 release_api(manifest, directory, transaction)
             else:
                 release_frontend(manifest, directory, transaction)

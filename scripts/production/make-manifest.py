@@ -19,6 +19,16 @@ if kind == "api":
     with open("api-release.tar.gz", "rb") as archive:
         manifest["archive_sha256"] = hashlib.file_digest(archive, "sha256").hexdigest()
     manifest["version"] = Path("VERSION").read_text().strip()
+    # The exact migration files this artifact ships, bound into the same
+    # signed manifest as the release itself — the migrate broker action
+    # (scripts/production/rad_release.py) verifies the production database's
+    # applied-migrations history against this list before touching anything,
+    # so "which migrations are pending" is never computed from unsigned,
+    # runner-supplied input.
+    migrations_dir = Path("apps/api/src/database/migrations")
+    manifest["migrations"] = sorted(
+        p.name for p in migrations_dir.glob("*.ts") if not p.name.endswith(".spec.ts")
+    ) if migrations_dir.is_dir() else []
 else:
     manifest["images"] = {}
     for service in ("storefront", "admin"):

@@ -198,7 +198,7 @@ echo "== Scenario: prior GitHub-side approvals are preserved, not reset or auto-
 # GitHub-side flags by hand. A re-run (e.g. just to refresh trusted_root
 # pinning) must carry those forward exactly, not wipe them to false.
 cat > "$ACTIVATION_DIR/activation.json.candidate" <<JSON
-{"schema":1,"repository":"mahdiyehnorouzi/RAD","enabled":false,"runner_workflow_policy_verified":true,"production_environments_verified":true,"host_preflight_verified":false,"nonproduction_rehearsal_verified":false,"broker_sha256":"stale","trusted_root_sha256":"stale"}
+{"schema":1,"repository":"mahdiyehnorouzi/RAD","enabled":false,"runner_workflow_policy_verified":true,"production_environments_verified":true,"host_preflight_verified":false,"nonproduction_rehearsal_verified":false,"migrations_verified":true,"broker_sha256":"stale","trusted_root_sha256":"stale"}
 JSON
 run_prep "$(disabled_policy false false)" keep-candidate >/dev/null 2>&1 || true
 CANDIDATE_JSON="$(cat "$ACTIVATION_DIR/activation.json.candidate")"
@@ -206,9 +206,11 @@ check "runner_workflow_policy_verified=true is preserved across a re-run" \
   "$(python3 -c "import json;print(str(json.loads('''$CANDIDATE_JSON''').get('runner_workflow_policy_verified')==True).lower())")"
 check "production_environments_verified=true is preserved across a re-run" \
   "$(python3 -c "import json;print(str(json.loads('''$CANDIDATE_JSON''').get('production_environments_verified')==True).lower())")"
+check "migrations_verified=true is preserved across a re-run" \
+  "$(python3 -c "import json;print(str(json.loads('''$CANDIDATE_JSON''').get('migrations_verified')==True).lower())")"
 
 echo
-echo "== Scenario: no prior candidate -> GitHub-side flags start false, never auto-approved =="
+echo "== Scenario: no prior candidate -> GitHub-side/migration flags start false, never auto-approved =="
 rm -f "$ACTIVATION_DIR/activation.json.candidate"
 run_prep "$(disabled_policy false false)" >/dev/null 2>&1 || true
 CANDIDATE_JSON="$(cat "$ACTIVATION_DIR/activation.json.candidate")"
@@ -216,6 +218,8 @@ check "runner_workflow_policy_verified defaults to false, not auto-approved" \
   "$(python3 -c "import json;print(str(json.loads('''$CANDIDATE_JSON''').get('runner_workflow_policy_verified')==False).lower())")"
 check "production_environments_verified defaults to false, not auto-approved" \
   "$(python3 -c "import json;print(str(json.loads('''$CANDIDATE_JSON''').get('production_environments_verified')==False).lower())")"
+check "migrations_verified defaults to false, not auto-approved" \
+  "$(python3 -c "import json;print(str(json.loads('''$CANDIDATE_JSON''').get('migrations_verified')==False).lower())")"
 
 echo
 echo "== Scenario: refuses to use the same host for production and restore =="

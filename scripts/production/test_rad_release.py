@@ -22,7 +22,8 @@ class ReleaseTests(unittest.TestCase):
         self.root = Path(self.temp.name)
         self.request = dict(kind="api", commit="a" * 40, run_id=123, run_attempt=1, stage="release-123456")
         self.manifest = dict(schema=1, repository=broker.REPO, kind="api", commit="a" * 40,
-                             run_id=123, run_attempt=1, version="1.5.1", archive_sha256="b" * 64)
+                             run_id=123, run_attempt=1, version="1.5.1", archive_sha256="b" * 64,
+                             migrations=["1792865771843-AddProductAttributes.ts"])
 
     def test_replay_and_out_of_order_runs_are_rejected(self):
         for sequence in ([123, 1], [123, 2], [124, 1]):
@@ -418,6 +419,116 @@ class ReleaseTests(unittest.TestCase):
             broker.frontend_smoke({"storefront": "x", "admin": "y"})
         self.assertIn("https://admin.rad-object.com/", requested)
         self.assertNotIn("https://admin.rad-object.com/login", requested)
+
+    def test_migration_record_name_derives_typeorm_stored_name(self):
+        self.assertEqual(broker.migration_record_name("1792865771843-AddProductAttributes.ts"),
+                         "AddProductAttributes1792865771843")
+        for bad in ("not-a-migration.ts", "1792865771843-Bad Name.ts", "AddProductAttributes.ts"):
+            with self.subTest(bad=bad), self.assertRaises(RuntimeError):
+                broker.migration_record_name(bad)
+
+    def test_manifest_requires_well_formed_migrations_list_for_api(self):
+        broker.validate_manifest(self.manifest, self.request)
+        for migrations in (None, "not-a-list", ["bad name.ts"], [123]):
+            with self.subTest(migrations=migrations), self.assertRaisesRegex(RuntimeError, "migrations"):
+                broker.validate_manifest({**self.manifest, "migrations": migrations}, self.request)
+        # Frontend manifests never carry/require this field.
+        broker.validate_manifest({**self.manifest, "kind": "frontend", "migrations": None,
+                                  "images": {"admin": "ghcr.io/mahdiyehnorouzi/rad-admin@sha256:" + "1" * 64}},
+                                 {**self.request, "kind": "frontend"})
+
+    def migrate_fixture(self, applied=()):
+        transaction = self.root / "transaction"
+        transaction.mkdir()
+        directory = self.root / "verified"
+        directory.mkdir()
+        entries = [(name, content, "file") for name, content in [
+            ("apps/api/dist/main.js", b"// built"), ("apps/api/package.json", b"{}"),
+            ("apps/api/src/database/cli-data-source.ts", b"// cli"), ("tsconfig.json", b"{}"),
+            ("node_modules/@nestjs/core/package.json", b"{}"), ("VERSION", b"1.5.1")]]
+        self.archive(entries)
+        (directory / "api-release.tar.gz").write_bytes((self.root / "api-release.tar.gz").read_bytes())
+        self.manifest["archive_sha256"] = broker.file_hash(directory / "api-release.tar.gz")
+        calls = {"backup": [], "run": []}
+        state = set(applied)
+        def fake_applied(_database_url):
+            return set(state)
+        def fake_backup(_database_url, _label):
+            calls["backup"].append(True)
+            return self.root / "backup.dump"
+        def fake_run(_npm, _api_dir, _database_url, _host):
+            calls["run"].append(True)
+            state.update(broker.migration_record_name(name) for name in self.manifest["migrations"])
+        for name, value in (("migrate_preflight", lambda: ("npm", "postgresql://prod-host/rad", "prod-host")),
+                            ("applied_migration_records", fake_applied),
+                            ("backup_database", fake_backup),
+                            ("run_pending_migrations", fake_run),
+                            ("BASE", self.root)):
+            patcher = patch.object(broker, name, value)
+            patcher.start()
+            self.addCleanup(patcher.stop)
+        return directory, transaction, calls
+
+    def test_migrate_no_pending_migrations_is_a_fast_noop(self):
+        directory, transaction, calls = self.migrate_fixture(applied={"AddProductAttributes1792865771843"})
+        broker.migrate_api(self.manifest, directory, transaction, migrations_verified=False)
+        self.assertEqual(calls, {"backup": [], "run": []})
+        self.assertEqual(json.loads((transaction / "migrate-result.json").read_text()), {"pending": [], "backup": None})
+
+    def test_migrate_pending_without_operator_approval_is_refused(self):
+        directory, transaction, calls = self.migrate_fixture(applied=())
+        with self.assertRaisesRegex(RuntimeError, "operator approval"):
+            broker.migrate_api(self.manifest, directory, transaction, migrations_verified=False)
+        self.assertEqual(calls, {"backup": [], "run": []})
+
+    def test_migrate_approved_pending_backs_up_then_runs(self):
+        directory, transaction, calls = self.migrate_fixture(applied=())
+        broker.migrate_api(self.manifest, directory, transaction, migrations_verified=True)
+        self.assertEqual(calls, {"backup": [True], "run": [True]})
+        result = json.loads((transaction / "migrate-result.json").read_text())
+        self.assertEqual(result["status"], "applied")
+        self.assertEqual(result["pending"], self.manifest["migrations"])
+
+    def test_migrate_tampered_archive_never_runs_migration(self):
+        directory, transaction, calls = self.migrate_fixture(applied=())
+        with open(directory / "api-release.tar.gz", "ab") as out:
+            out.write(b"tamper")
+        with self.assertRaisesRegex(RuntimeError, "checksum"):
+            broker.migrate_api(self.manifest, directory, transaction, migrations_verified=True)
+        self.assertEqual(calls, {"backup": [], "run": []})
+
+    def test_migrate_run_failure_stops_before_api_deploy_and_leaves_attempting_state(self):
+        directory, transaction, calls = self.migrate_fixture(applied=())
+        with patch.object(broker, "run_pending_migrations", side_effect=RuntimeError("migration failed")):
+            with self.assertRaisesRegex(RuntimeError, "migration failed"):
+                broker.migrate_api(self.manifest, directory, transaction, migrations_verified=True)
+        result = json.loads((transaction / "migrate-result.json").read_text())
+        self.assertEqual(result["status"], "attempting")
+
+    def test_migrate_backup_failure_stops_before_running_any_migration(self):
+        directory, transaction, calls = self.migrate_fixture(applied=())
+        with patch.object(broker, "backup_database", side_effect=RuntimeError("backup failed")):
+            with self.assertRaisesRegex(RuntimeError, "backup failed"):
+                broker.migrate_api(self.manifest, directory, transaction, migrations_verified=True)
+        self.assertEqual(calls["run"], [])
+
+    def test_migrate_verifies_nothing_left_pending_after_running(self):
+        # run_pending_migrations "succeeds" but the database still reports the
+        # migration missing afterward (e.g. a silently swallowed error) - the
+        # broker must not report success in that case.
+        directory, transaction, calls = self.migrate_fixture(applied=())
+        with patch.object(broker, "applied_migration_records", return_value=set()):
+            with self.assertRaisesRegex(RuntimeError, "did not apply everything expected"):
+                broker.migrate_api(self.manifest, directory, transaction, migrations_verified=True)
+
+    def test_migrate_retry_after_success_is_idempotent_and_skips_backup(self):
+        directory, transaction, calls = self.migrate_fixture(applied=())
+        broker.migrate_api(self.manifest, directory, transaction, migrations_verified=True)
+        self.assertEqual(calls["backup"], [True])
+        with patch.object(broker, "applied_migration_records", return_value={"AddProductAttributes1792865771843"}):
+            broker.migrate_api(self.manifest, directory, transaction, migrations_verified=True)
+        self.assertEqual(calls["backup"], [True])  # not called again
+        self.assertEqual(calls["run"], [True])  # not called again either
 
     def test_rollback_verification_succeeds_without_admin_login_route(self):
         transaction = self.root / "transaction"
