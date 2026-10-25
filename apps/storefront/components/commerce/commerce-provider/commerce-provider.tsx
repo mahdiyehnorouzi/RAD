@@ -60,6 +60,13 @@ type CommerceContextValue = {
     id: string,
     receipt: PaymentReceiptInput,
   ) => Promise<Order>;
+  /** Called once, after ZarinPal redirects back with Authority/Status. */
+  verifyPayment: (
+    id: string,
+    input: { authority?: string; status?: string },
+  ) => Promise<Order>;
+  /** Starts a fresh gateway session for the same pending order. */
+  retryPayment: (id: string) => Promise<Order>;
   cancelOrder: (id: string) => Promise<Order>;
   reviews: Review[];
   addReview: (review: Omit<Review, "id" | "createdAt">) => Promise<void>;
@@ -284,6 +291,23 @@ export function CommerceProvider({ children }: { children: React.ReactNode }) {
         const updated = await api<Order>(`/orders/${id}/confirm-payment`, {
           method: "POST",
           body: JSON.stringify(receipt),
+        });
+        setOrders((current) => upsertOrder(current, updated));
+        await refresh();
+        return updated;
+      },
+      verifyPayment: async (id, input) => {
+        const updated = await api<Order>(`/orders/${id}/payment/verify`, {
+          method: "POST",
+          body: JSON.stringify(input),
+        });
+        setOrders((current) => upsertOrder(current, updated));
+        await refresh();
+        return updated;
+      },
+      retryPayment: async (id) => {
+        const updated = await api<Order>(`/orders/${id}/payment/retry`, {
+          method: "POST",
         });
         setOrders((current) => upsertOrder(current, updated));
         await refresh();

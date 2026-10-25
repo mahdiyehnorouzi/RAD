@@ -11,7 +11,7 @@ import { toAdminCategory, toStoreCategory } from "../catalog/category";
 import { normalizeProductStatus } from "../inventory/product-status";
 import { normalizeStoreOrderStatus } from "../orders/store-order-status";
 import { toPolicyAcceptance } from "../policies/policy-acceptance";
-import type { OrderPaymentStatus } from "../orders/type";
+import type { OrderPaymentProvider, OrderPaymentStatus } from "../orders/type";
 
 export { toAdminCategory, toStoreCategory };
 
@@ -99,13 +99,16 @@ export function toAdminOrder(
       order.policiesAcceptedAt,
     ),
     paymentDueAt: order.paymentDueAt?.getTime(),
+    paymentProvider: payment?.provider as OrderPaymentProvider | undefined,
     paymentStatus: payment?.status as OrderPaymentStatus | undefined,
     paymentAmount: payment?.amount,
     receiptImage: payment?.receiptImage || undefined,
     paymentTrackingNumber: payment?.trackingNumber || undefined,
+    paymentGatewayRefId: payment?.gatewayRefId || undefined,
     paymentSubmittedAt: payment?.submittedAt?.getTime(),
     receiptSubmissions: payment?.receiptSubmissions ?? 0,
     paymentReviewedAt: payment?.reviewedAt?.getTime(),
+    paymentVerifiedAt: payment?.verifiedAt?.getTime(),
     rejectionReason: payment?.rejectionReason || undefined,
   };
 }

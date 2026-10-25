@@ -9,7 +9,12 @@ export interface ManualCardDetails {
 }
 
 export type PaymentStartResult =
-  | { kind: "redirect"; redirectUrl: string; provider: PaymentProvider }
+  | {
+      kind: "redirect";
+      redirectUrl: string;
+      provider: PaymentProvider;
+      authority: string;
+    }
   | {
       kind: "manual_card";
       provider: PaymentProvider;
@@ -42,29 +47,38 @@ export function manualCardDetails(): ManualCardDetails {
   const cardNumber = formatCardNumber(
     process.env.PAYMENT_CARD_NUMBER || "6037998155667788",
   );
-  const cardHolder =
-    process.env.PAYMENT_CARD_HOLDER?.trim() || "استودیو رَد";
+  const cardHolder = process.env.PAYMENT_CARD_HOLDER?.trim() || "استودیو رَد";
   const bankName = process.env.PAYMENT_CARD_BANK?.trim() || undefined;
   return { cardNumber, cardHolder, bankName };
 }
 
 /**
  * Start payment for an order whose works are held for the customer.
- * Today: returns manual card instructions (no redirect).
- * Later: call a PaymentGateway adapter from services/payment/contracts
- * and return `{ kind: "redirect", redirectUrl }`.
+ * `PAYMENT_MODE=gateway` calls ZarinPal and returns a redirect; otherwise
+ * returns manual card transfer instructions.
  */
-export function startPaymentSession(_input: {
+export async function startPaymentSession(input: {
   orderId: string;
   amount: number;
   currency: "IRR" | "USD";
   callbackUrl: string;
-}): PaymentStartResult {
+  mobile?: string;
+}): Promise<PaymentStartResult> {
   if (paymentMode() === "gateway") {
-    // Hook point for Zarinpal (or other) PaymentGateway.create(...)
-    throw new Error(
-      "PAYMENT_MODE=gateway but no PaymentGateway adapter is configured yet. Set PAYMENT_MODE=manual_card until the gateway is wired.",
-    );
+    const { requestZarinpalPayment } = await import("./zarinpal.adapter");
+    const session = await requestZarinpalPayment({
+      amountToman: input.amount,
+      callbackUrl: input.callbackUrl,
+      description: `سفارش رَد ${input.orderId}`,
+      orderId: input.orderId,
+      mobile: input.mobile,
+    });
+    return {
+      kind: "redirect",
+      redirectUrl: session.redirectUrl,
+      provider: "zarinpal",
+      authority: session.authority,
+    };
   }
 
   return {

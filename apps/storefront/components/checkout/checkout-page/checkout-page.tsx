@@ -195,10 +195,12 @@ export function CheckoutPage() {
       });
       setLeaving(true);
       clearDraft();
-      if (created.payment?.redirectUrl) {
-        window.location.assign(created.payment.redirectUrl);
-        return;
-      }
+      // Always land on the Review & Payment screen next — even for a
+      // gateway order, which already has a live redirectUrl at this point.
+      // Jumping straight to the external gateway from here would skip the
+      // approved "review your order, then pay" step entirely; checkout-
+      // payment.tsx is what actually shows the summary and the "پرداخت و
+      // تکمیل خرید" button that starts the real redirect.
       router.push(href(`/checkout/${encodeURIComponent(created.id)}`));
       void clear().catch(() => {});
     } catch (err) {
@@ -215,7 +217,7 @@ export function CheckoutPage() {
   if (leaving) {
     return (
       <section className="checkout-flow section" aria-busy="true">
-        <CheckoutSteps current={1} />
+        <CheckoutSteps current={2} />
         <p className="checkout-flow-leaving" role="status">
           {c.leaving}
         </p>
@@ -226,7 +228,7 @@ export function CheckoutPage() {
   if (!ready) {
     return (
       <section className="checkout-flow section" aria-busy="true">
-        <CheckoutSteps current={0} />
+        <CheckoutSteps current={1} />
         <CardListSkeleton count={2} />
       </section>
     );
@@ -239,7 +241,7 @@ export function CheckoutPage() {
   if (!items.length) {
     return (
       <section className="checkout-flow section">
-        <CheckoutSteps current={0} />
+        <CheckoutSteps current={1} />
         <div className="checkout-alert" role="alert">
           <p>{c.holdGone}</p>
           <ButtonLink href="/cart" outline>
@@ -265,7 +267,7 @@ export function CheckoutPage() {
 
   return (
     <section className="checkout-flow section">
-      <CheckoutSteps current={0} />
+      <CheckoutSteps current={1} />
       <header className="checkout-flow-head">
         <h1>{c.detailsTitle}</h1>
         <p>{c.detailsLede}</p>

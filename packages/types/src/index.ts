@@ -289,7 +289,14 @@ export interface Review {
 export type PaymentProvider = "sandbox" | "manual_card" | "zarinpal";
 export type PaymentMode = "manual_card" | "gateway";
 export type PaymentStatus =
-  "created" | "redirected" | "submitted" | "verified" | "rejected" | "failed";
+  | "created"
+  | "redirected"
+  | "submitted"
+  | "verified"
+  | "rejected"
+  | "failed"
+  | "verify_error"
+  | "verify_conflict";
 export interface ManualCardPayment {
   cardNumber: string;
   cardHolder: string;
@@ -310,8 +317,11 @@ export interface OrderPayment {
   receiptImage?: string;
   /** Bank transfer tracking / reference number entered with the receipt. */
   trackingNumber?: string;
+  /** ZarinPal reference number once a gateway payment is verified. */
+  gatewayRefId?: string;
   submittedAt?: number;
   reviewedAt?: number;
+  verifiedAt?: number;
   /** Why RAD refused the receipt; set when `status` is `rejected`. */
   rejectionReason?: string;
   /** `pending_payment` orders expire and restock their works after this (epoch ms). */

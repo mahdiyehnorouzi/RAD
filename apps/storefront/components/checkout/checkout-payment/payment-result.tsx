@@ -4,6 +4,7 @@ import { Check, CircleSlash, Clock } from "lucide-react";
 import type { Order } from "@rad/types";
 import { useLocale } from "@/components/i18n";
 import { ButtonLink } from "@/components/ui/button-link";
+import { OrderSprig } from "@/components/orders/order-detail/order-sprig";
 import { checkoutCopy } from "../const";
 
 const CLOSED = ["expired", "rejected", "cancelled", "returned"] as const;
@@ -46,6 +47,7 @@ export function PaymentResult({
 
   return (
     <section className={`payment-result${closed ? " is-closed" : ""}`}>
+      {!closed && !reviewing ? <OrderSprig /> : null}
       {reviewing ? (
         <img
           className="payment-result-art"

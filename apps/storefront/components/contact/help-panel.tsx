@@ -41,7 +41,9 @@ export function HelpPanel({
       ? c.checkoutTitle
       : tone === "payment"
         ? c.paymentTitle
-        : c.orderTitle;
+        : tone === "gatewayPayment"
+          ? c.gatewayPaymentTitle
+          : c.orderTitle;
   const template = orderId
     ? c.templateOrder.replace("{id}", orderId)
     : subject
@@ -52,7 +54,8 @@ export function HelpPanel({
     : subject
       ? c.copyNoteSubject
       : null;
-  const topic = tone === "payment" ? "payment" : "order";
+  const topic =
+    tone === "payment" || tone === "gatewayPayment" ? "payment" : "order";
 
   const copyText = async () => {
     window.clearTimeout(resetTimer.current);
