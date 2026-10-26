@@ -11,7 +11,14 @@ import {
 import { InjectRepository } from "@nestjs/typeorm";
 import { randomBytes } from "node:crypto";
 import { hash } from "bcryptjs";
-import { DataSource, In, IsNull, Not, Repository } from "typeorm";
+import {
+  DataSource,
+  In,
+  IsNull,
+  Not,
+  QueryFailedError,
+  Repository,
+} from "typeorm";
 import { generateVerificationCode } from "../auth/reset-token.util";
 import { MailService } from "../mail/mail.service";
 import {
@@ -338,27 +345,24 @@ export class AdminService {
           story: input.description.trim(),
           vendorId,
         })
-      : await this.products.save(
-          this.products.create({
-            slug,
-            name: input.name.trim(),
-            subtitle,
-            tomanPrice: input.price,
-            usdPrice,
-            color: "#8a4938",
-            accent: "#ead9bd",
-            shape: "tall",
-            category,
-            status: input.status,
-            story: input.description.trim(),
-            details,
-            en,
-            vendorId,
-            radNumber: await nextRadNumber(this.products),
-            year: new Date().getFullYear(),
-            sortOrder: await this.nextSortOrder(),
-          }),
-        );
+      : await this.createProductWithRadNumber({
+          slug,
+          name: input.name.trim(),
+          subtitle,
+          tomanPrice: input.price,
+          usdPrice,
+          color: "#8a4938",
+          accent: "#ead9bd",
+          shape: "tall",
+          category,
+          status: input.status,
+          story: input.description.trim(),
+          details,
+          en,
+          vendorId,
+          year: new Date().getFullYear(),
+          sortOrder: await this.nextSortOrder(),
+        });
 
     await this.replaceImages(
       product.id,
@@ -379,6 +383,38 @@ export class AdminService {
       saved,
       await this.productAttributes.valuesForProduct(product.id),
     );
+  }
+
+  /**
+   * `nextRadNumber()` reads `MAX(radNumber)` outside any lock, so two
+   * concurrent "create product" saves can read the same max and both
+   * attempt the next number. The DB's unique constraint rejects the loser
+   * rather than letting it duplicate the number, but without this retry
+   * that surfaces as a confusing failed save instead of just getting the
+   * next available number transparently.
+   */
+  private async createProductWithRadNumber(
+    product: Omit<Parameters<Repository<Product>["create"]>[0], "radNumber">,
+    attempt = 1,
+  ): Promise<Product> {
+    try {
+      return await this.products.save(
+        this.products.create({
+          ...product,
+          radNumber: await nextRadNumber(this.products),
+        }),
+      );
+    } catch (error) {
+      const isRadNumberConflict =
+        error instanceof QueryFailedError &&
+        String((error.driverError as { detail?: string })?.detail).includes(
+          "radNumber",
+        );
+      if (isRadNumberConflict && attempt < 3) {
+        return this.createProductWithRadNumber(product, attempt + 1);
+      }
+      throw error;
+    }
   }
 
   async deleteProduct(id: string) {
