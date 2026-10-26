@@ -104,6 +104,7 @@ export function ProductMedia({
   showStatusBadge = true,
   preserveTransparentBackground = false,
   priority = false,
+  fetchPriority,
   sizes = "100vw",
 }: {
   product: Product;
@@ -113,6 +114,19 @@ export function ProductMedia({
   preserveTransparentBackground?: boolean;
   /** The first image on screen: load it immediately instead of lazily. */
   priority?: boolean;
+  /**
+   * `next/image`'s `priority` only skips `loading="lazy"` and adds a
+   * `<link rel=preload>` — it does NOT set the `fetchpriority` attribute on
+   * either of those (see `next/dist/shared/lib/get-img-props.js`: `priority`
+   * and `fetchPriority` are two separate, independently-passed props).
+   * Without this, a `priority` image still competes at the browser's
+   * default ("auto") priority against every other request on the page.
+   * Callers must opt in explicitly and sparingly — at most one `"high"` per
+   * page, for the actual LCP candidate — never derived automatically from
+   * `priority` here, since `priority` alone is already used more broadly
+   * (e.g. the first 2 PLP cards) than any one page should mark `"high"`.
+   */
+  fetchPriority?: "high" | "low" | "auto";
   /**
    * The `sizes` attribute for the responsive image, matching the actual
    * rendered width of this usage's container (PLP card, PDP gallery, cart
@@ -164,6 +178,7 @@ export function ProductMedia({
         fill
         sizes={sizes}
         priority={priority}
+        fetchPriority={fetchPriority}
         loader={
           isCloudinaryUrl(src)
             ? cloudinaryLoader
