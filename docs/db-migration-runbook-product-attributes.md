@@ -1,3 +1,10 @@
+> **This manual procedure still works and remains correct for ahead-of-time
+> or recovery use.** For routine releases, `deploy-api-vps.yml` now also
+> applies pending migrations automatically (behind an explicit, separate
+> root approval that is **not** active until an operator completes that
+> transition) — see [`automated-migrations.md`](automated-migrations.md)
+> for what that does and does not change about the process below.
+
 # Product-attributes migration: runbook
 
 Covers `apps/api/src/database/migrations/1792865771843-AddProductAttributes.ts`
