@@ -178,7 +178,12 @@ class RealPostgresMigrationTests(unittest.TestCase):
             if args and args[0] in mapping:
                 binary = mapping[args[0]]
                 rewritten = [a.replace(published_url, internal_url) if isinstance(a, str) else a for a in args[1:]]
-                args = [DOCKER, "exec", container, binary, *rewritten]
+                # Run as the HOST's own uid:gid, not the container's default
+                # (postgres-alpine's "postgres" user) — on native Linux (real
+                # CI, unlike Docker Desktop's bind-mount uid translation) a
+                # file this writes to the bind-mounted backup_dir would
+                # otherwise be owned by a uid the test process can't chmod.
+                args = [DOCKER, "exec", "-u", f"{os.getuid()}:{os.getgid()}", container, binary, *rewritten]
                 # The `docker` CLI itself (not the thing it execs INTO the
                 # container) needs the real host environment to find the
                 # Docker Desktop socket/context — SAFE_ENV's production
