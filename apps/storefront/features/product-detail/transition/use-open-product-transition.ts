@@ -23,11 +23,15 @@ export function useOpenProductTransition(slug: string, href: string) {
       if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
         return;
       }
-      // Guards against stacking a second `radOverlay` history entry if the
-      // visitor manages to tap another card (e.g. a related work) while the
-      // overlay is still open — one history entry per overlay session keeps
-      // a single browser-back press landing back on the real origin page.
-      if (window.history.state?.radOverlay) return;
+      // A second card tapped while the overlay is already open (e.g. a
+      // related work inside it) still opens through the overlay — just
+      // without stacking a second `radOverlay` history entry, so one
+      // browser-back press still lands on the real origin page. Bailing
+      // out to a plain <Link> navigation here used to skip the morph
+      // animation entirely and then restore the *original* page's scroll
+      // position onto the new product page once the pathname-watcher in
+      // product-overlay.tsx closed the stale overlay.
+      const alreadyOverlaid = Boolean(window.history.state?.radOverlay);
       const img = artRef.current?.querySelector("img");
       if (!img) return;
       const rect = img.getBoundingClientRect();
@@ -47,7 +51,11 @@ export function useOpenProductTransition(slug: string, href: string) {
         },
         imageSrc,
       });
-      window.history.pushState({ radOverlay: true }, "", href);
+      if (alreadyOverlaid) {
+        window.history.replaceState({ radOverlay: true }, "", href);
+      } else {
+        window.history.pushState({ radOverlay: true }, "", href);
+      }
     },
     [href, open, slug],
   );
