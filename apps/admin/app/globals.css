@@ -203,8 +203,19 @@ textarea:focus-visible {
 }
 .admin-nav {
   display: grid;
+  align-content: start;
   gap: 7px;
   margin-top: 30px;
+  /* The sidebar is pinned to 100vh; on a short viewport (laptop, landscape
+     tablet/phone) 13 nav items plus the brand header and logout footer
+     overflow it with no scroll affordance, clipping the bottom items.
+     Scrolling just the nav list (not brand/foot) keeps those pinned:
+     flex: 1 lets it take the sidebar's remaining height, min-height: 0
+     lets that height shrink below content size so overflow can apply. */
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 .admin-nav button {
   width: 100%;

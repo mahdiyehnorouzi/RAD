@@ -154,7 +154,8 @@
   background: #f4efe6;
   color: var(--ink);
   font: inherit;
-  font-size: 0.9rem;
+  /* iOS Safari zooms the whole page on focus below 16px. */
+  font-size: max(1rem, 0.9rem);
   cursor: pointer;
 }
 .plp-sheet-select svg {

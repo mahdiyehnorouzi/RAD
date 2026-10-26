@@ -87,9 +87,12 @@
   padding: 0.7rem 0.95rem;
   color: var(--ink);
   font: inherit;
-  font-size: 0.97rem;
+  /* iOS Safari zooms the whole page on focus below 16px. */
+  font-size: max(1rem, 0.97rem);
   caret-color: #8a4938;
-  transition: border-color 180ms ease-out, background 180ms ease-out;
+  transition:
+    border-color 180ms ease-out,
+    background 180ms ease-out;
 }
 
 .message-field textarea {
@@ -312,7 +315,9 @@
   color: var(--ink);
   font: inherit;
   cursor: pointer;
-  transition: border-color 180ms ease-out, background 180ms ease-out;
+  transition:
+    border-color 180ms ease-out,
+    background 180ms ease-out;
 }
 
 .message-select select.is-empty {
