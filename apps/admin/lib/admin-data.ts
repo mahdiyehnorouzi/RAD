@@ -1,6 +1,7 @@
 import {
   PRODUCT_STATUSES,
   canTransitionProductStatus,
+  effectiveProductStatus,
   type ContactMessageStatus,
   type ContactSource,
   type ContactTopic,
@@ -163,6 +164,8 @@ export interface AdminProduct {
   category: string;
   price: number;
   status: AdminProductStatus;
+  /** Same derived field the public API sends; feeds `effectiveProductStatus`. */
+  reservedUntil?: number;
   /** Set while a customer's cart or unpaid order holds the work. */
   holdExpiresAt?: number;
   /** A customer holds the work (cart, unpaid order, or receipt awaiting review). */
@@ -442,10 +445,13 @@ const faTime = new Intl.DateTimeFormat("fa-IR", {
 });
 
 export function productStatusLabel(product: AdminProduct) {
-  if (product.holdExpiresAt) {
-    return `در سبد مشتری تا ${faTime.format(product.holdExpiresAt)}`;
+  const effective = effectiveProductStatus(product);
+  if (effective === "reserved") {
+    return `در سبد مشتری تا ${faTime.format(product.holdExpiresAt!)}`;
   }
-  if (product.held) return "فروخته شده · در انتظار تأیید پرداخت";
+  if (effective === "sold" && product.held) {
+    return "فروخته شده · در انتظار تأیید پرداخت";
+  }
   return productStatusLabels[product.status];
 }
 

@@ -1,4 +1,5 @@
 import { getCatalog } from "@/lib/catalog/get-catalog-works";
+import { commerceProducts } from "@/lib/artworks/product";
 import { CatalogProvider } from "./catalog-provider";
 
 /**
@@ -14,10 +15,10 @@ export async function CatalogScope({
   withArtworks?: boolean;
   children: React.ReactNode;
 }) {
-  const { products, artworks, origin } = await getCatalog();
+  const { artworks, origin } = await getCatalog();
   return (
     <CatalogProvider
-      products={products}
+      products={commerceProducts(artworks)}
       artworks={withArtworks ? artworks : undefined}
       live={origin === "api"}
     >

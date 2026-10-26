@@ -54,6 +54,7 @@ import { nextRadNumber } from "../catalog/rad-number";
 import { InventoryService } from "../inventory/inventory.service";
 import type { ProductStatus } from "../inventory/type";
 import { PaymentReviewService } from "../orders/payment-review.service";
+import { OrdersService } from "../orders/orders.service";
 import { ProductAttributesService } from "../product-attributes/product-attributes.service";
 import {
   canManuallyTransitionOrder,
@@ -105,6 +106,7 @@ export class AdminService {
     private readonly resetTokens: Repository<PasswordResetToken>,
     private readonly inventory: InventoryService,
     private readonly paymentReview: PaymentReviewService,
+    private readonly ordersService: OrdersService,
     private readonly productAttributes: ProductAttributesService,
     @Inject(MEDIA_STORAGE) private readonly storage: MediaStorageService,
     @Inject(MEDIA_STORAGE_RESOLVER)
@@ -491,6 +493,12 @@ export class AdminService {
 
   async rejectPayment(id: string, reason: string, reviewerId: string | null) {
     await this.paymentReview.reject(id, reason, reviewerId);
+    return this.adminOrder(id);
+  }
+
+  /** Staff-triggered recheck for a gateway payment nobody else is acting on. */
+  async reconcileGatewayPayment(id: string) {
+    await this.ordersService.adminReconcileGatewayPayment(id);
     return this.adminOrder(id);
   }
 

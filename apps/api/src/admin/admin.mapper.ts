@@ -38,6 +38,14 @@ export function toAdminProduct(
     category: toAdminCategory(product.category),
     price: product.tomanPrice ?? 0,
     status: normalizeProductStatus(product.status),
+    // `reservedUntil` matches the public mapper's derived field so Admin and
+    // Storefront resolve the same hold-vs-sale distinction the same way
+    // (see `effectiveProductStatus` in @rad/types). `holdExpiresAt`/`held`
+    // stay for the admin-only "awaiting payment verification" nuance.
+    reservedUntil:
+      normalizeProductStatus(product.status) === "sold" && product.holdExpiresAt
+        ? product.holdExpiresAt.getTime()
+        : undefined,
     holdExpiresAt: product.holdExpiresAt?.getTime(),
     held: Boolean(product.heldBy),
     artist: product.vendor?.displayName ?? "استودیو رَد",

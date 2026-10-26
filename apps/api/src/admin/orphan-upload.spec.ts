@@ -52,6 +52,7 @@ function adminServiceWithStorageSpy() {
     null as never,
     null as never,
     null as never,
+    null as never,
     storage,
     () => storage,
     null as never,
