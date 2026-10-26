@@ -109,6 +109,11 @@ export function useAdminWorkspace() {
   // 0) — the array state alone can't distinguish those, since an empty
   // array looks the same either way.
   const [loadedKeys, setLoadedKeys] = useState<Set<ResourceKey>>(new Set());
+  // A resource whose fetch failed: never cleared by itself, so the UI can
+  // show a clear error + retry instead of silently reading as "loaded and
+  // genuinely empty" (an empty array looks the same as a failed request
+  // unless something else records that it failed).
+  const [loadErrors, setLoadErrors] = useState<Set<ResourceKey>>(new Set());
 
   // The actual fetch-and-set for one resource, with no loaded/in-flight
   // guard — `fetchResource` below wraps this for the normal "load once per
@@ -164,9 +169,22 @@ export function useAdminWorkspace() {
       const existing = inFlightRef.current.get(key);
       if (existing) return existing;
       const run = async () => {
-        await refreshResource(key);
-        loadedRef.current.add(key);
-        setLoadedKeys((current) => new Set(current).add(key));
+        try {
+          await refreshResource(key);
+          loadedRef.current.add(key);
+          setLoadedKeys((current) => new Set(current).add(key));
+          setLoadErrors((current) => {
+            if (!current.has(key)) return current;
+            const next = new Set(current);
+            next.delete(key);
+            return next;
+          });
+        } catch {
+          // Leave `loadedRef` untouched so the next visit to this section
+          // (or an explicit retry) tries again instead of being treated as
+          // "already loaded, zero rows".
+          setLoadErrors((current) => new Set(current).add(key));
+        }
       };
       const promise = run().finally(() => inFlightRef.current.delete(key));
       inFlightRef.current.set(key, promise);
@@ -187,6 +205,13 @@ export function useAdminWorkspace() {
     }, 20_000);
     return () => window.clearInterval(timer);
   }, [authStatus, refreshResource]);
+
+  /** Re-runs a resource's fetch after a failed load (`fetchResource` itself
+   * retries, since a failed key is never added to `loadedRef`). */
+  const retryResource = useCallback(
+    (key: ResourceKey) => fetchResource(key),
+    [fetchResource],
+  );
 
   const loadSection = useCallback(
     (section: AdminSection) =>
@@ -342,6 +367,8 @@ export function useAdminWorkspace() {
         return restoreSession();
       },
       loadSection,
+      loadErrors,
+      retryResource,
       async setReviewHidden(id: string, hidden: boolean) {
         const saved = await api<AdminReview>(`/admin/reviews/${id}`, {
           method: "PATCH",
@@ -729,7 +756,9 @@ export function useAdminWorkspace() {
       error,
       helpQuestions,
       loadedKeys,
+      loadErrors,
       loadSection,
+      retryResource,
       members,
       messages,
       orders,
