@@ -126,6 +126,7 @@ export const fa = {
   sortHeading: "مرتب‌سازی",
   sortNewest: "جدیدترین",
   sortOldest: "قدیمی‌ترین",
+  sortAvailability: "موجود اول",
   sortPriceAsc: "ارزان‌ترین",
   sortPriceDesc: "گران‌ترین",
   clearFilters: "پاک‌کردن همه",

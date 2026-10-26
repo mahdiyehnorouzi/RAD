@@ -4,6 +4,7 @@ import { CATALOG_SORTS, type CatalogSort } from "@/lib/catalog/filters";
 const sortLabelKey: Record<CatalogSort, MessageKey> = {
   newest: "sortNewest",
   oldest: "sortOldest",
+  availability: "sortAvailability",
   "price-asc": "sortPriceAsc",
   "price-desc": "sortPriceDesc",
 };
