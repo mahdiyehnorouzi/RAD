@@ -6,9 +6,6 @@
  * browser's default priority. Kept as a standalone, dependency-free
  * predicate so it's testable without a DOM.
  */
-export function isHeroSlide(
-  context: "stage" | "thumb",
-  isFirstSlide: boolean,
-) {
+export function isHeroSlide(context: "stage" | "thumb", isFirstSlide: boolean) {
   return context === "stage" && isFirstSlide;
 }
