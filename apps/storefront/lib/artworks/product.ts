@@ -60,10 +60,14 @@ export function productFromArtwork(artwork: Artwork): Product {
   };
 }
 
-/** Works the shop lists: offered for sale and photographed. */
-export function shopProducts(artworks: Artwork[]): Product[] {
+/** Priced API records used by cart/checkout, regardless of gallery readiness. */
+export function commerceProducts(artworks: Artwork[]): Product[] {
   return artworks
     .filter((artwork) => artwork.price !== null)
-    .map(productFromArtwork)
-    .filter(hasRealProductImage);
+    .map(productFromArtwork);
+}
+
+/** Works the shop lists: offered for sale and photographed. */
+export function shopProducts(artworks: Artwork[]): Product[] {
+  return commerceProducts(artworks).filter(hasRealProductImage);
 }
