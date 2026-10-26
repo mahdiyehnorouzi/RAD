@@ -2629,6 +2629,10 @@ td select,
   background: color-mix(in srgb, var(--oxide) 16%, var(--paper));
   color: var(--oxide);
 }
+.status-badge.sand {
+  background: color-mix(in srgb, var(--sand) 45%, var(--paper));
+  color: var(--ink);
+}
 @media (max-width: 980px) {
   .stat-grid {
     grid-template-columns: repeat(2, 1fr);

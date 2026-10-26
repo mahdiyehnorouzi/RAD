@@ -81,6 +81,33 @@ export function isPurchasableStatus(status?: ProductStatus) {
   return status === "available";
 }
 
+/**
+ * What a viewer should be told, collapsing the `sold`-overloads-hold-and-sale
+ * model above into one of four buckets: `available`, time-bound `reserved`
+ * (cart hold or unpaid order — may return to `available`), permanently
+ * `sold`, or `unavailable` (draft/in_workshop/ready/archived). Admin and
+ * Storefront both resolve through this so a change to hold semantics only
+ * needs updating here.
+ */
+export type EffectiveProductStatus =
+  | "available"
+  | "reserved"
+  | "sold"
+  | "unavailable";
+
+export function effectiveProductStatus(
+  product: { status?: ProductStatus; reservedUntil?: number },
+  now: number = Date.now(),
+): EffectiveProductStatus {
+  if (product.status === "available") return "available";
+  if (product.status === "sold") {
+    return product.reservedUntil && product.reservedUntil > now
+      ? "reserved"
+      : "sold";
+  }
+  return "unavailable";
+}
+
 const categoryVisual: Record<string, ProductVisual> = {
   ceramics: "vessel",
   vases: "vessel",
