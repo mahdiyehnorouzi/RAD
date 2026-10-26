@@ -140,10 +140,22 @@ export function ProductOverlay() {
   // to, and leaving the overlay mounted here is exactly the "URL changed
   // but PDP stays visible" bug.
   const hasArrivedRef = useRef(false);
+  // A related work opened from inside an already-open overlay calls open()
+  // again with a new `href` without the phase ever leaving "open" (see
+  // use-open-product-transition.ts) — this must restart the same
+  // catch-up tracking as a fresh open, or the still-`true` `hasArrivedRef`
+  // from the PREVIOUS product reads the next tick's stale pathname as a
+  // real departure and closes the overlay before it ever arrives.
+  const arrivedForHrefRef = useRef<string | null>(null);
   useEffect(() => {
     if (phase !== "open") {
       hasArrivedRef.current = false;
+      arrivedForHrefRef.current = null;
       return;
+    }
+    if (arrivedForHrefRef.current !== href) {
+      hasArrivedRef.current = false;
+      arrivedForHrefRef.current = href;
     }
     if (!hasArrivedRef.current) {
       if (pathname === href) hasArrivedRef.current = true;
