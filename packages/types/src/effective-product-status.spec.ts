@@ -10,7 +10,10 @@ test("available status is always available, regardless of reservedUntil", () => 
     "available",
   );
   assert.equal(
-    effectiveProductStatus({ status: "available", reservedUntil: now + 1 }, now),
+    effectiveProductStatus(
+      { status: "available", reservedUntil: now + 1 },
+      now,
+    ),
     "available",
   );
 });

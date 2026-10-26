@@ -90,10 +90,7 @@ export function isPurchasableStatus(status?: ProductStatus) {
  * needs updating here.
  */
 export type EffectiveProductStatus =
-  | "available"
-  | "reserved"
-  | "sold"
-  | "unavailable";
+  "available" | "reserved" | "sold" | "unavailable";
 
 export function effectiveProductStatus(
   product: { status?: ProductStatus; reservedUntil?: number },

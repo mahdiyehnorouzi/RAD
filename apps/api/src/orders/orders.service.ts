@@ -841,7 +841,10 @@ export class OrdersService implements OnModuleInit {
       // `retryGatewayPayment`'s `replaceCheck` branch) — never write
       // `verify_error` from that alone. `verify_error` already reflects a
       // prior ambiguous attempt, so a repeat failure keeps it there.
-      { onUnreachable: payment.status === "redirected" ? "leave" : "verify_error" },
+      {
+        onUnreachable:
+          payment.status === "redirected" ? "leave" : "verify_error",
+      },
     );
     return result;
   }

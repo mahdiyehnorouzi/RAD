@@ -1,4 +1,8 @@
-import { effectiveProductStatus, type Product, type ProductStatus } from "@rad/types";
+import {
+  effectiveProductStatus,
+  type Product,
+  type ProductStatus,
+} from "@rad/types";
 import type { MessageKey } from "@/i18n/fa";
 
 /**

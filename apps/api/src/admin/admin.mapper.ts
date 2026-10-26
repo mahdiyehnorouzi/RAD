@@ -43,8 +43,7 @@ export function toAdminProduct(
     // (see `effectiveProductStatus` in @rad/types). `holdExpiresAt`/`held`
     // stay for the admin-only "awaiting payment verification" nuance.
     reservedUntil:
-      normalizeProductStatus(product.status) === "sold" &&
-      product.holdExpiresAt
+      normalizeProductStatus(product.status) === "sold" && product.holdExpiresAt
         ? product.holdExpiresAt.getTime()
         : undefined,
     holdExpiresAt: product.holdExpiresAt?.getTime(),
