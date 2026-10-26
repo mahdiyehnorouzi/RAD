@@ -322,11 +322,14 @@ export class AdminService {
     const usdPrice = Math.max(1, Math.round(input.price / 85_000));
     const category = toStoreCategory(input.category);
     const details = ["تنها یک نسخه"];
-    // Only a brand-new product needs a `subtitle` derived here — it has no
-    // existing value to preserve. An update must never re-derive and
-    // overwrite `subtitle` from `story` (see `updateProduct`): that was
-    // silently discarding whatever `subtitle` held on every single save.
-    const subtitle = input.description.trim().slice(0, 48);
+    // Used only for a brand-new product (no existing value to preserve):
+    // an explicit `subtitle` if admin set one, else the historical default
+    // (the description's first 48 characters). An update must never
+    // re-derive this default from a new description — see the `subtitle`
+    // passed to `updateProduct` below, which stays undefined (leaving the
+    // column untouched) unless admin explicitly set a value.
+    const subtitle =
+      input.subtitle?.trim() || input.description.trim().slice(0, 48);
     const en = {
       name: input.name,
       subtitle,
@@ -343,6 +346,8 @@ export class AdminService {
           category,
           status: input.status,
           story: input.description.trim(),
+          // undefined (admin didn't set one) leaves the column untouched.
+          subtitle: input.subtitle?.trim() || undefined,
           vendorId,
         })
       : await this.createProductWithRadNumber({
@@ -676,6 +681,8 @@ export class AdminService {
       category: string;
       status: ProductStatus;
       story: string;
+      /** Only written when admin explicitly set one; otherwise left as-is. */
+      subtitle?: string;
       vendorId: string | null;
     },
   ) {
@@ -689,14 +696,13 @@ export class AdminService {
       { id },
       {
         name: data.name,
-        // `subtitle` is intentionally left untouched here: it is a
-        // separate, shorter field from Admin's "description" (which maps
-        // to `story` below) and is shown as-is on the storefront's public
-        // `/artworks/:key` response. Admin has no UI to edit it directly
-        // today, so re-deriving and overwriting it from `story` on every
-        // save was silently discarding whatever value it held — never do
-        // that again (see admin.mapper.ts / artwork.mapper.ts for the full
-        // `description`/`story`/`subtitle` naming history).
+        // `subtitle` is a separate, shorter field from Admin's
+        // "description" (which maps to `story` below). Re-deriving and
+        // overwriting it from `story` on every save — even when admin
+        // didn't touch it — used to silently discard whatever value it
+        // held, so it's only written when `data.subtitle` is explicitly
+        // set; omitted here, it keeps its current value.
+        ...(data.subtitle !== undefined ? { subtitle: data.subtitle } : {}),
         tomanPrice: data.tomanPrice,
         usdPrice: data.usdPrice,
         category: data.category,

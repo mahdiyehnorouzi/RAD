@@ -35,6 +35,7 @@ export function toAdminProduct(
     slug: product.slug,
     name: product.name,
     description: product.story,
+    subtitle: product.subtitle,
     category: toAdminCategory(product.category),
     price: product.tomanPrice ?? 0,
     status: normalizeProductStatus(product.status),
@@ -43,8 +44,7 @@ export function toAdminProduct(
     // (see `effectiveProductStatus` in @rad/types). `holdExpiresAt`/`held`
     // stay for the admin-only "awaiting payment verification" nuance.
     reservedUntil:
-      normalizeProductStatus(product.status) === "sold" &&
-      product.holdExpiresAt
+      normalizeProductStatus(product.status) === "sold" && product.holdExpiresAt
         ? product.holdExpiresAt.getTime()
         : undefined,
     holdExpiresAt: product.holdExpiresAt?.getTime(),
