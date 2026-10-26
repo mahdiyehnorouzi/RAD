@@ -1363,11 +1363,21 @@ function Orders({
             const next = nextStatus ? orderStatusLabels[nextStatus] : undefined;
             const awaitingReceiptReview =
               order.status === "pending_verification";
+            // No automated process ever resolves these (see orders.service.ts
+            // retryGatewayPayment/verifyAndApplyGatewayResult): a gateway
+            // payment stuck here waits on the buyer's own retry, or forever
+            // if they never click it. Surface it the same way a manual-card
+            // receipt review is surfaced, so staff can find it without
+            // opening every order.
+            const awaitingGatewayReview =
+              order.paymentProvider === "zarinpal" &&
+              (order.paymentStatus === "verify_error" ||
+                order.paymentStatus === "verify_conflict");
             const statusOptions = orderStatusOptions(order.status);
             return (
               <article
                 id={`order-${order.id}`}
-                className={`order-process-card${awaitingReceiptReview ? " needs-receipt-review" : ""}${terminal ? " is-terminal" : ""}`}
+                className={`order-process-card${awaitingReceiptReview || awaitingGatewayReview ? " needs-receipt-review" : ""}${terminal ? " is-terminal" : ""}`}
                 key={order.id}
               >
                 <header>
