@@ -410,7 +410,7 @@ export class OrdersService implements OnModuleInit {
     });
 
     if (precheck === "verify") {
-      await this.verifyAndApplyGatewayResult(actor, id, authority);
+      await this.verifyAndApplyGatewayResult(ownerKey, id, authority);
     }
     return toOrder(await this.ownedOrder(actor, id));
   }
@@ -428,13 +428,12 @@ export class OrdersService implements OnModuleInit {
    * callers) may run more than once for the same order.
    */
   private async verifyAndApplyGatewayResult(
-    actor: Actor,
+    ownerKey: string,
     id: string,
     authority: string,
     options: { onUnreachable?: "verify_error" | "leave" } = {},
   ): Promise<{ confirmed: boolean; conflict: boolean; reachable: boolean }> {
     const onUnreachable = options.onUnreachable ?? "verify_error";
-    const ownerKey = this.identity.key(actor);
     const paymentRow = await this.payments.findOne({ where: { orderId: id } });
     if (!paymentRow) {
       throw new NotFoundException({
@@ -539,7 +538,7 @@ export class OrdersService implements OnModuleInit {
     });
 
     if (confirmed) {
-      await this.notices.create(actor, "order_confirmed", undefined);
+      await this.notices.createForOwner(ownerKey, "order_confirmed", undefined);
     }
     return { confirmed, conflict, reachable };
   }
@@ -677,7 +676,7 @@ export class OrdersService implements OnModuleInit {
     if (prep.kind === "reconcile") {
       if (!prep.authority) throw needsReconciliation();
       const result = await this.verifyAndApplyGatewayResult(
-        actor,
+        ownerKey,
         id,
         prep.authority,
       );
@@ -693,7 +692,7 @@ export class OrdersService implements OnModuleInit {
 
     if (prep.kind === "replaceCheck") {
       const precheck = await this.verifyAndApplyGatewayResult(
-        actor,
+        ownerKey,
         id,
         prep.authority,
         { onUnreachable: "leave" },
@@ -790,6 +789,61 @@ export class OrdersService implements OnModuleInit {
     });
 
     return toOrder(await this.ownedOrder(actor, id), session.redirectUrl);
+  }
+
+  /**
+   * Admin-triggered recheck for a gateway payment nobody is acting on:
+   * `retryGatewayPayment` only ever runs when the buyer themselves clicks
+   * retry, so a `redirected` session the buyer abandoned (closed the tab
+   * before the callback fired) or a `verify_error` they never returned to
+   * resolve can otherwise sit stuck indefinitely, holding the reservation
+   * (see `UNRESOLVED_PAYMENT_STATUSES`). This calls the exact same
+   * verify-and-apply path a customer's own retry uses — same idempotency,
+   * same row lock, same `onUnreachable` precaution for an unattempted
+   * `redirected` Authority — it only decides *when* to call it, not how.
+   * Refuses for `verify_conflict` (already resolved; needs a manual refund,
+   * never another verify attempt) and for anything not gateway/not
+   * currently ambiguous.
+   */
+  async adminReconcileGatewayPayment(id: string) {
+    const order = await this.orders.findOne({ where: { id } });
+    if (!order) {
+      throw new NotFoundException({
+        message: "سفارش پیدا نشد.",
+        code: "order_not_found",
+      });
+    }
+    const payment = await this.payments.findOne({ where: { orderId: id } });
+    if (!payment || payment.provider !== "zarinpal") {
+      throw new BadRequestException({
+        message: "این سفارش از درگاه آنلاین پرداخت نمی‌شود.",
+        code: "payment_not_gateway",
+      });
+    }
+    if (payment.status !== "redirected" && payment.status !== "verify_error") {
+      throw new BadRequestException({
+        message: "این پرداخت نیاز به بررسی مجدد ندارد.",
+        code: "payment_not_reconcilable",
+      });
+    }
+    if (!payment.gatewayAuthority) {
+      throw new BadRequestException({
+        message: "این سفارش هنوز شماره پیگیری درگاه ندارد.",
+        code: "payment_authority_missing",
+      });
+    }
+    const result = await this.verifyAndApplyGatewayResult(
+      order.ownerKey,
+      id,
+      payment.gatewayAuthority,
+      // `redirected`: an unattempted Authority verifying as inconclusive is
+      // the ordinary case, not new evidence of a problem (see
+      // `retryGatewayPayment`'s `replaceCheck` branch) — never write
+      // `verify_error` from that alone. `verify_error` already reflects a
+      // prior ambiguous attempt, so a repeat failure keeps it there.
+      { onUnreachable: payment.status === "redirected" ? "leave" : "verify_error" },
+    );
+    return result;
   }
 
   /** @deprecated Alias kept so existing clients keep working until renamed. */
