@@ -35,6 +35,10 @@ FRONTEND = Path("/root/rad-frontend-deploy")
 COMPOSE = FRONTEND / "docker-compose.frontend-vps.yml"
 SERVICE = "rad-api.service"
 GH = "/usr/local/bin/gh"
+NODE = "/usr/bin/node"
+PG_DUMP = "/usr/bin/pg_dump"
+PG_RESTORE = "/usr/bin/pg_restore"
+PSQL = "/usr/bin/psql"
 ACTIVATION = Path("/etc/rad-release/activation.json")
 # Where the migrate action writes its pre-migration pg_dump before running
 # anything. Root-private, same tree as every other release-time state this
@@ -165,8 +169,11 @@ def validate_manifest(manifest, request):
         require(re.fullmatch(r"[0-9a-f]{64}", manifest.get("archive_sha256", "")), "Invalid archive digest")
         require(re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+(?:[-+][A-Za-z0-9.-]+)?", manifest.get("version", "")), "Invalid version")
         migrations = manifest.get("migrations")
-        require(isinstance(migrations, list) and all(isinstance(m, str) and MIGRATION_FILE.fullmatch(m) for m in migrations),
-                "Invalid migrations list")
+        require(isinstance(migrations, list) and all(
+            isinstance(m, dict) and set(m) == {"name", "sha256"} and MIGRATION_FILE.fullmatch(m["name"])
+            and re.fullmatch(r"[0-9a-f]{64}", m["sha256"]) for m in migrations
+        ), "Invalid migrations list")
+        require(len({m["name"] for m in migrations}) == len(migrations), "Duplicate migration name in migrations list")
     else:
         images = manifest.get("images", {})
         require(isinstance(images, dict) and 1 <= len(images) <= 2, "No images selected")
@@ -331,15 +338,20 @@ def api_preflight():
     return {"previous": str(previous), "version": before["version"], "env_sha256": file_hash(ENV_FILE)}
 
 
-def database_url_from_env():
-    """Read DATABASE_URL from the same root-protected env file api_preflight()
-    already requires — never from this process's own environment, and never
-    printed or included in any exception message."""
+def read_env_value(key):
+    """Read one KEY=value line from the same root-protected env file
+    api_preflight() already requires — never from this process's own
+    environment, and never printed or included in any exception message."""
     protected(ENV_FILE)
     environment = ENV_FILE.read_text()
-    matches = re.findall(r'^\s*DATABASE_URL\s*=\s*"?([^"\n]*?)"?\s*$', environment, re.MULTILINE)
-    require(matches and matches[-1].strip(), "DATABASE_URL not set in production env file")
-    return matches[-1].strip()
+    values = re.findall(rf'^\s*{re.escape(key)}\s*=\s*["\']?([^"\'\n]*?)["\']?\s*$', environment, re.MULTILINE)
+    return values[-1].strip() if values else None
+
+
+def database_url_from_env():
+    value = read_env_value("DATABASE_URL")
+    require(value, "DATABASE_URL not set in production env file")
+    return value
 
 
 def migrate_preflight():
@@ -347,17 +359,13 @@ def migrate_preflight():
     same verified artifact, over the same DATABASE_URL api_preflight()
     protects, but never touch systemd/the live release symlink."""
     require(os.uname().machine == "x86_64", "API artifact requires Linux x86_64")
-    node_version = run("/usr/bin/node", "--version").stdout.strip()
+    node_version = run(NODE, "--version").stdout.strip()
     require(re.fullmatch(r"v[0-9]+\.[0-9]+\.[0-9]+", node_version) and int(node_version.split(".")[0][1:]) >= 22,
-            "API requires Node.js 22 or newer at /usr/bin/node")
+            f"API requires Node.js 22 or newer at {NODE}")
     npm = shutil.which("npm")
     require(npm, "npm not found on PATH")
     database_url = database_url_from_env()
-    environment = ENV_FILE.read_text()
-    def value(key):
-        values = re.findall(rf'^\s*{key}\s*=\s*["\']?([^"\'\n]*?)["\']?\s*$', environment, re.MULTILINE)
-        return values[-1].strip() if values else None
-    require(value("NODE_ENV") == "production" and value("TYPEORM_SYNCHRONIZE") == "false",
+    require(read_env_value("NODE_ENV") == "production" and read_env_value("TYPEORM_SYNCHRONIZE") == "false",
             "Explicit production/no-schema-sync settings required before migrating")
     host = urlsplit(database_url).hostname or ""
     require(host, "Could not parse database host from DATABASE_URL")
@@ -366,9 +374,12 @@ def migrate_preflight():
 
 def applied_migration_records(database_url):
     """The exact set of names TypeORM's own `migrations` table reports as
-    already executed. An absent table (never migrated before) means none."""
+    already executed. An absent table (never migrated before) means none.
+    Used only as a cheap read-only cross-check source — migration_show()
+    below, straight from TypeORM's own CLI, is the authority actually acted
+    on; see reconcile_migrations()."""
     try:
-        result = run("/usr/bin/psql", database_url, "-tAc", 'SELECT name FROM migrations ORDER BY id;')
+        result = run(PSQL, database_url, "-tAc", 'SELECT name FROM migrations ORDER BY id;')
     except subprocess.CalledProcessError as error:
         if "does not exist" in (error.stderr or ""):
             return set()
@@ -376,9 +387,94 @@ def applied_migration_records(database_url):
     return {line.strip() for line in result.stdout.splitlines() if line.strip()}
 
 
-def pending_migrations(manifest, database_url):
-    applied = applied_migration_records(database_url)
-    return [name for name in manifest["migrations"] if migration_record_name(name) not in applied]
+# TypeORM's real `migration:show` output, confirmed directly against a live
+# database (not assumed): a PENDING migration prints "[ ] <name>"; an
+# APPLIED one additionally prints its execution-order index before the
+# name, "[X] <index> <name>" - the optional `(?:[0-9]+\s+)?` group accounts
+# for that index, which only ever appears on the applied ("X") side.
+MIGRATION_SHOW_LINE = re.compile(r"^\[(X| )\]\s+(?:[0-9]+\s+)?(\S+)\s*$")
+
+
+def migration_show(npm, api_dir, database_url, host):
+    """Authoritative pending/applied state, straight from TypeORM's own CLI
+    (`migration:show`) run against the real migrations the extracted
+    artifact ships — never re-derived or guessed at by this broker's own
+    logic alone. Returns an ordered list of (name, applied: bool) exactly
+    as TypeORM reports it."""
+    env = {**SAFE_ENV, "DATABASE_URL": database_url, "RAD_ALLOW_REMOTE_DB_WRITE": host}
+    # TypeORM's CLI exits 1 (not 0) whenever anything is pending — that is
+    # not a failure of this command, only of a check=True expectation, so
+    # this call tolerates either exit code and inspects the actual output;
+    # any OTHER problem (connection failure, crash, no parseable lines at
+    # all) is what fails closed below.
+    result = run(npm, "run", "migration:show", env=env, cwd=api_dir, timeout=300, check=False)
+    entries = [(match.group(2), match.group(1) == "X")
+               for line in result.stdout.splitlines()
+               for match in (MIGRATION_SHOW_LINE.match(line.strip()),) if match]
+    require(result.returncode in (0, 1) and entries,
+            f"migration:show produced no parseable output (exit {result.returncode}); refusing to guess "
+            f"pending state: {(result.stderr or '').strip()[:500]}")
+    return entries
+
+
+def reconcile_migrations(manifest, shown):
+    """Cross-checks the broker's own manifest expectation against TypeORM's
+    own authoritative migration:show output and fails closed on ANY
+    disagreement - an unexpected extra/missing entry, a name this broker
+    cannot map back to a signed migration file, or a mismatched count -
+    rather than ever trusting either source alone. This is what makes
+    "pending" detection safe even if the derived name mapping
+    (migration_record_name) is ever wrong for some future migration: a
+    mismatch here refuses the whole migrate action instead of silently
+    running (or silently skipping) migration:run. Returns the ordered list
+    of pending migration dicts ({"name","sha256"}) to apply."""
+    expected = {}
+    for entry in manifest["migrations"]:
+        expected[migration_record_name(entry["name"])] = entry
+    shown_names = [name for name, _ in shown]
+    require(len(shown_names) == len(expected),
+            f"migration:show reports {len(shown_names)} migration(s) but the signed manifest lists "
+            f"{len(expected)} - refusing: this artifact's migrations do not match what was signed")
+    require(set(shown_names) == set(expected),
+            "migration:show reports migration name(s) this broker cannot reconcile against the signed "
+            "manifest - refusing rather than guessing which ones are actually pending")
+    return [expected[name] for name, applied in shown if not applied]
+
+
+def verify_restore(database_url, dump):
+    """Beyond `pg_restore --list`'s structural check (already run by the
+    caller): when the operator has configured a dedicated, isolated
+    verification database (RAD_MIGRATION_BACKUP_VERIFY_DATABASE_URL in the
+    same env file, naming the exact host - never production, same
+    convention as every other remote-write guard in this repo), actually
+    restore this exact dump into it and compare a cheap row-count sanity
+    check against the live source, then reset that database's schema -
+    exactly the pattern `rad-activation-prep.sh` already uses for the same
+    proof, just available per-migration instead of only during activation
+    prep. Without that configuration, this step is skipped and the skip is
+    logged explicitly - a real-restore rehearsal still happens on
+    `rad-activation-prep.sh`'s cadence either way; see
+    docs/automated-migrations.md."""
+    verify_url = read_env_value("RAD_MIGRATION_BACKUP_VERIFY_DATABASE_URL")
+    if not verify_url:
+        print("RAD_MIGRATION_BACKUP_VERIFY_DATABASE_URL not configured; this backup was only verified "
+              "structurally (pg_restore --list), not by an actual restore. See docs/automated-migrations.md.")
+        return
+    verify_host = urlsplit(verify_url).hostname or ""
+    source_host = urlsplit(database_url).hostname or ""
+    require(verify_host and verify_host != source_host,
+            "Backup verification target must be a genuinely separate host from the source database")
+    before = run(PSQL, database_url, "-tAc", 'SELECT count(*) FROM "Product";').stdout.strip()
+    require(before.isdigit(), "Could not read source Product count before restore verification")
+    reset = ("DROP SCHEMA IF EXISTS public CASCADE; CREATE SCHEMA public;",)
+    try:
+        run(PSQL, verify_url, "-c", *reset, timeout=120)
+        run(PG_RESTORE, "--dbname", verify_url, str(dump), timeout=1200)
+        after = run(PSQL, verify_url, "-tAc", 'SELECT count(*) FROM "Product";').stdout.strip()
+        require(after == before, f"Restored Product count ({after}) does not match source ({before}) - "
+                "treating this backup as unverified")
+    finally:
+        run(PSQL, verify_url, "-c", *reset, timeout=120, check=False)
 
 
 def backup_database(database_url, label):
@@ -388,14 +484,14 @@ def backup_database(database_url, label):
     stamp = time.strftime("%Y%m%dT%H%M%SZ", time.gmtime())
     dump = BACKUP_DIR / f"rad-pre-migration-{label}-{stamp}.dump"
     require(not dump.exists(), "Backup target already exists")
-    run("/usr/bin/pg_dump", database_url, "--format=custom", f"--file={dump}", timeout=1200)
+    run(PG_DUMP, database_url, "--format=custom", f"--file={dump}", timeout=1200)
     dump.chmod(0o600)
     require(dump.stat().st_size > 0, "Backup produced an empty file")
     # Prove the dump is at least structurally readable before trusting it as
-    # the migration's rollback path — never a real restore near production;
-    # see docs/automated-migrations.md for the separate, already-existing
-    # off-server/encrypted retention this directory feeds into.
-    run("/usr/bin/pg_restore", "--list", dump, timeout=300)
+    # the migration's rollback path.
+    listing = run(PG_RESTORE, "--list", dump, timeout=300).stdout
+    require(listing.strip(), "Backup dump has no restorable table of contents")
+    verify_restore(database_url, dump)
     return dump
 
 
@@ -404,30 +500,45 @@ def run_pending_migrations(npm, api_dir, database_url, host):
     return run(npm, "run", "migration:run", env=env, cwd=api_dir, timeout=1800)
 
 
-def migrate_api(manifest, directory, transaction, migrations_verified):
-    npm, database_url, host = migrate_preflight()
-    pending = pending_migrations(manifest, database_url)
-    if not pending:
-        atomic_json(transaction / "migrate-result.json", {"pending": [], "backup": None})
-        print("No pending migrations; nothing to do.")
-        return
-    require(migrations_verified,
-            "Pending migrations require operator approval: set migrations_verified=true in "
-            "/etc/rad-release/activation.json after reviewing this release (see docs/automated-migrations.md)")
+def migrate_api(manifest, directory, transaction, approved_migrations, offsite_backup_pipeline_verified):
+    require(isinstance(approved_migrations, dict)
+            and all(isinstance(k, str) and isinstance(v, str) for k, v in approved_migrations.items()),
+            "Invalid approved_migrations in activation policy")
     archive = directory / "api-release.tar.gz"
     require(file_hash(archive) == manifest["archive_sha256"], "API artifact checksum mismatch")
+    npm, database_url, host = migrate_preflight()
     with tempfile.TemporaryDirectory(prefix="migrate-", dir=BASE) as extracted:
         target = Path(extracted)
         unpack_api(archive, target)
         api_dir = target / "apps/api"
         require((api_dir / "src/database/cli-data-source.ts").exists(), "Incomplete artifact: cli-data-source.ts")
+        pending = reconcile_migrations(manifest, migration_show(npm, api_dir, database_url, host))
+        if not pending:
+            atomic_json(transaction / "migrate-result.json", {"pending": [], "backup": None})
+            print("No pending migrations; nothing to do.")
+            return
+        # Approval is tied to the EXACT content (name + sha256) of each
+        # pending migration, not just its filename - renaming/reusing a
+        # filename with different content, or adding a brand-new migration,
+        # both require a fresh, explicit approval entry; an old approval
+        # never silently covers either.
+        unapproved = [m for m in pending if approved_migrations.get(m["name"]) != m["sha256"]]
+        require(not unapproved,
+                "Pending migration(s) require renewed operator approval - add each to activation.json's "
+                "approved_migrations (keyed on name, pinned to its exact sha256) after review: "
+                + ", ".join(f"{m['name']} ({m['sha256'][:12]}...)" for m in unapproved))
+        require(offsite_backup_pipeline_verified,
+                "Migrating requires activation.json's offsite_backup_pipeline_verified=true - confirm the "
+                "existing off-server backup pipeline covers /var/lib/rad-release/backups/ before approving "
+                "unattended migrations (see docs/automated-migrations.md)")
         dump = backup_database(database_url, manifest["commit"][:12])
-        atomic_json(transaction / "migrate-result.json", {"pending": pending, "backup": str(dump), "status": "attempting"})
+        pending_names = [m["name"] for m in pending]
+        atomic_json(transaction / "migrate-result.json", {"pending": pending_names, "backup": str(dump), "status": "attempting"})
         run_pending_migrations(npm, api_dir, database_url, host)
-        still_pending = pending_migrations(manifest, database_url)
-        require(not still_pending, f"Migration run did not apply everything expected: {still_pending}")
-    atomic_json(transaction / "migrate-result.json", {"pending": pending, "backup": str(dump), "status": "applied"})
-    print(f"Applied {len(pending)} migration(s): {', '.join(pending)}")
+        still_pending = reconcile_migrations(manifest, migration_show(npm, api_dir, database_url, host))
+        require(not still_pending, f"Migration run did not apply everything expected: {[m['name'] for m in still_pending]}")
+    atomic_json(transaction / "migrate-result.json", {"pending": pending_names, "backup": str(dump), "status": "applied"})
+    print(f"Applied {len(pending_names)} migration(s): {', '.join(pending_names)}")
 
 
 def swap_release(path):
@@ -646,7 +757,9 @@ def main():
                 transaction = BASE / "transactions" / f"{manifest['run_id']}-{manifest['run_attempt']}-migrate"
                 transaction.mkdir(parents=True, mode=0o700)
                 atomic_json(transaction / "release.json", manifest)
-                migrate_api(manifest, directory, transaction, policy.get("migrations_verified") is True)
+                approved_migrations = policy.get("approved_migrations") if isinstance(policy.get("approved_migrations"), dict) else {}
+                offsite_backup_pipeline_verified = policy.get("offsite_backup_pipeline_verified") is True
+                migrate_api(manifest, directory, transaction, approved_migrations, offsite_backup_pipeline_verified)
                 print(f"Migration check complete for {manifest['commit']}")
                 return
             state_path = BASE / f"last-{request['kind']}.json"

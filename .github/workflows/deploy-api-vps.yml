@@ -141,12 +141,16 @@ jobs:
       # Same trust boundary as the `release` job's "Ship artifact and
       # trigger release" step below: this account can run nothing but the
       # fixed forced command, which hands the request to the unchanged
-      # root-owned broker. If this artifact's migrations require operator
-      # approval that hasn't been granted yet (activation policy's
-      # `migrations_verified` is not true), the broker refuses and this
-      # step - and therefore this job and `release`, which needs it - fails
-      # closed rather than deploying API code against an un-migrated
-      # database.
+      # root-owned broker. The broker cross-checks this artifact's signed
+      # migration list against what TypeORM's own `migration:show` reports
+      # against the live database (never trusting its own detection logic
+      # alone - see docs/automated-migrations.md), and refuses to run
+      # anything pending unless BOTH activation policy's
+      # `approved_migrations` names this exact migration by content hash
+      # AND `offsite_backup_pipeline_verified` is true. Any of that missing
+      # or inconsistent fails this step closed - and therefore this job and
+      # `release`, which needs it - rather than deploying API code against
+      # an un-migrated database or guessing at ambiguous migration state.
       - name: Ship artifact and trigger migration check over the tailnet
         run: |
           set -euo pipefail

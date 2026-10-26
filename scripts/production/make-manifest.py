@@ -19,16 +19,24 @@ if kind == "api":
     with open("api-release.tar.gz", "rb") as archive:
         manifest["archive_sha256"] = hashlib.file_digest(archive, "sha256").hexdigest()
     manifest["version"] = Path("VERSION").read_text().strip()
-    # The exact migration files this artifact ships, bound into the same
-    # signed manifest as the release itself — the migrate broker action
-    # (scripts/production/rad_release.py) verifies the production database's
-    # applied-migrations history against this list before touching anything,
-    # so "which migrations are pending" is never computed from unsigned,
-    # runner-supplied input.
+    # The exact migration files this artifact ships, each bound BY CONTENT
+    # HASH (not just name) into the same signed manifest as the release
+    # itself. The migrate broker action (scripts/production/rad_release.py)
+    # verifies the production database's own migration history against this
+    # list before touching anything, so "which migrations are pending" is
+    # never computed from unsigned, runner-supplied input — and an
+    # operator's approval of a migration (activation.json's
+    # `approved_migrations`, keyed on this same name+sha256 pair) cannot be
+    # reused for a different file that happens to keep the same filename.
     migrations_dir = Path("apps/api/src/database/migrations")
-    manifest["migrations"] = sorted(
-        p.name for p in migrations_dir.glob("*.ts") if not p.name.endswith(".spec.ts")
+    files = sorted(
+        p for p in migrations_dir.glob("*.ts") if not p.name.endswith(".spec.ts")
     ) if migrations_dir.is_dir() else []
+    migrations = []
+    for path in files:
+        with path.open("rb") as source:
+            migrations.append({"name": path.name, "sha256": hashlib.file_digest(source, "sha256").hexdigest()})
+    manifest["migrations"] = migrations
 else:
     manifest["images"] = {}
     for service in ("storefront", "admin"):
