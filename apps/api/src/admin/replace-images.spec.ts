@@ -467,6 +467,28 @@ describe("AdminService.saveProduct — subtitle preservation (description/subtit
       "story must still update normally from the description field",
     );
   });
+
+  test("an explicitly submitted subtitle is written, not just preserved", async () => {
+    const slug = `subtitle-explicit-${Date.now()}`;
+    const created = await admin.saveProduct(
+      baseInput(slug, [
+        { storage: "static", src: "/catalog/test.jpg" },
+      ]) as never,
+    );
+
+    await admin.saveProduct(
+      {
+        ...baseInput(slug, [{ storage: "static", src: "/catalog/test.jpg" }]),
+        subtitle: "زیرعنوان دستی",
+      } as never,
+      created.id,
+    );
+
+    const updatedRow = await dataSource
+      .getRepository(Product)
+      .findOneOrFail({ where: { id: created.id } });
+    assert.equal(updatedRow.subtitle, "زیرعنوان دستی");
+  });
 });
 
 describe("AdminService — SeaweedFS fail-closed ownership (upload-intent audit fix)", () => {
