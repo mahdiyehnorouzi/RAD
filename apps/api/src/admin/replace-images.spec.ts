@@ -142,6 +142,7 @@ before(async () => {
     repo(PasswordResetToken),
     inventory,
     paymentReview,
+    null as never,
     new ProductAttributesService(
       repo(ProductAttribute),
       repo(ProductAttributeOption),
@@ -523,6 +524,7 @@ describe("AdminService — SeaweedFS fail-closed ownership (upload-intent audit 
       repo(PasswordResetToken),
       inventory,
       paymentReview,
+      null as never,
       new ProductAttributesService(
         repo(ProductAttribute),
         repo(ProductAttributeOption),

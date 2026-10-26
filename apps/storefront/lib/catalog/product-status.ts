@@ -1,4 +1,4 @@
-import type { Product, ProductStatus } from "@rad/types";
+import { effectiveProductStatus, type Product, type ProductStatus } from "@rad/types";
 import type { MessageKey } from "@/i18n/fa";
 
 /**
@@ -46,10 +46,7 @@ export function isReserved(
   product: Pick<Product, "status" | "reservedUntil">,
   now = Date.now(),
 ) {
-  return (
-    product.status === "sold" &&
-    Boolean(product.reservedUntil && product.reservedUntil > now)
-  );
+  return effectiveProductStatus(product, now) === "reserved";
 }
 
 export function formatCountdown(

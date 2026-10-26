@@ -23,26 +23,31 @@ export class CartService {
 
   async add(actor: Actor, slug: string) {
     const ownerKey = this.identity.key(actor);
-    await this.inventory.hold(ownerKey, slug);
-    const existing = await this.cartItems.findOne({
-      where: { ownerKey, productSlug: slug },
-    });
-    if (!existing) {
-      const product = await this.cartItems.manager
-        .getRepository(Product)
-        .findOne({
+    await this.inventory.releaseExpiredHolds();
+    await this.cartItems.manager.transaction(async (manager) => {
+      // The product lock serializes simultaneous adds of this one-of-one work.
+      // Saving the cart row in the same transaction also rolls back the hold
+      // if persistence fails.
+      await this.inventory.hold(ownerKey, slug, manager);
+      const items = manager.getRepository(CartItem);
+      const existing = await items.findOne({
+        where: { ownerKey, productSlug: slug },
+      });
+      if (!existing) {
+        const product = await manager.getRepository(Product).findOneOrFail({
           where: { slug },
           select: { id: true, tomanPrice: true, usdPrice: true },
         });
-      await this.cartItems.save(
-        this.cartItems.create({
-          ownerKey,
-          productSlug: slug,
-          tomanPriceAtAdd: product?.tomanPrice ?? null,
-          usdPriceAtAdd: product?.usdPrice ?? null,
-        }),
-      );
-    }
+        await items.save(
+          items.create({
+            ownerKey,
+            productSlug: slug,
+            tomanPriceAtAdd: product.tomanPrice,
+            usdPriceAtAdd: product.usdPrice,
+          }),
+        );
+      }
+    });
     return this.snapshot(ownerKey);
   }
 

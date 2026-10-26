@@ -148,6 +148,16 @@ export class AdminController {
     return this.admin.rejectPayment(id, body.reason, request.userId ?? null);
   }
 
+  /** Re-verify a stuck gateway payment (`redirected`/`verify_error`) nobody else is acting on. */
+  @Post("orders/:id/payment/reconcile")
+  reconcileGatewayPayment(
+    @Param("id") id: string,
+    @Req() request: AuthedRequest,
+  ) {
+    this.admin.assert(request.adminRole, "order.write");
+    return this.admin.reconcileGatewayPayment(id);
+  }
+
   @Get("messages")
   listMessages() {
     return this.contact.listAll();

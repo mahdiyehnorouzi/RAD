@@ -112,6 +112,7 @@ export async function startPurchaseHarness() {
     repo(PasswordResetToken),
     inventory,
     paymentReview,
+    orders,
     new ProductAttributesService(
       repo(ProductAttribute),
       repo(ProductAttributeOption),

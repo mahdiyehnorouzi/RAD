@@ -131,6 +131,7 @@ before(async () => {
     repo(PasswordResetToken),
     inventory,
     paymentReview,
+    null as never,
     new ProductAttributesService(
       repo(ProductAttribute),
       repo(ProductAttributeOption),

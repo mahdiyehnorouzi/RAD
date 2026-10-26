@@ -1,5 +1,6 @@
 "use client";
 import { api } from "../lib/api";
+import { effectiveProductStatus } from "@rad/types";
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -135,10 +136,12 @@ function formatPriceInput(value: number) {
 }
 
 function statusTone(
-  status: AdminProduct["status"],
-): "green" | "oxide" | "muted" {
-  if (status === "available") return "green";
-  if (status === "sold") return "oxide";
+  product: Pick<AdminProduct, "status" | "reservedUntil">,
+): "green" | "oxide" | "sand" | "muted" {
+  const effective = effectiveProductStatus(product);
+  if (effective === "available") return "green";
+  if (effective === "reserved") return "sand";
+  if (effective === "sold") return "oxide";
   return "muted";
 }
 
@@ -834,7 +837,7 @@ function Overview({
               <strong>{product.name}</strong>
               <StatusBadge
                 label={productStatusLabel(product)}
-                tone={statusTone(product.status)}
+                tone={statusTone(product)}
               />
             </div>
           ))}
@@ -1135,7 +1138,7 @@ function Products({
                     <td>
                       <StatusBadge
                         label={productStatusLabel(product)}
-                        tone={statusTone(product.status)}
+                        tone={statusTone(product)}
                       />
                     </td>
                     <td>{money(product.price)}</td>
@@ -1178,7 +1181,7 @@ function Products({
                 <div className="product-meta">
                   <StatusBadge
                     label={productStatusLabel(product)}
-                    tone={statusTone(product.status)}
+                    tone={statusTone(product)}
                   />
                   <strong>{money(product.price)}</strong>
                   <small>ویرایش {date(product.updatedAt)}</small>
@@ -1360,11 +1363,21 @@ function Orders({
             const next = nextStatus ? orderStatusLabels[nextStatus] : undefined;
             const awaitingReceiptReview =
               order.status === "pending_verification";
+            // No automated process ever resolves these (see orders.service.ts
+            // retryGatewayPayment/verifyAndApplyGatewayResult): a gateway
+            // payment stuck here waits on the buyer's own retry, or forever
+            // if they never click it. Surface it the same way a manual-card
+            // receipt review is surfaced, so staff can find it without
+            // opening every order.
+            const awaitingGatewayReview =
+              order.paymentProvider === "zarinpal" &&
+              (order.paymentStatus === "verify_error" ||
+                order.paymentStatus === "verify_conflict");
             const statusOptions = orderStatusOptions(order.status);
             return (
               <article
                 id={`order-${order.id}`}
-                className={`order-process-card${awaitingReceiptReview ? " needs-receipt-review" : ""}${terminal ? " is-terminal" : ""}`}
+                className={`order-process-card${awaitingReceiptReview || awaitingGatewayReview ? " needs-receipt-review" : ""}${terminal ? " is-terminal" : ""}`}
                 key={order.id}
               >
                 <header>
@@ -2364,7 +2377,7 @@ function StatusBadge({
   tone,
 }: {
   label: string;
-  tone: "green" | "oxide" | "muted";
+  tone: "green" | "oxide" | "sand" | "muted";
 }) {
   return <span className={`status-badge ${tone}`}>{label}</span>;
 }
