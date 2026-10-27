@@ -4,8 +4,10 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Boxes,
   Calendar,
+  Check,
   ChevronRight,
   CircleDollarSign,
+  History,
   ImageIcon,
   Mic,
   Package,
@@ -24,7 +26,11 @@ import {
   type AdminCommissionStage,
 } from "../lib/admin-data";
 import { StageMeter } from "@rad/ui";
-import { useBodyScrollLock, useIsMobileViewport } from "./admin-dialog";
+import {
+  ConfirmDialog,
+  useBodyScrollLock,
+  useIsMobileViewport,
+} from "./admin-dialog";
 
 // Deep-links a selected commission as a URL hash (#commissions/RAD-M-...)
 // scoped to this section only — the rest of the admin shell has no router
@@ -64,16 +70,30 @@ interface CommissionBriefPayload {
   image?: string;
   images?: string[];
 }
+interface CommissionAuditEntry {
+  id: string;
+  at: number;
+  actor: "customer" | "artist" | "system";
+  stageId: AdminCommissionStage;
+  action: { fa: string; en: string };
+}
 interface CommissionPayloadShape {
   brief?: CommissionBriefPayload;
   deadlineAt?: number;
   estimatedCompletion?: string;
+  audit?: CommissionAuditEntry[];
 }
 function readPayload(payload: unknown): CommissionPayloadShape {
   if (payload && typeof payload === "object")
     return payload as CommissionPayloadShape;
   return {};
 }
+
+const auditActorLabels: Record<CommissionAuditEntry["actor"], string> = {
+  artist: "کارگاه",
+  customer: "مشتری",
+  system: "سامانه",
+};
 
 function statusTone(commission: AdminCommission): "oxide" | "green" | "muted" {
   if (commission.stage === "declined") return "muted";
@@ -156,7 +176,12 @@ export function AdminCommissions({
     window.history.pushState(null, "", `${HASH_PREFIX}${encodeURIComponent(id)}`);
     const item = commissions.find((entry) => entry.id === id);
     if (canWrite && item?.stage === "design_submitted") {
-      void onBeginReview(id);
+      // Already surfaced as a toast by the onBeginReview wrapper (which
+      // re-throws so a failed decide()/message() elsewhere gets its own
+      // inline retry UI); this call has no such UI of its own to hand the
+      // rejection to, so it's acknowledged here only to avoid an unhandled
+      // promise rejection — opening the detail view still works either way.
+      void onBeginReview(id).catch(() => {});
     }
   };
 
@@ -323,7 +348,7 @@ function asCopy(value: string) {
   return { fa: value, en: value };
 }
 
-type DetailTab = "summary" | "files" | "messages" | "decision";
+type DetailTab = "summary" | "files" | "messages" | "history" | "decision";
 
 function CommissionDetail({
   commission,
@@ -361,6 +386,7 @@ function CommissionDetail({
     { id: "summary", label: "خلاصه" },
     { id: "files", label: "فایل‌ها" },
     { id: "messages", label: "پیام‌ها" },
+    { id: "history", label: "تاریخچه مراحل" },
     ...(open ? [{ id: "decision" as const, label: "تصمیم" }] : []),
   ];
 
@@ -500,6 +526,10 @@ function CommissionDetail({
         />
       )}
 
+      {tab === "history" && (
+        <CommissionHistory commission={commission} payload={payload} open={open} />
+      )}
+
       {tab === "decision" && open && (
         <CommissionDecisionForm
           commission={commission}
@@ -519,6 +549,97 @@ function CommissionDetail({
             کارگاه هنرمند
           </a>{" "}
           شوید.
+        </p>
+      )}
+    </div>
+  );
+}
+
+function nextActionText(commission: AdminCommission, open: boolean): string {
+  if (commission.stage === "declined") {
+    return "این سفارش رد شده و اقدام بعدی ندارد.";
+  }
+  if (open) {
+    return "در انتظار تصمیم شماست — از تب «تصمیم» طرح را تأیید، رد یا برای آن تغییر/بدیل ثبت کنید.";
+  }
+  if (commission.stage === "feasibility" && commission.nextActor === "customer") {
+    return "تغییر یا بدیل پیشنهادی برای مشتری ارسال شده؛ تا پاسخ مشتری منتظر می‌مانید.";
+  }
+  const index = commissionStageOrder.indexOf(commission.stage);
+  const next = commissionStageOrder[index + 1];
+  return next
+    ? `ادامه و پیشرفت تا مرحله‌ی «${commissionStageLabels[next]}» از طریق کارگاه هنرمند ثبت می‌شود؛ پیام‌رسانی با مشتری همچنان از همین‌جا در دسترس است.`
+    : "این سفارش به آخرین مرحله رسیده است.";
+}
+
+function CommissionHistory({
+  commission,
+  payload,
+  open,
+}: {
+  commission: AdminCommission;
+  payload: CommissionPayloadShape;
+  open: boolean;
+}) {
+  const currentIndex = commissionStageOrder.indexOf(commission.stage);
+  const audit = [...(payload.audit ?? [])].sort((a, b) => b.at - a.at);
+
+  return (
+    <div className="commission-history">
+      <div className="commission-history-stages">
+        {commissionStageOrder.map((stage, index) => {
+          const status =
+            commission.stage === "declined"
+              ? "done"
+              : index < currentIndex
+                ? "done"
+                : index === currentIndex
+                  ? "current"
+                  : "pending";
+          return (
+            <div key={stage} className={`commission-history-stage ${status}`}>
+              <span className="commission-history-stage-marker">
+                {status === "done" ? <Check /> : index + 1}
+              </span>
+              <span>{commissionStageLabels[stage]}</span>
+            </div>
+          );
+        })}
+        {commission.stage === "declined" && (
+          <div className="commission-history-stage done declined">
+            <span className="commission-history-stage-marker">
+              <Check />
+            </span>
+            <span>{commissionStageLabels.declined}</span>
+          </div>
+        )}
+      </div>
+
+      <p className="commission-note commission-next-action">
+        {nextActionText(commission, open)}
+      </p>
+
+      <h4 className="commission-history-heading">
+        <History /> رویدادهای ثبت‌شده
+      </h4>
+      {audit.length ? (
+        <ol className="commission-audit-trail">
+          {audit.map((entry) => (
+            <li key={entry.id}>
+              <div className="commission-audit-entry-head">
+                <b>{auditActorLabels[entry.actor]}</b>
+                <span>{date(entry.at)}</span>
+              </div>
+              <p>{copy(entry.action)}</p>
+              <span className="commission-audit-stage">
+                {commissionStageLabels[entry.stageId]}
+              </span>
+            </li>
+          ))}
+        </ol>
+      ) : (
+        <p className="commission-empty-detail inline">
+          هنوز رویدادی برای این سفارش ثبت نشده است.
         </p>
       )}
     </div>
@@ -628,6 +749,7 @@ function CommissionDecisionForm({
   const [time, setTime] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [confirming, setConfirming] = useState(false);
 
   const decisionOptions: {
     value: typeof decision;
@@ -656,41 +778,73 @@ function CommissionDecisionForm({
     },
   ];
 
+  const submit = () => {
+    if (!canWrite || submitting) return;
+    setConfirming(false);
+    setSubmitting(true);
+    setError("");
+    void onDecide({
+      id: commission.id,
+      decision,
+      reason: reason.trim() ? asCopy(reason.trim()) : undefined,
+      alternative: alternative.trim() ? asCopy(alternative.trim()) : undefined,
+      change:
+        decision === "request_change"
+          ? {
+              whatChanged: asCopy(what.trim() || "جزئیات ساخت باید عوض شود."),
+              whyNecessary: asCopy(why.trim() || "با ماده فعلی قابل ساخت نیست."),
+              priceImpact: asCopy(price.trim() || "بدون تغییر قیمت"),
+              timeImpact: asCopy(time.trim() || "بدون تغییر زمان"),
+            }
+          : undefined,
+    })
+      .catch((err) => setError((err as Error).message || "ثبت تصمیم ناموفق بود."))
+      .finally(() => setSubmitting(false));
+  };
+
+  const confirmCopy: Record<typeof decision, { title: string; description: string; confirmLabel: string }> = {
+    approve: {
+      title: "تأیید طرح؟",
+      confirmLabel: "تأیید طرح",
+      description:
+        "طرح برای مشتری تأیید می‌شود و سفارش وارد مرحله‌ی پیشنهاد قیمت خواهد شد.",
+    },
+    request_change: {
+      title: "درخواست اصلاح؟",
+      confirmLabel: "ثبت درخواست اصلاح",
+      description: "این تغییرات برای مشتری ارسال می‌شود و پاسخ او منتظر می‌ماند.",
+    },
+    offer_alternative: {
+      title: "ارسال بدیل؟",
+      confirmLabel: "ارسال بدیل",
+      description: "بدیل پیشنهادی برای مشتری ارسال می‌شود و پاسخ او منتظر می‌ماند.",
+    },
+    decline: {
+      title: "رد سفارش؟",
+      confirmLabel: "رد سفارش",
+      description:
+        "این سفارش رد می‌شود، به مشتری اطلاع داده می‌شود و این اقدام قابل بازگشت نیست.",
+    },
+  };
+
   return (
     <form
       className="commission-decide"
       onSubmit={(event) => {
         event.preventDefault();
         if (!canWrite || submitting) return;
-        setSubmitting(true);
-        setError("");
-        void onDecide({
-          id: commission.id,
-          decision,
-          reason: reason.trim() ? asCopy(reason.trim()) : undefined,
-          alternative: alternative.trim()
-            ? asCopy(alternative.trim())
-            : undefined,
-          change:
-            decision === "request_change"
-              ? {
-                  whatChanged: asCopy(
-                    what.trim() || "جزئیات ساخت باید عوض شود.",
-                  ),
-                  whyNecessary: asCopy(
-                    why.trim() || "با ماده فعلی قابل ساخت نیست.",
-                  ),
-                  priceImpact: asCopy(price.trim() || "بدون تغییر قیمت"),
-                  timeImpact: asCopy(time.trim() || "بدون تغییر زمان"),
-                }
-              : undefined,
-        })
-          .catch((err) =>
-            setError((err as Error).message || "ثبت تصمیم ناموفق بود."),
-          )
-          .finally(() => setSubmitting(false));
+        setConfirming(true);
       }}
     >
+      {confirming && (
+        <ConfirmDialog
+          title={confirmCopy[decision].title}
+          description={confirmCopy[decision].description}
+          confirmLabel={confirmCopy[decision].confirmLabel}
+          onCancel={() => setConfirming(false)}
+          onConfirm={submit}
+        />
+      )}
       <div className="commission-decision-grid">
         {decisionOptions.map((option) => (
           <label

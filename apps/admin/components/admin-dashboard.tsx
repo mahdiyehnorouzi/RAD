@@ -497,6 +497,7 @@ export function AdminDashboard() {
                 await workspace.beginCommissionReview(id);
               } catch (error) {
                 announce((error as Error).message);
+                throw error;
               }
             }}
             onDecide={async (input) => {
@@ -505,6 +506,12 @@ export function AdminDashboard() {
                 announce("تصمیم برای مشتری ارسال شد.");
               } catch (error) {
                 announce((error as Error).message);
+                // Re-thrown (unlike this file's other section handlers,
+                // which only toast) so CommissionDecisionForm's own
+                // inline error + retry — more durable than a 2.8s toast
+                // for a failed stage decision — actually fires; see the
+                // same note on onMessage below.
+                throw error;
               }
             }}
             onMessage={async (id, body, internal) => {
@@ -513,6 +520,11 @@ export function AdminDashboard() {
                 announce("پیام برای مشتری ارسال شد.");
               } catch (error) {
                 announce((error as Error).message);
+                // Re-thrown so CommissionMessages sees the rejection and
+                // shows its inline error + retry button instead of the
+                // failure being swallowed here and only ever surfacing
+                // as a toast that's gone in 2.8s.
+                throw error;
               }
             }}
           />
