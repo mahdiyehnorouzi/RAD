@@ -25,8 +25,18 @@
    child of `.pdp` (not part of the normal-flow content column), and this
    rule's `width: 100%; margin-inline: auto` was winning the cascade over
    the bar's own width/inset rules (equal specificity, later in source
-   order) — collapsing its carefully balanced side insets back to 0/0. */
-.pdp > :global(:not(.pdp-floating-bar)) {
+   order) — collapsing its carefully balanced side insets back to 0/0.
+   Also excludes `.pdp-full-bleed` (e.g. `related-works.module.css`'s
+   `.related`): that section needs to be the one thing here that *isn't*
+   capped to this centered column and max-width — its own full-bleed
+   `width: 100vw` + negative-margin trick only computes correctly for an
+   element that is itself horizontally centered in the viewport, which
+   this rule's `margin-inline: auto` is exactly what provides. A plain,
+   un-hashed class name (not a CSS-module class) because the rule needs
+   to recognize it across module files without import-order/specificity
+   games — same reason `.pdp-floating-bar` is also a plain name, not a
+   module one. */
+.pdp > :global(:not(.pdp-floating-bar)):global(:not(.pdp-full-bleed)) {
   width: 100%;
   max-width: 86rem;
   min-width: 0;

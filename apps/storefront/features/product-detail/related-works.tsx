@@ -12,7 +12,10 @@ export function RelatedWorks({ works }: { works: Product[] }) {
   if (works.length === 0) return null;
 
   return (
-    <section className={styles.related} aria-labelledby="pdp-related-title">
+    <section
+      className={`${styles.related} pdp-full-bleed`}
+      aria-labelledby="pdp-related-title"
+    >
       <h2 id="pdp-related-title">{c.similarTitle}</h2>
       <ProductCarousel products={works} label={c.similarTitle} />
     </section>
