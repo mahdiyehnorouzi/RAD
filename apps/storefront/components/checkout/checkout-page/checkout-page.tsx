@@ -21,7 +21,7 @@ import { useLocale } from "@/components/i18n";
 import { ButtonLink } from "@/components/ui/button-link";
 import { CardListSkeleton } from "@/components/ui/skeleton";
 import { useCountdown } from "@/hooks/use-countdown";
-import { isNetworkError, readableErrorMessage } from "@/lib/api";
+import { ApiError, isNetworkError, readableErrorMessage } from "@/lib/api";
 import { availableWorks, formatCountdown } from "@/lib/catalog/product-status";
 import { productCopy } from "@/lib/catalog/products";
 import { cartTotal, formatTotal } from "@/lib/money";
@@ -33,6 +33,14 @@ import { CitySelect } from "./city-select";
 
 type FieldName = "name" | "phone" | "city" | "address";
 type FieldErrors = Partial<Record<FieldName, string>>;
+
+/** Backend codes meaning the cart/hold this form was built from no longer matches reality. */
+const CART_STALE_CODES = new Set([
+  "cart_empty",
+  "cart_items_unavailable",
+  "cart_item_unavailable",
+  "cart_item_price_missing",
+]);
 
 const FORM_ID = "checkout-details";
 const FIELD_ORDER: FieldName[] = ["name", "phone", "city", "address"];
@@ -74,9 +82,9 @@ function normalizePhone(raw: string) {
 }
 
 export function CheckoutPage() {
-  const { slugs, holds, holdEndsAt, ready, clear } = useCart();
+  const { slugs, holds, holdEndsAt, ready, clear, reload } = useCart();
   const { user, placeOrder } = useCommerce();
-  const { products, getProduct } = useCatalog();
+  const { products, getProduct, refresh: refreshCatalog } = useCatalog();
   const { locale, href, number } = useLocale();
   const c = checkoutCopy[locale];
   const router = useRouter();
@@ -204,11 +212,25 @@ export function CheckoutPage() {
       router.push(href(`/checkout/${encodeURIComponent(created.id)}`));
       void clear().catch(() => {});
     } catch (err) {
-      setError(
-        isNetworkError(err)
-          ? c.networkFailed
-          : readableErrorMessage(err, c.requestFailed),
-      );
+      if (
+        err instanceof ApiError &&
+        err.code &&
+        CART_STALE_CODES.has(err.code)
+      ) {
+        // The hold or cart row the form was built from is already gone
+        // server-side (expired, claimed by someone else, or swept by a
+        // concurrent request) — resync local state so the existing "lost"
+        // panel (holdGone + back-to-bag) renders instead of leaving the
+        // stale order summary next to a contradictory raw error string.
+        void reload();
+        void refreshCatalog();
+      } else {
+        setError(
+          isNetworkError(err)
+            ? c.networkFailed
+            : readableErrorMessage(err, c.requestFailed),
+        );
+      }
     } finally {
       setSubmitting(false);
     }
