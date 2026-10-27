@@ -176,6 +176,13 @@ export default async function RootLayout({
                   <GoogleAnalytics measurementId={gaMeasurementId} />
                 ) : null}
                 <RouteScrollReset />
+                {/* Rendered first (own in-flow banner when the catalog
+                    fell back to demo data) so its `position: sticky` sits
+                    at the true top of the page, ahead of everything else,
+                    rather than wherever it happened to mount in the tree. */}
+                {process.env.NODE_ENV === "development" ? (
+                  <DevDataBadge />
+                ) : null}
                 <HomeBanner />
                 <Header />
                 {/* <PwaRegistrar /> */}
@@ -186,9 +193,6 @@ export default async function RootLayout({
                     overlay. Inert until a ProductCardStage click opens it —
                     the route underneath stays mounted the whole time. */}
                 <ProductOverlay />
-                {process.env.NODE_ENV === "development" ? (
-                  <DevDataBadge />
-                ) : null}
               </CartProvider>
             </CommerceProvider>
           </CatalogIndexProvider>
