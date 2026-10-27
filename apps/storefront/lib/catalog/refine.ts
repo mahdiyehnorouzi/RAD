@@ -86,7 +86,7 @@ function matchesPrice(product: Product, filters: CatalogFilters) {
   return true;
 }
 
-/** Most recently listed first, by radNumber as a tiebreak. */
+/** Newest-created first, breaking ties by RAD number (stable, not last-updated). */
 export function newestFirst(a: Product, b: Product) {
   return (
     (b.listedAt ?? 0) - (a.listedAt ?? 0) ||
