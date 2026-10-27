@@ -4,7 +4,12 @@ import { FormEvent, Suspense, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCommerce } from "@/components/commerce";
 import { useLocale } from "@/components/i18n";
-import { ApiError, errorMessage, requestPasswordReset, resetAccountPassword } from "@/lib/api";
+import {
+  ApiError,
+  errorMessage,
+  requestPasswordReset,
+  resetAccountPassword,
+} from "@/lib/api";
 import type { MessageKey } from "@/i18n/fa";
 import "./account-page.css";
 
@@ -51,7 +56,8 @@ const GOOGLE_AUTH_ERROR_CODE: Record<string, MessageKey> = {
 };
 
 function safeReturnTo(value?: string | null) {
-  if (!value || !value.startsWith("/") || value.startsWith("//")) return "/account";
+  if (!value || !value.startsWith("/") || value.startsWith("//"))
+    return "/account";
   return value;
 }
 
@@ -75,7 +81,9 @@ function AccountLoginForm({ returnTo }: { returnTo?: string }) {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState(() => {
     const authError = search.get("authError");
-    return authError ? t(GOOGLE_AUTH_ERROR_CODE[authError] ?? "googleAuthFailed") : "";
+    return authError
+      ? t(GOOGLE_AUTH_ERROR_CODE[authError] ?? "googleAuthFailed")
+      : "";
   });
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
@@ -253,7 +261,11 @@ function AccountLoginForm({ returnTo }: { returnTo?: string }) {
                 <GoogleGlyph aria-hidden="true" />
                 <span>{t("continueWithGoogle")}</span>
               </a>
-              <div className="auth-divider" role="separator" aria-label={t("authDivider")}>
+              <div
+                className="auth-divider"
+                role="separator"
+                aria-label={t("authDivider")}
+              >
                 <span>{t("authDivider")}</span>
               </div>
             </>
@@ -284,7 +296,14 @@ function AccountLoginForm({ returnTo }: { returnTo?: string }) {
           {mode === "reset" ? (
             <>
               <label htmlFor="reset-code">{t("resetCodeLabel")}</label>
-              <input id="reset-code" name="code" type="text" inputMode="numeric" autoComplete="one-time-code" required />
+              <input
+                id="reset-code"
+                name="code"
+                type="text"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                required
+              />
             </>
           ) : null}
           {mode === "forgot" ? null : (
@@ -295,20 +314,30 @@ function AccountLoginForm({ returnTo }: { returnTo?: string }) {
                   id="login-password"
                   name="password"
                   type={showPassword ? "text" : "password"}
-                  autoComplete={isSignup || mode === "reset" ? "new-password" : "current-password"}
+                  autoComplete={
+                    isSignup || mode === "reset"
+                      ? "new-password"
+                      : "current-password"
+                  }
                   minLength={8}
                   required
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword((value) => !value)}
-                  aria-label={showPassword ? t("hidePassword") : t("showPassword")}
+                  aria-label={
+                    showPassword ? t("hidePassword") : t("showPassword")
+                  }
                 >
                   {showPassword ? "◉" : "◎"}
                 </button>
               </div>
               {mode === "signin" ? (
-                <button className="auth-switch" type="button" onClick={() => switchMode("forgot")}>
+                <button
+                  className="auth-switch"
+                  type="button"
+                  onClick={() => switchMode("forgot")}
+                >
                   {t("forgotPassword")}
                 </button>
               ) : (
@@ -330,7 +359,12 @@ function AccountLoginForm({ returnTo }: { returnTo?: string }) {
                 )}
           </button>
           {mode === "signin" || mode === "signup" ? null : (
-            <button className="auth-switch" type="button" disabled={busy} onClick={() => switchMode("signin")}>
+            <button
+              className="auth-switch"
+              type="button"
+              disabled={busy}
+              onClick={() => switchMode("signin")}
+            >
               {t("backToLogin")}
             </button>
           )}

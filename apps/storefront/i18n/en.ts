@@ -206,7 +206,8 @@ export const en = {
   googleAuthUnavailable: "Google sign-in isn't available in this environment.",
   googleAuthFailed: "Google sign-in failed. Please try again.",
   googleAuthCancelled: "Google sign-in was cancelled.",
-  googleOnlyAccount: "This account was created with Google — sign in with Google.",
+  googleOnlyAccount:
+    "This account was created with Google — sign in with Google.",
   hello: "Hello,",
   customOrdersNav: "Custom orders",
   accountInfo: "Account information",

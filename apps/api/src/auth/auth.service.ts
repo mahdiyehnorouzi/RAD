@@ -186,7 +186,9 @@ export class AuthService {
     if (!user?.adminRole)
       throw new UnauthorizedException("این حساب به دفتر کوره دسترسی ندارد.");
     if (!user.passwordHash)
-      throw new UnauthorizedException("این حساب با گوگل ساخته شده؛ رمز عبوری ندارد.");
+      throw new UnauthorizedException(
+        "این حساب با گوگل ساخته شده؛ رمز عبوری ندارد.",
+      );
     const matches = await compare(input.currentPassword, user.passwordHash);
     if (!matches) throw new UnauthorizedException("رمز عبور فعلی نادرست است.");
     await this.users.update(
