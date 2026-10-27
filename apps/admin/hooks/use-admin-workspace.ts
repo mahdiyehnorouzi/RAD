@@ -554,6 +554,7 @@ export function useAdminWorkspace() {
           slug: product.slug,
           name: product.name,
           description: product.description,
+          subtitle: product.subtitle,
           category: product.category,
           price: product.price,
           status: product.status,

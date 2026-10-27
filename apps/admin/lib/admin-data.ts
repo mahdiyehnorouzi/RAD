@@ -161,6 +161,9 @@ export interface AdminProduct {
   slug: string;
   name: string;
   description: string;
+  /** Short lede shown under the title on the PDP; falls back to the first
+   * 48 characters of `description` when left blank. */
+  subtitle?: string;
   category: string;
   price: number;
   status: AdminProductStatus;

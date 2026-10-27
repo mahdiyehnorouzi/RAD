@@ -35,6 +35,7 @@ export function toAdminProduct(
     slug: product.slug,
     name: product.name,
     description: product.story,
+    subtitle: product.subtitle,
     category: toAdminCategory(product.category),
     price: product.tomanPrice ?? 0,
     status: normalizeProductStatus(product.status),

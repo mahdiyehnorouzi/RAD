@@ -1717,6 +1717,7 @@ function ProductDialog({
       slug: "",
       name: "",
       description: "",
+      subtitle: "",
       category: "گلدان",
       price: 0,
       status: "draft",
@@ -2110,6 +2111,15 @@ function ProductDialog({
                   setDraft({ ...draft, description: event.target.value })
                 }
                 aria-invalid={Boolean(errors.description)}
+              />
+            </Field>
+            <Field label="زیرعنوان کوتاه (اختیاری)">
+              <input
+                value={draft.subtitle ?? ""}
+                placeholder="خالی بماند تا از ابتدای توضیحات ساخته شود"
+                onChange={(event) =>
+                  setDraft({ ...draft, subtitle: event.target.value })
+                }
               />
             </Field>
           </section>
