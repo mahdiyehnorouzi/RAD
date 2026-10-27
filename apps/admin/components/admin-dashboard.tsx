@@ -163,9 +163,20 @@ function relativeTime(value: number) {
   return date(value);
 }
 
+// A refresh or direct link to a Custom Orders detail (#commissions/<id>,
+// set by AdminCommissions) must land back in that section, not Overview —
+// this is the one spot in the shell that reads the hash; every other
+// section still opens on "overview" as before.
+function initialSectionFromHash(): AdminSection {
+  if (typeof window === "undefined") return "overview";
+  return window.location.hash.startsWith("#commissions/")
+    ? "commissions"
+    : "overview";
+}
+
 export function AdminDashboard() {
   const workspace = useAdminWorkspace();
-  const [section, setSection] = useState<AdminSection>("overview");
+  const [section, setSection] = useState<AdminSection>(initialSectionFromHash);
   const [mobileNav, setMobileNav] = useState(false);
   const [productEditor, setProductEditor] = useState<
     AdminProduct | "new" | null
@@ -492,6 +503,7 @@ export function AdminDashboard() {
                 await workspace.beginCommissionReview(id);
               } catch (error) {
                 announce((error as Error).message);
+                throw error;
               }
             }}
             onDecide={async (input) => {
@@ -500,6 +512,12 @@ export function AdminDashboard() {
                 announce("تصمیم برای مشتری ارسال شد.");
               } catch (error) {
                 announce((error as Error).message);
+                // Re-thrown (unlike this file's other section handlers,
+                // which only toast) so CommissionDecisionForm's own
+                // inline error + retry — more durable than a 2.8s toast
+                // for a failed stage decision — actually fires; see the
+                // same note on onMessage below.
+                throw error;
               }
             }}
             onMessage={async (id, body, internal) => {
@@ -508,6 +526,11 @@ export function AdminDashboard() {
                 announce("پیام برای مشتری ارسال شد.");
               } catch (error) {
                 announce((error as Error).message);
+                // Re-thrown so CommissionMessages sees the rejection and
+                // shows its inline error + retry button instead of the
+                // failure being swallowed here and only ever surfacing
+                // as a toast that's gone in 2.8s.
+                throw error;
               }
             }}
           />

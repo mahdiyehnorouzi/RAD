@@ -1,11 +1,15 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Boxes,
   Calendar,
+  Check,
+  ChevronLeft,
   ChevronRight,
   CircleDollarSign,
+  Download,
+  History,
   ImageIcon,
   Mic,
   Package,
@@ -18,12 +22,32 @@ import {
 import {
   commissionStageLabels,
   commissionStageOrder,
+  resolveCommissionSelection,
   stageCountLabel,
   type AdminCommission,
   type AdminCommissionStage,
 } from "../lib/admin-data";
 import { StageMeter } from "@rad/ui";
-import { useBodyScrollLock, useIsMobileViewport } from "./admin-dialog";
+import {
+  ConfirmDialog,
+  useBodyScrollLock,
+  useIsMobileViewport,
+} from "./admin-dialog";
+
+// Deep-links a selected commission as a URL hash (#commissions/RAD-M-...)
+// scoped to this section only — the rest of the admin shell has no router
+// integration, so this stays a local, self-contained affordance rather
+// than a shell-wide routing change. It gives refresh and direct links a
+// selection to restore, and the browser back button a step to land on
+// (list -> detail -> back) without a full history stack per click.
+const HASH_PREFIX = "#commissions/";
+function readHashCommissionId(): string | null {
+  if (typeof window === "undefined") return null;
+  const { hash } = window.location;
+  return hash.startsWith(HASH_PREFIX)
+    ? decodeURIComponent(hash.slice(HASH_PREFIX.length))
+    : null;
+}
 
 const copy = (value: { fa: string; en: string }) => value.fa;
 const date = (value: number) =>
@@ -48,16 +72,30 @@ interface CommissionBriefPayload {
   image?: string;
   images?: string[];
 }
+interface CommissionAuditEntry {
+  id: string;
+  at: number;
+  actor: "customer" | "artist" | "system";
+  stageId: AdminCommissionStage;
+  action: { fa: string; en: string };
+}
 interface CommissionPayloadShape {
   brief?: CommissionBriefPayload;
   deadlineAt?: number;
   estimatedCompletion?: string;
+  audit?: CommissionAuditEntry[];
 }
 function readPayload(payload: unknown): CommissionPayloadShape {
   if (payload && typeof payload === "object")
     return payload as CommissionPayloadShape;
   return {};
 }
+
+const auditActorLabels: Record<CommissionAuditEntry["actor"], string> = {
+  artist: "کارگاه",
+  customer: "مشتری",
+  system: "سامانه",
+};
 
 function statusTone(commission: AdminCommission): "oxide" | "green" | "muted" {
   if (commission.stage === "declined") return "muted";
@@ -94,22 +132,33 @@ export function AdminCommissions({
   ) => Promise<unknown>;
   onBeginReview: (id: string) => Promise<unknown>;
 }) {
-  const inbox = useMemo(
-    () =>
-      commissions.filter(
-        (item) =>
-          item.stage === "design_submitted" || item.stage === "feasibility",
-      ),
-    [commissions],
-  );
-  const [selectedId, setSelectedId] = useState<string | null>(
-    inbox[0]?.id ?? commissions[0]?.id ?? null,
+  // Opening Custom Orders always shows the list first; a selection only
+  // comes from the admin tapping a card, or from a hash deep-link/refresh
+  // (read synchronously at mount, below). Never auto-select "the first"
+  // or "the last" order. `requestedId` is the raw intent (what was
+  // clicked, or what the hash said); `selectedId` is derived from it
+  // against the real list so a stale/removed id never resolves to some
+  // other order.
+  const [requestedId, setRequestedId] = useState<string | null>(() =>
+    readHashCommissionId(),
   );
   const [query, setQuery] = useState("");
   const [stageFilter, setStageFilter] = useState<AdminCommissionStage | "all">(
     "all",
   );
   const inputRef = useRef<HTMLInputElement>(null);
+  const isMobile = useIsMobileViewport();
+
+  useEffect(() => {
+    const onPopState = () => setRequestedId(readHashCommissionId());
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, []);
+
+  const selectedId = useMemo(
+    () => resolveCommissionSelection(commissions, requestedId),
+    [commissions, requestedId],
+  );
   const selected = commissions.find((item) => item.id === selectedId) ?? null;
 
   const filtered = useMemo(
@@ -125,11 +174,32 @@ export function AdminCommissions({
   );
 
   const selectCommission = (id: string) => {
-    setSelectedId(id);
+    setRequestedId(id);
+    window.history.pushState(
+      null,
+      "",
+      `${HASH_PREFIX}${encodeURIComponent(id)}`,
+    );
     const item = commissions.find((entry) => entry.id === id);
     if (canWrite && item?.stage === "design_submitted") {
-      void onBeginReview(id);
+      // Already surfaced as a toast by the onBeginReview wrapper (which
+      // re-throws so a failed decide()/message() elsewhere gets its own
+      // inline retry UI); this call has no such UI of its own to hand the
+      // rejection to, so it's acknowledged here only to avoid an unhandled
+      // promise rejection — opening the detail view still works either way.
+      void onBeginReview(id).catch(() => {});
     }
+  };
+
+  const closeDetail = () => {
+    setRequestedId(null);
+    // Drop back to a plain hash-less URL rather than pushing another
+    // history entry, so repeated open/close doesn't pile up back-stops.
+    window.history.pushState(
+      null,
+      "",
+      window.location.pathname + window.location.search,
+    );
   };
 
   const stagesWithData = useMemo(
@@ -254,13 +324,17 @@ export function AdminCommissions({
             canWrite={canWrite}
             onDecide={onDecide}
             onMessage={onMessage}
-            onClose={() => setSelectedId(null)}
+            onClose={closeDetail}
           />
-        ) : (
+        ) : !isMobile ? (
+          // On mobile the list is the whole screen when nothing is
+          // selected — an empty placeholder panel would just be dead
+          // space under it, so it only renders on desktop's two-column
+          // layout, where it fills the second column.
           <div className="commission-empty-detail">
             یک سفارش را از فهرست انتخاب کنید.
           </div>
-        )}
+        ) : null}
       </div>
     </section>
   );
@@ -284,7 +358,7 @@ function asCopy(value: string) {
   return { fa: value, en: value };
 }
 
-type DetailTab = "summary" | "files" | "messages" | "decision";
+type DetailTab = "summary" | "files" | "messages" | "history" | "decision";
 
 function CommissionDetail({
   commission,
@@ -317,11 +391,13 @@ function CommissionDetail({
     : brief?.image || commission.image
       ? [brief?.image ?? commission.image!]
       : [];
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
   const tabs: { id: DetailTab; label: string }[] = [
     { id: "summary", label: "خلاصه" },
     { id: "files", label: "فایل‌ها" },
     { id: "messages", label: "پیام‌ها" },
+    { id: "history", label: "تاریخچه مراحل" },
     ...(open ? [{ id: "decision" as const, label: "تصمیم" }] : []),
   ];
 
@@ -436,15 +512,14 @@ function CommissionDetail({
         (images.length ? (
           <div className="commission-files">
             {images.map((src, index) => (
-              <a
+              <button
                 key={`${src}-${index}`}
-                href={src}
-                target="_blank"
-                rel="noreferrer"
+                type="button"
                 className="commission-file"
+                onClick={() => setLightboxIndex(index)}
               >
                 <img src={src} alt="" />
-              </a>
+              </button>
             ))}
           </div>
         ) : (
@@ -453,11 +528,28 @@ function CommissionDetail({
           </p>
         ))}
 
+      {lightboxIndex !== null && (
+        <CommissionLightbox
+          images={images}
+          index={lightboxIndex}
+          onIndexChange={setLightboxIndex}
+          onClose={() => setLightboxIndex(null)}
+        />
+      )}
+
       {tab === "messages" && (
         <CommissionMessages
           commission={commission}
           canWrite={canWrite}
           onMessage={onMessage}
+        />
+      )}
+
+      {tab === "history" && (
+        <CommissionHistory
+          commission={commission}
+          payload={payload}
+          open={open}
         />
       )}
 
@@ -486,6 +578,188 @@ function CommissionDetail({
   );
 }
 
+function nextActionText(commission: AdminCommission, open: boolean): string {
+  if (commission.stage === "declined") {
+    return "این سفارش رد شده و اقدام بعدی ندارد.";
+  }
+  if (open) {
+    return "در انتظار تصمیم شماست — از تب «تصمیم» طرح را تأیید، رد یا برای آن تغییر/بدیل ثبت کنید.";
+  }
+  if (
+    commission.stage === "feasibility" &&
+    commission.nextActor === "customer"
+  ) {
+    return "تغییر یا بدیل پیشنهادی برای مشتری ارسال شده؛ تا پاسخ مشتری منتظر می‌مانید.";
+  }
+  const index = commissionStageOrder.indexOf(commission.stage);
+  const next = commissionStageOrder[index + 1];
+  return next
+    ? `ادامه و پیشرفت تا مرحله‌ی «${commissionStageLabels[next]}» از طریق کارگاه هنرمند ثبت می‌شود؛ پیام‌رسانی با مشتری همچنان از همین‌جا در دسترس است.`
+    : "این سفارش به آخرین مرحله رسیده است.";
+}
+
+function CommissionHistory({
+  commission,
+  payload,
+  open,
+}: {
+  commission: AdminCommission;
+  payload: CommissionPayloadShape;
+  open: boolean;
+}) {
+  const currentIndex = commissionStageOrder.indexOf(commission.stage);
+  const audit = [...(payload.audit ?? [])].sort((a, b) => b.at - a.at);
+
+  return (
+    <div className="commission-history">
+      <div className="commission-history-stages">
+        {commissionStageOrder.map((stage, index) => {
+          const status =
+            commission.stage === "declined"
+              ? "done"
+              : index < currentIndex
+                ? "done"
+                : index === currentIndex
+                  ? "current"
+                  : "pending";
+          return (
+            <div key={stage} className={`commission-history-stage ${status}`}>
+              <span className="commission-history-stage-marker">
+                {status === "done" ? <Check /> : index + 1}
+              </span>
+              <span>{commissionStageLabels[stage]}</span>
+            </div>
+          );
+        })}
+        {commission.stage === "declined" && (
+          <div className="commission-history-stage done declined">
+            <span className="commission-history-stage-marker">
+              <Check />
+            </span>
+            <span>{commissionStageLabels.declined}</span>
+          </div>
+        )}
+      </div>
+
+      <p className="commission-note commission-next-action">
+        {nextActionText(commission, open)}
+      </p>
+
+      <h4 className="commission-history-heading">
+        <History /> رویدادهای ثبت‌شده
+      </h4>
+      {audit.length ? (
+        <ol className="commission-audit-trail">
+          {audit.map((entry) => (
+            <li key={entry.id}>
+              <div className="commission-audit-entry-head">
+                <b>{auditActorLabels[entry.actor]}</b>
+                <span>{date(entry.at)}</span>
+              </div>
+              <p>{copy(entry.action)}</p>
+              <span className="commission-audit-stage">
+                {commissionStageLabels[entry.stageId]}
+              </span>
+            </li>
+          ))}
+        </ol>
+      ) : (
+        <p className="commission-empty-detail inline">
+          هنوز رویدادی برای این سفارش ثبت نشده است.
+        </p>
+      )}
+    </div>
+  );
+}
+
+const faNumber = (value: number) =>
+  new Intl.NumberFormat("fa-IR").format(value);
+
+function CommissionLightbox({
+  images,
+  index,
+  onIndexChange,
+  onClose,
+}: {
+  images: string[];
+  index: number;
+  onIndexChange: (index: number) => void;
+  onClose: () => void;
+}) {
+  useBodyScrollLock(true);
+  const hasPrev = index > 0;
+  const hasNext = index < images.length - 1;
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+      else if (event.key === "ArrowRight" && hasPrev) onIndexChange(index - 1);
+      else if (event.key === "ArrowLeft" && hasNext) onIndexChange(index + 1);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [index, hasPrev, hasNext, onIndexChange, onClose]);
+
+  return (
+    <div
+      className="commission-lightbox"
+      role="dialog"
+      aria-modal="true"
+      aria-label="پیش‌نمایش فایل مرجع"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
+    >
+      <div className="commission-lightbox-bar">
+        <span>
+          {faNumber(index + 1)} از {faNumber(images.length)}
+        </span>
+        <div className="commission-lightbox-actions">
+          <a
+            href={images[index]}
+            target="_blank"
+            rel="noreferrer"
+            aria-label="دانلود یا بازکردن در تب جدید"
+          >
+            <Download />
+          </a>
+          <button type="button" onClick={onClose} aria-label="بستن پیش‌نمایش">
+            <X />
+          </button>
+        </div>
+      </div>
+      <div
+        className="commission-lightbox-stage"
+        onMouseDown={(event) => {
+          if (event.target === event.currentTarget) onClose();
+        }}
+      >
+        {hasPrev && (
+          <button
+            type="button"
+            className="commission-lightbox-nav prev"
+            onClick={() => onIndexChange(index - 1)}
+            aria-label="فایل قبلی"
+          >
+            <ChevronRight />
+          </button>
+        )}
+        <img src={images[index]} alt="" />
+        {hasNext && (
+          <button
+            type="button"
+            className="commission-lightbox-nav next"
+            onClick={() => onIndexChange(index + 1)}
+            aria-label="فایل بعدی"
+          >
+            <ChevronLeft />
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function CommissionMessages({
   commission,
   canWrite,
@@ -496,6 +770,22 @@ function CommissionMessages({
   onMessage: Parameters<typeof AdminCommissions>[0]["onMessage"];
 }) {
   const [message, setMessage] = useState("");
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState("");
+
+  const send = () => {
+    const body = message.trim();
+    if (!body || !canWrite || sending) return;
+    setSending(true);
+    setError("");
+    void onMessage(commission.id, asCopy(body))
+      .then(() => setMessage(""))
+      .catch((err) =>
+        setError((err as Error).message || "ارسال پیام ناموفق بود."),
+      )
+      .finally(() => setSending(false));
+  };
+
   return (
     <div className="commission-messages-pane">
       <ol className="commission-thread">
@@ -522,10 +812,7 @@ function CommissionMessages({
         className="commission-message"
         onSubmit={(event) => {
           event.preventDefault();
-          if (!message.trim() || !canWrite) return;
-          void onMessage(commission.id, asCopy(message.trim())).then(() =>
-            setMessage(""),
-          );
+          send();
         }}
       >
         <label htmlFor="studio-message">پیام به مشتری</label>
@@ -534,13 +821,22 @@ function CommissionMessages({
           value={message}
           onChange={(event) => setMessage(event.target.value)}
           rows={3}
+          disabled={sending}
         />
+        {error && (
+          <p className="commission-message-error" role="alert">
+            {error}
+            <button type="button" onClick={send}>
+              تلاش دوباره
+            </button>
+          </p>
+        )}
         <button
           className="secondary-action"
           type="submit"
-          disabled={!canWrite || !message.trim()}
+          disabled={!canWrite || !message.trim() || sending}
         >
-          ارسال پیام
+          {sending ? "در حال ارسال…" : "ارسال پیام"}
         </button>
       </form>
     </div>
@@ -565,6 +861,9 @@ function CommissionDecisionForm({
   const [why, setWhy] = useState("");
   const [price, setPrice] = useState("");
   const [time, setTime] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
+  const [confirming, setConfirming] = useState(false);
 
   const decisionOptions: {
     value: typeof decision;
@@ -593,35 +892,82 @@ function CommissionDecisionForm({
     },
   ];
 
+  const submit = () => {
+    if (!canWrite || submitting) return;
+    setConfirming(false);
+    setSubmitting(true);
+    setError("");
+    void onDecide({
+      id: commission.id,
+      decision,
+      reason: reason.trim() ? asCopy(reason.trim()) : undefined,
+      alternative: alternative.trim() ? asCopy(alternative.trim()) : undefined,
+      change:
+        decision === "request_change"
+          ? {
+              whatChanged: asCopy(what.trim() || "جزئیات ساخت باید عوض شود."),
+              whyNecessary: asCopy(
+                why.trim() || "با ماده فعلی قابل ساخت نیست.",
+              ),
+              priceImpact: asCopy(price.trim() || "بدون تغییر قیمت"),
+              timeImpact: asCopy(time.trim() || "بدون تغییر زمان"),
+            }
+          : undefined,
+    })
+      .catch((err) =>
+        setError((err as Error).message || "ثبت تصمیم ناموفق بود."),
+      )
+      .finally(() => setSubmitting(false));
+  };
+
+  const confirmCopy: Record<
+    typeof decision,
+    { title: string; description: string; confirmLabel: string }
+  > = {
+    approve: {
+      title: "تأیید طرح؟",
+      confirmLabel: "تأیید طرح",
+      description:
+        "طرح برای مشتری تأیید می‌شود و سفارش وارد مرحله‌ی پیشنهاد قیمت خواهد شد.",
+    },
+    request_change: {
+      title: "درخواست اصلاح؟",
+      confirmLabel: "ثبت درخواست اصلاح",
+      description:
+        "این تغییرات برای مشتری ارسال می‌شود و پاسخ او منتظر می‌ماند.",
+    },
+    offer_alternative: {
+      title: "ارسال بدیل؟",
+      confirmLabel: "ارسال بدیل",
+      description:
+        "بدیل پیشنهادی برای مشتری ارسال می‌شود و پاسخ او منتظر می‌ماند.",
+    },
+    decline: {
+      title: "رد سفارش؟",
+      confirmLabel: "رد سفارش",
+      description:
+        "این سفارش رد می‌شود، به مشتری اطلاع داده می‌شود و این اقدام قابل بازگشت نیست.",
+    },
+  };
+
   return (
     <form
       className="commission-decide"
       onSubmit={(event) => {
         event.preventDefault();
-        if (!canWrite) return;
-        void onDecide({
-          id: commission.id,
-          decision,
-          reason: reason.trim() ? asCopy(reason.trim()) : undefined,
-          alternative: alternative.trim()
-            ? asCopy(alternative.trim())
-            : undefined,
-          change:
-            decision === "request_change"
-              ? {
-                  whatChanged: asCopy(
-                    what.trim() || "جزئیات ساخت باید عوض شود.",
-                  ),
-                  whyNecessary: asCopy(
-                    why.trim() || "با ماده فعلی قابل ساخت نیست.",
-                  ),
-                  priceImpact: asCopy(price.trim() || "بدون تغییر قیمت"),
-                  timeImpact: asCopy(time.trim() || "بدون تغییر زمان"),
-                }
-              : undefined,
-        });
+        if (!canWrite || submitting) return;
+        setConfirming(true);
       }}
     >
+      {confirming && (
+        <ConfirmDialog
+          title={confirmCopy[decision].title}
+          description={confirmCopy[decision].description}
+          confirmLabel={confirmCopy[decision].confirmLabel}
+          onCancel={() => setConfirming(false)}
+          onConfirm={submit}
+        />
+      )}
       <div className="commission-decision-grid">
         {decisionOptions.map((option) => (
           <label
@@ -688,8 +1034,17 @@ function CommissionDecisionForm({
           />
         </>
       ) : null}
-      <button className="primary-action" type="submit" disabled={!canWrite}>
-        ثبت تصمیم و اطلاع به مشتری
+      {error && (
+        <p className="commission-message-error" role="alert">
+          {error}
+        </p>
+      )}
+      <button
+        className="primary-action"
+        type="submit"
+        disabled={!canWrite || submitting}
+      >
+        {submitting ? "در حال ثبت…" : "ثبت تصمیم و اطلاع به مشتری"}
       </button>
     </form>
   );
