@@ -20,7 +20,6 @@ import type {
   ProductCardVariant,
 } from "../type";
 import { ProductCardQr } from "./product-card-qr";
-import { ProductCardPrint } from "./product-card-print";
 import { ProductCardStage } from "./product-card-stage";
 import { ProductCardThumbs } from "./product-card-thumbs";
 import "../product-grid.css";
@@ -113,9 +112,11 @@ export function ProductCard({
     </div>
   );
 
-  const qr = (caption?: string) => (
-    <ProductCardQr product={product} name={copy.name} caption={caption} />
-  );
+  // Passport link only — no caption text. Every card in a grid repeating
+  // the same "RĀD STUDIO"/"RĀD" label under its icon was pure duplicated
+  // branding, not information a shopper needs per card; the icon alone
+  // still reaches the work's passport page.
+  const qr = () => <ProductCardQr product={product} name={copy.name} />;
 
   const className = `rad-card rad-card--${variant}${unavailable ? " is-unavailable" : ""}`;
 
@@ -143,8 +144,7 @@ export function ProductCard({
                 <p>{copy.subtitle}</p>
               </div>
             ) : null}
-            {qr(c.studio)}
-            <ProductCardPrint radNumber={product.radNumber} />
+            {qr()}
           </div>
         </div>
       </article>
@@ -156,7 +156,7 @@ export function ProductCard({
       {stage}
       <div className="rad-card-body">
         {info}
-        {variant === "standard" ? qr(c.studio) : qr("RĀD")}
+        {qr()}
         {variant === "suggest" ? (
           <Link
             href={productHref}
@@ -166,9 +166,6 @@ export function ProductCard({
           >
             <Arrow aria-hidden="true" />
           </Link>
-        ) : null}
-        {variant === "standard" ? (
-          <ProductCardPrint radNumber={product.radNumber} />
         ) : null}
       </div>
     </article>
