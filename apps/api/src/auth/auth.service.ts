@@ -70,6 +70,12 @@ export class AuthService {
         code: "account_inactive",
       });
     }
+    if (!existing.passwordHash) {
+      throw new UnauthorizedException({
+        message: "این حساب با گوگل ساخته شده؛ با گوگل وارد شوید.",
+        code: "google_only_account",
+      });
+    }
     const matches = await compare(input.password, existing.passwordHash);
     if (!matches) {
       throw new UnauthorizedException({
@@ -112,6 +118,65 @@ export class AuthService {
     return { user: actor.user };
   }
 
+  /**
+   * Called after the Google OAuth authorization-code exchange has already
+   * verified `googleId`/`email` server-side (`GoogleStrategy`) — never
+   * trusts a client-asserted identity. Matches an existing account by
+   * `googleId` first (repeat sign-in), then by verified email (first
+   * Google sign-in on an account that already has a password — Google
+   * has already proven ownership of that email, so this links rather than
+   * creating a duplicate identity), then creates a new, password-less
+   * account. `emailVerified` must be true or this refuses to match/create
+   * by email at all, since an unverified email proves nothing.
+   */
+  async signInWithGoogle(
+    profile: {
+      googleId: string;
+      email: string;
+      emailVerified: boolean;
+      name: string;
+    },
+    actor: Actor,
+  ) {
+    const email = profile.email.trim().toLowerCase();
+    let user = await this.users.findOne({
+      where: { googleId: profile.googleId },
+    });
+    if (!user && profile.emailVerified) {
+      const byEmail = await this.users.findOne({ where: { email } });
+      if (byEmail) {
+        await this.users.update(
+          { id: byEmail.id },
+          { googleId: profile.googleId },
+        );
+        byEmail.googleId = profile.googleId;
+        user = byEmail;
+      }
+    }
+    if (!user) {
+      if (!profile.emailVerified) {
+        throw new UnauthorizedException({
+          message: "ایمیل گوگل تأیید نشده است.",
+          code: "google_email_unverified",
+        });
+      }
+      user = await this.users.save(
+        this.users.create({
+          name: profile.name.trim() || email,
+          email,
+          passwordHash: null,
+          googleId: profile.googleId,
+          role: "customer",
+          status: "active",
+        }),
+      );
+      await this.notices.save(
+        this.notices.create({ ownerKey: `user:${user.id}`, kind: "welcome" }),
+      );
+    }
+    return this.openSession(toAuthUser(user), actor);
+  }
+
   async changePassword(
     actor: Actor,
     input: { currentPassword: string; newPassword: string },
@@ -120,6 +185,10 @@ export class AuthService {
     const user = await this.users.findOne({ where: { id: actor.user.id } });
     if (!user?.adminRole)
       throw new UnauthorizedException("این حساب به دفتر کوره دسترسی ندارد.");
+    if (!user.passwordHash)
+      throw new UnauthorizedException(
+        "این حساب با گوگل ساخته شده؛ رمز عبوری ندارد.",
+      );
     const matches = await compare(input.currentPassword, user.passwordHash);
     if (!matches) throw new UnauthorizedException("رمز عبور فعلی نادرست است.");
     await this.users.update(
