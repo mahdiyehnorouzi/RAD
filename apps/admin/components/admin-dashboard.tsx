@@ -163,9 +163,20 @@ function relativeTime(value: number) {
   return date(value);
 }
 
+// A refresh or direct link to a Custom Orders detail (#commissions/<id>,
+// set by AdminCommissions) must land back in that section, not Overview —
+// this is the one spot in the shell that reads the hash; every other
+// section still opens on "overview" as before.
+function initialSectionFromHash(): AdminSection {
+  if (typeof window === "undefined") return "overview";
+  return window.location.hash.startsWith("#commissions/")
+    ? "commissions"
+    : "overview";
+}
+
 export function AdminDashboard() {
   const workspace = useAdminWorkspace();
-  const [section, setSection] = useState<AdminSection>("overview");
+  const [section, setSection] = useState<AdminSection>(initialSectionFromHash);
   const [mobileNav, setMobileNav] = useState(false);
   const [productEditor, setProductEditor] = useState<
     AdminProduct | "new" | null

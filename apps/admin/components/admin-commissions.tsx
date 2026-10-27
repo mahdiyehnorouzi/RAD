@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Boxes,
   Calendar,
@@ -18,12 +18,28 @@ import {
 import {
   commissionStageLabels,
   commissionStageOrder,
+  resolveCommissionSelection,
   stageCountLabel,
   type AdminCommission,
   type AdminCommissionStage,
 } from "../lib/admin-data";
 import { StageMeter } from "@rad/ui";
 import { useBodyScrollLock, useIsMobileViewport } from "./admin-dialog";
+
+// Deep-links a selected commission as a URL hash (#commissions/RAD-M-...)
+// scoped to this section only — the rest of the admin shell has no router
+// integration, so this stays a local, self-contained affordance rather
+// than a shell-wide routing change. It gives refresh and direct links a
+// selection to restore, and the browser back button a step to land on
+// (list -> detail -> back) without a full history stack per click.
+const HASH_PREFIX = "#commissions/";
+function readHashCommissionId(): string | null {
+  if (typeof window === "undefined") return null;
+  const { hash } = window.location;
+  return hash.startsWith(HASH_PREFIX)
+    ? decodeURIComponent(hash.slice(HASH_PREFIX.length))
+    : null;
+}
 
 const copy = (value: { fa: string; en: string }) => value.fa;
 const date = (value: number) =>
@@ -94,22 +110,33 @@ export function AdminCommissions({
   ) => Promise<unknown>;
   onBeginReview: (id: string) => Promise<unknown>;
 }) {
-  const inbox = useMemo(
-    () =>
-      commissions.filter(
-        (item) =>
-          item.stage === "design_submitted" || item.stage === "feasibility",
-      ),
-    [commissions],
-  );
-  const [selectedId, setSelectedId] = useState<string | null>(
-    inbox[0]?.id ?? commissions[0]?.id ?? null,
+  // Opening Custom Orders always shows the list first; a selection only
+  // comes from the admin tapping a card, or from a hash deep-link/refresh
+  // (read synchronously at mount, below). Never auto-select "the first"
+  // or "the last" order. `requestedId` is the raw intent (what was
+  // clicked, or what the hash said); `selectedId` is derived from it
+  // against the real list so a stale/removed id never resolves to some
+  // other order.
+  const [requestedId, setRequestedId] = useState<string | null>(() =>
+    readHashCommissionId(),
   );
   const [query, setQuery] = useState("");
   const [stageFilter, setStageFilter] = useState<AdminCommissionStage | "all">(
     "all",
   );
   const inputRef = useRef<HTMLInputElement>(null);
+  const isMobile = useIsMobileViewport();
+
+  useEffect(() => {
+    const onPopState = () => setRequestedId(readHashCommissionId());
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, []);
+
+  const selectedId = useMemo(
+    () => resolveCommissionSelection(commissions, requestedId),
+    [commissions, requestedId],
+  );
   const selected = commissions.find((item) => item.id === selectedId) ?? null;
 
   const filtered = useMemo(
@@ -125,11 +152,19 @@ export function AdminCommissions({
   );
 
   const selectCommission = (id: string) => {
-    setSelectedId(id);
+    setRequestedId(id);
+    window.history.pushState(null, "", `${HASH_PREFIX}${encodeURIComponent(id)}`);
     const item = commissions.find((entry) => entry.id === id);
     if (canWrite && item?.stage === "design_submitted") {
       void onBeginReview(id);
     }
+  };
+
+  const closeDetail = () => {
+    setRequestedId(null);
+    // Drop back to a plain hash-less URL rather than pushing another
+    // history entry, so repeated open/close doesn't pile up back-stops.
+    window.history.pushState(null, "", window.location.pathname + window.location.search);
   };
 
   const stagesWithData = useMemo(
@@ -254,13 +289,17 @@ export function AdminCommissions({
             canWrite={canWrite}
             onDecide={onDecide}
             onMessage={onMessage}
-            onClose={() => setSelectedId(null)}
+            onClose={closeDetail}
           />
-        ) : (
+        ) : !isMobile ? (
+          // On mobile the list is the whole screen when nothing is
+          // selected — an empty placeholder panel would just be dead
+          // space under it, so it only renders on desktop's two-column
+          // layout, where it fills the second column.
           <div className="commission-empty-detail">
             یک سفارش را از فهرست انتخاب کنید.
           </div>
-        )}
+        ) : null}
       </div>
     </section>
   );
@@ -496,6 +535,22 @@ function CommissionMessages({
   onMessage: Parameters<typeof AdminCommissions>[0]["onMessage"];
 }) {
   const [message, setMessage] = useState("");
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState("");
+
+  const send = () => {
+    const body = message.trim();
+    if (!body || !canWrite || sending) return;
+    setSending(true);
+    setError("");
+    void onMessage(commission.id, asCopy(body))
+      .then(() => setMessage(""))
+      .catch((err) =>
+        setError((err as Error).message || "ارسال پیام ناموفق بود."),
+      )
+      .finally(() => setSending(false));
+  };
+
   return (
     <div className="commission-messages-pane">
       <ol className="commission-thread">
@@ -522,10 +577,7 @@ function CommissionMessages({
         className="commission-message"
         onSubmit={(event) => {
           event.preventDefault();
-          if (!message.trim() || !canWrite) return;
-          void onMessage(commission.id, asCopy(message.trim())).then(() =>
-            setMessage(""),
-          );
+          send();
         }}
       >
         <label htmlFor="studio-message">پیام به مشتری</label>
@@ -534,13 +586,22 @@ function CommissionMessages({
           value={message}
           onChange={(event) => setMessage(event.target.value)}
           rows={3}
+          disabled={sending}
         />
+        {error && (
+          <p className="commission-message-error" role="alert">
+            {error}
+            <button type="button" onClick={send}>
+              تلاش دوباره
+            </button>
+          </p>
+        )}
         <button
           className="secondary-action"
           type="submit"
-          disabled={!canWrite || !message.trim()}
+          disabled={!canWrite || !message.trim() || sending}
         >
-          ارسال پیام
+          {sending ? "در حال ارسال…" : "ارسال پیام"}
         </button>
       </form>
     </div>
@@ -565,6 +626,8 @@ function CommissionDecisionForm({
   const [why, setWhy] = useState("");
   const [price, setPrice] = useState("");
   const [time, setTime] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
 
   const decisionOptions: {
     value: typeof decision;
@@ -598,7 +661,9 @@ function CommissionDecisionForm({
       className="commission-decide"
       onSubmit={(event) => {
         event.preventDefault();
-        if (!canWrite) return;
+        if (!canWrite || submitting) return;
+        setSubmitting(true);
+        setError("");
         void onDecide({
           id: commission.id,
           decision,
@@ -619,7 +684,11 @@ function CommissionDecisionForm({
                   timeImpact: asCopy(time.trim() || "بدون تغییر زمان"),
                 }
               : undefined,
-        });
+        })
+          .catch((err) =>
+            setError((err as Error).message || "ثبت تصمیم ناموفق بود."),
+          )
+          .finally(() => setSubmitting(false));
       }}
     >
       <div className="commission-decision-grid">
@@ -688,8 +757,17 @@ function CommissionDecisionForm({
           />
         </>
       ) : null}
-      <button className="primary-action" type="submit" disabled={!canWrite}>
-        ثبت تصمیم و اطلاع به مشتری
+      {error && (
+        <p className="commission-message-error" role="alert">
+          {error}
+        </p>
+      )}
+      <button
+        className="primary-action"
+        type="submit"
+        disabled={!canWrite || submitting}
+      >
+        {submitting ? "در حال ثبت…" : "ثبت تصمیم و اطلاع به مشتری"}
       </button>
     </form>
   );
