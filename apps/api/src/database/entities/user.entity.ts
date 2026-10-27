@@ -21,8 +21,13 @@ export class User {
   @Column("text", { unique: true })
   email!: string;
 
-  @Column("text")
-  passwordHash!: string;
+  /** Null for a Google-only account — nothing to compare against at sign-in. */
+  @Column("text", { nullable: true })
+  passwordHash!: string | null;
+
+  /** Google's stable per-account subject id. Set once a Google sign-in links or creates this user. */
+  @Column("text", { nullable: true, unique: true })
+  googleId!: string | null;
 
   @Column("text", { default: "customer" })
   role!: string;

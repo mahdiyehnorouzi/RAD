@@ -51,7 +51,11 @@ async function lockPublicPassword(
   publicPassword: string,
 ) {
   const existing = await users.findOne({ where: { email } });
-  if (!existing || !(await compare(publicPassword, existing.passwordHash)))
+  if (
+    !existing ||
+    !existing.passwordHash ||
+    !(await compare(publicPassword, existing.passwordHash))
+  )
     return false;
   await users.update(
     { id: existing.id },
