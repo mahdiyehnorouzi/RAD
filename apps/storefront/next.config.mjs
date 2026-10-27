@@ -2,8 +2,28 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 const appRoot = path.dirname(fileURLToPath(import.meta.url));
 const monorepoRoot = path.resolve(appRoot, "../..");
+
+// SEAWEEDFS_PUBLIC_URL is a per-deployment env var (see
+// apps/api/src/storage/seaweedfs-storage.service.ts), not a fixed domain
+// the way Cloudinary's is — it can still be parsed at build/start time,
+// though, letting `remotePatterns` allowlist it (and, via `env` below,
+// letting `product-media.tsx`'s client-side loader recognize it) so
+// SeaweedFS-hosted thumbnails stop bypassing Next's image optimizer and
+// shipping full-size originals at thumbnail display size. Left undefined
+// when the var is unset/unparseable — that `src` then falls back to its
+// existing unresized passthrough, same as before this change.
+let seaweedfsPublicHost;
+try {
+  seaweedfsPublicHost = process.env.SEAWEEDFS_PUBLIC_URL
+    ? new URL(process.env.SEAWEEDFS_PUBLIC_URL).host
+    : undefined;
+} catch {
+  seaweedfsPublicHost = undefined;
+}
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  env: { NEXT_PUBLIC_SEAWEEDFS_HOST: seaweedfsPublicHost ?? "" },
   transpilePackages: ["@rad/ui", "@rad/types", "@rad/artworks", "@rad/i18n"],
   turbopack: { root: monorepoRoot },
   // Next's default (60s) means the on-demand image optimizer re-resizes
@@ -14,7 +34,18 @@ const nextConfig = {
   // cache removes the repeat resize cost without real staleness risk.
   // certificate-scene.tsx requests quality 80 (vs. the 75 default) for its
   // wide/tall hero photos, so both must be allowed or the optimizer 400s.
-  images: { minimumCacheTTL: 60 * 60 * 24, qualities: [75, 80] },
+  images: {
+    minimumCacheTTL: 60 * 60 * 24,
+    qualities: [75, 80],
+    ...(seaweedfsPublicHost
+      ? {
+          remotePatterns: [
+            { protocol: "https", hostname: seaweedfsPublicHost },
+            { protocol: "http", hostname: seaweedfsPublicHost },
+          ],
+        }
+      : {}),
+  },
   // Only for the plain `next build` path (Docker/Liara) — gated behind an
   // env var so `vinext build` (Cloudflare) never sees it; vinext has its
   // own output pipeline and standalone's bundled server.js makes no sense
