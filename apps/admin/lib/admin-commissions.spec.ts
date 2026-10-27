@@ -1,9 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import {
-  resolveCommissionSelection,
-  type AdminCommission,
-} from "./admin-data";
+import { resolveCommissionSelection, type AdminCommission } from "./admin-data";
 
 function commission(overrides: Partial<AdminCommission>): AdminCommission {
   return {

@@ -175,7 +175,11 @@ export function AdminCommissions({
 
   const selectCommission = (id: string) => {
     setRequestedId(id);
-    window.history.pushState(null, "", `${HASH_PREFIX}${encodeURIComponent(id)}`);
+    window.history.pushState(
+      null,
+      "",
+      `${HASH_PREFIX}${encodeURIComponent(id)}`,
+    );
     const item = commissions.find((entry) => entry.id === id);
     if (canWrite && item?.stage === "design_submitted") {
       // Already surfaced as a toast by the onBeginReview wrapper (which
@@ -191,7 +195,11 @@ export function AdminCommissions({
     setRequestedId(null);
     // Drop back to a plain hash-less URL rather than pushing another
     // history entry, so repeated open/close doesn't pile up back-stops.
-    window.history.pushState(null, "", window.location.pathname + window.location.search);
+    window.history.pushState(
+      null,
+      "",
+      window.location.pathname + window.location.search,
+    );
   };
 
   const stagesWithData = useMemo(
@@ -538,7 +546,11 @@ function CommissionDetail({
       )}
 
       {tab === "history" && (
-        <CommissionHistory commission={commission} payload={payload} open={open} />
+        <CommissionHistory
+          commission={commission}
+          payload={payload}
+          open={open}
+        />
       )}
 
       {tab === "decision" && open && (
@@ -573,7 +585,10 @@ function nextActionText(commission: AdminCommission, open: boolean): string {
   if (open) {
     return "در انتظار تصمیم شماست — از تب «تصمیم» طرح را تأیید، رد یا برای آن تغییر/بدیل ثبت کنید.";
   }
-  if (commission.stage === "feasibility" && commission.nextActor === "customer") {
+  if (
+    commission.stage === "feasibility" &&
+    commission.nextActor === "customer"
+  ) {
     return "تغییر یا بدیل پیشنهادی برای مشتری ارسال شده؛ تا پاسخ مشتری منتظر می‌مانید.";
   }
   const index = commissionStageOrder.indexOf(commission.stage);
@@ -891,17 +906,24 @@ function CommissionDecisionForm({
         decision === "request_change"
           ? {
               whatChanged: asCopy(what.trim() || "جزئیات ساخت باید عوض شود."),
-              whyNecessary: asCopy(why.trim() || "با ماده فعلی قابل ساخت نیست."),
+              whyNecessary: asCopy(
+                why.trim() || "با ماده فعلی قابل ساخت نیست.",
+              ),
               priceImpact: asCopy(price.trim() || "بدون تغییر قیمت"),
               timeImpact: asCopy(time.trim() || "بدون تغییر زمان"),
             }
           : undefined,
     })
-      .catch((err) => setError((err as Error).message || "ثبت تصمیم ناموفق بود."))
+      .catch((err) =>
+        setError((err as Error).message || "ثبت تصمیم ناموفق بود."),
+      )
       .finally(() => setSubmitting(false));
   };
 
-  const confirmCopy: Record<typeof decision, { title: string; description: string; confirmLabel: string }> = {
+  const confirmCopy: Record<
+    typeof decision,
+    { title: string; description: string; confirmLabel: string }
+  > = {
     approve: {
       title: "تأیید طرح؟",
       confirmLabel: "تأیید طرح",
@@ -911,12 +933,14 @@ function CommissionDecisionForm({
     request_change: {
       title: "درخواست اصلاح؟",
       confirmLabel: "ثبت درخواست اصلاح",
-      description: "این تغییرات برای مشتری ارسال می‌شود و پاسخ او منتظر می‌ماند.",
+      description:
+        "این تغییرات برای مشتری ارسال می‌شود و پاسخ او منتظر می‌ماند.",
     },
     offer_alternative: {
       title: "ارسال بدیل؟",
       confirmLabel: "ارسال بدیل",
-      description: "بدیل پیشنهادی برای مشتری ارسال می‌شود و پاسخ او منتظر می‌ماند.",
+      description:
+        "بدیل پیشنهادی برای مشتری ارسال می‌شود و پاسخ او منتظر می‌ماند.",
     },
     decline: {
       title: "رد سفارش؟",
