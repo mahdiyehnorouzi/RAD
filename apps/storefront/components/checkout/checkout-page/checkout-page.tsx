@@ -212,7 +212,11 @@ export function CheckoutPage() {
       router.push(href(`/checkout/${encodeURIComponent(created.id)}`));
       void clear().catch(() => {});
     } catch (err) {
-      if (err instanceof ApiError && err.code && CART_STALE_CODES.has(err.code)) {
+      if (
+        err instanceof ApiError &&
+        err.code &&
+        CART_STALE_CODES.has(err.code)
+      ) {
         // The hold or cart row the form was built from is already gone
         // server-side (expired, claimed by someone else, or swept by a
         // concurrent request) — resync local state so the existing "lost"
