@@ -12,13 +12,35 @@ const monorepoRoot = path.resolve(appRoot, "../..");
 // shipping full-size originals at thumbnail display size. Left undefined
 // when the var is unset/unparseable — that `src` then falls back to its
 // existing unresized passthrough, same as before this change.
+// `host` (hostname[:port]) for the NEXT_PUBLIC_ compare in product-media.tsx
+// — a plain string equality against another URL's `.host`, so the port
+// belongs in it there. `remotePatterns.hostname`, below, is a different,
+// stricter schema: it must be the bare hostname with NO port — Next
+// matches the port separately via its own `port` field (an embedded port
+// there is matched literally and never equals the real request's port,
+// silently failing every match whenever SEAWEEDFS_PUBLIC_URL has one, e.g.
+// any deployment not proxied through a bare :443/:80).
 let seaweedfsPublicHost;
+let seaweedfsHostname;
+let seaweedfsPort;
+let seaweedfsPathname;
 try {
-  seaweedfsPublicHost = process.env.SEAWEEDFS_PUBLIC_URL
-    ? new URL(process.env.SEAWEEDFS_PUBLIC_URL).host
-    : undefined;
+  if (process.env.SEAWEEDFS_PUBLIC_URL) {
+    const url = new URL(process.env.SEAWEEDFS_PUBLIC_URL);
+    seaweedfsPublicHost = url.host;
+    seaweedfsHostname = url.hostname;
+    seaweedfsPort = url.port;
+    // Scoped to this one bucket path, not the whole host — SEAWEEDFS_PUBLIC_URL
+    // is the API's own domain (e.g. api.rad-object.com/storage/rad-public), so
+    // an unscoped pattern would let Next's optimizer fetch any other path on
+    // that same host, not just product photos.
+    seaweedfsPathname = `${url.pathname.replace(/\/+$/, "")}/**`;
+  }
 } catch {
   seaweedfsPublicHost = undefined;
+  seaweedfsHostname = undefined;
+  seaweedfsPort = undefined;
+  seaweedfsPathname = undefined;
 }
 
 /** @type {import('next').NextConfig} */
@@ -40,8 +62,18 @@ const nextConfig = {
     ...(seaweedfsPublicHost
       ? {
           remotePatterns: [
-            { protocol: "https", hostname: seaweedfsPublicHost },
-            { protocol: "http", hostname: seaweedfsPublicHost },
+            {
+              protocol: "https",
+              hostname: seaweedfsHostname,
+              port: seaweedfsPort,
+              pathname: seaweedfsPathname,
+            },
+            {
+              protocol: "http",
+              hostname: seaweedfsHostname,
+              port: seaweedfsPort,
+              pathname: seaweedfsPathname,
+            },
           ],
         }
       : {}),
