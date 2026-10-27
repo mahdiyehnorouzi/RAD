@@ -70,7 +70,14 @@ export class AuthService {
         code: "account_inactive",
       });
     }
-    const matches = await compare(input.password, existing.passwordHash);
+    // existing.passwordHash is null for a password-less (Google-only)
+    // account - including on an older artifact that predates that feature,
+    // if it's ever rolled back to after the column already allows null.
+    // Same rejection as a wrong password: telling an unauthenticated caller
+    // "this account uses Google" would leak which emails are registered.
+    const matches = existing.passwordHash
+      ? await compare(input.password, existing.passwordHash)
+      : false;
     if (!matches) {
       throw new UnauthorizedException({
         message: "ایمیل یا رمز عبور نادرست است.",
@@ -120,7 +127,9 @@ export class AuthService {
     const user = await this.users.findOne({ where: { id: actor.user.id } });
     if (!user?.adminRole)
       throw new UnauthorizedException("این حساب به دفتر کوره دسترسی ندارد.");
-    const matches = await compare(input.currentPassword, user.passwordHash);
+    const matches = user.passwordHash
+      ? await compare(input.currentPassword, user.passwordHash)
+      : false;
     if (!matches) throw new UnauthorizedException("رمز عبور فعلی نادرست است.");
     await this.users.update(
       { id: user.id },
