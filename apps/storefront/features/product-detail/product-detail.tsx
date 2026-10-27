@@ -180,9 +180,21 @@ export function ProductDetail({
             shape="strip"
             className={styles.restStrip}
           />
-          <RelatedWorks works={related} />
         </div>
       </div>
+      {/* A direct child of `.pdp` (not nested in `.rest`, the right column
+          of the two-column `.top` grid): `.related`'s own full-bleed trick
+          (`width: 100vw` + a negative `margin-inline-start`) only computes
+          correctly for an element that is itself horizontally centered in
+          the viewport. `.rest` is the *right* half of a two-column grid —
+          off-center by design — so the same trick there bled the carousel
+          leftward into the sticky gallery/summary column instead of
+          spanning edge-to-edge below it. `.pdp`'s own children are centered
+          (see the `.pdp > :not(.pdp-floating-bar)` rule above), which is
+          exactly the condition the trick needs, and this is also where the
+          "Related Works" section visually belongs: below the product
+          information, not inside one of its two columns. */}
+      <RelatedWorks works={related} />
       <ProductFloatingBuy
         product={resolved}
         state={state}
