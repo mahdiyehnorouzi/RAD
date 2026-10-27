@@ -433,6 +433,12 @@ export function AdminDashboard() {
         {section === "orders" && (
           <Orders
             orders={workspace.orders}
+            loading={
+              !workspace.loadedKeys.has("orders") &&
+              !workspace.loadErrors.has("orders")
+            }
+            loadError={workspace.loadErrors.has("orders")}
+            onRetry={() => workspace.retryResource("orders")}
             messages={workspace.messages}
             onSetMessageStatus={setMessageStatus}
             onReplyMessage={replyToMessage}
@@ -1335,6 +1341,9 @@ function ProductThumb({ product }: { product: AdminProduct }) {
 
 function Orders({
   orders,
+  loading,
+  loadError,
+  onRetry,
   messages,
   onSetMessageStatus,
   onReplyMessage,
@@ -1346,6 +1355,9 @@ function Orders({
   onRejectPayment,
 }: {
   orders: AdminOrder[];
+  loading: boolean;
+  loadError: boolean;
+  onRetry: () => void;
   messages: AdminContactMessage[];
   onSetMessageStatus: (
     id: string,
@@ -1371,7 +1383,19 @@ function Orders({
           </p>
         </div>
       </div>
-      {orders.length ? (
+      {loadError ? (
+        <div className="auth-error-state">
+          <p>
+            دریافت سفارش‌ها ناموفق بود. اتصال اینترنت را بررسی و دوباره تلاش
+            کنید.
+          </p>
+          <button className="primary-action" type="button" onClick={onRetry}>
+            تلاش دوباره
+          </button>
+        </div>
+      ) : loading ? (
+        <p className="admin-loading">در حال بارگذاری سفارش‌ها…</p>
+      ) : orders.length ? (
         <div className="order-process-list">
           {orders.map((order) => {
             const terminal = isTerminalOrderStatus(order.status);

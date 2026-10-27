@@ -5,45 +5,70 @@ import { featuredHomeWorks } from "./featured-works";
 
 function product(overrides: Partial<Product> & { slug: string }): Product {
   return {
-    name: overrides.slug,
+    name: "",
     subtitle: "",
-    price: "1000000",
-    usdPrice: 10,
-    color: "#000",
-    accent: "#fff",
-    shape: "tall",
+    price: "",
+    usdPrice: 0,
+    color: "",
+    accent: "",
+    shape: "round",
     category: "ceramics",
     status: "available",
     story: "",
     details: [],
     en: { name: "", subtitle: "", story: "", details: [] },
     ...overrides,
-  };
+  } as Product;
 }
 
-test("featuredHomeWorks orders the newest-listed work first, not the lowest radNumber", () => {
-  const oldest = product({ slug: "oldest", listedAt: 1, radNumber: 1 });
-  const newest = product({ slug: "newest", listedAt: 3, radNumber: 3 });
-  const middle = product({ slug: "middle", listedAt: 2, radNumber: 2 });
-
-  // Public catalog order (radNumber ascending) would put `oldest` first.
-  const result = featuredHomeWorks([oldest, middle, newest]);
-
+test("featuredHomeWorks sorts available works newest-first by listedAt", () => {
+  const products = [
+    product({ slug: "old", listedAt: 1_000, radNumber: 1 }),
+    product({ slug: "newest", listedAt: 3_000, radNumber: 2 }),
+    product({ slug: "mid", listedAt: 2_000, radNumber: 3 }),
+  ];
+  const featured = featuredHomeWorks(products);
   assert.deepEqual(
-    result.map((product) => product.slug),
-    ["newest", "middle", "oldest"],
+    featured.map((p) => p.slug),
+    ["newest", "mid", "old"],
   );
 });
 
-test("a scarce (sold/gone) work still fills the last slot, after sorting", () => {
-  const gone = product({ slug: "gone", status: "sold", listedAt: 5 });
-  const a = product({ slug: "a", listedAt: 1 });
-  const b = product({ slug: "b", listedAt: 2 });
-
-  const result = featuredHomeWorks([a, b, gone]);
-
+test("featuredHomeWorks breaks a listedAt tie by RAD number, descending", () => {
+  const products = [
+    product({ slug: "lower-rad", listedAt: 1_000, radNumber: 10 }),
+    product({ slug: "higher-rad", listedAt: 1_000, radNumber: 20 }),
+  ];
+  const featured = featuredHomeWorks(products);
   assert.deepEqual(
-    result.map((product) => product.slug),
-    ["b", "a", "gone"],
+    featured.map((p) => p.slug),
+    ["higher-rad", "lower-rad"],
   );
+});
+
+test("featuredHomeWorks excludes sold, reserved, archived and draft works", () => {
+  const products = [
+    product({ slug: "available", status: "available", listedAt: 1_000 }),
+    product({ slug: "sold", status: "sold", listedAt: 5_000 }),
+    product({ slug: "archived", status: "archived", listedAt: 4_000 }),
+    product({ slug: "draft", status: "draft", listedAt: 3_000 }),
+  ];
+  const featured = featuredHomeWorks(products);
+  assert.deepEqual(
+    featured.map((p) => p.slug),
+    ["available"],
+  );
+});
+
+test("featuredHomeWorks never pads missing slots with ineligible or fake products", () => {
+  const products = [product({ slug: "only-one", listedAt: 1_000 })];
+  assert.equal(featuredHomeWorks(products).length, 1);
+  assert.equal(featuredHomeWorks([]).length, 0);
+});
+
+test("featuredHomeWorks caps at 5 even with more eligible works", () => {
+  const products = Array.from({ length: 8 }, (_, index) =>
+    product({ slug: `work-${index}`, listedAt: index, radNumber: index }),
+  );
+  assert.equal(featuredHomeWorks(products).length, 5);
 });

@@ -401,23 +401,6 @@
   font-weight: var(--font-weight-medium, 500);
 }
 
-.rad-card .rad-card-print.rad-fingerprint {
-  position: absolute;
-  z-index: 0;
-  bottom: -2.8rem;
-  inset-inline-end: -2.2rem;
-  width: 9.5rem;
-  height: 9.5rem;
-  color: color-mix(in srgb, var(--sand) 78%, var(--ink));
-  stroke-width: 0.9;
-  opacity: 0.42;
-  pointer-events: none;
-}
-
-.rad-card:hover .rad-card-print.is-pressed path {
-  animation-name: rad-print-repress, rad-print-ink;
-}
-
 /* ——— QR label code and its scan ——— */
 
 .rad-card-qr {
