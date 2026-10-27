@@ -77,7 +77,10 @@ export class GoogleAuthService {
   }
 
   /** Exchanges the authorization code and verifies the returned ID token server-side. */
-  async resolveProfile(code: string, codeVerifier: string): Promise<GoogleProfile> {
+  async resolveProfile(
+    code: string,
+    codeVerifier: string,
+  ): Promise<GoogleProfile> {
     const client = this.client();
     const { tokens } = await client.getToken({
       code,

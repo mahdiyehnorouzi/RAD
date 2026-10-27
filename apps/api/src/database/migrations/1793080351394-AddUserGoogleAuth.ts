@@ -12,18 +12,25 @@ import { MigrationInterface, QueryRunner } from "typeorm";
  * deliberately left out here; it belongs in its own migration, not this one.
  */
 export class AddUserGoogleAuth1793080351394 implements MigrationInterface {
-    name = 'AddUserGoogleAuth1793080351394'
+  name = "AddUserGoogleAuth1793080351394";
 
-    public async up(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`ALTER TABLE "User" ADD "googleId" text`);
-        await queryRunner.query(`ALTER TABLE "User" ADD CONSTRAINT "UQ_02dec29f4ca814ab6efa2d4f0c4" UNIQUE ("googleId")`);
-        await queryRunner.query(`ALTER TABLE "User" ALTER COLUMN "passwordHash" DROP NOT NULL`);
-    }
+  public async up(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`ALTER TABLE "User" ADD "googleId" text`);
+    await queryRunner.query(
+      `ALTER TABLE "User" ADD CONSTRAINT "UQ_02dec29f4ca814ab6efa2d4f0c4" UNIQUE ("googleId")`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "User" ALTER COLUMN "passwordHash" DROP NOT NULL`,
+    );
+  }
 
-    public async down(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`ALTER TABLE "User" ALTER COLUMN "passwordHash" SET NOT NULL`);
-        await queryRunner.query(`ALTER TABLE "User" DROP CONSTRAINT "UQ_02dec29f4ca814ab6efa2d4f0c4"`);
-        await queryRunner.query(`ALTER TABLE "User" DROP COLUMN "googleId"`);
-    }
-
+  public async down(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(
+      `ALTER TABLE "User" ALTER COLUMN "passwordHash" SET NOT NULL`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "User" DROP CONSTRAINT "UQ_02dec29f4ca814ab6efa2d4f0c4"`,
+    );
+    await queryRunner.query(`ALTER TABLE "User" DROP COLUMN "googleId"`);
+  }
 }

@@ -125,7 +125,8 @@ export class AuthController {
         code: "google_not_configured",
       });
     }
-    const { url, state, codeVerifier } = this.google.buildAuthorizationRequest();
+    const { url, state, codeVerifier } =
+      this.google.buildAuthorizationRequest();
     response.cookie(
       GOOGLE_OAUTH_COOKIE,
       JSON.stringify({ state, codeVerifier, from: safeReturnPath(from) }),
@@ -168,7 +169,10 @@ export class AuthController {
     }
 
     try {
-      const profile = await this.google.resolveProfile(code, saved.codeVerifier);
+      const profile = await this.google.resolveProfile(
+        code,
+        saved.codeVerifier,
+      );
       const actor = await this.identity.fromRequest(request);
       const result = await this.auth.signInWithGoogle(profile, actor);
       response.clearCookie(GOOGLE_OAUTH_COOKIE, { path: "/" });
