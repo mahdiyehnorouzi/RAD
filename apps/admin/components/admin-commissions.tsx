@@ -5,8 +5,10 @@ import {
   Boxes,
   Calendar,
   Check,
+  ChevronLeft,
   ChevronRight,
   CircleDollarSign,
+  Download,
   History,
   ImageIcon,
   Mic,
@@ -381,6 +383,7 @@ function CommissionDetail({
     : brief?.image || commission.image
       ? [brief?.image ?? commission.image!]
       : [];
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
   const tabs: { id: DetailTab; label: string }[] = [
     { id: "summary", label: "خلاصه" },
@@ -501,15 +504,14 @@ function CommissionDetail({
         (images.length ? (
           <div className="commission-files">
             {images.map((src, index) => (
-              <a
+              <button
                 key={`${src}-${index}`}
-                href={src}
-                target="_blank"
-                rel="noreferrer"
+                type="button"
                 className="commission-file"
+                onClick={() => setLightboxIndex(index)}
               >
                 <img src={src} alt="" />
-              </a>
+              </button>
             ))}
           </div>
         ) : (
@@ -517,6 +519,15 @@ function CommissionDetail({
             <ImageIcon /> فایل مرجعی برای این سفارش ثبت نشده است.
           </p>
         ))}
+
+      {lightboxIndex !== null && (
+        <CommissionLightbox
+          images={images}
+          index={lightboxIndex}
+          onIndexChange={setLightboxIndex}
+          onClose={() => setLightboxIndex(null)}
+        />
+      )}
 
       {tab === "messages" && (
         <CommissionMessages
@@ -642,6 +653,94 @@ function CommissionHistory({
           هنوز رویدادی برای این سفارش ثبت نشده است.
         </p>
       )}
+    </div>
+  );
+}
+
+const faNumber = (value: number) =>
+  new Intl.NumberFormat("fa-IR").format(value);
+
+function CommissionLightbox({
+  images,
+  index,
+  onIndexChange,
+  onClose,
+}: {
+  images: string[];
+  index: number;
+  onIndexChange: (index: number) => void;
+  onClose: () => void;
+}) {
+  useBodyScrollLock(true);
+  const hasPrev = index > 0;
+  const hasNext = index < images.length - 1;
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+      else if (event.key === "ArrowRight" && hasPrev) onIndexChange(index - 1);
+      else if (event.key === "ArrowLeft" && hasNext) onIndexChange(index + 1);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [index, hasPrev, hasNext, onIndexChange, onClose]);
+
+  return (
+    <div
+      className="commission-lightbox"
+      role="dialog"
+      aria-modal="true"
+      aria-label="پیش‌نمایش فایل مرجع"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
+    >
+      <div className="commission-lightbox-bar">
+        <span>
+          {faNumber(index + 1)} از {faNumber(images.length)}
+        </span>
+        <div className="commission-lightbox-actions">
+          <a
+            href={images[index]}
+            target="_blank"
+            rel="noreferrer"
+            aria-label="دانلود یا بازکردن در تب جدید"
+          >
+            <Download />
+          </a>
+          <button type="button" onClick={onClose} aria-label="بستن پیش‌نمایش">
+            <X />
+          </button>
+        </div>
+      </div>
+      <div
+        className="commission-lightbox-stage"
+        onMouseDown={(event) => {
+          if (event.target === event.currentTarget) onClose();
+        }}
+      >
+        {hasPrev && (
+          <button
+            type="button"
+            className="commission-lightbox-nav prev"
+            onClick={() => onIndexChange(index - 1)}
+            aria-label="فایل قبلی"
+          >
+            <ChevronRight />
+          </button>
+        )}
+        <img src={images[index]} alt="" />
+        {hasNext && (
+          <button
+            type="button"
+            className="commission-lightbox-nav next"
+            onClick={() => onIndexChange(index + 1)}
+            aria-label="فایل بعدی"
+          >
+            <ChevronLeft />
+          </button>
+        )}
+      </div>
     </div>
   );
 }
