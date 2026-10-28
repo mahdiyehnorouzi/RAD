@@ -12,7 +12,6 @@ import {
 const styles = {
   details: "details",
   card: "card",
-  stripes: "stripes",
   holder: "holder",
   number: "number",
   bank: "bank",

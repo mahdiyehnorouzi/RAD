@@ -52,7 +52,6 @@ export function PaymentCardView({
   return (
     <div className={styles.details}>
       <article className={styles.card} aria-label={labels.cardLabel}>
-        <div className={styles.stripes} aria-hidden="true" />
         <div className={styles.holder}>
           {model.holderLines.map((line) => (
             <span key={line}>{line}</span>
@@ -66,7 +65,26 @@ export function PaymentCardView({
         {model.bankName ? (
           <div className={styles.bank} dir="ltr">
             <span>{model.bankName}</span>
-            <span className={styles.mark} aria-hidden="true" />
+            <svg
+              className={styles.mark}
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+              focusable="false"
+            >
+              <circle cx="12" cy="12" r="2.15" fill="currentColor" />
+              {Array.from({ length: 12 }, (_, index) => (
+                <rect
+                  key={index}
+                  x="11.35"
+                  y="0.6"
+                  width="1.3"
+                  height="5.4"
+                  rx="0.65"
+                  fill="currentColor"
+                  transform={`rotate(${index * 30} 12 12)`}
+                />
+              ))}
+            </svg>
           </div>
         ) : null}
       </article>
