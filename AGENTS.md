@@ -21,9 +21,10 @@ Monorepo using npm workspaces.
 - **`apps/admin`** — Next.js 16 (App Router) staff dashboard. Order/payment review, damage reports, reviews, shape/help question management.
 - **`packages/types`** — Shared TypeScript types/enums used across apps (e.g. `StoreOrderStatus`).
 - **`packages/ui`** — Shared UI components.
-- **`packages/state`** — Shared state utilities.
+- **`packages/state`** — Zustand wrapper. As of the 2026-10 audit it has zero confirmed consumers in any app or package — do not treat it as an established pattern to extend; see `docs/engineering/adr/adr-005-shared-package-extraction.md` before adding anything here.
 - **`packages/i18n`** — Shared i18n infrastructure (Persian/English).
 - **`packages/artworks`** — Artwork-related utilities.
+- **`apps/Rad-App`** — React Native app. **Not an npm workspace member** (absent from the root `"workspaces"` array) — deliberately isolated: its own lockfile, its own Jest-based test runner (the only Jest usage in this repo), and `scripts/check-isolation.mjs`, which fails its build if any module resolves from outside `apps/Rad-App`. Do not assume it shares `packages/*` the way the three workspace apps do, and do not add it to the workspaces array without understanding why it was kept out.
 
 ## 2. Tech Stack
 
@@ -84,7 +85,7 @@ Do not patch the first visible symptom. Search the repository before introducing
 - Checkout creates an `Order` (`status: "pending_payment"`), `OrderItem`s, and a `PaymentIntent` (`status: "created"`), and reserves inventory for `ORDER_PAYMENT_WINDOW_MS` (30 min).
 - Customer submits a receipt image + optional tracking number via `confirm-payment`. `OrdersService.confirmPayment` validates the image, normalizes the tracking number, and moves `Order.status` → `"pending_verification"`, `PaymentIntent.status` → `"submitted"`.
 - Admin reviews the receipt and approves or rejects. Approve → `Order.status: "confirmed"`, `PaymentIntent.status: "verified"`, `Product.status: "sold"`. Reject → `Order.status: "rejected"`, product restocked to `"available"`.
-- Payment-related changes must be traced across the full chain: storefront UI → API client → DTO (`ConfirmPaymentDto`) → `OrdersService`/payment logic → `PaymentIntent`/`Order`/`Product` entities → admin review (`admin.service.ts`/`payment-review.service.ts`) → returned UI state. Do not change one link without checking the others.
+- Payment-related changes must be traced across the full chain: storefront UI → API client → DTO (`ConfirmPaymentDto`) → `OrdersService`/payment logic → `PaymentIntent`/`Order`/`Product` entities → admin review (`admin.service.ts` — there is no separate `payment-review.service.ts`; the review logic lives directly in `admin.service.ts`) → returned UI state. Do not change one link without checking the others.
 
 **Tracking number**: `ConfirmPaymentDto` (`apps/api/src/orders/dto/confirm-payment.dto.ts`) applies only a DTO-level sanity bound (`MaxLength(40)`) — this is explicitly commented as not the real business rule. The actual rule (4-32 alphanumeric characters, after stripping spaces/dashes) lives solely in `normalizeTrackingNumber` (service-level, `payment-receipt.ts`). Treat these as two different layers: do not weaken the service-level rule just to make a frontend input pass, and make sure frontend validation mirrors the actual business constraint, not just the DTO sanity bound.
 
@@ -149,6 +150,8 @@ Use only the testing infrastructure that actually exists in this repository: API
 
 Before changing an existing test file, inspect its current git state first. Note: `apps/api/src/orders/purchase-flow.spec.ts` was already modified on the `feat/rad-conversational-copy` branch as of this audit — do not overwrite or discard existing uncommitted changes to this or any other file without checking first.
 
+`apps/api/src/cart/` (`cart.controller.ts`, `cart.service.ts`) has **no spec file** as of the 2026-10 audit, despite being the module that triggers every inventory hold (`CartService` calls `InventoryService.hold()`/`releaseCartHolds()`). Per `docs/engineering/adr/adr-007-test-first-refactoring.md`, write a characterization test here before structurally changing this module — do not treat its current simplicity as a reason to skip tests.
+
 After implementation, run the smallest relevant checks first (e.g. a single spec file), then broader checks (typecheck/lint/full test run) where reasonable.
 
 When reporting results, distinguish clearly between: **inspected**, **tested**, **manually verified**, and **not verified**. Never claim something works merely because the code looks correct.
@@ -179,3 +182,19 @@ If unrelated problems are discovered during a task, report them separately rathe
 ## 13. Safety Rule
 
 If a task affects payment, inventory, authentication, authorization, unique-product availability, or database state, and the intended behavior is ambiguous, do not silently invent a business rule. Explain the ambiguity before making a destructive or irreversible change.
+
+## 14. Engineering Decisions and Skills
+
+Architectural decisions from the 2026-10 audit are recorded as ADRs under
+`docs/engineering/adr/` (see that directory's `README.md` for the index)
+and as current-vs-target architecture docs under
+`docs/engineering/architecture/`. These documents explain *why* a rule
+exists; this file states the rule itself — consult the ADRs before
+proposing a structural change in an area one already covers (admin
+routing, the `orders`/gateway-payment split, shared-package or shared-
+contract placement, test-first refactoring policy).
+
+For a structural refactor of an existing module (not a new feature), use
+the `rad-safe-refactor` skill rather than improvising a workflow — it
+encodes the scope-discipline, test-first, and human-approval rules in
+this file as a repeatable procedure.
