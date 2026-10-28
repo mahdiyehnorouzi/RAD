@@ -25,8 +25,8 @@ export async function DevDataBadge() {
     return (
       <output className="dev-data-banner" role="status">
         ⚠ DEMO DATA — not the real Admin catalog ({reason}). Set{" "}
-        <code>CATALOG_SOURCE=api</code> for real-data testing; a reachable
-        API is required for it to fail visibly instead of showing this.
+        <code>CATALOG_SOURCE=api</code> for real-data testing; a reachable API
+        is required for it to fail visibly instead of showing this.
       </output>
     );
   }
