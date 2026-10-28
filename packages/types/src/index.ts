@@ -188,7 +188,8 @@ export interface Product {
 export interface AuthUser {
   id: string;
   name: string;
-  email: string;
+  /** Null for a phone-only (SMS OTP) account. */
+  email: string | null;
   role: "customer" | "artist" | "admin";
   adminRole?: "owner" | "manager" | "editor" | "viewer" | null;
 }

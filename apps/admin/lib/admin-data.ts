@@ -253,7 +253,8 @@ export interface AdminMember {
 export interface AdminUser {
   id: string;
   name: string;
-  email: string;
+  /** Null for a phone-only (SMS OTP) customer account. */
+  email: string | null;
   status: "active" | "invited";
   createdAt: number;
 }
