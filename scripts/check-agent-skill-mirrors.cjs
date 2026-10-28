@@ -29,7 +29,9 @@ if (!skillNames.has("rad-safe-refactor")) {
 for (const skill of [...skillNames].sort()) {
   const canonicalPath = path.join(root, canonical, skill, "SKILL.md");
   if (!fs.existsSync(canonicalPath)) {
-    errors.push("Missing canonical skill: " + path.relative(root, canonicalPath));
+    errors.push(
+      "Missing canonical skill: " + path.relative(root, canonicalPath),
+    );
     continue;
   }
 
@@ -37,11 +39,19 @@ for (const skill of [...skillNames].sort()) {
   const body = bytes.toString("utf8");
   const frontmatter = body.match(/^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/);
   const lines = frontmatter ? frontmatter[1].split(/\r?\n/) : [];
-  const name = lines.find((line) => line.startsWith("name:"))?.slice(5).trim();
-  const description = lines.find((line) => line.startsWith("description:"))?.slice(12).trim();
+  const name = lines
+    .find((line) => line.startsWith("name:"))
+    ?.slice(5)
+    .trim();
+  const description = lines
+    .find((line) => line.startsWith("description:"))
+    ?.slice(12)
+    .trim();
 
   if (name !== skill || !description) {
-    errors.push("Invalid/missing YAML frontmatter name or description: " + skill);
+    errors.push(
+      "Invalid/missing YAML frontmatter name or description: " + skill,
+    );
   }
 
   for (const mirror of locations.slice(1)) {
@@ -66,5 +76,7 @@ if (errors.length) {
   );
   process.exitCode = 1;
 } else {
-  console.log("RAD skill mirror guard PASSED: " + [...skillNames].sort().join(", "));
+  console.log(
+    "RAD skill mirror guard PASSED: " + [...skillNames].sort().join(", "),
+  );
 }
