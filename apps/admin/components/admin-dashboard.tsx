@@ -62,13 +62,10 @@ import {
   stageCountLabel,
   type AdminContactMessage,
   type AdminDamageReport,
-  type AdminMember,
   type AdminOrder,
   type AdminProduct,
   type AdminRemoteMediaStorage,
-  type AdminRole,
   type AdminSection,
-  type AdminUser,
   type ProductAttribute,
   type ProductAttributeValue,
 } from "../lib/admin-data";
@@ -80,16 +77,14 @@ import { AdminDamageReports } from "./admin-damage-reports";
 import { AdminOrderDamage } from "./admin-order-damage";
 import { AdminOrderPolicies } from "./admin-order-policies";
 import type { DamageReview } from "./admin-damage-report";
-import {
-  ConfirmDialog,
-  DialogShell,
-  Field,
-  useBodyScrollLock,
-} from "./admin-dialog";
+import { ConfirmDialog, Field, useBodyScrollLock } from "./admin-dialog";
 import { AdminReviews } from "./admin-reviews";
 import { AdminShapeQuestions } from "./admin-shape-questions";
 import { AdminHelpQuestions } from "./admin-help-questions";
 import { AdminProductAttributes } from "./admin-product-attributes";
+import { EmptyState, StatusBadge } from "./admin-list-chrome";
+import { InviteDialog, Members } from "./admin-members";
+import { UsersPanel } from "./admin-users";
 import { ProductAttributeFields } from "./admin-product-attribute-fields";
 import { StageMeter } from "@rad/ui";
 
@@ -167,6 +162,35 @@ function relativeTime(value: number) {
 // set by AdminCommissions) must land back in that section, not Overview —
 // this is the one spot in the shell that reads the hash; every other
 // section still opens on "overview" as before.
+type AsyncKey =
+  | "messages"
+  | "reviews"
+  | "shapeQuestions"
+  | "helpQuestions"
+  | "users"
+  | "members";
+
+function sectionAsync(
+  workspace: {
+    loadedKeys: { has(key: AsyncKey): boolean };
+    loadErrors: { has(key: AsyncKey): boolean };
+    refreshingKeys: { has(key: AsyncKey): boolean };
+    refreshErrors: { has(key: AsyncKey): boolean };
+    retryResource: (key: AsyncKey) => unknown;
+  },
+  key: AsyncKey,
+) {
+  return {
+    loading: !workspace.loadedKeys.has(key) && !workspace.loadErrors.has(key),
+    loadError: workspace.loadErrors.has(key),
+    refreshing: workspace.refreshingKeys.has(key),
+    refreshError: workspace.refreshErrors.has(key),
+    onRetry: () => {
+      void workspace.retryResource(key);
+    },
+  };
+}
+
 function initialSectionFromHash(): AdminSection {
   if (typeof window === "undefined") return "overview";
   return window.location.hash.startsWith("#commissions/")
@@ -220,25 +244,15 @@ export function AdminDashboard() {
     id: string,
     status: AdminContactMessage["status"],
   ) => {
-    try {
-      await workspace.setMessageStatus(id, status);
-      announce(
-        status === "resolved"
-          ? "پیام رسیدگی‌شده ثبت شد."
-          : "پیام دوباره باز شد.",
-      );
-    } catch (error) {
-      announce((error as Error).message);
-    }
+    await workspace.setMessageStatus(id, status);
+    announce(
+      status === "resolved" ? "پیام رسیدگی‌شده ثبت شد." : "پیام دوباره باز شد.",
+    );
   };
 
   const replyToMessage = async (id: string, body: string) => {
-    try {
-      await workspace.replyToMessage(id, body);
-      announce("پاسخ برای مشتری ارسال شد.");
-    } catch (error) {
-      announce((error as Error).message);
-    }
+    await workspace.replyToMessage(id, body);
+    announce("پاسخ برای مشتری ارسال شد.");
   };
 
   const openMessages = workspace.messages.filter(
@@ -478,6 +492,7 @@ export function AdminDashboard() {
         {section === "messages" && (
           <AdminMessages
             messages={workspace.messages}
+            {...sectionAsync(workspace, "messages")}
             orders={workspace.orders}
             canWrite={workspace.can("order.write")}
             onSetStatus={setMessageStatus}
@@ -488,6 +503,12 @@ export function AdminDashboard() {
         {section === "damage" && (
           <AdminDamageReports
             reports={workspace.damageReports}
+            loading={
+              !workspace.loadedKeys.has("damageReports") &&
+              !workspace.loadErrors.has("damageReports")
+            }
+            loadError={workspace.loadErrors.has("damageReports")}
+            onRetry={() => workspace.retryResource("damageReports")}
             orders={workspace.orders}
             canWrite={workspace.can("order.write")}
             onReview={reviewDamage}
@@ -497,6 +518,12 @@ export function AdminDashboard() {
         {section === "commissions" && (
           <AdminCommissions
             commissions={workspace.commissions}
+            loading={
+              !workspace.loadedKeys.has("commissions") &&
+              !workspace.loadErrors.has("commissions")
+            }
+            loadError={workspace.loadErrors.has("commissions")}
+            onRetry={() => workspace.retryResource("commissions")}
             canWrite={workspace.can("order.write")}
             onBeginReview={async (id) => {
               try {
@@ -538,100 +565,61 @@ export function AdminDashboard() {
         {section === "reviews" && (
           <AdminReviews
             reviews={workspace.reviews}
+            {...sectionAsync(workspace, "reviews")}
             canWrite={workspace.can("content.write")}
             onSetHidden={async (id, hidden) => {
-              try {
-                await workspace.setReviewHidden(id, hidden);
-                announce(
-                  hidden
-                    ? "نظر از فروشگاه پنهان شد."
-                    : "نظر دوباره در فروشگاه دیده می‌شود.",
-                );
-              } catch (error) {
-                announce((error as Error).message);
-              }
+              await workspace.setReviewHidden(id, hidden);
+              announce(
+                hidden
+                  ? "نظر از فروشگاه پنهان شد."
+                  : "نظر دوباره در فروشگاه دیده می‌شود.",
+              );
             }}
             onDelete={async (id) => {
-              try {
-                await workspace.deleteReview(id);
-                announce("نظر حذف شد.");
-                return true;
-              } catch (error) {
-                announce((error as Error).message);
-                return false;
-              }
+              await workspace.deleteReview(id);
+              announce("نظر حذف شد.");
             }}
           />
         )}
         {section === "shape" && (
           <AdminShapeQuestions
             questions={workspace.shapeQuestions}
+            {...sectionAsync(workspace, "shapeQuestions")}
             canWrite={workspace.can("content.write")}
             onSave={async (input, id) => {
-              try {
-                await workspace.saveShapeQuestion(input, id);
-                announce(
-                  id ? "سؤال ذخیره شد." : "سؤال تازه به پرسشنامه اضافه شد.",
-                );
-                return true;
-              } catch (error) {
-                announce((error as Error).message);
-                return false;
-              }
+              await workspace.saveShapeQuestion(input, id);
+              announce(
+                id ? "سؤال ذخیره شد." : "سؤال تازه به پرسشنامه اضافه شد.",
+              );
+              return true;
             }}
             onDelete={async (id) => {
-              try {
-                await workspace.deleteShapeQuestion(id);
-                announce("سؤال از پرسشنامه حذف شد.");
-                return true;
-              } catch (error) {
-                announce((error as Error).message);
-                return false;
-              }
+              await workspace.deleteShapeQuestion(id);
+              announce("سؤال از پرسشنامه حذف شد.");
             }}
             onReorder={async (ids) => {
-              try {
-                await workspace.reorderShapeQuestions(ids);
-              } catch (error) {
-                announce((error as Error).message);
-              }
+              await workspace.reorderShapeQuestions(ids);
             }}
           />
         )}
         {section === "help" && (
           <AdminHelpQuestions
             questions={workspace.helpQuestions}
+            {...sectionAsync(workspace, "helpQuestions")}
             canWrite={workspace.can("content.write")}
             onSave={async (input, id) => {
-              try {
-                await workspace.saveHelpQuestion(input, id);
-                announce(
-                  id
-                    ? "سؤال ذخیره شد."
-                    : "سؤال تازه به صفحه‌ی راهنما اضافه شد.",
-                );
-                return true;
-              } catch (error) {
-                announce((error as Error).message);
-                return false;
-              }
+              await workspace.saveHelpQuestion(input, id);
+              announce(
+                id ? "سؤال ذخیره شد." : "سؤال تازه به صفحه‌ی راهنما اضافه شد.",
+              );
+              return true;
             }}
             onDelete={async (id) => {
-              try {
-                await workspace.deleteHelpQuestion(id);
-                announce("سؤال از صفحه‌ی راهنما حذف شد.");
-                return true;
-              } catch (error) {
-                announce((error as Error).message);
-                return false;
-              }
+              await workspace.deleteHelpQuestion(id);
+              announce("سؤال از صفحه‌ی راهنما حذف شد.");
             }}
             onReorder={async (ids) => {
-              try {
-                await workspace.reorderHelpQuestions(ids);
-              } catch (error) {
-                announce((error as Error).message);
-              }
+              await workspace.reorderHelpQuestions(ids);
             }}
           />
         )}
@@ -668,19 +656,21 @@ export function AdminDashboard() {
             }}
           />
         )}
-        {section === "users" && <UsersPanel users={workspace.users} />}
+        {section === "users" && (
+          <UsersPanel
+            users={workspace.users}
+            {...sectionAsync(workspace, "users")}
+          />
+        )}
         {section === "members" && (
           <Members
             members={workspace.members}
+            {...sectionAsync(workspace, "members")}
             canWrite={workspace.can("member.write")}
             onInvite={() => setInviteOpen(true)}
             onChange={async (member) => {
-              try {
-                await workspace.updateMember(member);
-                announce("سطح دسترسی به‌روزرسانی شد.");
-              } catch (error) {
-                announce((error as Error).message);
-              }
+              await workspace.updateMember(member);
+              announce("سطح دسترسی به‌روزرسانی شد.");
             }}
           />
         )}
@@ -742,13 +732,9 @@ export function AdminDashboard() {
         <InviteDialog
           onClose={() => setInviteOpen(false)}
           onInvite={async (member) => {
-            try {
-              await workspace.inviteMember(member);
-              setInviteOpen(false);
-              announce("عضو جدید در پایگاه داده ثبت شد.");
-            } catch (error) {
-              announce((error as Error).message);
-            }
+            await workspace.inviteMember(member);
+            setInviteOpen(false);
+            announce("عضو جدید در پایگاه داده ثبت شد.");
           }}
         />
       )}
@@ -1547,169 +1533,6 @@ function Orders({
   );
 }
 
-function UsersPanel({ users }: { users: AdminUser[] }) {
-  const [query, setQuery] = useState("");
-  const inputRef = useRef<HTMLInputElement>(null);
-  const filtered = useMemo(
-    () =>
-      users.filter((user) =>
-        `${user.name} ${user.email} ${user.id}`
-          .toLowerCase()
-          .includes(query.trim().toLowerCase()),
-      ),
-    [users, query],
-  );
-
-  return (
-    <section className="paper-panel data-view">
-      <div className="view-heading">
-        <div>
-          <span className="eyebrow">حساب‌های فروشگاه</span>
-          <h2>مشتریان</h2>
-          <p>کاربرانی که از فروشگاه ثبت‌نام کرده‌اند.</p>
-        </div>
-      </div>
-      <div className="toolbar">
-        <div className="search-field">
-          <Search />
-          <input
-            ref={inputRef}
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="جست‌وجوی نام، ایمیل یا شناسه"
-            aria-label="جست‌وجوی مشتریان"
-          />
-          {query ? (
-            <button
-              type="button"
-              onClick={() => {
-                setQuery("");
-                inputRef.current?.focus();
-              }}
-              aria-label="پاک کردن جست‌وجو"
-            >
-              <X />
-            </button>
-          ) : null}
-        </div>
-      </div>
-      {filtered.length ? (
-        <div className="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>نام</th>
-                <th>ایمیل</th>
-                <th>وضعیت</th>
-                <th>تاریخ ثبت‌نام</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((user) => (
-                <tr key={user.id}>
-                  <td>
-                    <strong>{user.name}</strong>
-                    <small>{user.id}</small>
-                  </td>
-                  <td>{user.email}</td>
-                  <td>
-                    <StatusBadge
-                      label={user.status === "active" ? "فعال" : "دعوت‌شده"}
-                      tone={user.status === "active" ? "green" : "muted"}
-                    />
-                  </td>
-                  <td>{date(user.createdAt)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      ) : (
-        <EmptyState
-          title="مشتری‌ای پیدا نشد"
-          description={
-            users.length
-              ? "عبارت جست‌وجو را تغییر دهید."
-              : "هنوز کسی از فروشگاه ثبت‌نام نکرده است."
-          }
-        />
-      )}
-    </section>
-  );
-}
-
-function Members({
-  members,
-  canWrite,
-  onInvite,
-  onChange,
-}: {
-  members: AdminMember[];
-  canWrite: boolean;
-  onInvite: () => void;
-  onChange: (member: AdminMember) => void | Promise<void>;
-}) {
-  return (
-    <section className="paper-panel data-view">
-      <div className="view-heading">
-        <div>
-          <span className="eyebrow">حریم کارگاه</span>
-          <h2>افراد و دسترسی</h2>
-          <p>دسترسی هر فرد را بر اساس مسئولیت واقعی او تنظیم کنید.</p>
-        </div>
-        <button
-          className="primary-action"
-          type="button"
-          onClick={onInvite}
-          disabled={!canWrite}
-        >
-          <Plus />
-          دعوت فرد جدید
-        </button>
-      </div>
-      <div className="member-list">
-        {members.map((member) => (
-          <article className="member-row" key={member.id}>
-            <div className="member-avatar">{member.name.slice(0, 1)}</div>
-            <div>
-              <strong>{member.name}</strong>
-              <small>{member.email}</small>
-            </div>
-            <StatusBadge
-              label={member.status === "active" ? "فعال" : "دعوت‌شده"}
-              tone={member.status === "active" ? "green" : "muted"}
-            />
-            <select
-              value={member.role}
-              disabled={!canWrite || member.role === "owner"}
-              onChange={(event) =>
-                onChange({ ...member, role: event.target.value as AdminRole })
-              }
-              aria-label={`نقش ${member.name}`}
-            >
-              {Object.entries(roleLabels).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </select>
-          </article>
-        ))}
-      </div>
-      <div className="permission-note">
-        <ShieldCheck />
-        <div>
-          <strong>مجوزها روی سرور بررسی می‌شوند</strong>
-          <p>
-            هر تغییر محصول، سفارش یا عضو از طریق API و نقش ذخیره‌شده در پایگاه
-            داده کنترل می‌شود.
-          </p>
-        </div>
-      </div>
-    </section>
-  );
-}
-
 function ProductDialog({
   product,
   onClose,
@@ -2348,108 +2171,6 @@ function ProductDialog({
           </section>
         </div>
       </form>
-    </div>
-  );
-}
-
-function InviteDialog({
-  onClose,
-  onInvite,
-}: {
-  onClose: () => void;
-  onInvite: (member: AdminMember) => void | Promise<void>;
-}) {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [role, setRole] = useState<AdminRole>("viewer");
-  const [error, setError] = useState("");
-  return (
-    <DialogShell
-      title="دعوت فرد جدید"
-      description="نقش را متناسب با مسئولیت فرد انتخاب کنید."
-      onClose={onClose}
-    >
-      <form
-        className="editor-form"
-        noValidate
-        onSubmit={(event) => {
-          event.preventDefault();
-          if (!name.trim() || !/^\S+@\S+\.\S+$/.test(email)) {
-            setError("نام و ایمیل معتبر را وارد کنید.");
-            return;
-          }
-          onInvite({
-            id: crypto.randomUUID(),
-            name,
-            email,
-            role,
-            status: "invited",
-          });
-        }}
-      >
-        <Field label="نام و نام خانوادگی">
-          <input
-            value={name}
-            onChange={(event) => setName(event.target.value)}
-          />
-        </Field>
-        <Field label="ایمیل" error={error}>
-          <input
-            dir="ltr"
-            type="email"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            aria-invalid={Boolean(error)}
-          />
-        </Field>
-        <Field label="سطح دسترسی">
-          <select
-            value={role}
-            onChange={(event) => setRole(event.target.value as AdminRole)}
-          >
-            {Object.entries(roleLabels)
-              .filter(([value]) => value !== "owner")
-              .map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-          </select>
-        </Field>
-        <div className="dialog-actions">
-          <button className="secondary-action" type="button" onClick={onClose}>
-            انصراف
-          </button>
-          <button className="primary-action" type="submit">
-            افزودن دعوت
-          </button>
-        </div>
-      </form>
-    </DialogShell>
-  );
-}
-
-function StatusBadge({
-  label,
-  tone,
-}: {
-  label: string;
-  tone: "green" | "oxide" | "sand" | "muted";
-}) {
-  return <span className={`status-badge ${tone}`}>{label}</span>;
-}
-function EmptyState({
-  title,
-  description,
-}: {
-  title: string;
-  description: string;
-}) {
-  return (
-    <div className="empty-state">
-      <Package />
-      <h3>{title}</h3>
-      <p>{description}</p>
     </div>
   );
 }
