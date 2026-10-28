@@ -2,6 +2,12 @@ import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 
 const NOTIFY_TIMEOUT_MS = 3_000;
+const MAX_ATTEMPTS = 2;
+const RETRY_DELAY_MS = 500;
+
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 /**
  * Tells the storefront its catalog cache is stale after a product write.
@@ -12,8 +18,9 @@ const NOTIFY_TIMEOUT_MS = 3_000;
  * full cache window after Admin publishes, sells or deletes a product.
  *
  * Best-effort: a failure here must never fail the admin write that
- * triggered it — the storefront's own time-based revalidation is still the
- * fallback.
+ * triggered it (callers invoke this unawaited) — the storefront's own
+ * time-based revalidation, and its shorter TTL for an empty result, are
+ * still the fallback if every attempt here fails.
  */
 @Injectable()
 export class CatalogRevalidationService {
@@ -26,21 +33,23 @@ export class CatalogRevalidationService {
     const secret = this.config.get<string>("CATALOG_REVALIDATE_SECRET");
     if (!url || !secret) return;
 
-    try {
-      const response = await fetch(url, {
-        method: "POST",
-        headers: { "x-revalidate-secret": secret },
-        signal: AbortSignal.timeout(NOTIFY_TIMEOUT_MS),
-      });
-      if (!response.ok) {
+    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+      try {
+        const response = await fetch(url, {
+          method: "POST",
+          headers: { "x-revalidate-secret": secret },
+          signal: AbortSignal.timeout(NOTIFY_TIMEOUT_MS),
+        });
+        if (response.ok) return;
         this.logger.warn(
-          `Catalog revalidation notify failed: ${response.status}`,
+          `Catalog revalidation notify failed (attempt ${attempt}): ${response.status}`,
+        );
+      } catch (error) {
+        this.logger.warn(
+          `Catalog revalidation notify failed (attempt ${attempt}): ${(error as Error).message}`,
         );
       }
-    } catch (error) {
-      this.logger.warn(
-        `Catalog revalidation notify failed: ${(error as Error).message}`,
-      );
+      if (attempt < MAX_ATTEMPTS) await delay(RETRY_DELAY_MS);
     }
   }
 }

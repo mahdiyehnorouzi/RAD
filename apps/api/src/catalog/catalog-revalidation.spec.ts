@@ -66,3 +66,46 @@ test("notifyChanged swallows a failing request instead of throwing", async () =>
     globalThis.fetch = originalFetch;
   }
 });
+
+test("notifyChanged retries once after a failed attempt, then stops", async () => {
+  const originalFetch = globalThis.fetch;
+  let calls = 0;
+  globalThis.fetch = (async () => {
+    calls++;
+    if (calls === 1) throw new Error("transient network blip");
+    return new Response(null, { status: 200 });
+  }) as typeof fetch;
+  try {
+    const service = new CatalogRevalidationService(
+      configWith({
+        STOREFRONT_REVALIDATE_URL: "https://storefront.example/api/revalidate-catalog",
+        CATALOG_REVALIDATE_SECRET: "shh",
+      }),
+    );
+    await service.notifyChanged();
+    assert.equal(calls, 2);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("notifyChanged gives up after the retry budget is exhausted", async () => {
+  const originalFetch = globalThis.fetch;
+  let calls = 0;
+  globalThis.fetch = (async () => {
+    calls++;
+    throw new Error("storefront unreachable");
+  }) as typeof fetch;
+  try {
+    const service = new CatalogRevalidationService(
+      configWith({
+        STOREFRONT_REVALIDATE_URL: "https://storefront.example/api/revalidate-catalog",
+        CATALOG_REVALIDATE_SECRET: "shh",
+      }),
+    );
+    await assert.doesNotReject(() => service.notifyChanged());
+    assert.equal(calls, 2);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});

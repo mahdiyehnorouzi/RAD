@@ -54,3 +54,18 @@ test("invalidates the catalog cache when the secret matches", () =>
     assert.deepEqual(updateTagCalls, ["catalog"]);
     assert.equal(resetCalls, 1);
   }));
+
+test("a secret of the wrong length is rejected, not thrown on", () =>
+  withSecret("shh", async () => {
+    const response = await POST(request("way-too-long-a-guess"));
+    assert.equal(response.status, 401);
+  }));
+
+test("rate-limits a burst of requests per instance", () =>
+  withSecret("shh", async () => {
+    let lastStatus = 0;
+    for (let i = 0; i < 40; i++) {
+      lastStatus = (await POST(request("shh"))).status;
+    }
+    assert.equal(lastStatus, 429);
+  }));
