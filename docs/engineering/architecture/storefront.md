@@ -20,20 +20,25 @@ checks — the described layering holds up in practice.
 
 ## State ownership (current, codified by ADR-001)
 
-Two state tools coexist with no prior documented rule:
+Two shared-state tools coexist with no prior documented rule:
 
-- **React Context**: `features/cart/cart-provider.tsx`. The cart is
-  **server-owned** — `apps/api/src/cart/cart.service.ts` persists it in
-  Postgres and couples every mutation to inventory holds. The Context
-  provider is a client cache, not the source of truth.
+- **React Context**: `features/cart/cart-provider.tsx` — a subtree-shared
+  client view over the checkout flow. The underlying cart data is
+  **server-owned** (`apps/api/src/cart/cart.service.ts` persists it in
+  Postgres and couples every mutation to inventory holds); the Context
+  provider is a client-side cache of that server state for the checkout
+  subtree, not itself the server-state cache strategy.
 - **Zustand**: `features/product-detail/transition/product-transition-store.ts`
-  and `hooks/use-making-workspace.tsx` — both ephemeral, client-only UI
-  state.
+  and `hooks/use-making-workspace.tsx` — both shared, client-only state
+  with no server counterpart.
 
-**ADR-001** codifies this as the rule for new features: server-owned/
-cross-navigation state → Context; ephemeral client-only UI state →
-Zustand. This is a documentation change, not a migration — existing code
-already matches the rule.
+**ADR-001** codifies the rule for new features by state type (local →
+`useState`/`useReducer`, subtree-shared → Context, shared client-only →
+Zustand, server → the existing data-fetching layer, URL state → route/
+search params, form state → form-local state) rather than a single
+Context-vs-Zustand axis. This is a documentation change, not a migration
+and not a new dependency — existing code already matches the refined
+rule.
 
 ## Component scale (evaluated, not flagged as a problem)
 

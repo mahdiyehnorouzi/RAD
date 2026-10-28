@@ -14,18 +14,30 @@ Hand-maintained content below this line — never edited by `next dev`, which on
 
 ## State management
 
-Pick the state tool by **ownership and lifetime**, not by copying the
-nearest existing file:
+Pick the state tool by **type, ownership, scope, and lifetime** — not by
+copying the nearest existing file, and not by defaulting to Context or
+Zustand for everything:
 
-- **Server-owned or cross-navigation state** (mirrors a backend resource,
-  or must survive route changes within a session) → **React Context**,
-  following `features/cart/cart-provider.tsx`. The cart itself is
-  server-owned — `apps/api/src/cart/cart.service.ts` persists it and
-  couples it to inventory holds; the Context provider is a client cache,
-  not the source of truth.
-- **Ephemeral, client-only UI state** scoped to one feature → **Zustand**,
-  following `features/product-detail/transition/product-transition-store.ts`
-  and `hooks/use-making-workspace.tsx`.
+- **Local UI state** (one component, e.g. an open/closed flag) →
+  `useState`/`useReducer`.
+- **Subtree-shared state** (shared across a branch of the tree, not the
+  whole app) → **React Context** when appropriate, following
+  `features/cart/cart-provider.tsx` — note the cart's actual data is
+  server-owned (`apps/api/src/cart/cart.service.ts` persists it and
+  couples it to inventory holds); the Context provider holds a
+  client-side view of that data for the checkout subtree, it is not
+  itself the server-state cache.
+- **Shared client-only state** with no server counterpart → **Zustand**
+  when justified, following
+  `features/product-detail/transition/product-transition-store.ts` and
+  `hooks/use-making-workspace.tsx`.
+- **Server state** → the existing data-fetching/cache code in `lib/`.
+  Do not reach for Context as a general server-state cache.
+- **URL state** (filters, pagination, selected tab — anything that should
+  survive a reload or be shareable) → route params/search params.
+- **Form state** → form-local state, not global state.
 
 Do not migrate existing cart/transition/workspace code to "unify" on one
-tool — both already follow this rule.
+tool, and do not add a new state-management dependency — all of the
+above uses what's already installed. See
+`../../docs/engineering/adr/adr-001-state-management-selection.md`.

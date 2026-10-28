@@ -59,13 +59,48 @@ Layer agent instructions as follows:
    agent might skip reading.
 
 **Tool portability**: because this repository already maintains three
-separate skill directories for different tools, the canonical source for
-any new skill is written once and the existing mirroring convention
-(copy, not symlink, since the host filesystem copies observed are not
-symlinks) is followed for any tool that needs its own copy — but **this
-PR only adds the skill to the location(s) this execution environment
-actually supports** (see Step 5); extending it to every tool directory is
-explicitly deferred, not assumed to be free or automatic.
+separate skill directories (`.claude/skills/`, `.agents/skills/`,
+`.cursor/skills/`), each new skill has one **canonical source** and is
+mirrored as byte-identical copies into every directory this repository
+already uses for skills — matching the existing, pre-audit convention of
+plain file copies, not symlinks (confirmed by `diff`: the existing
+`api-module-structure`/`storefront-component-structure` files in
+`.agents/skills/` and `.cursor/skills/` are not symlinked to one
+location).
+
+Canonical source and sync method for `rad-safe-refactor`:
+`.claude/skills/rad-safe-refactor/SKILL.md` is the canonical file; the
+`.agents/skills/` and `.cursor/skills/` copies are produced by copying it
+verbatim. There is no build step or script that keeps them in sync
+automatically — **whoever edits this skill must re-copy it to all three
+directories in the same commit**, and a reviewer should diff the three
+files before approving any future change to this skill. This PR's own
+copies were verified identical by direct `diff` and matching checksums
+(see Step 6 of the PR this ADR accompanies).
+
+**Discoverability is reported, not assumed**, per target tool:
+- **Claude Code** (this execution environment): **unverified**. The
+  skill file is placed at the path this tool's own skill-loading
+  convention uses (`.claude/skills/<name>/SKILL.md`, matching the format
+  of other skills already in that directory), but no observation in this
+  session confirmed `rad-safe-refactor` actually appears in a skill
+  listing — the existing project-specific skills
+  (`api-module-structure`, `storefront-component-structure`) were not
+  observed in this session's own skill listing either, despite existing
+  in `.agents/skills/` and `.cursor/skills/`. Placement follows
+  convention; it is not proof of discovery.
+- **The generic `.agents/skills/` convention**: **unverified**. No tool
+  in this audit's execution environment reads this path; it is mirrored
+  because two existing project skills already live there, on the
+  assumption that whatever tool created them discovers skills from that
+  location — an assumption carried over from the existing repository
+  convention, not independently confirmed by this PR.
+- **Cursor** (`.cursor/skills/`): **unverified**, for the same reason —
+  mirrored to match the existing convention, not confirmed by running
+  Cursor against this file.
+- No tool was found in this audit to be definitively **unsupported** for
+  this skill format; "unverified" is the honest status for all three
+  targets, not "verified," and this ADR does not claim otherwise.
 
 ## Rationale
 
@@ -77,10 +112,17 @@ contributors don't have to guess where a new rule belongs.
 
 ## Trade-offs
 
-- Not every AI tool in use discovers skills the same way; this ADR
-  explicitly does not assume parity, and the current PR limits itself to
-  one skill in one or more directories it can verify are actually
-  discoverable, rather than guessing at every tool's mechanism.
+- Not every AI tool in use discovers skills the same way, and this ADR
+  does not assume parity: the current PR mirrors `rad-safe-refactor`
+  into all three existing skill directories to match the repository's
+  own pre-existing convention, but reports discoverability in each as
+  **unverified** rather than claiming the mirroring itself proves any
+  tool will find the file.
+- Mirroring by hand (no sync script) means a future edit to one copy
+  and not the others is a real risk; this PR accepts that risk now
+  (consistent with not adding new tooling/CI in this PR) and states the
+  manual-sync expectation explicitly rather than silently relying on
+  reviewers to notice drift.
 - Keeping app-level AGENTS.md content minimal (per the audit's Step 4
   instruction not to duplicate large rule sets) means some judgment calls
   will still require consulting the root file; this is accepted as better
@@ -116,6 +158,13 @@ contributors don't have to guess where a new rule belongs.
   before merge — it is not auto-generated from this audit without
   review, per the audit's own Step 2 instruction ("do not invent
   architectural facts").
-- The `rad-safe-refactor` skill (Step 5) must be checked for actual
-  discoverability in at least one supported tool before being considered
-  complete, not merely written to match a format.
+- Before any PR that edits `rad-safe-refactor` (or any future mirrored
+  skill) is merged, the reviewer must confirm all mirrored copies are
+  byte-identical (e.g. `diff`/checksum across `.claude/`, `.agents/`,
+  `.cursor/`) — drift between copies is a documentation defect, not a
+  cosmetic one, since different tools may load different copies.
+- A future PR that actually exercises this skill end-to-end in a given
+  tool (Claude Code, or any other) should update this ADR's
+  discoverability table from "unverified" to "verified" for that tool,
+  with a note on how it was confirmed — this ADR does not pre-claim that
+  outcome.

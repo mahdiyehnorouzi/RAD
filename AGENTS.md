@@ -24,7 +24,7 @@ Monorepo using npm workspaces.
 - **`packages/state`** — Zustand wrapper. As of the 2026-10 audit it has zero confirmed consumers in any app or package — do not treat it as an established pattern to extend; see `docs/engineering/adr/adr-005-shared-package-extraction.md` before adding anything here.
 - **`packages/i18n`** — Shared i18n infrastructure (Persian/English).
 - **`packages/artworks`** — Artwork-related utilities.
-- **`apps/Rad-App`** — React Native app. **Not an npm workspace member** (absent from the root `"workspaces"` array) — deliberately isolated: its own lockfile, its own Jest-based test runner (the only Jest usage in this repo), and `scripts/check-isolation.mjs`, which fails its build if any module resolves from outside `apps/Rad-App`. Do not assume it shares `packages/*` the way the three workspace apps do, and do not add it to the workspaces array without understanding why it was kept out.
+- **`apps/Rad-App`** — React Native app. **Not an npm workspace member** (absent from the root `"workspaces"` array) — deliberately isolated: its own lockfile, its own Jest-based test runner (the only Jest usage in this repo), and `apps/Rad-App/scripts/check-isolation.mjs`, which fails its build if any module resolves from outside `apps/Rad-App`. Do not assume it shares `packages/*` the way the three workspace apps do, and do not add it to the workspaces array without understanding why it was kept out.
 
 ## 2. Tech Stack
 

@@ -19,27 +19,43 @@ related helpers (`canTransitionProductStatus`, etc.) are defined once and
 correctly imported by both `apps/admin` and `apps/api` (Phase 02/03).
 
 `apps/Rad-App` (React Native) already demonstrates a working, CI-enforced
-boundary pattern: `scripts/check-isolation.mjs` builds its production
+boundary pattern: `apps/Rad-App/scripts/check-isolation.mjs` builds its production
 bundle and fails if any module resolves from outside `apps/Rad-App`
 (not from `packages/*`, the other web apps, or root `node_modules`).
 
 ## Approved Decision
 
-1. A new shared package under `packages/` should not be created until at
-   least two real, current consumers need the same code — a single
+1. A new shared package under `packages/` normally requires **at least
+   two real, current consumers** that need the same code — a single
    consumer should keep the code local to that app until a second
    consumer actually appears.
-2. Extend dependency-boundary enforcement in CI (not implemented in this
+2. **Exception**: this rule may be set aside when there is a demonstrated
+   architectural reason to extract shared code before a second consumer
+   exists. An exception requires all three of:
+   - a documented architectural justification in the PR that creates the
+     package (not asserted after the fact);
+   - explicit Tech Lead approval, recorded in that PR; and
+   - the package still being removed or merged back into its one
+     consumer if no second consumer appears within a reasonable,
+     stated follow-up window.
+   Absent all three, the two-consumer rule applies as stated above.
+3. Extend dependency-boundary enforcement in CI (not implemented in this
    PR — see Step 6/ADR-008) to:
    - run `knip` (or an equivalent dead-export/dead-package check) across
      all apps and packages, not storefront only, so an unused package like
      `packages/state` surfaces automatically; and
-   - apply `apps/Rad-App`'s isolation-check pattern as a model for
-     verifying that `packages/*` are not imported from `apps/Rad-App`'s
-     bundle in the opposite direction.
-3. Disposition of `packages/state` itself (delete vs. document a concrete
-   near-term consumer) is a decision for the Tech Lead, not automated by
-   this ADR — see Step 6 "Unresolved Questions" in this PR's summary.
+   - **preserve, unchanged, `apps/Rad-App`'s existing isolation
+     requirement** — `apps/Rad-App/scripts/check-isolation.mjs` must continue to fail
+     the build if any module in `apps/Rad-App`'s bundle resolves from
+     outside `apps/Rad-App` (including from `packages/*`). This ADR's
+     two-consumer rule governs when a *new* shared package may be
+     created; it does not loosen or replace Rad-App's existing,
+     independent isolation boundary, which stays in force regardless of
+     how many consumers any given package has.
+4. Disposition of `packages/state` itself (delete vs. document a concrete
+   near-term consumer, vs. invoking the exception in point 2 with a
+   stated justification) is a decision for the Tech Lead, not automated
+   by this ADR — see Step 6 "Unresolved Questions" in this PR's summary.
 
 ## Rationale
 
@@ -47,7 +63,12 @@ The "≥2 consumers" rule is directly supported by contrasting the two real
 examples in this repository: `packages/types` earned its existence by
 having two consumers from the start; `packages/state` did not and has sat
 unused. Automating the detection (rather than relying on someone noticing)
-closes the exact gap that let `packages/state` go unnoticed.
+closes the exact gap that let `packages/state` go unnoticed. The
+exception exists because a strict rule with no escape hatch would either
+get silently violated or force a deliberately bad short-term design
+(duplicating code into a second consumer just to satisfy the count) —
+requiring a documented reason plus Tech Lead sign-off keeps the exception
+rare and visible rather than a loophole.
 
 ## Trade-offs
 
@@ -78,3 +99,7 @@ closes the exact gap that let `packages/state` go unnoticed.
 - The future CI-extension PR must demonstrate it flags `packages/state`
   as unused (or confirms it no longer exists) as its own acceptance
   criterion.
+- Any PR invoking the exception in point 2 must link the Tech Lead
+  approval and state the follow-up window in its description — a PR
+  that creates a single-consumer package without this is non-compliant
+  with this ADR, not a quiet exception to it.

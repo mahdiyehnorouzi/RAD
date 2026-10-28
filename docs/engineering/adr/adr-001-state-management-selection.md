@@ -24,35 +24,66 @@ are individually defensible; the gap is the absence of a stated convention.
 
 ## Approved Decision
 
-Select state management by **where the data is owned and how long it
-lives**, not by habit or precedent of the nearest existing file:
+Select state management by **state type, ownership, scope, and
+lifetime** — not by a single Context-vs-Zustand axis, and not by habit or
+precedent of the nearest existing file:
 
-- **Server-owned or cross-navigation state** (state that mirrors a backend
-  resource, or must survive across route changes within a session) →
-  **React Context**, following the existing `cart-provider.tsx` pattern.
-- **Ephemeral, client-only UI state** scoped to one feature or interaction
-  (transition flags, in-progress editor/workspace state not yet persisted)
-  → **Zustand**, following the existing `product-transition-store.ts` /
-  `use-making-workspace.tsx` pattern.
+- **Local UI state** (toggle, input draft, hover/open flags scoped to one
+  component) → `useState` or `useReducer`. No shared tool needed.
+- **Subtree-shared state** (several components under one branch of the
+  tree need the same value, but it doesn't need to leave that subtree) →
+  **React Context**, when appropriate — e.g. the existing
+  `features/cart/cart-provider.tsx`, which shares the cart's client-side
+  cache across the checkout subtree.
+- **Shared client-only state** (ephemeral state read/written from
+  multiple, non-nested parts of the app, with no server counterpart) →
+  **Zustand**, when justified — e.g. the existing
+  `features/product-detail/transition/product-transition-store.ts` and
+  `hooks/use-making-workspace.tsx`.
+- **Server state** (anything that mirrors a backend resource — the cart's
+  actual data, order status, catalog data) → the app's established
+  data-fetching and cache strategy (its `lib/api` client code and
+  whatever request-level caching Next.js/React already provides for it).
+  **Context is not the default server-state cache** — where Context is
+  used alongside server state today (e.g. `cart-provider.tsx`), Context
+  holds the *client-side view* of that state for the subtree that needs
+  it, not a general-purpose cache replacing the data-fetching layer.
+- **URL state** (anything that should be shareable/bookmarkable or survive
+  a reload — filters, pagination, selected tab) → route params and search
+  params, not component or Context state.
+- **Form state** → form-local state (component state or whatever
+  established form-handling approach the form already uses), not global
+  state of any kind.
 
-This codifies the existing split; it does not require migrating any
-existing code.
+This codifies and refines the existing split; it does not require
+migrating any existing code, and it introduces no new dependency.
 
 ## Rationale
 
-The existing usages already follow this line exactly, by coincidence or
-earlier unwritten convention — codifying it costs nothing and prevents the
-next feature from picking arbitrarily.
+The previous draft of this ADR collapsed "server-owned state" and
+"cross-navigation state" into one Context bucket, which overstates what
+Context is good for and risks agents reaching for Context as a server-
+state cache in new code. The corrected model separates state by its
+actual nature (local/subtree/shared-client/server/URL/form), which
+matches how the existing code already behaves: `cart-provider.tsx`'s
+Context value is a client-side reflection of server-owned cart data for
+the checkout subtree, not itself the cache strategy for that data; the
+two Zustand stores are genuinely shared-client-only state with no server
+counterpart.
 
 ## Trade-offs
 
-- Some state will sit at the boundary (e.g. optimistic UI updates ahead of
-  a server write) and will require a judgment call; this ADR does not
-  remove the need for engineering judgment, only narrows the default case.
+- This is a finer-grained model than a single Context-vs-Zustand
+  dichotomy, so it requires slightly more judgment to classify a given
+  piece of state correctly; the trade-off is accepted because the
+  coarser model was actively misleading about server state.
 - Standardizing on a single tool for everything was considered and
   rejected: it would force a rewrite of working, untested-but-stable code
   (cart) for no measurable benefit, violating the audit's scope-discipline
   finding (`AGENTS.md` §11).
+- No new dependency is introduced by this ADR; "established data-fetching
+  and cache strategy" refers to whatever the storefront already uses for
+  server data today, not a new library.
 
 ## Consequences
 
@@ -64,6 +95,9 @@ next feature from picking arbitrarily.
 
 - Do not retroactively migrate `cart-provider.tsx` or the existing Zustand
   stores to match this rule "for consistency" — they already match it.
+- Do not introduce a new state-management dependency to satisfy any
+  category above; use `useState`/`useReducer`, React Context, the
+  existing Zustand dependency, and the app's existing data-fetching code.
 - Any new feature introducing state must justify its choice against this
   rule in the PR description if the classification is not obvious.
 

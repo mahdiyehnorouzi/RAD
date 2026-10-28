@@ -29,7 +29,7 @@ RAD/                          npm workspaces: ["apps/storefront", "apps/api", "a
 (`npm install --prefix apps/Rad-App`), has its own lockfile, its own test
 runner (Jest — the only Jest usage in the repository; every other app uses
 `node:test` via `tsx --test`), its own `README.md`/`ROADMAP.md`, and its
-own CI-style guard: `scripts/check-isolation.mjs` builds its production
+own CI-style guard: `apps/Rad-App/scripts/check-isolation.mjs` builds its production
 bundle and **fails if any module resolves from outside `apps/Rad-App`**
 (not from `packages/*`, the other web apps, or root `node_modules`).
 
