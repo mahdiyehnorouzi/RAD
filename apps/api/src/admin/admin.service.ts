@@ -528,6 +528,9 @@ export class AdminService {
         relations: adminOrderRelations,
       });
     });
+    if (nextStatus !== currentStatus) {
+      void this.catalogRevalidation.notifyChanged();
+    }
     return toAdminOrder(updated);
   }
 
