@@ -14,7 +14,11 @@ after(async () => {
 });
 
 /** Carries an order from checkout to `pending_verification`. */
-async function submitReceipt(rad: PurchaseHarness, buyer: ReturnType<PurchaseHarness["buyer"]>, slug: string) {
+async function submitReceipt(
+  rad: PurchaseHarness,
+  buyer: ReturnType<PurchaseHarness["buyer"]>,
+  slug: string,
+) {
   const order = await rad.placeOrder(buyer, slug);
   await rad.orders.confirmPayment(buyer, order.id, {
     receiptImage: rad.receipt(),
@@ -91,7 +95,9 @@ test("a confirmed sale is never reversed by a later unrelated reject", async () 
 
   // A stale/duplicate reject attempt on an already-reviewed order must be
   // rejected outright, never silently restock a genuinely sold work.
-  await assert.rejects(rad.admin.rejectPayment(order.id, "late callback", null));
+  await assert.rejects(
+    rad.admin.rejectPayment(order.id, "late callback", null),
+  );
 
   const stillSold = await rad.productRow(slug);
   assert.equal(stillSold.status, "sold");
