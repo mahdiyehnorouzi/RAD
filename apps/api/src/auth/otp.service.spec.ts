@@ -60,7 +60,7 @@ before(async () => {
     },
   } as unknown as MelipayamakService;
 
-  otp = new OtpService(dataSource.getRepository(OtpCode), fakeSms);
+  otp = new OtpService(dataSource.getRepository(OtpCode), fakeSms, dataSource);
 });
 
 after(async () => {
@@ -195,4 +195,39 @@ test("a later request for the same phone invalidates the earlier unconsumed code
   await assert.rejects(() => otp.verifyCode("09127777777", firstCode));
   const result = await otp.verifyCode("09127777777", secondCode);
   assert.equal(result.verified, true);
+});
+
+test("a burst of parallel wrong guesses cannot bypass the attempt cap (concurrency-safe verification)", async () => {
+  sent = [];
+  await otp.requestCode("09128888888");
+  const realCode = sent[0].code;
+  const wrongCode = realCode === "111111" ? "222222" : "111111";
+
+  // 20 simultaneous wrong guesses against the same code. Without a row
+  // lock serializing the read-check-increment, every one of them can read
+  // `attempts: 0` before any single increment commits, so all 20 pass the
+  // "< 5" check and the real code would still verify afterwards — the cap
+  // existing only on paper.
+  const results = await Promise.allSettled(
+    Array.from({ length: 20 }, () => otp.verifyCode("09128888888", wrongCode)),
+  );
+  assert.ok(
+    results.every((result) => result.status === "rejected"),
+    "every wrong guess must be rejected",
+  );
+
+  // The cap must have actually been enforced: the real code no longer
+  // verifies, because attempts correctly accumulated to >= 5 despite the
+  // concurrency.
+  await assert.rejects(
+    () => otp.verifyCode("09128888888", realCode),
+    (error: unknown) => {
+      assert.ok(error instanceof BadRequestException);
+      assert.equal(
+        (error.getResponse() as { code?: string }).code,
+        "otp_too_many_attempts",
+      );
+      return true;
+    },
+  );
 });
