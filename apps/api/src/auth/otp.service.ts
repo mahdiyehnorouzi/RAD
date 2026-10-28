@@ -9,7 +9,10 @@ import { MoreThan, Repository } from "typeorm";
 import { OtpCode } from "../database/entities";
 import { MelipayamakService } from "../sms/melipayamak.service";
 import { normalizeIranianMobile } from "../sms/phone";
-import { generateVerificationCode, hashVerificationCode } from "./reset-token.util";
+import {
+  generateVerificationCode,
+  hashVerificationCode,
+} from "./reset-token.util";
 
 const OTP_TTL_MS = 2 * 60 * 1000;
 const RESEND_COOLDOWN_MS = 60 * 1000;
@@ -47,7 +50,10 @@ export class OtpService {
     const phone = this.requirePhone(rawPhone);
 
     const recent = await this.codes.findOne({
-      where: { phone, createdAt: MoreThan(new Date(Date.now() - RESEND_COOLDOWN_MS)) },
+      where: {
+        phone,
+        createdAt: MoreThan(new Date(Date.now() - RESEND_COOLDOWN_MS)),
+      },
       order: { createdAt: "DESC" },
     });
     if (recent) {
@@ -104,7 +110,10 @@ export class OtpService {
     }
 
     if (hashVerificationCode(code) !== record.codeHash) {
-      await this.codes.update({ id: record.id }, { attempts: record.attempts + 1 });
+      await this.codes.update(
+        { id: record.id },
+        { attempts: record.attempts + 1 },
+      );
       throw new BadRequestException({
         message: "کد وارد شده درست نیست.",
         code: "otp_invalid",

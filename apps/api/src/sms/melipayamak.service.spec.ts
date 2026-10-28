@@ -78,7 +78,8 @@ describe("MelipayamakService: SendOtp response handling", () => {
   test("ReturnValue '0' (bad credentials) throws", async () => {
     stubFetch(200, "0");
     await assert.rejects(
-      () => new MelipayamakService(configured()).sendOtp("09121234567", "654321"),
+      () =>
+        new MelipayamakService(configured()).sendOtp("09121234567", "654321"),
       InternalServerErrorException,
     );
   });
@@ -86,7 +87,8 @@ describe("MelipayamakService: SendOtp response handling", () => {
   test("a negative ReturnValue (e.g. '-111' invalid IP) throws", async () => {
     stubFetch(200, "-111");
     await assert.rejects(
-      () => new MelipayamakService(configured()).sendOtp("09121234567", "654321"),
+      () =>
+        new MelipayamakService(configured()).sendOtp("09121234567", "654321"),
       InternalServerErrorException,
     );
   });
@@ -94,7 +96,8 @@ describe("MelipayamakService: SendOtp response handling", () => {
   test("a non-2xx HTTP response throws even with a numeric-looking body", async () => {
     stubFetch(500, "123456789");
     await assert.rejects(
-      () => new MelipayamakService(configured()).sendOtp("09121234567", "654321"),
+      () =>
+        new MelipayamakService(configured()).sendOtp("09121234567", "654321"),
       InternalServerErrorException,
     );
   });
@@ -104,7 +107,8 @@ describe("MelipayamakService: SendOtp response handling", () => {
       throw new Error("ECONNREFUSED");
     }) as typeof fetch;
     await assert.rejects(
-      () => new MelipayamakService(configured()).sendOtp("09121234567", "654321"),
+      () =>
+        new MelipayamakService(configured()).sendOtp("09121234567", "654321"),
       InternalServerErrorException,
     );
   });

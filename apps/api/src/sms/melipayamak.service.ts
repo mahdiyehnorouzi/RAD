@@ -35,8 +35,8 @@ export class MelipayamakService {
   isConfigured() {
     return Boolean(
       this.config.get<string>("MELIPAYAMAK_USERNAME") &&
-        this.config.get<string>("MELIPAYAMAK_PASSWORD") &&
-        this.config.get<string>("MELIPAYAMAK_SENDER"),
+      this.config.get<string>("MELIPAYAMAK_PASSWORD") &&
+      this.config.get<string>("MELIPAYAMAK_SENDER"),
     );
   }
 
