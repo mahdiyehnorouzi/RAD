@@ -488,6 +488,12 @@ export function AdminDashboard() {
         {section === "damage" && (
           <AdminDamageReports
             reports={workspace.damageReports}
+            loading={
+              !workspace.loadedKeys.has("damageReports") &&
+              !workspace.loadErrors.has("damageReports")
+            }
+            loadError={workspace.loadErrors.has("damageReports")}
+            onRetry={() => workspace.retryResource("damageReports")}
             orders={workspace.orders}
             canWrite={workspace.can("order.write")}
             onReview={reviewDamage}
@@ -497,6 +503,12 @@ export function AdminDashboard() {
         {section === "commissions" && (
           <AdminCommissions
             commissions={workspace.commissions}
+            loading={
+              !workspace.loadedKeys.has("commissions") &&
+              !workspace.loadErrors.has("commissions")
+            }
+            loadError={workspace.loadErrors.has("commissions")}
+            onRetry={() => workspace.retryResource("commissions")}
             canWrite={workspace.can("order.write")}
             onBeginReview={async (id) => {
               try {
