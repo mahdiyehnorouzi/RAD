@@ -26,10 +26,7 @@ test("notifyChanged POSTs the shared secret to the configured URL", async () => 
   const originalFetch = globalThis.fetch;
   let seenUrl: string | undefined;
   let seenSecret: string | null | undefined;
-  globalThis.fetch = (async (
-    url: RequestInfo | URL,
-    init?: RequestInit,
-  ) => {
+  globalThis.fetch = (async (url: RequestInfo | URL, init?: RequestInit) => {
     seenUrl = String(url);
     seenSecret = new Headers(init?.headers).get("x-revalidate-secret");
     return new Response(null, { status: 200 });
@@ -37,7 +34,8 @@ test("notifyChanged POSTs the shared secret to the configured URL", async () => 
   try {
     const service = new CatalogRevalidationService(
       configWith({
-        STOREFRONT_REVALIDATE_URL: "https://storefront.example/api/revalidate-catalog",
+        STOREFRONT_REVALIDATE_URL:
+          "https://storefront.example/api/revalidate-catalog",
         CATALOG_REVALIDATE_SECRET: "shh",
       }),
     );
@@ -57,7 +55,8 @@ test("notifyChanged swallows a failing request instead of throwing", async () =>
   try {
     const service = new CatalogRevalidationService(
       configWith({
-        STOREFRONT_REVALIDATE_URL: "https://storefront.example/api/revalidate-catalog",
+        STOREFRONT_REVALIDATE_URL:
+          "https://storefront.example/api/revalidate-catalog",
         CATALOG_REVALIDATE_SECRET: "shh",
       }),
     );
@@ -78,7 +77,8 @@ test("notifyChanged retries once after a failed attempt, then stops", async () =
   try {
     const service = new CatalogRevalidationService(
       configWith({
-        STOREFRONT_REVALIDATE_URL: "https://storefront.example/api/revalidate-catalog",
+        STOREFRONT_REVALIDATE_URL:
+          "https://storefront.example/api/revalidate-catalog",
         CATALOG_REVALIDATE_SECRET: "shh",
       }),
     );
@@ -99,7 +99,8 @@ test("notifyChanged gives up after the retry budget is exhausted", async () => {
   try {
     const service = new CatalogRevalidationService(
       configWith({
-        STOREFRONT_REVALIDATE_URL: "https://storefront.example/api/revalidate-catalog",
+        STOREFRONT_REVALIDATE_URL:
+          "https://storefront.example/api/revalidate-catalog",
         CATALOG_REVALIDATE_SECRET: "shh",
       }),
     );

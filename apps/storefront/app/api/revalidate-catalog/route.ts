@@ -58,5 +58,8 @@ export async function POST(request: Request) {
   }
   updateTag(CATALOG_TAG);
   resetProcessCatalogCache();
-  return Response.json({ ok: true }, { headers: { "cache-control": "no-store" } });
+  return Response.json(
+    { ok: true },
+    { headers: { "cache-control": "no-store" } },
+  );
 }

@@ -21,7 +21,8 @@ function withSecret(value: string | undefined, fn: () => Promise<void>) {
   updateTagCalls = [];
   resetCalls = 0;
   return fn().finally(() => {
-    if (ORIGINAL_SECRET === undefined) delete process.env.CATALOG_REVALIDATE_SECRET;
+    if (ORIGINAL_SECRET === undefined)
+      delete process.env.CATALOG_REVALIDATE_SECRET;
     else process.env.CATALOG_REVALIDATE_SECRET = ORIGINAL_SECRET;
   });
 }
