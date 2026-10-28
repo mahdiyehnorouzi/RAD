@@ -1,6 +1,6 @@
 # Agent Skill Discovery and Session Initialization
 
-**Status:** Engineering procedure; complements [ADR-008](../adr/adr-008-agent-engineering-system.md), [ADR-007](../adr/adr-007-test-first-refactoring.md), and the [Task-to-PR workflow](./task-to-pr.md) (currently a separate stacked PR). No tool discovery behavior is assumed from file presence alone.
+**Status:** Engineering procedure; complements [ADR-008](../adr/adr-008-agent-engineering-system.md), [ADR-007](../adr/adr-007-test-first-refactoring.md), and the Task-to-PR workflow being developed in a separate stacked PR (#116). No tool discovery behavior is assumed from file presence alone.
 
 ## 1. Preflight before an agent task
 
