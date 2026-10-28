@@ -100,6 +100,30 @@ export class AuthController {
     return this.otp.verifyCode(body.phone, body.code);
   }
 
+  /**
+   * Verifies the code and opens a session in one step — the only way an
+   * SMS OTP sign-in actually happens. `otp/verify` above stays a
+   * lower-level check (e.g. for a future "verify my phone" flow on an
+   * existing account) and never issues a session itself.
+   */
+  @Post("otp/signin")
+  @Throttle({ default: { limit: 8, ttl: 60_000 } })
+  async signInWithOtp(
+    @Body() body: OtpVerifyDto,
+    @Req() request: AuthedRequest,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    const { phone } = await this.otp.verifyCode(body.phone, body.code);
+    const actor = await this.identity.fromRequest(request);
+    const result = await this.auth.signInWithPhone(phone, actor);
+    response.cookie(
+      AUTH_COOKIE,
+      result.sessionToken,
+      sessionCookieOptions(result.maxAgeMs),
+    );
+    return { user: result.user };
+  }
+
   @Post("logout")
   logout(@Res({ passthrough: true }) response: Response) {
     response.clearCookie(AUTH_COOKIE, { path: "/" });

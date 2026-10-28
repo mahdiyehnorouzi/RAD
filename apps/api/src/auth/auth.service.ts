@@ -6,7 +6,7 @@ import {
 } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import { InjectRepository } from "@nestjs/typeorm";
-import { createHash, randomInt } from "node:crypto";
+import { createHash, randomBytes, randomInt } from "node:crypto";
 import { hash, compare } from "bcryptjs";
 import { MoreThan, Repository } from "typeorm";
 import {
@@ -115,6 +115,50 @@ export class AuthService {
     return this.openSession(toAuthUser(created), actor);
   }
 
+  /**
+   * Opens a session for a phone the caller has already proven ownership of
+   * (via `OtpService.verifyCode` — this method trusts its caller on that,
+   * it never re-checks the code). Account-linking policy: auto-link only
+   * when an existing account already has this *exact* phone on file —
+   * never by guessing at an email/password account to attach it to. Since
+   * no pre-existing account has a phone yet, a first-time OTP sign-in
+   * always creates a brand-new, password-less, email-less account; a
+   * returning OTP user is found by their own stored phone. Mirrors
+   * Google's auto-link-by-verified-signal policy in #96, applied to the
+   * signal OTP actually proves (phone), not one it doesn't (email).
+   */
+  async signInWithPhone(phone: string, actor: Actor) {
+    const existing = await this.users.findOne({ where: { phone } });
+    if (existing) {
+      if (existing.status === "invited") {
+        throw new UnauthorizedException({
+          message: "این حساب هنوز فعال نشده است.",
+          code: "account_inactive",
+        });
+      }
+      return this.openSession(toAuthUser(existing), actor);
+    }
+
+    const created = await this.users.save(
+      this.users.create({
+        name: "مشتری رَد",
+        email: null,
+        phone,
+        // Unusable: nobody knows this value, so email/password sign-in on
+        // a phone-only account can never succeed by chance. Keeps
+        // `passwordHash` required at the DB level (see the AddUserPhone
+        // migration's docstring for why this isn't a nullable column).
+        passwordHash: await hash(randomBytes(32).toString("hex"), 12),
+        role: "customer",
+        status: "active",
+      }),
+    );
+    await this.notices.save(
+      this.notices.create({ ownerKey: `user:${created.id}`, kind: "welcome" }),
+    );
+    return this.openSession(toAuthUser(created), actor);
+  }
+
   async me(actor: Actor) {
     return { user: actor.user };
   }
@@ -158,7 +202,10 @@ export class AuthService {
       }),
     );
 
-    await this.mail.sendPasswordResetCode(user.email, code);
+    // `normalized`, not `user.email`: both are the same string (this row
+    // was found by exactly this email), but `user.email` is typed nullable
+    // now (phone-only accounts) while `normalized` is known non-null here.
+    await this.mail.sendPasswordResetCode(normalized, code);
     return {
       message:
         "کد بازیابی به ایمیل شما ارسال شد. صندوق ورودی و پوشهٔ اسپم را بررسی کنید.",

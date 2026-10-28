@@ -5,6 +5,7 @@ import {
   ForbiddenException,
   Inject,
   Injectable,
+  InternalServerErrorException,
   Logger,
   NotFoundException,
 } from "@nestjs/common";
@@ -621,6 +622,17 @@ export class AdminService {
 
   /** Single-use (deleted on consume by `AuthService.resetPassword`), expiring, replaces any prior token for this user. */
   private async issueInviteToken(user: User) {
+    // Staff accounts are always created with an email (`InviteMemberDto`
+    // requires one) — only phone-only (SMS OTP) customer accounts ever
+    // have a null `email`, and those are never admins. Guarded rather than
+    // asserted: a null here means something upstream is badly wrong, and
+    // silently calling `sendAdminInvite` with it would just throw inside
+    // nodemailer with a far more confusing error.
+    if (!user.email) {
+      throw new InternalServerErrorException(
+        "این حساب ایمیل ندارد؛ دعوت ارسال نشد.",
+      );
+    }
     const { code, tokenHash, expiresAt } =
       generateVerificationCode(INVITE_TOKEN_TTL_MS);
     await this.resetTokens.delete({ userId: user.id });

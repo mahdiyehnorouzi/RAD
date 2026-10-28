@@ -1,7 +1,7 @@
 export type AuthUser = {
   id: string;
   name: string;
-  email: string;
+  email: string | null;
   role: "customer" | "artist" | "admin";
   adminRole?: "owner" | "manager" | "editor" | "viewer" | null;
 };
@@ -18,7 +18,7 @@ export function ownerKey(actor: Actor) {
 export function toAuthUser(user: {
   id: string;
   name: string;
-  email: string;
+  email: string | null;
   role: string;
   adminRole?: string | null;
 }): AuthUser {
