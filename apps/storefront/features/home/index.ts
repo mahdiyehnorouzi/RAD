@@ -5,4 +5,4 @@ export {
   ProcessSection,
   ThreadJourney,
 } from "./sections";
-export { featuredHomeWorks, liveFeaturedHomeWorks } from "./const";
+export { liveFeaturedHomeWorks } from "./const";
