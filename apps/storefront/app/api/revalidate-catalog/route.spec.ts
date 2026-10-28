@@ -60,11 +60,7 @@ test("invalidates the catalog cache when the secret matches", () =>
     assert.equal(response.status, 200);
     assert.deepEqual(updateTagCalls, ["catalog"]);
     assert.equal(resetCalls, 1);
-    assert.deepEqual(revalidatePathCalls, [
-      ["/", "layout"],
-      ["/fa", undefined],
-      ["/en", undefined],
-    ]);
+    assert.deepEqual(revalidatePathCalls, [["/[locale]", "page"]]);
   }));
 
 test("a secret of the wrong length is rejected, not thrown on", () =>
