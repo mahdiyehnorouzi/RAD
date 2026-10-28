@@ -5,5 +5,5 @@ export {
   heroCardCopy,
   heroCards,
 } from "./hero-cards";
-export { featuredHomeWorks } from "./featured-works";
+export { featuredHomeWorks, liveFeaturedHomeWorks } from "./featured-works";
 export { certificateScene } from "./home-media";

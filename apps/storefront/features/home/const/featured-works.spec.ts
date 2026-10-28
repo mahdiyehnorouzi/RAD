@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import type { Product } from "@rad/types";
-import { featuredHomeWorks } from "./featured-works";
+import { featuredHomeWorks, liveFeaturedHomeWorks } from "./featured-works";
 
 function product(overrides: Partial<Product> & { slug: string }): Product {
   return {
@@ -71,4 +71,31 @@ test("featuredHomeWorks caps at 5 even with more eligible works", () => {
     product({ slug: `work-${index}`, listedAt: index, radNumber: index }),
   );
   assert.equal(featuredHomeWorks(products).length, 5);
+});
+
+test("featuredHomeWorks excludes works with no status (bundled registry rows)", () => {
+  const products = [
+    product({ slug: "live", status: "available", listedAt: 1_000 }),
+    product({ slug: "registry", status: undefined, listedAt: 9_000 }),
+  ];
+  assert.deepEqual(
+    featuredHomeWorks(products).map((item) => item.slug),
+    ["live"],
+  );
+});
+
+test("liveFeaturedHomeWorks never publishes registry/demo catalog as Latest Works", () => {
+  const products = [
+    product({
+      slug: "demo-available-shape",
+      status: "available",
+      listedAt: 5_000,
+    }),
+    product({ slug: "demo-other", status: undefined, listedAt: 4_000 }),
+  ];
+  assert.deepEqual(liveFeaturedHomeWorks(products, "registry"), []);
+  assert.deepEqual(
+    liveFeaturedHomeWorks(products, "api").map((item) => item.slug),
+    ["demo-available-shape"],
+  );
 });

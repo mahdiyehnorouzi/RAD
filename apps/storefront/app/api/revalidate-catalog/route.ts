@@ -1,7 +1,8 @@
 import { timingSafeEqual } from "node:crypto";
-import { updateTag } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { CATALOG_TAG } from "@/lib/catalog/catalog-tag";
 import { resetProcessCatalogCache } from "@/lib/catalog/get-catalog-works";
+import { LOCALES } from "@/lib/locale";
 
 /**
  * Admin (a separate Next.js app/deployment) has no way to invalidate this
@@ -58,6 +59,13 @@ export async function POST(request: Request) {
   }
   updateTag(CATALOG_TAG);
   resetProcessCatalogCache();
+  // Homepage is request-time (`force-dynamic`) but the locale layout still
+  // prerenders `getCatalogIndex()`. Invalidate both the tagged fetch and the
+  // layout so Admin product writes refresh Latest Works and the catalog index.
+  revalidatePath("/", "layout");
+  for (const locale of LOCALES) {
+    revalidatePath(`/${locale}`);
+  }
   return Response.json(
     { ok: true },
     { headers: { "cache-control": "no-store" } },
