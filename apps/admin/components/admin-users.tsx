@@ -29,7 +29,7 @@ export function UsersPanel({
   const filtered = useMemo(
     () =>
       users.filter((user) =>
-        `${user.name} ${user.email} ${user.id}`
+        `${user.name} ${user.email ?? ""} ${user.id}`
           .toLowerCase()
           .includes(query.trim().toLowerCase()),
       ),
@@ -97,7 +97,7 @@ export function UsersPanel({
                       <strong>{user.name}</strong>
                       <small>{user.id}</small>
                     </td>
-                    <td>{user.email}</td>
+                    <td>{user.email ?? "—"}</td>
                     <td>
                       <StatusBadge
                         label={user.status === "active" ? "فعال" : "دعوت‌شده"}

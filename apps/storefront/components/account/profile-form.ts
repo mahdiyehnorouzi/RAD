@@ -12,7 +12,8 @@ type ProfileDraft = {
 
 export type ProfileUser = {
   name: string;
-  email: string;
+  /** Null for a phone-only (SMS OTP) account. Unused by this form today. */
+  email: string | null;
   phone?: string | null;
 };
 

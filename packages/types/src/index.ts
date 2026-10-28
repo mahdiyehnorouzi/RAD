@@ -189,11 +189,14 @@ export interface Product {
 export interface AuthUser {
   id: string;
   name: string;
-  email: string;
+  /** Null for a phone-only (SMS OTP) account that has never set an email. */
+  email: string | null;
   /**
    * Canonical Iranian mobile (`09` and nine digits), or null when unset.
    * Absent only on responses from an API that predates contact phones.
-   * Not a sign-in identifier.
+   * Not a sign-in identifier — see `verifiedPhone` on the API-side `User`
+   * entity for the OTP-verified login identifier, which is never exposed
+   * to the client as part of this shared session type.
    */
   phone?: string | null;
   role: "customer" | "artist" | "admin";

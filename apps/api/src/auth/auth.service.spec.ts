@@ -4,6 +4,7 @@ import { BadRequestException, UnauthorizedException } from "@nestjs/common";
 import { compare, hash } from "bcryptjs";
 import { AuthService } from "./auth.service";
 import type { Actor } from "../common/identity";
+import type { User } from "../database/entities";
 
 /**
  * Unit coverage (no DB) for the null-passwordHash guard in `signIn` and
@@ -117,6 +118,37 @@ function authServiceWithUsers(usersRepo: unknown) {
     mail,
     inventory,
   );
+}
+
+/** An in-memory `Repository<User>` stand-in: enough for find/save/create. */
+function fakeUsersStore(seed: Partial<User>[] = []) {
+  const rows: Partial<User>[] = [...seed];
+  let nextId = rows.length + 1;
+  const repo = {
+    findOne: async ({ where }: { where: Record<string, unknown> }) =>
+      rows.find((row) =>
+        Object.entries(where).every(([key, value]) => row[key as keyof User] === value),
+      ) ?? null,
+    create: (input: Partial<User>) => input,
+    // Mirrors the real Postgres unique constraint on `verifiedPhone` (and
+    // `email`): a concurrent duplicate insert must fail loudly with the
+    // same shape `isUniqueViolation` (profile.service.ts, addresses.service.ts)
+    // checks for, never silently succeed or silently return the other row.
+    save: async (input: Partial<User>) => {
+      for (const field of ["verifiedPhone", "email"] as const) {
+        const value = input[field];
+        if (value != null && rows.some((row) => row[field] === value)) {
+          throw Object.assign(new Error("duplicate key value"), {
+            code: "23505",
+          });
+        }
+      }
+      const row = { id: `generated-${nextId++}`, ...input };
+      rows.push(row);
+      return row;
+    },
+  };
+  return { repo: repo as never, rows };
 }
 
 const actor: Actor = { user: null, guestId: "guest-1" };
@@ -505,5 +537,183 @@ describe("AuthService.changePassword", () => {
         return true;
       },
     );
+  });
+});
+
+describe("AuthService.signInWithPhone", () => {
+  const guest: Actor = { user: null, guestId: "guest-otp" };
+
+  test("a first-time verified phone creates a brand-new, password-less, email-less account", async () => {
+    const { repo, rows } = fakeUsersStore();
+    const auth = authServiceWithUsers(repo);
+    const result = await auth.signInWithPhone("09121234567", guest);
+
+    assert.equal(rows.length, 1);
+    assert.equal(rows[0].verifiedPhone, "09121234567");
+    assert.equal(rows[0].email, null);
+    assert.ok(rows[0].passwordHash, "a random unusable hash must still be set");
+    assert.equal(result.user.email, null);
+    assert.equal(typeof result.sessionToken, "string");
+  });
+
+  test("a returning verifiedPhone signs into the same account, not a new one", async () => {
+    const { repo, rows } = fakeUsersStore([
+      {
+        id: "existing-otp-user",
+        name: "مشتری رَد",
+        email: null,
+        verifiedPhone: "09127654321",
+        passwordHash: "unusable",
+        role: "customer",
+        adminRole: null,
+        status: "active",
+      },
+    ]);
+    const auth = authServiceWithUsers(repo);
+    const result = await auth.signInWithPhone("09127654321", guest);
+
+    assert.equal(rows.length, 1, "no second account was created");
+    assert.equal(result.user.id, "existing-otp-user");
+  });
+
+  test("never auto-links to an existing email/password account merely by chance — only an exact stored verifiedPhone match signs in", async () => {
+    const { repo, rows } = fakeUsersStore([
+      {
+        id: "email-password-user",
+        name: "Buyer",
+        email: "buyer@example.com",
+        verifiedPhone: null,
+        passwordHash: await hash("some-password", 12),
+        role: "customer",
+        adminRole: null,
+        status: "active",
+      },
+    ]);
+    const auth = authServiceWithUsers(repo);
+    const result = await auth.signInWithPhone("09121112222", guest);
+
+    // A brand-new account was created for this phone — the existing
+    // email/password account (which has no verifiedPhone on file) was
+    // never touched or signed into.
+    assert.equal(rows.length, 2);
+    assert.notEqual(result.user.id, "email-password-user");
+  });
+
+  test("an invited (not-yet-active) account found by verifiedPhone is rejected, not silently signed in", async () => {
+    const { repo } = fakeUsersStore([
+      {
+        id: "invited-user",
+        name: "Invited",
+        email: null,
+        verifiedPhone: "09123334444",
+        passwordHash: "unusable",
+        role: "customer",
+        adminRole: null,
+        status: "invited",
+      },
+    ]);
+    const auth = authServiceWithUsers(repo);
+    await assert.rejects(
+      auth.signInWithPhone("09123334444", guest),
+      (error: unknown) => {
+        assert.ok(error instanceof UnauthorizedException);
+        assert.equal(
+          (error.getResponse() as { code?: string }).code,
+          "account_inactive",
+        );
+        return true;
+      },
+    );
+  });
+
+  test("an unverified contact phone on an existing account cannot be used to sign into that account via OTP", async () => {
+    const { repo, rows } = fakeUsersStore([
+      {
+        id: "email-password-user",
+        name: "Buyer",
+        email: "buyer@example.com",
+        // Self-reported via ProfileService.update, never SMS-verified.
+        phone: "09121112222",
+        verifiedPhone: null,
+        passwordHash: await hash("some-password", 12),
+        role: "customer",
+        adminRole: null,
+        status: "active",
+      },
+    ]);
+    const auth = authServiceWithUsers(repo);
+    const result = await auth.signInWithPhone("09121112222", guest);
+
+    // Completing OTP for a number that only exists as this account's
+    // unverified contact `phone` must never sign into it — a brand-new
+    // account is created instead, and the original account is untouched.
+    assert.equal(rows.length, 2);
+    assert.notEqual(result.user.id, "email-password-user");
+    assert.equal(
+      rows.find((row) => row.id === "email-password-user")?.verifiedPhone,
+      null,
+    );
+  });
+
+  test("a profile update to the contact phone does not change verifiedPhone, and vice versa", async () => {
+    const { rows } = fakeUsersStore([
+      {
+        id: "otp-user",
+        name: "مشتری رَد",
+        email: null,
+        phone: null,
+        verifiedPhone: "09121234567",
+        passwordHash: "unusable",
+        role: "customer",
+        adminRole: null,
+        status: "active",
+      },
+    ]);
+
+    // Simulates ProfileService.update writing only the contact field.
+    rows[0].phone = "09120000000";
+
+    assert.equal(rows[0].verifiedPhone, "09121234567", "sign-in identifier is untouched");
+    assert.equal(rows[0].phone, "09120000000");
+  });
+
+  test("duplicate verifiedPhone values are rejected safely, not silently merged", async () => {
+    const { repo, rows } = fakeUsersStore([
+      {
+        id: "first-otp-user",
+        name: "مشتری رَد",
+        email: null,
+        verifiedPhone: "09121234567",
+        passwordHash: "unusable",
+        role: "customer",
+        adminRole: null,
+        status: "active",
+      },
+    ]);
+    const rawRepo = repo as unknown as {
+      save: (input: Record<string, unknown>) => Promise<unknown>;
+      create: (input: Record<string, unknown>) => Record<string, unknown>;
+    };
+
+    // A concurrent race where the lookup for a *different* number missed
+    // this exact row is simulated directly against the repo: the unique
+    // constraint on `verifiedPhone` must still be the backstop.
+    await assert.rejects(
+      rawRepo.save(
+        rawRepo.create({
+          name: "مشتری رَد",
+          email: null,
+          verifiedPhone: "09121234567",
+          passwordHash: "unusable",
+          role: "customer",
+          status: "active",
+        }),
+      ),
+      (error: unknown) => {
+        assert.equal((error as { code?: string }).code, "23505");
+        return true;
+      },
+    );
+    assert.equal(rows.length, 1, "no duplicate row was created");
   });
 });

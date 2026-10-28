@@ -29,9 +29,11 @@ export function AccountPage() {
             <h1>
               {t("hello")} {user.name}
             </h1>
-            <p>
-              <span dir="ltr">{user.email}</span>
-            </p>
+            {user.email ? (
+              <p>
+                <span dir="ltr">{user.email}</span>
+              </p>
+            ) : null}
           </div>
         </header>
         <AccountBanner />

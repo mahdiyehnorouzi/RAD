@@ -77,7 +77,8 @@ export function MessageForm({
   const askOrder = !orderId && !subject && topic !== "" && ORDER_TOPICS.includes(topic);
 
   useEffect(() => {
-    if (user?.email) setContact((current) => current || user.email);
+    const email = user?.email;
+    if (email) setContact((current) => current || email);
   }, [user?.email]);
 
   useEffect(() => {

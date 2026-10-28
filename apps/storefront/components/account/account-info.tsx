@@ -136,16 +136,18 @@ export function AccountInfoPage() {
                 ) : null}
               </label>
 
-              <div className="account-info-field">
-                <span id="account-email-label">
-                  <Mail aria-hidden="true" strokeWidth={1.6} />
-                  {t("emailLabel")}
-                </span>
-                <bdi dir="ltr" aria-labelledby="account-email-label">
-                  {user.email}
-                </bdi>
-                <small>{t("accountEmailLocked")}</small>
-              </div>
+              {user.email ? (
+                <div className="account-info-field">
+                  <span id="account-email-label">
+                    <Mail aria-hidden="true" strokeWidth={1.6} />
+                    {t("emailLabel")}
+                  </span>
+                  <bdi dir="ltr" aria-labelledby="account-email-label">
+                    {user.email}
+                  </bdi>
+                  <small>{t("accountEmailLocked")}</small>
+                </div>
+              ) : null}
 
               <label className="account-info-field" htmlFor="account-phone">
                 <span>
