@@ -31,6 +31,11 @@ import { PaymentReviewService } from "../orders/payment-review.service";
 import { InventoryService } from "../inventory/inventory.service";
 import { NoticesService } from "../notices/notices.service";
 import { MailService } from "../mail/mail.service";
+import type { CatalogRevalidationService } from "../catalog/catalog-revalidation.service";
+
+const catalogRevalidation = {
+  notifyChanged: async () => {},
+} as unknown as CatalogRevalidationService;
 import { CloudinaryStorageService } from "../storage/cloudinary-storage.service";
 import {
   createMediaStorageResolver,
@@ -152,6 +157,7 @@ before(async () => {
     storage,
     () => storage,
     mail,
+    catalogRevalidation,
   );
 });
 
@@ -556,6 +562,7 @@ describe("AdminService — SeaweedFS fail-closed ownership (upload-intent audit 
       seaweedfsStub,
       resolver,
       mail,
+      catalogRevalidation,
     );
   });
 

@@ -32,6 +32,7 @@ function adminServiceWithProductsRepo(products: unknown) {
     null as never,
     null as never,
     null as never,
+    null as never,
   ) as unknown as {
     createProductWithRadNumber: (
       product: Record<string, unknown>,

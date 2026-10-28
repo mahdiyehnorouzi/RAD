@@ -58,6 +58,7 @@ import {
 import type { ProductImageStorage } from "../database/entities/product-image.entity";
 import { productIncludeWithSrc } from "../catalog/product.mapper";
 import { nextRadNumber } from "../catalog/rad-number";
+import { CatalogRevalidationService } from "../catalog/catalog-revalidation.service";
 import { InventoryService } from "../inventory/inventory.service";
 import type { ProductStatus } from "../inventory/type";
 import { PaymentReviewService } from "../orders/payment-review.service";
@@ -119,6 +120,7 @@ export class AdminService {
     @Inject(MEDIA_STORAGE_RESOLVER)
     private readonly storageFor: MediaStorageResolver,
     private readonly mail: MailService,
+    private readonly catalogRevalidation: CatalogRevalidationService,
   ) {}
 
   private readonly logger = new Logger(AdminService.name);
@@ -384,6 +386,7 @@ export class AdminService {
       where: { id: product.id },
       relations: productIncludeWithSrc,
     });
+    void this.catalogRevalidation.notifyChanged();
     return toAdminProduct(
       saved,
       await this.productAttributes.valuesForProduct(product.id),
@@ -441,6 +444,7 @@ export class AdminService {
       await manager.getRepository(Review).delete({ productSlug: product.slug });
       await manager.getRepository(Product).delete({ id });
     });
+    void this.catalogRevalidation.notifyChanged();
     return { ok: true };
   }
 
@@ -529,11 +533,13 @@ export class AdminService {
 
   async approvePayment(id: string, reviewerId: string | null) {
     await this.paymentReview.approve(id, reviewerId);
+    void this.catalogRevalidation.notifyChanged();
     return this.adminOrder(id);
   }
 
   async rejectPayment(id: string, reason: string, reviewerId: string | null) {
     await this.paymentReview.reject(id, reason, reviewerId);
+    void this.catalogRevalidation.notifyChanged();
     return this.adminOrder(id);
   }
 
