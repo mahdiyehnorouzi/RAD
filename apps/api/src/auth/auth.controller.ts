@@ -2,9 +2,12 @@ import { Body, Controller, Get, Patch, Post, Req, Res } from "@nestjs/common";
 import { Throttle } from "@nestjs/throttler";
 import type { Response } from "express";
 import { AuthService } from "./auth.service";
+import { OtpService } from "./otp.service";
 import { ChangePasswordDto } from "./dto/change-password.dto";
 import { ForgotPasswordDto } from "./dto/forgot-password.dto";
 import { ResetPasswordDto } from "./dto/reset-password.dto";
+import { OtpRequestDto } from "./dto/otp-request.dto";
+import { OtpVerifyDto } from "./dto/otp-verify.dto";
 import { RegisterDto } from "./dto/register.dto";
 import { SessionDto } from "./dto/session.dto";
 import { IdentityService } from "../common/identity.service";
@@ -15,6 +18,7 @@ import { AUTH_COOKIE, sessionCookieOptions } from "../common/cookies";
 export class AuthController {
   constructor(
     private readonly auth: AuthService,
+    private readonly otp: OtpService,
     private readonly identity: IdentityService,
   ) {}
 
@@ -77,6 +81,23 @@ export class AuthController {
   @Throttle({ default: { limit: 8, ttl: 60_000 } })
   async resetPassword(@Body() body: ResetPasswordDto) {
     return this.auth.resetPassword(body);
+  }
+
+  /**
+   * Sends a login code to the given phone via Melipayamak. Verification
+   * proves phone ownership only — no session/account is created yet (see
+   * `OtpService`'s docstring).
+   */
+  @Post("otp/request")
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
+  async requestOtp(@Body() body: OtpRequestDto) {
+    return this.otp.requestCode(body.phone);
+  }
+
+  @Post("otp/verify")
+  @Throttle({ default: { limit: 8, ttl: 60_000 } })
+  async verifyOtp(@Body() body: OtpVerifyDto) {
+    return this.otp.verifyCode(body.phone, body.code);
   }
 
   @Post("logout")
