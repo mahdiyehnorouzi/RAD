@@ -165,3 +165,5 @@ additions made explicit:
 - **Security-sensitive-area flag**: yes/no, and if yes, that human
   approval is pending before merge.
 - **Remaining risks**: anything deferred or not covered by this pass.
+
+<!-- intentional mismatch for negative CI test; never merge -->
