@@ -251,7 +251,10 @@ export function useRedThread(containerRef: RefObject<HTMLElement | null>) {
         const highValue = lowest[low + 1];
         const t =
           highValue > lowValue
-            ? Math.min(1, Math.max(0, (pen - lowValue) / (highValue - lowValue)))
+            ? Math.min(
+                1,
+                Math.max(0, (pen - lowValue) / (highValue - lowValue)),
+              )
             : 0;
         drawn = lengths[low] + (lengths[low + 1] - lengths[low]) * t;
         bx = xs[low] + (xs[low + 1] - xs[low]) * t;
