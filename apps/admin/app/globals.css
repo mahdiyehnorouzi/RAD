@@ -147,7 +147,14 @@ textarea:focus-visible {
 .admin-sidebar {
   position: sticky;
   top: 0;
+  /* 100vh on mobile Safari is the LARGEST possible viewport (toolbar
+     collapsed), taller than what's actually visible when the toolbar is
+     showing — on the fixed-position mobile drawer below, that phantom
+     extra height pushes the logout footer past the real bottom edge.
+     100dvh tracks the real, current viewport; vh is the pre-dvh-support
+     fallback. */
   height: 100vh;
+  height: 100dvh;
   padding: 28px 20px;
   background: var(--ink);
   color: var(--paper);

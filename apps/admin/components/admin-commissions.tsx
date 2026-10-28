@@ -82,7 +82,7 @@ interface CommissionAuditEntry {
 interface CommissionPayloadShape {
   brief?: CommissionBriefPayload;
   deadlineAt?: number;
-  estimatedCompletion?: string;
+  estimatedCompletion?: number;
   audit?: CommissionAuditEntry[];
 }
 function readPayload(payload: unknown): CommissionPayloadShape {
@@ -487,7 +487,7 @@ function CommissionDetail({
                 <dt>
                   <Calendar /> زمان تحویل موردنظر
                 </dt>
-                <dd>{payload.estimatedCompletion}</dd>
+                <dd>{shortDate(payload.estimatedCompletion)}</dd>
               </div>
             )}
             {payload.deadlineAt && (
