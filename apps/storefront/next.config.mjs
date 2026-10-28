@@ -1,5 +1,11 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import bundleAnalyzer from "@next/bundle-analyzer";
+
+const withBundleAnalyzer = bundleAnalyzer({
+  enabled: process.env.ANALYZE === "true",
+});
+
 const appRoot = path.dirname(fileURLToPath(import.meta.url));
 const monorepoRoot = path.resolve(appRoot, "../..");
 
@@ -144,4 +150,5 @@ const nextConfig = {
   },
 };
 
-export default nextConfig;
+// export default nextConfig;
+export default withBundleAnalyzer(nextConfig);
