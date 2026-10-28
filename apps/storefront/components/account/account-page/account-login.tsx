@@ -35,7 +35,8 @@ const AUTH_ERROR_CODE: Record<string, MessageKey> = {
 const RESEND_COOLDOWN_SECONDS = 60;
 
 function safeReturnTo(value?: string | null) {
-  if (!value || !value.startsWith("/") || value.startsWith("//")) return "/account";
+  if (!value || !value.startsWith("/") || value.startsWith("//"))
+    return "/account";
   return value;
 }
 
@@ -382,7 +383,10 @@ function AccountLoginForm({ returnTo }: { returnTo?: string }) {
               <div className="auth-divider">
                 <span>{t("authDivider")}</span>
               </div>
-              <Link className="button outline auth-google" href="/backend/auth/google">
+              <Link
+                className="button outline auth-google"
+                href="/backend/auth/google"
+              >
                 <GoogleMark />
                 {t("continueWithGoogle")}
               </Link>
@@ -393,7 +397,11 @@ function AccountLoginForm({ returnTo }: { returnTo?: string }) {
               </div>
             </form>
           ) : (
-            <form className="auth-stack" onSubmit={handlePasswordSubmit} noValidate>
+            <form
+              className="auth-stack"
+              onSubmit={handlePasswordSubmit}
+              noValidate
+            >
               {passwordMode === "signin" || passwordMode === "signup" ? (
                 <div className="auth-tabs" role="tablist">
                   <button
@@ -442,7 +450,14 @@ function AccountLoginForm({ returnTo }: { returnTo?: string }) {
               {passwordMode === "reset" ? (
                 <>
                   <label htmlFor="reset-code">{t("resetCodeLabel")}</label>
-                  <input id="reset-code" name="code" type="text" inputMode="numeric" autoComplete="one-time-code" required />
+                  <input
+                    id="reset-code"
+                    name="code"
+                    type="text"
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    required
+                  />
                 </>
               ) : null}
               {passwordMode === "forgot" ? null : (
@@ -453,20 +468,30 @@ function AccountLoginForm({ returnTo }: { returnTo?: string }) {
                       id="login-password"
                       name="password"
                       type={showPassword ? "text" : "password"}
-                      autoComplete={isSignup || passwordMode === "reset" ? "new-password" : "current-password"}
+                      autoComplete={
+                        isSignup || passwordMode === "reset"
+                          ? "new-password"
+                          : "current-password"
+                      }
                       minLength={8}
                       required
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword((value) => !value)}
-                      aria-label={showPassword ? t("hidePassword") : t("showPassword")}
+                      aria-label={
+                        showPassword ? t("hidePassword") : t("showPassword")
+                      }
                     >
                       {showPassword ? "◉" : "◎"}
                     </button>
                   </div>
                   {passwordMode === "signin" ? (
-                    <button className="auth-switch" type="button" onClick={() => switchPasswordMode("forgot")}>
+                    <button
+                      className="auth-switch"
+                      type="button"
+                      onClick={() => switchPasswordMode("forgot")}
+                    >
                       {t("forgotPassword")}
                     </button>
                   ) : (

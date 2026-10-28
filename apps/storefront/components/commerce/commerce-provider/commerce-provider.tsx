@@ -240,10 +240,13 @@ export function CommerceProvider({ children }: { children: React.ReactNode }) {
         await syncSession();
       },
       requestOtp: (phone) =>
-        api<{ message: string; expiresInSeconds: number }>("/auth/otp/request", {
-          method: "POST",
-          body: JSON.stringify({ phone }),
-        }),
+        api<{ message: string; expiresInSeconds: number }>(
+          "/auth/otp/request",
+          {
+            method: "POST",
+            body: JSON.stringify({ phone }),
+          },
+        ),
       signInWithOtp: async (input) => {
         await api<{ user: AuthUser }>("/auth/otp/signin", {
           method: "POST",
