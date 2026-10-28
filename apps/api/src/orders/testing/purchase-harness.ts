@@ -29,6 +29,11 @@ import {
 } from "../../database/entities";
 import { InventoryService } from "../../inventory/inventory.service";
 import { MailService } from "../../mail/mail.service";
+import type { CatalogRevalidationService } from "../../catalog/catalog-revalidation.service";
+
+const catalogRevalidation = {
+  notifyChanged: async () => {},
+} as unknown as CatalogRevalidationService;
 import { NoticesService } from "../../notices/notices.service";
 import {
   CURRENT_POLICY_VERSIONS,
@@ -122,6 +127,7 @@ export async function startPurchaseHarness() {
     new CloudinaryStorageService(new ConfigService({})),
     () => new CloudinaryStorageService(new ConfigService({})),
     mail,
+    catalogRevalidation,
   );
 
   let productCount = 0;

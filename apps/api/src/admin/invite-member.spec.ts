@@ -32,6 +32,11 @@ import { AuthService } from "../auth/auth.service";
 import { InventoryService } from "../inventory/inventory.service";
 import { NoticesService } from "../notices/notices.service";
 import { MailService } from "../mail/mail.service";
+import type { CatalogRevalidationService } from "../catalog/catalog-revalidation.service";
+
+const catalogRevalidation = {
+  notifyChanged: async () => {},
+} as unknown as CatalogRevalidationService;
 import { PaymentReviewService } from "../orders/payment-review.service";
 import { ProductAttributesService } from "../product-attributes/product-attributes.service";
 import { CloudinaryStorageService } from "../storage/cloudinary-storage.service";
@@ -141,6 +146,7 @@ before(async () => {
     storage,
     () => storage,
     mail,
+    catalogRevalidation,
   );
 
   auth = new AuthService(
