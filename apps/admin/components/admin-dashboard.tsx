@@ -77,7 +77,12 @@ import { AdminDamageReports } from "./admin-damage-reports";
 import { AdminOrderDamage } from "./admin-order-damage";
 import { AdminOrderPolicies } from "./admin-order-policies";
 import type { DamageReview } from "./admin-damage-report";
-import { ConfirmDialog, Field, useBodyScrollLock } from "./admin-dialog";
+import {
+  ConfirmDialog,
+  Field,
+  useBodyScrollLock,
+  useIsMobileViewport,
+} from "./admin-dialog";
 import { AdminReviews } from "./admin-reviews";
 import { AdminShapeQuestions } from "./admin-shape-questions";
 import { AdminHelpQuestions } from "./admin-help-questions";
@@ -1022,6 +1027,7 @@ function Products({
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [page, setPage] = useState(1);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const isMobile = useIsMobileViewport();
   const inputRef = useRef<HTMLInputElement>(null);
 
   const categories = useMemo(
@@ -1190,24 +1196,26 @@ function Products({
                     <td>{money(product.price)}</td>
                     <td>{date(product.updatedAt)}</td>
                     <td className="cell-actions">
-                      <AdminRowMenu
-                        open={openMenuId === product.id}
-                        onToggle={() =>
-                          setOpenMenuId((current) =>
-                            current === product.id ? null : product.id,
-                          )
-                        }
-                        onClose={() => setOpenMenuId(null)}
-                        canWrite={canWrite}
-                        onEdit={() => {
-                          setOpenMenuId(null);
-                          onEdit(product);
-                        }}
-                        onDelete={() => {
-                          setOpenMenuId(null);
-                          onDelete(product);
-                        }}
-                      />
+                      {isMobile ? null : (
+                        <AdminRowMenu
+                          open={openMenuId === product.id}
+                          onToggle={() =>
+                            setOpenMenuId((current) =>
+                              current === product.id ? null : product.id,
+                            )
+                          }
+                          onClose={() => setOpenMenuId(null)}
+                          canWrite={canWrite}
+                          onEdit={() => {
+                            setOpenMenuId(null);
+                            onEdit(product);
+                          }}
+                          onDelete={() => {
+                            setOpenMenuId(null);
+                            onDelete(product);
+                          }}
+                        />
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -1235,24 +1243,26 @@ function Products({
                     <small>ویرایش {date(product.updatedAt)}</small>
                   </div>
                 </div>
-                <AdminRowMenu
-                  open={openMenuId === product.id}
-                  onToggle={() =>
-                    setOpenMenuId((current) =>
-                      current === product.id ? null : product.id,
-                    )
-                  }
-                  onClose={() => setOpenMenuId(null)}
-                  canWrite={canWrite}
-                  onEdit={() => {
-                    setOpenMenuId(null);
-                    onEdit(product);
-                  }}
-                  onDelete={() => {
-                    setOpenMenuId(null);
-                    onDelete(product);
-                  }}
-                />
+                {isMobile ? (
+                  <AdminRowMenu
+                    open={openMenuId === product.id}
+                    onToggle={() =>
+                      setOpenMenuId((current) =>
+                        current === product.id ? null : product.id,
+                      )
+                    }
+                    onClose={() => setOpenMenuId(null)}
+                    canWrite={canWrite}
+                    onEdit={() => {
+                      setOpenMenuId(null);
+                      onEdit(product);
+                    }}
+                    onDelete={() => {
+                      setOpenMenuId(null);
+                      onDelete(product);
+                    }}
+                  />
+                ) : null}
               </article>
             ))}
           </div>
