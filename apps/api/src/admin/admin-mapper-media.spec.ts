@@ -120,6 +120,27 @@ describe("toAdminProduct — image src derivation", () => {
     assert.equal(result.images[0].storage, "static");
   });
 
+  test("admin gallery order follows sortOrder so the cover stays first after reload", () => {
+    const result = toAdminProduct(
+      product([
+        image({
+          id: "later",
+          storage: "static",
+          src: "/images/later.jpg",
+          sortOrder: 1,
+        }),
+        image({
+          id: "cover",
+          storage: "static",
+          src: "/images/cover.jpg",
+          sortOrder: 0,
+        }),
+      ]),
+    );
+    assert.equal(result.images[0].src, "/images/cover.jpg");
+    assert.equal(result.images[1].src, "/images/later.jpg");
+  });
+
   test("seaweedfs image with no SEAWEEDFS_PUBLIC_URL/ENDPOINT configured falls back to the proxy route, never the stored null", () => {
     delete process.env.SEAWEEDFS_PUBLIC_URL;
     const result = toAdminProduct(

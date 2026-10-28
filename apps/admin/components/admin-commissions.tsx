@@ -27,6 +27,7 @@ import {
   type AdminCommission,
   type AdminCommissionStage,
 } from "../lib/admin-data";
+import { briefExcerpt } from "../lib/product-cover";
 import { StageMeter } from "@rad/ui";
 import {
   ConfirmDialog,
@@ -311,7 +312,7 @@ export function AdminCommissions({
                     </header>
                     <strong>{item.customerName}</strong>
                     <span className="commission-card-id">{item.id}</span>
-                    <p>{item.concept}</p>
+                    <p>{briefExcerpt(item.concept, 96)}</p>
                     {payload.brief?.budget && (
                       <span className="commission-card-budget">
                         <CircleDollarSign /> {payload.brief.budget}
