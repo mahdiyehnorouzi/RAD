@@ -90,6 +90,8 @@ import { AdminReviews } from "./admin-reviews";
 import { AdminShapeQuestions } from "./admin-shape-questions";
 import { AdminHelpQuestions } from "./admin-help-questions";
 import { AdminProductAttributes } from "./admin-product-attributes";
+import { AdminAsyncRegion } from "./admin-async-region";
+import { createSingleFlight } from "../lib/admin-mutation";
 import { ProductAttributeFields } from "./admin-product-attribute-fields";
 import { StageMeter } from "@rad/ui";
 
@@ -167,6 +169,35 @@ function relativeTime(value: number) {
 // set by AdminCommissions) must land back in that section, not Overview —
 // this is the one spot in the shell that reads the hash; every other
 // section still opens on "overview" as before.
+type AsyncKey =
+  | "messages"
+  | "reviews"
+  | "shapeQuestions"
+  | "helpQuestions"
+  | "users"
+  | "members";
+
+function sectionAsync(
+  workspace: {
+    loadedKeys: { has(key: AsyncKey): boolean };
+    loadErrors: { has(key: AsyncKey): boolean };
+    refreshingKeys: { has(key: AsyncKey): boolean };
+    refreshErrors: { has(key: AsyncKey): boolean };
+    retryResource: (key: AsyncKey) => unknown;
+  },
+  key: AsyncKey,
+) {
+  return {
+    loading: !workspace.loadedKeys.has(key) && !workspace.loadErrors.has(key),
+    loadError: workspace.loadErrors.has(key),
+    refreshing: workspace.refreshingKeys.has(key),
+    refreshError: workspace.refreshErrors.has(key),
+    onRetry: () => {
+      void workspace.retryResource(key);
+    },
+  };
+}
+
 function initialSectionFromHash(): AdminSection {
   if (typeof window === "undefined") return "overview";
   return window.location.hash.startsWith("#commissions/")
@@ -220,25 +251,15 @@ export function AdminDashboard() {
     id: string,
     status: AdminContactMessage["status"],
   ) => {
-    try {
-      await workspace.setMessageStatus(id, status);
-      announce(
-        status === "resolved"
-          ? "پیام رسیدگی‌شده ثبت شد."
-          : "پیام دوباره باز شد.",
-      );
-    } catch (error) {
-      announce((error as Error).message);
-    }
+    await workspace.setMessageStatus(id, status);
+    announce(
+      status === "resolved" ? "پیام رسیدگی‌شده ثبت شد." : "پیام دوباره باز شد.",
+    );
   };
 
   const replyToMessage = async (id: string, body: string) => {
-    try {
-      await workspace.replyToMessage(id, body);
-      announce("پاسخ برای مشتری ارسال شد.");
-    } catch (error) {
-      announce((error as Error).message);
-    }
+    await workspace.replyToMessage(id, body);
+    announce("پاسخ برای مشتری ارسال شد.");
   };
 
   const openMessages = workspace.messages.filter(
@@ -478,6 +499,7 @@ export function AdminDashboard() {
         {section === "messages" && (
           <AdminMessages
             messages={workspace.messages}
+            {...sectionAsync(workspace, "messages")}
             orders={workspace.orders}
             canWrite={workspace.can("order.write")}
             onSetStatus={setMessageStatus}
@@ -550,100 +572,61 @@ export function AdminDashboard() {
         {section === "reviews" && (
           <AdminReviews
             reviews={workspace.reviews}
+            {...sectionAsync(workspace, "reviews")}
             canWrite={workspace.can("content.write")}
             onSetHidden={async (id, hidden) => {
-              try {
-                await workspace.setReviewHidden(id, hidden);
-                announce(
-                  hidden
-                    ? "نظر از فروشگاه پنهان شد."
-                    : "نظر دوباره در فروشگاه دیده می‌شود.",
-                );
-              } catch (error) {
-                announce((error as Error).message);
-              }
+              await workspace.setReviewHidden(id, hidden);
+              announce(
+                hidden
+                  ? "نظر از فروشگاه پنهان شد."
+                  : "نظر دوباره در فروشگاه دیده می‌شود.",
+              );
             }}
             onDelete={async (id) => {
-              try {
-                await workspace.deleteReview(id);
-                announce("نظر حذف شد.");
-                return true;
-              } catch (error) {
-                announce((error as Error).message);
-                return false;
-              }
+              await workspace.deleteReview(id);
+              announce("نظر حذف شد.");
             }}
           />
         )}
         {section === "shape" && (
           <AdminShapeQuestions
             questions={workspace.shapeQuestions}
+            {...sectionAsync(workspace, "shapeQuestions")}
             canWrite={workspace.can("content.write")}
             onSave={async (input, id) => {
-              try {
-                await workspace.saveShapeQuestion(input, id);
-                announce(
-                  id ? "سؤال ذخیره شد." : "سؤال تازه به پرسشنامه اضافه شد.",
-                );
-                return true;
-              } catch (error) {
-                announce((error as Error).message);
-                return false;
-              }
+              await workspace.saveShapeQuestion(input, id);
+              announce(
+                id ? "سؤال ذخیره شد." : "سؤال تازه به پرسشنامه اضافه شد.",
+              );
+              return true;
             }}
             onDelete={async (id) => {
-              try {
-                await workspace.deleteShapeQuestion(id);
-                announce("سؤال از پرسشنامه حذف شد.");
-                return true;
-              } catch (error) {
-                announce((error as Error).message);
-                return false;
-              }
+              await workspace.deleteShapeQuestion(id);
+              announce("سؤال از پرسشنامه حذف شد.");
             }}
             onReorder={async (ids) => {
-              try {
-                await workspace.reorderShapeQuestions(ids);
-              } catch (error) {
-                announce((error as Error).message);
-              }
+              await workspace.reorderShapeQuestions(ids);
             }}
           />
         )}
         {section === "help" && (
           <AdminHelpQuestions
             questions={workspace.helpQuestions}
+            {...sectionAsync(workspace, "helpQuestions")}
             canWrite={workspace.can("content.write")}
             onSave={async (input, id) => {
-              try {
-                await workspace.saveHelpQuestion(input, id);
-                announce(
-                  id
-                    ? "سؤال ذخیره شد."
-                    : "سؤال تازه به صفحه‌ی راهنما اضافه شد.",
-                );
-                return true;
-              } catch (error) {
-                announce((error as Error).message);
-                return false;
-              }
+              await workspace.saveHelpQuestion(input, id);
+              announce(
+                id ? "سؤال ذخیره شد." : "سؤال تازه به صفحه‌ی راهنما اضافه شد.",
+              );
+              return true;
             }}
             onDelete={async (id) => {
-              try {
-                await workspace.deleteHelpQuestion(id);
-                announce("سؤال از صفحه‌ی راهنما حذف شد.");
-                return true;
-              } catch (error) {
-                announce((error as Error).message);
-                return false;
-              }
+              await workspace.deleteHelpQuestion(id);
+              announce("سؤال از صفحه‌ی راهنما حذف شد.");
             }}
             onReorder={async (ids) => {
-              try {
-                await workspace.reorderHelpQuestions(ids);
-              } catch (error) {
-                announce((error as Error).message);
-              }
+              await workspace.reorderHelpQuestions(ids);
             }}
           />
         )}
@@ -680,19 +663,21 @@ export function AdminDashboard() {
             }}
           />
         )}
-        {section === "users" && <UsersPanel users={workspace.users} />}
+        {section === "users" && (
+          <UsersPanel
+            users={workspace.users}
+            {...sectionAsync(workspace, "users")}
+          />
+        )}
         {section === "members" && (
           <Members
             members={workspace.members}
+            {...sectionAsync(workspace, "members")}
             canWrite={workspace.can("member.write")}
             onInvite={() => setInviteOpen(true)}
             onChange={async (member) => {
-              try {
-                await workspace.updateMember(member);
-                announce("سطح دسترسی به‌روزرسانی شد.");
-              } catch (error) {
-                announce((error as Error).message);
-              }
+              await workspace.updateMember(member);
+              announce("سطح دسترسی به‌روزرسانی شد.");
             }}
           />
         )}
@@ -754,13 +739,9 @@ export function AdminDashboard() {
         <InviteDialog
           onClose={() => setInviteOpen(false)}
           onInvite={async (member) => {
-            try {
-              await workspace.inviteMember(member);
-              setInviteOpen(false);
-              announce("عضو جدید در پایگاه داده ثبت شد.");
-            } catch (error) {
-              announce((error as Error).message);
-            }
+            await workspace.inviteMember(member);
+            setInviteOpen(false);
+            announce("عضو جدید در پایگاه داده ثبت شد.");
           }}
         />
       )}
@@ -1559,7 +1540,21 @@ function Orders({
   );
 }
 
-function UsersPanel({ users }: { users: AdminUser[] }) {
+function UsersPanel({
+  users,
+  loading,
+  loadError,
+  refreshing = false,
+  refreshError = false,
+  onRetry,
+}: {
+  users: AdminUser[];
+  loading: boolean;
+  loadError: boolean;
+  refreshing?: boolean;
+  refreshError?: boolean;
+  onRetry: () => void;
+}) {
   const [query, setQuery] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
   const filtered = useMemo(
@@ -1605,62 +1600,105 @@ function UsersPanel({ users }: { users: AdminUser[] }) {
           ) : null}
         </div>
       </div>
-      {filtered.length ? (
-        <div className="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>نام</th>
-                <th>ایمیل</th>
-                <th>وضعیت</th>
-                <th>تاریخ ثبت‌نام</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((user) => (
-                <tr key={user.id}>
-                  <td>
-                    <strong>{user.name}</strong>
-                    <small>{user.id}</small>
-                  </td>
-                  <td>{user.email}</td>
-                  <td>
-                    <StatusBadge
-                      label={user.status === "active" ? "فعال" : "دعوت‌شده"}
-                      tone={user.status === "active" ? "green" : "muted"}
-                    />
-                  </td>
-                  <td>{date(user.createdAt)}</td>
+      <AdminAsyncRegion
+        loading={loading}
+        loadError={loadError}
+        refreshing={refreshing}
+        refreshError={refreshError}
+        onRetry={onRetry}
+        errorMessage="دریافت فهرست مشتریان ناموفق بود. اتصال اینترنت را بررسی و دوباره تلاش کنید."
+        loadingLabel="در حال بارگذاری مشتریان…"
+        skeleton="table"
+      >
+        {filtered.length ? (
+          <div className="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>نام</th>
+                  <th>ایمیل</th>
+                  <th>وضعیت</th>
+                  <th>تاریخ ثبت‌نام</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      ) : (
-        <EmptyState
-          title="مشتری‌ای پیدا نشد"
-          description={
-            users.length
-              ? "عبارت جست‌وجو را تغییر دهید."
-              : "هنوز کسی از فروشگاه ثبت‌نام نکرده است."
-          }
-        />
-      )}
+              </thead>
+              <tbody>
+                {filtered.map((user) => (
+                  <tr key={user.id}>
+                    <td>
+                      <strong>{user.name}</strong>
+                      <small>{user.id}</small>
+                    </td>
+                    <td>{user.email}</td>
+                    <td>
+                      <StatusBadge
+                        label={user.status === "active" ? "فعال" : "دعوت‌شده"}
+                        tone={user.status === "active" ? "green" : "muted"}
+                      />
+                    </td>
+                    <td>{date(user.createdAt)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <EmptyState
+            title="مشتری‌ای پیدا نشد"
+            description={
+              users.length
+                ? "عبارت جست‌وجو را تغییر دهید."
+                : "هنوز کسی از فروشگاه ثبت‌نام نکرده است."
+            }
+          />
+        )}
+      </AdminAsyncRegion>
     </section>
   );
 }
 
 function Members({
   members,
+  loading,
+  loadError,
+  refreshing = false,
+  refreshError = false,
+  onRetry,
   canWrite,
   onInvite,
   onChange,
 }: {
   members: AdminMember[];
+  loading: boolean;
+  loadError: boolean;
+  refreshing?: boolean;
+  refreshError?: boolean;
+  onRetry: () => void;
   canWrite: boolean;
   onInvite: () => void;
   onChange: (member: AdminMember) => void | Promise<void>;
 }) {
+  const [pendingId, setPendingId] = useState<string | null>(null);
+  const [rowError, setRowError] = useState("");
+  const roleFlight = useRef(createSingleFlight());
+
+  const changeRole = (member: AdminMember) => {
+    void roleFlight.current.run(async () => {
+      setPendingId(member.id);
+      setRowError("");
+      try {
+        await onChange(member);
+      } catch (error) {
+        setRowError(
+          error instanceof Error && error.message
+            ? error.message
+            : "به‌روزرسانی دسترسی ناموفق بود. نقش قبلی سر جایش است.",
+        );
+      } finally {
+        setPendingId(null);
+      }
+    });
+  };
+
   return (
     <section className="paper-panel data-view">
       <div className="view-heading">
@@ -1673,41 +1711,74 @@ function Members({
           className="primary-action"
           type="button"
           onClick={onInvite}
-          disabled={!canWrite}
+          disabled={!canWrite || loading || loadError}
         >
           <Plus />
           دعوت فرد جدید
         </button>
       </div>
-      <div className="member-list">
-        {members.map((member) => (
-          <article className="member-row" key={member.id}>
-            <div className="member-avatar">{member.name.slice(0, 1)}</div>
-            <div>
-              <strong>{member.name}</strong>
-              <small>{member.email}</small>
-            </div>
-            <StatusBadge
-              label={member.status === "active" ? "فعال" : "دعوت‌شده"}
-              tone={member.status === "active" ? "green" : "muted"}
-            />
-            <select
-              value={member.role}
-              disabled={!canWrite || member.role === "owner"}
-              onChange={(event) =>
-                onChange({ ...member, role: event.target.value as AdminRole })
-              }
-              aria-label={`نقش ${member.name}`}
-            >
-              {Object.entries(roleLabels).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </select>
-          </article>
-        ))}
-      </div>
+      {rowError ? (
+        <p className="admin-inline-error" role="alert">
+          {rowError}
+        </p>
+      ) : null}
+      <AdminAsyncRegion
+        loading={loading}
+        loadError={loadError}
+        refreshing={refreshing}
+        refreshError={refreshError}
+        onRetry={onRetry}
+        errorMessage="دریافت افراد و دسترسی ناموفق بود. اتصال اینترنت را بررسی و دوباره تلاش کنید."
+        loadingLabel="در حال بارگذاری افراد…"
+        skeleton="rows"
+      >
+        {members.length ? (
+          <div className="member-list">
+            {members.map((member) => (
+              <article className="member-row" key={member.id}>
+                <div className="member-avatar">{member.name.slice(0, 1)}</div>
+                <div>
+                  <strong>{member.name}</strong>
+                  <small>{member.email}</small>
+                  {pendingId === member.id ? (
+                    <span className="admin-refresh" role="status">
+                      در حال ذخیره…
+                    </span>
+                  ) : null}
+                </div>
+                <StatusBadge
+                  label={member.status === "active" ? "فعال" : "دعوت‌شده"}
+                  tone={member.status === "active" ? "green" : "muted"}
+                />
+                <select
+                  value={member.role}
+                  disabled={
+                    !canWrite || member.role === "owner" || pendingId !== null
+                  }
+                  onChange={(event) =>
+                    changeRole({
+                      ...member,
+                      role: event.target.value as AdminRole,
+                    })
+                  }
+                  aria-label={`نقش ${member.name}`}
+                >
+                  {Object.entries(roleLabels).map(([value, label]) => (
+                    <option key={value} value={value}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+              </article>
+            ))}
+          </div>
+        ) : (
+          <EmptyState
+            title="هنوز فردی ثبت نشده"
+            description="با دعوت، دسترسی کارگاه را برای یک نفر تازه باز کنید."
+          />
+        )}
+      </AdminAsyncRegion>
       <div className="permission-note">
         <ShieldCheck />
         <div>
@@ -2375,6 +2446,8 @@ function InviteDialog({
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<AdminRole>("viewer");
   const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
+  const inviteFlight = useRef(createSingleFlight());
   return (
     <DialogShell
       title="دعوت فرد جدید"
@@ -2386,16 +2459,31 @@ function InviteDialog({
         noValidate
         onSubmit={(event) => {
           event.preventDefault();
+          if (saving) return;
           if (!name.trim() || !/^\S+@\S+\.\S+$/.test(email)) {
             setError("نام و ایمیل معتبر را وارد کنید.");
             return;
           }
-          onInvite({
-            id: crypto.randomUUID(),
-            name,
-            email,
-            role,
-            status: "invited",
+          setError("");
+          void inviteFlight.current.run(async () => {
+            setSaving(true);
+            try {
+              await onInvite({
+                id: crypto.randomUUID(),
+                name,
+                email,
+                role,
+                status: "invited",
+              });
+            } catch (caught) {
+              setError(
+                caught instanceof Error && caught.message
+                  ? caught.message
+                  : "دعوت ثبت نشد. نام و ایمیل سر جایشان است.",
+              );
+            } finally {
+              setSaving(false);
+            }
           });
         }}
       >
@@ -2432,8 +2520,8 @@ function InviteDialog({
           <button className="secondary-action" type="button" onClick={onClose}>
             انصراف
           </button>
-          <button className="primary-action" type="submit">
-            افزودن دعوت
+          <button className="primary-action" type="submit" disabled={saving}>
+            {saving ? "در حال ثبت…" : "افزودن دعوت"}
           </button>
         </div>
       </form>
