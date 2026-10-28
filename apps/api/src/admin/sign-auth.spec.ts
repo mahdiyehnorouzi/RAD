@@ -39,6 +39,7 @@ function adminServiceForUnitTests() {
     new CloudinaryStorageService(new ConfigService({})),
     () => new CloudinaryStorageService(new ConfigService({})),
     null as never,
+    null as never,
   );
 }
 

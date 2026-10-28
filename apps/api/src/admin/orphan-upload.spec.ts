@@ -56,6 +56,7 @@ function adminServiceWithStorageSpy() {
     storage,
     () => storage,
     null as never,
+    null as never,
   );
   return { admin, deleteCount: () => deleteCalls };
 }
