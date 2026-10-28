@@ -127,7 +127,9 @@ function fakeUsersStore(seed: Partial<User>[] = []) {
   const repo = {
     findOne: async ({ where }: { where: Record<string, unknown> }) =>
       rows.find((row) =>
-        Object.entries(where).every(([key, value]) => row[key as keyof User] === value),
+        Object.entries(where).every(
+          ([key, value]) => row[key as keyof User] === value,
+        ),
       ) ?? null,
     create: (input: Partial<User>) => input,
     // Mirrors the real Postgres unique constraint on `verifiedPhone` (and
