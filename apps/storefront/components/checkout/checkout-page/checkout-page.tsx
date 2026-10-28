@@ -16,7 +16,10 @@ import { CartEmpty, useCart } from "@/features/cart";
 import { useCatalog } from "@/components/catalog";
 import { useCommerce } from "@/components/commerce";
 import { HelpPanel } from "@/components/contact";
-import { CheckoutAgreement } from "@/components/help";
+// Imported from its own sub-path, not the `@/components/help` barrel —
+// that barrel also reaches help-hub/policy-page, which this client
+// component (checkout) has no use for.
+import { CheckoutAgreement } from "@/components/help/purchase-path";
 import { useLocale } from "@/components/i18n";
 import { ButtonLink } from "@/components/ui/button-link";
 import { CardListSkeleton } from "@/components/ui/skeleton";
