@@ -85,6 +85,7 @@ test("PaymentCardView renders the stacked LTR number, holder, bank, and a separa
   );
   assert.equal(article.includes("۱۲٬۵۰۰٬۰۰۰"), false);
   assert.equal(html.includes("پرداخت تأیید"), false);
+  assert.equal(html.includes("stripes"), false);
 });
 
 test("PaymentCardView copy success feedback does not claim the order is paid", () => {
