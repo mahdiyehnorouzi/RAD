@@ -43,6 +43,8 @@ type CommerceContextValue = {
     email: string;
     password: string;
   }) => Promise<void>;
+  requestOtp: (phone: string) => Promise<{ expiresInSeconds: number }>;
+  signInWithOtp: (input: { phone: string; code: string }) => Promise<void>;
   logout: () => Promise<void>;
   favorites: string[];
   toggleFavorite: (slug: string) => Promise<void>;
@@ -232,6 +234,18 @@ export function CommerceProvider({ children }: { children: React.ReactNode }) {
       },
       register: async (input) => {
         await api<{ user: AuthUser }>("/auth/register", {
+          method: "POST",
+          body: JSON.stringify(input),
+        });
+        await syncSession();
+      },
+      requestOtp: (phone) =>
+        api<{ message: string; expiresInSeconds: number }>("/auth/otp/request", {
+          method: "POST",
+          body: JSON.stringify({ phone }),
+        }),
+      signInWithOtp: async (input) => {
+        await api<{ user: AuthUser }>("/auth/otp/signin", {
           method: "POST",
           body: JSON.stringify(input),
         });

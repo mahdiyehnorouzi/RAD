@@ -90,7 +90,87 @@
   border-radius: var(--radius);
   background: var(--canvas);
   display: grid;
+  gap: 0.9rem;
+}
+
+.auth-stack {
+  display: grid;
   gap: 0.7rem;
+}
+
+.auth-method-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.4rem;
+  margin-bottom: 0.4rem;
+}
+
+.auth-method-tabs button {
+  min-height: 48px;
+  border: 1px solid var(--line);
+  border-radius: 0.8rem;
+  background: var(--paper);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.auth-method-tabs button.active {
+  background: var(--clay);
+  border-color: var(--clay);
+  color: var(--paper);
+}
+
+.auth-otp-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.auth-otp-actions .auth-switch:disabled {
+  color: var(--muted);
+}
+
+.auth-divider {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0.3rem 0;
+  color: #9b9183;
+  font-size: 0.85rem;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: "";
+  height: 1px;
+  background: var(--line);
+}
+
+.auth-google {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  width: 100%;
+}
+
+.auth-no-account {
+  display: grid;
+  gap: 0.25rem;
+  margin-top: 0.5rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--line);
+  border-radius: 0.8rem;
+  background: color-mix(in srgb, var(--clay) 8%, var(--paper));
+  font-size: 0.86rem;
+  color: #71665b;
+}
+
+.auth-no-account strong {
+  color: var(--ink, inherit);
 }
 
 .auth-form input {
