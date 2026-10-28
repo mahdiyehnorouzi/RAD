@@ -1,5 +1,5 @@
 import { VerifyProductMediaDto } from "./dto/verify-product-media.dto";
-import { mediaLimits } from "../storage/media-policy";
+import { mediaLimits as configuredMediaLimits } from "../storage/media-policy";
 import {
   Body,
   Controller,
@@ -101,8 +101,8 @@ export class AdminController {
   }
 
   @Get("media/limits")
-  mediaLimits() {
-    return mediaLimits();
+  getMediaLimits() {
+    return configuredMediaLimits();
   }
 
   @Post("products/:slug/media/verify")
