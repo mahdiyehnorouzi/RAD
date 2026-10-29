@@ -5,7 +5,8 @@ import {
   ConflictException,
   NotFoundException,
 } from "@nestjs/common";
-import { CartItem } from "../database/entities";
+import { CartItem, Product } from "../database/entities";
+import { CART_HOLD_MS } from "../inventory/const/product-status";
 import { ORDER_PAYMENT_WINDOW_MS } from "./const";
 import {
   startPurchaseHarness,
@@ -546,6 +547,125 @@ describe("E2E purchase (card-to-card)", () => {
     assert.equal(
       order.policyAcceptance?.versions.terms,
       rad.acceptedPolicies.terms,
+    );
+  });
+
+  test("P0 regression: a hold that expired (e.g. a slow shopper, or a backgrounded mobile tab) and was swept away by someone else's activity fails checkout with a coded, client-actionable error — not a silent/ambiguous one", async () => {
+    const slug = await rad.product();
+    const slow = rad.buyer("slow-shopper");
+    const rival = rad.buyer("rival");
+
+    await rad.cart.add(slow, slug);
+
+    try {
+      // The slow shopper's hold ages out (e.g. they spent too long on the
+      // shipping form, or the tab was backgrounded on mobile and the
+      // client-side refresh timer never fired).
+      travel(CART_HOLD_MS + MINUTE);
+      // A rival's unrelated cart activity sweeps the expired hold (which
+      // also drops the slow shopper's now-stale CartItem row — see
+      // `releaseExpiredHolds`) and immediately re-claims the work. This is
+      // the realistic trigger, not just a direct DB edit.
+      await assert.doesNotReject(rad.cart.add(rival, slug));
+
+      await assert.rejects(
+        rad.orders.checkout(slow, {
+          name: "مشتری کند",
+          phone: "09121234567",
+          city: "تهران",
+          address: "خیابان ولیعصر",
+          acceptedPolicies: rad.acceptedPolicies,
+        }),
+        (error: unknown) => {
+          assert.ok(error instanceof BadRequestException);
+          const body = error.getResponse();
+          assert.equal(
+            typeof body === "object" && body !== null
+              ? (body as { code?: string }).code
+              : undefined,
+            "cart_empty",
+            "checkout must surface a structured code so the frontend can resync cart state instead of showing a bare/contradictory error",
+          );
+          return true;
+        },
+      );
+    } finally {
+      mock.timers.reset();
+    }
+
+    // The sweep that released the hold to `rival` also cleared the slow
+    // shopper's now-stale cart row — this is what the frontend fix resyncs
+    // on, instead of leaving a contradictory "item still in your bag" UI.
+    assert.deepEqual((await rad.cart.get(slow)).slugs, []);
+  });
+
+  test("P0 regression: a cart item that's still genuinely held becomes unavailable only when someone else actually owns it (not from expiry alone)", async () => {
+    const slug = await rad.product();
+    const slow = rad.buyer("slow-shopper-2");
+    const rival = rad.buyer("rival-2");
+
+    await rad.cart.add(slow, slug);
+    // Admin/ops-style override: the work is marked sold to someone else
+    // while it's still sitting, unexpired, in the slow shopper's cart.
+    await rad.cart.add(rival, await rad.product());
+    await rad.dataSource
+      .getRepository(Product)
+      .update(
+        { slug },
+        { status: "sold", heldBy: "user:someone-else", holdExpiresAt: null },
+      );
+
+    await assert.rejects(
+      rad.orders.checkout(slow, {
+        name: "مشتری کند",
+        phone: "09121234567",
+        city: "تهران",
+        address: "خیابان ولیعصر",
+        acceptedPolicies: rad.acceptedPolicies,
+      }),
+      (error: unknown) => {
+        assert.ok(error instanceof ConflictException);
+        const body = error.getResponse();
+        assert.equal(
+          typeof body === "object" && body !== null
+            ? (body as { code?: string }).code
+            : undefined,
+          "cart_item_unavailable",
+        );
+        return true;
+      },
+    );
+  });
+
+  test("P0 regression: checkout against an emptied cart (e.g. the expired-hold row was swept away) is coded, not a bare string", async () => {
+    const slug = await rad.product();
+    const buyer = rad.buyer("vanished-cart");
+    await rad.cart.add(buyer, slug);
+
+    // Simulate the cart row having been swept out from under this owner
+    // (expired-hold cleanup, or a second tab clearing the bag) without the
+    // checkout request itself knowing yet.
+    await rad.cart.remove(buyer, slug);
+
+    await assert.rejects(
+      rad.orders.checkout(buyer, {
+        name: "مشتری",
+        phone: "09121234567",
+        city: "تهران",
+        address: "خیابان ولیعصر",
+        acceptedPolicies: rad.acceptedPolicies,
+      }),
+      (error: unknown) => {
+        assert.ok(error instanceof BadRequestException);
+        const body = error.getResponse();
+        assert.equal(
+          typeof body === "object" && body !== null
+            ? (body as { code?: string }).code
+            : undefined,
+          "cart_empty",
+        );
+        return true;
+      },
     );
   });
 });

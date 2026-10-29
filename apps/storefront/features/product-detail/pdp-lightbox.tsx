@@ -38,7 +38,7 @@ export function PdpLightbox({
   slides: Slide[];
   active: number;
   count: number;
-  onGoTo: (index: number) => void;
+  onGoTo: (index: number, options?: { animate?: boolean }) => void;
   onClose: () => void;
   renderSlide: (slide: Slide) => React.ReactNode;
 }) {
@@ -97,7 +97,7 @@ export function PdpLightbox({
       if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
         const rtl = locale === "fa";
         const forward = (event.key === "ArrowLeft") === rtl;
-        onGoTo(active + (forward ? 1 : -1));
+        onGoTo(active + (forward ? 1 : -1), { animate: false });
         return;
       }
       if (event.key === "Tab") {
@@ -270,7 +270,7 @@ export function PdpLightbox({
           <button
             type="button"
             className={`${styles.nav} ${styles.prev}`}
-            onClick={() => onGoTo(active - 1)}
+            onClick={() => onGoTo(active - 1, { animate: false })}
             disabled={active === 0}
             aria-label={c.previousView}
           >
@@ -289,7 +289,7 @@ export function PdpLightbox({
           <button
             type="button"
             className={`${styles.nav} ${styles.next}`}
-            onClick={() => onGoTo(active + 1)}
+            onClick={() => onGoTo(active + 1, { animate: false })}
             disabled={active === count - 1}
             aria-label={c.nextView}
           >
@@ -305,7 +305,7 @@ export function PdpLightbox({
               key={index}
               type="button"
               className={`${styles.thumb}${index === active ? ` ${styles.active}` : ""}`}
-              onClick={() => onGoTo(index)}
+              onClick={() => onGoTo(index, { animate: false })}
               aria-pressed={index === active}
               aria-label={`${c.view} ${format(index + 1)}`}
             >

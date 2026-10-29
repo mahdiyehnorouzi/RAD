@@ -27,6 +27,12 @@ import {
   type AdminCommission,
   type AdminCommissionStage,
 } from "../lib/admin-data";
+import { briefExcerpt } from "../lib/product-cover";
+import {
+  commissionDetailTabs,
+  defaultCommissionDetailTab,
+  type CommissionDetailTabId,
+} from "../lib/commission-detail-tabs";
 import { StageMeter } from "@rad/ui";
 import {
   ConfirmDialog,
@@ -82,7 +88,7 @@ interface CommissionAuditEntry {
 interface CommissionPayloadShape {
   brief?: CommissionBriefPayload;
   deadlineAt?: number;
-  estimatedCompletion?: string;
+  estimatedCompletion?: number;
   audit?: CommissionAuditEntry[];
 }
 function readPayload(payload: unknown): CommissionPayloadShape {
@@ -106,12 +112,18 @@ function statusTone(commission: AdminCommission): "oxide" | "green" | "muted" {
 
 export function AdminCommissions({
   commissions,
+  loading,
+  loadError,
+  onRetry,
   canWrite,
   onDecide,
   onMessage,
   onBeginReview,
 }: {
   commissions: AdminCommission[];
+  loading: boolean;
+  loadError: boolean;
+  onRetry: () => void;
   canWrite: boolean;
   onDecide: (input: {
     id: string;
@@ -268,74 +280,89 @@ export function AdminCommissions({
           </button>
         ))}
       </div>
-      <div className="commission-layout">
-        <div className="commission-list">
-          {filtered.length ? (
-            filtered.map((item) => {
-              const meter = commissionMeter(item);
-              const payload = readPayload(item.payload);
-              return (
-                <button
-                  key={item.id}
-                  type="button"
-                  className={`commission-card${item.id === selectedId ? " active" : ""}`}
-                  onClick={() => selectCommission(item.id)}
-                >
-                  <header>
-                    <span className={`status-badge ${statusTone(item)}`}>
-                      {item.nextActor === "artist" && item.stage !== "declined"
-                        ? "نیاز به بررسی"
-                        : commissionStageLabels[item.stage]}
-                    </span>
-                    <small>{shortDate(item.createdAt)}</small>
-                  </header>
-                  <strong>{item.customerName}</strong>
-                  <span className="commission-card-id">{item.id}</span>
-                  <p>{item.concept}</p>
-                  {payload.brief?.budget && (
-                    <span className="commission-card-budget">
-                      <CircleDollarSign /> {payload.brief.budget}
-                    </span>
-                  )}
-                  <StageMeter
-                    index={meter.index}
-                    total={meter.total}
-                    label={meter.label}
-                    countLabel={stageCountLabel(meter.index, meter.total)}
-                    kicker="مرحله فعلی"
-                    nextKicker="مرحله بعد"
-                    nextLabel={meter.nextLabel}
-                    compact
-                  />
-                </button>
-              );
-            })
-          ) : (
-            <p className="commission-empty">
-              {commissions.length
-                ? "سفارشی با این جست‌وجو پیدا نشد."
-                : "هنوز سفارش اختصاصی‌ای ارسال نشده است."}
-            </p>
-          )}
+      {loadError ? (
+        <div className="auth-error-state">
+          <p>
+            دریافت سفارش‌های اختصاصی ناموفق بود. اتصال اینترنت را بررسی و دوباره
+            تلاش کنید.
+          </p>
+          <button className="primary-action" type="button" onClick={onRetry}>
+            تلاش دوباره
+          </button>
         </div>
-        {selected ? (
-          <CommissionDetail
-            commission={selected}
-            canWrite={canWrite}
-            onDecide={onDecide}
-            onMessage={onMessage}
-            onClose={closeDetail}
-          />
-        ) : !isMobile ? (
-          // On mobile the list is the whole screen when nothing is
-          // selected — an empty placeholder panel would just be dead
-          // space under it, so it only renders on desktop's two-column
-          // layout, where it fills the second column.
-          <div className="commission-empty-detail">
-            یک سفارش را از فهرست انتخاب کنید.
+      ) : loading ? (
+        <p className="admin-loading">در حال بارگذاری سفارش‌های اختصاصی…</p>
+      ) : (
+        <div className="commission-layout">
+          <div className="commission-list">
+            {filtered.length ? (
+              filtered.map((item) => {
+                const meter = commissionMeter(item);
+                const payload = readPayload(item.payload);
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    className={`commission-card${item.id === selectedId ? " active" : ""}`}
+                    onClick={() => selectCommission(item.id)}
+                  >
+                    <header>
+                      <span className={`status-badge ${statusTone(item)}`}>
+                        {item.nextActor === "artist" &&
+                        item.stage !== "declined"
+                          ? "نیاز به بررسی"
+                          : commissionStageLabels[item.stage]}
+                      </span>
+                      <small>{shortDate(item.createdAt)}</small>
+                    </header>
+                    <strong>{item.customerName}</strong>
+                    <span className="commission-card-id">{item.id}</span>
+                    <p>{briefExcerpt(item.concept, 96)}</p>
+                    {payload.brief?.budget && (
+                      <span className="commission-card-budget">
+                        <CircleDollarSign /> {payload.brief.budget}
+                      </span>
+                    )}
+                    <StageMeter
+                      index={meter.index}
+                      total={meter.total}
+                      label={meter.label}
+                      countLabel={stageCountLabel(meter.index, meter.total)}
+                      kicker="مرحله فعلی"
+                      nextKicker="مرحله بعد"
+                      nextLabel={meter.nextLabel}
+                      compact
+                    />
+                  </button>
+                );
+              })
+            ) : (
+              <p className="commission-empty">
+                {commissions.length
+                  ? "سفارشی با این جست‌وجو پیدا نشد."
+                  : "هنوز سفارش اختصاصی‌ای ارسال نشده است."}
+              </p>
+            )}
           </div>
-        ) : null}
-      </div>
+          {selected ? (
+            <CommissionDetail
+              commission={selected}
+              canWrite={canWrite}
+              onDecide={onDecide}
+              onMessage={onMessage}
+              onClose={closeDetail}
+            />
+          ) : !isMobile ? (
+            // On mobile the list is the whole screen when nothing is
+            // selected — an empty placeholder panel would just be dead
+            // space under it, so it only renders on desktop's two-column
+            // layout, where it fills the second column.
+            <div className="commission-empty-detail">
+              یک سفارش را از فهرست انتخاب کنید.
+            </div>
+          ) : null}
+        </div>
+      )}
     </section>
   );
 }
@@ -357,8 +384,6 @@ function commissionMeter(commission: AdminCommission) {
 function asCopy(value: string) {
   return { fa: value, en: value };
 }
-
-type DetailTab = "summary" | "files" | "messages" | "history" | "decision";
 
 function CommissionDetail({
   commission,
@@ -382,7 +407,9 @@ function CommissionDetail({
   const open =
     commission.stage === "design_submitted" ||
     (commission.stage === "feasibility" && commission.nextActor === "artist");
-  const [tab, setTab] = useState<DetailTab>(open ? "decision" : "summary");
+  const [tab, setTab] = useState<CommissionDetailTabId>(() =>
+    defaultCommissionDetailTab(commission),
+  );
   const meter = commissionMeter(commission);
   const payload = readPayload(commission.payload);
   const brief = payload.brief;
@@ -393,13 +420,7 @@ function CommissionDetail({
       : [];
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
-  const tabs: { id: DetailTab; label: string }[] = [
-    { id: "summary", label: "خلاصه" },
-    { id: "files", label: "فایل‌ها" },
-    { id: "messages", label: "پیام‌ها" },
-    { id: "history", label: "تاریخچه مراحل" },
-    ...(open ? [{ id: "decision" as const, label: "تصمیم" }] : []),
-  ];
+  const tabs = commissionDetailTabs(commission);
 
   return (
     <div className="commission-detail">
@@ -428,7 +449,11 @@ function CommissionDetail({
         nextKicker="مرحله بعد"
         nextLabel={meter.nextLabel}
       />
-      <div className="commission-tabs" role="tablist">
+      <div
+        className="commission-tabs"
+        role="tablist"
+        aria-label="بخش‌های سفارش اختصاصی"
+      >
         {tabs.map((item) => (
           <button
             key={item.id}
@@ -487,7 +512,7 @@ function CommissionDetail({
                 <dt>
                   <Calendar /> زمان تحویل موردنظر
                 </dt>
-                <dd>{payload.estimatedCompletion}</dd>
+                <dd>{shortDate(payload.estimatedCompletion)}</dd>
               </div>
             )}
             {payload.deadlineAt && (

@@ -1,6 +1,10 @@
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
-import { ProductDetail } from "@/features/product-detail";
+// Imported from its own file, not the `@/features/product-detail` barrel —
+// that barrel also re-exports `ProductOverlay` (the drag/motion-heavy PDP
+// modal, already loaded separately via `next/dynamic` in the root layout),
+// which this route has no reason to pull into its own bundle.
+import { ProductDetail } from "@/features/product-detail/product-detail";
 import { fetchProductReviews } from "@/lib/api";
 import { registryProducts } from "@/lib/catalog/get-catalog-works";
 import { resolvePdpData, resolveWork } from "@/lib/catalog/resolve-pdp-data";

@@ -233,13 +233,39 @@ export function useRedThread(containerRef: RefObject<HTMLElement | null>) {
         if (lowest[mid] <= pen) low = mid;
         else high = mid - 1;
       }
-      const drawn = pen < lowest[0] ? 0 : lengths[low];
+      // `lowest`/`lengths` are only sampled every SAMPLE_PX along the path,
+      // so snapping straight to `lengths[low]` advances the stroke in
+      // visible ~6px steps as the pen moves. Interpolate linearly between
+      // the bracketing samples instead, so the draw length tracks scroll
+      // continuously — same path, same per-frame read+write, just a
+      // smoother value.
+      let drawn: number;
+      let bx = xs[low];
+      let by = ys[low];
+      if (pen < lowest[0]) {
+        drawn = 0;
+      } else if (low >= count) {
+        drawn = lengths[count];
+      } else {
+        const lowValue = lowest[low];
+        const highValue = lowest[low + 1];
+        const t =
+          highValue > lowValue
+            ? Math.min(
+                1,
+                Math.max(0, (pen - lowValue) / (highValue - lowValue)),
+              )
+            : 0;
+        drawn = lengths[low] + (lengths[low + 1] - lengths[low]) * t;
+        bx = xs[low] + (xs[low + 1] - xs[low]) * t;
+        by = ys[low] + (ys[low + 1] - ys[low]) * t;
+      }
       for (const line of lines)
         line.style.strokeDashoffset = `${total - drawn}`;
 
       if (bead) {
-        bead.setAttribute("cx", `${xs[low]}`);
-        bead.setAttribute("cy", `${ys[low]}`);
+        bead.setAttribute("cx", `${bx}`);
+        bead.setAttribute("cy", `${by}`);
         bead.style.opacity = drawn > 0 && drawn < total - 1 ? "1" : "0";
       }
 

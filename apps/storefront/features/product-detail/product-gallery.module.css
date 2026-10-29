@@ -25,11 +25,11 @@
     align-items: stretch;
   }
 
-  .stage {
+  .gallery.hasThumbs .stage {
     grid-area: stage;
   }
 
-  .thumbs {
+  .gallery.hasThumbs .thumbs {
     grid-area: thumbs;
   }
 }

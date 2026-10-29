@@ -29,6 +29,7 @@ import {
 } from "../../database/entities";
 import { InventoryService } from "../../inventory/inventory.service";
 import { MailService } from "../../mail/mail.service";
+import type { CatalogRevalidationService } from "../../catalog/catalog-revalidation.service";
 import { NoticesService } from "../../notices/notices.service";
 import {
   CURRENT_POLICY_VERSIONS,
@@ -77,6 +78,13 @@ export async function startPurchaseHarness() {
   } as never);
   await dataSource.initialize();
 
+  let catalogRevalidationCalls = 0;
+  const catalogRevalidation: CatalogRevalidationService = {
+    notifyChanged: async () => {
+      catalogRevalidationCalls += 1;
+    },
+  } as unknown as CatalogRevalidationService;
+
   const repo = dataSource.getRepository.bind(dataSource);
   const identity = new IdentityService(repo(User));
   const notices = new NoticesService(repo(Notice), identity);
@@ -122,6 +130,7 @@ export async function startPurchaseHarness() {
     new CloudinaryStorageService(new ConfigService({})),
     () => new CloudinaryStorageService(new ConfigService({})),
     mail,
+    catalogRevalidation,
   );
 
   let productCount = 0;
@@ -140,6 +149,10 @@ export async function startPurchaseHarness() {
     inventory,
     notices,
     acceptedPolicies,
+
+    catalogRevalidationCallCount() {
+      return catalogRevalidationCalls;
+    },
 
     buyer(name: string): Actor {
       return { user: null, guestId: `${name}-${Date.now()}-${Math.random()}` };

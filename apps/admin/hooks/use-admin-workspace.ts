@@ -30,6 +30,7 @@ import {
   resolveUploadedObjectKey,
   type SignedUpload,
 } from "../lib/media-upload";
+import { ResourceGate } from "../lib/resource-gate";
 
 /**
  * `initializing`: the one-time `/auth/me` session restore hasn't settled yet
@@ -63,6 +64,20 @@ type ResourceKey =
  * section's own data (plus whatever it cross-references, e.g. order status
  * panels needing the order's own messages/damage reports) is requested.
  */
+const resourceKeys: ResourceKey[] = [
+  "products",
+  "orders",
+  "members",
+  "users",
+  "commissions",
+  "messages",
+  "damageReports",
+  "reviews",
+  "shapeQuestions",
+  "helpQuestions",
+  "productAttributes",
+];
+
 const sectionResources: Record<AdminSection, ResourceKey[]> = {
   overview: ["products", "orders", "commissions"],
   products: ["products"],
@@ -102,115 +117,194 @@ export function useAdminWorkspace() {
   // Tracks which resources are loaded or in flight, so switching sections
   // back and forth — or React 18 dev-mode's double effect invocation —
   // never issues duplicate requests for data already fetched/loading.
-  const loadedRef = useRef<Set<ResourceKey>>(new Set());
-  const inFlightRef = useRef<Map<ResourceKey, Promise<unknown>>>(new Map());
-  // Reactive mirror of `loadedRef`, so components can tell "hasn't loaded
-  // yet" (show a skeleton) apart from "loaded and genuinely zero" (show
-  // 0) — the array state alone can't distinguish those, since an empty
-  // array looks the same either way.
+  // `ResourceGate` also separates an initial failure (nothing to show) from
+  // a background refresh failure (keep the rows already on screen) and drops
+  // an older response when a newer request for the same resource is in flight.
+  const gateRef = useRef(new ResourceGate<ResourceKey>());
+  const initialFlightRef = useRef<Map<ResourceKey, Promise<unknown>>>(
+    new Map(),
+  );
+  // Bumped on logout so a response that arrives afterwards cannot write
+  // rows back into a signed-out workspace.
+  const sessionEpochRef = useRef(0);
+  // Bumped when a mutation writes a list locally, so an in-flight refresh
+  // that started before that write cannot replace the newer rows.
+  const writeEpochRef = useRef(new Map<ResourceKey, number>());
+  const bumpWrite = useCallback((key: ResourceKey) => {
+    writeEpochRef.current.set(key, (writeEpochRef.current.get(key) ?? 0) + 1);
+  }, []);
+  // Reactive mirror of the gate, so components can tell "hasn't loaded
+  // yet" (show a skeleton) apart from "loaded and genuinely zero".
   const [loadedKeys, setLoadedKeys] = useState<Set<ResourceKey>>(new Set());
-  // A resource whose fetch failed: never cleared by itself, so the UI can
-  // show a clear error + retry instead of silently reading as "loaded and
-  // genuinely empty" (an empty array looks the same as a failed request
-  // unless something else records that it failed).
   const [loadErrors, setLoadErrors] = useState<Set<ResourceKey>>(new Set());
+  const [refreshingKeys, setRefreshingKeys] = useState<Set<ResourceKey>>(
+    new Set(),
+  );
+  const [refreshErrors, setRefreshErrors] = useState<Set<ResourceKey>>(
+    new Set(),
+  );
 
-  // The actual fetch-and-set for one resource, with no loaded/in-flight
-  // guard — `fetchResource` below wraps this for the normal "load once per
-  // section visit" path; `pollResource` (further down) calls it directly on
-  // an interval so an already-loaded resource (messages, for the unread
-  // badge and inbox) still picks up rows written by someone else's request
-  // — there is no WebSocket/SSE layer in this app to invalidate on instead.
-  const refreshResource = useCallback(async (key: ResourceKey) => {
+  const publishGate = useCallback(() => {
+    const loaded = new Set<ResourceKey>();
+    const errors = new Set<ResourceKey>();
+    const refreshing = new Set<ResourceKey>();
+    const refreshFailed = new Set<ResourceKey>();
+    for (const key of resourceKeys) {
+      const status = gateRef.current.status(key);
+      if (status.loaded) loaded.add(key);
+      if (status.loadError) errors.add(key);
+      if (status.refreshing) refreshing.add(key);
+      if (status.refreshError) refreshFailed.add(key);
+    }
+    setLoadedKeys(loaded);
+    setLoadErrors(errors);
+    setRefreshingKeys(refreshing);
+    setRefreshErrors(refreshFailed);
+  }, []);
+
+  // Fetches one resource and returns the payload. Callers commit it only
+  // when this request is still the latest one for that key.
+  const readResource = useCallback(async (key: ResourceKey) => {
     switch (key) {
       case "products":
-        setProducts(await api<AdminProduct[]>("/admin/products"));
+        return api<AdminProduct[]>("/admin/products");
+      case "orders":
+        return api<AdminOrder[]>("/admin/orders");
+      case "members":
+        return api<AdminMember[]>("/admin/members");
+      case "users":
+        return api<AdminUser[]>("/admin/users");
+      case "commissions":
+        return api<AdminCommission[]>("/admin/commissions");
+      case "messages":
+        return api<AdminContactMessage[]>("/admin/messages");
+      case "damageReports":
+        return api<AdminDamageReport[]>("/admin/damage-reports");
+      case "reviews":
+        return api<AdminReview[]>("/admin/reviews");
+      case "shapeQuestions":
+        return api<ShapeQuestion[]>("/admin/shape-questions");
+      case "helpQuestions":
+        return api<HelpQuestion[]>("/admin/help-questions");
+      case "productAttributes":
+        return api<ProductAttribute[]>("/admin/product-attributes");
+    }
+  }, []);
+
+  const commitResource = useCallback((key: ResourceKey, data: unknown) => {
+    switch (key) {
+      case "products":
+        setProducts(data as AdminProduct[]);
         break;
       case "orders":
-        setOrders(await api<AdminOrder[]>("/admin/orders"));
+        setOrders(data as AdminOrder[]);
         break;
       case "members":
-        setMembers(await api<AdminMember[]>("/admin/members"));
+        setMembers(data as AdminMember[]);
         break;
       case "users":
-        setUsers(await api<AdminUser[]>("/admin/users"));
+        setUsers(data as AdminUser[]);
         break;
       case "commissions":
-        setCommissions(await api<AdminCommission[]>("/admin/commissions"));
+        setCommissions(data as AdminCommission[]);
         break;
       case "messages":
-        setMessages(await api<AdminContactMessage[]>("/admin/messages"));
+        setMessages(data as AdminContactMessage[]);
         break;
       case "damageReports":
-        setDamageReports(
-          await api<AdminDamageReport[]>("/admin/damage-reports"),
-        );
+        setDamageReports(data as AdminDamageReport[]);
         break;
       case "reviews":
-        setReviews(await api<AdminReview[]>("/admin/reviews"));
+        setReviews(data as AdminReview[]);
         break;
       case "shapeQuestions":
-        setShapeQuestions(await api<ShapeQuestion[]>("/admin/shape-questions"));
+        setShapeQuestions(data as ShapeQuestion[]);
         break;
       case "helpQuestions":
-        setHelpQuestions(await api<HelpQuestion[]>("/admin/help-questions"));
+        setHelpQuestions(data as HelpQuestion[]);
         break;
       case "productAttributes":
-        setProductAttributes(
-          await api<ProductAttribute[]>("/admin/product-attributes"),
-        );
+        setProductAttributes(data as ProductAttribute[]);
         break;
     }
   }, []);
 
-  const fetchResource = useCallback(
-    (key: ResourceKey): Promise<unknown> => {
-      if (loadedRef.current.has(key)) return Promise.resolve();
-      const existing = inFlightRef.current.get(key);
-      if (existing) return existing;
-      const run = async () => {
+  const runResource = useCallback(
+    (key: ResourceKey, mode: "initial" | "refresh"): Promise<unknown> => {
+      if (mode === "initial") {
+        const existing = initialFlightRef.current.get(key);
+        if (existing) return existing;
+        if (gateRef.current.status(key).loaded) return Promise.resolve();
+      }
+      const generation = gateRef.current.begin(key, mode);
+      if (generation == null) {
+        return initialFlightRef.current.get(key) ?? Promise.resolve();
+      }
+      const epoch = sessionEpochRef.current;
+      publishGate();
+      const promise = (async () => {
         try {
-          await refreshResource(key);
-          loadedRef.current.add(key);
-          setLoadedKeys((current) => new Set(current).add(key));
-          setLoadErrors((current) => {
-            if (!current.has(key)) return current;
-            const next = new Set(current);
-            next.delete(key);
-            return next;
-          });
+          const seenWrite = writeEpochRef.current.get(key) ?? 0;
+          const data = await readResource(key);
+          if (sessionEpochRef.current !== epoch) return;
+          if ((writeEpochRef.current.get(key) ?? 0) !== seenWrite) {
+            // A mutation landed while this response was in flight. Drop the
+            // payload, but clear the spinner — the local write is newer.
+            gateRef.current.settle(key, generation, true);
+            return;
+          }
+          if (gateRef.current.settle(key, generation, true) === "applied") {
+            commitResource(key, data);
+          }
         } catch {
-          // Leave `loadedRef` untouched so the next visit to this section
-          // (or an explicit retry) tries again instead of being treated as
-          // "already loaded, zero rows".
-          setLoadErrors((current) => new Set(current).add(key));
+          if (sessionEpochRef.current !== epoch) return;
+          gateRef.current.settle(key, generation, false);
+        } finally {
+          if (sessionEpochRef.current === epoch) publishGate();
         }
-      };
-      const promise = run().finally(() => inFlightRef.current.delete(key));
-      inFlightRef.current.set(key, promise);
+      })();
+      if (mode === "initial") {
+        initialFlightRef.current.set(key, promise);
+        void promise.finally(() => {
+          if (initialFlightRef.current.get(key) === promise) {
+            initialFlightRef.current.delete(key);
+          }
+        });
+      }
       return promise;
     },
-    [refreshResource],
+    [commitResource, publishGate, readResource],
+  );
+
+  const fetchResource = useCallback(
+    (key: ResourceKey) => runResource(key, "initial"),
+    [runResource],
   );
 
   // Polls the inbox so a reply the customer sends while an admin already
   // has this tab open still shows up — there is no WebSocket/SSE channel
   // in this app to push it instead. Only runs once messages have been
   // loaded at least once (the global-badge effect below triggers that),
-  // and only while authenticated.
+  // and only while authenticated. A failed poll keeps the rows already
+  // shown; it does not replace them with an empty or full-screen error.
   useEffect(() => {
     if (authStatus !== "authenticated") return;
     const timer = window.setInterval(() => {
-      if (loadedRef.current.has("messages")) void refreshResource("messages");
+      if (gateRef.current.status("messages").loaded) {
+        void runResource("messages", "refresh");
+      }
     }, 20_000);
     return () => window.clearInterval(timer);
-  }, [authStatus, refreshResource]);
+  }, [authStatus, runResource]);
 
-  /** Re-runs a resource's fetch after a failed load (`fetchResource` itself
-   * retries, since a failed key is never added to `loadedRef`). */
+  /** Re-runs a failed initial load, or a failed background refresh. */
   const retryResource = useCallback(
-    (key: ResourceKey) => fetchResource(key),
-    [fetchResource],
+    (key: ResourceKey) =>
+      runResource(
+        key,
+        gateRef.current.status(key).loaded ? "refresh" : "initial",
+      ),
+    [runResource],
   );
 
   const loadSection = useCallback(
@@ -260,9 +354,14 @@ export function useAdminWorkspace() {
   // session turns out to be unauthenticated, so a later login starts clean.
   useEffect(() => {
     if (authStatus !== "unauthenticated") return;
-    loadedRef.current.clear();
-    inFlightRef.current.clear();
+    sessionEpochRef.current += 1;
+    gateRef.current.reset();
+    initialFlightRef.current.clear();
+    writeEpochRef.current.clear();
     setLoadedKeys(new Set());
+    setLoadErrors(new Set());
+    setRefreshingKeys(new Set());
+    setRefreshErrors(new Set());
     setProducts([]);
     setOrders([]);
     setMembers([]);
@@ -368,18 +467,22 @@ export function useAdminWorkspace() {
       },
       loadSection,
       loadErrors,
+      refreshingKeys,
+      refreshErrors,
       retryResource,
       async setReviewHidden(id: string, hidden: boolean) {
         const saved = await api<AdminReview>(`/admin/reviews/${id}`, {
           method: "PATCH",
           body: JSON.stringify({ hidden }),
         });
+        bumpWrite("reviews");
         setReviews((items) =>
           items.map((item) => (item.id === saved.id ? saved : item)),
         );
       },
       async deleteReview(id: string) {
         await api(`/admin/reviews/${id}`, { method: "DELETE" });
+        bumpWrite("reviews");
         setReviews((items) => items.filter((item) => item.id !== id));
       },
       async saveShapeQuestion(input: ShapeQuestionInput, id?: string) {
@@ -387,6 +490,7 @@ export function useAdminWorkspace() {
           id ? `/admin/shape-questions/${id}` : "/admin/shape-questions",
           { method: id ? "PATCH" : "POST", body: JSON.stringify(input) },
         );
+        bumpWrite("shapeQuestions");
         setShapeQuestions((items) =>
           id
             ? items.map((item) => (item.id === saved.id ? saved : item))
@@ -395,15 +499,19 @@ export function useAdminWorkspace() {
       },
       async deleteShapeQuestion(id: string) {
         await api(`/admin/shape-questions/${id}`, { method: "DELETE" });
+        bumpWrite("shapeQuestions");
         setShapeQuestions((items) => items.filter((item) => item.id !== id));
       },
       async reorderShapeQuestions(ids: string[]) {
-        setShapeQuestions(
-          await api<ShapeQuestion[]>("/admin/shape-questions/order", {
+        const saved = await api<ShapeQuestion[]>(
+          "/admin/shape-questions/order",
+          {
             method: "PUT",
             body: JSON.stringify({ ids }),
-          }),
+          },
         );
+        bumpWrite("shapeQuestions");
+        setShapeQuestions(saved);
       },
       async saveHelpQuestion(input: HelpQuestionInput, id?: string) {
         const saved = await api<HelpQuestion>(
@@ -413,6 +521,7 @@ export function useAdminWorkspace() {
             body: JSON.stringify({ ...input, more: input.more ?? null }),
           },
         );
+        bumpWrite("helpQuestions");
         setHelpQuestions((items) =>
           id
             ? items.map((item) => (item.id === saved.id ? saved : item))
@@ -421,15 +530,16 @@ export function useAdminWorkspace() {
       },
       async deleteHelpQuestion(id: string) {
         await api(`/admin/help-questions/${id}`, { method: "DELETE" });
+        bumpWrite("helpQuestions");
         setHelpQuestions((items) => items.filter((item) => item.id !== id));
       },
       async reorderHelpQuestions(ids: string[]) {
-        setHelpQuestions(
-          await api<HelpQuestion[]>("/admin/help-questions/order", {
-            method: "PUT",
-            body: JSON.stringify({ ids }),
-          }),
-        );
+        const saved = await api<HelpQuestion[]>("/admin/help-questions/order", {
+          method: "PUT",
+          body: JSON.stringify({ ids }),
+        });
+        bumpWrite("helpQuestions");
+        setHelpQuestions(saved);
       },
       async saveProductAttribute(input: ProductAttributeInput, id?: string) {
         const saved = await api<ProductAttribute>(
@@ -634,6 +744,7 @@ export function useAdminWorkspace() {
           method: "PATCH",
           body: JSON.stringify({ status }),
         });
+        bumpWrite("messages");
         setMessages((items) =>
           items.map((item) => (item.id === saved.id ? saved : item)),
         );
@@ -644,6 +755,7 @@ export function useAdminWorkspace() {
           `/admin/messages/${id}/reply`,
           { method: "POST", body: JSON.stringify({ body }) },
         );
+        bumpWrite("messages");
         setMessages((items) => {
           const byId = new Map(items.map((item) => [item.id, item]));
           for (const row of thread) byId.set(row.id, row);
@@ -678,6 +790,7 @@ export function useAdminWorkspace() {
             role: member.role,
           }),
         });
+        bumpWrite("members");
         setMembers((items) => [saved, ...items]);
       },
       async updateMember(member: AdminMember) {
@@ -685,6 +798,7 @@ export function useAdminWorkspace() {
           method: "PATCH",
           body: JSON.stringify({ role: member.role, status: member.status }),
         });
+        bumpWrite("members");
         setMembers((items) =>
           items.map((item) => (item.id === saved.id ? saved : item)),
         );
@@ -750,6 +864,7 @@ export function useAdminWorkspace() {
       },
     }),
     [
+      bumpWrite,
       authStatus,
       commissions,
       currentRole,
@@ -758,6 +873,8 @@ export function useAdminWorkspace() {
       helpQuestions,
       loadedKeys,
       loadErrors,
+      refreshingKeys,
+      refreshErrors,
       loadSection,
       retryResource,
       members,

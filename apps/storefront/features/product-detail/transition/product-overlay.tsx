@@ -11,7 +11,9 @@ import { X } from "lucide-react";
 import { usePathname } from "next/navigation";
 import {
   animate,
-  motion,
+  domMax,
+  LazyMotion,
+  m,
   useAnimation,
   useMotionValue,
   useTransform,
@@ -468,82 +470,84 @@ export function ProductOverlay() {
   if (!mounted || !slug || !href || !sourceRect) return null;
 
   return (
-    <div className={styles.root} role="dialog" aria-modal="true">
-      <motion.div
-        className={styles.backdrop}
-        style={{ opacity: reducedMotion ? undefined : backdropOpacity }}
-        initial={reducedMotion ? false : { opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: reducedMotion ? 0.12 : 0.3 }}
-        onClick={() => performClose(false)}
-      />
-      <motion.div
-        className={styles.card}
-        drag={canDismiss ? "y" : false}
-        dragDirectionLock
-        dragConstraints={{ top: 0, bottom: DRAG_RANGE }}
-        dragElastic={{ top: 0, bottom: 0.6 }}
-        style={{
-          y,
-          scale: reducedMotion ? 1 : cardScale,
-          borderRadius: reducedMotion ? 0 : cardRadius,
-        }}
-        onPointerDownCapture={onPointerDownCapture}
-        onDragStart={onDragStart}
-        onDrag={onDrag}
-        onDragEnd={onDragEnd}
-      >
-        <div className={styles.scroll} ref={scrollRef}>
-          <div className={styles.heroTarget} ref={heroTargetRef} />
-          <button
-            type="button"
-            className={styles.close}
-            aria-label="بستن"
-            data-no-dismiss
-            onClick={() => performClose(false)}
-          >
-            <X aria-hidden="true" />
-          </button>
-          <div
-            ref={contentRef}
-            className={styles.content}
-            style={{ opacity: contentVisible ? 1 : 0 }}
-          >
-            {data ? (
-              <>
-                <ProductDetail
-                  product={data.product}
-                  artwork={data.artwork}
-                  passport={data.passport}
-                  related={data.related}
-                  initialFaq={data.faq}
-                  qrSvg={data.qrSvg}
-                />
-                <Footer />
-              </>
-            ) : loadError ? (
-              <div className={styles.errorState} role="alert">
-                <p>بار گذاری اطلاعات محصول ناموفق بود.</p>
-                <button
-                  type="button"
-                  className={styles.errorRetry}
-                  onClick={() => setRetryToken((n) => n + 1)}
-                >
-                  تلاش دوباره
-                </button>
-              </div>
-            ) : null}
-          </div>
-        </div>
-      </motion.div>
-      {showMorphImage && imageSrc ? (
-        <motion.img
-          src={imageSrc}
-          alt=""
-          className={styles.morphImage}
-          animate={imageControls}
+    <LazyMotion features={domMax} strict>
+      <div className={styles.root} role="dialog" aria-modal="true">
+        <m.div
+          className={styles.backdrop}
+          style={{ opacity: reducedMotion ? undefined : backdropOpacity }}
+          initial={reducedMotion ? false : { opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: reducedMotion ? 0.12 : 0.3 }}
+          onClick={() => performClose(false)}
         />
-      ) : null}
-    </div>
+        <m.div
+          className={styles.card}
+          drag={canDismiss ? "y" : false}
+          dragDirectionLock
+          dragConstraints={{ top: 0, bottom: DRAG_RANGE }}
+          dragElastic={{ top: 0, bottom: 0.6 }}
+          style={{
+            y,
+            scale: reducedMotion ? 1 : cardScale,
+            borderRadius: reducedMotion ? 0 : cardRadius,
+          }}
+          onPointerDownCapture={onPointerDownCapture}
+          onDragStart={onDragStart}
+          onDrag={onDrag}
+          onDragEnd={onDragEnd}
+        >
+          <div className={styles.scroll} ref={scrollRef}>
+            <div className={styles.heroTarget} ref={heroTargetRef} />
+            <button
+              type="button"
+              className={styles.close}
+              aria-label="بستن"
+              data-no-dismiss
+              onClick={() => performClose(false)}
+            >
+              <X aria-hidden="true" />
+            </button>
+            <div
+              ref={contentRef}
+              className={styles.content}
+              style={{ opacity: contentVisible ? 1 : 0 }}
+            >
+              {data ? (
+                <>
+                  <ProductDetail
+                    product={data.product}
+                    artwork={data.artwork}
+                    passport={data.passport}
+                    related={data.related}
+                    initialFaq={data.faq}
+                    qrSvg={data.qrSvg}
+                  />
+                  <Footer />
+                </>
+              ) : loadError ? (
+                <div className={styles.errorState} role="alert">
+                  <p>بار گذاری اطلاعات محصول ناموفق بود.</p>
+                  <button
+                    type="button"
+                    className={styles.errorRetry}
+                    onClick={() => setRetryToken((n) => n + 1)}
+                  >
+                    تلاش دوباره
+                  </button>
+                </div>
+              ) : null}
+            </div>
+          </div>
+        </m.div>
+        {showMorphImage && imageSrc ? (
+          <m.img
+            src={imageSrc}
+            alt=""
+            className={styles.morphImage}
+            animate={imageControls}
+          />
+        ) : null}
+      </div>
+    </LazyMotion>
   );
 }
