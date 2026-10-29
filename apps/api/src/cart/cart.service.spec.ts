@@ -21,7 +21,7 @@ test("get returns an empty snapshot for a new owner", async () => {
   assert.deepEqual(cart, { slugs: [], holds: {}, prices: {} });
 });
 
-test("add snapshots current product prices, even after catalog price changes", async () => {
+test("add preserves prices after catalog changes", async () => {
   const owner = rad.buyer("price-snapshot");
   const slug = await rad.product(8_500_000);
   const row = await rad.productRow(slug);
@@ -34,10 +34,8 @@ test("add snapshots current product prices, even after catalog price changes", a
   });
   assert.ok(added.holds[slug] > Date.now());
 
-  await rad.dataSource.getRepository(Product).update(
-    { slug },
-    { tomanPrice: 9_900_000, usdPrice: 200 },
-  );
+  const products = rad.dataSource.getRepository(Product);
+  await products.update({ slug }, { tomanPrice: 9_900_000, usdPrice: 200 });
   const again = await rad.cart.get(owner);
   assert.deepEqual(again.prices[slug], added.prices[slug]);
 
@@ -77,7 +75,7 @@ test("remove of a missing cart item leaves other items unchanged", async () => {
   assert.equal((await rad.productRow(slug)).status, "sold");
 });
 
-test("clear removes all owned items and holds and tolerates an empty cart", async () => {
+test("clear releases holds and tolerates an empty cart", async () => {
   const owner = rad.buyer("clear-cart");
   const slugs = [await rad.product(), await rad.product()];
   for (const slug of slugs) await rad.cart.add(owner, slug);
@@ -108,10 +106,8 @@ test("get expires abandoned holds before building the snapshot", async () => {
   const slug = await rad.product();
   await rad.cart.add(owner, slug);
 
-  await rad.dataSource.getRepository(Product).update(
-    { slug },
-    { holdExpiresAt: new Date(Date.now() - 1) },
-  );
+  const products = rad.dataSource.getRepository(Product);
+  await products.update({ slug }, { holdExpiresAt: new Date(Date.now() - 1) });
 
   const snapshot = await rad.cart.get(owner);
   assert.deepEqual(snapshot.slugs, []);
