@@ -62,6 +62,14 @@
     inset 0 0 0 1px rgba(120, 96, 64, 0.1);
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
+  /* Safari/WebKit bug: a `filter` on a descendant (here `.heroCardMark`'s
+     drop-shadow) can break an ancestor's `backface-visibility: hidden`,
+     letting the front face's content keep compositing through once the
+     card has flipped to show its back — visible on iPhone as the RAD
+     number bleeding onto the back face. Forcing this element onto its own
+     compositing layer (a no-op 3D transform) keeps backface-visibility
+     correct independent of what a child's filter does. */
+  transform: translateZ(0);
   animation: hero-card-appear 0.5s ease-out calc(0.5s + var(--abs) * 0.16s) both;
 }
 

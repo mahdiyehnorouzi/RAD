@@ -127,6 +127,7 @@ export const en = {
   sortHeading: "Sort",
   sortNewest: "Newest",
   sortOldest: "Oldest",
+  sortAvailability: "Available first",
   sortPriceAsc: "Price: low to high",
   sortPriceDesc: "Price: high to low",
   clearFilters: "Clear filters",

@@ -44,12 +44,31 @@ export function paymentProvider(): PaymentProvider {
 }
 
 export function manualCardDetails(): ManualCardDetails {
+  // Holder must be the name printed on the physical card. Do not substitute a
+  // brand alias here — operators set PAYMENT_CARD_HOLDER.
   const cardNumber = formatCardNumber(
     process.env.PAYMENT_CARD_NUMBER || "6037998155667788",
   );
   const cardHolder = process.env.PAYMENT_CARD_HOLDER?.trim() || "استودیو رَد";
   const bankName = process.env.PAYMENT_CARD_BANK?.trim() || undefined;
   return { cardNumber, cardHolder, bankName };
+}
+
+/**
+ * Safe to print: mode, digit count, and whether holder/bank env vars are set.
+ * Never includes the PAN, holder name, or bank name.
+ */
+export function manualPaymentConfigFingerprint() {
+  const configuredNumber = process.env.PAYMENT_CARD_NUMBER?.trim() || "";
+  const configuredHolder = process.env.PAYMENT_CARD_HOLDER?.trim() || "";
+  return {
+    mode: paymentMode(),
+    provider: paymentProvider(),
+    cardDigitCount: digitsOnly(configuredNumber).length,
+    holderConfigured: configuredHolder.length > 0,
+    usesBrandHolderFallback: configuredHolder.length === 0,
+    bankConfigured: Boolean(process.env.PAYMENT_CARD_BANK?.trim()),
+  };
 }
 
 /**

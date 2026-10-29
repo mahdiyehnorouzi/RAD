@@ -11,7 +11,14 @@ import {
 import { InjectRepository } from "@nestjs/typeorm";
 import { randomBytes } from "node:crypto";
 import { hash } from "bcryptjs";
-import { DataSource, In, IsNull, Not, Repository } from "typeorm";
+import {
+  DataSource,
+  In,
+  IsNull,
+  Not,
+  QueryFailedError,
+  Repository,
+} from "typeorm";
 import { generateVerificationCode } from "../auth/reset-token.util";
 import { MailService } from "../mail/mail.service";
 import {
@@ -51,6 +58,7 @@ import {
 import type { ProductImageStorage } from "../database/entities/product-image.entity";
 import { productIncludeWithSrc } from "../catalog/product.mapper";
 import { nextRadNumber } from "../catalog/rad-number";
+import { CatalogRevalidationService } from "../catalog/catalog-revalidation.service";
 import { InventoryService } from "../inventory/inventory.service";
 import type { ProductStatus } from "../inventory/type";
 import { PaymentReviewService } from "../orders/payment-review.service";
@@ -112,6 +120,7 @@ export class AdminService {
     @Inject(MEDIA_STORAGE_RESOLVER)
     private readonly storageFor: MediaStorageResolver,
     private readonly mail: MailService,
+    private readonly catalogRevalidation: CatalogRevalidationService,
   ) {}
 
   private readonly logger = new Logger(AdminService.name);
@@ -315,11 +324,14 @@ export class AdminService {
     const usdPrice = Math.max(1, Math.round(input.price / 85_000));
     const category = toStoreCategory(input.category);
     const details = ["تنها یک نسخه"];
-    // Only a brand-new product needs a `subtitle` derived here — it has no
-    // existing value to preserve. An update must never re-derive and
-    // overwrite `subtitle` from `story` (see `updateProduct`): that was
-    // silently discarding whatever `subtitle` held on every single save.
-    const subtitle = input.description.trim().slice(0, 48);
+    // Used only for a brand-new product (no existing value to preserve):
+    // an explicit `subtitle` if admin set one, else the historical default
+    // (the description's first 48 characters). An update must never
+    // re-derive this default from a new description — see the `subtitle`
+    // passed to `updateProduct` below, which stays undefined (leaving the
+    // column untouched) unless admin explicitly set a value.
+    const subtitle =
+      input.subtitle?.trim() || input.description.trim().slice(0, 48);
     const en = {
       name: input.name,
       subtitle,
@@ -336,29 +348,28 @@ export class AdminService {
           category,
           status: input.status,
           story: input.description.trim(),
+          // undefined (admin didn't set one) leaves the column untouched.
+          subtitle: input.subtitle?.trim() || undefined,
           vendorId,
         })
-      : await this.products.save(
-          this.products.create({
-            slug,
-            name: input.name.trim(),
-            subtitle,
-            tomanPrice: input.price,
-            usdPrice,
-            color: "#8a4938",
-            accent: "#ead9bd",
-            shape: "tall",
-            category,
-            status: input.status,
-            story: input.description.trim(),
-            details,
-            en,
-            vendorId,
-            radNumber: await nextRadNumber(this.products),
-            year: new Date().getFullYear(),
-            sortOrder: await this.nextSortOrder(),
-          }),
-        );
+      : await this.createProductWithRadNumber({
+          slug,
+          name: input.name.trim(),
+          subtitle,
+          tomanPrice: input.price,
+          usdPrice,
+          color: "#8a4938",
+          accent: "#ead9bd",
+          shape: "tall",
+          category,
+          status: input.status,
+          story: input.description.trim(),
+          details,
+          en,
+          vendorId,
+          year: new Date().getFullYear(),
+          sortOrder: await this.nextSortOrder(),
+        });
 
     await this.replaceImages(
       product.id,
@@ -375,10 +386,43 @@ export class AdminService {
       where: { id: product.id },
       relations: productIncludeWithSrc,
     });
+    void this.catalogRevalidation.notifyChanged();
     return toAdminProduct(
       saved,
       await this.productAttributes.valuesForProduct(product.id),
     );
+  }
+
+  /**
+   * `nextRadNumber()` reads `MAX(radNumber)` outside any lock, so two
+   * concurrent "create product" saves can read the same max and both
+   * attempt the next number. The DB's unique constraint rejects the loser
+   * rather than letting it duplicate the number, but without this retry
+   * that surfaces as a confusing failed save instead of just getting the
+   * next available number transparently.
+   */
+  private async createProductWithRadNumber(
+    product: Omit<Parameters<Repository<Product>["create"]>[0], "radNumber">,
+    attempt = 1,
+  ): Promise<Product> {
+    try {
+      return await this.products.save(
+        this.products.create({
+          ...product,
+          radNumber: await nextRadNumber(this.products),
+        }),
+      );
+    } catch (error) {
+      const isRadNumberConflict =
+        error instanceof QueryFailedError &&
+        String((error.driverError as { detail?: string })?.detail).includes(
+          "radNumber",
+        );
+      if (isRadNumberConflict && attempt < 3) {
+        return this.createProductWithRadNumber(product, attempt + 1);
+      }
+      throw error;
+    }
   }
 
   async deleteProduct(id: string) {
@@ -400,6 +444,7 @@ export class AdminService {
       await manager.getRepository(Review).delete({ productSlug: product.slug });
       await manager.getRepository(Product).delete({ id });
     });
+    void this.catalogRevalidation.notifyChanged();
     return { ok: true };
   }
 
@@ -483,16 +528,21 @@ export class AdminService {
         relations: adminOrderRelations,
       });
     });
+    if (nextStatus !== currentStatus) {
+      void this.catalogRevalidation.notifyChanged();
+    }
     return toAdminOrder(updated);
   }
 
   async approvePayment(id: string, reviewerId: string | null) {
     await this.paymentReview.approve(id, reviewerId);
+    void this.catalogRevalidation.notifyChanged();
     return this.adminOrder(id);
   }
 
   async rejectPayment(id: string, reason: string, reviewerId: string | null) {
     await this.paymentReview.reject(id, reason, reviewerId);
+    void this.catalogRevalidation.notifyChanged();
     return this.adminOrder(id);
   }
 
@@ -640,6 +690,8 @@ export class AdminService {
       category: string;
       status: ProductStatus;
       story: string;
+      /** Only written when admin explicitly set one; otherwise left as-is. */
+      subtitle?: string;
       vendorId: string | null;
     },
   ) {
@@ -653,14 +705,13 @@ export class AdminService {
       { id },
       {
         name: data.name,
-        // `subtitle` is intentionally left untouched here: it is a
-        // separate, shorter field from Admin's "description" (which maps
-        // to `story` below) and is shown as-is on the storefront's public
-        // `/artworks/:key` response. Admin has no UI to edit it directly
-        // today, so re-deriving and overwriting it from `story` on every
-        // save was silently discarding whatever value it held — never do
-        // that again (see admin.mapper.ts / artwork.mapper.ts for the full
-        // `description`/`story`/`subtitle` naming history).
+        // `subtitle` is a separate, shorter field from Admin's
+        // "description" (which maps to `story` below). Re-deriving and
+        // overwriting it from `story` on every save — even when admin
+        // didn't touch it — used to silently discard whatever value it
+        // held, so it's only written when `data.subtitle` is explicitly
+        // set; omitted here, it keeps its current value.
+        ...(data.subtitle !== undefined ? { subtitle: data.subtitle } : {}),
         tomanPrice: data.tomanPrice,
         usdPrice: data.usdPrice,
         category: data.category,

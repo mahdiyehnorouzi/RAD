@@ -31,6 +31,11 @@ import { PaymentReviewService } from "../orders/payment-review.service";
 import { InventoryService } from "../inventory/inventory.service";
 import { NoticesService } from "../notices/notices.service";
 import { MailService } from "../mail/mail.service";
+import type { CatalogRevalidationService } from "../catalog/catalog-revalidation.service";
+
+const catalogRevalidation = {
+  notifyChanged: async () => {},
+} as unknown as CatalogRevalidationService;
 import { CloudinaryStorageService } from "../storage/cloudinary-storage.service";
 import {
   createMediaStorageResolver,
@@ -152,6 +157,7 @@ before(async () => {
     storage,
     () => storage,
     mail,
+    catalogRevalidation,
   );
 });
 
@@ -382,6 +388,31 @@ describe("AdminService.saveProduct — cloudinary images (Phase 2)", () => {
     assert.equal(saved.images.length, 2);
   });
 
+  test("reordering gallery images persists the first as cover (sortOrder 0)", async () => {
+    const slug = `cover-order-${Date.now()}`;
+    const created = await admin.saveProduct(
+      baseInput(slug, [
+        { storage: "static", src: "/images/cover-a.jpg" },
+        { storage: "static", src: "/images/cover-b.jpg" },
+      ]) as never,
+    );
+    const saved = await admin.saveProduct(
+      baseInput(slug, [
+        { storage: "static", src: "/images/cover-b.jpg" },
+        { storage: "static", src: "/images/cover-a.jpg" },
+      ]) as never,
+      created.id,
+    );
+    assert.equal(saved.images[0].src, "/images/cover-b.jpg");
+    const rows = await dataSource
+      .getRepository(ProductImage)
+      .find({ where: { productSlug: slug }, order: { sortOrder: "ASC" } });
+    assert.equal(rows[0].src, "/images/cover-b.jpg");
+    assert.equal(rows[0].sortOrder, 0);
+    assert.equal(rows[1].src, "/images/cover-a.jpg");
+    assert.equal(rows[1].sortOrder, 1);
+  });
+
   test("a failed Cloudinary delete during cleanup is logged/non-fatal — the save itself still succeeds", async () => {
     const slug = `cloudinary-delete-fails-${Date.now()}`;
     const created = await admin.saveProduct(
@@ -467,6 +498,28 @@ describe("AdminService.saveProduct — subtitle preservation (description/subtit
       "story must still update normally from the description field",
     );
   });
+
+  test("an explicitly submitted subtitle is written, not just preserved", async () => {
+    const slug = `subtitle-explicit-${Date.now()}`;
+    const created = await admin.saveProduct(
+      baseInput(slug, [
+        { storage: "static", src: "/catalog/test.jpg" },
+      ]) as never,
+    );
+
+    await admin.saveProduct(
+      {
+        ...baseInput(slug, [{ storage: "static", src: "/catalog/test.jpg" }]),
+        subtitle: "زیرعنوان دستی",
+      } as never,
+      created.id,
+    );
+
+    const updatedRow = await dataSource
+      .getRepository(Product)
+      .findOneOrFail({ where: { id: created.id } });
+    assert.equal(updatedRow.subtitle, "زیرعنوان دستی");
+  });
 });
 
 describe("AdminService — SeaweedFS fail-closed ownership (upload-intent audit fix)", () => {
@@ -534,6 +587,7 @@ describe("AdminService — SeaweedFS fail-closed ownership (upload-intent audit 
       seaweedfsStub,
       resolver,
       mail,
+      catalogRevalidation,
     );
   });
 

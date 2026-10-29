@@ -161,6 +161,9 @@ export interface AdminProduct {
   slug: string;
   name: string;
   description: string;
+  /** Short lede shown under the title on the PDP; falls back to the first
+   * 48 characters of `description` when left blank. */
+  subtitle?: string;
   category: string;
   price: number;
   status: AdminProductStatus;
@@ -320,6 +323,21 @@ export const commissionStageLabels: Record<AdminCommissionStage, string> = {
   complete: "تمام",
   declined: "رد شده",
 };
+
+// Custom Orders must open on the list, not jump into a detail view: picks
+// which commission (if any) should be selected for a given requested id.
+// A requested id that no longer exists in the list (stale deep link, order
+// removed/filtered) falls back to no selection rather than guessing an
+// order to open, so the list is always what the admin sees by default.
+export function resolveCommissionSelection(
+  commissions: AdminCommission[],
+  requestedId: string | null,
+): string | null {
+  if (!requestedId) return null;
+  return commissions.some((item) => item.id === requestedId)
+    ? requestedId
+    : null;
+}
 
 export const roleLabels: Record<AdminRole, string> = {
   owner: "مالک",

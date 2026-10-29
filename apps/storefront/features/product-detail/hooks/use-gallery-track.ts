@@ -11,7 +11,7 @@ export function useGalleryTrack(count: number) {
   const [active, setActive] = useState(0);
 
   const goTo = useCallback(
-    (index: number) => {
+    (index: number, options?: { animate?: boolean }) => {
       const track = trackRef.current;
       if (!track) return;
       const next = Math.min(Math.max(index, 0), count - 1);
@@ -19,9 +19,20 @@ export function useGalleryTrack(count: number) {
       const still = window.matchMedia(
         "(prefers-reduced-motion: reduce)",
       ).matches;
+      // `animate: false` (the lightbox's own Next/Previous — see
+      // pdp-lightbox.tsx) skips the smooth-scroll animation on this track
+      // entirely. The lightbox has its own slide shown fullscreen; this
+      // track sits hidden behind it the whole time it's open, so animating
+      // it was pure wasted compositor/scroll work on every click — worse,
+      // a rapid run of clicks queued overlapping smooth-scrolls that each
+      // fired their own `onScroll`-driven re-render, which is what the
+      // reported freeze during fast Next/Previous actually was. An instant
+      // `behavior: "auto"` jump keeps this track correctly positioned for
+      // the moment the lightbox closes, without the animation or the
+      // scroll-event storm.
       track.scrollTo({
         left: sign * next * track.clientWidth,
-        behavior: still ? "auto" : "smooth",
+        behavior: still || options?.animate === false ? "auto" : "smooth",
       });
       setActive(next);
     },

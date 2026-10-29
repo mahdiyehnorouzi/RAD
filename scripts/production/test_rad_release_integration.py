@@ -34,6 +34,12 @@ SPEC.loader.exec_module(broker)
 REPO_ROOT = Path(__file__).resolve().parents[2]
 API_DIR = REPO_ROOT / "apps" / "api"
 MIGRATION_FILE = API_DIR / "src" / "database" / "migrations" / "1792865771843-AddProductAttributes.ts"
+# Second real migration (production schema-drift recovery): additive
+# PaymentIntent columns only, no new table — see that migration file's own
+# header for why it exists. `migration:show` against `apps/api`'s real
+# migrations directory reports BOTH files, so this test's manifest/baseline
+# schema have to account for both, not just the first one.
+MIGRATION_FILE_2 = API_DIR / "src" / "database" / "migrations" / "1793032301266-AddPaymentIntentGatewayColumns.ts"
 CLI_DATA_SOURCE = API_DIR / "src" / "database" / "cli-data-source.ts"
 
 DOCKER = shutil.which("docker")
@@ -53,7 +59,8 @@ def _docker_daemon_reachable():
 
 def _prerequisites_met():
     return bool(
-        DOCKER and NPM and MIGRATION_FILE.exists() and CLI_DATA_SOURCE.exists()
+        DOCKER and NPM and MIGRATION_FILE.exists() and MIGRATION_FILE_2.exists()
+        and CLI_DATA_SOURCE.exists()
         and (REPO_ROOT / "node_modules" / "typeorm" / "cli.js").exists()
         and _docker_daemon_reachable()
     )
@@ -107,11 +114,14 @@ class RealPostgresMigrationTests(unittest.TestCase):
         # ProductAttributeValue.productId foreign key) — a minimal,
         # schema-accurate stand-in for that one dependency is enough to
         # exercise the real migration for real, without reimplementing this
-        # repo's full entity set here.
+        # repo's full entity set here. The second migration (gateway
+        # columns) likewise only needs a bare "PaymentIntent" table to
+        # ALTER — same reasoning, same minimal stand-in.
         subprocess.run(
             [DOCKER, "exec", cls.container, "psql",
              "postgresql://postgres:postgres@127.0.0.1:5432/rad_migrate_it", "-c",
-             'CREATE TABLE IF NOT EXISTS "Product" (id text PRIMARY KEY);'],
+             'CREATE TABLE IF NOT EXISTS "Product" (id text PRIMARY KEY);'
+             'CREATE TABLE IF NOT EXISTS "PaymentIntent" (id text PRIMARY KEY);'],
             check=True, capture_output=True, text=True, timeout=15)
 
     @classmethod
@@ -195,22 +205,29 @@ class RealPostgresMigrationTests(unittest.TestCase):
         patch.object(broker, "run", dockerized_run).start()
         self.addCleanup(patch.stopall)
 
-    def manifest_for(self, path):
-        return {"migrations": [{"name": path.name, "sha256": file_sha256(path)}]}
+    def manifest_for(self, *paths):
+        return {"migrations": [{"name": path.name, "sha256": file_sha256(path)} for path in paths]}
 
     def table_names(self):
         result = broker.run(broker.PSQL, self.database_url, "-tAc",
                             "SELECT tablename FROM pg_tables WHERE schemaname='public';")
         return {line.strip() for line in result.stdout.splitlines() if line.strip()}
 
+    def payment_intent_columns(self):
+        result = broker.run(broker.PSQL, self.database_url, "-tAc",
+                            "SELECT column_name FROM information_schema.columns "
+                            "WHERE table_name = 'PaymentIntent';")
+        return {line.strip() for line in result.stdout.splitlines() if line.strip()}
+
     def test_full_migration_lifecycle_against_real_postgres(self):
-        manifest = self.manifest_for(MIGRATION_FILE)
+        manifest = self.manifest_for(MIGRATION_FILE, MIGRATION_FILE_2)
 
         # 1. Initial state: nothing applied yet, correctly detected as pending.
         shown = broker.migration_show(NPM, API_DIR, self.database_url, "127.0.0.1")
         pending = broker.reconcile_migrations(manifest, shown)
-        self.assertEqual([m["name"] for m in pending], [MIGRATION_FILE.name])
+        self.assertEqual({m["name"] for m in pending}, {MIGRATION_FILE.name, MIGRATION_FILE_2.name})
         self.assertEqual(self.table_names() & {"ProductAttribute", "ProductAttributeValue"}, set())
+        self.assertEqual(self.payment_intent_columns() & {"gatewayAuthority", "gatewayRefId", "verifiedAt"}, set())
 
         # 2. A real backup, with a real, non-empty, structurally-valid dump.
         dump = broker.backup_database(self.database_url, "it")
@@ -224,10 +241,12 @@ class RealPostgresMigrationTests(unittest.TestCase):
         for table in ("ProductAttribute", "ProductAttributeOption",
                       "ProductAttributeCategory", "ProductAttributeValue"):
             self.assertIn(table, tables)
+        for column in ("gatewayAuthority", "gatewayRefId", "verifiedAt"):
+            self.assertIn(column, self.payment_intent_columns())
 
-        # 4. migration:show now reports it applied; reconciling again finds
-        #    nothing pending — the exact check migrate_api() relies on to
-        #    skip a second backup/run on a later, idempotent retry.
+        # 4. migration:show now reports both applied; reconciling again
+        #    finds nothing pending — the exact check migrate_api() relies on
+        #    to skip a second backup/run on a later, idempotent retry.
         shown_after = broker.migration_show(NPM, API_DIR, self.database_url, "127.0.0.1")
         self.assertEqual(broker.reconcile_migrations(manifest, shown_after), [])
 

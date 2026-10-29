@@ -10,7 +10,13 @@ import { useCatalog } from "@/components/catalog";
 import { AccountShell } from "../../account/account-shell";
 import { CardListSkeleton } from "@/components/ui/skeleton";
 import { HelpPanel } from "@/components/contact";
-import { OrderPolicies, OrderStatusGuide } from "@/components/help";
+// Imported from its own sub-path, not the `@/components/help` barrel —
+// that barrel also reaches help-hub/policy-page, which this client
+// component (order detail) has no use for.
+import {
+  OrderPolicies,
+  OrderStatusGuide,
+} from "@/components/help/purchase-path";
 import { NoAccessState, NotFoundState } from "@/components/states";
 import {
   PAYMENT_HELP_STATUSES,

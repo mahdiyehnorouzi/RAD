@@ -24,6 +24,16 @@ export function registryProducts(): Product[] {
 }
 
 const CATALOG_PROCESS_CACHE_MS = 30_000;
+/**
+ * A genuinely empty API response is valid data (see `loadArtworks`) and is
+ * never backfilled — but caching it for the full window risks a transient
+ * blip (deploy, API restart) looking "stuck" on an empty Homepage for up to
+ * 30s on this process. Re-checking sooner costs nothing when the API really
+ * is still empty, and self-heals fast when it was a blip — independent of
+ * whether the revalidation webhook (`refreshCatalog` / `revalidate-catalog`)
+ * reaches this process at all.
+ */
+const EMPTY_CATALOG_PROCESS_CACHE_MS = 5_000;
 
 /**
  * Module-scope (one per worker process), not React's `cache()`: that cache is
@@ -51,7 +61,20 @@ function loadCatalogForProcess(): Promise<CatalogLoad> {
     });
     return { artworks, products: shopProducts(artworks), origin };
   })();
-  processCatalogCache = { value, expiresAt: now + CATALOG_PROCESS_CACHE_MS };
+  processCatalogCache = {
+    value,
+    // Set eagerly so a concurrent caller within this tick reuses the same
+    // in-flight promise; corrected to the shorter window below once we
+    // know whether this result is empty.
+    expiresAt: now + CATALOG_PROCESS_CACHE_MS,
+  };
+  value.then((result) => {
+    if (processCatalogCache?.value !== value) return;
+    const ttl = result.artworks.length
+      ? CATALOG_PROCESS_CACHE_MS
+      : EMPTY_CATALOG_PROCESS_CACHE_MS;
+    processCatalogCache.expiresAt = now + ttl;
+  });
   // Don't cache a rejection: let the next caller retry instead of failing
   // every request for the rest of the window.
   value.catch(() => {
@@ -73,7 +96,10 @@ export const getCatalog = cache(loadCatalogForProcess);
 
 /** Names and numbers only: enough for breadcrumbs, toasts and notices on every page. */
 export const getCatalogIndex = cache(async (): Promise<CatalogIndexEntry[]> => {
-  const { artworks, products } = await getCatalog();
+  const { artworks, products, origin } = await getCatalog();
+  // Build-time registry fallback must not ship as the customer catalog index
+  // (those slugs are demo records, not live Admin works).
+  if (origin !== "api") return [];
   const inShop = new Set(products.map((product) => product.slug));
   return artworks.map((artwork) => ({
     slug: artwork.slug,

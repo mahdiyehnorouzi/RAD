@@ -126,7 +126,12 @@ export class OrdersService implements OnModuleInit {
       where: { ownerKey },
       relations: { product: true },
     });
-    if (!cart.length) throw new BadRequestException("سبد خرید خالی است.");
+    if (!cart.length) {
+      throw new BadRequestException({
+        message: "سبد خرید خالی است.",
+        code: "cart_empty",
+      });
+    }
 
     const phone = normalizePhone(input.phone);
     if (!phone) {
@@ -145,7 +150,10 @@ export class OrdersService implements OnModuleInit {
         lock: { mode: "pessimistic_write" },
       });
       if (products.length !== slugs.length) {
-        throw new BadRequestException("یکی از آثار سبد دیگر موجود نیست.");
+        throw new BadRequestException({
+          message: "یکی از آثار سبد دیگر موجود نیست.",
+          code: "cart_items_unavailable",
+        });
       }
       await this.inventory.assertHeldForCheckout(manager, ownerKey, products);
       if (
@@ -153,7 +161,10 @@ export class OrdersService implements OnModuleInit {
           (product) => product.tomanPrice === null || product.usdPrice === null,
         )
       ) {
-        throw new BadRequestException("یکی از آثار سبد قیمت فروش ندارد.");
+        throw new BadRequestException({
+          message: "یکی از آثار سبد قیمت فروش ندارد.",
+          code: "cart_item_price_missing",
+        });
       }
 
       const total = products.reduce(
