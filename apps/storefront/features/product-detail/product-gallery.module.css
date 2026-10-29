@@ -103,6 +103,15 @@
 }
 
 .stageTrack {
+  /* Absolutely positioned against `.stage`'s own rendered box (`inset: 0`)
+     instead of relying on `width: auto` to independently fill it: `.stage`'s
+     width comes from a `calc(100% + 2 * var(--page))` full-bleed trick on
+     phone (see the `@media (--phone)` rule below), and when that `calc()`
+     and this element's own box resolve their fractional pixels differently,
+     the track falls a px or two short of `.stage`'s actual edge — exposing
+     `.stage`'s own placeholder background as a thin seam at the side. */
+  position: absolute;
+  inset: 0;
   display: flex;
   height: 100%;
   overflow-x: auto;
