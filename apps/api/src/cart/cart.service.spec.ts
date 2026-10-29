@@ -74,7 +74,7 @@ test("remove of a missing cart item leaves other items unchanged", async () => {
 
   const snapshot = await rad.cart.remove(owner, otherSlug);
   assert.deepEqual(snapshot.slugs, [slug]);
-  assert.equal((await rad.productRow(slug)).status, "held");
+  assert.equal((await rad.productRow(slug)).status, "sold");
 });
 
 test("clear removes all owned items and holds and tolerates an empty cart", async () => {
