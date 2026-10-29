@@ -193,3 +193,29 @@ describe("ensureStaff: production dev-password lockout is unaffected by the fix"
     );
   });
 });
+
+describe("ensureStaff: dev-password lockout tolerates a password-less (Google-only) staff row", () => {
+  // Not DB-backed: the `User.passwordHash` column is NOT NULL today (no
+  // migration here changes that), so embedded-postgres would reject this
+  // insert. The scenario this guards is only reachable after the Google
+  // Sign-In migration has run and this older artifact becomes a rollback
+  // target - exercised here against the function directly with a stub
+  // repo, the same way `auth.service.spec.ts` covers its guards.
+  test("lockPublicPassword returns false instead of throwing when passwordHash is null", async () => {
+    const { lockPublicPassword } = await import("./ensure-staff");
+    const stubUsers = {
+      findOne: async () => ({
+        id: "staff-1",
+        email: "mahdiyeh.norozi77@gmail.com",
+        passwordHash: null,
+      }),
+      update: async () => ({}),
+    } as never;
+    const locked = await lockPublicPassword(
+      stubUsers,
+      "mahdiyeh.norozi77@gmail.com",
+      "rad-studio-owner",
+    );
+    assert.equal(locked, false);
+  });
+});

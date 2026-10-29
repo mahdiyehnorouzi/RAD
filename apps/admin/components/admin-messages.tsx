@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import type { AdminContactMessage, AdminOrder } from "../lib/admin-data";
+import { AdminAsyncRegion } from "./admin-async-region";
 import { AdminContactMessageItem } from "./admin-contact-message";
 
 type Filter = "new" | "resolved" | "all";
@@ -19,6 +20,11 @@ const filters: { id: Filter; label: string }[] = [
  */
 export function AdminMessages({
   messages,
+  loading,
+  loadError,
+  refreshing = false,
+  refreshError = false,
+  onRetry,
   orders,
   canWrite,
   onSetStatus,
@@ -26,6 +32,11 @@ export function AdminMessages({
   onOpenOrder,
 }: {
   messages: AdminContactMessage[];
+  loading: boolean;
+  loadError: boolean;
+  refreshing?: boolean;
+  refreshError?: boolean;
+  onRetry: () => void;
   orders: AdminOrder[];
   canWrite: boolean;
   onSetStatus: (
@@ -96,35 +107,48 @@ export function AdminMessages({
             onClick={() => setFilter(id)}
           >
             {label}
-            <span>{number.format(counts[id])}</span>
+            <span>
+              {loading || loadError ? "…" : number.format(counts[id])}
+            </span>
           </button>
         ))}
       </div>
 
-      {visible.length ? (
-        <div className="contact-message-list">
-          {visible.map((message) => (
-            <AdminContactMessageItem
-              key={message.id}
-              message={message}
-              replies={repliesByRoot.get(message.id) ?? []}
-              order={
-                message.orderId ? orderById.get(message.orderId) : undefined
-              }
-              canWrite={canWrite}
-              onSetStatus={onSetStatus}
-              onReply={onReply}
-              onOpenOrder={onOpenOrder}
-            />
-          ))}
-        </div>
-      ) : (
-        <p className="contact-message-empty">
-          {filter === "new"
-            ? "پیام رسیدگی‌نشده‌ای نیست."
-            : "هنوز پیامی در این دسته نیست."}
-        </p>
-      )}
+      <AdminAsyncRegion
+        loading={loading}
+        loadError={loadError}
+        refreshing={refreshing}
+        refreshError={refreshError}
+        onRetry={onRetry}
+        errorMessage="دریافت پیام‌ها ناموفق بود. اتصال اینترنت را بررسی و دوباره تلاش کنید."
+        loadingLabel="در حال بارگذاری پیام‌ها…"
+        skeleton="list"
+      >
+        {visible.length ? (
+          <div className="contact-message-list">
+            {visible.map((message) => (
+              <AdminContactMessageItem
+                key={message.id}
+                message={message}
+                replies={repliesByRoot.get(message.id) ?? []}
+                order={
+                  message.orderId ? orderById.get(message.orderId) : undefined
+                }
+                canWrite={canWrite}
+                onSetStatus={onSetStatus}
+                onReply={onReply}
+                onOpenOrder={onOpenOrder}
+              />
+            ))}
+          </div>
+        ) : (
+          <p className="contact-message-empty">
+            {filter === "new"
+              ? "پیام رسیدگی‌نشده‌ای نیست."
+              : "هنوز پیامی در این دسته نیست."}
+          </p>
+        )}
+      </AdminAsyncRegion>
     </section>
   );
 }

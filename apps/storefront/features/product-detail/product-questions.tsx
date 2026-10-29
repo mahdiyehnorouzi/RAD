@@ -11,7 +11,10 @@ import {
   Truck,
 } from "lucide-react";
 import type { FaqContent, FaqIcon } from "@rad/types";
-import { ShippingReturnsDisclosure } from "@/components/help";
+// Imported from its own sub-path, not the `@/components/help` barrel —
+// that barrel also reaches help-hub/policy-page, which the PDP has no
+// use for.
+import { ShippingReturnsDisclosure } from "@/components/help/purchase-path";
 import { useLocale } from "@/components/i18n";
 import type { WorkTexture } from "@/lib/catalog/material-texture";
 import { pdpCopy } from "./const";

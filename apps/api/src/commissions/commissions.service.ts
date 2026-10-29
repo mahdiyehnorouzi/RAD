@@ -101,11 +101,10 @@ export class CommissionsService {
 
   async addMineMessage(actor: Actor, id: string, body: LocaleCopy) {
     this.requireSignedIn(actor);
-    const current = this.toCommission(
-      (await this.requireOwned(actor, id)).payload,
+    await this.requireOwned(actor, id);
+    const { next } = await this.mutateCommission(id, (current) =>
+      addCommissionMessage(current, { author: "customer", body }),
     );
-    const next = addCommissionMessage(current, { author: "customer", body });
-    await this.commissions.update({ id }, { payload: next });
     return this.toCustomer(next);
   }
 
@@ -121,28 +120,24 @@ export class CommissionsService {
   }
 
   async beginReview(id: string) {
-    const row = await this.commissions.findOne({ where: { id } });
-    if (!row) throw new NotFoundException("سفارش اختصاصی پیدا نشد.");
-    const current = this.toCommission(row.payload);
-    const next = beginCommissionReview(current);
-    if (next === current) return this.toAdmin(row);
-    await this.commissions.update({ id }, { payload: next });
+    const { row, next } = await this.mutateCommission(id, (current) =>
+      beginCommissionReview(current),
+    );
     return this.toAdmin({ ...row, payload: next });
   }
 
   async decide(id: string, input: CommissionDecideDto) {
-    const row = await this.commissions.findOne({ where: { id } });
-    if (!row) throw new NotFoundException("سفارش اختصاصی پیدا نشد.");
-    let current = this.toCommission(row.payload);
-    if (current.stage === "design_submitted") {
-      current = beginCommissionReview(current);
-    }
-    const next = artistDecideCommission(current, input.decision, {
-      reason: input.reason,
-      alternative: input.alternative,
-      change: input.change,
+    const { row, next } = await this.mutateCommission(id, (current) => {
+      const started =
+        current.stage === "design_submitted"
+          ? beginCommissionReview(current)
+          : current;
+      return artistDecideCommission(started, input.decision, {
+        reason: input.reason,
+        alternative: input.alternative,
+        change: input.change,
+      });
     });
-    await this.commissions.update({ id }, { payload: next });
     const kind =
       input.decision === "approve"
         ? "commission_approved"
@@ -154,15 +149,9 @@ export class CommissionsService {
   }
 
   async addArtistMessage(id: string, body: LocaleCopy, internal?: boolean) {
-    const row = await this.commissions.findOne({ where: { id } });
-    if (!row) throw new NotFoundException("سفارش اختصاصی پیدا نشد.");
-    const current = this.toCommission(row.payload);
-    const next = addCommissionMessage(current, {
-      author: "artist",
-      body,
-      internal,
-    });
-    await this.commissions.update({ id }, { payload: next });
+    const { row, next } = await this.mutateCommission(id, (current) =>
+      addCommissionMessage(current, { author: "artist", body, internal }),
+    );
     if (!internal) {
       await this.notices.createForOwner(row.ownerKey, "commission_message", id);
     }
@@ -170,13 +159,53 @@ export class CommissionsService {
   }
 
   async saveAdmin(id: string, payload: MakingCommission) {
-    const row = await this.commissions.findOne({ where: { id } });
-    if (!row) throw new NotFoundException("سفارش اختصاصی پیدا نشد.");
-    const previous = this.toCommission(row.payload);
-    const next = { ...payload, id, updatedAt: Date.now() };
-    await this.commissions.update({ id }, { payload: next });
+    const { row, previous, next } = await this.mutateCommission(id, () => ({
+      ...payload,
+      id,
+      updatedAt: Date.now(),
+    }));
     await this.emitStageNotice(row.ownerKey, previous.stage, next.stage, id);
     return this.toAdmin({ ...row, payload: next });
+  }
+
+  /**
+   * Every write here was read -> compute `next` in JS -> blind update(),
+   * with no lock of any kind — two concurrent writers (two admins, or an
+   * admin and the customer messaging at once) could both read the same
+   * row, and whichever update() landed second silently clobbered the
+   * first's message/stage/audit entry with an older snapshot (lost
+   * update). A row lock inside a transaction serializes concurrent
+   * mutations of the same commission instead: the second writer's
+   * `SELECT ... FOR UPDATE` blocks until the first transaction commits,
+   * then reads the genuinely-current row — the same pattern
+   * `OrdersService` already uses for order rows. (An optimistic
+   * updatedAt-matches retry was tried first; two writers racing in close
+   * lockstep could keep re-colliding past a bounded retry count — this
+   * doesn't have that failure mode.)
+   */
+  private async mutateCommission(
+    id: string,
+    mutate: (current: MakingCommission, row: Commission) => MakingCommission,
+  ): Promise<{
+    row: Commission;
+    previous: MakingCommission;
+    next: MakingCommission;
+  }> {
+    return this.commissions.manager.transaction(async (manager) => {
+      const row = await manager.getRepository(Commission).findOne({
+        where: { id },
+        lock: { mode: "pessimistic_write" },
+      });
+      if (!row) throw new NotFoundException("سفارش اختصاصی پیدا نشد.");
+      const current = this.toCommission(row.payload);
+      const next = mutate(current, row);
+      if (next !== current) {
+        await manager
+          .getRepository(Commission)
+          .update({ id }, { payload: next });
+      }
+      return { row, previous: current, next };
+    });
   }
 
   private async emitStageNotice(

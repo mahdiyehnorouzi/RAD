@@ -305,7 +305,10 @@ export class InventoryService implements OnModuleInit, OnModuleDestroy {
         );
         if (claimed.affected) continue;
       }
-      throw new ConflictException(`اثر «${product.name}» دیگر قابل خرید نیست.`);
+      throw new ConflictException({
+        message: `اثر «${product.name}» دیگر قابل خرید نیست.`,
+        code: "cart_item_unavailable",
+      });
     }
   }
 

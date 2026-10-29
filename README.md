@@ -413,7 +413,16 @@ Requires SMTP settings in `apps/api/.env`. Without SMTP, registration and login 
 
 ### Payments
 
-Default mode is `PAYMENT_MODE=manual_card`: checkout returns bank transfer instructions and accepts a receipt image. Switch to `gateway` when a payment provider adapter is wired.
+Default mode is `PAYMENT_MODE=manual_card`: checkout returns bank transfer instructions and accepts a receipt image. `PAYMENT_MODE=gateway` starts a ZarinPal session instead. Do **not** flip production to `gateway` (or away from it) as part of a UI deploy — payment mode is an operator setting on the API host.
+
+Temporary card-transfer (safe enablement):
+
+1. Confirm live ZarinPal is *not* the intended path for this window (pending orders already on `zarinpal` stay on the gateway flow).
+2. On the API host only, set `PAYMENT_MODE=manual_card` plus the real `PAYMENT_CARD_NUMBER`, `PAYMENT_CARD_HOLDER` (the name printed on the card, not a studio alias), and `PAYMENT_CARD_BANK`.
+3. Restart the API. From `apps/api`, verify the fingerprint only — digit count and whether holder/bank are set. This prints no PAN, holder, or bank name:
+   `npx tsx -e "import { manualPaymentConfigFingerprint } from './src/payment/payment-session.ts'; console.log(manualPaymentConfigFingerprint())"`
+4. Place a test order and confirm the storefront shows that holder/bank, copies 16 digits with no spaces, and still requires a receipt. Copying the number must not change order status.
+5. To return to ZarinPal later, set `PAYMENT_MODE=gateway` only after a sandbox/live round trip; new checkouts follow the gateway, existing `manual_card` pending orders keep receipt upload.
 
 ---
 

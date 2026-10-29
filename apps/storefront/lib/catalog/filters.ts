@@ -6,6 +6,7 @@ export type StatusFilter = (typeof STATUS_FILTERS)[number];
 export const CATALOG_SORTS = [
   "newest",
   "oldest",
+  "availability",
   "price-asc",
   "price-desc",
 ] as const;
@@ -46,7 +47,11 @@ function first(value: string | string[] | undefined) {
   return (Array.isArray(value) ? value[0] : value) ?? "";
 }
 
-function oneOf<T extends string>(list: readonly T[], value: string, fallback: T) {
+function oneOf<T extends string>(
+  list: readonly T[],
+  value: string,
+  fallback: T,
+) {
   return (list as readonly string[]).includes(value) ? (value as T) : fallback;
 }
 

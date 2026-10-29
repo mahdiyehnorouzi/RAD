@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -10,6 +10,20 @@ export const metadata: Metadata = {
     shortcut: "/rad-logo.png",
   },
 };
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  return <html lang="fa" dir="rtl"><body>{children}</body></html>;
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  interactiveWidget: "resizes-content",
+};
+export default function AdminLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <html lang="fa" dir="rtl">
+      <body>{children}</body>
+    </html>
+  );
 }
