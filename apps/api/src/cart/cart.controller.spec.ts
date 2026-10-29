@@ -26,12 +26,10 @@ test("cart route decorators preserve existing methods and paths", () => {
   }
 });
 
-test("AddCartItemDto accepts a nonempty slug and rejects missing, blank or non-string values", async () => {
+test("AddCartItemDto validates slug", async () => {
   for (const slug of ["work-a", "another-work"]) {
-    assert.deepEqual(
-      await validate(plainToInstance(AddCartItemDto, { slug })),
-      [],
-    );
+    const dto = plainToInstance(AddCartItemDto, { slug });
+    assert.deepEqual(await validate(dto), []);
   }
 
   for (const input of [{}, { slug: "" }, { slug: 123 }, { slug: null }]) {
@@ -40,7 +38,7 @@ test("AddCartItemDto accepts a nonempty slug and rejects missing, blank or non-s
   }
 });
 
-test("controller resolves the actor from each request and delegates unchanged arguments", async () => {
+test("controller forwards resolved actors and arguments", async () => {
   const calls: unknown[][] = [];
   const guest: Actor = { user: null, guestId: "test-guest" };
   const signedIn: Actor = {
@@ -75,7 +73,7 @@ test("controller resolves the actor from each request and delegates unchanged ar
       calls.push(["clear", actor]);
       return { slugs: [], holds: {}, prices: {} };
     },
-  } as CartService;
+  } as unknown as CartService;
   const controller = new CartController(cart, identity);
   const guestRequest = { guestId: "test-guest" } as AuthedRequest;
   const userRequest = {
@@ -84,13 +82,10 @@ test("controller resolves the actor from each request and delegates unchanged ar
   } as AuthedRequest;
 
   assert.deepEqual((await controller.get(guestRequest)).slugs, []);
-  assert.deepEqual((await controller.add({ slug: "work-a" }, userRequest)).slugs, [
-    "work-a",
-  ]);
-  assert.deepEqual(
-    (await controller.remove("work-a", userRequest)).slugs,
-    [],
-  );
+  const added = await controller.add({ slug: "work-a" }, userRequest);
+  assert.deepEqual(added.slugs, ["work-a"]);
+  const removed = await controller.remove("work-a", userRequest);
+  assert.deepEqual(removed.slugs, []);
   assert.deepEqual((await controller.clear(guestRequest)).slugs, []);
 
   assert.deepEqual(calls, [
