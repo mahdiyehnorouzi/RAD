@@ -96,7 +96,10 @@ export const getCatalog = cache(loadCatalogForProcess);
 
 /** Names and numbers only: enough for breadcrumbs, toasts and notices on every page. */
 export const getCatalogIndex = cache(async (): Promise<CatalogIndexEntry[]> => {
-  const { artworks, products } = await getCatalog();
+  const { artworks, products, origin } = await getCatalog();
+  // Build-time registry fallback must not ship as the customer catalog index
+  // (those slugs are demo records, not live Admin works).
+  if (origin !== "api") return [];
   const inShop = new Set(products.map((product) => product.slug));
   return artworks.map((artwork) => ({
     slug: artwork.slug,

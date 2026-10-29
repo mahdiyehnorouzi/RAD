@@ -41,3 +41,17 @@ export function cardNumberGroups(raw: string) {
       .match(/.{1,4}/g) ?? []
   );
 }
+
+/** Digits only — what «کپی شماره کارت» writes to the clipboard. */
+export function cardDigitsForCopy(raw: string) {
+  return cardNumberGroups(raw).join("");
+}
+
+/** Split a printed cardholder name onto two lines (given name / family name). */
+export function holderNameLines(name: string) {
+  const trimmed = name.trim();
+  if (!trimmed) return [];
+  const parts = trimmed.split(/\s+/);
+  if (parts.length < 2) return [trimmed];
+  return [parts.slice(0, -1).join(" "), parts[parts.length - 1]!];
+}

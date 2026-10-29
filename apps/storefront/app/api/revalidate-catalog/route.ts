@@ -1,5 +1,5 @@
 import { timingSafeEqual } from "node:crypto";
-import { updateTag } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { CATALOG_TAG } from "@/lib/catalog/catalog-tag";
 import { resetProcessCatalogCache } from "@/lib/catalog/get-catalog-works";
 
@@ -58,6 +58,11 @@ export async function POST(request: Request) {
   }
   updateTag(CATALOG_TAG);
   resetProcessCatalogCache();
+  // Latest Works is `force-dynamic`; tagged fetch + the process cache are the
+  // source of truth. Do not `revalidatePath("/", "layout")`: that purges the
+  // Client Cache and every nested route (PLP, PDP, about, help). Invalidate
+  // only the locale index pages (`app/[locale]/page.tsx`).
+  revalidatePath("/[locale]", "page");
   return Response.json(
     { ok: true },
     { headers: { "cache-control": "no-store" } },

@@ -1,0 +1,214 @@
+.details {
+  display: grid;
+  justify-items: center;
+  gap: 0.95rem;
+}
+
+.card {
+  --card-blue: #6686d2;
+  --card-ink: #f7f4ff;
+  position: relative;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  width: min(100%, 21.25rem);
+  min-height: 34rem;
+  padding: 1.85rem 1.55rem 1.45rem;
+  border: 0;
+  border-radius: 1.85rem;
+  background: var(--card-blue);
+  color: var(--card-ink);
+  box-shadow: 0 22px 44px -24px rgb(24 35 31 / 0.45);
+}
+
+.holder {
+  display: grid;
+  align-content: start;
+  justify-items: start;
+  gap: 0.2rem;
+  justify-self: start;
+  max-width: 9.5rem;
+  color: rgb(255 255 255 / 0.96);
+  font-size: 1.22rem;
+  font-weight: var(--font-weight-regular, 400);
+  line-height: 1.7;
+}
+
+.number {
+  display: grid;
+  justify-items: start;
+  align-content: center;
+  gap: 0.72rem;
+  width: max-content;
+  justify-self: start;
+  align-self: center;
+  margin-block-start: 0.4rem;
+  margin-inline-start: 0.85rem;
+  color: #fff;
+  font-size: clamp(1.55rem, 6vw, 1.9rem);
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--font-weight-regular, 400);
+  letter-spacing: 0.12em;
+  line-height: 1;
+  unicode-bidi: isolate;
+  user-select: all;
+}
+
+.bank {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  width: max-content;
+  justify-self: start;
+  color: #fff;
+  font-size: 0.98rem;
+  font-weight: var(--font-weight-medium, 500);
+  letter-spacing: 0.01em;
+}
+
+.mark {
+  width: 1.35rem;
+  height: 1.35rem;
+  flex: none;
+}
+
+.copy {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: min(100%, 21.25rem);
+  min-height: 3.1rem;
+  padding: 0.7rem 1.2rem;
+  border: 0;
+  border-radius: 999px;
+  background: #1c3a32;
+  color: var(--paper);
+  font: inherit;
+  font-size: 0.95rem;
+  cursor: pointer;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    transform 140ms var(--rad-kiln-ease, cubic-bezier(0.22, 1, 0.36, 1)),
+    background 140ms var(--rad-kiln-ease, cubic-bezier(0.22, 1, 0.36, 1));
+}
+
+.copy svg {
+  width: 1.05rem;
+  height: 1.05rem;
+  stroke-width: 1.8;
+}
+
+.copy:active {
+  transform: scale(0.97);
+}
+
+.copy[data-copied] {
+  background: #16312b;
+}
+
+@media (--fine-pointer) {
+  .copy:hover {
+    background: #16312b;
+  }
+}
+
+.copy:focus-visible {
+  outline: 2px solid var(--sand);
+  outline-offset: 3px;
+}
+
+.hint {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.7;
+  text-align: center;
+}
+
+.amount {
+  display: grid;
+  justify-items: center;
+  gap: 0.45rem;
+  width: min(100%, 21.25rem);
+  padding: 1.05rem 1rem 1.15rem;
+  border: 1px solid color-mix(in srgb, var(--sand) 55%, var(--line));
+  border-radius: 1rem;
+  background: color-mix(in srgb, var(--paper) 70%, var(--canvas));
+  text-align: center;
+}
+
+.amount > span {
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
+.amount > b {
+  color: var(--ink);
+  font-size: clamp(1.2rem, 3vw, 1.45rem);
+  font-weight: var(--font-weight-medium, 500);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.amountCopy {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  min-height: 2.5rem;
+  padding: 0.3rem 0.9rem;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--clay);
+  font: inherit;
+  font-size: 0.82rem;
+  text-decoration: underline;
+  text-underline-offset: 0.28em;
+  cursor: pointer;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.amountCopy svg {
+  width: 0.95rem;
+  height: 0.95rem;
+}
+
+.amountCopy:active {
+  transform: scale(0.97);
+}
+
+.alert {
+  margin: 0;
+  color: var(--focus);
+  font-size: 0.84rem;
+  text-align: center;
+}
+
+@media (--phone) {
+  .card {
+    min-height: 31.5rem;
+    padding: 1.55rem 1.3rem 1.25rem;
+  }
+
+  .number {
+    font-size: 1.58rem;
+  }
+}
+
+@media (--reduced-motion) {
+  .copy,
+  .amountCopy {
+    transition: none;
+  }
+
+  .copy:active,
+  .amountCopy:active {
+    transform: none;
+  }
+}

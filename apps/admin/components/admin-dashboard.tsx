@@ -5,7 +5,6 @@ import { effectiveProductStatus } from "@rad/types";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Archive,
-  ArrowLeft,
   Bell,
   Boxes,
   ChevronLeft,
@@ -13,8 +12,6 @@ import {
   CircleDollarSign,
   CircleGauge,
   CircleHelp,
-  Eye,
-  EyeOff,
   Hammer,
   Image as ImageIcon,
   MessageSquareQuote,
@@ -25,7 +22,6 @@ import {
   LayoutDashboard,
   LogOut,
   Menu,
-  MoreVertical,
   Package,
   PackageCheck,
   PackageX,
@@ -44,11 +40,7 @@ import {
 } from "lucide-react";
 import { useAdminWorkspace } from "../hooks/use-admin-workspace";
 import {
-  loadRememberedEmail,
-  loadRememberMe,
-  saveLoginPreferences,
-} from "../lib/admin-storage";
-import {
+  commissionStageLabels,
   isVideoStorage,
   orderStatusLabels,
   orderStatusOptions,
@@ -77,7 +69,12 @@ import { AdminDamageReports } from "./admin-damage-reports";
 import { AdminOrderDamage } from "./admin-order-damage";
 import { AdminOrderPolicies } from "./admin-order-policies";
 import type { DamageReview } from "./admin-damage-report";
-import { ConfirmDialog, Field, useBodyScrollLock } from "./admin-dialog";
+import {
+  ConfirmDialog,
+  Field,
+  useBodyScrollLock,
+  useIsMobileViewport,
+} from "./admin-dialog";
 import { AdminReviews } from "./admin-reviews";
 import { AdminShapeQuestions } from "./admin-shape-questions";
 import { AdminHelpQuestions } from "./admin-help-questions";
@@ -86,6 +83,15 @@ import { EmptyState, StatusBadge } from "./admin-list-chrome";
 import { InviteDialog, Members } from "./admin-members";
 import { UsersPanel } from "./admin-users";
 import { ProductAttributeFields } from "./admin-product-attribute-fields";
+import { AdminRowMenu } from "./admin-row-menu";
+import { AdminLogin } from "./admin-login";
+import {
+  briefExcerpt,
+  canSelectAsCover,
+  coverImage,
+  selectAsCover,
+  selectAsCoverBySrc,
+} from "../lib/product-cover";
 import { StageMeter } from "@rad/ui";
 
 const navItems: { id: AdminSection; label: string; icon: typeof Package }[] = [
@@ -845,7 +851,7 @@ function Overview({
             دیدن همه
           </button>
         </div>
-        <div className="recent-products" style={{ paddingTop: 18 }}>
+        <div className="recent-products">
           {recentProducts.map((product) => (
             <div className="recent-card" key={product.id}>
               <ProductThumb product={product} />
@@ -858,25 +864,30 @@ function Overview({
           ))}
           {!recentProducts.length && <p>هنوز اثری ثبت نشده است.</p>}
         </div>
-        <div className="activity-list" style={{ paddingTop: 10 }}>
+        <div className="activity-list">
           {recentProducts.slice(0, 4).map((product) => (
             <div className="activity-row" key={`activity-${product.id}`}>
               <ProductThumb product={product} />
               <div>
                 <strong>{product.name}</strong>
                 <small>
+                  {product.category} ·{" "}
                   {product.status === "available"
                     ? "اثر آمادهٔ فروش شد"
                     : "اطلاعات اثر به‌روزرسانی شد"}{" "}
                   · {relativeTime(product.updatedAt)}
                 </small>
               </div>
+              <StatusBadge
+                label={productStatusLabel(product)}
+                tone={statusTone(product)}
+              />
             </div>
           ))}
         </div>
       </section>
       <section className="split-grid">
-        <article className="paper-panel">
+        <article className="paper-panel overview-commissions">
           <div className="panel-heading">
             <div>
               <span className="eyebrow">سفارش اختصاصی</span>
@@ -891,14 +902,32 @@ function Overview({
             </button>
           </div>
           {workspace.commissions.slice(0, 3).map((item) => (
-            <div className="compact-row" key={item.id}>
+            <button
+              className="compact-row"
+              type="button"
+              key={item.id}
+              onClick={() => onNavigate("commissions")}
+            >
               <div>
                 <strong>{item.customerName}</strong>
-                <small>
-                  {item.id} · {item.concept}
-                </small>
+                <small className="compact-row-id">{item.id}</small>
+                {item.concept ? (
+                  <p className="compact-row-excerpt">
+                    {briefExcerpt(item.concept)}
+                  </p>
+                ) : null}
               </div>
-            </div>
+              <StatusBadge
+                label={commissionStageLabels[item.stage]}
+                tone={
+                  item.stage === "declined"
+                    ? "muted"
+                    : item.nextActor === "artist"
+                      ? "oxide"
+                      : "green"
+                }
+              />
+            </button>
           ))}
           {!workspace.commissions.length && (
             <p>هنوز طرح اختصاصی‌ای نرسیده است.</p>
@@ -991,6 +1020,7 @@ function Products({
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [page, setPage] = useState(1);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const isMobile = useIsMobileViewport();
   const inputRef = useRef<HTMLInputElement>(null);
 
   const categories = useMemo(
@@ -1159,23 +1189,26 @@ function Products({
                     <td>{money(product.price)}</td>
                     <td>{date(product.updatedAt)}</td>
                     <td className="cell-actions">
-                      <RowMenu
-                        open={openMenuId === product.id}
-                        onToggle={() =>
-                          setOpenMenuId((current) =>
-                            current === product.id ? null : product.id,
-                          )
-                        }
-                        canWrite={canWrite}
-                        onEdit={() => {
-                          setOpenMenuId(null);
-                          onEdit(product);
-                        }}
-                        onDelete={() => {
-                          setOpenMenuId(null);
-                          onDelete(product);
-                        }}
-                      />
+                      {isMobile ? null : (
+                        <AdminRowMenu
+                          open={openMenuId === product.id}
+                          onToggle={() =>
+                            setOpenMenuId((current) =>
+                              current === product.id ? null : product.id,
+                            )
+                          }
+                          onClose={() => setOpenMenuId(null)}
+                          canWrite={canWrite}
+                          onEdit={() => {
+                            setOpenMenuId(null);
+                            onEdit(product);
+                          }}
+                          onDelete={() => {
+                            setOpenMenuId(null);
+                            onDelete(product);
+                          }}
+                        />
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -1186,38 +1219,43 @@ function Products({
             {pageItems.map((product) => (
               <article className="product-row" key={product.id}>
                 <ProductThumb product={product} />
-                <div className="product-primary">
-                  <span>
-                    {product.category} · {product.artist}
-                  </span>
-                  <h3>{product.name}</h3>
-                  <p>{product.description}</p>
+                <div className="product-copy">
+                  <div className="product-primary">
+                    <span>
+                      {product.category} · {product.artist}
+                    </span>
+                    <h3>{product.name}</h3>
+                    <p>{product.description}</p>
+                  </div>
+                  <div className="product-meta">
+                    <StatusBadge
+                      label={productStatusLabel(product)}
+                      tone={statusTone(product)}
+                    />
+                    <strong>{money(product.price)}</strong>
+                    <small>ویرایش {date(product.updatedAt)}</small>
+                  </div>
                 </div>
-                <div className="product-meta">
-                  <StatusBadge
-                    label={productStatusLabel(product)}
-                    tone={statusTone(product)}
+                {isMobile ? (
+                  <AdminRowMenu
+                    open={openMenuId === product.id}
+                    onToggle={() =>
+                      setOpenMenuId((current) =>
+                        current === product.id ? null : product.id,
+                      )
+                    }
+                    onClose={() => setOpenMenuId(null)}
+                    canWrite={canWrite}
+                    onEdit={() => {
+                      setOpenMenuId(null);
+                      onEdit(product);
+                    }}
+                    onDelete={() => {
+                      setOpenMenuId(null);
+                      onDelete(product);
+                    }}
                   />
-                  <strong>{money(product.price)}</strong>
-                  <small>ویرایش {date(product.updatedAt)}</small>
-                </div>
-                <RowMenu
-                  open={openMenuId === product.id}
-                  onToggle={() =>
-                    setOpenMenuId((current) =>
-                      current === product.id ? null : product.id,
-                    )
-                  }
-                  canWrite={canWrite}
-                  onEdit={() => {
-                    setOpenMenuId(null);
-                    onEdit(product);
-                  }}
-                  onDelete={() => {
-                    setOpenMenuId(null);
-                    onDelete(product);
-                  }}
-                />
+                ) : null}
               </article>
             ))}
           </div>
@@ -1266,60 +1304,11 @@ function Products({
   );
 }
 
-function RowMenu({
-  open,
-  onToggle,
-  canWrite,
-  onEdit,
-  onDelete,
-}: {
-  open: boolean;
-  onToggle: () => void;
-  canWrite: boolean;
-  onEdit: () => void;
-  onDelete: () => void;
-}) {
-  return (
-    <>
-      <button
-        className="row-menu-trigger"
-        type="button"
-        onClick={onToggle}
-        aria-haspopup="menu"
-        aria-expanded={open}
-        aria-label="عملیات"
-      >
-        <MoreVertical />
-      </button>
-      {open && (
-        <div className="row-menu" role="menu">
-          <button type="button" onClick={onEdit} disabled={!canWrite}>
-            <Pencil />
-            ویرایش
-          </button>
-          <button
-            type="button"
-            className="danger"
-            onClick={onDelete}
-            disabled={!canWrite}
-          >
-            <Trash2 />
-            حذف
-          </button>
-        </div>
-      )}
-    </>
-  );
-}
-
 function ProductThumb({ product }: { product: AdminProduct }) {
+  const cover = coverImage(product.images);
   return (
     <div className="product-thumb">
-      {product.images[0]?.src ? (
-        <img src={product.images[0].src} alt="" />
-      ) : (
-        <Package />
-      )}
+      {cover?.src ? <img src={cover.src} alt="" /> : <Package />}
       <span>{number.format(product.images.length)} عکس</span>
     </div>
   );
@@ -1612,6 +1601,9 @@ function ProductDialog({
   >({});
   const controllers = useRef(new Map<string, AbortController>());
   const previewUrlsRef = useRef<string[]>([]);
+  const pendingCover = useRef(new Set<string>());
+  const mediaInputId = "product-media-upload";
+  const coverInputId = "product-cover-upload";
   const uploadingCount = Object.values(uploads).filter(
     (item) => item.pending,
   ).length;
@@ -1724,12 +1716,15 @@ function ProductDialog({
         controller.signal,
       );
       if (controller.signal.aborted) return;
-      setDraft((item) => ({
-        ...item,
-        images: item.images.map((image) =>
+      setDraft((item) => {
+        const images = item.images.map((image) =>
           image.src === previewUrl ? { ...result, src: previewUrl } : image,
-        ),
-      }));
+        );
+        return pendingCover.current.has(previewUrl)
+          ? { ...item, images: selectAsCoverBySrc(images, previewUrl) }
+          : { ...item, images };
+      });
+      pendingCover.current.delete(previewUrl);
       setUploads((items) => ({
         ...items,
         [previewUrl]: { file, progress: 100, pending: false },
@@ -1752,13 +1747,21 @@ function ProductDialog({
       controllers.current.delete(previewUrl);
     }
   };
-  const addImage = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const addImage = (
+    event: React.ChangeEvent<HTMLInputElement>,
+    asCover = false,
+  ) => {
     const files = Array.from(event.target.files ?? []);
     event.target.value = "";
     setImageError("");
     for (const file of files) {
+      if (asCover && file.type.startsWith("video/")) {
+        setImageError("کاور اثر باید تصویر باشد، نه ویدیو.");
+        continue;
+      }
       const src = URL.createObjectURL(file);
       previewUrlsRef.current.push(src);
+      if (asCover) pendingCover.current.add(src);
       setDraft((item) => ({
         ...item,
         images: [
@@ -1778,6 +1781,7 @@ function ProductDialog({
   const removeMedia = (index: number) => {
     const src = draft.images[index].src;
     if (src) {
+      pendingCover.current.delete(src);
       controllers.current.get(src)?.abort();
       setUploads((items) => {
         const copy = { ...items };
@@ -1800,6 +1804,12 @@ function ProductDialog({
       ];
       return { ...item, images };
     });
+  const setCover = (index: number) =>
+    setDraft((item) => ({
+      ...item,
+      images: selectAsCover(item.images, index, uploads),
+    }));
+  const previewCover = coverImage(draft.images, uploads);
   const sections: { id: string; label: string; icon: React.ReactNode }[] = [
     { id: "section-basics", label: "اطلاعات اصلی", icon: <Pencil /> },
     { id: "section-category", label: "دسته‌بندی", icon: <Tag /> },
@@ -1845,10 +1855,10 @@ function ProductDialog({
             بازگشت به لیست
           </button>
           <div className="editor-cover">
-            {draft.images[0]?.src ? (
+            {previewCover?.src ? (
               <img
                 className="product-thumb"
-                src={draft.images[0].src}
+                src={previewCover.src}
                 alt=""
                 style={{ objectFit: "cover" }}
               />
@@ -1857,17 +1867,18 @@ function ProductDialog({
                 <Package />
               </div>
             )}
-            <label>
+            <label htmlFor={coverInputId} className="upload-button">
               <ImagePlus />
               تغییر کاور
-              <input
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                onChange={addImage}
-                aria-label="تغییر تصویر اصلی"
-                hidden
-              />
             </label>
+            <input
+              id={coverInputId}
+              className="sr-file"
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              onChange={(event) => addImage(event, true)}
+              disabled={!limits || saving}
+            />
           </div>
           <nav className="editor-section-nav">
             {sections.map((item) => (
@@ -2058,23 +2069,27 @@ function ProductDialog({
               تصویر و ویدیوی اثر
             </h3>
             <div className="image-editor">
-              <p>حداقل یک تصویر لازم است؛ اولین تصویر، تصویر اصلی اثر است.</p>
+              <p>
+                حداقل یک تصویر لازم است. تصویر کاور در کارت فروشگاه و اولین
+                تصویر صفحهٔ اثر نمایش داده می‌شود.
+              </p>
               <p>
                 {limits
                   ? `تصویر JPEG، PNG، WebP تا ${number.format(limits.image / 1024 / 1024)} مگابایت؛ ویدیوی MP4، WebM تا ${number.format(limits.video / 1024 / 1024)} مگابایت.`
                   : "در حال دریافت محدودیت فایل…"}
               </p>
-              <label className="upload-button">
+              <label htmlFor={mediaInputId} className="upload-button">
                 <ImagePlus /> افزودن تصویر یا ویدیو
-                <input
-                  type="file"
-                  multiple
-                  accept="image/jpeg,image/png,image/webp,video/mp4,video/webm"
-                  onChange={addImage}
-                  disabled={!limits || saving}
-                  aria-label="بارگذاری تصویر یا ویدیوی اثر"
-                />
               </label>
+              <input
+                id={mediaInputId}
+                className="sr-file"
+                type="file"
+                multiple
+                accept="image/jpeg,image/png,image/webp,video/mp4,video/webm"
+                onChange={(event) => addImage(event)}
+                disabled={!limits || saving}
+              />
               {imageError && (
                 <p className="field-error" role="alert">
                   {imageError}
@@ -2089,9 +2104,11 @@ function ProductDialog({
               <div className="product-media-list">
                 {draft.images.map((image, index) => {
                   const upload = image.src ? uploads[image.src] : undefined;
+                  const isCover = coverImage(draft.images, uploads) === image;
+                  const coverReady = canSelectAsCover(image, upload);
                   return (
                     <div
-                      className="product-media-item"
+                      className={`product-media-item${isCover ? " is-cover" : ""}`}
                       key={image.src || image.objectKey || index}
                     >
                       {isVideoStorage(image.storage) ? (
@@ -2106,6 +2123,9 @@ function ProductDialog({
                           src={image.src ?? undefined}
                           alt={`تصویر ${number.format(index + 1)}`}
                         />
+                      )}
+                      {isCover && (
+                        <span className="cover-badge">کاور انتخاب‌شده</span>
                       )}
                       {upload && <small>{upload.file.name}</small>}
                       {upload?.pending && (
@@ -2128,6 +2148,16 @@ function ProductDialog({
                         </p>
                       )}
                       <div className="product-media-actions">
+                        {!isVideoStorage(image.storage) && (
+                          <button
+                            type="button"
+                            className={isCover ? "cover-selected" : ""}
+                            disabled={saving || isCover || !coverReady}
+                            onClick={() => setCover(index)}
+                          >
+                            {isCover ? "کاور فعلی" : "انتخاب به‌عنوان کاور"}
+                          </button>
+                        )}
                         {upload?.error && (
                           <button
                             type="button"
@@ -2282,238 +2312,5 @@ function AccountSettings({
         </div>
       </form>
     </section>
-  );
-}
-
-function LoginVisual({ tagline }: { tagline?: string }) {
-  return (
-    <div className="login-visual">
-      <svg className="visual-thread" viewBox="0 0 400 600" aria-hidden="true">
-        <path d="M60 110 C140 150 90 230 180 220 C 260 212 220 140 320 150" />
-      </svg>
-      <span className="visual-stone" aria-hidden="true" />
-      <div className="brand-block">
-        <span className="brand-mark">
-          <img src="/rad-logo.png" alt="رَد" width={56} height={56} />
-        </span>
-        <strong>پنل مدیریت استودیو</strong>
-        <small>رَد</small>
-      </div>
-      {tagline && <p className="visual-tagline">{tagline}</p>}
-    </div>
-  );
-}
-
-function ConnectingScreen() {
-  return (
-    <div className="connecting-screen" role="status" aria-live="polite">
-      <span className="visual-stone" aria-hidden="true" />
-      <div className="connecting-dots" aria-hidden="true">
-        <span />
-        <span />
-        <span />
-      </div>
-      <p>در حال اتصال به پنل مدیریت…</p>
-    </div>
-  );
-}
-
-function AdminLogin({
-  onLogin,
-  onForgotPassword,
-}: {
-  onLogin: (input: {
-    email: string;
-    password: string;
-    rememberMe?: boolean;
-  }) => Promise<void>;
-  onForgotPassword: (email: string) => Promise<{ message: string }>;
-}) {
-  const [mode, setMode] = useState<"login" | "forgot">("login");
-  const [email, setEmail] = useState(() => loadRememberedEmail());
-  const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(() => loadRememberMe());
-  const [error, setError] = useState("");
-  const [forgotMessage, setForgotMessage] = useState("");
-  // Brief "connecting" state shown while the login request is in flight —
-  // there is no dedicated backend step for this, it just covers the real
-  // request latency so the panel doesn't jump straight from form to shell.
-  const [connecting, setConnecting] = useState(false);
-
-  if (connecting) return <ConnectingScreen />;
-
-  if (mode === "forgot") {
-    return (
-      <div className="login-screen">
-        <LoginVisual />
-        <div className="login-form-side">
-          <section className="login-form-card">
-            <span className="eyebrow">دفتر کوره</span>
-            <h1>فراموشی رمز عبور</h1>
-            <p>
-              ایمیل حساب مدیریتی خود را وارد کنید. یک کد ۶ رقمی به ایمیل شما
-              ارسال می‌شود.
-            </p>
-            <form
-              className="editor-form"
-              noValidate
-              onSubmit={async (event) => {
-                event.preventDefault();
-                try {
-                  setError("");
-                  const result = await onForgotPassword(email.trim());
-                  setForgotMessage(result.message);
-                } catch (err) {
-                  setError((err as Error).message);
-                }
-              }}
-            >
-              {error && (
-                <small className="field-error" role="alert">
-                  {error}
-                </small>
-              )}
-              {forgotMessage && (
-                <div className="login-success" role="status">
-                  <p>{forgotMessage}</p>
-                  <a
-                    className="text-link"
-                    href={`/reset-password?email=${encodeURIComponent(email.trim())}`}
-                  >
-                    وارد کردن کد بازیابی
-                  </a>
-                </div>
-              )}
-              <Field label="ایمیل">
-                <input
-                  dir="ltr"
-                  type="email"
-                  name="email"
-                  value={email}
-                  onChange={(event) => setEmail(event.target.value)}
-                  autoComplete="username"
-                  required
-                />
-              </Field>
-              <button className="primary-action" type="submit">
-                ارسال کد بازیابی
-              </button>
-              <button
-                className="text-link-button"
-                type="button"
-                onClick={() => {
-                  setMode("login");
-                  setError("");
-                  setForgotMessage("");
-                }}
-              >
-                بازگشت به ورود
-              </button>
-            </form>
-          </section>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="login-screen">
-      <LoginVisual tagline="هیچ دو رَدی یکسان نیست." />
-      <div className="login-form-side">
-        <section className="login-form-card">
-          <span className="eyebrow">دفتر کوره</span>
-          <h1>ورود به مدیریت رَد</h1>
-          <p>
-            حساب‌های جدید مشتری از فروشگاه ساخته می‌شوند. محصولات تازه را پس از
-            ورود در همین پنل اضافه کنید.
-          </p>
-          <form
-            className="editor-form"
-            noValidate
-            onSubmit={async (event) => {
-              event.preventDefault();
-              try {
-                setError("");
-                saveLoginPreferences(email, rememberMe);
-                setConnecting(true);
-                await onLogin({ email: email.trim(), password, rememberMe });
-              } catch (err) {
-                setConnecting(false);
-                setError((err as Error).message);
-              }
-            }}
-          >
-            {error && (
-              <small className="field-error" role="alert">
-                {error}
-              </small>
-            )}
-            <Field label="ایمیل">
-              <input
-                dir="ltr"
-                type="email"
-                name="email"
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-                autoComplete="username"
-                required
-              />
-            </Field>
-            <Field label="رمز عبور">
-              <div className="password-field">
-                <input
-                  dir="ltr"
-                  type={showPassword ? "text" : "password"}
-                  name="password"
-                  value={password}
-                  onChange={(event) => setPassword(event.target.value)}
-                  autoComplete="current-password"
-                  minLength={8}
-                  required
-                />
-                <button
-                  type="button"
-                  className="password-toggle"
-                  onClick={() => setShowPassword((value) => !value)}
-                  aria-label={
-                    showPassword ? "پنهان کردن رمز عبور" : "نمایش رمز عبور"
-                  }
-                >
-                  {showPassword ? <EyeOff /> : <Eye />}
-                </button>
-              </div>
-            </Field>
-            <label className="remember-field">
-              <input
-                type="checkbox"
-                name="remember"
-                checked={rememberMe}
-                onChange={(event) => setRememberMe(event.target.checked)}
-              />
-              <span>
-                مرا به خاطر بسپار — ایمیل و ورود در این مرورگر نگه داشته شود
-              </span>
-            </label>
-            <div className="login-actions">
-              <button className="primary-action" type="submit">
-                ورود
-                <ArrowLeft />
-              </button>
-              <button
-                className="text-link-button"
-                type="button"
-                onClick={() => {
-                  setMode("forgot");
-                  setError("");
-                }}
-              >
-                رمز عبور را فراموش کرده‌اید؟
-              </button>
-            </div>
-          </form>
-        </section>
-      </div>
-    </div>
   );
 }
