@@ -47,9 +47,9 @@ export function manualCardDetails(): ManualCardDetails {
   // Holder must be the name printed on the physical card. Do not substitute a
   // brand alias here — operators set PAYMENT_CARD_HOLDER.
   const cardNumber = formatCardNumber(
-    process.env.PAYMENT_CARD_NUMBER || "6037998155667788",
+    process.env.PAYMENT_CARD_NUMBER || "6219861903364882",
   );
-  const cardHolder = process.env.PAYMENT_CARD_HOLDER?.trim() || "استودیو رَد";
+  const cardHolder = process.env.PAYMENT_CARD_HOLDER?.trim() || "مهدیه نروزی";
   const bankName = process.env.PAYMENT_CARD_BANK?.trim() || undefined;
   return { cardNumber, cardHolder, bankName };
 }
