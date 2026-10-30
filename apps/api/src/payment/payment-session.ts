@@ -47,7 +47,7 @@ export function manualCardDetails(): ManualCardDetails {
   const cardNumber = formatCardNumber(
     process.env.PAYMENT_CARD_NUMBER || "6219861903364882",
   );
-  const cardHolder = process.env.PAYMENT_CARD_HOLDER?.trim() || "مهدیه نروزی";
+  const cardHolder = process.env.PAYMENT_CARD_HOLDER?.trim() || "مهدیه نوروزی";
   const bankName = process.env.PAYMENT_CARD_BANK?.trim() || undefined;
   return { cardNumber, cardHolder, bankName };
 }
