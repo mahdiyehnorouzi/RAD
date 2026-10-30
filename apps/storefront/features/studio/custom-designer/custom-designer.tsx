@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { COMMISSION_POLICY_SLUGS, currentPolicyVersions } from "@rad/types";
 import { useLocale } from "@/components/i18n";
 import { useCommerce } from "@/components/commerce";
@@ -28,6 +28,33 @@ import styles from "./custom-designer.module.css";
 
 type SubmitFailure = "session" | "network" | "failed" | null;
 
+// The submission itself is already durable (persisted server-side) once
+// submitDesign() resolves, but its confirmation screen — `sentId`, which
+// decides whether <SentNotice> or the designer form renders — was only
+// ever in-memory React state. A refresh right after a successful submit
+// dropped the visitor straight back into a blank form with no sign
+// anything was sent, and no way back to the "track your order" link
+// except navigating to /account/making themselves. Same storage pattern
+// as the draft autosave in hooks/use-designer-draft.ts.
+const sentIdStorageKey = "rad-studio-sent-v1";
+
+function readSentId(): string {
+  try {
+    return window.localStorage.getItem(sentIdStorageKey) ?? "";
+  } catch {
+    return "";
+  }
+}
+
+function writeSentId(id: string) {
+  try {
+    if (id) window.localStorage.setItem(sentIdStorageKey, id);
+    else window.localStorage.removeItem(sentIdStorageKey);
+  } catch {
+    /* storage unavailable — the confirmation just won't survive a refresh */
+  }
+}
+
 export function CustomDesigner({ designer }: { designer: Designer }) {
   const { t, locale, href } = useLocale();
   const c = designerCopy[locale];
@@ -45,6 +72,14 @@ export function CustomDesigner({ designer }: { designer: Designer }) {
     `/account?returnTo=${encodeURIComponent("/studio/start")}`,
   );
   const { canSubmit } = designer;
+
+  // Deferred to an effect, not a useState lazy initializer: the server
+  // render always has no localStorage, so reading it during render would
+  // mismatch the client's first paint when a confirmation is pending.
+  useEffect(() => {
+    const saved = readSentId();
+    if (saved) setSentId(saved);
+  }, []);
 
   function keepInView() {
     const top = shell.current?.getBoundingClientRect().top ?? 0;
@@ -140,6 +175,7 @@ export function CustomDesigner({ designer }: { designer: Designer }) {
         });
         draftStore.clear();
         setSentId(commission.id);
+        writeSentId(commission.id);
         keepInView();
       } catch (err) {
         const kind: SubmitFailure = isSessionExpired(err)
@@ -164,6 +200,7 @@ export function CustomDesigner({ designer }: { designer: Designer }) {
   function startAnother() {
     draftStore.reset();
     setSentId("");
+    writeSentId("");
     setSubmitError("");
     setFailure(null);
   }

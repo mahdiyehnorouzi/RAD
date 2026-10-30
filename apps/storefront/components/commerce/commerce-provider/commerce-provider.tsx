@@ -287,6 +287,10 @@ export function CommerceProvider({ children }: { children: React.ReactNode }) {
         window.dispatchEvent(new Event("rad:session"));
         return created;
       },
+      // Every order-affecting action resyncs the cart the same way placeOrder
+      // does, even though checkout already clears it before redirecting to
+      // the gateway: relying on that ordering alone is fragile, and
+      // cancelOrder/verifyPayment can still change what's purchasable.
       confirmDemoPayment: async (id, receipt) => {
         const updated = await api<Order>(`/orders/${id}/confirm-payment`, {
           method: "POST",
@@ -294,6 +298,7 @@ export function CommerceProvider({ children }: { children: React.ReactNode }) {
         });
         setOrders((current) => upsertOrder(current, updated));
         await refresh();
+        window.dispatchEvent(new Event("rad:session"));
         return updated;
       },
       verifyPayment: async (id, input) => {
@@ -303,6 +308,7 @@ export function CommerceProvider({ children }: { children: React.ReactNode }) {
         });
         setOrders((current) => upsertOrder(current, updated));
         await refresh();
+        window.dispatchEvent(new Event("rad:session"));
         return updated;
       },
       retryPayment: async (id) => {
@@ -311,6 +317,7 @@ export function CommerceProvider({ children }: { children: React.ReactNode }) {
         });
         setOrders((current) => upsertOrder(current, updated));
         await refresh();
+        window.dispatchEvent(new Event("rad:session"));
         return updated;
       },
       cancelOrder: async (id) => {
@@ -319,6 +326,7 @@ export function CommerceProvider({ children }: { children: React.ReactNode }) {
         });
         setOrders((current) => upsertOrder(current, updated));
         await refresh();
+        window.dispatchEvent(new Event("rad:session"));
         return updated;
       },
       reviews,

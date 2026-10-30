@@ -1,4 +1,9 @@
-import type { Locale, Product, Vendor } from "@rad/types";
+import {
+  isPurchasableStatus,
+  type Locale,
+  type Product,
+  type Vendor,
+} from "@rad/types";
 import { priceToNumber } from "@/lib/money";
 import type {
   CatalogFilters,
@@ -81,16 +86,26 @@ function matchesPrice(product: Product, filters: CatalogFilters) {
   return true;
 }
 
-function newestFirst(a: Product, b: Product) {
+/** Newest-created first, breaking ties by RAD number (stable, not last-updated). */
+export function newestFirst(a: Product, b: Product) {
   return (
     (b.listedAt ?? 0) - (a.listedAt ?? 0) ||
     (b.radNumber ?? 0) - (a.radNumber ?? 0)
   );
 }
 
+/** In-stock works first, then newest within each group. */
+function availabilityFirst(a: Product, b: Product) {
+  return (
+    Number(isPurchasableStatus(b.status)) -
+      Number(isPurchasableStatus(a.status)) || newestFirst(a, b)
+  );
+}
+
 const comparators: Record<CatalogSort, (a: Product, b: Product) => number> = {
   newest: newestFirst,
   oldest: (a, b) => newestFirst(b, a),
+  availability: availabilityFirst,
   "price-asc": (a, b) =>
     priceToNumber(a.price) - priceToNumber(b.price) || newestFirst(a, b),
   "price-desc": (a, b) =>

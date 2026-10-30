@@ -13,6 +13,7 @@ import { AdminController } from "./admin.controller";
 import { AdminService } from "./admin.service";
 import { AdminGuard } from "../common/guards/admin.guard";
 import { StorageModule } from "../storage/storage.module";
+import { CatalogRevalidationService } from "../catalog/catalog-revalidation.service";
 
 @Module({
   imports: [
@@ -29,6 +30,6 @@ import { StorageModule } from "../storage/storage.module";
     ProductAttributesModule,
   ],
   controllers: [AdminController],
-  providers: [AdminService, AdminGuard],
+  providers: [AdminService, AdminGuard, CatalogRevalidationService],
 })
 export class AdminModule {}

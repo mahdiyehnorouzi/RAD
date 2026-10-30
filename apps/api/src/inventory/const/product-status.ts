@@ -31,3 +31,22 @@ export const LEGACY_PRODUCT_STATUS = {
 export const CART_HOLD_MS = 15 * 60 * 1000;
 
 export const HOLD_SWEEP_INTERVAL_MS = 30 * 1000;
+
+/** Orders that still own their products; cart mutations must not release them. */
+export const INVENTORY_OWNING_ORDER_STATUSES = [
+  "pending_payment",
+  "pending_verification",
+  "confirmed",
+  "packing",
+  "shipped",
+  "delivered",
+] as const;
+
+/** A timeout cannot establish that these payment attempts are unpaid. */
+export const UNRESOLVED_PAYMENT_STATUSES = [
+  "redirected",
+  "submitted",
+  "verified",
+  "verify_error",
+  "verify_conflict",
+] as const;

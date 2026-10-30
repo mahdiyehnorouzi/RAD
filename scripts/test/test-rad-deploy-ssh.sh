@@ -174,6 +174,36 @@ else
 fi
 
 reset_markers
+if make_valid_tar "${TMPROOT}/valid-migrate.tar" api \
+  && SSH_ORIGINAL_COMMAND="migrate commit=$(printf '%040d' 6) run_id=7 run_attempt=1" \
+     "$ENTRYPOINT" < "${TMPROOT}/valid-migrate.tar" > "${TMPROOT}/out.log" 2>"${TMPROOT}/err.log"; then
+  ok=true
+else
+  ok=false
+fi
+check "entrypoint accepts a well-formed migrate request and invokes the broker" "$ok"
+if [[ -f "$BROKER_RECEIVED" ]]; then
+  check "  ...broker request has action=migrate, kind forced to api" \
+    "$(node -e "
+      const r = JSON.parse(require('fs').readFileSync('${BROKER_RECEIVED}', 'utf8'));
+      const ok = r.action === 'migrate' && r.kind === 'api' && r.commit === '$(printf '%040d' 6)' && r.run_id === 7 && r.run_attempt === 1;
+      console.log(ok);
+    ")"
+else
+  check "  ...broker request has action=migrate, kind forced to api" "false"
+fi
+
+reset_markers
+if SSH_ORIGINAL_COMMAND="migrate kind=frontend commit=$(printf '%040d' 7) run_id=1 run_attempt=1" \
+   "$ENTRYPOINT" </dev/null >"${TMPROOT}/out.log" 2>"${TMPROOT}/err.log"; then
+  ok=false
+else
+  ok=true
+fi
+check "entrypoint rejects a migrate command that tries to pass kind=" "$ok"
+check "  ...and never invoked the broker" "$( [[ ! -f "$BROKER_RECEIVED" ]] && echo true || echo false )"
+
+reset_markers
 if SSH_ORIGINAL_COMMAND="rm -rf /" "$ENTRYPOINT" </dev/null >"${TMPROOT}/out.log" 2>"${TMPROOT}/err.log"; then
   ok=false
 else

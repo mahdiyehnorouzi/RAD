@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { X } from "lucide-react";
+import { createSingleFlight } from "../lib/admin-mutation";
 
 // Ref-counted so a second overlay opening on top of a first — or one
 // closing while another is still open — never unlocks the background: the
@@ -68,6 +69,28 @@ export function ConfirmDialog({
   onCancel: () => void;
   onConfirm: () => void | Promise<void>;
 }) {
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState("");
+  const flight = useRef(createSingleFlight());
+
+  const confirm = () => {
+    void flight.current.run(async () => {
+      setPending(true);
+      setError("");
+      try {
+        await onConfirm();
+      } catch (caught) {
+        setError(
+          caught instanceof Error && caught.message
+            ? caught.message
+            : "انجام این کار ناموفق بود. دوباره تلاش کنید.",
+        );
+      } finally {
+        setPending(false);
+      }
+    });
+  };
+
   return (
     <DialogShell
       title={title}
@@ -75,12 +98,22 @@ export function ConfirmDialog({
       onClose={onCancel}
       compact
     >
+      {error ? (
+        <p className="admin-inline-error" role="alert">
+          {error}
+        </p>
+      ) : null}
       <div className="dialog-actions">
         <button className="secondary-action" type="button" onClick={onCancel}>
           انصراف
         </button>
-        <button className="danger-action" type="button" onClick={onConfirm}>
-          {confirmLabel}
+        <button
+          className="danger-action"
+          type="button"
+          onClick={confirm}
+          disabled={pending}
+        >
+          {pending ? "در حال انجام…" : confirmLabel}
         </button>
       </div>
     </DialogShell>

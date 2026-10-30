@@ -1,6 +1,7 @@
 import {
   PRODUCT_STATUSES,
   canTransitionProductStatus,
+  effectiveProductStatus,
   type ContactMessageStatus,
   type ContactSource,
   type ContactTopic,
@@ -160,9 +161,14 @@ export interface AdminProduct {
   slug: string;
   name: string;
   description: string;
+  /** Short lede shown under the title on the PDP; falls back to the first
+   * 48 characters of `description` when left blank. */
+  subtitle?: string;
   category: string;
   price: number;
   status: AdminProductStatus;
+  /** Same derived field the public API sends; feeds `effectiveProductStatus`. */
+  reservedUntil?: number;
   /** Set while a customer's cart or unpaid order holds the work. */
   holdExpiresAt?: number;
   /** A customer holds the work (cart, unpaid order, or receipt awaiting review). */
@@ -318,6 +324,21 @@ export const commissionStageLabels: Record<AdminCommissionStage, string> = {
   declined: "رد شده",
 };
 
+// Custom Orders must open on the list, not jump into a detail view: picks
+// which commission (if any) should be selected for a given requested id.
+// A requested id that no longer exists in the list (stale deep link, order
+// removed/filtered) falls back to no selection rather than guessing an
+// order to open, so the list is always what the admin sees by default.
+export function resolveCommissionSelection(
+  commissions: AdminCommission[],
+  requestedId: string | null,
+): string | null {
+  if (!requestedId) return null;
+  return commissions.some((item) => item.id === requestedId)
+    ? requestedId
+    : null;
+}
+
 export const roleLabels: Record<AdminRole, string> = {
   owner: "مالک",
   manager: "مدیر",
@@ -442,10 +463,13 @@ const faTime = new Intl.DateTimeFormat("fa-IR", {
 });
 
 export function productStatusLabel(product: AdminProduct) {
-  if (product.holdExpiresAt) {
-    return `در سبد مشتری تا ${faTime.format(product.holdExpiresAt)}`;
+  const effective = effectiveProductStatus(product);
+  if (effective === "reserved") {
+    return `در سبد مشتری تا ${faTime.format(product.holdExpiresAt!)}`;
   }
-  if (product.held) return "فروخته شده · در انتظار تأیید پرداخت";
+  if (effective === "sold" && product.held) {
+    return "فروخته شده · در انتظار تأیید پرداخت";
+  }
   return productStatusLabels[product.status];
 }
 

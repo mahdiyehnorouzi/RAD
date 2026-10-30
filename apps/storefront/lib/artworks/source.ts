@@ -18,6 +18,8 @@ import { PHASE_PRODUCTION_BUILD } from "next/constants";
  * `generateStaticParams`'s build-time fetches legitimately need the
  * registry fallback to tolerate a handful of per-product prerender
  * failures against the live API (see `app/[locale]/products/[slug]/page.tsx`).
+ * Customer-facing Latest Works must not consume that fallback — the homepage
+ * is `force-dynamic` and `liveFeaturedHomeWorks` ignores `origin !== "api"`.
  * `process.env.NEXT_PHASE` distinguishes the two; it is unset outside `next
  * build`, so runtime behavior is unaffected by this exception.
  */

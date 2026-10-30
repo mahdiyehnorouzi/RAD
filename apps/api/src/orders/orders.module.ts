@@ -8,6 +8,6 @@ import { NoticesModule } from "../notices/notices.module";
   imports: [NoticesModule],
   controllers: [OrdersController],
   providers: [OrdersService, PaymentReviewService],
-  exports: [PaymentReviewService],
+  exports: [PaymentReviewService, OrdersService],
 })
 export class OrdersModule {}

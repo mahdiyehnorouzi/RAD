@@ -8,9 +8,15 @@
 # `rad-deploy` account (forced SSH command, no shell, no arbitrary remote
 # commands - see scripts/production/rad-deploy-ssh-entrypoint.sh) and pins
 # the VPS host key via RAD_VPS_SSH_HOST_KEY. The actual release, health
-# check, and rollback logic is scripts/production/rad_release.py, completely
-# unchanged from the self-hosted-runner design it was reviewed under - only
-# how the signed artifact and the trigger reach the VPS has changed.
+# check, and rollback logic is scripts/production/rad_release.py.
+#
+# `migrate` (below) runs before `release` and applies any pending
+# migrations this exact signed artifact ships - checked against the live
+# database's own migration history, backed up first, under the same broker
+# lock as every release - so the API this job releases next never starts
+# against a database it expects but that doesn't exist yet. See
+# docs/automated-migrations.md for the one-time operator approval this
+# requires and what it does and doesn't automate.
 name: API VPS release
 on:
   workflow_call:
@@ -79,9 +85,87 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
-  release:
+  # Applies any migrations this exact artifact ships before the API that
+  # depends on them is ever started - see docs/automated-migrations.md.
+  # Reuses the same signed artifact/manifest `release` ships below (no
+  # second build, no second signing) and the same tailnet/SSH transport;
+  # only the forced-command verb differs ("migrate" vs "deploy kind=api").
+  # A deployment whose artifact has no pending migrations is a fast no-op
+  # here (the broker checks the live database's own migration history
+  # before doing anything else) - most releases never touch the backup/
+  # migration-lock path at all.
+  migrate:
+    name: Apply pending migrations
     needs: build-artifact
     if: github.repository == 'mahdiyehnorouzi/RAD' && github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && inputs.commit_sha == github.sha && (github.event_name != 'workflow_dispatch' || inputs.confirm == 'deploy')
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: production-api-vps
+    permissions:
+      contents: read
+      id-token: write
+    # Same group as `release` below: a migrate and a release (this run's or
+    # any other's) never run concurrently against the host, and this job
+    # always finishes (or fails) before `release` can start, by `needs:`.
+    concurrency:
+      group: rad-production-release
+      cancel-in-progress: false
+    env:
+      RAD_VPS_TAILSCALE_IP: "100.103.104.79"
+    steps:
+      - name: Download signed artifact (this exact run/attempt only)
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: api-release-${{ github.sha }}-${{ github.run_attempt }}
+          path: stage
+
+      - name: Connect to RAD tailnet using GitHub OIDC
+        uses: tailscale/github-action@v4
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          audience: ${{ secrets.TS_AUDIENCE }}
+          tags: tag:rad-deploy
+
+      - name: Configure pinned SSH identity for the restricted rad-deploy account
+        env:
+          SSH_KEY: ${{ secrets.RAD_DEPLOY_SSH_PRIVATE_KEY }}
+          HOST_KEY: ${{ secrets.RAD_VPS_SSH_HOST_KEY }}
+        run: |
+          set -euo pipefail
+          test -n "$SSH_KEY" && test -n "$HOST_KEY"
+          install -m 700 -d "$HOME/.ssh"
+          printf '%s\n' "$SSH_KEY" > "$HOME/.ssh/id_ed25519"
+          printf '%s %s\n' "$RAD_VPS_TAILSCALE_IP" "$HOST_KEY" > "$HOME/.ssh/known_hosts"
+          chmod 600 "$HOME/.ssh/id_ed25519" "$HOME/.ssh/known_hosts"
+
+      # Same trust boundary as the `release` job's "Ship artifact and
+      # trigger release" step below: this account can run nothing but the
+      # fixed forced command, which hands the request to the unchanged
+      # root-owned broker. The broker cross-checks this artifact's signed
+      # migration list against what TypeORM's own `migration:show` reports
+      # against the live database (never trusting its own detection logic
+      # alone - see docs/automated-migrations.md), and refuses to run
+      # anything pending unless BOTH activation policy's
+      # `approved_migrations` names this exact migration by content hash
+      # AND `offsite_backup_pipeline_verified` is true. Any of that missing
+      # or inconsistent fails this step closed - and therefore this job and
+      # `release`, which needs it - rather than deploying API code against
+      # an un-migrated database or guessing at ambiguous migration state.
+      - name: Ship artifact and trigger migration check over the tailnet
+        run: |
+          set -euo pipefail
+          ssh_args=(-o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=15)
+          tar -cf - -C stage release.json release.sigstore.json api-release.tar.gz \
+            | ssh "${ssh_args[@]}" "rad-deploy@${RAD_VPS_TAILSCALE_IP}" \
+              "migrate commit=${GITHUB_SHA} run_id=${GITHUB_RUN_ID} run_attempt=${GITHUB_RUN_ATTEMPT}"
+
+      - name: Remove runner SSH credentials
+        if: always()
+        run: rm -f "$HOME/.ssh/id_ed25519" "$HOME/.ssh/known_hosts"
+
+  release:
+    needs: [build-artifact, migrate]
+    if: github.repository == 'mahdiyehnorouzi/RAD' && github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && inputs.commit_sha == github.sha && (github.event_name != 'workflow_dispatch' || inputs.confirm == 'deploy') && needs.migrate.result == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     environment: production-api-vps
@@ -143,7 +227,7 @@ jobs:
         run: rm -f "$HOME/.ssh/id_ed25519" "$HOME/.ssh/known_hosts"
 
   verify-outcome:
-    needs: [checks, build-artifact, release]
+    needs: [checks, build-artifact, migrate, release]
     if: always()
     runs-on: ubuntu-latest
     steps:
@@ -152,8 +236,9 @@ jobs:
           TRUSTED: ${{ github.repository == 'mahdiyehnorouzi/RAD' && github.ref == 'refs/heads/main' && inputs.commit_sha == github.sha && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') }}
           REQUESTED: ${{ github.event_name != 'workflow_dispatch' || inputs.confirm == 'deploy' }}
           CHECKS: ${{ needs.checks.result }}
+          MIGRATE: ${{ needs.migrate.result }}
           RELEASE: ${{ needs.release.result }}
         run: |
           test "$TRUSTED" = true
           test "$CHECKS" = success
-          if test "$REQUESTED" = true; then test "$RELEASE" = success; fi
+          if test "$REQUESTED" = true; then test "$MIGRATE" = success; test "$RELEASE" = success; fi
