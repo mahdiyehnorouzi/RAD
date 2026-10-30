@@ -38,6 +38,16 @@ export class SaveProductDto {
   @MinLength(1)
   description!: string;
 
+  @ApiPropertyOptional({
+    example: "سفال دست‌ساز با لعاب مات.",
+    description:
+      "Short lede shown under the title on the PDP. Falls back to the " +
+      "first 48 characters of `description` when left blank.",
+  })
+  @IsOptional()
+  @IsString()
+  subtitle?: string;
+
   @ApiProperty({ example: "گلدان", enum: ADMIN_CATEGORIES })
   @IsIn(ADMIN_CATEGORIES)
   category!: string;

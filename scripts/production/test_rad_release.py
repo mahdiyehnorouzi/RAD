@@ -21,8 +21,10 @@ class ReleaseTests(unittest.TestCase):
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name)
         self.request = dict(kind="api", commit="a" * 40, run_id=123, run_attempt=1, stage="release-123456")
+        self.migration_sha = "c" * 64
         self.manifest = dict(schema=1, repository=broker.REPO, kind="api", commit="a" * 40,
-                             run_id=123, run_attempt=1, version="1.5.1", archive_sha256="b" * 64)
+                             run_id=123, run_attempt=1, version="1.5.1", archive_sha256="b" * 64,
+                             migrations=[{"name": "1792865771843-AddProductAttributes.ts", "sha256": self.migration_sha}])
 
     def test_replay_and_out_of_order_runs_are_rejected(self):
         for sequence in ([123, 1], [123, 2], [124, 1]):
@@ -121,6 +123,38 @@ class ReleaseTests(unittest.TestCase):
             policy_path.chmod(0o644)
             with self.assertRaisesRegex(RuntimeError, "root-private"):
                 broker.validate_activation()
+
+    def test_old_shaped_activation_policy_still_validates_after_broker_upgrade(self):
+        """A policy approved before this feature existed (no
+        `approved_migrations`/`offsite_backup_pipeline_verified` at all)
+        must still pass validate_activation() once broker_sha256 is updated
+        to this new broker - those fields are only ever read defensively
+        with `.get()` at the point of use (see main()), never required by
+        validate_activation() itself. This is what guarantees installing
+        this broker upgrade can never silently disable routine, non-
+        migrating production deploys just because the operator hasn't
+        separately opted into migration approvals yet."""
+        policy_path = self.root / "activation.json"
+        trusted_root_path = self.root / "trusted_root.jsonl"
+        trusted_root_path.write_text('{"mediaType": "fixture"}\n')
+        trusted_root_path.chmod(0o644)
+        policy = dict(schema=1, repository=broker.REPO, enabled=True,
+                      runner_workflow_policy_verified=True, production_environments_verified=True,
+                      host_preflight_verified=True, nonproduction_rehearsal_verified=True,
+                      broker_sha256=broker.file_hash(Path(broker.__file__)),
+                      trusted_root_sha256=broker.file_hash(trusted_root_path))
+        policy_path.write_text(json.dumps(policy))
+        policy_path.chmod(0o600)
+        with patch.object(broker, "ACTIVATION", policy_path), patch.object(broker, "TRUSTED_ROOT", trusted_root_path), \
+             patch.object(broker, "protected"):
+            result = broker.validate_activation()
+        self.assertNotIn("approved_migrations", result)
+        self.assertNotIn("offsite_backup_pipeline_verified", result)
+        # Exactly the defaulting main() applies before calling migrate_api -
+        # must never raise and must land on the safe (empty/false) default.
+        approved = result.get("approved_migrations") if isinstance(result.get("approved_migrations"), dict) else {}
+        self.assertEqual(approved, {})
+        self.assertIsNot(result.get("offsite_backup_pipeline_verified"), True)
 
     def test_correct_manifest(self):
         broker.validate_manifest(self.manifest, self.request)
@@ -418,6 +452,193 @@ class ReleaseTests(unittest.TestCase):
             broker.frontend_smoke({"storefront": "x", "admin": "y"})
         self.assertIn("https://admin.rad-object.com/", requested)
         self.assertNotIn("https://admin.rad-object.com/login", requested)
+
+    def test_migration_record_name_derives_typeorm_stored_name(self):
+        self.assertEqual(broker.migration_record_name("1792865771843-AddProductAttributes.ts"),
+                         "AddProductAttributes1792865771843")
+        for bad in ("not-a-migration.ts", "1792865771843-Bad Name.ts", "AddProductAttributes.ts"):
+            with self.subTest(bad=bad), self.assertRaises(RuntimeError):
+                broker.migration_record_name(bad)
+
+    def test_manifest_requires_well_formed_migrations_list_for_api(self):
+        broker.validate_manifest(self.manifest, self.request)
+        bad_entry = {"name": "1792865771843-AddProductAttributes.ts", "sha256": self.migration_sha}
+        for migrations in (None, "not-a-list", [{"name": "bad name.ts", "sha256": self.migration_sha}],
+                           [{"name": bad_entry["name"], "sha256": "not-hex"}], [{"name": bad_entry["name"]}],
+                           [bad_entry, bad_entry]):
+            with self.subTest(migrations=migrations), self.assertRaisesRegex(RuntimeError, "migrations"):
+                broker.validate_manifest({**self.manifest, "migrations": migrations}, self.request)
+        # Frontend manifests never carry/require this field.
+        broker.validate_manifest({**self.manifest, "kind": "frontend", "migrations": None,
+                                  "images": {"admin": "ghcr.io/mahdiyehnorouzi/rad-admin@sha256:" + "1" * 64}},
+                                 {**self.request, "kind": "frontend"})
+
+    def migrate_fixture(self, applied=False, show_entries=None, reconcile_mismatch=False):
+        """`applied`/`show_entries` control what the fake `migration:show`
+        reports; by default it reports exactly the one manifest migration,
+        applied or not per `applied`. `reconcile_mismatch=True` makes it
+        report something `reconcile_migrations` cannot square with the
+        manifest, for the fail-closed cross-check tests."""
+        transaction = self.root / "transaction"
+        transaction.mkdir()
+        directory = self.root / "verified"
+        directory.mkdir()
+        entries = [(name, content, "file") for name, content in [
+            ("apps/api/dist/main.js", b"// built"), ("apps/api/package.json", b"{}"),
+            ("apps/api/src/database/cli-data-source.ts", b"// cli"), ("tsconfig.json", b"{}"),
+            ("node_modules/@nestjs/core/package.json", b"{}"), ("VERSION", b"1.5.1")]]
+        self.archive(entries)
+        (directory / "api-release.tar.gz").write_bytes((self.root / "api-release.tar.gz").read_bytes())
+        self.manifest["archive_sha256"] = broker.file_hash(directory / "api-release.tar.gz")
+        calls = {"backup": [], "run": [], "show": []}
+        state = {"applied": applied}
+        def fake_show(_npm, _api_dir, _database_url, _host):
+            calls["show"].append(True)
+            if reconcile_mismatch:
+                return [("SomethingUnexpected9999999999999", True)]
+            if show_entries is not None:
+                return show_entries
+            return [("AddProductAttributes1792865771843", state["applied"])]
+        def fake_backup(_database_url, _label):
+            calls["backup"].append(True)
+            return self.root / "backup.dump"
+        def fake_run(_npm, _api_dir, _database_url, _host):
+            calls["run"].append(True)
+            state["applied"] = True
+        for name, value in (("migrate_preflight", lambda: ("npm", "postgresql://prod-host/rad", "prod-host")),
+                            ("migration_show", fake_show),
+                            ("backup_database", fake_backup),
+                            ("run_pending_migrations", fake_run),
+                            ("BASE", self.root)):
+            patcher = patch.object(broker, name, value)
+            patcher.start()
+            self.addCleanup(patcher.stop)
+        return directory, transaction, calls
+
+    def approved(self):
+        return {self.manifest["migrations"][0]["name"]: self.migration_sha}
+
+    def test_migrate_no_pending_migrations_is_a_fast_noop(self):
+        directory, transaction, calls = self.migrate_fixture(applied=True)
+        broker.migrate_api(self.manifest, directory, transaction, {}, False)
+        self.assertEqual(calls["backup"], [])
+        self.assertEqual(calls["run"], [])
+        self.assertEqual(json.loads((transaction / "migrate-result.json").read_text()), {"pending": [], "backup": None})
+
+    def test_migrate_pending_without_operator_approval_is_refused(self):
+        directory, transaction, calls = self.migrate_fixture(applied=False)
+        with self.assertRaisesRegex(RuntimeError, "renewed operator approval"):
+            broker.migrate_api(self.manifest, directory, transaction, {}, True)
+        self.assertEqual(calls["backup"], [])
+        self.assertEqual(calls["run"], [])
+
+    def test_migrate_approval_is_pinned_to_exact_content_hash_not_just_name(self):
+        # An approval entry for this exact filename but a DIFFERENT sha256
+        # (e.g. the file's content changed after review, or was reused for a
+        # different migration) must not satisfy approval.
+        directory, transaction, calls = self.migrate_fixture(applied=False)
+        stale_approval = {self.manifest["migrations"][0]["name"]: "d" * 64}
+        with self.assertRaisesRegex(RuntimeError, "renewed operator approval"):
+            broker.migrate_api(self.manifest, directory, transaction, stale_approval, True)
+        self.assertEqual(calls["run"], [])
+
+    def test_migrate_approved_pending_requires_offsite_backup_pipeline_too(self):
+        # Per-migration approval alone is not enough - the operator must
+        # also attest the existing off-server backup pipeline is in place.
+        directory, transaction, calls = self.migrate_fixture(applied=False)
+        with self.assertRaisesRegex(RuntimeError, "offsite_backup_pipeline_verified"):
+            broker.migrate_api(self.manifest, directory, transaction, self.approved(), False)
+        self.assertEqual(calls["backup"], [])
+        self.assertEqual(calls["run"], [])
+
+    def test_migrate_approved_and_offsite_verified_backs_up_then_runs(self):
+        directory, transaction, calls = self.migrate_fixture(applied=False)
+        broker.migrate_api(self.manifest, directory, transaction, self.approved(), True)
+        self.assertEqual(calls["backup"], [True])
+        self.assertEqual(calls["run"], [True])
+        result = json.loads((transaction / "migrate-result.json").read_text())
+        self.assertEqual(result["status"], "applied")
+        self.assertEqual(result["pending"], [self.manifest["migrations"][0]["name"]])
+
+    def test_migrate_tampered_archive_never_runs_migration(self):
+        directory, transaction, calls = self.migrate_fixture(applied=False)
+        with open(directory / "api-release.tar.gz", "ab") as out:
+            out.write(b"tamper")
+        with self.assertRaisesRegex(RuntimeError, "checksum"):
+            broker.migrate_api(self.manifest, directory, transaction, self.approved(), True)
+        self.assertEqual(calls["backup"], [])
+        self.assertEqual(calls["run"], [])
+
+    def test_migrate_run_failure_stops_before_api_deploy_and_leaves_attempting_state(self):
+        directory, transaction, calls = self.migrate_fixture(applied=False)
+        with patch.object(broker, "run_pending_migrations", side_effect=RuntimeError("migration failed")):
+            with self.assertRaisesRegex(RuntimeError, "migration failed"):
+                broker.migrate_api(self.manifest, directory, transaction, self.approved(), True)
+        result = json.loads((transaction / "migrate-result.json").read_text())
+        self.assertEqual(result["status"], "attempting")
+
+    def test_migrate_backup_failure_stops_before_running_any_migration(self):
+        directory, transaction, calls = self.migrate_fixture(applied=False)
+        with patch.object(broker, "backup_database", side_effect=RuntimeError("backup failed")):
+            with self.assertRaisesRegex(RuntimeError, "backup failed"):
+                broker.migrate_api(self.manifest, directory, transaction, self.approved(), True)
+        self.assertEqual(calls["run"], [])
+
+    def test_migrate_verifies_nothing_left_pending_after_running(self):
+        # run_pending_migrations "succeeds" but migration:show still reports
+        # the migration missing afterward (e.g. a silently swallowed error) -
+        # the broker must not report success in that case.
+        directory, transaction, calls = self.migrate_fixture(applied=False)
+        with patch.object(broker, "migration_show", return_value=[("AddProductAttributes1792865771843", False)]):
+            with self.assertRaisesRegex(RuntimeError, "did not apply everything expected"):
+                broker.migrate_api(self.manifest, directory, transaction, self.approved(), True)
+
+    def test_migrate_retry_after_success_is_idempotent_and_skips_backup(self):
+        directory, transaction, calls = self.migrate_fixture(applied=False)
+        broker.migrate_api(self.manifest, directory, transaction, self.approved(), True)
+        self.assertEqual(calls["backup"], [True])
+        broker.migrate_api(self.manifest, directory, transaction, self.approved(), True)
+        self.assertEqual(calls["backup"], [True])  # not called again
+        self.assertEqual(calls["run"], [True])  # not called again either
+
+    def test_migrate_fails_closed_when_typeorm_state_disagrees_with_manifest(self):
+        # migration:show reporting something this broker cannot reconcile
+        # against the signed manifest (wrong count, unknown name) must
+        # refuse outright - never fall back to trusting one side blindly.
+        directory, transaction, calls = self.migrate_fixture(applied=False, reconcile_mismatch=True)
+        with self.assertRaisesRegex(RuntimeError, "refusing"):
+            broker.migrate_api(self.manifest, directory, transaction, self.approved(), True)
+        self.assertEqual(calls["backup"], [])
+        self.assertEqual(calls["run"], [])
+
+    def test_migration_show_fails_closed_on_unparseable_output(self):
+        # Direct unit test of migration_show() itself (migrate_api's own
+        # tests mock this function out entirely, so this is the only place
+        # that exercises its own output-parsing fail-closed behavior).
+        for stdout, returncode in [("", 0), ("garbage, no brackets here", 0), ("[X] Fine1234567890123", 2)]:
+            with self.subTest(stdout=stdout, returncode=returncode), \
+                 patch.object(broker, "run", return_value=subprocess.CompletedProcess([], returncode, stdout)):
+                with self.assertRaisesRegex(RuntimeError, "no parseable output"):
+                    broker.migration_show("npm", self.root, "postgresql://prod-host/rad", "prod-host")
+        with patch.object(broker, "run", return_value=subprocess.CompletedProcess([], 1, "[ ] Pending1234567890123\n")):
+            self.assertEqual(broker.migration_show("npm", self.root, "postgresql://prod-host/rad", "prod-host"),
+                             [("Pending1234567890123", False)])
+
+    def test_reconcile_migrations_cross_checks_both_directions(self):
+        manifest = self.manifest
+        name = "AddProductAttributes1792865771843"
+        # Agreement: one pending.
+        self.assertEqual(broker.reconcile_migrations(manifest, [(name, False)]),
+                         manifest["migrations"])
+        # Agreement: nothing pending.
+        self.assertEqual(broker.reconcile_migrations(manifest, [(name, True)]), [])
+        # Count mismatch (migration:show knows about more migrations than
+        # the signed manifest does) - refuse, don't guess.
+        with self.assertRaises(RuntimeError):
+            broker.reconcile_migrations(manifest, [(name, False), ("Extra1234567890123", False)])
+        # Same count, but a name the manifest never signed - refuse.
+        with self.assertRaises(RuntimeError):
+            broker.reconcile_migrations(manifest, [("Unexpected1234567890", False)])
 
     def test_rollback_verification_succeeds_without_admin_login_route(self):
         transaction = self.root / "transaction"

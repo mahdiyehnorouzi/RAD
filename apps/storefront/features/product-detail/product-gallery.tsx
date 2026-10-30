@@ -19,6 +19,7 @@ import {
 } from "@/components/product/listing";
 import { pdpCopy } from "./const";
 import { useGalleryTrack } from "./hooks";
+import { isHeroSlide } from "./is-hero-slide";
 import { PdpLightbox } from "./pdp-lightbox";
 import styles from "./product-gallery.module.css";
 
@@ -103,12 +104,22 @@ export function ProductGallery({
         />
       );
     }
+    // The one genuine LCP candidate on this page: the main stage's first
+    // slide. `priority` alone only skips `loading="lazy"` and preloads the
+    // resource — it does not raise the browser's fetch priority for either
+    // the preload or the `<img>` itself (see the comment on `ProductMedia`'s
+    // `fetchPriority` prop), which left the hero competing at the default
+    // priority against every other request on the page, including the
+    // deliberately `loading="lazy"` thumbs/secondary tiles once they scroll
+    // into the lazy-loading root margin.
+    const isHero = isHeroSlide(context, slide === slides[0]);
     return slide.kind === "photo" ? (
       <ProductMedia
         product={galleryProduct}
         imageIndex={slide.index}
         showStatusBadge={false}
-        priority={context === "stage" && slide === slides[0]}
+        priority={isHero}
+        fetchPriority={isHero ? "high" : undefined}
         sizes={sizes}
       />
     ) : (
@@ -117,7 +128,8 @@ export function ProductGallery({
         imageIndex={0}
         showStatusBadge={false}
         preserveTransparentBackground
-        priority={context === "stage" && slide === slides[0]}
+        priority={isHero}
+        fetchPriority={isHero ? "high" : undefined}
         sizes={sizes}
       />
     );

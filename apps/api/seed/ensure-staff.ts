@@ -45,13 +45,17 @@ async function upsertStaff(
 }
 
 /** Replaces a password that matches the public dev default with an unknowable one. */
-async function lockPublicPassword(
+export async function lockPublicPassword(
   users: Repository<User>,
   email: string,
   publicPassword: string,
 ) {
   const existing = await users.findOne({ where: { email } });
-  if (!existing || !(await compare(publicPassword, existing.passwordHash)))
+  if (
+    !existing ||
+    !existing.passwordHash ||
+    !(await compare(publicPassword, existing.passwordHash))
+  )
     return false;
   await users.update(
     { id: existing.id },

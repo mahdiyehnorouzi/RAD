@@ -240,6 +240,19 @@ with open(broker, "rb") as source:
 
 runner_workflow_policy_verified = False
 production_environments_verified = False
+# Per-migration approval (name -> exact sha256 the operator reviewed), and
+# whether the operator has separately attested that the existing off-server
+# backup pipeline covers /var/lib/rad-release/backups/ — see
+# docs/automated-migrations.md. Like the two flags above, this script
+# cannot verify either of these itself (they are human judgments about
+# reviewed migration files and an operator-owned pipeline, not something
+# host state proves), so it only ever preserves existing values — never
+# approves a migration or sets the offsite flag true on its own. A migration
+# whose approval isn't carried forward here (e.g. a corrupt/unreadable prior
+# candidate) simply requires re-approval — never silently inherited as
+# approved.
+approved_migrations = {}
+offsite_backup_pipeline_verified = False
 existing = Path(candidate)
 if existing.exists():
     try:
@@ -247,8 +260,12 @@ if existing.exists():
         if isinstance(prior, dict):
             runner_workflow_policy_verified = prior.get("runner_workflow_policy_verified") is True
             production_environments_verified = prior.get("production_environments_verified") is True
+            offsite_backup_pipeline_verified = prior.get("offsite_backup_pipeline_verified") is True
+            prior_approved = prior.get("approved_migrations")
+            if isinstance(prior_approved, dict):
+                approved_migrations = {k: v for k, v in prior_approved.items() if isinstance(k, str) and isinstance(v, str)}
     except (json.JSONDecodeError, OSError):
-        pass  # no prior candidate to preserve from — start false, as before.
+        pass  # no prior candidate to preserve from — start empty/false, as before.
 
 policy = dict(
     schema=1, repository="mahdiyehnorouzi/RAD", broker_sha256=digest,
@@ -258,6 +275,8 @@ policy = dict(
     production_environments_verified=production_environments_verified,
     host_preflight_verified=(host_ok == "true"),
     nonproduction_rehearsal_verified=(rehearsal_ok == "true"),
+    approved_migrations=approved_migrations,
+    offsite_backup_pipeline_verified=offsite_backup_pipeline_verified,
 )
 with open(candidate, "w") as out:
     json.dump(policy, out, indent=2); out.write("\n")

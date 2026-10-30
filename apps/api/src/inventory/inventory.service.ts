@@ -20,6 +20,8 @@ import {
   HIDDEN_PRODUCT_STATUSES,
   HOLD_SWEEP_INTERVAL_MS,
   LEGACY_PRODUCT_STATUS,
+  INVENTORY_OWNING_ORDER_STATUSES,
+  UNRESOLVED_PAYMENT_STATUSES,
 } from "./const/product-status";
 import {
   canTransitionProductStatus,
@@ -104,6 +106,14 @@ export class InventoryService implements OnModuleInit, OnModuleDestroy {
         .set({ status: "expired" })
         .where("status = :pending", { pending: "pending_payment" })
         .andWhere('"paymentDueAt" <= :now', { now })
+        .andWhere(
+          `NOT EXISTS (
+          SELECT 1 FROM "PaymentIntent" payment
+          WHERE payment."orderId" = "Order"."id"
+            AND payment."status" IN (:...protectedPayments)
+        )`,
+          { protectedPayments: UNRESOLVED_PAYMENT_STATUSES },
+        )
         .returning(["id", "ownerKey"])
         .execute();
       const expiredOrders = (overdue.raw ?? []) as Array<{
@@ -118,6 +128,22 @@ export class InventoryService implements OnModuleInit, OnModuleDestroy {
         .set({ status: "available", holdExpiresAt: null, heldBy: null })
         .where("status = :sold", { sold: "sold" })
         .andWhere('"holdExpiresAt" <= :now', { now })
+        .andWhere(
+          `NOT EXISTS (
+          SELECT 1 FROM "OrderItem" item
+          JOIN "Order" purchase ON purchase."id" = item."orderId"
+          WHERE item."productSlug" = "Product"."slug"
+            AND purchase."status" IN (:...activeOrders)
+            AND (purchase."paymentDueAt" IS NOT NULL OR purchase."status" != 'pending_payment'
+              OR EXISTS (SELECT 1 FROM "PaymentIntent" payment
+                WHERE payment."orderId" = purchase."id"
+                  AND payment."status" IN (:...protectedPayments)))
+        )`,
+          {
+            activeOrders: INVENTORY_OWNING_ORDER_STATUSES,
+            protectedPayments: UNRESOLVED_PAYMENT_STATUSES,
+          },
+        )
         .returning(["slug"])
         .execute();
       const slugs = ((released.raw ?? []) as Array<{ slug: string }>).map(
@@ -134,24 +160,51 @@ export class InventoryService implements OnModuleInit, OnModuleDestroy {
   }
 
   /** Holds an available work for this cart owner, or confirms an existing hold. */
-  async hold(ownerKey: string, slug: string): Promise<Date> {
-    await this.releaseExpiredHolds();
-    const products = this.dataSource.getRepository(Product);
-    const expiresAt = new Date(Date.now() + CART_HOLD_MS);
-    const result = await products.update(
-      { slug, status: "available" },
-      { status: "sold", holdExpiresAt: expiresAt, heldBy: ownerKey },
-    );
-    if (result.affected) return expiresAt;
-
+  async hold(
+    ownerKey: string,
+    slug: string,
+    manager: EntityManager,
+  ): Promise<Date> {
+    const products = manager.getRepository(Product);
     const product = await products.findOne({
       where: { slug },
-      select: { id: true, status: true, heldBy: true, holdExpiresAt: true },
+      lock: { mode: "pessimistic_write" },
     });
     if (!product || !this.isPublic(product.status)) {
       throw new NotFoundException("اثر پیدا نشد.");
     }
-    if (product.heldBy === ownerKey && product.holdExpiresAt) {
+    const ordered = await manager
+      .getRepository(OrderItem)
+      .createQueryBuilder("item")
+      .innerJoin("item.order", "order")
+      .where('"item"."productSlug" = :slug', { slug })
+      .andWhere('"order"."status" IN (:...active)', {
+        active: INVENTORY_OWNING_ORDER_STATUSES,
+      })
+      .getExists();
+    if (ordered) {
+      throw new ConflictException(
+        "این اثر در یک سفارش ثبت شده و قابل افزودن به سبد نیست.",
+      );
+    }
+    if (product.status === "available") {
+      const expiresAt = new Date(Date.now() + CART_HOLD_MS);
+      await products.update(
+        { id: product.id },
+        {
+          status: "sold",
+          holdExpiresAt: expiresAt,
+          heldBy: ownerKey,
+        },
+      );
+      return expiresAt;
+    }
+    if (
+      product.status === "sold" &&
+      product.heldBy === ownerKey &&
+      product.holdExpiresAt &&
+      product.holdExpiresAt.getTime() > Date.now()
+    ) {
       return product.holdExpiresAt;
     }
     throw new ConflictException("این اثر دیگر قابل افزودن به سبد نیست.");
@@ -164,15 +217,25 @@ export class InventoryService implements OnModuleInit, OnModuleDestroy {
     manager?: EntityManager,
   ) {
     if (!slugs.length) return;
-    await (manager ?? this.dataSource.manager).getRepository(Product).update(
-      {
-        slug: In(slugs),
-        status: "sold",
-        heldBy: ownerKey,
-        holdExpiresAt: Not(IsNull()),
-      },
-      { status: "available", holdExpiresAt: null, heldBy: null },
-    );
+    await (manager ?? this.dataSource.manager)
+      .getRepository(Product)
+      .createQueryBuilder()
+      .update(Product)
+      .set({ status: "available", holdExpiresAt: null, heldBy: null })
+      .where('"slug" IN (:...slugs)', { slugs })
+      .andWhere('"status" = :status', { status: "sold" })
+      .andWhere('"heldBy" = :ownerKey', { ownerKey })
+      .andWhere('"holdExpiresAt" IS NOT NULL')
+      .andWhere(
+        `NOT EXISTS (
+        SELECT 1 FROM "OrderItem" item
+        JOIN "Order" purchase ON purchase."id" = item."orderId"
+        WHERE item."productSlug" = "Product"."slug"
+          AND purchase."status" IN (:...activeOrders)
+      )`,
+        { activeOrders: INVENTORY_OWNING_ORDER_STATUSES },
+      )
+      .execute();
   }
 
   /** Current hold deadlines for this owner, keyed by slug. */
@@ -204,6 +267,24 @@ export class InventoryService implements OnModuleInit, OnModuleDestroy {
     ownerKey: string,
     products: Product[],
   ) {
+    // Checkout locks products before this check. A second request that read
+    // the old cart before the first committed must not create another order.
+    const alreadyOrdered = await manager
+      .getRepository(OrderItem)
+      .createQueryBuilder("item")
+      .innerJoin("item.order", "order")
+      .where('"item"."productSlug" IN (:...slugs)', {
+        slugs: products.map((product) => product.slug),
+      })
+      .andWhere('"order"."status" IN (:...active)', {
+        active: INVENTORY_OWNING_ORDER_STATUSES,
+      })
+      .getExists();
+    if (alreadyOrdered) {
+      throw new ConflictException(
+        "یکی از آثار سبد در یک سفارش ثبت شده است؛ سفارش‌های خود را بررسی کنید.",
+      );
+    }
     const now = Date.now();
     const repo = manager.getRepository(Product);
     for (const product of products) {
@@ -224,7 +305,10 @@ export class InventoryService implements OnModuleInit, OnModuleDestroy {
         );
         if (claimed.affected) continue;
       }
-      throw new ConflictException(`اثر «${product.name}» دیگر قابل خرید نیست.`);
+      throw new ConflictException({
+        message: `اثر «${product.name}» دیگر قابل خرید نیست.`,
+        code: "cart_item_unavailable",
+      });
     }
   }
 

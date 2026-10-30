@@ -17,6 +17,30 @@
   pointer-events: none;
 }
 
-.dev-data-badge.is-registry {
+/* Deliberately loud and impossible to miss: a quiet corner pill let demo
+   registry data get mistaken for the real Admin catalog (see PR discussion).
+   This sits above all page content, in the normal document flow at the very
+   top, pushing everything else down rather than overlapping it. */
+.dev-data-banner {
+  display: block;
+  position: sticky;
+  top: 0;
+  z-index: 9999;
+  padding: 0.6rem 1rem;
+  font:
+    700 0.82rem/1.4 ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    monospace;
+  text-align: center;
+  direction: ltr;
+  color: #fff;
   background: #a3401f;
+  border-bottom: 2px solid #5c2410;
+}
+
+.dev-data-banner code {
+  padding: 0.05rem 0.3rem;
+  background: rgba(255, 255, 255, 0.18);
+  border-radius: 4px;
 }

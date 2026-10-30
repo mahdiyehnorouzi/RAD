@@ -1,5 +1,6 @@
 export { ProductDetail } from "./product-detail";
 export { ProductOverlay } from "./transition/product-overlay";
+export { ProductOverlayGate } from "./transition/product-overlay-gate";
 export {
   useProductTransitionStore,
   type SourceRect,

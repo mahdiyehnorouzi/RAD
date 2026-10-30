@@ -75,19 +75,38 @@ function cloudinaryLoader({ src, width }: ImageLoaderProps) {
 }
 
 /**
- * Any other absolute (http/https) `src` — currently: a `seaweedfs`-storage
- * row's delivery URL (see `apps/api/src/catalog/product.mapper.ts`), a
- * self-hosted, arbitrary-domain URL that can't be allowlisted in
+ * `SEAWEEDFS_PUBLIC_URL`'s host, mirrored into the client bundle by
+ * `next.config.mjs` (`env.NEXT_PUBLIC_SEAWEEDFS_HOST`), which also adds it to
+ * `images.remotePatterns` when set. Unlike Cloudinary, SeaweedFS has no
+ * transform API of its own — but once its host is allowlisted, Next's own
+ * built-in optimizer can still fetch-and-resize it server-side, so a known
+ * SeaweedFS URL no longer needs a custom loader at all (`undefined` below
+ * routes it through that default optimizer instead of `identityLoader`).
+ */
+function isKnownSeaweedfsUrl(src: string) {
+  const host = process.env.NEXT_PUBLIC_SEAWEEDFS_HOST;
+  if (!host) return false;
+  try {
+    return new URL(src).host === host;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Any other absolute (http/https) `src` not covered above — an
+ * unrecognized self-hosted/arbitrary-domain URL that can't be allowlisted in
  * `next.config.mjs`'s `images.remotePatterns` the way a fixed known host
- * like Cloudinary's could be.
+ * like Cloudinary's (or a configured SeaweedFS host) could be.
  *
  * A custom `loader` bypasses next/image's built-in optimizer (and the
  * domain allowlist check that comes with it) for the one `<Image>` it's
  * passed to, same as `cloudinaryLoader` already does — this just returns
  * the URL unchanged since there's no transform API to ask for a smaller
- * size from. This is the same reason `isCloudinaryUrl` exists: scope the
- * bypass to actual remote URLs, never to the on-site `/catalog/images/:id`
- * proxy route or a relative `static`/`external` path.
+ * size from, and the host isn't allowlisted for Next's own optimizer to
+ * fetch it either. This is the same reason `isCloudinaryUrl` exists: scope
+ * the bypass to actual remote URLs, never to the on-site
+ * `/catalog/images/:id` proxy route or a relative `static`/`external` path.
  */
 function identityLoader({ src }: ImageLoaderProps) {
   return src;
@@ -104,6 +123,7 @@ export function ProductMedia({
   showStatusBadge = true,
   preserveTransparentBackground = false,
   priority = false,
+  fetchPriority,
   sizes = "100vw",
 }: {
   product: Product;
@@ -113,6 +133,19 @@ export function ProductMedia({
   preserveTransparentBackground?: boolean;
   /** The first image on screen: load it immediately instead of lazily. */
   priority?: boolean;
+  /**
+   * `next/image`'s `priority` only skips `loading="lazy"` and adds a
+   * `<link rel=preload>` — it does NOT set the `fetchpriority` attribute on
+   * either of those (see `next/dist/shared/lib/get-img-props.js`: `priority`
+   * and `fetchPriority` are two separate, independently-passed props).
+   * Without this, a `priority` image still competes at the browser's
+   * default ("auto") priority against every other request on the page.
+   * Callers must opt in explicitly and sparingly — at most one `"high"` per
+   * page, for the actual LCP candidate — never derived automatically from
+   * `priority` here, since `priority` alone is already used more broadly
+   * (e.g. the first 2 PLP cards) than any one page should mark `"high"`.
+   */
+  fetchPriority?: "high" | "low" | "auto";
   /**
    * The `sizes` attribute for the responsive image, matching the actual
    * rendered width of this usage's container (PLP card, PDP gallery, cart
@@ -164,10 +197,11 @@ export function ProductMedia({
         fill
         sizes={sizes}
         priority={priority}
+        fetchPriority={fetchPriority}
         loader={
           isCloudinaryUrl(src)
             ? cloudinaryLoader
-            : isAbsoluteHttpUrl(src)
+            : isAbsoluteHttpUrl(src) && !isKnownSeaweedfsUrl(src)
               ? identityLoader
               : undefined
         }
