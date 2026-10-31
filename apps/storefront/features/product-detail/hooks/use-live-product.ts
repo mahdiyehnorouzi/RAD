@@ -54,12 +54,15 @@ export function useLiveProduct(slug: string): LiveProduct {
       if (document.visibilityState === "visible") void check();
     };
     const timer = window.setInterval(whenVisible, POLL_MS);
+    const onPageShow = () => void check();
     document.addEventListener("visibilitychange", whenVisible);
     window.addEventListener("online", whenVisible);
+    window.addEventListener("pageshow", onPageShow);
     return () => {
       window.clearInterval(timer);
       document.removeEventListener("visibilitychange", whenVisible);
       window.removeEventListener("online", whenVisible);
+      window.removeEventListener("pageshow", onPageShow);
     };
   }, [check]);
 

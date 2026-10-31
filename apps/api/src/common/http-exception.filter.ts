@@ -16,20 +16,31 @@ export class ApiExceptionFilter implements ExceptionFilter {
         ? exception.getStatus()
         : HttpStatus.INTERNAL_SERVER_ERROR;
     const payload =
-      exception instanceof HttpException ? exception.getResponse() : "خطای داخلی سرور";
+      exception instanceof HttpException
+        ? exception.getResponse()
+        : "خطای داخلی سرور";
     const raw =
       typeof payload === "string"
         ? payload
-        : ((payload as { message?: string | string[] }).message ?? "خطای داخلی سرور");
+        : ((payload as { message?: string | string[] }).message ??
+          "خطای داخلی سرور");
     const message = Array.isArray(raw) ? raw[0] : raw;
     const code =
       typeof payload === "object" && payload && "code" in payload
         ? String((payload as { code?: unknown }).code ?? "")
         : "";
+    const orderId =
+      typeof payload === "object" &&
+      payload &&
+      "orderId" in payload &&
+      typeof (payload as { orderId?: unknown }).orderId === "string"
+        ? (payload as { orderId: string }).orderId
+        : "";
     response.status(status).json({
       error: message,
       statusCode: status,
       ...(code ? { code } : {}),
+      ...(orderId ? { orderId } : {}),
     });
   }
 }

@@ -19,11 +19,14 @@ export function ProductLiveNotice({
   live,
   inBag,
   reserved,
+  heldByOther,
 }: {
   product: Product;
   live: LiveProduct;
   inBag: boolean;
   reserved: boolean;
+  /** False until the bag snapshot can tell this visitor's order from someone else's. */
+  heldByOther: boolean;
 }) {
   const { t, locale, number } = useLocale();
   const firstStatus = useRef(product.status);
@@ -68,7 +71,7 @@ export function ProductLiveNotice({
         <p>{t("liveDeletedBody")}</p>
       </StateNotice>
     );
-  } else if (reserved) {
+  } else if (heldByOther && reserved) {
     change = (
       <StateNotice live="off">
         <strong>{t("liveReservedTitle")}</strong>
