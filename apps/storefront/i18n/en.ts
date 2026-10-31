@@ -160,6 +160,12 @@ export const en = {
   emptyBag: "Your bag is empty.",
   emptyBagBody:
     "Every RAD work has only one edition. Explore the latest collection and choose yours.",
+  pendingOrderBagTitle: "Your order is placed. The bag is empty.",
+  pendingOrderBagBody:
+    "The work moved from the bag onto an unpaid order and stays reserved for you until the payment window ends. A new order is not created.",
+  resumePayment: "Continue payment",
+  reservedForYou: "Reserved for you",
+  viewOrders: "Your orders",
   shoppingBag: "Shopping bag",
   clearBag: "Clear bag",
   uniquePiece: "Unique work • 1/1",
@@ -567,6 +573,8 @@ export const en = {
   addBagFailed: "The work couldn't be added to your bag. Try again.",
   addBagNetwork: "No connection — the work wasn't added. Try again.",
   addBagTaken: "Someone else just took this work.",
+  addBagOwnOrder:
+    "This work is reserved on your unpaid order. Continue that payment.",
   cartErrorTitle: "Your bag couldn't be loaded.",
   cartErrorBody:
     "We couldn't reach the shop. Nothing has been removed from your bag — try again.",

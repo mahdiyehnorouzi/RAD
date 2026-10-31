@@ -30,7 +30,7 @@
     "test:catalog": "tsx --test src/catalog/*.spec.ts",
     "test:attributes": "tsx --test src/product-attributes/*.spec.ts",
     "test:compression": "tsx --test src/compression.spec.ts",
-    "test:inventory": "tsx --test src/inventory/*.spec.ts",
+    "test:inventory": "tsx --test src/inventory/*.spec.ts src/cart/*.spec.ts src/common/guest-id.spec.ts",
     "test:database": "tsx --test src/database/*.spec.ts",
     "test:health": "tsx --test src/health/*.spec.ts",
     "test:deploy": "tsx --test scripts/*.spec.ts",

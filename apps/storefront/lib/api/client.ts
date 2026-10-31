@@ -1,4 +1,6 @@
 import { withCurrentAssetPaths } from "@/lib/media/legacy-assets";
+import { browserGuestId } from "./guest-id";
+import { createRequestGate } from "./request-gate";
 import { parseServerTimingDuration } from "./server-timing";
 
 const timingEnabled =
@@ -9,17 +11,32 @@ export const SERVER_API_URL = process.env.API_URL || "http://localhost:4000";
 
 const API_BASE = typeof window === "undefined" ? SERVER_API_URL : "/backend";
 
-type ApiErrorBody = { error?: unknown; message?: unknown; code?: unknown };
+/** Browser-only. Server renders must not share one guest across visitors. */
+const browserSession = createRequestGate();
+
+type ApiErrorBody = {
+  error?: unknown;
+  message?: unknown;
+  code?: unknown;
+  orderId?: unknown;
+};
 
 export class ApiError extends Error {
   status: number;
   code?: string;
+  orderId?: string;
 
-  constructor(message: string, status: number, code?: string) {
+  constructor(
+    message: string,
+    status: number,
+    code?: string,
+    orderId?: string,
+  ) {
     super(message);
     this.name = "ApiError";
     this.status = status;
     this.code = code;
+    this.orderId = orderId;
   }
 }
 
@@ -71,6 +88,10 @@ export async function api<T>(
   if (init?.body && !headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json");
   }
+  const guestId = browserGuestId();
+  if (guestId && !headers.has("x-rad-guest")) {
+    headers.set("x-rad-guest", guestId);
+  }
   const { timeoutMs = 20_000, ...fetchInit } = init ?? {};
   const controller = new AbortController();
   const external = fetchInit.signal;
@@ -83,13 +104,16 @@ export async function api<T>(
   // The browser's own monotonic clock, start to finish — never compared
   // against a timestamp from another machine (see server-timing.ts).
   const clientStart = timingEnabled ? performance.now() : 0;
-  try {
-    const response = await fetch(`${API_BASE}${path}`, {
+  const send = () =>
+    fetch(`${API_BASE}${path}`, {
       ...fetchInit,
       credentials: "include",
       headers,
       signal: controller.signal,
     });
+  try {
+    const response =
+      typeof window === "undefined" ? await send() : await browserSession(send);
     if (timingEnabled) {
       const totalMs = performance.now() - clientStart;
       const proxyMs = parseServerTimingDuration(
@@ -113,6 +137,7 @@ export async function api<T>(
           "Request failed",
         response.status,
         firstString(data.code),
+        firstString(data.orderId),
       );
     }
     return withCurrentAssetPaths(data);

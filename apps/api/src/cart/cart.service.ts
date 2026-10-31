@@ -1,11 +1,11 @@
 import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
-import { CartItem, Product } from "../database/entities";
+import { CartItem, Order, Product } from "../database/entities";
 import { IdentityService } from "../common/identity.service";
 import { InventoryService } from "../inventory/inventory.service";
 import type { Actor } from "../common/identity";
-import type { CartSnapshot } from "./type";
+import type { CartPendingOrder, CartSnapshot } from "./type";
 
 @Injectable()
 export class CartService {
@@ -104,6 +104,31 @@ export class CartService {
       slugs,
       holds: await this.inventory.holdsFor(ownerKey, slugs),
       prices,
+      pendingOrders: await this.pendingOrders(ownerKey),
     };
+  }
+
+  /**
+   * Checkout deletes the bag and keeps the works on the order. The bag
+   * response still names those orders so the shop can resume payment
+   * instead of looking empty.
+   */
+  private async pendingOrders(ownerKey: string): Promise<CartPendingOrder[]> {
+    const now = Date.now();
+    const orders = await this.cartItems.manager.getRepository(Order).find({
+      where: { ownerKey, status: "pending_payment" },
+      relations: { items: true },
+      order: { createdAt: "ASC" },
+    });
+    return orders
+      .filter(
+        (order) => !order.paymentDueAt || order.paymentDueAt.getTime() > now,
+      )
+      .map((order) => ({
+        id: order.id,
+        status: "pending_payment" as const,
+        paymentDueAt: order.paymentDueAt?.getTime() ?? null,
+        slugs: (order.items ?? []).map((item) => item.productSlug),
+      }));
   }
 }
