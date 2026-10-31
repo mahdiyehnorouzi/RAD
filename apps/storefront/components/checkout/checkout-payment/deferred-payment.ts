@@ -1,0 +1,101 @@
+/**
+ * Where "I'll pay later" sends the buyer.
+ *
+ * Checkout has already created the order and cleared the cart, so this must
+ * be the existing order page. That page resumes manual receipt or gateway
+ * payment only while the order is still `pending_payment` and inside the
+ * payment window. It does not create an order and it does not restock.
+ */
+export function payLaterPath(orderId: string) {
+  const id = orderId.trim();
+  if (!id) throw new Error("pay later requires an order id");
+  return `/orders/${encodeURIComponent(id)}`;
+}
+
+type PayLaterInput = {
+  orderId: string;
+  status: string;
+  /** True when the payment deadline has passed, even if the sweep has not flipped status yet. */
+  expired: boolean;
+  gateway: boolean;
+  hasLiveRedirect: boolean;
+  receiptStep: boolean;
+};
+
+type PayLaterOffer =
+  | { offer: true; href: string }
+  | {
+      offer: false;
+      reason:
+        | "not-payable"
+        | "expired"
+        | "gateway"
+        | "awaiting-redirect"
+        | "receipt-step";
+    };
+
+/**
+ * The manual-card transfer step is the only place this control appears.
+ * Other states stay on their existing checkout or order screens.
+ */
+export function payLaterOffer(input: PayLaterInput): PayLaterOffer {
+  if (input.status !== "pending_payment") {
+    return { offer: false, reason: "not-payable" };
+  }
+  if (input.expired) return { offer: false, reason: "expired" };
+  if (input.receiptStep) return { offer: false, reason: "receipt-step" };
+  if (input.hasLiveRedirect) {
+    return { offer: false, reason: "awaiting-redirect" };
+  }
+  if (input.gateway) return { offer: false, reason: "gateway" };
+  return { offer: true, href: payLaterPath(input.orderId) };
+}
+
+/**
+ * Receipt and gateway buttons on the order page. False means show the closed
+ * state only. `dueAt` and `now` are both epoch milliseconds (`Date.now()`).
+ */
+export function canContinuePayment(input: {
+  status: string;
+  dueAt?: number | null;
+  now: number;
+}) {
+  if (input.status !== "pending_payment") return false;
+  if (input.dueAt != null && input.dueAt <= input.now) return false;
+  return true;
+}
+
+/**
+ * Gateway attempts a timeout cannot prove are unpaid. Same set the API sweep
+ * refuses to expire (`UNRESOLVED_PAYMENT_STATUSES`).
+ */
+const PAYMENT_SURVIVES_DEADLINE = new Set([
+  "redirected",
+  "submitted",
+  "verified",
+  "verify_error",
+  "verify_conflict",
+]);
+
+/**
+ * True when the order page should replace payment actions with the expired
+ * note. `remainingMs` is the live countdown (`useCountdown`), so this flips
+ * on the same tick the clock hits zero, without a refresh.
+ * Unresolved gateway states stay on their own screens: the server keeps
+ * those orders open after `dueAt`.
+ */
+export function paymentWindowClosed(input: {
+  orderStatus: string;
+  paymentStatus?: string | null;
+  remainingMs: number | null;
+}) {
+  if (input.orderStatus === "expired") return true;
+  if (input.orderStatus !== "pending_payment") return false;
+  if (
+    input.paymentStatus != null &&
+    PAYMENT_SURVIVES_DEADLINE.has(input.paymentStatus)
+  ) {
+    return false;
+  }
+  return input.remainingMs !== null && input.remainingMs <= 0;
+}
