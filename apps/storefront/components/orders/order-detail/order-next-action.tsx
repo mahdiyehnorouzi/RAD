@@ -215,9 +215,7 @@ export function OrderNextAction({
         title={t("manualPaymentHint")}
         note={deadline}
       >
-        {manualCard ? (
-          <PaymentCard card={manualCard} />
-        ) : null}
+        {manualCard ? <PaymentCard card={manualCard} /> : null}
 
         <ReceiptForm
           busy={busy}

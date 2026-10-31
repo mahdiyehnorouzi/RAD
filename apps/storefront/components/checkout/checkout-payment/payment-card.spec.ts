@@ -124,21 +124,24 @@ test("PaymentCardView omits the bank when none is configured", () => {
 });
 
 test("PaymentCardView English copy reads left to right", () => {
-  const html = render({ dir: "ltr", copy: {
-    title: checkoutCopy.en.cardTitle,
-    subtitle: checkoutCopy.en.cardSubtitle,
-    cardLabel: checkoutCopy.en.cardLabel,
-    holderLabel: checkoutCopy.en.holderLabel,
-    bankLabel: checkoutCopy.en.bankLabel,
-    copyCard: checkoutCopy.en.copyCard,
-    copyCardName: checkoutCopy.en.copyCardName,
-    copyCardHint: checkoutCopy.en.copyCardHint,
-    copyCardDone: checkoutCopy.en.copyCardDone,
-    copyCardDoneName: checkoutCopy.en.copyCardDoneName,
-    copyFailed: checkoutCopy.en.copyFailed,
-    copyFailedDetail: checkoutCopy.en.copyFailedDetail,
-    instruction: checkoutCopy.en.instruction,
-  } });
+  const html = render({
+    dir: "ltr",
+    copy: {
+      title: checkoutCopy.en.cardTitle,
+      subtitle: checkoutCopy.en.cardSubtitle,
+      cardLabel: checkoutCopy.en.cardLabel,
+      holderLabel: checkoutCopy.en.holderLabel,
+      bankLabel: checkoutCopy.en.bankLabel,
+      copyCard: checkoutCopy.en.copyCard,
+      copyCardName: checkoutCopy.en.copyCardName,
+      copyCardHint: checkoutCopy.en.copyCardHint,
+      copyCardDone: checkoutCopy.en.copyCardDone,
+      copyCardDoneName: checkoutCopy.en.copyCardDoneName,
+      copyFailed: checkoutCopy.en.copyFailed,
+      copyFailedDetail: checkoutCopy.en.copyFailedDetail,
+      instruction: checkoutCopy.en.instruction,
+    },
+  });
   assert.match(html, /dir="ltr"/);
   assert.match(html, /Payment card/);
   assert.match(html, /Card-to-card transfer/);

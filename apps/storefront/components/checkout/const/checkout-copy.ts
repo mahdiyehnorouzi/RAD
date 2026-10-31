@@ -222,8 +222,7 @@ export const checkoutCopy = {
     copyAmount: "Copy amount",
     copied: "Copied",
     copyFailed: "Couldn't copy",
-    copyFailedDetail:
-      "Couldn't copy. Select the number and copy it yourself.",
+    copyFailedDetail: "Couldn't copy. Select the number and copy it yourself.",
     instruction:
       "Transfer the order amount to this card, then submit your payment receipt.",
     exactTitle: "Transfer exactly this amount.",

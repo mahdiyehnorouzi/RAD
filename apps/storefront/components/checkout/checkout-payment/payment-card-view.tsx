@@ -58,7 +58,8 @@ export function PaymentCardView({
   const liveId = useId();
   const model = paymentCardModel(card);
   const state = failed ? "error" : copied === "card" ? "copied" : "idle";
-  const Icon = state === "error" ? CircleAlert : state === "copied" ? Check : Copy;
+  const Icon =
+    state === "error" ? CircleAlert : state === "copied" ? Check : Copy;
   const visibleLabel =
     state === "error"
       ? labels.copyFailed
@@ -139,7 +140,6 @@ export function PaymentCardView({
           <Info aria-hidden="true" />
           <span>{labels.instruction}</span>
         </p>
-
       </article>
       <p id={hintId} className={styles.live}>
         {labels.copyCardHint}
