@@ -10,15 +10,7 @@ import {
 } from "./payment-card-view";
 import styles from "./payment-card.module.css";
 
-export function PaymentCard({
-  card,
-  amount,
-  amountDigits,
-}: {
-  card: ManualCardPayment;
-  amount: string;
-  amountDigits: string;
-}) {
+export function PaymentCard({ card }: { card: ManualCardPayment }) {
   const { locale } = useLocale();
   const c = checkoutCopy[locale];
   const [copied, setCopied] = useState<PaymentCardCopyKey | null>(null);
@@ -34,6 +26,7 @@ export function PaymentCard({
       setFailed(false);
       timer.current = window.setTimeout(() => setCopied(null), 2500);
     } catch {
+      setCopied(null);
       setFailed(true);
     }
   }
@@ -44,21 +37,25 @@ export function PaymentCard({
     <PaymentCardView
       styles={styles}
       card={card}
-      amount={amount}
+      dir={locale === "fa" ? "rtl" : "ltr"}
       copied={copied}
       failed={failed}
       labels={{
+        title: c.cardTitle,
+        subtitle: c.cardSubtitle,
         cardLabel: c.cardLabel,
+        holderLabel: c.holderLabel,
+        bankLabel: c.bankLabel,
         copyCard: c.copyCard,
+        copyCardName: c.copyCardName,
         copyCardHint: c.copyCardHint,
         copyCardDone: c.copyCardDone,
-        amountDueLabel: c.amountDueLabel,
-        copyAmount: c.copyAmount,
-        copied: c.copied,
+        copyCardDoneName: c.copyCardDoneName,
         copyFailed: c.copyFailed,
+        copyFailedDetail: c.copyFailedDetail,
+        instruction: c.instruction,
       }}
       onCopyCard={() => void copy("card", model.copyDigits)}
-      onCopyAmount={() => void copy("amount", amountDigits)}
     />
   );
 }

@@ -369,11 +369,7 @@ export function CheckoutPayment({ id }: { id: string }) {
                 </button>
               </div>
             ) : manualCard ? (
-              <PaymentCard
-                card={manualCard}
-                amount={tomanLabel}
-                amountDigits={String(tomanDue)}
-              />
+              <PaymentCard card={manualCard} />
             ) : (
               <p className="checkout-alert" role="status">
                 {c.noCard}
