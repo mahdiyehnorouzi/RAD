@@ -1,4 +1,5 @@
-import { Check, Copy } from "lucide-react";
+import { useId } from "react";
+import { Check, CircleAlert, Copy, Info } from "lucide-react";
 import type { ManualCardPayment } from "@rad/types";
 import {
   cardDigitsForCopy,
@@ -6,17 +7,22 @@ import {
   holderNameLines,
 } from "../../../lib/payment/receipt";
 
-export type PaymentCardCopyKey = "card" | "amount";
+export type PaymentCardCopyKey = "card";
 
 export type PaymentCardLabels = {
+  title: string;
+  subtitle: string;
   cardLabel: string;
+  holderLabel: string;
+  bankLabel: string;
   copyCard: string;
+  copyCardName: string;
   copyCardHint: string;
   copyCardDone: string;
-  amountDueLabel: string;
-  copyAmount: string;
-  copied: string;
+  copyCardDoneName: string;
   copyFailed: string;
+  copyFailedDetail: string;
+  instruction: string;
 };
 
 export function paymentCardModel(card: ManualCardPayment) {
@@ -25,6 +31,7 @@ export function paymentCardModel(card: ManualCardPayment) {
     groups,
     copyDigits: cardDigitsForCopy(card.cardNumber),
     holderLines: holderNameLines(card.cardHolder),
+    holder: card.cardHolder.trim(),
     bankName: card.bankName?.trim() || "",
   };
 }
@@ -32,98 +39,118 @@ export function paymentCardModel(card: ManualCardPayment) {
 export function PaymentCardView({
   styles,
   card,
-  amount,
   labels,
   copied,
   failed,
+  dir,
   onCopyCard,
-  onCopyAmount,
 }: {
   styles: Record<string, string>;
   card: ManualCardPayment;
-  amount: string;
   labels: PaymentCardLabels;
   copied: PaymentCardCopyKey | null;
   failed: boolean;
+  dir: "rtl" | "ltr";
   onCopyCard: () => void;
-  onCopyAmount: () => void;
 }) {
+  const titleId = useId();
+  const hintId = useId();
+  const liveId = useId();
   const model = paymentCardModel(card);
+  const state = failed ? "error" : copied === "card" ? "copied" : "idle";
+  const Icon =
+    state === "error" ? CircleAlert : state === "copied" ? Check : Copy;
+  const visibleLabel =
+    state === "error"
+      ? labels.copyFailed
+      : state === "copied"
+        ? labels.copyCardDone
+        : labels.copyCard;
+  const accessibleName =
+    state === "error"
+      ? labels.copyFailed
+      : state === "copied"
+        ? labels.copyCardDoneName
+        : labels.copyCardName;
+
   return (
-    <div className={styles.details}>
-      <article className={styles.card} aria-label={labels.cardLabel}>
-        <div className={styles.holder}>
-          {model.holderLines.map((line) => (
-            <span key={line}>{line}</span>
-          ))}
-        </div>
-        <p className={styles.number} dir="ltr" lang="en">
-          {model.groups.map((group) => (
-            <span key={group}>{group}</span>
-          ))}
-        </p>
-        {model.bankName ? (
-          <div className={styles.bank} dir="ltr">
-            <span>{model.bankName}</span>
-            <svg
-              className={styles.mark}
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-              focusable="false"
-            >
-              <circle cx="12" cy="12" r="2.15" fill="currentColor" />
-              {Array.from({ length: 12 }, (_, index) => (
-                <rect
-                  key={index}
-                  x="11.35"
-                  y="0.6"
-                  width="1.3"
-                  height="5.4"
-                  rx="0.65"
-                  fill="currentColor"
-                  transform={`rotate(${index * 30} 12 12)`}
-                />
-              ))}
-            </svg>
-          </div>
-        ) : null}
-      </article>
-      <button
-        className={styles.copy}
-        type="button"
-        data-copied={copied === "card" || undefined}
-        aria-live="polite"
-        onClick={onCopyCard}
+    <div className={styles.frame}>
+      <article
+        className={styles.card}
+        dir={dir}
+        lang={dir === "rtl" ? "fa" : "en"}
+        aria-labelledby={titleId}
       >
-        {copied === "card" ? (
-          <Check aria-hidden="true" />
-        ) : (
-          <Copy aria-hidden="true" />
-        )}
-        {copied === "card" ? labels.copyCardDone : labels.copyCard}
-      </button>
-      <p className={styles.hint}>{labels.copyCardHint}</p>
-      <div className={styles.amount} aria-label={labels.amountDueLabel}>
-        <span>{labels.amountDueLabel}</span>
-        <b>{amount}</b>
-        <button
-          className={styles.amountCopy}
-          type="button"
-          onClick={onCopyAmount}
-        >
-          {copied === "amount" ? (
-            <Check aria-hidden="true" />
-          ) : (
-            <Copy aria-hidden="true" />
-          )}
-          {copied === "amount" ? labels.copied : labels.copyAmount}
-        </button>
-      </div>
-      {failed ? (
-        <p className={styles.alert} role="alert">
-          {labels.copyFailed}
+        <img
+          className={styles.art}
+          src="/studio/bowl.webp"
+          alt=""
+          width={128}
+          height={128}
+          decoding="async"
+        />
+        <div className={styles.titles}>
+          <h2 id={titleId}>{labels.title}</h2>
+          <p className={styles.subtitle}>{labels.subtitle}</p>
+        </div>
+        <p className={styles.mark} lang="fa">
+          رَد
         </p>
-      ) : null}
+
+        <div className={styles.numberBlock}>
+          <span className={styles.kicker}>{labels.cardLabel}</span>
+          <div className={styles.numberRow}>
+            <button
+              className={styles.copy}
+              type="button"
+              data-state={state}
+              aria-label={accessibleName}
+              aria-describedby={`${hintId} ${liveId}`}
+              onClick={onCopyCard}
+            >
+              <Icon aria-hidden="true" />
+              {visibleLabel}
+            </button>
+            <p className={styles.number} dir="ltr" lang="en">
+              {model.groups.join(" ")}
+            </p>
+          </div>
+        </div>
+
+        <div className={styles.meta}>
+          {model.holder ? (
+            <div className={styles.metaItem}>
+              <span className={styles.kicker}>{labels.holderLabel}</span>
+              <strong className={styles.value} dir="auto">
+                {model.holder}
+              </strong>
+            </div>
+          ) : null}
+          {model.bankName ? (
+            <div className={styles.metaItem}>
+              <span className={styles.kicker}>{labels.bankLabel}</span>
+              <strong className={styles.value} dir="auto">
+                {model.bankName}
+              </strong>
+            </div>
+          ) : null}
+        </div>
+
+        <p className={styles.note}>
+          <Info aria-hidden="true" />
+          <span>{labels.instruction}</span>
+        </p>
+      </article>
+      <p id={hintId} className={styles.live}>
+        {labels.copyCardHint}
+      </p>
+      <p id={liveId} className={styles.live} role={failed ? "alert" : "status"}>
+        {failed
+          ? labels.copyFailedDetail
+          : copied === "card"
+            ? labels.copyCardDoneName
+            : ""}
+      </p>
     </div>
   );
 }

@@ -176,7 +176,11 @@ export function CheckoutPayment({ id }: { id: string }) {
             <PaymentResult order={order} amount={tomanLabel} />
           </div>
           <aside className="checkout-flow-aside">
-            <CheckoutSummary items={items} total={summaryTotal} />
+            <CheckoutSummary
+              items={items}
+              total={summaryTotal}
+              amountDigits={String(tomanDue)}
+            />
           </aside>
         </div>
       </section>
@@ -369,11 +373,7 @@ export function CheckoutPayment({ id }: { id: string }) {
                 </button>
               </div>
             ) : manualCard ? (
-              <PaymentCard
-                card={manualCard}
-                amount={tomanLabel}
-                amountDigits={String(tomanDue)}
-              />
+              <PaymentCard card={manualCard} />
             ) : (
               <p className="checkout-alert" role="status">
                 {c.noCard}
@@ -408,7 +408,11 @@ export function CheckoutPayment({ id }: { id: string }) {
         </div>
 
         <aside className="checkout-flow-aside">
-          <CheckoutSummary items={items} total={summaryTotal} />
+          <CheckoutSummary
+            items={items}
+            total={summaryTotal}
+            amountDigits={String(tomanDue)}
+          />
         </aside>
 
         <div className="checkout-flow-action">
