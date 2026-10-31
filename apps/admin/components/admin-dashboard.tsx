@@ -2254,4 +2254,3 @@ function AccountSettings({
     </section>
   );
 }
-
