@@ -389,6 +389,7 @@ html[dir="rtl"] .checkout-flow input.checkout-ltr-field::placeholder {
 /* ——— Summary ——— */
 
 .checkout-summary {
+  position: relative;
   display: grid;
   gap: 1.1rem;
   padding: 1.35rem 1.4rem;
@@ -495,7 +496,63 @@ html[dir="rtl"] .checkout-flow input.checkout-ltr-field::placeholder {
 }
 
 .checkout-summary-total dd {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.35rem 0.65rem;
   font-weight: var(--font-weight-medium, 500);
+}
+
+.checkout-summary-total dd > span {
+  user-select: text;
+}
+
+.checkout-summary-copy {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  padding: 0.2rem 0.15rem;
+  border: 0;
+  background: transparent;
+  color: var(--focus);
+  font: inherit;
+  font-size: 0.78rem;
+  line-height: 1.2;
+  text-decoration: underline;
+  text-underline-offset: 0.22em;
+  cursor: pointer;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.checkout-summary-copy[data-state="copied"] {
+  color: var(--moss);
+  text-decoration: none;
+}
+
+.checkout-summary-copy:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 3px;
+}
+
+.checkout-summary-live {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (--fine-pointer) {
+  .checkout-summary-copy:hover {
+    color: color-mix(in srgb, var(--focus) 80%, var(--ink));
+  }
 }
 
 /* ——— Countdown meter ——— */

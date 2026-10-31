@@ -8,6 +8,9 @@ export const orderDetailCopy = {
     reviewTitle: "رسید شما دریافت شد و در انتظار تأیید رَد است.",
     reviewNote: "تا پایان بررسی، اثر برای شما رزرو می‌ماند.",
     receiptTitle: "رسیدی که فرستادی",
+    copyAmount: "کپی مبلغ",
+    copied: "کپی شد",
+    copyFailed: "خطا در کپی",
   },
   en: {
     quantity: "Quantity: {count}",
@@ -16,6 +19,9 @@ export const orderDetailCopy = {
     reviewTitle: "Your receipt arrived and is waiting for RAD to confirm it.",
     reviewNote: "The work stays reserved for you until the check ends.",
     receiptTitle: "The receipt you sent",
+    copyAmount: "Copy amount",
+    copied: "Copied",
+    copyFailed: "Couldn't copy",
   },
 };
 
