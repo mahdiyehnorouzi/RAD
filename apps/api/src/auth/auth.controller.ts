@@ -2,11 +2,13 @@ import { Body, Controller, Get, Patch, Post, Req, Res } from "@nestjs/common";
 import { Throttle } from "@nestjs/throttler";
 import type { Response } from "express";
 import { AuthService } from "./auth.service";
+import { ProfileService } from "./profile.service";
 import { ChangePasswordDto } from "./dto/change-password.dto";
 import { ForgotPasswordDto } from "./dto/forgot-password.dto";
 import { ResetPasswordDto } from "./dto/reset-password.dto";
 import { RegisterDto } from "./dto/register.dto";
 import { SessionDto } from "./dto/session.dto";
+import { UpdateProfileDto } from "./dto/update-profile.dto";
 import { IdentityService } from "../common/identity.service";
 import type { AuthedRequest } from "../common/session.middleware";
 import { AUTH_COOKIE, sessionCookieOptions } from "../common/cookies";
@@ -15,6 +17,7 @@ import { AUTH_COOKIE, sessionCookieOptions } from "../common/cookies";
 export class AuthController {
   constructor(
     private readonly auth: AuthService,
+    private readonly profiles: ProfileService,
     private readonly identity: IdentityService,
   ) {}
 
@@ -55,6 +58,16 @@ export class AuthController {
       sessionCookieOptions(result.maxAgeMs),
     );
     return { user: result.user };
+  }
+
+  @Patch("profile")
+  @Throttle({ default: { limit: 8, ttl: 60_000 } })
+  async updateProfile(
+    @Body() body: UpdateProfileDto,
+    @Req() request: AuthedRequest,
+  ) {
+    const actor = await this.identity.fromRequest(request);
+    return this.profiles.update(actor, body);
   }
 
   @Patch("password")
