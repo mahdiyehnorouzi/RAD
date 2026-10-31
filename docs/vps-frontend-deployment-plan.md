@@ -3,6 +3,11 @@
 Branch: `feat/vps-frontend-migration`. Status: **design only — nothing deployed,
 no DNS changed, no production service touched.**
 
+The Liara deploy workflows named below (`deploy-storefront-liara.yml`,
+`deploy-admin-liara.yml`) were later removed. The live frontend image build
+is `.github/workflows/deploy-frontend-vps.yml`. The rest of this note is the
+original design record and was not re-verified by that cleanup.
+
 ## 1. Fact classification
 
 Per request, every infrastructure claim below is tagged:
@@ -17,7 +22,7 @@ Per request, every infrastructure claim below is tagged:
 | Storefront/admin are Next.js 16.3.2, App Router, with `apps/storefront/Dockerfile` and `apps/admin/Dockerfile` already producing standalone-server images | (1) |
 | Frontends talk to the API via server-side `API_URL` only; no secrets in frontend env vars; CORS is exact-origin-matched; cookies are host-only (no domain attr) | (1) |
 | No live payment gateway exists in `apps/api` (manual card + receipt-upload + admin review); `PAYMENT_MODE=gateway` throws today | (1) |
-| Existing GHCR build-and-push pattern for both apps (`deploy-storefront-liara.yml`, `deploy-admin-liara.yml`) and for the API (`deploy-api-vps.yml`'s SSH stage/deploy/rollback pattern) | (1) |
+| GHCR build-and-push for storefront and admin, and the API release/rollback path, now live in `deploy-frontend-vps.yml` and `deploy-api-vps.yml`. The Liara workflow files this draft originally cited were removed | (1) |
 | SeaweedFS is running on the VPS as 5 containers: `seaweedfs_master_1`, `seaweedfs_volume_1`, `seaweedfs_filer_1`, `seaweedfs_s3_1`, `seaweedfs_webdav_1` | (2) |
 | An authenticated S3 upload/download test against that SeaweedFS succeeded at some point, prior to a subsequent storage reconfiguration | (2) — the *current* post-reconfiguration state of that path is (4) |
 | PostgreSQL stays on Liara (`rad-db`, `olympus.liara.cloud:31444`) and must not move | (3) + user instruction — treated as a hard constraint regardless of current verification |

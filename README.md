@@ -18,11 +18,6 @@ The repo is an **npm workspaces monorepo** (version `1.5.1`). Three apps run ind
 - **npm** (workspaces; install from repo root only)
 - **Docker Desktop** (recommended) for local PostgreSQL
 
-Optional for deployment:
-
-- [Wrangler](https://developers.cloudflare.com/workers/wrangler/) — Cloudflare Workers frontends
-- `CLOUDFLARE_API_TOKEN` — storefront/admin Cloudflare deploys
-
 ---
 
 ## Quick start (full local stack)
@@ -184,11 +179,10 @@ Copy from `apps/api/.env.example`:
 
 | Variable | Description |
 | --- | --- |
-| `API_URL` | Upstream API for SSR and Cloudflare build (default `http://localhost:4000`) |
+| `API_URL` | Upstream API for SSR (default `http://localhost:4000`) |
 | `CATALOG_SOURCE` | `auto` (default), `api` or `registry` — where catalog data comes from |
 | `NEXT_PUBLIC_SITE_URL` | Public site URL (production / SEO) |
 | `NEXT_PUBLIC_GA_MEASUREMENT_ID` | Google Analytics 4 ID |
-| `CLOUDFLARE_API_TOKEN` | Required for `deploy:cloudflare` |
 
 ### `apps/admin/.env` (optional locally)
 
@@ -216,10 +210,7 @@ Copy from `apps/api/.env.example`:
 | `npm run format:changed` | Prettier on files changed since `origin/main` (what CI checks) |
 | `npm run format` / `format:check` | Prettier across the whole repo (`.prettierignore` lists exclusions) |
 | `npm test` | Run every workspace's tests (API pricing + purchase flow) |
-| `npm run deploy:release` | Deploy storefront + admin (CI/release) |
-| `npm run deploy:api` | Deploy API to the VPS over SSH (PM2 restart) |
-| `npm run deploy:storefront` | Deploy storefront to Cloudflare |
-| `npm run deploy:admin` | Deploy admin to Cloudflare |
+| `npm run deploy:api` | Legacy PM2 SSH deploy. Not used by the GitHub Actions VPS release |
 
 ---
 
@@ -275,7 +266,7 @@ Notable routes:
 
 Dev: `npm run dev` (port **3000**).
 
-Cloudflare: `npm run build:vinext` / `npm run deploy:cloudflare` inside the workspace.
+Production images use `npm run build` (`next build`) with `LIARA_BUILD=1` inside `apps/storefront/Dockerfile`. `npm run build:vinext` remains for the old Workers toolchain and is still run in CI; it is not what the VPS release ships.
 
 ### Admin (`apps/admin`)
 
@@ -332,25 +323,14 @@ RAD/
 
 ## Deployment
 
-Production layout:
+Pushing to `main` deploys through `.github/workflows/deploy.yml`. That workflow waits for CI, then releases only the services the push affected:
 
-- **API** — VPS at `https://api.rad-object.com`, deployed over SSH and run under PM2 (`scripts/deploy-api-server.sh`); `Dockerfile.api` builds the image used on that host, health check `/health`
-- **Storefront** — Cloudflare Workers (`vinext` build)
-- **Admin** — Cloudflare Workers
+- **API** — `.github/workflows/deploy-api-vps.yml` ships a signed artifact to the VPS, applies pending migrations, checks health, and rolls back on failure. Public API: `https://api.rad-object.com` (`/health`).
+- **Storefront and admin** — `.github/workflows/deploy-frontend-vps.yml` builds the Docker images and releases them on the same VPS.
 
-Full frontend release (from root, with Cloudflare credentials configured):
+The dependency map, smoke tests, and emergency `workflow_dispatch` path are in `docs/cicd-pipeline.md`.
 
-```bash
-npm run deploy:release
-```
-
-Individual deploys:
-
-```bash
-npm run deploy:api            # SSH + PM2 restart on the API VPS (needs SSH key access)
-npm run deploy:storefront
-npm run deploy:admin
-```
+`npm run deploy:api` (`scripts/deploy-api-server.sh`) is an older PM2-over-SSH script. GitHub Actions does not call it. Routine releases do not run it.
 
 On API boot in production (`scripts/start-production.mjs`):
 
@@ -359,7 +339,7 @@ On API boot in production (`scripts/start-production.mjs`):
 3. Registry seed if `RUN_SEED=true`
 4. Start HTTP server
 
-Set `STOREFRONT_ORIGIN`, `ADMIN_ORIGIN`, `JWT_SECRET`, `DATABASE_URL`, and SMTP vars in the hosting dashboard. Point storefront/admin `API_URL` at the deployed API URL.
+Set `STOREFRONT_ORIGIN`, `ADMIN_ORIGIN`, `JWT_SECRET`, `DATABASE_URL`, and SMTP vars in the API process environment on the VPS. Point storefront and admin `API_URL` at the deployed API URL.
 
 ---
 
@@ -381,7 +361,7 @@ npm run typecheck --workspace @rad/api
 
 ### Continuous integration
 
-`.github/workflows/ci.yml` runs on every pull request and on pushes to `main`: lint, typecheck, tests, and the production builds (API, and the vinext builds of admin and storefront that Cloudflare deploys). `release.yml` runs the same checks before deploying a tag. Protect `main` by requiring the **CI passed** status check.
+`.github/workflows/ci.yml` runs on every pull request and on pushes to `main`: lint, typecheck, tests, the API build, the storefront and admin standalone builds the VPS images use, and the vinext builds. The `main` ruleset requires the aggregate status check **CI passed**.
 
 Run the same checks locally before pushing:
 

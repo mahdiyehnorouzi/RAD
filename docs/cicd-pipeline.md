@@ -136,10 +136,10 @@ named, and restored the matching env snapshot.
   rollback, untouched.
 - `docker-compose.frontend-vps.yml` + both Dockerfiles — untouched. Images are still built off-VPS
   and pulled from GHCR; nothing is ever built on the VPS itself.
-- `ci.yml` — untouched; still the one required status check PRs gate on.
-- The Liara/Cloudflare workflows (`deploy-admin-liara.yml`, `deploy-storefront-liara.yml`,
-  `release.yml`) — untouched, kept only as the documented historical fallback. This pipeline
-  does not touch, replace, or race with them.
+- `ci.yml` — still the one required status check PRs gate on (`CI passed`). The standalone-build comment was updated later; the jobs and the check name were not.
+- Storefront and admin production releases go through `deploy-frontend-vps.yml` only.
+  The Liara workflows and the Cloudflare tag workflow `release.yml` were removed.
+  They are not a fallback and do not race with this pipeline.
 
 **What was missing, now added:**
 
