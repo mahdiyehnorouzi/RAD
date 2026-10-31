@@ -108,8 +108,10 @@ jobs:
             script: build:vinext
           - app: storefront
             script: build:vinext
-          # Node.js runtime path (Liara/Docker) — validated independently of
-          # the Cloudflare/vinext build above; see apps/*/liara.json.
+          # Node.js standalone output used by the VPS Docker images.
+          # apps/*/Dockerfile sets LIARA_BUILD=1; that variable name is
+          # unchanged so the image build contract stays the same.
+          # Validated independently of the vinext build above.
           - app: admin
             script: build
             liara: "1"
