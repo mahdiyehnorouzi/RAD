@@ -12,7 +12,7 @@ export function payLaterPath(orderId: string) {
   return `/orders/${encodeURIComponent(id)}`;
 }
 
-export type PayLaterInput = {
+type PayLaterInput = {
   orderId: string;
   status: string;
   /** True when the payment deadline has passed, even if the sweep has not flipped status yet. */
@@ -22,7 +22,7 @@ export type PayLaterInput = {
   receiptStep: boolean;
 };
 
-export type PayLaterOffer =
+type PayLaterOffer =
   | { offer: true; href: string }
   | {
       offer: false;
@@ -51,7 +51,10 @@ export function payLaterOffer(input: PayLaterInput): PayLaterOffer {
   return { offer: true, href: payLaterPath(input.orderId) };
 }
 
-/** Receipt and gateway buttons on the order page. False means show the closed state only. */
+/**
+ * Receipt and gateway buttons on the order page. False means show the closed
+ * state only. `dueAt` and `now` are both epoch milliseconds (`Date.now()`).
+ */
 export function canContinuePayment(input: {
   status: string;
   dueAt?: number | null;
@@ -60,4 +63,39 @@ export function canContinuePayment(input: {
   if (input.status !== "pending_payment") return false;
   if (input.dueAt != null && input.dueAt <= input.now) return false;
   return true;
+}
+
+/**
+ * Gateway attempts a timeout cannot prove are unpaid. Same set the API sweep
+ * refuses to expire (`UNRESOLVED_PAYMENT_STATUSES`).
+ */
+const PAYMENT_SURVIVES_DEADLINE = new Set([
+  "redirected",
+  "submitted",
+  "verified",
+  "verify_error",
+  "verify_conflict",
+]);
+
+/**
+ * True when the order page should replace payment actions with the expired
+ * note. `remainingMs` is the live countdown (`useCountdown`), so this flips
+ * on the same tick the clock hits zero, without a refresh.
+ * Unresolved gateway states stay on their own screens: the server keeps
+ * those orders open after `dueAt`.
+ */
+export function paymentWindowClosed(input: {
+  orderStatus: string;
+  paymentStatus?: string | null;
+  remainingMs: number | null;
+}) {
+  if (input.orderStatus === "expired") return true;
+  if (input.orderStatus !== "pending_payment") return false;
+  if (
+    input.paymentStatus != null &&
+    PAYMENT_SURVIVES_DEADLINE.has(input.paymentStatus)
+  ) {
+    return false;
+  }
+  return input.remainingMs !== null && input.remainingMs <= 0;
 }

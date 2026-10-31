@@ -22,7 +22,7 @@ import { Button, ButtonLink } from "@/components/ui/button-link";
 import { formatToman } from "@/lib/money";
 import { formatCountdown } from "@/lib/catalog/product-status";
 import { useCountdown } from "@/hooks/use-countdown";
-import { canContinuePayment } from "@/components/checkout/checkout-payment/deferred-payment";
+import { paymentWindowClosed } from "@/components/checkout/checkout-payment/deferred-payment";
 import { PaymentCard } from "@/components/checkout/checkout-payment/payment-card";
 import { STORE_ORDER_STATUS_KEY, orderDetailCopy } from "../const";
 import { ReceiptForm } from "./receipt-form";
@@ -108,13 +108,11 @@ export function OrderNextAction({
         : t("holdExpired");
 
   if (
-    order.status === "expired" ||
-    (order.status === "pending_payment" &&
-      !canContinuePayment({
-        status: order.status,
-        dueAt: order.payment?.dueAt,
-        now: Date.now(),
-      }))
+    paymentWindowClosed({
+      orderStatus: order.status,
+      paymentStatus: order.payment?.status,
+      remainingMs: remaining,
+    })
   ) {
     return (
       <NextCard

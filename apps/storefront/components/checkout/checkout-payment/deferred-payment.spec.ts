@@ -5,6 +5,7 @@ import {
   canContinuePayment,
   payLaterOffer,
   payLaterPath,
+  paymentWindowClosed,
 } from "./deferred-payment";
 
 const unpaid = {
@@ -89,6 +90,87 @@ test("gateway redirect is not replaced with the manual pay-later link", () => {
   assert.equal(payLaterOffer({ ...unpaid, gateway: true }).offer, false);
   assert.equal(
     payLaterOffer({ ...unpaid, hasLiveRedirect: true, gateway: true }).offer,
+    false,
+  );
+});
+
+test("pay later disappears on the tick the open-session countdown reaches zero", () => {
+  const dueAt = 1_700_000_000_000 + 30 * 60 * 1000;
+  const offerAt = (now: number) =>
+    payLaterOffer({
+      ...unpaid,
+      expired: Math.max(0, dueAt - now) <= 0,
+    });
+  assert.equal(offerAt(dueAt - 1000).offer, true);
+  assert.deepEqual(offerAt(dueAt), { offer: false, reason: "expired" });
+  assert.equal(offerAt(dueAt + 1000).offer, false);
+});
+
+test("ordinary continuation closes on the tick the deadline passes and stays closed", () => {
+  const dueAt = 1_700_000_000_000 + 30 * 60 * 1000;
+  const closedAt = (now: number) =>
+    paymentWindowClosed({
+      orderStatus: "pending_payment",
+      paymentStatus: "created",
+      remainingMs: Math.max(0, dueAt - now),
+    });
+  assert.equal(closedAt(dueAt - 1000), false);
+  assert.equal(closedAt(dueAt), true);
+  assert.equal(closedAt(dueAt + 1000), true);
+});
+
+test("dueAt is compared as epoch milliseconds, the same unit as Date.now()", () => {
+  const now = 1_700_000_000_000;
+  assert.equal(
+    canContinuePayment({
+      status: "pending_payment",
+      dueAt: now + 1,
+      now,
+    }),
+    true,
+  );
+  assert.equal(
+    canContinuePayment({
+      status: "pending_payment",
+      dueAt: Math.floor(now / 1000),
+      now,
+    }),
+    false,
+  );
+});
+
+test("unresolved gateway states stay on their own screen after the deadline", () => {
+  for (const paymentStatus of [
+    "redirected",
+    "submitted",
+    "verified",
+    "verify_error",
+    "verify_conflict",
+  ]) {
+    assert.equal(
+      paymentWindowClosed({
+        orderStatus: "pending_payment",
+        paymentStatus,
+        remainingMs: 0,
+      }),
+      false,
+      paymentStatus,
+    );
+  }
+  assert.equal(
+    paymentWindowClosed({
+      orderStatus: "expired",
+      paymentStatus: "verify_conflict",
+      remainingMs: 0,
+    }),
+    true,
+  );
+  assert.equal(
+    paymentWindowClosed({
+      orderStatus: "pending_verification",
+      paymentStatus: "submitted",
+      remainingMs: 0,
+    }),
     false,
   );
 });
