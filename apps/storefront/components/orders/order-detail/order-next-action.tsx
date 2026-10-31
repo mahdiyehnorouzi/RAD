@@ -22,6 +22,7 @@ import { Button, ButtonLink } from "@/components/ui/button-link";
 import { formatToman } from "@/lib/money";
 import { formatCountdown } from "@/lib/catalog/product-status";
 import { useCountdown } from "@/hooks/use-countdown";
+import { canContinuePayment } from "@/components/checkout/checkout-payment/deferred-payment";
 import { PaymentCard } from "@/components/checkout/checkout-payment/payment-card";
 import { STORE_ORDER_STATUS_KEY, orderDetailCopy } from "../const";
 import { ReceiptForm } from "./receipt-form";
@@ -105,6 +106,31 @@ export function OrderNextAction({
             time: formatCountdown(remaining, locale, number),
           })
         : t("holdExpired");
+
+  if (
+    order.status === "expired" ||
+    (order.status === "pending_payment" &&
+      !canContinuePayment({
+        status: order.status,
+        dueAt: order.payment?.dueAt,
+        now: Date.now(),
+      }))
+  ) {
+    return (
+      <NextCard
+        id={id}
+        icon={TimerOff}
+        tone="stop"
+        title={t("orderExpiredNote")}
+      >
+        <div className="order-next-actions">
+          <ButtonLink href={productHref} outline>
+            {t("nextActionBrowse")}
+          </ButtonLink>
+        </div>
+      </NextCard>
+    );
+  }
 
   if (order.status === "pending_payment") {
     if (redirectUrl) {
@@ -283,23 +309,6 @@ export function OrderNextAction({
         }
       >
         <p className="order-pay-note">{t("paymentRejectedHelp")}</p>
-        <div className="order-next-actions">
-          <ButtonLink href={productHref} outline>
-            {t("nextActionBrowse")}
-          </ButtonLink>
-        </div>
-      </NextCard>
-    );
-  }
-
-  if (order.status === "expired") {
-    return (
-      <NextCard
-        id={id}
-        icon={TimerOff}
-        tone="stop"
-        title={t("orderExpiredNote")}
-      >
         <div className="order-next-actions">
           <ButtonLink href={productHref} outline>
             {t("nextActionBrowse")}

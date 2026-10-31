@@ -110,6 +110,7 @@ export const checkoutCopy = {
     cancelAsk: "سفارش رو لغو می‌کنی؟ این رَد دوباره برای بقیه قابل خرید می‌شه.",
     cancelYes: "بله، لغو شود",
     cancelNo: "نه، ادامه می‌دهم",
+    payLater: "بعداً پرداخت می‌کنم",
 
     doneTitle: "رسید شما دریافت شد :)",
     doneBody:
@@ -250,6 +251,7 @@ export const checkoutCopy = {
     cancelAsk: "Cancel this order? The work goes back to the shop.",
     cancelYes: "Yes, cancel",
     cancelNo: "No, keep going",
+    payLater: "I'll pay later",
 
     doneTitle: "RAD has your receipt.",
     doneBody:
