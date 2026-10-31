@@ -2,7 +2,7 @@
 import "./checkout-page.css";
 import "../flow/purchase-design.css";
 
-import { FormEvent, useEffect, useRef, useState } from "react";
+import { FormEvent, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import {
@@ -34,6 +34,7 @@ import {
   restoreCheckoutLocation,
 } from "@/lib/geo/iran-locations";
 import {
+  applyIranMobileEdit,
   canonicalIranMobile,
   formatIranMobileDraft,
   iranMobileMessage,
@@ -126,12 +127,15 @@ export function CheckoutPage() {
   const [accepted, setAccepted] = useState(false);
   const [agreeMissing, setAgreeMissing] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
+  const phoneRef = useRef<HTMLInputElement>(null);
+  const phoneCaret = useRef<number | null>(null);
   const agreeRef = useRef<HTMLInputElement>(null);
   const errorRef = useRef<HTMLParagraphElement>(null);
 
   const items = slugs
     .map((slug) => getProduct(slug))
     .filter((item): item is Product => Boolean(item));
+  const formVisible = !leaving && ready && slugs.length > 0 && items.length > 0;
   const total = formatTotal(cartTotal(items), locale);
   const lost = slugs.some((slug) => !holds[slug] || !getProduct(slug));
   const remaining = useCountdown(holdEndsAt);
@@ -142,13 +146,14 @@ export function CheckoutPage() {
     errorRef.current?.focus();
   }, [error]);
 
-  // Restore a draft left by an earlier visit to this form (e.g. the buyer
-  // went on to /checkout/[id] and came back). Applied imperatively after
-  // mount so it never fights SSR/hydration.
-  useEffect(() => {
-    const draft = readDraft();
+  // The bag is not ready on the first render, so the form is not mounted
+  // yet. Restore only once it is actually in the document — including a
+  // later visit via browser back — without waiting on a one-shot mount effect.
+  useLayoutEffect(() => {
+    if (!formVisible) return;
     const form = formRef.current;
     if (!form) return;
+    const draft = readDraft();
     for (const name of ["name", "address", "postalCode"] as const) {
       const value = draft[name];
       if (!value) continue;
@@ -167,7 +172,15 @@ export function CheckoutPage() {
     setCityId(location.cityId);
     if (draft.phone) setPhone(formatIranMobileDraft(draft.phone));
     /* eslint-enable react-hooks/set-state-in-effect */
-  }, []);
+  }, [formVisible]);
+
+  useLayoutEffect(() => {
+    const node = phoneRef.current;
+    const caret = phoneCaret.current;
+    if (!node || caret == null) return;
+    node.setSelectionRange(caret, caret);
+    phoneCaret.current = null;
+  }, [phone]);
 
   const persistDraft = (patch?: Partial<Draft>) => {
     const form = formRef.current;
@@ -382,6 +395,7 @@ export function CheckoutPage() {
             error={errors.phone}
           >
             <input
+              ref={phoneRef}
               id="checkout-phone"
               name="phone"
               className="checkout-ltr-field"
@@ -397,17 +411,33 @@ export function CheckoutPage() {
                 errors.phone ? "checkout-phone-error" : undefined
               }
               onChange={(event) => {
-                const next = formatIranMobileDraft(event.currentTarget.value);
-                setPhone(next);
+                const cursor =
+                  event.currentTarget.selectionStart ??
+                  event.currentTarget.value.length;
+                const edit = applyIranMobileEdit(
+                  phone,
+                  event.currentTarget.value,
+                  cursor,
+                );
+                phoneCaret.current = edit.cursor;
+                if (edit.value === phone) {
+                  event.currentTarget.value = edit.value;
+                  event.currentTarget.setSelectionRange(
+                    edit.cursor,
+                    edit.cursor,
+                  );
+                  phoneCaret.current = null;
+                }
+                setPhone(edit.value);
                 if (phoneTouched) {
                   setFieldError(
                     "phone",
-                    iranMobileMessage(next, true, phoneCopy),
+                    iranMobileMessage(edit.value, true, phoneCopy),
                   );
                 } else {
                   clearFieldError("phone");
                 }
-                persistDraft({ phone: next });
+                persistDraft({ phone: edit.value });
               }}
               onBlur={() => {
                 setPhoneTouched(true);

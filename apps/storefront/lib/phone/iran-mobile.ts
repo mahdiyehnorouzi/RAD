@@ -33,10 +33,64 @@ export function formatIranMobileDraft(raw: string) {
     digits = `0${digits.slice(2)}`;
   }
   digits = digits.slice(0, 11);
+  return groupIranMobile(digits);
+}
+
+function groupIranMobile(digits: string) {
   if (!digits.startsWith("0")) return digits;
   if (digits.length <= 4) return digits;
   if (digits.length <= 7) return `${digits.slice(0, 4)} ${digits.slice(4)}`;
   return `${digits.slice(0, 4)} ${digits.slice(4, 7)} ${digits.slice(7)}`;
+}
+
+function digitsBefore(value: string, cursor: number) {
+  return toLatinDigits(value.slice(0, Math.max(0, cursor))).replace(/\D/g, "")
+    .length;
+}
+
+function cursorAfterDigits(formatted: string, count: number) {
+  if (count <= 0) return 0;
+  let seen = 0;
+  for (let index = 0; index < formatted.length; index += 1) {
+    if (/\d/.test(formatted[index] ?? "")) {
+      seen += 1;
+      if (seen === count) return index + 1;
+    }
+  }
+  return formatted.length;
+}
+
+/**
+ * Reformats a phone edit and keeps the caret on the same digit.
+ * Backspacing a grouping space deletes the digit before that space,
+ * instead of putting the space straight back.
+ */
+export function applyIranMobileEdit(
+  previous: string,
+  nextRaw: string,
+  cursor: number,
+) {
+  const previousDigits = toLatinDigits(previous).replace(/\D/g, "");
+  const nextDigits = toLatinDigits(nextRaw).replace(/\D/g, "");
+  const before = digitsBefore(nextRaw, cursor);
+  const onlyRemovedFormatting =
+    nextDigits === previousDigits &&
+    toLatinDigits(nextRaw).length < toLatinDigits(previous).length;
+  if (onlyRemovedFormatting) {
+    const index = Math.max(0, before - 1);
+    const trimmed =
+      previousDigits.slice(0, index) + previousDigits.slice(index + 1);
+    const value = formatIranMobileDraft(trimmed);
+    return { value, cursor: cursorAfterDigits(value, index) };
+  }
+  const value = formatIranMobileDraft(nextRaw);
+  return {
+    value,
+    cursor: cursorAfterDigits(
+      value,
+      Math.min(before, digitsBefore(value, value.length)),
+    ),
+  };
 }
 
 export function iranMobileMessage(

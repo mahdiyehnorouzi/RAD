@@ -63,10 +63,19 @@ test("the dataset is the 2025-01-18 Iranian Post snapshot of all 31 provinces", 
   const ids = new Set<string>();
   let cities = 0;
   for (const province of IRAN_PROVINCES) {
+    assert.match(province.id, /^province:/);
     assert.equal(ids.has(province.id), false, province.label);
     ids.add(province.id);
     assert.ok(province.cities.length > 0, province.label);
+    const labels = new Set<string>();
     for (const city of province.cities) {
+      assert.match(city.id, /^(city|county):/);
+      assert.equal(
+        labels.has(city.label),
+        false,
+        `${province.label} ${city.label}`,
+      );
+      labels.add(city.label);
       assert.equal(ids.has(city.id), false, city.label);
       ids.add(city.id);
       cities += 1;
