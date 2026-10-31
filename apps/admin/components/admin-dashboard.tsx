@@ -784,7 +784,10 @@ function Overview({
           <p>امروز در استودیو رَد چه خبر است؟ · {todayLabel}</p>
         </div>
       </section>
-      <OverviewStats products={workspace.products} loading={!workspace.loadedKeys.has("products")} />
+      <OverviewStats
+        products={workspace.products}
+        loading={!workspace.loadedKeys.has("products")}
+      />
       <section className="shortcut-grid">
         <ShortcutTile
           icon={<Archive />}
