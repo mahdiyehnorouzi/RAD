@@ -15,13 +15,11 @@ test("OverviewStats preserves status counts and total", () => {
   const html = renderToStaticMarkup(
     createElement(OverviewStats, { products, loading: false }),
   );
-  assert.match(html, /آماده فروش/);
-  assert.match(html, /در کارگاه/);
-  assert.match(html, /فروخته شده/);
-  assert.match(html, /اثر ثبت‌شده/);
-  assert.equal((html.match(/>۲<\/strong>/g) ?? []).length, 1);
-  assert.equal((html.match(/>۱<\/strong>/g) ?? []).length, 2);
-  assert.equal((html.match(/>۵<\/strong>/g) ?? []).length, 1);
+  assert.equal((html.match(/class="stat-tile"/g) ?? []).length, 4);
+  assert.match(html, /<strong>۲<\/strong><span>آماده فروش<\/span>/);
+  assert.match(html, /<strong>۱<\/strong><span>در کارگاه<\/span>/);
+  assert.match(html, /<strong>۱<\/strong><span>فروخته شده<\/span>/);
+  assert.match(html, /<strong>۵<\/strong><span>اثر ثبت‌شده<\/span>/);
 });
 
 test("OverviewStats shows skeletons before initial product load", () => {
