@@ -7,15 +7,12 @@ import {
   Archive,
   ArrowLeft,
   Bell,
-  Boxes,
   ChevronLeft,
   ChevronRight,
   CircleDollarSign,
-  CircleGauge,
   CircleHelp,
   Eye,
   EyeOff,
-  Hammer,
   Image as ImageIcon,
   MessageSquareQuote,
   Shapes,
@@ -92,7 +89,7 @@ import { InviteDialog, Members } from "./admin-members";
 import { UsersPanel } from "./admin-users";
 import { ProductAttributeFields } from "./admin-product-attribute-fields";
 import { AdminRowMenu } from "./admin-row-menu";
-import { StatTile } from "./admin-stat-tile";
+import { OverviewStats } from "./admin-overview-stats";
 import {
   briefExcerpt,
   canSelectAsCover,
@@ -770,16 +767,6 @@ function Overview({
   workspace: ReturnType<typeof useAdminWorkspace>;
   onNavigate: (section: AdminSection) => void;
 }) {
-  const statsLoading = !workspace.loadedKeys.has("products");
-  const available = workspace.products.filter(
-    (item) => item.status === "available",
-  ).length;
-  const inWorkshop = workspace.products.filter(
-    (item) => item.status === "in_workshop",
-  ).length;
-  const sold = workspace.products.filter(
-    (item) => item.status === "sold",
-  ).length;
   const recentProducts = [...workspace.products]
     .sort((a, b) => b.updatedAt - a.updatedAt)
     .slice(0, 6);
@@ -797,32 +784,10 @@ function Overview({
           <p>امروز در استودیو رَد چه خبر است؟ · {todayLabel}</p>
         </div>
       </section>
-      <section className="stat-grid">
-        <StatTile
-          icon={<PackageCheck />}
-          value={available}
-          label="آماده فروش"
-          loading={statsLoading}
-        />
-        <StatTile
-          icon={<Hammer />}
-          value={inWorkshop}
-          label="در کارگاه"
-          loading={statsLoading}
-        />
-        <StatTile
-          icon={<Boxes />}
-          value={sold}
-          label="فروخته شده"
-          loading={statsLoading}
-        />
-        <StatTile
-          icon={<CircleGauge />}
-          value={workspace.products.length}
-          label="اثر ثبت‌شده"
-          loading={statsLoading}
-        />
-      </section>
+      <OverviewStats
+        products={workspace.products}
+        loading={!workspace.loadedKeys.has("products")}
+      />
       <section className="shortcut-grid">
         <ShortcutTile
           icon={<Archive />}
