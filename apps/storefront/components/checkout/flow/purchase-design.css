@@ -7,99 +7,6 @@ body:has(.purchase-bag) .route-trail {
   display: none;
 }
 
-/*
- * The manual-transfer card and the receipt-remove button have no styling
- * anywhere else in the codebase (unlike the rules below, which override an
- * already-responsive base from checkout-flow.css / checkout-payment.css),
- * so they stay unconditional — they're the only source of truth for these
- * components at every screen width, not a mobile-only override.
- */
-.transfer-details {
-  display: grid;
-}
-.transfer-card {
-  padding: 24px 20px 18px;
-  min-height: 180px;
-  background: #173d31 url("/studio/leaf.webp") center/cover;
-  background-blend-mode: multiply;
-  color: white;
-  border-radius: 16px;
-}
-.transfer-bank,
-.transfer-holder {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  font-size: 14px;
-}
-.transfer-bank svg {
-  width: 22px;
-}
-.transfer-number {
-  direction: ltr;
-  unicode-bidi: isolate;
-  text-align: center;
-  letter-spacing: 1.6px;
-  font-size: clamp(16px, 4.2vw, 22px);
-  font-family: monospace;
-  margin: 32px 0 15px;
-  user-select: all;
-}
-.transfer-holder {
-  justify-content: space-between;
-}
-.transfer-holder svg {
-  width: 18px;
-}
-.transfer-copy {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  min-height: 43px;
-  border: 0;
-  border-radius: 12px;
-  background: #e5e7dc;
-  color: #254737;
-  padding: 9px;
-  font: inherit;
-  font-size: 13px;
-  cursor: pointer;
-  margin-top: 9px;
-}
-.transfer-copy svg {
-  width: 18px;
-  height: 18px;
-}
-.transfer-feedback {
-  min-height: 22px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  font-size: 12px;
-  color: #31533e;
-  margin: 10px 0;
-}
-.transfer-feedback svg {
-  width: 17px;
-}
-.transfer-amount {
-  display: grid;
-  text-align: center;
-  gap: 12px;
-  padding: 18px 12px 10px;
-  border: 1px solid #ded7c9;
-  border-radius: 15px;
-  margin-bottom: 20px;
-}
-.transfer-amount > span {
-  font-size: 14px;
-}
-.transfer-amount > b {
-  font-size: 21px;
-}
 .transfer-next {
   display: grid;
   gap: 13px;
@@ -502,25 +409,6 @@ body:has(.purchase-bag) .route-trail {
   }
   .checkout-flow.section .checkout-step-dot {
     box-shadow: none;
-  }
-  .checkout-flow.section .transfer-card {
-    min-height: 160px;
-    padding: 19px 18px 15px;
-  }
-  .checkout-flow.section .transfer-number {
-    margin: 25px 0 15px;
-  }
-  .checkout-flow.section .transfer-amount {
-    gap: 7px;
-    padding: 12px 10px 9px;
-    margin-bottom: 0;
-  }
-  .checkout-flow.section .transfer-amount > b {
-    font-size: 19px;
-  }
-  .checkout-flow.section .transfer-feedback {
-    min-height: 18px;
-    margin: 8px 0;
   }
   .checkout-flow.section .checkout-flow-help {
     border-top: 1px solid #e4dbcb;

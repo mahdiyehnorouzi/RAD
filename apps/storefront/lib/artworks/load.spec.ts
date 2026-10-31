@@ -64,6 +64,19 @@ test("loadArtworks throws in production when the API fails, never substituting t
   );
 });
 
+test("loadArtworks throws outside production too when CATALOG_SOURCE=api is set explicitly, never silently substituting the registry (connected integration testing)", async () => {
+  await withEnv({ NODE_ENV: "development", CATALOG_SOURCE: "api" }, () =>
+    withFetch(
+      (async () => {
+        throw new TypeError("network down");
+      }) as typeof fetch,
+      async () => {
+        await assert.rejects(() => loadArtworks());
+      },
+    ),
+  );
+});
+
 test("loadArtworks falls back to the registry outside production when the API fails (CATALOG_SOURCE=auto)", async () => {
   await withEnv({ NODE_ENV: "development", CATALOG_SOURCE: undefined }, () =>
     withFetch(

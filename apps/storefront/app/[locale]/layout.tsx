@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import dynamic from "next/dynamic";
 import "../globals.css";
 import "@/components/ui/button-link.css";
 import "@/components/ui/section.css";
@@ -19,6 +18,7 @@ import { CommerceProvider } from "@/components/commerce";
 import { CatalogIndexProvider } from "@/components/catalog";
 import { getCatalogIndex } from "@/lib/catalog/get-catalog-works";
 import { HomeBanner } from "@/features/home/home-banner";
+import { ProductOverlayGate } from "@/features/product-detail/transition/product-overlay-gate";
 import {
   DEFAULT_LOCALE,
   LOCALES,
@@ -34,15 +34,6 @@ import {
   siteName,
   siteUrl,
 } from "@/lib/seo";
-
-// Mounted once on every route (including the home page) but inert until a
-// product card is clicked — see product-overlay.tsx. It pulls in the
-// `motion` library and the full `ProductDetail` tree, none of which the
-// initial paint needs, so it's code-split into its own chunk instead of
-// shipping as part of every page's critical JS.
-const ProductOverlay = dynamic(() =>
-  import("@/features/product-detail").then((mod) => mod.ProductOverlay),
-);
 
 const googleVerification =
   process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION ||
@@ -176,6 +167,13 @@ export default async function RootLayout({
                   <GoogleAnalytics measurementId={gaMeasurementId} />
                 ) : null}
                 <RouteScrollReset />
+                {/* Rendered first (own in-flow banner when the catalog
+                    fell back to demo data) so its `position: sticky` sits
+                    at the true top of the page, ahead of everything else,
+                    rather than wherever it happened to mount in the tree. */}
+                {process.env.NODE_ENV === "development" ? (
+                  <DevDataBadge />
+                ) : null}
                 <HomeBanner />
                 <Header />
                 {/* <PwaRegistrar /> */}
@@ -184,11 +182,11 @@ export default async function RootLayout({
                 <Footer />
                 {/* Mounted once, globally: the card -> PDP expandable-card
                     overlay. Inert until a ProductCardStage click opens it —
-                    the route underneath stays mounted the whole time. */}
-                <ProductOverlay />
-                {process.env.NODE_ENV === "development" ? (
-                  <DevDataBadge />
-                ) : null}
+                    the route underneath stays mounted the whole time. The
+                    gate defers the overlay's own chunk (motion + the full
+                    ProductDetail tree) off every page's critical path —
+                    see product-overlay-gate.tsx. */}
+                <ProductOverlayGate />
               </CartProvider>
             </CommerceProvider>
           </CatalogIndexProvider>

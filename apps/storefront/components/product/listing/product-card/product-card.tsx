@@ -95,7 +95,14 @@ export function ProductCard({
   const info = (
     <div className="rad-card-info">
       <h3 className="rad-card-name">
-        <Link href={productHref}>{copy.name}</Link>
+        {/* `prefetch={false}`: this card already renders another `Link` to
+            the same href in `ProductCardStage` (the photo) — on a grid of
+            ~18 cards, two same-href Links both auto-prefetching doubled the
+            RSC prefetch traffic for no benefit. The stage Link still
+            prefetches normally; this one only needs to navigate. */}
+        <Link href={productHref} prefetch={false}>
+          {copy.name}
+        </Link>
       </h3>
       <p className="rad-card-maker">
         {c.by} <b>{maker}</b>
@@ -160,6 +167,7 @@ export function ProductCard({
         {variant === "suggest" ? (
           <Link
             href={productHref}
+            prefetch={false}
             className="rad-card-go"
             tabIndex={-1}
             aria-hidden="true"

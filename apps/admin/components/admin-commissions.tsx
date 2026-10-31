@@ -28,6 +28,11 @@ import {
   type AdminCommissionStage,
 } from "../lib/admin-data";
 import { briefExcerpt } from "../lib/product-cover";
+import {
+  commissionDetailTabs,
+  defaultCommissionDetailTab,
+  type CommissionDetailTabId,
+} from "../lib/commission-detail-tabs";
 import { StageMeter } from "@rad/ui";
 import {
   ConfirmDialog,
@@ -380,8 +385,6 @@ function asCopy(value: string) {
   return { fa: value, en: value };
 }
 
-type DetailTab = "summary" | "files" | "messages" | "history" | "decision";
-
 function CommissionDetail({
   commission,
   canWrite,
@@ -404,7 +407,9 @@ function CommissionDetail({
   const open =
     commission.stage === "design_submitted" ||
     (commission.stage === "feasibility" && commission.nextActor === "artist");
-  const [tab, setTab] = useState<DetailTab>(open ? "decision" : "summary");
+  const [tab, setTab] = useState<CommissionDetailTabId>(() =>
+    defaultCommissionDetailTab(commission),
+  );
   const meter = commissionMeter(commission);
   const payload = readPayload(commission.payload);
   const brief = payload.brief;
@@ -415,13 +420,7 @@ function CommissionDetail({
       : [];
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
-  const tabs: { id: DetailTab; label: string }[] = [
-    { id: "summary", label: "خلاصه" },
-    { id: "files", label: "فایل‌ها" },
-    { id: "messages", label: "پیام‌ها" },
-    { id: "history", label: "تاریخچه مراحل" },
-    ...(open ? [{ id: "decision" as const, label: "تصمیم" }] : []),
-  ];
+  const tabs = commissionDetailTabs(commission);
 
   return (
     <div className="commission-detail">
@@ -450,7 +449,11 @@ function CommissionDetail({
         nextKicker="مرحله بعد"
         nextLabel={meter.nextLabel}
       />
-      <div className="commission-tabs" role="tablist">
+      <div
+        className="commission-tabs"
+        role="tablist"
+        aria-label="بخش‌های سفارش اختصاصی"
+      >
         {tabs.map((item) => (
           <button
             key={item.id}
