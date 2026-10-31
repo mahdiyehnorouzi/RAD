@@ -6,13 +6,10 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Archive,
   Bell,
-  Boxes,
   ChevronLeft,
   ChevronRight,
   CircleDollarSign,
-  CircleGauge,
   CircleHelp,
-  Hammer,
   Image as ImageIcon,
   MessageSquareQuote,
   Shapes,
@@ -85,6 +82,7 @@ import { UsersPanel } from "./admin-users";
 import { ProductAttributeFields } from "./admin-product-attribute-fields";
 import { AdminRowMenu } from "./admin-row-menu";
 import { AdminLogin } from "./admin-login";
+import { OverviewStats } from "./admin-overview-stats";
 import {
   briefExcerpt,
   canSelectAsCover,
@@ -762,16 +760,6 @@ function Overview({
   workspace: ReturnType<typeof useAdminWorkspace>;
   onNavigate: (section: AdminSection) => void;
 }) {
-  const statsLoading = !workspace.loadedKeys.has("products");
-  const available = workspace.products.filter(
-    (item) => item.status === "available",
-  ).length;
-  const inWorkshop = workspace.products.filter(
-    (item) => item.status === "in_workshop",
-  ).length;
-  const sold = workspace.products.filter(
-    (item) => item.status === "sold",
-  ).length;
   const recentProducts = [...workspace.products]
     .sort((a, b) => b.updatedAt - a.updatedAt)
     .slice(0, 6);
@@ -789,32 +777,10 @@ function Overview({
           <p>امروز در استودیو رَد چه خبر است؟ · {todayLabel}</p>
         </div>
       </section>
-      <section className="stat-grid">
-        <StatTile
-          icon={<PackageCheck />}
-          value={available}
-          label="آماده فروش"
-          loading={statsLoading}
-        />
-        <StatTile
-          icon={<Hammer />}
-          value={inWorkshop}
-          label="در کارگاه"
-          loading={statsLoading}
-        />
-        <StatTile
-          icon={<Boxes />}
-          value={sold}
-          label="فروخته شده"
-          loading={statsLoading}
-        />
-        <StatTile
-          icon={<CircleGauge />}
-          value={workspace.products.length}
-          label="اثر ثبت‌شده"
-          loading={statsLoading}
-        />
-      </section>
+      <OverviewStats
+        products={workspace.products}
+        loading={!workspace.loadedKeys.has("products")}
+      />
       <section className="shortcut-grid">
         <ShortcutTile
           icon={<Archive />}
@@ -948,32 +914,6 @@ function Overview({
         </article>
       </section>
     </div>
-  );
-}
-
-function StatTile({
-  icon,
-  value,
-  label,
-  loading = false,
-}: {
-  icon: React.ReactNode;
-  value: number;
-  label: string;
-  /** Before the first successful load only — a later background refetch
-   * keeps showing the previous number instead of reverting to this. */
-  loading?: boolean;
-}) {
-  return (
-    <article className="stat-tile">
-      <span className="stat-icon">{icon}</span>
-      {loading ? (
-        <span className="stat-skeleton" aria-hidden="true" />
-      ) : (
-        <strong>{number.format(value)}</strong>
-      )}
-      <span>{label}</span>
-    </article>
   );
 }
 
