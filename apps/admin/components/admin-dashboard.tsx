@@ -92,6 +92,7 @@ import { InviteDialog, Members } from "./admin-members";
 import { UsersPanel } from "./admin-users";
 import { ProductAttributeFields } from "./admin-product-attribute-fields";
 import { AdminRowMenu } from "./admin-row-menu";
+import { StatTile } from "./admin-stat-tile";
 import {
   briefExcerpt,
   canSelectAsCover,
@@ -955,32 +956,6 @@ function Overview({
         </article>
       </section>
     </div>
-  );
-}
-
-function StatTile({
-  icon,
-  value,
-  label,
-  loading = false,
-}: {
-  icon: React.ReactNode;
-  value: number;
-  label: string;
-  /** Before the first successful load only — a later background refetch
-   * keeps showing the previous number instead of reverting to this. */
-  loading?: boolean;
-}) {
-  return (
-    <article className="stat-tile">
-      <span className="stat-icon">{icon}</span>
-      {loading ? (
-        <span className="stat-skeleton" aria-hidden="true" />
-      ) : (
-        <strong>{number.format(value)}</strong>
-      )}
-      <span>{label}</span>
-    </article>
   );
 }
 
