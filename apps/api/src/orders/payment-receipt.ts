@@ -11,15 +11,36 @@ function latinDigits(value: string) {
 
 /** Bank reference as typed by the customer, or `null` when it is not usable. */
 export function normalizeTrackingNumber(raw: string | undefined) {
-  const value = latinDigits(raw ?? "").replace(/[\s-]/g, "").toUpperCase();
+  const value = latinDigits(raw ?? "")
+    .replace(/[\s-]/g, "")
+    .toUpperCase();
   return /^[A-Z0-9]{4,32}$/.test(value) ? value : null;
 }
 
-/** Digits-only phone, or `null` when it cannot reach the customer. */
+/**
+ * Iranian mobile in the stored form `09` plus nine digits, or `null`.
+ * Accepts Persian/Arabic digits and the `09`, `9`, `98`, and `0098` prefixes.
+ * The same rule lives in `apps/storefront/lib/phone/iran-mobile.ts`.
+ */
 export function normalizePhone(raw: string | undefined) {
-  const value = latinDigits(raw ?? "").replace(/[^\d+]/g, "");
-  const digits = value.replace(/\D/g, "");
-  return digits.length >= 10 && digits.length <= 15 ? value : null;
+  const digits = latinDigits(raw ?? "").replace(/\D/g, "");
+  let national = "";
+  if (digits.startsWith("0098")) {
+    if (digits.length !== 14) return null;
+    national = digits.slice(4);
+  } else if (digits.startsWith("98")) {
+    if (digits.length !== 12) return null;
+    national = digits.slice(2);
+  } else if (digits.startsWith("09")) {
+    if (digits.length !== 11) return null;
+    national = digits.slice(1);
+  } else if (digits.startsWith("9")) {
+    if (digits.length !== 10) return null;
+    national = digits;
+  } else {
+    return null;
+  }
+  return /^9\d{9}$/.test(national) ? `0${national}` : null;
 }
 
 export function receiptHash(receiptImage: string) {

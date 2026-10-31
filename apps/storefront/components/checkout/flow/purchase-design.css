@@ -171,7 +171,7 @@ body:has(.purchase-bag) .route-trail {
     margin-bottom: 6px;
     color: #294138;
   }
-  .checkout-flow.section .checkout-field :is(input, textarea) {
+  .checkout-flow.section .checkout-field :is(input, textarea, select) {
     width: 100%;
     min-height: 43px;
     padding: 10px 12px;
@@ -184,6 +184,15 @@ body:has(.purchase-bag) .route-trail {
   }
   .checkout-flow.section .checkout-field textarea {
     min-height: 84px;
+  }
+  .checkout-flow.section .checkout-select select {
+    padding-inline-end: 2.5rem;
+  }
+  .checkout-flow.section
+    .checkout-field.is-invalid
+    :is(input, textarea, select) {
+    border-color: var(--oxide);
+    background: var(--oxide-wash);
   }
   .checkout-flow.section .checkout-summary {
     padding: 12px 0;
