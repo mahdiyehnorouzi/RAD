@@ -303,7 +303,8 @@ html[dir="rtl"] .checkout-flow {
 }
 
 .checkout-flow .checkout-field input,
-.checkout-flow .checkout-field textarea {
+.checkout-flow .checkout-field textarea,
+.checkout-flow .checkout-field select {
   width: 100%;
   min-height: 3.1rem;
   padding: 0.7rem 0.95rem;
@@ -331,12 +332,14 @@ html[dir="rtl"] .checkout-flow {
 }
 
 .checkout-flow .checkout-field input:hover,
-.checkout-flow .checkout-field textarea:hover {
+.checkout-flow .checkout-field textarea:hover,
+.checkout-flow .checkout-field select:hover {
   border-color: color-mix(in srgb, var(--ink) 30%, transparent);
 }
 
 .checkout-flow .checkout-field input:focus-visible,
-.checkout-flow .checkout-field textarea:focus-visible {
+.checkout-flow .checkout-field textarea:focus-visible,
+.checkout-flow .checkout-field select:focus-visible {
   outline: none;
   border-color: var(--moss);
   background: #fff;
@@ -344,12 +347,14 @@ html[dir="rtl"] .checkout-flow {
 }
 
 .checkout-flow .checkout-field input:disabled,
-.checkout-flow .checkout-field textarea:disabled {
+.checkout-flow .checkout-field textarea:disabled,
+.checkout-flow .checkout-field select:disabled {
   opacity: 0.6;
 }
 
 .checkout-flow .checkout-field.is-invalid input,
-.checkout-flow .checkout-field.is-invalid textarea {
+.checkout-flow .checkout-field.is-invalid textarea,
+.checkout-flow .checkout-field.is-invalid select {
   border-color: var(--oxide);
   background: var(--oxide-wash);
 }

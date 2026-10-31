@@ -28,13 +28,23 @@ import { ApiError, isNetworkError, readableErrorMessage } from "@/lib/api";
 import { availableWorks, formatCountdown } from "@/lib/catalog/product-status";
 import { productCopy } from "@/lib/catalog/products";
 import { cartTotal, formatTotal } from "@/lib/money";
+import {
+  cityAfterProvinceChange,
+  locationSelection,
+  restoreCheckoutLocation,
+} from "@/lib/geo/iran-locations";
+import {
+  canonicalIranMobile,
+  formatIranMobileDraft,
+  iranMobileMessage,
+} from "@/lib/phone/iran-mobile";
 import { toLatinDigits } from "@/lib/payment/receipt";
 import { checkoutCopy, fillCopy } from "../const";
 import { CheckoutMeter, CheckoutSteps, CheckoutSummary } from "../flow";
 import { CheckoutField } from "./checkout-field";
-import { CitySelect } from "./city-select";
+import { LocationFields } from "./location-fields";
 
-type FieldName = "name" | "phone" | "city" | "address";
+type FieldName = "name" | "phone" | "province" | "city" | "address";
 type FieldErrors = Partial<Record<FieldName, string>>;
 
 /** Backend codes meaning the cart/hold this form was built from no longer matches reality. */
@@ -46,9 +56,26 @@ const CART_STALE_CODES = new Set([
 ]);
 
 const FORM_ID = "checkout-details";
-const FIELD_ORDER: FieldName[] = ["name", "phone", "city", "address"];
+const FIELD_ORDER: FieldName[] = [
+  "name",
+  "phone",
+  "province",
+  "city",
+  "address",
+];
 const DRAFT_KEY = "rad.checkout.draft";
-type Draft = Partial<Record<FieldName | "postalCode", string>>;
+type Draft = Partial<
+  Record<
+    | "name"
+    | "phone"
+    | "provinceId"
+    | "cityId"
+    | "city"
+    | "address"
+    | "postalCode",
+    string
+  >
+>;
 
 /**
  * Inputs below are uncontrolled (`defaultValue`), so a browser back
@@ -80,10 +107,6 @@ function clearDraft() {
   } catch {}
 }
 
-function normalizePhone(raw: string) {
-  return toLatinDigits(raw).replace(/[^\d+]/g, "");
-}
-
 export function CheckoutPage() {
   const { slugs, holds, holdEndsAt, ready, clear, reload } = useCart();
   const { user, placeOrder } = useCommerce();
@@ -93,6 +116,10 @@ export function CheckoutPage() {
   const router = useRouter();
 
   const [errors, setErrors] = useState<FieldErrors>({});
+  const [phone, setPhone] = useState("");
+  const [phoneTouched, setPhoneTouched] = useState(false);
+  const [provinceId, setProvinceId] = useState("");
+  const [cityId, setCityId] = useState("");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [leaving, setLeaving] = useState(false);
@@ -122,7 +149,8 @@ export function CheckoutPage() {
     const draft = readDraft();
     const form = formRef.current;
     if (!form) return;
-    for (const [name, value] of Object.entries(draft)) {
+    for (const name of ["name", "address", "postalCode"] as const) {
+      const value = draft[name];
       if (!value) continue;
       const field = form.elements.namedItem(name);
       if (
@@ -132,30 +160,44 @@ export function CheckoutPage() {
         field.value = value;
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const location = restoreCheckoutLocation(draft);
+    // Session storage is read after mount so the server render stays empty.
+    /* eslint-disable react-hooks/set-state-in-effect */
+    setProvinceId(location.provinceId);
+    setCityId(location.cityId);
+    if (draft.phone) setPhone(formatIranMobileDraft(draft.phone));
+    /* eslint-enable react-hooks/set-state-in-effect */
   }, []);
 
-  const persistDraft = () => {
+  const persistDraft = (patch?: Partial<Draft>) => {
     const form = formRef.current;
     if (!form) return;
     const data = new FormData(form);
     writeDraft({
       name: String(data.get("name") ?? ""),
-      phone: String(data.get("phone") ?? ""),
-      city: String(data.get("city") ?? ""),
+      phone,
+      provinceId,
+      cityId,
       address: String(data.get("address") ?? ""),
       postalCode: String(data.get("postalCode") ?? ""),
+      ...patch,
     });
   };
 
+  const phoneCopy = { empty: c.phoneEmpty, invalid: c.phoneError };
+
   const validate = (data: FormData): FieldErrors => {
-    const value = (key: FieldName) => String(data.get(key) ?? "").trim();
+    const value = (key: "name" | "address") =>
+      String(data.get(key) ?? "").trim();
     const next: FieldErrors = {};
     if (value("name").length < 2) next.name = c.nameError;
-    const phoneDigits = normalizePhone(value("phone")).replace(/\D/g, "");
-    if (phoneDigits.length < 10 || phoneDigits.length > 15)
-      next.phone = c.phoneError;
-    if (!value("city")) next.city = c.cityError;
+    const phoneError = iranMobileMessage(phone, true, phoneCopy);
+    if (phoneError) next.phone = phoneError;
+    const place = locationSelection(provinceId, cityId);
+    if (!place.ok) {
+      if (place.reason === "province") next.province = c.provinceError;
+      else next.city = c.cityError;
+    }
     if (value("address").length < 8) next.address = c.addressError;
     return next;
   };
@@ -168,10 +210,23 @@ export function CheckoutPage() {
       return next;
     });
 
+  const setFieldError = (name: FieldName, message?: string) =>
+    setErrors((current) => {
+      if (!message) {
+        if (!current[name]) return current;
+        const next = { ...current };
+        delete next[name];
+        return next;
+      }
+      if (current[name] === message) return current;
+      return { ...current, [name]: message };
+    });
+
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (submitting || leaving) return;
     const data = new FormData(event.currentTarget);
+    setPhoneTouched(true);
     const nextErrors = validate(data);
     setErrors(nextErrors);
     const firstInvalid = FIELD_ORDER.find((name) => nextErrors[name]);
@@ -189,13 +244,16 @@ export function CheckoutPage() {
 
     const field = (key: string) => String(data.get(key) ?? "").trim();
     const postalCode = toLatinDigits(field("postalCode"));
+    const mobile = canonicalIranMobile(phone);
+    const place = locationSelection(provinceId, cityId);
+    if (!mobile || !place.ok) return;
     try {
       setError("");
       setSubmitting(true);
       const created = await placeOrder({
         name: field("name"),
-        phone: normalizePhone(field("phone")),
-        city: field("city"),
+        phone: mobile,
+        city: place.snapshot,
         address: [
           field("address"),
           postalCode && `${c.postalLabel} ${postalCode}`,
@@ -324,33 +382,80 @@ export function CheckoutPage() {
             error={errors.phone}
           >
             <input
-              {...fieldProps("phone")}
+              id="checkout-phone"
+              name="phone"
               className="checkout-ltr-field"
               type="tel"
-              inputMode="tel"
+              inputMode="numeric"
               autoComplete="tel"
               dir="ltr"
               placeholder={c.phonePlaceholder}
-            />
-          </CheckoutField>
-          <CheckoutField
-            id="checkout-city"
-            label={c.cityLabel}
-            error={errors.city}
-          >
-            <CitySelect
-              id="checkout-city"
-              name="city"
-              defaultValue={""}
+              value={phone}
               disabled={busy}
-              invalid={Boolean(errors.city)}
-              describedBy={errors.city ? "checkout-city-error" : undefined}
-              onChangeValue={() => {
-                clearFieldError("city");
-                persistDraft();
+              aria-invalid={errors.phone ? true : undefined}
+              aria-describedby={
+                errors.phone ? "checkout-phone-error" : undefined
+              }
+              onChange={(event) => {
+                const next = formatIranMobileDraft(event.currentTarget.value);
+                setPhone(next);
+                if (phoneTouched) {
+                  setFieldError(
+                    "phone",
+                    iranMobileMessage(next, true, phoneCopy),
+                  );
+                } else {
+                  clearFieldError("phone");
+                }
+                persistDraft({ phone: next });
+              }}
+              onBlur={() => {
+                setPhoneTouched(true);
+                const canonical = canonicalIranMobile(phone);
+                const next = canonical
+                  ? formatIranMobileDraft(canonical)
+                  : phone;
+                if (canonical) setPhone(next);
+                setFieldError(
+                  "phone",
+                  iranMobileMessage(next, true, phoneCopy),
+                );
+                persistDraft({ phone: next });
               }}
             />
           </CheckoutField>
+          <LocationFields
+            provinceId={provinceId}
+            cityId={cityId}
+            provinceLabel={c.provinceLabel}
+            cityLabel={c.cityLabel}
+            provincePlaceholder={c.provincePlaceholder}
+            cityPlaceholder={c.cityPlaceholder}
+            cityWaiting={c.cityWaiting}
+            provinceError={errors.province}
+            cityError={errors.city}
+            disabled={busy}
+            onProvince={(next) => {
+              const city = cityAfterProvinceChange(provinceId, next, cityId);
+              setProvinceId(next);
+              setCityId(city);
+              setFieldError("province", next ? undefined : c.provinceError);
+              if (city !== cityId) clearFieldError("city");
+              persistDraft({ provinceId: next, cityId: city });
+            }}
+            onCity={(next) => {
+              setCityId(next);
+              setFieldError("city", next ? undefined : c.cityError);
+              persistDraft({ cityId: next });
+            }}
+            onProvinceBlur={(value) => {
+              setFieldError("province", value ? undefined : c.provinceError);
+            }}
+            onCityBlur={(value) => {
+              if (!provinceId) return;
+              setFieldError("city", value ? undefined : c.cityError);
+            }}
+          />
           <CheckoutField
             id="checkout-address"
             label={c.addressLabel}
@@ -379,7 +484,7 @@ export function CheckoutPage() {
               autoComplete="postal-code"
               dir="ltr"
               disabled={busy}
-              onInput={persistDraft}
+              onInput={() => persistDraft()}
             />
           </CheckoutField>
         </form>
