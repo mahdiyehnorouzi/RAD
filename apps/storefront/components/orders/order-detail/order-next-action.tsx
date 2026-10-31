@@ -19,7 +19,6 @@ import type { Order } from "@rad/types";
 import type { PaymentReceiptInput } from "@/types/api";
 import { useLocale } from "@/components/i18n";
 import { Button, ButtonLink } from "@/components/ui/button-link";
-import { formatToman } from "@/lib/money";
 import { formatCountdown } from "@/lib/catalog/product-status";
 import { useCountdown } from "@/hooks/use-countdown";
 import { paymentWindowClosed } from "@/components/checkout/checkout-payment/deferred-payment";
@@ -92,11 +91,6 @@ export function OrderNextAction({
   const manualCard = order.payment?.manualCard;
   const redirectUrl = order.payment?.redirectUrl;
   const gatewayOrder = order.payment?.provider === "zarinpal";
-  const amountDue = order.payment?.amount ?? order.total;
-  const amountLabel =
-    locale === "fa"
-      ? formatToman(amountDue)
-      : `${new Intl.NumberFormat("en-US").format(amountDue)} toman`;
 
   const deadline =
     remaining === null
@@ -222,11 +216,7 @@ export function OrderNextAction({
         note={deadline}
       >
         {manualCard ? (
-          <PaymentCard
-            card={manualCard}
-            amount={amountLabel}
-            amountDigits={String(amountDue)}
-          />
+          <PaymentCard card={manualCard} />
         ) : null}
 
         <ReceiptForm
