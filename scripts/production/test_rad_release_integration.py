@@ -40,6 +40,7 @@ MIGRATIONS_DIR = API_DIR / "src" / "database" / "migrations"
 # list, so this test must hash the staged artifact's files with that glob
 # rather than a hand-maintained subset.
 PHONE_MIGRATION = "1793510000000-AddUserContactPhone.ts"
+ADDRESS_BOOK_MIGRATION = "1793600000000-AddCustomerAddressBook.ts"
 CLI_DATA_SOURCE = API_DIR / "src" / "database" / "cli-data-source.ts"
 
 DOCKER = shutil.which("docker")
@@ -255,7 +256,10 @@ class RealPostgresMigrationTests(unittest.TestCase):
         """Hash the migrations inside the staged artifact, matching make-manifest.py."""
         migrations_dir = self.api_dir / "src" / "database" / "migrations"
         files = sorted(p for p in migrations_dir.glob("*.ts") if not p.name.endswith(".spec.ts"))
-        self.assertIn(PHONE_MIGRATION, [path.name for path in files])
+        names = [path.name for path in files]
+        self.assertIn(PHONE_MIGRATION, names)
+        self.assertIn(ADDRESS_BOOK_MIGRATION, names)
+        self.assertEqual(names[-1], ADDRESS_BOOK_MIGRATION)
         return self.manifest_for(*files)
 
     def user_rows(self):
@@ -299,7 +303,11 @@ class RealPostgresMigrationTests(unittest.TestCase):
             {m["name"] for m in pending},
             {entry["name"] for entry in manifest["migrations"]},
         )
-        self.assertEqual(self.table_names() & {"ProductAttribute", "ProductAttributeValue"}, set())
+        self.assertEqual(
+            self.table_names()
+            & {"ProductAttribute", "ProductAttributeValue", "CustomerAddress"},
+            set(),
+        )
         self.assertEqual(self.payment_intent_columns() & {"gatewayAuthority", "gatewayRefId", "verifiedAt"}, set())
         self.assertEqual(self.phone_facts()[0], "")
 
@@ -313,7 +321,8 @@ class RealPostgresMigrationTests(unittest.TestCase):
 
         tables = self.table_names()
         for table in ("ProductAttribute", "ProductAttributeOption",
-                      "ProductAttributeCategory", "ProductAttributeValue"):
+                      "ProductAttributeCategory", "ProductAttributeValue",
+                      "CustomerAddress"):
             self.assertIn(table, tables)
         for column in ("gatewayAuthority", "gatewayRefId", "verifiedAt"):
             self.assertIn(column, self.payment_intent_columns())
@@ -343,19 +352,23 @@ class RealPostgresMigrationTests(unittest.TestCase):
         shown_after = broker.migration_show(NPM, self.api_dir, self.database_url, "127.0.0.1")
         self.assertEqual(broker.reconcile_migrations(manifest, shown_after), [])
 
-        # 5. Reverting the last migration (the phone column) restores the
-        #    schema the previous API release selects, and keeps the accounts.
+        # 5. Reverting the last migration drops only the address book.
+        #    The phone column from the previous migration stays, and accounts
+        #    are unchanged. Order snapshots are not part of this table.
         broker.run(
             NPM, "run", "migration:revert",
             env={**broker.SAFE_ENV, "PATH": os.environ.get("PATH", ""),
                  "DATABASE_URL": self.database_url, "RAD_ALLOW_REMOTE_DB_WRITE": "127.0.0.1"},
             cwd=self.api_dir, timeout=1800)
-        self.assertEqual(self.phone_facts()[0], "")
+        self.assertNotIn("CustomerAddress", self.table_names())
+        nullable, indexdef = self.phone_facts()
+        self.assertEqual(nullable, "YES")
+        self.assertIn("UNIQUE", indexdef)
         self.assertEqual(self.user_rows(), before)
         self.assertIn("sara@example.com", self.previous_api_user_read())
         shown_reverted = broker.migration_show(NPM, self.api_dir, self.database_url, "127.0.0.1")
         pending_again = broker.reconcile_migrations(manifest, shown_reverted)
-        self.assertEqual([entry["name"] for entry in pending_again], [PHONE_MIGRATION])
+        self.assertEqual([entry["name"] for entry in pending_again], [ADDRESS_BOOK_MIGRATION])
 
     @unittest.skipUnless(os.environ.get("RAD_TEST_BACKUP_VERIFY_DATABASE_URL"),
                          "Set RAD_TEST_BACKUP_VERIFY_DATABASE_URL to a second, already-reachable, "
