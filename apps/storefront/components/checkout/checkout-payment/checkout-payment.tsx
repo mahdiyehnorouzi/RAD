@@ -20,6 +20,7 @@ import { formatCountdown } from "@/lib/catalog/product-status";
 import { formatTotal } from "@/lib/money";
 import { checkoutCopy } from "../const";
 import { CheckoutMeter, CheckoutSteps, CheckoutSummary } from "../flow";
+import { payLaterOffer } from "./deferred-payment";
 import { useCheckoutOrder } from "./hooks";
 import { PaymentCard } from "./payment-card";
 import { PaymentReceipt } from "./payment-receipt";
@@ -175,7 +176,11 @@ export function CheckoutPayment({ id }: { id: string }) {
             <PaymentResult order={order} amount={tomanLabel} />
           </div>
           <aside className="checkout-flow-aside">
-            <CheckoutSummary items={items} total={summaryTotal} />
+            <CheckoutSummary
+              items={items}
+              total={summaryTotal}
+              amountDigits={String(tomanDue)}
+            />
           </aside>
         </div>
       </section>
@@ -234,6 +239,14 @@ export function CheckoutPayment({ id }: { id: string }) {
       const url = updated.payment?.redirectUrl;
       if (url) window.location.assign(url);
     });
+  const later = payLaterOffer({
+    orderId: order.id,
+    status: order.status,
+    expired,
+    gateway: gatewayOrder,
+    hasLiveRedirect: Boolean(redirectUrl),
+    receiptStep,
+  });
 
   return (
     <section className="checkout-flow section">
@@ -360,11 +373,7 @@ export function CheckoutPayment({ id }: { id: string }) {
                 </button>
               </div>
             ) : manualCard ? (
-              <PaymentCard
-                card={manualCard}
-                amount={tomanLabel}
-                amountDigits={String(tomanDue)}
-              />
+              <PaymentCard card={manualCard} />
             ) : (
               <p className="checkout-alert" role="status">
                 {c.noCard}
@@ -399,7 +408,11 @@ export function CheckoutPayment({ id }: { id: string }) {
         </div>
 
         <aside className="checkout-flow-aside">
-          <CheckoutSummary items={items} total={summaryTotal} />
+          <CheckoutSummary
+            items={items}
+            total={summaryTotal}
+            amountDigits={String(tomanDue)}
+          />
         </aside>
 
         <div className="checkout-flow-action">
@@ -445,9 +458,11 @@ export function CheckoutPayment({ id }: { id: string }) {
                 </span>
                 <ArrowIcon aria-hidden="true" />
               </button>
-              <ButtonLink href="/cart" outline>
-                {locale === "fa" ? "هنوز نه" : "Not yet"}
-              </ButtonLink>
+              {later.offer ? (
+                <ButtonLink href={later.href} outline>
+                  {c.payLater}
+                </ButtonLink>
+              ) : null}
             </div>
           )}
           {receiptStep && (

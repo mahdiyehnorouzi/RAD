@@ -1,0 +1,71 @@
+.dialog {
+  width: min(28rem, calc(100% - 1.5rem));
+  max-height: min(80svh, 32rem);
+  margin: auto;
+  padding: 1.2rem 1.2rem 1.15rem;
+  border: 1px solid var(--account-line);
+  border-radius: var(--account-radius);
+  background: var(--account-paper);
+  color: var(--account-green);
+  box-shadow: var(--account-shadow);
+}
+
+.dialog::backdrop {
+  background: rgb(38 61 52 / 0.45);
+}
+
+/* Beats the shared `.section h2` size; the dialog is nested in the page. */
+.dialog.dialog h2 {
+  margin: 0 0 0.45rem;
+  font-size: 1.15rem;
+  line-height: 1.5;
+}
+
+.dialog.dialog p {
+  margin: 0;
+  color: var(--account-muted);
+  font-size: 0.95rem;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+
+.dialog.dialog .summary {
+  margin-top: 0.8rem;
+  color: var(--account-green);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.6rem;
+  margin-top: 1.15rem;
+}
+
+.actions :global(.account-button:disabled) {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+@media (--phone) {
+  .dialog {
+    width: calc(100% - 1.5rem);
+    margin-top: auto;
+    margin-bottom: max(0.75rem, env(safe-area-inset-bottom));
+  }
+
+  .actions {
+    display: grid;
+  }
+
+  .actions :global(.account-button) {
+    width: 100%;
+  }
+}
+
+@media (--reduced-motion) {
+  .dialog,
+  .dialog::backdrop {
+    transition: none;
+  }
+}

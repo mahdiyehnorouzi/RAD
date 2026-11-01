@@ -1,0 +1,180 @@
+.form {
+  display: grid;
+  gap: 1rem;
+  max-width: 40rem;
+  min-width: 0;
+}
+
+.sheet {
+  display: grid;
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--account-line);
+  border-radius: var(--account-radius);
+  background: var(--account-paper);
+  box-shadow: var(--account-shadow);
+}
+
+.field {
+  display: grid;
+  gap: 0.4rem;
+  min-width: 0;
+  padding: 0.95rem 1.15rem 1.05rem;
+}
+
+.field + .field {
+  border-top: 1px solid var(--account-line);
+}
+
+.field > span,
+.legend {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: var(--account-muted);
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+.optional {
+  color: var(--account-muted);
+  font-style: normal;
+  font-weight: 400;
+}
+
+.field input:not([type="checkbox"]),
+.field textarea,
+.select select {
+  width: 100%;
+  min-width: 0;
+  min-height: 48px;
+  padding: 0.55rem 0.8rem;
+  border: 1px solid var(--account-line);
+  border-radius: 12px;
+  background: var(--account-page);
+  color: var(--account-green);
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.6;
+}
+
+.field textarea {
+  min-height: 6.5rem;
+  resize: vertical;
+}
+
+.field input:not([type="checkbox"]):focus-visible,
+.field textarea:focus-visible,
+.select select:focus-visible {
+  outline: 2px solid var(--account-oxide);
+  outline-offset: 2px;
+}
+
+.field input:not([type="checkbox"])[aria-invalid="true"],
+.field textarea[aria-invalid="true"],
+.select select[aria-invalid="true"] {
+  border-color: var(--account-oxide);
+}
+
+.ltr {
+  direction: ltr;
+  text-align: left;
+}
+
+:global(html[dir="rtl"]) .form {
+  text-align: start;
+}
+
+:global(html[dir="rtl"]) .ltr {
+  direction: ltr;
+  text-align: left;
+}
+
+.hint,
+.error {
+  color: var(--account-muted);
+  font-size: 0.82rem;
+  line-height: 1.6;
+}
+
+.error {
+  color: var(--account-oxide);
+}
+
+.select {
+  position: relative;
+  min-width: 0;
+}
+
+.select select {
+  appearance: none;
+  padding-inline-end: 2.5rem;
+  cursor: pointer;
+}
+
+.select select[data-empty] {
+  color: var(--account-muted);
+  font-weight: 500;
+}
+
+.select svg {
+  position: absolute;
+  inset-inline-end: 0.85rem;
+  top: 50%;
+  width: 1rem;
+  height: 1rem;
+  translate: 0 -50%;
+  color: var(--account-muted);
+  pointer-events: none;
+}
+
+.check {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  min-height: 48px;
+  color: var(--account-green);
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.check input {
+  width: 1.15rem;
+  height: 1.15rem;
+  min-height: 0;
+  margin-top: 0.25rem;
+  padding: 0;
+  accent-color: var(--account-green);
+}
+
+.check span {
+  color: var(--account-green);
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.actions :global(.account-button:disabled) {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+@media (--phone) {
+  .form {
+    max-width: none;
+  }
+
+  .actions {
+    display: grid;
+  }
+
+  .actions :global(.account-button) {
+    width: 100%;
+  }
+}
