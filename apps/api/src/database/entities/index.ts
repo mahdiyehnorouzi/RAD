@@ -2,6 +2,7 @@ import { ArtistApplication } from "./artist-application.entity";
 import { CartItem } from "./cart-item.entity";
 import { Commission } from "./commission.entity";
 import { ContactMessage } from "./contact-message.entity";
+import { CustomerAddress } from "./customer-address.entity";
 import { DamageReport } from "./damage-report.entity";
 import { Favorite } from "./favorite.entity";
 import { HelpQuestion } from "./help-question.entity";
@@ -40,6 +41,7 @@ export const entities = [
   Commission,
   PaymentIntent,
   ContactMessage,
+  CustomerAddress,
   DamageReport,
   ShapeQuestion,
   HelpQuestion,
@@ -53,6 +55,7 @@ export {
   CartItem,
   Commission,
   ContactMessage,
+  CustomerAddress,
   DamageReport,
   Favorite,
   HelpQuestion,
