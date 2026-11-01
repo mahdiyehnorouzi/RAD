@@ -17,3 +17,13 @@ export async function resetAccountPassword(input: {
     body: JSON.stringify(input),
   });
 }
+
+export async function changeAccountPassword(input: {
+  currentPassword: string;
+  newPassword: string;
+}) {
+  return api<{ ok: boolean }>("/auth/password", {
+    method: "PATCH",
+    body: JSON.stringify(input),
+  });
+}

@@ -19,9 +19,10 @@ import type { Order } from "@rad/types";
 import type { PaymentReceiptInput } from "@/types/api";
 import { useLocale } from "@/components/i18n";
 import { Button, ButtonLink } from "@/components/ui/button-link";
-import { formatToman } from "@/lib/money";
 import { formatCountdown } from "@/lib/catalog/product-status";
 import { useCountdown } from "@/hooks/use-countdown";
+import { paymentWindowClosed } from "@/components/checkout/checkout-payment/deferred-payment";
+import { PaymentCard } from "@/components/checkout/checkout-payment/payment-card";
 import { STORE_ORDER_STATUS_KEY, orderDetailCopy } from "../const";
 import { ReceiptForm } from "./receipt-form";
 
@@ -77,7 +78,6 @@ export function OrderNextAction({
   const Forward = locale === "fa" ? ChevronLeft : ChevronRight;
   const remaining = useCountdown(order.payment?.dueAt);
   const [copied, setCopied] = useState(false);
-  const [cardCopied, setCardCopied] = useState(false);
   const [replacing, setReplacing] = useState(false);
   const submittedAt = order.payment?.submittedAt;
 
@@ -91,11 +91,6 @@ export function OrderNextAction({
   const manualCard = order.payment?.manualCard;
   const redirectUrl = order.payment?.redirectUrl;
   const gatewayOrder = order.payment?.provider === "zarinpal";
-  const amountDue = order.payment?.amount ?? order.total;
-  const amountLabel =
-    locale === "fa"
-      ? formatToman(amountDue)
-      : `${new Intl.NumberFormat("en-US").format(amountDue)} toman`;
 
   const deadline =
     remaining === null
@@ -105,6 +100,29 @@ export function OrderNextAction({
             time: formatCountdown(remaining, locale, number),
           })
         : t("holdExpired");
+
+  if (
+    paymentWindowClosed({
+      orderStatus: order.status,
+      paymentStatus: order.payment?.status,
+      remainingMs: remaining,
+    })
+  ) {
+    return (
+      <NextCard
+        id={id}
+        icon={TimerOff}
+        tone="stop"
+        title={t("orderExpiredNote")}
+      >
+        <div className="order-next-actions">
+          <ButtonLink href={productHref} outline>
+            {t("nextActionBrowse")}
+          </ButtonLink>
+        </div>
+      </NextCard>
+    );
+  }
 
   if (order.status === "pending_payment") {
     if (redirectUrl) {
@@ -197,38 +215,7 @@ export function OrderNextAction({
         title={t("manualPaymentHint")}
         note={deadline}
       >
-        {manualCard ? (
-          <div className="order-pay-card">
-            <span className="order-pay-card-label">
-              {t("manualPaymentCardLabel")}
-            </span>
-            <b className="order-pay-card-number" dir="ltr">
-              {manualCard.cardNumber}
-            </b>
-            <span className="order-pay-card-meta">
-              {manualCard.cardHolder}
-              {manualCard.bankName ? ` · ${manualCard.bankName}` : ""}
-            </span>
-            <span className="order-pay-card-amount">
-              {t("manualPaymentAmount", { amount: amountLabel })}
-            </span>
-            <Button
-              type="button"
-              outline
-              onClick={async () => {
-                await navigator.clipboard.writeText(
-                  manualCard.cardNumber.replace(/\D/g, ""),
-                );
-                setCardCopied(true);
-                window.setTimeout(() => setCardCopied(false), 1800);
-              }}
-            >
-              {cardCopied
-                ? t("manualPaymentCardCopied")
-                : t("manualPaymentCopyCard")}
-            </Button>
-          </div>
-        ) : null}
+        {manualCard ? <PaymentCard card={manualCard} /> : null}
 
         <ReceiptForm
           busy={busy}
@@ -308,23 +295,6 @@ export function OrderNextAction({
         }
       >
         <p className="order-pay-note">{t("paymentRejectedHelp")}</p>
-        <div className="order-next-actions">
-          <ButtonLink href={productHref} outline>
-            {t("nextActionBrowse")}
-          </ButtonLink>
-        </div>
-      </NextCard>
-    );
-  }
-
-  if (order.status === "expired") {
-    return (
-      <NextCard
-        id={id}
-        icon={TimerOff}
-        tone="stop"
-        title={t("orderExpiredNote")}
-      >
         <div className="order-next-actions">
           <ButtonLink href={productHref} outline>
             {t("nextActionBrowse")}

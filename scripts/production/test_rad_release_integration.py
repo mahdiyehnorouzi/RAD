@@ -1,7 +1,8 @@
 """Integration tests against a REAL, ephemeral PostgreSQL 16 instance.
 
-Starts a throwaway `postgres:16-alpine` Docker container, points this
-repository's own `apps/api` TypeORM CLI at it, and exercises the broker's
+Starts a throwaway `postgres:16-alpine` Docker container, points a
+production-shaped extract of `apps/api` (the tree `package-api.sh` ships)
+at it, and exercises the broker's
 migration functions (migration_show, backup_database, run_pending_migrations,
 reconcile_migrations) with nothing mocked except the three Postgres
 client-binary paths (PG_DUMP/PG_RESTORE/PSQL), which this module redirects
@@ -33,13 +34,12 @@ SPEC.loader.exec_module(broker)
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 API_DIR = REPO_ROOT / "apps" / "api"
-MIGRATION_FILE = API_DIR / "src" / "database" / "migrations" / "1792865771843-AddProductAttributes.ts"
-# Second real migration (production schema-drift recovery): additive
-# PaymentIntent columns only, no new table — see that migration file's own
-# header for why it exists. `migration:show` against `apps/api`'s real
-# migrations directory reports BOTH files, so this test's manifest/baseline
-# schema have to account for both, not just the first one.
-MIGRATION_FILE_2 = API_DIR / "src" / "database" / "migrations" / "1793032301266-AddPaymentIntentGatewayColumns.ts"
+MIGRATIONS_DIR = API_DIR / "src" / "database" / "migrations"
+# Same selection `scripts/production/make-manifest.py` signs into release.json.
+# The broker refuses when migration:show's count differs from that signed
+# list, so this test must hash the staged artifact's files with that glob
+# rather than a hand-maintained subset.
+PHONE_MIGRATION = "1793510000000-AddUserContactPhone.ts"
 CLI_DATA_SOURCE = API_DIR / "src" / "database" / "cli-data-source.ts"
 
 DOCKER = shutil.which("docker")
@@ -59,7 +59,7 @@ def _docker_daemon_reachable():
 
 def _prerequisites_met():
     return bool(
-        DOCKER and NPM and MIGRATION_FILE.exists() and MIGRATION_FILE_2.exists()
+        DOCKER and NPM and (MIGRATIONS_DIR / PHONE_MIGRATION).exists()
         and CLI_DATA_SOURCE.exists()
         and (REPO_ROOT / "node_modules" / "typeorm" / "cli.js").exists()
         and _docker_daemon_reachable()
@@ -67,8 +67,11 @@ def _prerequisites_met():
 
 
 def file_sha256(path):
+    digest = hashlib.sha256()
     with path.open("rb") as source:
-        return hashlib.file_digest(source, "sha256").hexdigest()
+        for chunk in iter(lambda: source.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
 
 
 @unittest.skipUnless(_prerequisites_met(),
@@ -97,11 +100,31 @@ class RealPostgresMigrationTests(unittest.TestCase):
         try:
             cls.port = cls._published_port()
             cls._wait_ready()
+            cls._stage_production_artifact()
             cls._create_baseline_schema()
         except Exception:
             subprocess.run([DOCKER, "rm", "-f", cls.container], capture_output=True)
             raise
         cls.database_url = f"postgresql://postgres:postgres@127.0.0.1:{cls.port}/rad_migrate_it"
+
+    @classmethod
+    def _stage_production_artifact(cls):
+        """The layout `package-api.sh` gives the migrate broker: `apps/api/src`
+        (migrations included) beside a root `node_modules`, so
+        `npm run migration:show` resolves `tsx ../../node_modules/typeorm`
+        from the extracted tree, not from the checkout the test was edited in.
+        """
+        root = Path(cls.tmp.name) / "artifact"
+        api = root / "apps" / "api"
+        shutil.copytree(API_DIR / "src", api / "src")
+        for name in ("package.json", "tsconfig.json", "tsconfig.build.json"):
+            shutil.copy2(API_DIR / name, api / name)
+        shutil.copy2(REPO_ROOT / "tsconfig.json", root / "tsconfig.json")
+        (root / "node_modules").symlink_to(REPO_ROOT / "node_modules", target_is_directory=True)
+        overflow = API_DIR / "node_modules"
+        if overflow.exists():
+            (api / "node_modules").symlink_to(overflow, target_is_directory=True)
+        cls.api_dir = api
 
     @classmethod
     def _create_baseline_schema(cls):
@@ -121,7 +144,16 @@ class RealPostgresMigrationTests(unittest.TestCase):
             [DOCKER, "exec", cls.container, "psql",
              "postgresql://postgres:postgres@127.0.0.1:5432/rad_migrate_it", "-c",
              'CREATE TABLE IF NOT EXISTS "Product" (id text PRIMARY KEY);'
-             'CREATE TABLE IF NOT EXISTS "PaymentIntent" (id text PRIMARY KEY);'],
+             'CREATE TABLE IF NOT EXISTS "PaymentIntent" (id text PRIMARY KEY);'
+             'CREATE TABLE IF NOT EXISTS "User" ('
+             '  id text PRIMARY KEY,'
+             '  name text NOT NULL,'
+             '  email text NOT NULL UNIQUE,'
+             '  "passwordHash" text NOT NULL'
+             ');'
+             """INSERT INTO "User" (id, name, email, "passwordHash") VALUES
+                ('u1', 'سارا', 'sara@example.com', 'hash-1'),
+                ('u2', 'نسترن', 'nastaran@example.com', 'hash-2');"""],
             check=True, capture_output=True, text=True, timeout=15)
 
     @classmethod
@@ -219,23 +251,65 @@ class RealPostgresMigrationTests(unittest.TestCase):
                             "WHERE table_name = 'PaymentIntent';")
         return {line.strip() for line in result.stdout.splitlines() if line.strip()}
 
+    def signed_manifest(self):
+        """Hash the migrations inside the staged artifact, matching make-manifest.py."""
+        migrations_dir = self.api_dir / "src" / "database" / "migrations"
+        files = sorted(p for p in migrations_dir.glob("*.ts") if not p.name.endswith(".spec.ts"))
+        self.assertIn(PHONE_MIGRATION, [path.name for path in files])
+        return self.manifest_for(*files)
+
+    def user_rows(self):
+        result = broker.run(
+            broker.PSQL, self.database_url, "-tAc",
+            'SELECT id || \'|\' || name || \'|\' || email || \'|\' || "passwordHash" '
+            'FROM "User" ORDER BY id;')
+        return [line.strip() for line in result.stdout.splitlines() if line.strip()]
+
+    def phone_facts(self):
+        result = broker.run(
+            broker.PSQL, self.database_url, "-tAc",
+            "SELECT is_nullable FROM information_schema.columns "
+            "WHERE table_name = 'User' AND column_name = 'phone';")
+        nullable = result.stdout.strip()
+        index = broker.run(
+            broker.PSQL, self.database_url, "-tAc",
+            "SELECT indexdef FROM pg_indexes "
+            "WHERE schemaname = 'public' AND indexname = 'UQ_User_phone';")
+        return nullable, index.stdout.strip()
+
+    def previous_api_user_read(self):
+        """The previous API release's User entity has no phone column."""
+        result = broker.run(
+            broker.PSQL, self.database_url, "-tAc",
+            'SELECT id, name, email, "passwordHash" FROM "User" ORDER BY id;')
+        return result.stdout.strip()
+
     def test_full_migration_lifecycle_against_real_postgres(self):
-        manifest = self.manifest_for(MIGRATION_FILE, MIGRATION_FILE_2)
+        manifest = self.signed_manifest()
+        before = self.user_rows()
+        self.assertEqual(before, [
+            "u1|سارا|sara@example.com|hash-1",
+            "u2|نسترن|nastaran@example.com|hash-2",
+        ])
 
         # 1. Initial state: nothing applied yet, correctly detected as pending.
-        shown = broker.migration_show(NPM, API_DIR, self.database_url, "127.0.0.1")
+        shown = broker.migration_show(NPM, self.api_dir, self.database_url, "127.0.0.1")
         pending = broker.reconcile_migrations(manifest, shown)
-        self.assertEqual({m["name"] for m in pending}, {MIGRATION_FILE.name, MIGRATION_FILE_2.name})
+        self.assertEqual(
+            {m["name"] for m in pending},
+            {entry["name"] for entry in manifest["migrations"]},
+        )
         self.assertEqual(self.table_names() & {"ProductAttribute", "ProductAttributeValue"}, set())
         self.assertEqual(self.payment_intent_columns() & {"gatewayAuthority", "gatewayRefId", "verifiedAt"}, set())
+        self.assertEqual(self.phone_facts()[0], "")
 
         # 2. A real backup, with a real, non-empty, structurally-valid dump.
         dump = broker.backup_database(self.database_url, "it")
         self.assertTrue(dump.exists())
         self.assertGreater(dump.stat().st_size, 0)
 
-        # 3. A real `npm run migration:run` against the real database.
-        broker.run_pending_migrations(NPM, API_DIR, self.database_url, "127.0.0.1")
+        # 3. A real `npm run migration:run` against the staged artifact.
+        broker.run_pending_migrations(NPM, self.api_dir, self.database_url, "127.0.0.1")
 
         tables = self.table_names()
         for table in ("ProductAttribute", "ProductAttributeOption",
@@ -243,19 +317,52 @@ class RealPostgresMigrationTests(unittest.TestCase):
             self.assertIn(table, tables)
         for column in ("gatewayAuthority", "gatewayRefId", "verifiedAt"):
             self.assertIn(column, self.payment_intent_columns())
+        self.assertEqual(self.user_rows(), before)
+        nullable, indexdef = self.phone_facts()
+        self.assertEqual(nullable, "YES")
+        self.assertIn("UNIQUE", indexdef)
+        self.assertIn("(phone)", indexdef)
+        phones = broker.run(
+            broker.PSQL, self.database_url, "-tAc",
+            'SELECT count(*) FROM "User" WHERE phone IS NULL;')
+        self.assertEqual(phones.stdout.strip(), "2")
+        broker.run(
+            broker.PSQL, self.database_url, "-c",
+            """UPDATE "User" SET phone = '09121234567' WHERE id = 'u1';""")
+        with self.assertRaises(subprocess.CalledProcessError):
+            broker.run(
+                broker.PSQL, self.database_url, "-c",
+                """UPDATE "User" SET phone = '09121234567' WHERE id = 'u2';""")
+        broker.run(
+            broker.PSQL, self.database_url, "-c",
+            """UPDATE "User" SET phone = NULL WHERE id = 'u1';""")
+        self.assertEqual(self.user_rows(), before)
+        self.assertIn("u1|سارا|sara@example.com|hash-1", self.previous_api_user_read())
 
-        # 4. migration:show now reports both applied; reconciling again
-        #    finds nothing pending — the exact check migrate_api() relies on
-        #    to skip a second backup/run on a later, idempotent retry.
-        shown_after = broker.migration_show(NPM, API_DIR, self.database_url, "127.0.0.1")
+        # 4. migration:show now reports every signed migration applied.
+        shown_after = broker.migration_show(NPM, self.api_dir, self.database_url, "127.0.0.1")
         self.assertEqual(broker.reconcile_migrations(manifest, shown_after), [])
+
+        # 5. Reverting the last migration (the phone column) restores the
+        #    schema the previous API release selects, and keeps the accounts.
+        broker.run(
+            NPM, "run", "migration:revert",
+            env={**broker.SAFE_ENV, "PATH": os.environ.get("PATH", ""),
+                 "DATABASE_URL": self.database_url, "RAD_ALLOW_REMOTE_DB_WRITE": "127.0.0.1"},
+            cwd=self.api_dir, timeout=1800)
+        self.assertEqual(self.phone_facts()[0], "")
+        self.assertEqual(self.user_rows(), before)
+        self.assertIn("sara@example.com", self.previous_api_user_read())
+        shown_reverted = broker.migration_show(NPM, self.api_dir, self.database_url, "127.0.0.1")
+        pending_again = broker.reconcile_migrations(manifest, shown_reverted)
+        self.assertEqual([entry["name"] for entry in pending_again], [PHONE_MIGRATION])
 
     @unittest.skipUnless(os.environ.get("RAD_TEST_BACKUP_VERIFY_DATABASE_URL"),
                          "Set RAD_TEST_BACKUP_VERIFY_DATABASE_URL to a second, already-reachable, "
                          "isolated PostgreSQL 16 database (never the one this test provisions) to "
                          "exercise the real-restore verification path (verify_restore / concern #4).")
     def test_backup_is_actually_restorable_not_just_structurally_valid(self):
-        broker.run_pending_migrations(NPM, API_DIR, self.database_url, "127.0.0.1")
+        broker.run_pending_migrations(NPM, self.api_dir, self.database_url, "127.0.0.1")
         verify_url = os.environ["RAD_TEST_BACKUP_VERIFY_DATABASE_URL"]
         self.env_file.write_text(
             self.env_file.read_text() + f"RAD_MIGRATION_BACKUP_VERIFY_DATABASE_URL={verify_url}\n")

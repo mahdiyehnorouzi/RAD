@@ -62,6 +62,7 @@ INCOMING_BASE="${TMPROOT}/incoming"
 mkdir -p "$INCOMING_BASE"
 export RAD_DEPLOY_INCOMING_BASE="$INCOMING_BASE"
 export RAD_DEPLOY_VALIDATOR="${ROOT}/scripts/production/rad_deploy_entrypoint.py"
+export RAD_DEPLOY_TRANSPORT="${ROOT}/scripts/production/rad_deploy_transport.py"
 export RAD_DEPLOY_MAX_TRANSPORT_BYTES=20000 # small but big enough for tar's own block padding on a two/three-file archive
 
 BROKER_RECEIVED="${TMPROOT}/broker-received.json"
@@ -255,6 +256,65 @@ else
   ok=true
 fi
 check "entrypoint rejects an upload larger than the transport size cap" "$ok"
+check "  ...and never invoked the broker" "$( [[ ! -f "$BROKER_RECEIVED" ]] && echo true || echo false )"
+check "  ...and left no staging directory behind" "$( [[ -z "$(find "$INCOMING_BASE" -mindepth 1 -print -quit)" ]] && echo true || echo false )"
+
+reset_markers
+if make_valid_tar "${TMPROOT}/truncated.tar" api \
+  && head -c 20 "${TMPROOT}/truncated.tar" > "${TMPROOT}/partial.tar" \
+  && SSH_ORIGINAL_COMMAND="migrate commit=$(printf '%040d' 8) run_id=8 run_attempt=1" \
+     "$ENTRYPOINT" < "${TMPROOT}/partial.tar" >"${TMPROOT}/out.log" 2>"${TMPROOT}/err.log"; then
+  ok=false
+else
+  ok=true
+fi
+check "entrypoint rejects a truncated upload instead of invoking the broker" "$ok"
+check "  ...and never invoked the broker" "$( [[ ! -f "$BROKER_RECEIVED" ]] && echo true || echo false )"
+check "  ...and left no staging directory behind" "$( [[ -z "$(find "$INCOMING_BASE" -mindepth 1 -print -quit)" ]] && echo true || echo false )"
+check "  ...and reported the failed stage" "$( grep -q 'stage=transfer_complete' "${TMPROOT}/err.log" && grep -q 'broker not invoked' "${TMPROOT}/err.log" && echo true || echo false )"
+
+reset_markers
+if python3 - "$ENTRYPOINT" "$INCOMING_BASE" "$BROKER_RECEIVED" <<'PY'
+import os, signal, subprocess, sys, time
+entrypoint, incoming, broker_received = sys.argv[1:]
+env = os.environ.copy()
+env["RAD_DEPLOY_TRANSFER_IDLE_SECONDS"] = "1"
+env["RAD_DEPLOY_TRANSFER_DEADLINE_SECONDS"] = "5"
+env["SSH_ORIGINAL_COMMAND"] = "migrate commit=" + ("b" * 40) + " run_id=9 run_attempt=1"
+proc = subprocess.Popen(
+    [entrypoint], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+    env=env, start_new_session=True,
+)
+proc.stdin.write(b"partial-upload-without-eof")
+proc.stdin.flush()
+started = time.monotonic()
+try:
+    code = proc.wait(timeout=10)
+except subprocess.TimeoutExpired:
+    os.killpg(proc.pid, signal.SIGKILL)
+    sys.exit("stalled upload hung past the idle deadline")
+elapsed = time.monotonic() - started
+err = proc.stderr.read().decode()
+if code == 0:
+    sys.exit("stalled upload was accepted")
+if elapsed > 8:
+    sys.exit(f"stalled upload took {elapsed:.1f}s")
+if os.path.exists(broker_received):
+    sys.exit("broker was invoked")
+if "reason=stalled" not in err and "reason=deadline" not in err:
+    sys.exit("missing stall reason:\n" + err)
+if any(os.scandir(incoming)):
+    sys.exit("staging directory left behind")
+if "UNIQUE" in err:
+    sys.exit("payload leaked into logs")
+PY
+then
+  ok=true
+else
+  ok=false
+  cat "${TMPROOT}/err.log" >&2 || true
+fi
+check "entrypoint fails a stalled upload, skips the broker, and removes staging" "$ok"
 
 reset_markers
 export FAKE_BROKER_FAIL=1

@@ -24,9 +24,11 @@
 #      activation.json to match what was just installed. Every other
 #      field - enabled, runner_workflow_policy_verified,
 #      production_environments_verified, host_preflight_verified,
-#      nonproduction_rehearsal_verified, schema, repository - is copied
-#      through byte-for-byte unchanged. This script never sets, clears,
-#      or re-derives any approval flag.
+#      nonproduction_rehearsal_verified, schema, repository,
+#      approved_migrations, offsite_backup_pipeline_verified, and
+#      migration_exception - is copied through unchanged. This script
+#      never sets, clears, or re-derives any approval flag, and it never
+#      creates a migration_exception.
 #   5. Post-install validation: loads the INSTALLED broker as a Python
 #      module and calls its own validate_activation() against the real,
 #      installed activation.json - the same fail-closed check a real
