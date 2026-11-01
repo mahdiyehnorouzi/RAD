@@ -1,47 +1,151 @@
-.account-info-fields {
-  max-width: 40rem;
-}
-
-.account-info-fields > div {
+.account-info-form {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  align-items: center;
   gap: 1rem;
-  min-height: 4.5rem;
-  padding: 0.9rem 1.2rem;
+  max-width: 40rem;
+  min-width: 0;
 }
 
-.account-info-fields > div + div {
+.account-info-sheet {
+  display: grid;
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--account-line);
+  border-radius: var(--account-radius);
+  background: var(--account-paper);
+  box-shadow: var(--account-shadow);
+}
+
+.account-info-field {
+  display: grid;
+  gap: 0.4rem;
+  min-width: 0;
+  padding: 0.95rem 1.15rem 1.05rem;
+}
+
+.account-info-field + .account-info-field {
   border-top: 1px solid var(--account-line);
 }
 
-.account-info-icon {
-  width: 1.3rem;
-  height: 1.3rem;
-  color: var(--account-green);
-}
-
-.account-info-fields dt {
+.account-info-field > span {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
   color: var(--account-muted);
   font-size: 0.8rem;
   line-height: 1.5;
 }
 
-.account-info-fields dd {
-  margin: 0;
-  overflow-wrap: anywhere;
+.account-info-field > span svg {
+  width: 1.05rem;
+  height: 1.05rem;
+  flex: none;
   color: var(--account-green);
-  font-size: 1.02rem;
+}
+
+.account-info-field em {
+  color: var(--account-muted);
+  font-style: normal;
+  font-weight: 400;
+}
+
+.account-info-field input,
+.account-info-field bdi {
+  width: 100%;
+  min-width: 0;
+  color: var(--account-green);
+  font-size: 1rem;
   font-weight: 600;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.account-info-field input {
+  min-height: 48px;
+  padding: 0.55rem 0.8rem;
+  border: 1px solid var(--account-line);
+  border-radius: 12px;
+  background: var(--account-page);
+  color: var(--account-green);
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.account-info-field input:focus-visible {
+  outline: 2px solid var(--account-oxide);
+  outline-offset: 2px;
+}
+
+.account-info-field input[aria-invalid="true"] {
+  border-color: var(--account-oxide);
+}
+
+.account-info-phone {
+  direction: ltr;
+  text-align: left;
+}
+
+html[dir="rtl"] .account-info-form {
+  text-align: start;
+}
+
+html[dir="rtl"] .account-info-phone {
+  direction: ltr;
+  text-align: left;
+}
+
+.account-info-field small {
+  color: var(--account-muted);
+  font-size: 0.82rem;
   line-height: 1.6;
 }
 
-.account-info-fields dd span {
-  unicode-bidi: isolate;
+.account-info-field small[role="alert"] {
+  color: var(--account-oxide);
+}
+
+.account-info-status {
+  margin: 0;
+  color: var(--account-green);
+  font-size: 0.92rem;
+  line-height: 1.6;
+}
+
+.account-info-status.is-error {
+  color: var(--account-oxide);
+}
+
+.account-info-actions {
+  display: flex;
+}
+
+.account-info-actions .account-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.account-info-actions .account-button[aria-busy="true"] {
+  cursor: progress;
 }
 
 .account-info-logout {
   width: 100%;
   max-width: 40rem;
-  margin-top: 1.5rem;
+  margin-top: 0.4rem;
+}
+
+@media (--phone) {
+  .account-info-form,
+  .account-info-logout {
+    max-width: none;
+  }
+
+  .account-info-actions {
+    display: grid;
+  }
+
+  .account-info-actions .account-button,
+  .account-info-logout {
+    width: 100%;
+  }
 }

@@ -39,6 +39,7 @@ import {
   formatIranMobileDraft,
   iranMobileMessage,
 } from "@/lib/phone/iran-mobile";
+import { seedCheckoutName, seedCheckoutPhone } from "./checkout-contact";
 import { toLatinDigits } from "@/lib/payment/receipt";
 import { checkoutCopy, fillCopy } from "../const";
 import { CheckoutMeter, CheckoutSteps, CheckoutSummary } from "../flow";
@@ -154,7 +155,7 @@ export function CheckoutPage() {
     const form = formRef.current;
     if (!form) return;
     const draft = readDraft();
-    for (const name of ["name", "address", "postalCode"] as const) {
+    for (const name of ["address", "postalCode"] as const) {
       const value = draft[name];
       if (!value) continue;
       const field = form.elements.namedItem(name);
@@ -165,14 +166,26 @@ export function CheckoutPage() {
         field.value = value;
       }
     }
+    const nameField = form.elements.namedItem("name");
+    if (nameField instanceof HTMLInputElement) {
+      nameField.value = seedCheckoutName({
+        current: nameField.value,
+        draftName: draft.name,
+        profileName: user?.name,
+      });
+    }
     const location = restoreCheckoutLocation(draft);
     // Session storage is read after mount so the server render stays empty.
-    /* eslint-disable react-hooks/set-state-in-effect */
     setProvinceId(location.provinceId);
     setCityId(location.cityId);
-    if (draft.phone) setPhone(formatIranMobileDraft(draft.phone));
-    /* eslint-enable react-hooks/set-state-in-effect */
-  }, [formVisible]);
+    setPhone((current) =>
+      seedCheckoutPhone({
+        current,
+        draftPhone: draft.phone,
+        profilePhone: user?.phone,
+      }),
+    );
+  }, [formVisible, user?.name, user?.phone]);
 
   useLayoutEffect(() => {
     const node = phoneRef.current;
