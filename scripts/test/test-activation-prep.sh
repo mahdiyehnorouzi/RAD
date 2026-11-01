@@ -198,7 +198,7 @@ echo "== Scenario: prior GitHub-side approvals are preserved, not reset or auto-
 # GitHub-side flags by hand. A re-run (e.g. just to refresh trusted_root
 # pinning) must carry those forward exactly, not wipe them to false.
 cat > "$ACTIVATION_DIR/activation.json.candidate" <<JSON
-{"schema":1,"repository":"mahdiyehnorouzi/RAD","enabled":false,"runner_workflow_policy_verified":true,"production_environments_verified":true,"host_preflight_verified":false,"nonproduction_rehearsal_verified":false,"approved_migrations":{"1792865771843-AddProductAttributes.ts":"deadbeef"},"offsite_backup_pipeline_verified":true,"broker_sha256":"stale","trusted_root_sha256":"stale"}
+{"schema":1,"repository":"mahdiyehnorouzi/RAD","enabled":false,"runner_workflow_policy_verified":true,"production_environments_verified":true,"host_preflight_verified":false,"nonproduction_rehearsal_verified":false,"approved_migrations":{"1792865771843-AddProductAttributes.ts":"deadbeef"},"offsite_backup_pipeline_verified":true,"migration_exception":{"commit":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","run_id":41281465243,"run_attempt":2},"broker_sha256":"stale","trusted_root_sha256":"stale"}
 JSON
 run_prep "$(disabled_policy false false)" keep-candidate >/dev/null 2>&1 || true
 CANDIDATE_JSON="$(cat "$ACTIVATION_DIR/activation.json.candidate")"
@@ -210,6 +210,12 @@ check "offsite_backup_pipeline_verified=true is preserved across a re-run" \
   "$(python3 -c "import json;print(str(json.loads('''$CANDIDATE_JSON''').get('offsite_backup_pipeline_verified')==True).lower())")"
 check "approved_migrations entry is preserved across a re-run" \
   "$(python3 -c "import json;print(str(json.loads('''$CANDIDATE_JSON''').get('approved_migrations')=={'1792865771843-AddProductAttributes.ts':'deadbeef'}).lower())")"
+check "migration_exception commit is preserved" \
+  "$(python3 -c "import json;print(str((json.loads('''$CANDIDATE_JSON''').get('migration_exception') or {}).get('commit')=='aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa').lower())")"
+check "migration_exception run_id is preserved" \
+  "$(python3 -c "import json;print(str((json.loads('''$CANDIDATE_JSON''').get('migration_exception') or {}).get('run_id')==41281465243).lower())")"
+check "migration_exception run_attempt is preserved" \
+  "$(python3 -c "import json;print(str((json.loads('''$CANDIDATE_JSON''').get('migration_exception') or {}).get('run_attempt')==2).lower())")"
 
 echo
 echo "== Scenario: no prior candidate -> GitHub-side/migration flags start false, never auto-approved =="
@@ -224,6 +230,8 @@ check "offsite_backup_pipeline_verified defaults to false, not auto-approved" \
   "$(python3 -c "import json;print(str(json.loads('''$CANDIDATE_JSON''').get('offsite_backup_pipeline_verified')==False).lower())")"
 check "approved_migrations defaults to empty, not auto-approved" \
   "$(python3 -c "import json;print(str(json.loads('''$CANDIDATE_JSON''').get('approved_migrations')=={}).lower())")"
+check "migration_exception is absent, not invented" \
+  "$(python3 -c "import json;print(str('migration_exception' not in json.loads('''$CANDIDATE_JSON''')).lower())")"
 
 echo
 echo "== Scenario: refuses to use the same host for production and restore =="

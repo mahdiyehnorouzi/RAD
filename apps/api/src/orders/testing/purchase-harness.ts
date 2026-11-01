@@ -30,10 +30,6 @@ import {
 import { InventoryService } from "../../inventory/inventory.service";
 import { MailService } from "../../mail/mail.service";
 import type { CatalogRevalidationService } from "../../catalog/catalog-revalidation.service";
-
-const catalogRevalidation = {
-  notifyChanged: async () => {},
-} as unknown as CatalogRevalidationService;
 import { NoticesService } from "../../notices/notices.service";
 import {
   CURRENT_POLICY_VERSIONS,
@@ -81,6 +77,13 @@ export async function startPurchaseHarness() {
     synchronize: true,
   } as never);
   await dataSource.initialize();
+
+  let catalogRevalidationCalls = 0;
+  const catalogRevalidation: CatalogRevalidationService = {
+    notifyChanged: async () => {
+      catalogRevalidationCalls += 1;
+    },
+  } as unknown as CatalogRevalidationService;
 
   const repo = dataSource.getRepository.bind(dataSource);
   const identity = new IdentityService(repo(User));
@@ -146,6 +149,10 @@ export async function startPurchaseHarness() {
     inventory,
     notices,
     acceptedPolicies,
+
+    catalogRevalidationCallCount() {
+      return catalogRevalidationCalls;
+    },
 
     buyer(name: string): Actor {
       return { user: null, guestId: `${name}-${Date.now()}-${Math.random()}` };

@@ -8,6 +8,7 @@ import { fetchFaq } from "@/lib/api";
 import { overlayLiveProduct } from "@/lib/catalog/category-defaults";
 import { workTextures } from "@/lib/catalog/material-texture";
 import { isGoneStatus } from "@/lib/catalog/product-status";
+import { purchaseView } from "./purchase-view";
 import { DevPurchaseStateReader } from "./dev-purchase-state-reader";
 import { useInView, useLiveProduct } from "./hooks";
 import { MaterialTexture } from "./material-texture";
@@ -82,16 +83,21 @@ export function ProductDetail({
   const resolved = overlayLiveProduct(product, live.product);
   const textures = workTextures(resolved);
 
-  const { inBag, reserved, label, status } = useProductStatus(resolved);
+  const { inBag, reserved, heldByOther, label, status, ownOrderId } =
+    useProductStatus(resolved);
   const withdrawn = live.withdrawn && !inBag;
-  const baseState: PurchaseState = {
+  const flags = {
     inBag,
     reserved,
+    heldByOther,
     withdrawn,
-    sold: !inBag && !reserved && !withdrawn && isGoneStatus(status),
+    ownOrderId,
+    sold:
+      !inBag && !reserved && !ownOrderId && !withdrawn && isGoneStatus(status),
     status,
     label,
   };
+  const baseState: PurchaseState = { ...flags, ...purchaseView(flags) };
   // Dev-only override so every purchase-bar visual state can be inspected
   // against a real product without touching cart/inventory logic.
   // `DevPurchaseStateReader` — and the `useSearchParams()` it needs — is
@@ -111,9 +117,10 @@ export function ProductDetail({
     [],
   );
   const devBusy = devState === "loading";
-  const state: PurchaseState = devOverride
+  const merged: PurchaseState = devOverride
     ? { ...baseState, ...devOverride }
     : baseState;
+  const state: PurchaseState = { ...merged, ...purchaseView(merged) };
 
   useEffect(() => {
     document.documentElement.setAttribute("data-pdp-bare", "true");
@@ -170,7 +177,9 @@ export function ProductDetail({
           <div className={styles.foldList}>
             <ProductQuestions
               faq={faq}
-              showShipping={!state.sold && !state.withdrawn}
+              showShipping={
+                state.button !== "sold" && state.button !== "withdrawn"
+              }
               textures={textures}
               index={5}
             />

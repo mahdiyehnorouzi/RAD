@@ -37,7 +37,7 @@ Only what is actually installed:
 - **class-validator / class-transformer** — backend DTO validation.
 - **@nestjs/jwt + bcryptjs** — authentication, cookie-based sessions (`common/session.middleware.ts`, `common/guards/`).
 - **Testing: Node's built-in test runner (`node:test`) via `tsx --test`.** No Jest, Vitest, Playwright, or Cypress are installed anywhere in this repo.
-- **Build/deploy**: Cloudflare Workers (`@opennextjs/cloudflare` / vinext) for storefront and admin; Render for the API. ESLint 9 + Prettier 3 for lint/format.
+- **Build/deploy**: Production releases run from `.github/workflows/deploy.yml` onto the self-hosted VPS (storefront and admin as Docker images, API as a signed artifact with migrations). `npm run build:vinext` still exists and CI still runs it; it is not the production deploy path. ESLint 9 + Prettier 3 for lint/format.
 
 Do not assume any other framework, library, or test tool is available. If a task seems to require one that isn't listed here, flag it instead of adding it silently.
 

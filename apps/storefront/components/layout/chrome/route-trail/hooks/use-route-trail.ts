@@ -69,6 +69,7 @@ export function useRouteTrail() {
       if (!second) break;
       const pages: Record<string, string> = {
         info: c.accountInfo,
+        addresses: c.addresses,
         making: c.customOrders,
         notifications: c.notifications,
       };
