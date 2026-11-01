@@ -151,6 +151,7 @@ describe("AuthService.changePassword", () => {
         id: userId,
         name: "Admin",
         email: "admin@example.com",
+        phone: null,
         role: "admin",
         adminRole: "owner",
       },

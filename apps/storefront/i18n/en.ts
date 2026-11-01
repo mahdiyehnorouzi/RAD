@@ -236,7 +236,24 @@ export const en = {
   makingDemoBanner:
     "Sample custom-order path — details are read-only and actions are disabled.",
   makingPathTitle: "Making path of my work",
-  accountInfoBody: "Your name, email, and session on this device.",
+  accountInfoBody:
+    "You can update your name and mobile number. Email is the sign-in and password-recovery address.",
+  accountEmailLocked:
+    "Email is used to sign in and reset your password. It can change only after the new address is verified.",
+  accountPhoneLabel: "Mobile number",
+  accountPhoneOptional: "optional",
+  accountPhonePlaceholder: "0912 123 4567",
+  accountPhoneHint: "For order contact. This number is not used to sign in.",
+  accountNameInvalid: "Enter a name of at least 2 characters.",
+  accountNameTooLong: "Name must be 80 characters or fewer.",
+  accountPhoneInvalid:
+    "Enter an Iranian mobile, 09 and eleven digits, such as 09121234567.",
+  accountPhoneTaken:
+    "This mobile number is already registered to another account.",
+  saveProfile: "Save changes",
+  savingProfile: "Saving…",
+  profileSaved: "Account details saved.",
+  profileSaveFailed: "Could not save. Try again.",
   favoritesNav: "Favourites",
   savedWorks: "saved works",
   favoritesTitle: "Favourite works",

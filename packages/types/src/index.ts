@@ -189,6 +189,12 @@ export interface AuthUser {
   id: string;
   name: string;
   email: string;
+  /**
+   * Canonical Iranian mobile (`09` and nine digits), or null when unset.
+   * Absent only on responses from an API that predates contact phones.
+   * Not a sign-in identifier.
+   */
+  phone?: string | null;
   role: "customer" | "artist" | "admin";
   adminRole?: "owner" | "manager" | "editor" | "viewer" | null;
 }
