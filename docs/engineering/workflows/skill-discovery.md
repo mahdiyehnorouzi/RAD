@@ -1,56 +1,64 @@
-# Agent Skill Discovery and Session Initialization
+# Agent skill discovery and session initialization
 
-**Status:** Engineering procedure; complements [ADR-008](../adr/adr-008-agent-engineering-system.md), [ADR-007](../adr/adr-007-test-first-refactoring.md), and the Task-to-PR workflow being developed in a separate stacked PR (#116). No tool discovery behavior is assumed from file presence alone.
+**Status:** procedure for reporting how a skill was found. It does not install tools, change global agent configuration, add a CI check, or make file presence into discovery. Branching, risk, and merge rules are in the [task-to-PR workflow](./task-to-pr.md). Structural refactors follow `rad-safe-refactor` and [ADR-007](../adr/adr-007-test-first-refactoring.md). Placement and mirrors follow [ADR-008](../adr/adr-008-agent-engineering-system.md).
 
-## 1. Preflight before an agent task
+The default base is the latest `origin/main`. Do not require a historical foundation branch.
 
-Record the current working directory, Git branch, HEAD commit, and `git status --short`. Check the task's intended base branch against the current working tree. On a stacked PR, use an isolated worktree whose branch contains the necessary rules and skills; do **not** switch or overwrite an unrelated active feature worktree.
+## 1. Preflight
 
-Read root `AGENTS.md` plus applicable app-specific rules and ADRs from **the current worktree**. Determine what the task requires before attempting a skill. Do not silently assume that skills available in another worktree are loaded into this session.
+Before a skill test or a task that depends on one, record:
 
-## 2. Native discovery and invocation
+- current working directory
+- branch
+- HEAD commit
+- `git status --short`
+- whether this worktree is the task branch or an unrelated checkout
 
-When an applicable skill is required:
+Read root [`AGENTS.md`](../../../AGENTS.md), the touched app's `AGENTS.md`, and the relevant ADRs from **this worktree**. Skills present in another checkout are not loaded here.
 
-1. Check the tool's actual available-skills listing or native discovery interface in **this session**.
-2. Attempt native invocation using the mechanism supported by that tool (for Claude Code, the native Skill mechanism where available).
-3. Record the observed result, loaded skill name, and reported base directory.
-4. **Do not** count `cat SKILL.md`, a direct file read, or viewing a mirrored copy as successful native invocation. Manual use of the contents is permitted only if explicitly labeled **manual fallback**, not as a native Skill test.
-5. Never claim that all agents discover a skill merely because its Markdown exists in `.claude/skills/`, `.agents/skills/`, and `.cursor/skills/`.
+Use an isolated worktree. Do not switch, reset, or commit on an unrelated feature checkout. A stacked PR follows [task-to-PR workflow](./task-to-pr.md): branch from the dependency only when the work cannot be reviewed without it, then retarget to `main` after that dependency merges.
 
-The `rad-safe-refactor` skill has been **natively discovered and invoked in a Claude Code session started from the isolated Foundation worktree**, according to an operator-supplied session transcript. A different Claude Code session rooted in a feature worktree lacking the file returned `Unknown skill: rad-safe-refactor`. These are environment-specific observations, not contradictory global claims.
+If the required skill file is absent from this worktree, stop the native test. Report **UNVERIFIED** or **FAILED**. Do not copy the skill into the active feature branch to produce a green result. Open a new session from a worktree that already contains the file.
 
-Cursor, Codex, Kilo and any other tools require separate verification in their own environment; do not mark them verified by analogy.
+## 2. File presence is not discovery
 
-## 3. Evidence-based reporting
+Tracked skill files live in three directories that are not the same set:
 
-Report separately for each tool/session:
+- `.claude/skills/`
+- `.agents/skills/`
+- `.cursor/skills/`
 
-| Field | Required evidence |
+For `rad-safe-refactor`, ADR-008 names `.claude/skills/rad-safe-refactor/SKILL.md` as the canonical file. The `.agents/skills/` and `.cursor/skills/` copies must be byte-identical. Confirm with `git rev-parse` or `diff` at the current commit. On the `main` used for this review, those three blobs matched.
+
+That rule does not cover every skill. `api-module-structure` is not in `.claude/skills/`. `storefront-component-structure` is not byte-identical between `.agents/skills/` and `.cursor/skills/`. Report a missing or drifted copy. Do not fix it inside an unrelated task, and do not describe a future mirror checker as already required. This document does not add one.
+
+## 3. Statuses
+
+Use one status per tool and per session. **VERIFIED** requires both native discovery and native invocation in that session. Reading `SKILL.md` is **MANUAL FALLBACK**, including when the session instructions say to open that file.
+
+| Status | Meaning |
 | --- | --- |
-| Worktree | Working-directory path, branch, and commit |
-| File presence | Relevant skill file path exists in that worktree |
-| Native discovery | Observed listing or tool discovery result |
-| Invocation | Exact native skill call and success/failure |
-| Loaded content | Confirmation that the expected skill sections loaded |
-| Changes | Explicit yes/no for files, commits, PRs and deployment |
+| **VERIFIED** | This session's own listing showed the skill, and this session's native invoke action succeeded. Record the listing, the invoke action, the loaded name, and the directory. |
+| **FAILED** | A native invoke was attempted in this session and failed. Quote the error. |
+| **UNVERIFIED** | This session did not complete both listing and native invoke. Absence of a tool, a missing file, or a second-hand transcript all stay here. |
+| **MANUAL FALLBACK** | The file was read and followed without a successful native invoke. Report it separately from VERIFIED. |
 
-Use these statuses:
-- **VERIFIED:** native discovery **and** invocation succeeded in the stated environment.
-- **FAILED:** native invocation was attempted and failed; identify the mechanical cause if confirmed.
-- **UNVERIFIED:** no conclusive native invocation test in that environment.
-- **MANUAL FALLBACK:** read and applied skill content without a successful native invocation; report separately from VERIFIED.
+Also record whether the session changed files, commits, pull requests, or a deploy. A discovery test should change none of them.
 
-If the session is on the wrong branch or the skill is not natively available, stop the claimed native test and recommend a new session in the intended worktree. Do not invent a success or copy the skill into unrelated feature branches just to make the status green.
+An invocation test does not prove a refactor. A planning dry run may conclude **NO REFACTOR**. Only a separate, authorized, test-backed PR demonstrates the full workflow. Say which of those happened.
 
-## 4. Refactor dry-run acceptance
+## 4. Tools are not interchangeable
 
-An invocation-only test checks discovery, **not** successful refactoring. A planning dry run checks task judgment and should be able to conclude **NO REFACTOR** for cohesive code. Only a separately authorized, isolated, test-backed implementation-and-review PR can demonstrate the full workflow. Record which milestone was actually achieved.
+Do not mark a tool verified because another tool was, or because the Markdown file exists.
 
-## 5. Mirror consistency and future automation
+**Claude Code.** The repository convention is `.claude/skills/<name>/SKILL.md`. Native evidence is that session's skill listing plus its Skill invoke, not a file read. An older operator transcript reported success in a foundation worktree and `Unknown skill: rad-safe-refactor` in a checkout that lacked the file. That transcript was not rerun for this review, and that worktree is gone. Claude Code on current `main`: **UNVERIFIED**.
 
-`.claude/skills/rad-safe-refactor/SKILL.md` is the canonical skill file under ADR-008; `.agents/` and `.cursor/` copies are mirrors. Before accepting edits to this skill, compare copies byte-for-byte. This procedure does **not** add a CI gate or promise automated synchronization. A later CI PR should enforce mirror drift and valid skill metadata, without changing business logic.
+**Cursor.** Project skills are catalogued from `.cursor/skills/<name>/SKILL.md` when the session starts in a tree that contains them. This Cursor session listed `rad-safe-refactor` at `.cursor/skills/rad-safe-refactor/SKILL.md`. That is discovery of the catalog entry only. Cursor's follow-through is to read `SKILL.md`. That read is manual fallback, and no separate invoke result was returned. Cursor invocation: **UNVERIFIED**.
 
-## 6. Example read-only validation prompt
+**Codex.** No Codex session was run. `.agents/skills/` is a directory in the repo. ADR-008 does not identify a Codex loader for it. Codex: **UNVERIFIED**.
 
-> Verify native discovery and invocation of `rad-safe-refactor` in this exact agent session. Report current working directory, Git branch, skill listing, actual invocation result, and loaded directory. Do not substitute reading SKILL.md for native invocation; do not modify repository files or merge anything.
+**Kilo.** This repository has no Kilo skill directory, config, or session, and none was installed for this review. Kilo: **UNVERIFIED**. That is not a finding that Kilo is unsupported.
+
+## 5. Read-only check
+
+> In this session only, report working directory, branch, HEAD, and short git status. Report whether `rad-safe-refactor` appears in the native skill listing and whether a native invoke succeeded. If the only action available is reading `SKILL.md`, label that manual fallback and mark invocation UNVERIFIED. Do not edit files, switch branches, merge, or deploy.
