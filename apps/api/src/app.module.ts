@@ -11,6 +11,7 @@ import { SessionMiddleware } from "./common/session.middleware";
 import { jwtSecret } from "./common/jwt-secret";
 import { ApiExceptionFilter } from "./common/http-exception.filter";
 import { AuthModule } from "./auth/auth.module";
+import { AddressesModule } from "./addresses/addresses.module";
 import { CatalogModule } from "./catalog/catalog.module";
 import { CartModule } from "./cart/cart.module";
 import { FavoritesModule } from "./favorites/favorites.module";
@@ -64,6 +65,7 @@ import { HealthController } from "./health/health.controller";
     InventoryModule,
     MailModule,
     AuthModule,
+    AddressesModule,
     CatalogModule,
     CartModule,
     FavoritesModule,
