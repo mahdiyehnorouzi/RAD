@@ -740,6 +740,11 @@ def main():
         require(isinstance(request.get("commit"), str) and SHA.fullmatch(request["commit"]), "Invalid commit")
         for key in ("run_id", "run_attempt"):
             require(type(request.get(key)) is int and 0 < request[key] < 10**18, "Invalid run identity")
+        print(
+            f"rad-release: stage=request_accepted action={action} kind={request['kind']} "
+            f"commit={request['commit']} run_id={request['run_id']} run_attempt={request['run_attempt']}",
+            flush=True,
+        )
         with tempfile.TemporaryDirectory(prefix="verified-", dir=BASE) as temp:
             directory = Path(temp)
             snapshot_input(request["stage"], "release.json", directory / "release.json", 65536)
@@ -759,8 +764,18 @@ def main():
                 atomic_json(transaction / "release.json", manifest)
                 approved_migrations = policy.get("approved_migrations") if isinstance(policy.get("approved_migrations"), dict) else {}
                 offsite_backup_pipeline_verified = policy.get("offsite_backup_pipeline_verified") is True
+                print(
+                    f"rad-release: stage=migrate_start commit={manifest['commit']} "
+                    f"run_id={manifest['run_id']} run_attempt={manifest['run_attempt']}",
+                    flush=True,
+                )
                 migrate_api(manifest, directory, transaction, approved_migrations, offsite_backup_pipeline_verified)
-                print(f"Migration check complete for {manifest['commit']}")
+                print(
+                    f"rad-release: stage=migrate_complete commit={manifest['commit']} "
+                    f"run_id={manifest['run_id']} run_attempt={manifest['run_attempt']}",
+                    flush=True,
+                )
+                print(f"Migration check complete for {manifest['commit']}", flush=True)
                 return
             state_path = BASE / f"last-{request['kind']}.json"
             state = json.loads(state_path.read_text()) if state_path.exists() else {}
@@ -770,13 +785,23 @@ def main():
             atomic_json(transaction / "release.json", manifest)
             # Burn this sequence BEFORE activation; retry requires a new attempt.
             atomic_json(state_path, {"sequence": sequence, "status": "attempting", "commit": manifest["commit"]})
+            print(
+                f"rad-release: stage=release_start kind={request['kind']} commit={manifest['commit']} "
+                f"run_id={manifest['run_id']} run_attempt={manifest['run_attempt']}",
+                flush=True,
+            )
             if request["kind"] == "api":
                 release_api(manifest, directory, transaction)
             else:
                 release_frontend(manifest, directory, transaction)
             atomic_json(state_path, {"sequence": sequence, "status": "healthy", "commit": manifest["commit"]})
             atomic_json(transaction / "successful.json", {"verified": True})
-            print(f"Release verified healthy: {request['kind']} {manifest['commit']}")
+            print(
+                f"rad-release: stage=release_complete kind={request['kind']} commit={manifest['commit']} "
+                f"run_id={manifest['run_id']} run_attempt={manifest['run_attempt']}",
+                flush=True,
+            )
+            print(f"Release verified healthy: {request['kind']} {manifest['commit']}", flush=True)
 
 
 if __name__ == "__main__":
