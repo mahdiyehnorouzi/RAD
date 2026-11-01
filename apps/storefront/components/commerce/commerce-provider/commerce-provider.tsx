@@ -44,6 +44,7 @@ type CommerceContextValue = {
     password: string;
   }) => Promise<void>;
   logout: () => Promise<void>;
+  updateProfile: (input: { name: string; phone: string }) => Promise<AuthUser>;
   favorites: string[];
   toggleFavorite: (slug: string) => Promise<void>;
   isFavorite: (slug: string) => boolean;
@@ -241,6 +242,14 @@ export function CommerceProvider({ children }: { children: React.ReactNode }) {
         await api("/auth/logout", { method: "POST" });
         setUser(null);
         await syncSession();
+      },
+      updateProfile: async (input) => {
+        const result = await api<{ user: AuthUser }>("/auth/profile", {
+          method: "PATCH",
+          body: JSON.stringify(input),
+        });
+        setUser(result.user);
+        return result.user;
       },
       favorites,
       toggleFavorite: async (slug) => {

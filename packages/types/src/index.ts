@@ -189,6 +189,12 @@ export interface AuthUser {
   id: string;
   name: string;
   email: string;
+  /**
+   * Canonical Iranian mobile (`09` and nine digits), or null when unset.
+   * Absent only on responses from an API that predates contact phones.
+   * Not a sign-in identifier.
+   */
+  phone?: string | null;
   role: "customer" | "artist" | "admin";
   adminRole?: "owner" | "manager" | "editor" | "viewer" | null;
 }
@@ -391,12 +397,25 @@ export interface SessionState {
   notices: Notice[];
   unread: number;
 }
+export interface CartPendingOrder {
+  id: string;
+  status: "pending_payment";
+  /** Epoch ms. Null when an older order has no payment deadline yet. */
+  paymentDueAt: number | null;
+  slugs: string[];
+}
+
 export interface CartSnapshot {
   slugs: string[];
   /** Hold deadline per slug (epoch ms). Unpaid holds return to `available` after it. */
   holds: Record<string, number>;
   /** Price per slug when it entered the bag; missing for older cart rows. */
   prices?: Record<string, CartPriceAtAdd>;
+  /**
+   * Unpaid orders for this visitor. The bag is empty because checkout moved
+   * the works here; it is not a dropped cart. Older responses may omit it.
+   */
+  pendingOrders?: CartPendingOrder[];
 }
 
 export interface CartPriceAtAdd {

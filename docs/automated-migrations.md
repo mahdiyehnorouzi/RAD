@@ -38,10 +38,12 @@ Tailscale/SSH transport and the exact same root-owned broker. It:
 4. If something is pending, it requires that **every** pending migration is
    individually present in `approved_migrations` in the root-private
    `/etc/rad-release/activation.json`, keyed by filename **and pinned to its
-   exact content sha256** — and that `offsite_backup_pipeline_verified` is
-   also `true`. Missing or mismatched approval refuses, never silently
-   skips.
-5. With both approvals: takes a verified `pg_dump` backup
+   exact content sha256**. `offsite_backup_pipeline_verified` must also be
+   `true`, unless a `migration_exception` object matches this exact commit,
+   GitHub run, attempt, migration filename, and digest and has not expired.
+   Missing or mismatched approval refuses, never silently skips. The
+   exception does not set the offsite flag and does not skip the local dump.
+5. With that authorization: takes a verified `pg_dump` backup
    (`/var/lib/rad-release/backups/`, root-private), proves it structurally
    via `pg_restore --list`, and — when the operator has configured a
    dedicated isolated verification database — actually restores it and
@@ -301,8 +303,12 @@ with every external call mocked:
 - pending migrations with no approval entry at all (refused)
 - pending migrations approved by **name but with a stale/wrong content
   hash** (refused — proves approval is pinned to content, not filename)
-- approved migrations but no `offsite_backup_pipeline_verified` (refused)
-- both approvals present (backup → run → verify, succeeds)
+- approved migrations but no `offsite_backup_pipeline_verified` and no exception (refused)
+- a malformed, expired, or non-matching `migration_exception` (refused, no backup)
+- an exception that names one migration while another is also pending (refused)
+- an exact-match exception with the offsite flag false (local backup, then `migration:run`; the result records that the dump is not offsite)
+- the same `(run_id, run_attempt)` migrate transaction a second time (refused before `migrate_api`)
+- both approvals present (backup → run → verify, succeeds; a stale exception object is ignored)
 - a tampered/mismatched artifact (checksum fails before anything runs)
 - migration failure (stops before the state file is marked `applied`,
   `release` never starts)
@@ -345,6 +351,115 @@ rejected before it ever reaches the broker.
 `offsite_backup_pipeline_verified` being preserved across re-runs and
 defaulting to empty/false for a first-time candidate, exactly like the two
 existing GitHub-side flags.
+
+## One-time migration exception
+
+`migration_exception` is a single optional object in `activation.json`. It
+waives only the offsite attestation, and only for one pending migration on
+one signed release. The broker still verifies the Sigstore bundle, still
+requires `approved_migrations` to pin the same digest, still takes the
+local `pg_dump` under `/var/lib/rad-release/backups/`, and still holds
+`release.lock`. That dump is on the VPS disk. It is not an offsite backup.
+If the VPS disk or the database host is lost after the migration, the
+pre-migration state may be unrecoverable.
+
+The object is not tied to a particular filename in code. The next time a
+single migration is pending, root can replace the object with a new commit,
+run id, attempt, filename, digest, expiry, reason, and `authorized_by`.
+That does not require another broker change. Two pending migrations at once
+are refused. A second GitHub attempt does not match. The same attempt cannot
+enter twice: the broker creates
+`/var/lib/rad-release/transactions/<run_id>-<run_attempt>-migrate` without
+replacing it. After a successful migrate, delete the object. Leaving it in
+place does not authorize a different release, but deleting that transaction
+directory while the object is still present and unexpired would allow the
+same attempt to match again — do not delete the directory.
+
+`offsite_backup_pipeline_verified` stays false until a real offsite pipeline
+has been restored and checked. When that flag is true, the broker does not
+consult `migration_exception`.
+
+### Installing this broker without moving the application release
+
+The broker is `/usr/local/libexec/rad-release.py`. It is not inside the API
+artifact. Deploy run `41281465243` built commit
+`b7fe164c7a58d29686bf866953a26880f4ff1bc0`. Its migrate job checks that
+`main` is still that SHA (`deploy-api-vps.yml`). Merging this change into
+`main` moves that SHA, and a re-run of `41281465243` then fails that check.
+Do not merge this pull request before that re-run.
+
+Install the broker from the reviewed, unmerged commit:
+
+1. On a trusted machine, check out that exact commit. `git rev-parse HEAD`
+   must equal the commit recorded on the pull request.
+2. `sha256sum scripts/production/rad_release.py` must equal the digest
+   published on that pull request. A mismatch means the file is not the
+   reviewed broker. Stop.
+3. Copy that checkout to the VPS as `/root/rad-reviewed-release` (mode
+   private to root). Do not copy it into the live API tree.
+4. As root, install only that file with
+   `scripts/production/rad-install-broker-trusted-root.sh`, setting
+   `NEW_BROKER_SOURCE` to the file inside the reviewed checkout and
+   `RAD_INSTALL_CONFIRM=yes-install-live`. The script hashes the file it
+   installs and writes that digest to `broker_sha256`. It does not create
+   `migration_exception` and it does not change the offsite flag. It does
+   not touch the database.
+5. Confirm `sha256sum /usr/local/libexec/rad-release.py` equals the same
+   digest. Confirm `offsite_backup_pipeline_verified` is still false.
+
+This step makes the new broker live for the next release. It does not
+migrate anything. Stop here until the activation edit below is a separate,
+explicit decision.
+
+### Authorizing deploy 41281465243
+
+Do this only after the installed broker hash matches, and only while `main`
+is still `b7fe164c7a58d29686bf866953a26880f4ff1bc0`. Check free disk first.
+The local dump has to fit.
+
+Copy `/etc/rad-release/activation.json` to
+`/root/activation.json.bak-41281465243`. Edit the live file so that it
+gains only:
+
+- `approved_migrations["1793510000000-AddUserContactPhone.ts"]` =
+  `bd5cb2eb1664db86d8a6339ca033ccd0e3536a1823740847b7da53a8dbcc86bd`
+  Recompute that digest from the signed artifact on the VPS and require an
+  exact match before saving.
+- `migration_exception` with `commit`
+  `b7fe164c7a58d29686bf866953a26880f4ff1bc0`, `run_id` `41281465243`,
+  `run_attempt` set to the attempt you are about to launch (the failed run
+  is attempt 1, so a first full re-run is attempt 2 — read
+  `gh run view 41281465243` and do not guess if a re-run already happened),
+  `migration` `1793510000000-AddUserContactPhone.ts`, `sha256` the same
+  digest,   `expires_at` an UTC `YYYY-MM-DDTHH:MM:SSZ` no more than 24 hours
+  ahead (the broker rejects a longer window), `reason` a short explanation, and `authorized_by` the operator
+  name. Root ownership of the file is the authorization; `authorized_by`
+  is the audit label.
+
+Leave `offsite_backup_pipeline_verified` false. `chmod 0600` the file.
+Do not restart services.
+
+Re-run **all** jobs of run `41281465243`. Re-running only the failed job
+does not rebuild the artifact. The broker log must contain
+`MIGRATION_EXCEPTION` with `local_dump_is_not_offsite=true`, then a
+non-empty dump path, then `Migration check complete`, then a healthy API
+release. The transaction directory
+`41281465243-<attempt>-migrate/migrate-result.json` must record
+`local_dump_is_not_offsite: true`.
+
+Then delete `migration_exception` from `activation.json`. Leave the offsite
+flag false. Leave the transaction directory and the dump in place.
+
+A failed attempt burns that `run_attempt` even when PostgreSQL rolls the
+migration back. The next attempt needs a new `run_attempt` and a new
+`expires_at`. Application rollback does not drop `"User"."phone"`. The
+database undo is restoring the pre-migration dump into a new database.
+Do not run `migration:revert`. Do not restore that dump over the live
+database without a separate decision.
+
+After that release has succeeded, this pull request can be merged. The
+installed file's bytes stay valid as long as the merged `rad_release.py`
+is byte-for-byte the same file that was hashed.
 
 ## Remaining risks
 

@@ -4,6 +4,9 @@ import { privatePageMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = privatePageMetadata;
 
+/** Do not statically prerender this route — same reasoning as /cart's layout. */
+export const dynamic = "force-dynamic";
+
 export default function Layout({ children }: { children: React.ReactNode }) {
   return <CatalogScope>{children}</CatalogScope>;
 }

@@ -1,7 +1,7 @@
 import {
   ArchiveSection,
   HomeHero,
-  featuredHomeWorks,
+  liveFeaturedHomeWorks,
   CertificateSection,
   ThreadJourney,
 } from "@/features/home";
@@ -14,9 +14,21 @@ import { getCatalog } from "@/lib/catalog/get-catalog-works";
 import { livePiecesFrom, workshopToday } from "@/lib/now";
 import { productListJsonLd, safeJsonLd } from "@/lib/seo";
 
+/**
+ * Do not statically prerender this page during `next build`.
+ *
+ * The production-build catalog source is allowed to fall back to the bundled
+ * registry (so PDP `generateStaticParams` can tolerate a missing API). Those
+ * records have no live availability status, so Latest Works would bake as an
+ * empty grid and then be served as `x-nextjs-prerender` HIT after every
+ * deploy. Request-time rendering uses `catalogSource() === "api"`; `getCatalog`
+ * still caches the API fetch for 30s under `CATALOG_TAG`.
+ */
+export const dynamic = "force-dynamic";
+
 export default async function Home() {
-  const { artworks, products } = await getCatalog();
-  const featured = featuredHomeWorks(products);
+  const { artworks, products, origin } = await getCatalog();
+  const featured = liveFeaturedHomeWorks(products, origin);
   const today = workshopToday(livePiecesFrom(artworks));
 
   return (

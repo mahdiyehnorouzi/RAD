@@ -4,11 +4,11 @@
 
 `apps/api/.env` (gitignored, machine-local) was configured with a
 `DATABASE_URL` pointing at a remote Postgres instance hosted on Liara
-(`olympus.liara.cloud`). Per `docs/liara-migration.md`, **Liara is where the
-real backend API and database already live in production** — this is not a
-staging/scratch database, it is the one serving `https://api.rad-object.com`
-today (confirmed by cross-checking a product slug against the live API
-during this audit).
+(`olympus.liara.cloud`). The audit that added `.env.local` treated that
+host as the live database behind `https://api.rad-object.com` (a product
+slug was cross-checked against the live API). This is not a scratch
+database. This cleanup does not move Postgres or change its credentials.
+Application deploys are documented in `docs/cicd-pipeline.md`.
 
 Running `npm run dev:api` (or any other local script that reads
 `DATABASE_URL`) with `.env` configured this way means **local development

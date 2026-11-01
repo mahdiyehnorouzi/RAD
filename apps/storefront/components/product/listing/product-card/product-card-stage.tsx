@@ -30,8 +30,18 @@ export function ProductCardStage({
 
   return (
     <div className="rad-card-stage">
+      {/* `prefetch={false}`: on a grid of up to 18 cards, each card's own
+          photo Link auto-prefetching the full PDP RSC payload as it enters
+          the viewport was the bulk of the PLP's request/byte overhead — and
+          it's largely wasted work besides: the real click path (`onClick`
+          below) opens the fullscreen PDP overlay, whose content comes from
+          the separate `/api/pdp/[slug]` route, never from this prefetched
+          RSC payload. `href` still navigates correctly without JS, in a
+          new tab, or if the overlay transition is skipped — only the
+          speculative pre-fetch is disabled, not navigation itself. */}
       <Link
         href={productHref}
+        prefetch={false}
         ref={ref}
         className="rad-card-art"
         tabIndex={-1}

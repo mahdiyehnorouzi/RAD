@@ -5,17 +5,13 @@ import { effectiveProductStatus } from "@rad/types";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Archive,
-  ArrowLeft,
   Bell,
-  Boxes,
   ChevronLeft,
   ChevronRight,
   CircleDollarSign,
-  CircleGauge,
-  CircleHelp,
   Eye,
   EyeOff,
-  Hammer,
+  CircleHelp,
   Image as ImageIcon,
   MessageSquareQuote,
   Shapes,
@@ -42,11 +38,7 @@ import {
   X,
 } from "lucide-react";
 import { useAdminWorkspace } from "../hooks/use-admin-workspace";
-import {
-  loadRememberedEmail,
-  loadRememberMe,
-  saveLoginPreferences,
-} from "../lib/admin-storage";
+import { passwordChangeError } from "../lib/password-change";
 import {
   commissionStageLabels,
   isVideoStorage,
@@ -92,6 +84,8 @@ import { InviteDialog, Members } from "./admin-members";
 import { UsersPanel } from "./admin-users";
 import { ProductAttributeFields } from "./admin-product-attribute-fields";
 import { AdminRowMenu } from "./admin-row-menu";
+import { AdminLogin } from "./admin-login";
+import { OverviewStats } from "./admin-overview-stats";
 import {
   briefExcerpt,
   canSelectAsCover,
@@ -769,16 +763,6 @@ function Overview({
   workspace: ReturnType<typeof useAdminWorkspace>;
   onNavigate: (section: AdminSection) => void;
 }) {
-  const statsLoading = !workspace.loadedKeys.has("products");
-  const available = workspace.products.filter(
-    (item) => item.status === "available",
-  ).length;
-  const inWorkshop = workspace.products.filter(
-    (item) => item.status === "in_workshop",
-  ).length;
-  const sold = workspace.products.filter(
-    (item) => item.status === "sold",
-  ).length;
   const recentProducts = [...workspace.products]
     .sort((a, b) => b.updatedAt - a.updatedAt)
     .slice(0, 6);
@@ -796,32 +780,10 @@ function Overview({
           <p>امروز در استودیو رَد چه خبر است؟ · {todayLabel}</p>
         </div>
       </section>
-      <section className="stat-grid">
-        <StatTile
-          icon={<PackageCheck />}
-          value={available}
-          label="آماده فروش"
-          loading={statsLoading}
-        />
-        <StatTile
-          icon={<Hammer />}
-          value={inWorkshop}
-          label="در کارگاه"
-          loading={statsLoading}
-        />
-        <StatTile
-          icon={<Boxes />}
-          value={sold}
-          label="فروخته شده"
-          loading={statsLoading}
-        />
-        <StatTile
-          icon={<CircleGauge />}
-          value={workspace.products.length}
-          label="اثر ثبت‌شده"
-          loading={statsLoading}
-        />
-      </section>
+      <OverviewStats
+        products={workspace.products}
+        loading={!workspace.loadedKeys.has("products")}
+      />
       <section className="shortcut-grid">
         <ShortcutTile
           icon={<Archive />}
@@ -955,32 +917,6 @@ function Overview({
         </article>
       </section>
     </div>
-  );
-}
-
-function StatTile({
-  icon,
-  value,
-  label,
-  loading = false,
-}: {
-  icon: React.ReactNode;
-  value: number;
-  label: string;
-  /** Before the first successful load only — a later background refetch
-   * keeps showing the previous number instead of reverting to this. */
-  loading?: boolean;
-}) {
-  return (
-    <article className="stat-tile">
-      <span className="stat-icon">{icon}</span>
-      {loading ? (
-        <span className="stat-skeleton" aria-hidden="true" />
-      ) : (
-        <strong>{number.format(value)}</strong>
-      )}
-      <span>{label}</span>
-    </article>
   );
 }
 
@@ -2227,7 +2163,14 @@ function AccountSettings({
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [shown, setShown] = useState({
+    current: false,
+    next: false,
+    confirm: false,
+  });
   const [error, setError] = useState("");
+  const [saved, setSaved] = useState("");
+  const [saving, setSaving] = useState(false);
 
   return (
     <section className="paper-panel data-view account-view">
@@ -2245,23 +2188,34 @@ function AccountSettings({
         noValidate
         onSubmit={async (event) => {
           event.preventDefault();
-          if (newPassword.length < 8) {
-            setError("رمز عبور جدید باید حداقل ۸ نویسه باشد.");
-            return;
-          }
-          if (newPassword !== confirmPassword) {
-            setError("تکرار رمز عبور با رمز جدید یکسان نیست.");
+          if (saving) return;
+          const validation = passwordChangeError({
+            currentPassword,
+            newPassword,
+            confirmPassword,
+          });
+          if (validation) {
+            setSaved("");
+            setError(validation);
             return;
           }
           try {
+            setSaving(true);
             setError("");
             await onChangePassword({ currentPassword, newPassword });
             setCurrentPassword("");
             setNewPassword("");
             setConfirmPassword("");
-            onDone("رمز عبور با موفقیت تغییر کرد.");
+            setShown({ current: false, next: false, confirm: false });
+            const message =
+              "رمز عبور با موفقیت تغییر کرد. در این دستگاه وارد می‌مانید.";
+            setSaved(message);
+            onDone(message);
           } catch (err) {
+            setSaved("");
             setError((err as Error).message);
+          } finally {
+            setSaving(false);
           }
         }}
       >
@@ -2270,51 +2224,67 @@ function AccountSettings({
             {error}
           </small>
         )}
+        {saved && (
+          <p className="login-success" role="status">
+            {saved}
+          </p>
+        )}
         <Field label="رمز عبور فعلی">
-          <input
-            dir="ltr"
-            type="password"
+          <SecretInput
             name="current-password"
             value={currentPassword}
-            onChange={(event) => setCurrentPassword(event.target.value)}
+            shown={shown.current}
+            disabled={saving}
             autoComplete="current-password"
-            minLength={8}
-            required
+            onChange={setCurrentPassword}
+            onToggle={() =>
+              setShown((current) => ({ ...current, current: !current.current }))
+            }
           />
         </Field>
         <div className="form-grid">
           <Field label="رمز عبور جدید">
-            <input
-              dir="ltr"
-              type="password"
+            <SecretInput
               name="new-password"
               value={newPassword}
-              onChange={(event) => setNewPassword(event.target.value)}
+              shown={shown.next}
+              disabled={saving}
               autoComplete="new-password"
-              minLength={8}
-              required
+              onChange={setNewPassword}
+              onToggle={() =>
+                setShown((current) => ({ ...current, next: !current.next }))
+              }
             />
           </Field>
           <Field label="تکرار رمز عبور جدید">
-            <input
-              dir="ltr"
-              type="password"
+            <SecretInput
               name="confirm-password"
               value={confirmPassword}
-              onChange={(event) => setConfirmPassword(event.target.value)}
+              shown={shown.confirm}
+              disabled={saving}
               autoComplete="new-password"
-              minLength={8}
-              required
+              onChange={setConfirmPassword}
+              onToggle={() =>
+                setShown((current) => ({
+                  ...current,
+                  confirm: !current.confirm,
+                }))
+              }
             />
           </Field>
         </div>
         <p className="account-note">
-          مرورگر دسکتاپ می‌تواند رمز جدید را پس از ذخیره، برای ورودهای بعدی
-          پیشنهاد دهد.
+          نشست‌های باز تا پایان اعتبارشان باقی می‌مانند. ورود بعدی با رمز تازه
+          انجام می‌شود.
         </p>
         <div className="dialog-actions account-actions">
-          <button className="primary-action" type="submit">
-            ذخیره رمز عبور
+          <button
+            className="primary-action"
+            type="submit"
+            disabled={saving}
+            aria-busy={saving || undefined}
+          >
+            {saving ? "در حال ذخیره…" : "ذخیره رمز عبور"}
           </button>
         </div>
       </form>
@@ -2322,235 +2292,45 @@ function AccountSettings({
   );
 }
 
-function LoginVisual({ tagline }: { tagline?: string }) {
-  return (
-    <div className="login-visual">
-      <svg className="visual-thread" viewBox="0 0 400 600" aria-hidden="true">
-        <path d="M60 110 C140 150 90 230 180 220 C 260 212 220 140 320 150" />
-      </svg>
-      <span className="visual-stone" aria-hidden="true" />
-      <div className="brand-block">
-        <span className="brand-mark">
-          <img src="/rad-logo.png" alt="رَد" width={56} height={56} />
-        </span>
-        <strong>پنل مدیریت استودیو</strong>
-        <small>رَد</small>
-      </div>
-      {tagline && <p className="visual-tagline">{tagline}</p>}
-    </div>
-  );
-}
-
-function ConnectingScreen() {
-  return (
-    <div className="connecting-screen" role="status" aria-live="polite">
-      <span className="visual-stone" aria-hidden="true" />
-      <div className="connecting-dots" aria-hidden="true">
-        <span />
-        <span />
-        <span />
-      </div>
-      <p>در حال اتصال به پنل مدیریت…</p>
-    </div>
-  );
-}
-
-function AdminLogin({
-  onLogin,
-  onForgotPassword,
+function SecretInput({
+  name,
+  value,
+  shown,
+  disabled,
+  autoComplete,
+  onChange,
+  onToggle,
 }: {
-  onLogin: (input: {
-    email: string;
-    password: string;
-    rememberMe?: boolean;
-  }) => Promise<void>;
-  onForgotPassword: (email: string) => Promise<{ message: string }>;
+  name: string;
+  value: string;
+  shown: boolean;
+  disabled: boolean;
+  autoComplete: "current-password" | "new-password";
+  onChange: (value: string) => void;
+  onToggle: () => void;
 }) {
-  const [mode, setMode] = useState<"login" | "forgot">("login");
-  const [email, setEmail] = useState(() => loadRememberedEmail());
-  const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(() => loadRememberMe());
-  const [error, setError] = useState("");
-  const [forgotMessage, setForgotMessage] = useState("");
-  // Brief "connecting" state shown while the login request is in flight —
-  // there is no dedicated backend step for this, it just covers the real
-  // request latency so the panel doesn't jump straight from form to shell.
-  const [connecting, setConnecting] = useState(false);
-
-  if (connecting) return <ConnectingScreen />;
-
-  if (mode === "forgot") {
-    return (
-      <div className="login-screen">
-        <LoginVisual />
-        <div className="login-form-side">
-          <section className="login-form-card">
-            <span className="eyebrow">دفتر کوره</span>
-            <h1>فراموشی رمز عبور</h1>
-            <p>
-              ایمیل حساب مدیریتی خود را وارد کنید. یک کد ۶ رقمی به ایمیل شما
-              ارسال می‌شود.
-            </p>
-            <form
-              className="editor-form"
-              noValidate
-              onSubmit={async (event) => {
-                event.preventDefault();
-                try {
-                  setError("");
-                  const result = await onForgotPassword(email.trim());
-                  setForgotMessage(result.message);
-                } catch (err) {
-                  setError((err as Error).message);
-                }
-              }}
-            >
-              {error && (
-                <small className="field-error" role="alert">
-                  {error}
-                </small>
-              )}
-              {forgotMessage && (
-                <div className="login-success" role="status">
-                  <p>{forgotMessage}</p>
-                  <a
-                    className="text-link"
-                    href={`/reset-password?email=${encodeURIComponent(email.trim())}`}
-                  >
-                    وارد کردن کد بازیابی
-                  </a>
-                </div>
-              )}
-              <Field label="ایمیل">
-                <input
-                  dir="ltr"
-                  type="email"
-                  name="email"
-                  value={email}
-                  onChange={(event) => setEmail(event.target.value)}
-                  autoComplete="username"
-                  required
-                />
-              </Field>
-              <button className="primary-action" type="submit">
-                ارسال کد بازیابی
-              </button>
-              <button
-                className="text-link-button"
-                type="button"
-                onClick={() => {
-                  setMode("login");
-                  setError("");
-                  setForgotMessage("");
-                }}
-              >
-                بازگشت به ورود
-              </button>
-            </form>
-          </section>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="login-screen">
-      <LoginVisual tagline="هیچ دو رَدی یکسان نیست." />
-      <div className="login-form-side">
-        <section className="login-form-card">
-          <span className="eyebrow">دفتر کوره</span>
-          <h1>ورود به مدیریت رَد</h1>
-          <p>
-            حساب‌های جدید مشتری از فروشگاه ساخته می‌شوند. محصولات تازه را پس از
-            ورود در همین پنل اضافه کنید.
-          </p>
-          <form
-            className="editor-form"
-            noValidate
-            onSubmit={async (event) => {
-              event.preventDefault();
-              try {
-                setError("");
-                saveLoginPreferences(email, rememberMe);
-                setConnecting(true);
-                await onLogin({ email: email.trim(), password, rememberMe });
-              } catch (err) {
-                setConnecting(false);
-                setError((err as Error).message);
-              }
-            }}
-          >
-            {error && (
-              <small className="field-error" role="alert">
-                {error}
-              </small>
-            )}
-            <Field label="ایمیل">
-              <input
-                dir="ltr"
-                type="email"
-                name="email"
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-                autoComplete="username"
-                required
-              />
-            </Field>
-            <Field label="رمز عبور">
-              <div className="password-field">
-                <input
-                  dir="ltr"
-                  type={showPassword ? "text" : "password"}
-                  name="password"
-                  value={password}
-                  onChange={(event) => setPassword(event.target.value)}
-                  autoComplete="current-password"
-                  minLength={8}
-                  required
-                />
-                <button
-                  type="button"
-                  className="password-toggle"
-                  onClick={() => setShowPassword((value) => !value)}
-                  aria-label={
-                    showPassword ? "پنهان کردن رمز عبور" : "نمایش رمز عبور"
-                  }
-                >
-                  {showPassword ? <EyeOff /> : <Eye />}
-                </button>
-              </div>
-            </Field>
-            <label className="remember-field">
-              <input
-                type="checkbox"
-                name="remember"
-                checked={rememberMe}
-                onChange={(event) => setRememberMe(event.target.checked)}
-              />
-              <span>
-                مرا به خاطر بسپار — ایمیل و ورود در این مرورگر نگه داشته شود
-              </span>
-            </label>
-            <div className="login-actions">
-              <button className="primary-action" type="submit">
-                ورود
-                <ArrowLeft />
-              </button>
-              <button
-                className="text-link-button"
-                type="button"
-                onClick={() => {
-                  setMode("forgot");
-                  setError("");
-                }}
-              >
-                رمز عبور را فراموش کرده‌اید؟
-              </button>
-            </div>
-          </form>
-        </section>
-      </div>
+    <div className="password-field">
+      <input
+        dir="ltr"
+        type={shown ? "text" : "password"}
+        name={name}
+        value={value}
+        disabled={disabled}
+        onChange={(event) => onChange(event.target.value)}
+        autoComplete={autoComplete}
+        minLength={8}
+        required
+      />
+      <button
+        type="button"
+        className="password-toggle"
+        aria-pressed={shown}
+        aria-label={shown ? "پنهان کردن رمز عبور" : "نمایش رمز عبور"}
+        onClick={onToggle}
+      >
+        {shown ? <EyeOff /> : <Eye />}
+      </button>
     </div>
   );
 }
