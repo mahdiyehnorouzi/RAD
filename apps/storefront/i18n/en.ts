@@ -160,6 +160,12 @@ export const en = {
   emptyBag: "Your bag is empty.",
   emptyBagBody:
     "Every RAD work has only one edition. Explore the latest collection and choose yours.",
+  pendingOrderBagTitle: "Your order is placed. The bag is empty.",
+  pendingOrderBagBody:
+    "The work moved from the bag onto an unpaid order and stays reserved for you until the payment window ends. A new order is not created.",
+  resumePayment: "Continue payment",
+  reservedForYou: "Reserved for you",
+  viewOrders: "Your orders",
   shoppingBag: "Shopping bag",
   clearBag: "Clear bag",
   uniquePiece: "Unique work • 1/1",
@@ -230,7 +236,41 @@ export const en = {
   makingDemoBanner:
     "Sample custom-order path — details are read-only and actions are disabled.",
   makingPathTitle: "Making path of my work",
-  accountInfoBody: "Your name, email, and session on this device.",
+  accountInfoBody:
+    "You can update your name and mobile number. Email is the sign-in and password-recovery address.",
+  accountEmailLocked:
+    "Email is used to sign in and reset your password. It can change only after the new address is verified.",
+  accountPhoneLabel: "Mobile number",
+  accountPhoneOptional: "optional",
+  accountPhonePlaceholder: "0912 123 4567",
+  accountPhoneHint: "For order contact. This number is not used to sign in.",
+  accountNameInvalid: "Enter a name of at least 2 characters.",
+  accountNameTooLong: "Name must be 80 characters or fewer.",
+  accountPhoneInvalid:
+    "Enter an Iranian mobile, 09 and eleven digits, such as 09121234567.",
+  accountPhoneTaken:
+    "This mobile number is already registered to another account.",
+  saveProfile: "Save changes",
+  savingProfile: "Saving…",
+  profileSaved: "Account details saved.",
+  profileSaveFailed: "Could not save. Try again.",
+  passwordChangeTitle: "Password",
+  passwordChangeBody: "Enter your current password, then choose a new one.",
+  passwordCurrentLabel: "Current password",
+  passwordNewLabel: "New password",
+  passwordConfirmLabel: "Confirm new password",
+  passwordCurrentRequired: "Enter your current password.",
+  passwordMismatch: "The confirmation does not match the new password.",
+  passwordReused: "The new password must be different from the current one.",
+  passwordCurrentWrong: "The current password is incorrect.",
+  passwordUnset: "This account does not have a password.",
+  passwordSignInRequired: "Sign in before changing your password.",
+  passwordChanged: "Password updated. You stay signed in on this device.",
+  passwordChangeFailed: "Could not change the password. Try again.",
+  passwordSessionNote:
+    "Sessions that are already open stay valid until they expire. The next sign-in uses the new password.",
+  savePassword: "Save password",
+  savingPassword: "Saving…",
   favoritesNav: "Favourites",
   savedWorks: "saved works",
   favoritesTitle: "Favourite works",
@@ -567,6 +607,8 @@ export const en = {
   addBagFailed: "The work couldn't be added to your bag. Try again.",
   addBagNetwork: "No connection — the work wasn't added. Try again.",
   addBagTaken: "Someone else just took this work.",
+  addBagOwnOrder:
+    "This work is reserved on your unpaid order. Continue that payment.",
   cartErrorTitle: "Your bag couldn't be loaded.",
   cartErrorBody:
     "We couldn't reach the shop. Nothing has been removed from your bag — try again.",

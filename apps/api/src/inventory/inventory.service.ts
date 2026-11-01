@@ -176,16 +176,31 @@ export class InventoryService implements OnModuleInit, OnModuleDestroy {
     const ordered = await manager
       .getRepository(OrderItem)
       .createQueryBuilder("item")
-      .innerJoin("item.order", "order")
+      .innerJoinAndSelect("item.order", "order")
       .where('"item"."productSlug" = :slug', { slug })
       .andWhere('"order"."status" IN (:...active)', {
         active: INVENTORY_OWNING_ORDER_STATUSES,
       })
-      .getExists();
-    if (ordered) {
-      throw new ConflictException(
-        "این اثر در یک سفارش ثبت شده و قابل افزودن به سبد نیست.",
-      );
+      .getOne();
+    if (ordered?.order) {
+      if (
+        ordered.order.ownerKey === ownerKey &&
+        ordered.order.status === "pending_payment"
+      ) {
+        throw new ConflictException({
+          message:
+            "این اثر روی سفارش باز شما رزرو است. پرداخت همان سفارش را ادامه دهید.",
+          code: "reserved_for_you",
+          orderId: ordered.order.id,
+        });
+      }
+      throw new ConflictException({
+        message: "این اثر در یک سفارش ثبت شده و قابل افزودن به سبد نیست.",
+        code:
+          ordered.order.status === "pending_payment"
+            ? "reserved_by_other"
+            : "sold",
+      });
     }
     if (product.status === "available") {
       const expiresAt = new Date(Date.now() + CART_HOLD_MS);
@@ -207,7 +222,16 @@ export class InventoryService implements OnModuleInit, OnModuleDestroy {
     ) {
       return product.holdExpiresAt;
     }
-    throw new ConflictException("این اثر دیگر قابل افزودن به سبد نیست.");
+    const heldBySomeoneElse =
+      product.status === "sold" &&
+      Boolean(product.heldBy) &&
+      product.heldBy !== ownerKey &&
+      Boolean(product.holdExpiresAt) &&
+      (product.holdExpiresAt as Date).getTime() > Date.now();
+    throw new ConflictException({
+      message: "این اثر دیگر قابل افزودن به سبد نیست.",
+      code: heldBySomeoneElse ? "reserved_by_other" : "sold",
+    });
   }
 
   /** Releases this owner's unpaid cart holds on the given works. */

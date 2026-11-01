@@ -1,8 +1,11 @@
 """Safe local tests: temporary filesystem and mocked host operations only."""
+from datetime import datetime, timezone
 import importlib.util
 import io
 import json
+import os
 from pathlib import Path
+import signal
 import subprocess
 import tarfile
 import tempfile
@@ -22,6 +25,7 @@ class ReleaseTests(unittest.TestCase):
         self.root = Path(self.temp.name)
         self.request = dict(kind="api", commit="a" * 40, run_id=123, run_attempt=1, stage="release-123456")
         self.migration_sha = "c" * 64
+        self.now = datetime(2026, 11, 1, 8, 36, tzinfo=timezone.utc)
         self.manifest = dict(schema=1, repository=broker.REPO, kind="api", commit="a" * 40,
                              run_id=123, run_attempt=1, version="1.5.1", archive_sha256="b" * 64,
                              migrations=[{"name": "1792865771843-AddProductAttributes.ts", "sha256": self.migration_sha}])
@@ -492,13 +496,14 @@ class ReleaseTests(unittest.TestCase):
         self.manifest["archive_sha256"] = broker.file_hash(directory / "api-release.tar.gz")
         calls = {"backup": [], "run": [], "show": []}
         state = {"applied": applied}
+        record = broker.migration_record_name(self.manifest["migrations"][0]["name"])
         def fake_show(_npm, _api_dir, _database_url, _host):
             calls["show"].append(True)
             if reconcile_mismatch:
                 return [("SomethingUnexpected9999999999999", True)]
             if show_entries is not None:
                 return show_entries
-            return [("AddProductAttributes1792865771843", state["applied"])]
+            return [(record, state["applied"])]
         def fake_backup(_database_url, _label):
             calls["backup"].append(True)
             return self.root / "backup.dump"
@@ -517,6 +522,21 @@ class ReleaseTests(unittest.TestCase):
 
     def approved(self):
         return {self.manifest["migrations"][0]["name"]: self.migration_sha}
+
+    def waiver(self, **overrides):
+        """A well-formed exception for whatever single migration the fixture manifest currently lists."""
+        record = {
+            "commit": self.manifest["commit"],
+            "run_id": self.manifest["run_id"],
+            "run_attempt": self.manifest["run_attempt"],
+            "migration": self.manifest["migrations"][0]["name"],
+            "sha256": self.manifest["migrations"][0]["sha256"],
+            "expires_at": "2026-11-02T08:36:00Z",
+            "reason": "founder-authorized deploy without offsite backup",
+            "authorized_by": "root",
+        }
+        record.update(overrides)
+        return record
 
     def test_migrate_no_pending_migrations_is_a_fast_noop(self):
         directory, transaction, calls = self.migrate_fixture(applied=True)
@@ -550,6 +570,133 @@ class ReleaseTests(unittest.TestCase):
             broker.migrate_api(self.manifest, directory, transaction, self.approved(), False)
         self.assertEqual(calls["backup"], [])
         self.assertEqual(calls["run"], [])
+
+    def test_migration_exception_absent_or_malformed_or_expired_fails_closed(self):
+        directory, transaction, calls = self.migrate_fixture(applied=False)
+        refused = [
+            ("absent", None, "offsite_backup_pipeline_verified"),
+            ("not-object", [], "invalid migration_exception"),
+            ("missing-field", {k: v for k, v in self.waiver().items() if k != "authorized_by"}, "invalid migration_exception"),
+            ("extra-field", {**self.waiver(), "skip_backup": True}, "invalid migration_exception"),
+            ("bool-run", self.waiver(run_id=True), "invalid migration_exception"),
+            ("newline-reason", self.waiver(reason="line\nbreak"), "invalid migration_exception"),
+            ("bad-expiry", self.waiver(expires_at="2026-11-02 08:36:00Z"), "invalid migration_exception"),
+            ("expired", self.waiver(expires_at="2026-11-01T08:36:00Z"), "migration exception expired"),
+            ("expiry-too-far", self.waiver(expires_at="2026-11-02T08:36:01Z"), "expiry is too far ahead"),
+        ]
+        for label, exception, message in refused:
+            with self.subTest(label=label):
+                with self.assertRaisesRegex(RuntimeError, message):
+                    broker.migrate_api(self.manifest, directory, transaction, self.approved(), False,
+                                       migration_exception=exception, now=self.now)
+        self.assertEqual(calls["backup"], [])
+        self.assertEqual(calls["run"], [])
+
+    def test_migration_exception_rejects_wrong_commit_run_attempt_migration_or_digest(self):
+        directory, transaction, calls = self.migrate_fixture(applied=False)
+        mismatches = [
+            ("commit", self.waiver(commit="b" * 40), "this commit"),
+            ("run", self.waiver(run_id=124), "this run"),
+            ("attempt", self.waiver(run_attempt=2), "this attempt"),
+            ("migration", self.waiver(migration="1793510000000-AddUserContactPhone.ts"), "this migration"),
+            ("digest", self.waiver(sha256="d" * 64), "this digest"),
+        ]
+        for label, exception, message in mismatches:
+            with self.subTest(label=label):
+                with self.assertRaisesRegex(RuntimeError, message):
+                    broker.migrate_api(self.manifest, directory, transaction, self.approved(), False,
+                                       migration_exception=exception, now=self.now)
+        self.assertEqual(calls["backup"], [])
+        self.assertEqual(calls["run"], [])
+
+    def test_migration_exception_rejects_an_additional_pending_migration(self):
+        second = "e" * 64
+        self.manifest["migrations"] = [
+            self.manifest["migrations"][0],
+            {"name": "1793510000000-AddUserContactPhone.ts", "sha256": second},
+        ]
+        directory, transaction, calls = self.migrate_fixture(show_entries=[
+            ("AddProductAttributes1792865771843", False),
+            ("AddUserContactPhone1793510000000", False),
+        ])
+        approved = {**self.approved(), "1793510000000-AddUserContactPhone.ts": second}
+        with self.assertRaisesRegex(RuntimeError, "additional pending"):
+            broker.migrate_api(self.manifest, directory, transaction, approved, False,
+                               migration_exception=self.waiver(), now=self.now)
+        self.assertEqual(calls["backup"], [])
+        self.assertEqual(calls["run"], [])
+
+    def test_exact_migration_exception_backs_up_then_runs_without_setting_offsite_flag(self):
+        directory, transaction, calls = self.migrate_fixture(applied=False)
+        broker.migrate_api(self.manifest, directory, transaction, self.approved(), False,
+                           migration_exception=self.waiver(), now=self.now)
+        self.assertEqual(calls["backup"], [True])
+        self.assertEqual(calls["run"], [True])
+        record = json.loads((transaction / "migrate-result.json").read_text())["migration_exception"]
+        self.assertIs(record["offsite_backup_pipeline_verified"], False)
+        self.assertIs(record["local_dump_is_not_offsite"], True)
+        self.assertEqual(record["sha256"], self.migration_sha)
+        self.assertEqual(record["authorized_by"], "root")
+
+    def test_migration_exception_authorizes_a_different_future_migration_without_code_changes(self):
+        # The phone migration is not special-cased. A later release supplies
+        # its own object; this broker does not need another code change.
+        self.manifest["migrations"] = [{"name": "1793600000000-FutureChange.ts", "sha256": self.migration_sha}]
+        directory, transaction, calls = self.migrate_fixture()
+        broker.migrate_api(self.manifest, directory, transaction,
+                           {"1793600000000-FutureChange.ts": self.migration_sha}, False,
+                           migration_exception=self.waiver(), now=self.now)
+        self.assertEqual(calls["backup"], [True])
+        self.assertEqual(calls["run"], [True])
+
+    def test_migration_exception_backup_failure_stops_before_running_any_migration(self):
+        directory, transaction, calls = self.migrate_fixture(applied=False)
+        with patch.object(broker, "backup_database", side_effect=RuntimeError("backup failed")):
+            with self.assertRaisesRegex(RuntimeError, "backup failed"):
+                broker.migrate_api(self.manifest, directory, transaction, self.approved(), False,
+                                   migration_exception=self.waiver(), now=self.now)
+        self.assertEqual(calls["run"], [])
+
+    def test_offsite_approval_does_not_consult_a_migration_exception(self):
+        directory, transaction, calls = self.migrate_fixture(applied=False)
+        broker.migrate_api(self.manifest, directory, transaction, self.approved(), True,
+                           migration_exception={"skip_backup": True}, now=self.now)
+        self.assertEqual(calls["backup"], [True])
+        self.assertNotIn("migration_exception", json.loads((transaction / "migrate-result.json").read_text()))
+
+    def test_same_migrate_run_attempt_cannot_enter_twice(self):
+        base = self.root / "broker-base"
+        base.mkdir()
+        calls = []
+        saved_env = dict(os.environ)
+        saved_umask = os.umask(0o022)
+        os.umask(saved_umask)
+        try:
+            with patch.object(broker.os, "geteuid", return_value=0), \
+                 patch.object(broker, "protected"), \
+                 patch.object(broker, "BASE", base), \
+                 patch.object(broker, "validate_activation", return_value={
+                     "approved_migrations": self.approved(),
+                     "offsite_backup_pipeline_verified": False,
+                     "migration_exception": self.waiver(),
+                 }), \
+                 patch.object(broker, "read_request", return_value={**self.request, "action": "migrate"}), \
+                 patch.object(broker, "snapshot_input"), \
+                 patch.object(broker, "verify_manifest", return_value=self.manifest), \
+                 patch.object(broker, "migrate_api", lambda *_args, **_kwargs: calls.append(True)), \
+                 patch.object(broker.sys, "argv", ["rad-release.py"]):
+                broker.main()
+                with self.assertRaises(FileExistsError):
+                    broker.main()
+        finally:
+            os.environ.clear()
+            os.environ.update(saved_env)
+            os.umask(saved_umask)
+            signal.signal(signal.SIGTERM, signal.SIG_DFL)
+            signal.signal(signal.SIGINT, signal.SIG_DFL)
+        self.assertEqual(calls, [True])
+        transaction = base / "transactions" / f"{self.manifest['run_id']}-{self.manifest['run_attempt']}-migrate"
+        self.assertTrue((transaction / "release.json").is_file())
 
     def test_migrate_approved_and_offsite_verified_backs_up_then_runs(self):
         directory, transaction, calls = self.migrate_fixture(applied=False)

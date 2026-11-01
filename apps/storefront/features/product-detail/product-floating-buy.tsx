@@ -59,16 +59,20 @@ export function ProductFloatingBuy({
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const unavailable = state.sold || state.withdrawn || state.reserved;
+  const unavailable =
+    state.button === "sold" ||
+    state.button === "withdrawn" ||
+    state.button === "reserved";
   // Derive the label from the boolean flags, not `state.label` — that
   // string reflects the real product's live status and can disagree with
   // an overridden/derived `sold`/`reserved` flag (e.g. the dev QA override,
   // or `withdrawn`, which has no corresponding `label` of its own).
-  const unavailableLabel = state.reserved
-    ? c.reservedNow
-    : state.sold || state.withdrawn
-      ? t("soldOut")
-      : (state.label ?? t("soldOut"));
+  const unavailableLabel =
+    state.button === "reserved"
+      ? c.reservedNow
+      : state.button === "sold" || state.button === "withdrawn"
+        ? t("soldOut")
+        : (state.label ?? t("soldOut"));
   const isBusy = busy || forceBusy;
 
   return (
@@ -80,7 +84,15 @@ export function ProductFloatingBuy({
       data-hidden={!visible}
     >
       <div className={styles.action}>
-        {unavailable ? (
+        {state.button === "resume" && state.ownOrderId ? (
+          <Link
+            className={styles.goToBagPill}
+            href={href(`/checkout/${encodeURIComponent(state.ownOrderId)}`)}
+            tabIndex={visible ? undefined : -1}
+          >
+            {t("resumePayment")}
+          </Link>
+        ) : unavailable ? (
           <div className="add-to-bag">
             <button
               type="button"

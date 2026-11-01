@@ -108,8 +108,10 @@ jobs:
             script: build:vinext
           - app: storefront
             script: build:vinext
-          # Node.js runtime path (Liara/Docker) — validated independently of
-          # the Cloudflare/vinext build above; see apps/*/liara.json.
+          # Node.js standalone output used by the VPS Docker images.
+          # apps/*/Dockerfile sets LIARA_BUILD=1; that variable name is
+          # unchanged so the image build contract stays the same.
+          # Validated independently of the vinext build above.
           - app: admin
             script: build
             liara: "1"
@@ -157,7 +159,11 @@ jobs:
           bash -n scripts/production/fetch-trusted-root.sh
           bash -n scripts/production/rad-activation-prep.sh
           bash -n scripts/production/rad-install-broker-trusted-root.sh
+          bash -n scripts/production/rad-deploy-ssh-entrypoint.sh
+          bash -n scripts/production/rad-deploy-shell.sh
+          bash -n scripts/production/rad-deploy-ship.sh
           sh -n scripts/production/rad-release
+          bash scripts/test/test-rad-deploy-ssh.sh
       - name: Validate production workflows with pinned actionlint
         run: |
           set -euo pipefail
@@ -166,7 +172,7 @@ jobs:
           echo '023070a287cd8cccd71515fedc843f1985bf96c436b7effaecce67290e7e0757  actionlint.tar.gz' | sha256sum -c -
           tar -xzf actionlint.tar.gz actionlint
           cd "$GITHUB_WORKSPACE"
-          "$RUNNER_TEMP/actionlint" -shellcheck= .github/workflows/ci.yml .github/workflows/deploy.yml .github/workflows/deploy-api-vps.yml .github/workflows/deploy-frontend-vps.yml
+          "$RUNNER_TEMP/actionlint" -shellcheck= .github/workflows/ci.yml .github/workflows/deploy.yml .github/workflows/deploy-api-vps.yml .github/workflows/deploy-frontend-vps.yml .github/workflows/verify-rad-deploy-ssh.yml
 
   release-signatures:
     name: Release signature verification (real cryptography)
