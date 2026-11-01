@@ -5,6 +5,7 @@ No checkout code is imported/executed here. All supplied files are copied throug
 no-follow descriptors and cryptographically verified before privileged changes.
 """
 import contextlib
+from datetime import datetime, timedelta, timezone
 import fcntl
 import hashlib
 import grp
@@ -65,8 +66,18 @@ MIGRATION_FILE = re.compile(r"([0-9]{13})-([A-Za-z0-9_]+)\.ts")
 TRUSTED_ROOT = Path("/etc/rad-release/trusted_root.jsonl")
 SAFE_ENV = {"PATH": "/usr/local/bin:/usr/bin:/bin", "HOME": "/root", "LANG": "C.UTF-8"}
 SHA = re.compile(r"[0-9a-f]{40}")
+HEX64 = re.compile(r"[0-9a-f]{64}")
 DIGEST = re.compile(r"sha256:[0-9a-f]{64}")
 STAGE = re.compile(r"release-[A-Za-z0-9_-]{6,80}")
+# UTC with a Z suffix only. Offsets and fractional seconds are rejected so an
+# expiry cannot be ambiguous.
+EXCEPTION_EXPIRES = re.compile(r"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z")
+EXCEPTION_FIELDS = frozenset({
+    "commit", "run_id", "run_attempt", "migration", "sha256", "expires_at", "reason", "authorized_by",
+})
+# Printable text for the audit log. Control characters (including newlines)
+# are rejected so the journal line stays one record.
+AUDIT_TEXT = re.compile(r"[^\x00-\x1f\x7f]{1,200}")
 
 
 def require(condition, message):
@@ -500,7 +511,54 @@ def run_pending_migrations(npm, api_dir, database_url, host):
     return run(npm, "run", "migration:run", env=env, cwd=api_dir, timeout=1800)
 
 
-def migrate_api(manifest, directory, transaction, approved_migrations, offsite_backup_pipeline_verified):
+def authorize_migration_exception(manifest, pending, exception, now):
+    """One exact release, or nothing.
+
+    This waives only `offsite_backup_pipeline_verified`. It does not waive
+    signed-manifest verification, `approved_migrations`, the local pg_dump,
+    or the release lock. The local dump this allows is on the VPS disk; it
+    is not an offsite backup. A later migration needs its own object — this
+    one matches a single commit, GitHub run, attempt, filename, and digest,
+    and only until `expires_at`.
+    """
+    require(isinstance(exception, dict) and set(exception) == EXCEPTION_FIELDS, "invalid migration_exception")
+    require(isinstance(exception["commit"], str) and SHA.fullmatch(exception["commit"]), "invalid migration_exception")
+    require(type(exception["run_id"]) is int and type(exception["run_attempt"]) is int, "invalid migration_exception")
+    require(0 < exception["run_id"] < 10**18 and 0 < exception["run_attempt"] < 10**18, "invalid migration_exception")
+    require(isinstance(exception["migration"], str) and MIGRATION_FILE.fullmatch(exception["migration"]),
+            "invalid migration_exception")
+    require(isinstance(exception["sha256"], str) and HEX64.fullmatch(exception["sha256"]), "invalid migration_exception")
+    require(isinstance(exception["expires_at"], str) and EXCEPTION_EXPIRES.fullmatch(exception["expires_at"]),
+            "invalid migration_exception")
+    require(isinstance(exception["reason"], str) and AUDIT_TEXT.fullmatch(exception["reason"]), "invalid migration_exception")
+    require(isinstance(exception["authorized_by"], str) and AUDIT_TEXT.fullmatch(exception["authorized_by"]),
+            "invalid migration_exception")
+    require(now.tzinfo is not None and now.utcoffset() == timezone.utc.utcoffset(now), "invalid migration_exception clock")
+    expires = datetime.strptime(exception["expires_at"], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
+    require(timedelta(0) < expires - now <= timedelta(hours=24),
+            "migration exception expired" if expires <= now else "migration exception expiry is too far ahead")
+    require(exception["commit"] == manifest["commit"], "migration exception does not authorize this commit")
+    require(exception["run_id"] == manifest["run_id"], "migration exception does not authorize this run")
+    require(exception["run_attempt"] == manifest["run_attempt"], "migration exception does not authorize this attempt")
+    require(len(pending) == 1, "migration exception does not authorize additional pending migrations")
+    require(pending[0]["name"] == exception["migration"], "migration exception does not authorize this migration")
+    require(pending[0]["sha256"] == exception["sha256"], "migration exception does not authorize this digest")
+    return {
+        "commit": exception["commit"],
+        "run_id": exception["run_id"],
+        "run_attempt": exception["run_attempt"],
+        "migration": exception["migration"],
+        "sha256": exception["sha256"],
+        "expires_at": exception["expires_at"],
+        "reason": exception["reason"],
+        "authorized_by": exception["authorized_by"],
+        "offsite_backup_pipeline_verified": False,
+        "local_dump_is_not_offsite": True,
+    }
+
+
+def migrate_api(manifest, directory, transaction, approved_migrations, offsite_backup_pipeline_verified,
+                migration_exception=None, now=None):
     require(isinstance(approved_migrations, dict)
             and all(isinstance(k, str) and isinstance(v, str) for k, v in approved_migrations.items()),
             "Invalid approved_migrations in activation policy")
@@ -527,17 +585,39 @@ def migrate_api(manifest, directory, transaction, approved_migrations, offsite_b
                 "Pending migration(s) require renewed operator approval - add each to activation.json's "
                 "approved_migrations (keyed on name, pinned to its exact sha256) after review: "
                 + ", ".join(f"{m['name']} ({m['sha256'][:12]}...)" for m in unapproved))
-        require(offsite_backup_pipeline_verified,
-                "Migrating requires activation.json's offsite_backup_pipeline_verified=true - confirm the "
-                "existing off-server backup pipeline covers /var/lib/rad-release/backups/ before approving "
-                "unattended migrations (see docs/automated-migrations.md)")
+        exception_record = None
+        if offsite_backup_pipeline_verified is not True:
+            # Absent means "no waiver". A present object must match this
+            # release exactly. Neither path skips the local pg_dump below,
+            # and neither path sets offsite_backup_pipeline_verified.
+            require(migration_exception is not None,
+                    "Migrating requires activation.json's offsite_backup_pipeline_verified=true - confirm the "
+                    "existing off-server backup pipeline covers /var/lib/rad-release/backups/ before approving "
+                    "unattended migrations (see docs/automated-migrations.md)")
+            moment = now if now is not None else datetime.now(timezone.utc)
+            exception_record = authorize_migration_exception(manifest, pending, migration_exception, moment)
+            print(
+                "rad-release: MIGRATION_EXCEPTION "
+                f"commit={exception_record['commit']} migration={exception_record['migration']} "
+                f"sha256={exception_record['sha256']} run_id={exception_record['run_id']} "
+                f"run_attempt={exception_record['run_attempt']} expires_at={exception_record['expires_at']} "
+                f"authorized_by={exception_record['authorized_by']} "
+                "offsite_backup_pipeline_verified=false local_dump_is_not_offsite=true",
+                flush=True,
+            )
         dump = backup_database(database_url, manifest["commit"][:12])
         pending_names = [m["name"] for m in pending]
-        atomic_json(transaction / "migrate-result.json", {"pending": pending_names, "backup": str(dump), "status": "attempting"})
+        attempting = {"pending": pending_names, "backup": str(dump), "status": "attempting"}
+        if exception_record is not None:
+            attempting["migration_exception"] = exception_record
+        atomic_json(transaction / "migrate-result.json", attempting)
         run_pending_migrations(npm, api_dir, database_url, host)
         still_pending = reconcile_migrations(manifest, migration_show(npm, api_dir, database_url, host))
         require(not still_pending, f"Migration run did not apply everything expected: {[m['name'] for m in still_pending]}")
-    atomic_json(transaction / "migrate-result.json", {"pending": pending_names, "backup": str(dump), "status": "applied"})
+    applied = {"pending": pending_names, "backup": str(dump), "status": "applied"}
+    if exception_record is not None:
+        applied["migration_exception"] = exception_record
+    atomic_json(transaction / "migrate-result.json", applied)
     print(f"Applied {len(pending_names)} migration(s): {', '.join(pending_names)}")
 
 
@@ -764,12 +844,17 @@ def main():
                 atomic_json(transaction / "release.json", manifest)
                 approved_migrations = policy.get("approved_migrations") if isinstance(policy.get("approved_migrations"), dict) else {}
                 offsite_backup_pipeline_verified = policy.get("offsite_backup_pipeline_verified") is True
+                # Key absent: no waiver. Key present, including null: the
+                # migrate path treats it as an exception object and fails
+                # closed unless it matches. Never default a typo to "allow".
+                migration_exception = policy["migration_exception"] if "migration_exception" in policy else None
                 print(
                     f"rad-release: stage=migrate_start commit={manifest['commit']} "
                     f"run_id={manifest['run_id']} run_attempt={manifest['run_attempt']}",
                     flush=True,
                 )
-                migrate_api(manifest, directory, transaction, approved_migrations, offsite_backup_pipeline_verified)
+                migrate_api(manifest, directory, transaction, approved_migrations, offsite_backup_pipeline_verified,
+                            migration_exception)
                 print(
                     f"rad-release: stage=migrate_complete commit={manifest['commit']} "
                     f"run_id={manifest['run_id']} run_attempt={manifest['run_attempt']}",
