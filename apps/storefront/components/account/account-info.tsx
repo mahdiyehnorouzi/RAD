@@ -9,6 +9,7 @@ import {
   applyIranMobileEdit,
   formatIranMobileDraft,
 } from "@/lib/phone/iran-mobile";
+import { PasswordForm } from "./password-form";
 import { AccountShell } from "./account-shell";
 import { AccountHeading } from "./account-heading";
 import {
@@ -232,6 +233,7 @@ export function AccountInfoPage() {
               </button>
             </div>
           </form>
+          <PasswordForm />
           <button
             type="button"
             className="account-button account-button--oxide account-info-logout"

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, test } from "node:test";
-import { UnauthorizedException } from "@nestjs/common";
-import { hash } from "bcryptjs";
+import { BadRequestException, UnauthorizedException } from "@nestjs/common";
+import { compare, hash } from "bcryptjs";
 import { AuthService } from "./auth.service";
 import type { Actor } from "../common/identity";
 
@@ -193,7 +193,7 @@ describe("AuthService.changePassword", () => {
     );
   });
 
-  test("a password-less admin-role account (null passwordHash) is rejected, not thrown as a 500", async () => {
+  test("a password-less account (null passwordHash) is rejected, not thrown as a 500", async () => {
     const auth = authServiceWithUsers(
       usersRepoReturning({
         id: "a1",
@@ -206,7 +206,186 @@ describe("AuthService.changePassword", () => {
         currentPassword: "anything",
         newPassword: "new-pass-123",
       }),
-      UnauthorizedException,
+      (error: unknown) => {
+        assert.ok(error instanceof UnauthorizedException);
+        const response = error.getResponse() as { code?: string };
+        assert.equal(response.code, "password_unset");
+        return true;
+      },
+    );
+  });
+
+  test("a customer password account can change its own password", async () => {
+    const passwordHash = await hash("current-pass", 12);
+    const updates: Array<Record<string, unknown>> = [];
+    const deleted: unknown[] = [];
+    let signed = false;
+    const auth = new AuthService(
+      {
+        findOne: async () => ({
+          id: "c1",
+          adminRole: null,
+          status: "active",
+          passwordHash,
+        }),
+        update: async (_where: unknown, patch: Record<string, unknown>) => {
+          updates.push(patch);
+        },
+      } as never,
+      noopRepo(),
+      {
+        delete: async (where: unknown) => {
+          deleted.push(where);
+        },
+      } as never,
+      noopRepo(),
+      noopRepo(),
+      noopRepo(),
+      noopRepo(),
+      {
+        signAsync: async () => {
+          signed = true;
+          return "token";
+        },
+      } as never,
+      {} as never,
+      { transferHolds: async () => {} } as never,
+    );
+    const result = await auth.changePassword(
+      {
+        user: {
+          id: "c1",
+          name: "Buyer",
+          email: "buyer@example.com",
+          phone: null,
+          role: "customer",
+          adminRole: null,
+        },
+        guestId: "guest-3",
+      },
+      { currentPassword: "current-pass", newPassword: "new-pass-123" },
+    );
+    assert.deepEqual(result, { ok: true });
+    assert.equal(signed, false);
+    assert.equal(updates.length, 1);
+    const stored = String(updates[0]?.passwordHash);
+    assert.notEqual(stored, "new-pass-123");
+    assert.equal(await compare("new-pass-123", stored), true);
+    assert.equal(await compare("current-pass", stored), false);
+    assert.deepEqual(deleted, [{ userId: "c1" }]);
+  });
+
+  test("an unauthenticated request is rejected", async () => {
+    const auth = authServiceWithUsers(usersRepoReturning(null));
+    await assert.rejects(
+      auth.changePassword(
+        { user: null, guestId: "guest-4" },
+        { currentPassword: "current-pass", newPassword: "new-pass-123" },
+      ),
+      (error: unknown) => {
+        assert.ok(error instanceof UnauthorizedException);
+        const response = error.getResponse() as { code?: string };
+        assert.equal(response.code, "unauthenticated");
+        return true;
+      },
+    );
+  });
+
+  test("the wrong current password is rejected before the new password is stored", async () => {
+    const passwordHash = await hash("current-pass", 12);
+    let updated = false;
+    const auth = authServiceWithUsers({
+      findOne: async () => ({
+        id: "c1",
+        status: "active",
+        passwordHash,
+      }),
+      update: async () => {
+        updated = true;
+      },
+    });
+    await assert.rejects(
+      auth.changePassword(
+        {
+          user: {
+            id: "c1",
+            name: "Buyer",
+            email: "buyer@example.com",
+            phone: null,
+            role: "customer",
+            adminRole: null,
+          },
+          guestId: "guest-3",
+        },
+        { currentPassword: "wrong-pass", newPassword: "short" },
+      ),
+      (error: unknown) => {
+        assert.ok(error instanceof UnauthorizedException);
+        const response = error.getResponse() as {
+          code?: string;
+          message?: string;
+        };
+        assert.equal(response.code, "password_incorrect");
+        assert.equal(response.message, "رمز عبور فعلی نادرست است.");
+        assert.equal(updated, false);
+        return true;
+      },
+    );
+  });
+
+  test("a new password shorter than the policy is rejected", async () => {
+    const passwordHash = await hash("current-pass", 12);
+    const auth = authServiceWithUsers(
+      usersRepoReturning({
+        id: "c1",
+        status: "active",
+        passwordHash,
+      }),
+    );
+    await assert.rejects(
+      auth.changePassword(
+        {
+          user: {
+            id: "c1",
+            name: "Buyer",
+            email: "buyer@example.com",
+            phone: null,
+            role: "customer",
+            adminRole: null,
+          },
+          guestId: "guest-3",
+        },
+        { currentPassword: "current-pass", newPassword: "short" },
+      ),
+      (error: unknown) => {
+        assert.ok(error instanceof BadRequestException);
+        const response = error.getResponse() as { code?: string };
+        assert.equal(response.code, "password_invalid");
+        return true;
+      },
+    );
+  });
+
+  test("reusing the current password is rejected", async () => {
+    const passwordHash = await hash("current-pass", 12);
+    const auth = authServiceWithUsers(
+      usersRepoReturning({
+        id: "c1",
+        status: "active",
+        passwordHash,
+      }),
+    );
+    await assert.rejects(
+      auth.changePassword(authedActor("c1"), {
+        currentPassword: "current-pass",
+        newPassword: "current-pass",
+      }),
+      (error: unknown) => {
+        assert.ok(error instanceof BadRequestException);
+        const response = error.getResponse() as { code?: string };
+        assert.equal(response.code, "password_reused");
+        return true;
+      },
     );
   });
 });

@@ -1,5 +1,6 @@
 import {
   Injectable,
+  BadRequestException,
   ConflictException,
   NotFoundException,
   UnauthorizedException,
@@ -123,18 +124,65 @@ export class AuthService {
     actor: Actor,
     input: { currentPassword: string; newPassword: string },
   ) {
-    if (!actor.user) throw new UnauthorizedException("ابتدا وارد حساب شوید.");
+    if (!actor.user) {
+      throw new UnauthorizedException({
+        message: "ابتدا وارد حساب شوید.",
+        code: "unauthenticated",
+      });
+    }
     const user = await this.users.findOne({ where: { id: actor.user.id } });
-    if (!user?.adminRole)
-      throw new UnauthorizedException("این حساب به دفتر کوره دسترسی ندارد.");
-    const matches = user.passwordHash
-      ? await compare(input.currentPassword, user.passwordHash)
-      : false;
-    if (!matches) throw new UnauthorizedException("رمز عبور فعلی نادرست است.");
+    if (!user) {
+      throw new UnauthorizedException({
+        message: "ابتدا وارد حساب شوید.",
+        code: "unauthenticated",
+      });
+    }
+    if (user.status === "invited") {
+      throw new UnauthorizedException({
+        message: "این حساب هنوز فعال نشده است.",
+        code: "account_inactive",
+      });
+    }
+    // A password-less account has nothing to verify. The caller is already
+    // authenticated, so this does not reveal the account to a stranger.
+    if (!user.passwordHash) {
+      throw new UnauthorizedException({
+        message: "این حساب رمز عبور ندارد.",
+        code: "password_unset",
+      });
+    }
+    const currentMatches = await compare(
+      input.currentPassword,
+      user.passwordHash,
+    );
+    if (!currentMatches) {
+      throw new UnauthorizedException({
+        message: "رمز عبور فعلی نادرست است.",
+        code: "password_incorrect",
+      });
+    }
+    const reused = await compare(input.newPassword, user.passwordHash);
+    if (reused) {
+      throw new BadRequestException({
+        message: "رمز عبور جدید باید با رمز فعلی متفاوت باشد.",
+        code: "password_reused",
+      });
+    }
+    if (input.newPassword.length < 8) {
+      throw new BadRequestException({
+        message: "رمز عبور باید حداقل ۸ نویسه باشد.",
+        code: "password_invalid",
+      });
+    }
     await this.users.update(
       { id: user.id },
       { passwordHash: await hash(input.newPassword, 12) },
     );
+    // Sessions are stateless JWTs. There is no session table and no
+    // password-generation column, so cookies already issued stay valid
+    // until they expire. Outstanding reset codes are removed so a code
+    // sent before this change cannot replace the new password.
+    await this.resetTokens.delete({ userId: user.id });
     return { ok: true };
   }
 

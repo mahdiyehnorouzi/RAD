@@ -9,6 +9,8 @@ import {
   ChevronLeft,
   ChevronRight,
   CircleDollarSign,
+  Eye,
+  EyeOff,
   CircleHelp,
   Image as ImageIcon,
   MessageSquareQuote,
@@ -36,6 +38,7 @@ import {
   X,
 } from "lucide-react";
 import { useAdminWorkspace } from "../hooks/use-admin-workspace";
+import { passwordChangeError } from "../lib/password-change";
 import {
   commissionStageLabels,
   isVideoStorage,
@@ -2160,7 +2163,14 @@ function AccountSettings({
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [shown, setShown] = useState({
+    current: false,
+    next: false,
+    confirm: false,
+  });
   const [error, setError] = useState("");
+  const [saved, setSaved] = useState("");
+  const [saving, setSaving] = useState(false);
 
   return (
     <section className="paper-panel data-view account-view">
@@ -2178,23 +2188,34 @@ function AccountSettings({
         noValidate
         onSubmit={async (event) => {
           event.preventDefault();
-          if (newPassword.length < 8) {
-            setError("رمز عبور جدید باید حداقل ۸ نویسه باشد.");
-            return;
-          }
-          if (newPassword !== confirmPassword) {
-            setError("تکرار رمز عبور با رمز جدید یکسان نیست.");
+          if (saving) return;
+          const validation = passwordChangeError({
+            currentPassword,
+            newPassword,
+            confirmPassword,
+          });
+          if (validation) {
+            setSaved("");
+            setError(validation);
             return;
           }
           try {
+            setSaving(true);
             setError("");
             await onChangePassword({ currentPassword, newPassword });
             setCurrentPassword("");
             setNewPassword("");
             setConfirmPassword("");
-            onDone("رمز عبور با موفقیت تغییر کرد.");
+            setShown({ current: false, next: false, confirm: false });
+            const message =
+              "رمز عبور با موفقیت تغییر کرد. در این دستگاه وارد می‌مانید.";
+            setSaved(message);
+            onDone(message);
           } catch (err) {
+            setSaved("");
             setError((err as Error).message);
+          } finally {
+            setSaving(false);
           }
         }}
       >
@@ -2203,54 +2224,113 @@ function AccountSettings({
             {error}
           </small>
         )}
+        {saved && (
+          <p className="login-success" role="status">
+            {saved}
+          </p>
+        )}
         <Field label="رمز عبور فعلی">
-          <input
-            dir="ltr"
-            type="password"
+          <SecretInput
             name="current-password"
             value={currentPassword}
-            onChange={(event) => setCurrentPassword(event.target.value)}
+            shown={shown.current}
+            disabled={saving}
             autoComplete="current-password"
-            minLength={8}
-            required
+            onChange={setCurrentPassword}
+            onToggle={() =>
+              setShown((current) => ({ ...current, current: !current.current }))
+            }
           />
         </Field>
         <div className="form-grid">
           <Field label="رمز عبور جدید">
-            <input
-              dir="ltr"
-              type="password"
+            <SecretInput
               name="new-password"
               value={newPassword}
-              onChange={(event) => setNewPassword(event.target.value)}
+              shown={shown.next}
+              disabled={saving}
               autoComplete="new-password"
-              minLength={8}
-              required
+              onChange={setNewPassword}
+              onToggle={() =>
+                setShown((current) => ({ ...current, next: !current.next }))
+              }
             />
           </Field>
           <Field label="تکرار رمز عبور جدید">
-            <input
-              dir="ltr"
-              type="password"
+            <SecretInput
               name="confirm-password"
               value={confirmPassword}
-              onChange={(event) => setConfirmPassword(event.target.value)}
+              shown={shown.confirm}
+              disabled={saving}
               autoComplete="new-password"
-              minLength={8}
-              required
+              onChange={setConfirmPassword}
+              onToggle={() =>
+                setShown((current) => ({
+                  ...current,
+                  confirm: !current.confirm,
+                }))
+              }
             />
           </Field>
         </div>
         <p className="account-note">
-          مرورگر دسکتاپ می‌تواند رمز جدید را پس از ذخیره، برای ورودهای بعدی
-          پیشنهاد دهد.
+          نشست‌های باز تا پایان اعتبارشان باقی می‌مانند. ورود بعدی با رمز تازه
+          انجام می‌شود.
         </p>
         <div className="dialog-actions account-actions">
-          <button className="primary-action" type="submit">
-            ذخیره رمز عبور
+          <button
+            className="primary-action"
+            type="submit"
+            disabled={saving}
+            aria-busy={saving || undefined}
+          >
+            {saving ? "در حال ذخیره…" : "ذخیره رمز عبور"}
           </button>
         </div>
       </form>
     </section>
+  );
+}
+
+function SecretInput({
+  name,
+  value,
+  shown,
+  disabled,
+  autoComplete,
+  onChange,
+  onToggle,
+}: {
+  name: string;
+  value: string;
+  shown: boolean;
+  disabled: boolean;
+  autoComplete: "current-password" | "new-password";
+  onChange: (value: string) => void;
+  onToggle: () => void;
+}) {
+  return (
+    <div className="password-field">
+      <input
+        dir="ltr"
+        type={shown ? "text" : "password"}
+        name={name}
+        value={value}
+        disabled={disabled}
+        onChange={(event) => onChange(event.target.value)}
+        autoComplete={autoComplete}
+        minLength={8}
+        required
+      />
+      <button
+        type="button"
+        className="password-toggle"
+        aria-pressed={shown}
+        aria-label={shown ? "پنهان کردن رمز عبور" : "نمایش رمز عبور"}
+        onClick={onToggle}
+      >
+        {shown ? <EyeOff /> : <Eye />}
+      </button>
+    </div>
   );
 }
