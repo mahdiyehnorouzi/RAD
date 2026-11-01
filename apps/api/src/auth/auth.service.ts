@@ -174,15 +174,17 @@ export class AuthService {
         code: "password_invalid",
       });
     }
-    await this.users.update(
-      { id: user.id },
-      { passwordHash: await hash(input.newPassword, 12) },
-    );
+    const passwordHash = await hash(input.newPassword, 12);
+    // Hash first so bcrypt does not hold a database transaction open.
+    // Both writes commit together: if deleting reset codes fails, TypeORM
+    // rolls the new hash back and the previous password stays in force.
     // Sessions are stateless JWTs. There is no session table and no
     // password-generation column, so cookies already issued stay valid
-    // until they expire. Outstanding reset codes are removed so a code
-    // sent before this change cannot replace the new password.
-    await this.resetTokens.delete({ userId: user.id });
+    // until they expire. This does not issue a new token.
+    await this.users.manager.transaction(async (manager) => {
+      await manager.update(User, { id: user.id }, { passwordHash });
+      await manager.delete(PasswordResetToken, { userId: user.id });
+    });
     return { ok: true };
   }
 

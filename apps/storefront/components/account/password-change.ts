@@ -1,7 +1,7 @@
 import { ApiError, isNetworkError, readableErrorMessage } from "@/lib/api";
 import type { MessageKey } from "@/i18n/fa";
 
-export const PASSWORD_MIN_LENGTH = 8;
+const PASSWORD_MIN_LENGTH = 8;
 
 const PASSWORD_CODES: Partial<Record<string, MessageKey>> = {
   unauthenticated: "passwordSignInRequired",
@@ -26,9 +26,9 @@ export function passwordChangeMessage(
 
 export type PasswordField = "current" | "next" | "confirm";
 
-export type PasswordDraft = Record<PasswordField, string>;
+type PasswordDraft = Record<PasswordField, string>;
 
-export type PasswordFormState = {
+type PasswordFormState = {
   draft: PasswordDraft;
   phase: "idle" | "saving" | "saved" | "error";
   errors: Partial<Record<PasswordField, string>>;
