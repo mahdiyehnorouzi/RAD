@@ -154,7 +154,16 @@ class RealPostgresMigrationTests(unittest.TestCase):
              ');'
              """INSERT INTO "User" (id, name, email, "passwordHash") VALUES
                 ('u1', 'سارا', 'sara@example.com', 'hash-1'),
-                ('u2', 'نسترن', 'nastaran@example.com', 'hash-2');"""],
+                ('u2', 'نسترن', 'nastaran@example.com', 'hash-2');"""
+             'CREATE TABLE IF NOT EXISTS "Order" ('
+             '  id text PRIMARY KEY,'
+             '  name text NOT NULL,'
+             '  city text NOT NULL,'
+             '  phone text NOT NULL,'
+             '  address text NOT NULL'
+             ');'
+             """INSERT INTO "Order" (id, name, city, phone, address) VALUES
+                ('o1', 'سارا', 'تهران، تهران', '09121234567', 'خیابان ولیعصر، پلاک ۱۲');"""],
             check=True, capture_output=True, text=True, timeout=15)
 
     @classmethod
@@ -269,6 +278,13 @@ class RealPostgresMigrationTests(unittest.TestCase):
             'FROM "User" ORDER BY id;')
         return [line.strip() for line in result.stdout.splitlines() if line.strip()]
 
+    def order_rows(self):
+        result = broker.run(
+            broker.PSQL, self.database_url, "-tAc",
+            "SELECT id || '|' || name || '|' || city || '|' || phone || '|' || address "
+            'FROM "Order" ORDER BY id;')
+        return [line.strip() for line in result.stdout.splitlines() if line.strip()]
+
     def phone_facts(self):
         result = broker.run(
             broker.PSQL, self.database_url, "-tAc",
@@ -291,6 +307,10 @@ class RealPostgresMigrationTests(unittest.TestCase):
     def test_full_migration_lifecycle_against_real_postgres(self):
         manifest = self.signed_manifest()
         before = self.user_rows()
+        orders_before = self.order_rows()
+        self.assertEqual(orders_before, [
+            "o1|سارا|تهران، تهران|09121234567|خیابان ولیعصر، پلاک ۱۲",
+        ])
         self.assertEqual(before, [
             "u1|سارا|sara@example.com|hash-1",
             "u2|نسترن|nastaran@example.com|hash-2",
@@ -327,6 +347,7 @@ class RealPostgresMigrationTests(unittest.TestCase):
         for column in ("gatewayAuthority", "gatewayRefId", "verifiedAt"):
             self.assertIn(column, self.payment_intent_columns())
         self.assertEqual(self.user_rows(), before)
+        self.assertEqual(self.order_rows(), orders_before)
         nullable, indexdef = self.phone_facts()
         self.assertEqual(nullable, "YES")
         self.assertIn("UNIQUE", indexdef)
@@ -365,6 +386,7 @@ class RealPostgresMigrationTests(unittest.TestCase):
         self.assertEqual(nullable, "YES")
         self.assertIn("UNIQUE", indexdef)
         self.assertEqual(self.user_rows(), before)
+        self.assertEqual(self.order_rows(), orders_before)
         self.assertIn("sara@example.com", self.previous_api_user_read())
         shown_reverted = broker.migration_show(NPM, self.api_dir, self.database_url, "127.0.0.1")
         pending_again = broker.reconcile_migrations(manifest, shown_reverted)

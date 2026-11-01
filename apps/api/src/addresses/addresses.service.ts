@@ -3,6 +3,7 @@ import {
   ConflictException,
   Injectable,
   NotFoundException,
+  OnModuleInit,
   UnauthorizedException,
 } from "@nestjs/common";
 import { InjectDataSource, InjectRepository } from "@nestjs/typeorm";
@@ -29,7 +30,7 @@ const notFound = {
 };
 
 @Injectable()
-export class AddressesService {
+export class AddressesService implements OnModuleInit {
   constructor(
     @InjectRepository(CustomerAddress)
     private readonly addresses: Repository<CustomerAddress>,
@@ -38,6 +39,22 @@ export class AddressesService {
     @InjectDataSource()
     private readonly dataSource: DataSource,
   ) {}
+
+  /**
+   * Production refuses schema sync, so a deploy of this API before
+   * `1793600000000-AddCustomerAddressBook` would otherwise boot and then
+   * 500 on every address request. Fail during module init instead.
+   */
+  async onModuleInit() {
+    const [row] = await this.dataSource.query(
+      `SELECT to_regclass('public."CustomerAddress"') AS present`,
+    );
+    if (!row?.present) {
+      throw new Error(
+        'Deployment refused: relation "CustomerAddress" does not exist. Apply migration 1793600000000-AddCustomerAddressBook before starting this API.',
+      );
+    }
+  }
 
   async list(actor: Actor) {
     const userId = await this.existingUserId(actor);

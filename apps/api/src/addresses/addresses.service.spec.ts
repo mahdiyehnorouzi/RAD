@@ -10,10 +10,13 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from "@nestjs/common";
+import { Controller, Module } from "@nestjs/common";
+import { NestFactory } from "@nestjs/core";
+import { TypeOrmModule } from "@nestjs/typeorm";
 import { QueryFailedError, type DataSource } from "typeorm";
 import type { Actor } from "../common/identity";
 import { createAppDataSource } from "../database/data-source";
-import { CustomerAddress, Order, User } from "../database/entities";
+import { CustomerAddress, Order, User, entities } from "../database/entities";
 import { AddCustomerAddressBook1793600000000 } from "../database/migrations/1793600000000-AddCustomerAddressBook";
 import { iranDivisionsPath } from "./addresses.locations";
 import { AddressesService } from "./addresses.service";
@@ -72,28 +75,33 @@ function actor(id: string, name: string): Actor {
   };
 }
 
-let pg: EmbeddedPostgres;
-let databaseDir: string;
+let pg: EmbeddedPostgres | undefined;
+let databaseDir: string | undefined;
 let dataSource: DataSource;
 let service: AddressesService;
 
 before(async () => {
-  databaseDir = mkdtempSync(path.join(tmpdir(), "rad-addresses-"));
-  const port = await freePort();
-  pg = new EmbeddedPostgres({
-    databaseDir,
-    user: "rad",
-    password: "rad",
-    port,
-    persistent: false,
-    onLog: () => {},
-    onError: () => {},
-  });
-  await pg.initialise();
-  await pg.start();
-  await pg.createDatabase("rad_test");
+  const externalUrl = process.env.RAD_ADDRESS_TEST_DATABASE_URL;
+  let url = externalUrl;
+  if (!url) {
+    databaseDir = mkdtempSync(path.join(tmpdir(), "rad-addresses-"));
+    const port = await freePort();
+    pg = new EmbeddedPostgres({
+      databaseDir,
+      user: "rad",
+      password: "rad",
+      port,
+      persistent: false,
+      onLog: () => {},
+      onError: () => {},
+    });
+    await pg.initialise();
+    await pg.start();
+    await pg.createDatabase("rad_test");
+    url = `postgresql://rad:rad@127.0.0.1:${port}/rad_test`;
+  }
   dataSource = createAppDataSource({
-    url: `postgresql://rad:rad@127.0.0.1:${port}/rad_test`,
+    url,
     synchronize: true,
   } as never);
   await dataSource.initialize();
@@ -117,6 +125,7 @@ before(async () => {
     dataSource.getRepository(User),
     dataSource,
   );
+  await service.onModuleInit();
   const users = dataSource.getRepository(User);
   await users.save(
     users.create({
@@ -141,7 +150,7 @@ before(async () => {
 after(async () => {
   await dataSource?.destroy();
   await pg?.stop();
-  rmSync(databaseDir, { recursive: true, force: true });
+  if (databaseDir) rmSync(databaseDir, { recursive: true, force: true });
 });
 
 async function clear() {
@@ -332,6 +341,73 @@ describe("customer address book", { concurrency: 1 }, () => {
     assert.equal(nastaranLeft.addresses[0].isDefault, true);
   });
 
+  test("concurrent creates keep a single default and stop at twenty", async () => {
+    await clear();
+    const sara = actor("user-a", "سارا");
+    await Promise.all([
+      service.create(
+        sara,
+        draft({ recipientName: "سارا یک", isDefault: true }),
+      ),
+      service.create(
+        sara,
+        draft({
+          recipientName: "سارا دو",
+          address: "خیابان آزادی، پلاک ۸",
+          isDefault: true,
+        }),
+      ),
+    ]);
+    const created = await dataSource.getRepository(CustomerAddress).find({
+      where: { userId: "user-a" },
+    });
+    assert.equal(created.length, 2);
+    assert.equal(created.filter((row) => row.isDefault).length, 1);
+
+    await clear();
+    const repo = dataSource.getRepository(CustomerAddress);
+    await repo.save(
+      Array.from({ length: 19 }, (_, index) =>
+        repo.create({
+          userId: "user-a",
+          recipientName: `سارا ${index + 1}`,
+          phone: "09121234567",
+          provinceId: tehran!.id,
+          cityId: tehran!.cities[0].id,
+          provinceLabel: "تهران",
+          cityLabel: "تهران",
+          address: "خیابان ولیعصر، پلاک ۱۲",
+          postalCode: null,
+          isDefault: index === 0,
+        }),
+      ),
+    );
+    const results = await Promise.allSettled([
+      service.create(sara, draft({ recipientName: "بیستم" })),
+      service.create(
+        sara,
+        draft({
+          recipientName: "بیست‌ویکم",
+          address: "خیابان انقلاب، پلاک ۳",
+        }),
+      ),
+    ]);
+    assert.equal(
+      results.filter((result) => result.status === "fulfilled").length,
+      1,
+    );
+    const rejected = results.find((result) => result.status === "rejected");
+    assert.ok(rejected?.status === "rejected");
+    assert.ok(rejected.reason instanceof BadRequestException);
+    assert.equal(
+      (rejected.reason.getResponse() as { code?: string }).code,
+      "address_limit",
+    );
+    const left = await service.list(sara);
+    assert.equal(left.addresses.length, 20);
+    assert.equal(left.addresses.filter((row) => row.isDefault).length, 1);
+  });
+
   test("the twenty-first address is refused", async () => {
     await clear();
     const repo = dataSource.getRepository(CustomerAddress);
@@ -369,6 +445,8 @@ describe("customer address book", { concurrency: 1 }, () => {
   });
 
   test("dropping the address book does not drop orders", async () => {
+    const users = dataSource.getRepository(User);
+    const userBefore = await users.findOneByOrFail({ id: "user-a" });
     const orders = dataSource.getRepository(Order);
     const order = await orders.save(
       orders.create({
@@ -397,5 +475,70 @@ describe("customer address book", { concurrency: 1 }, () => {
     assert.equal(kept.address, order.address);
     assert.equal(kept.city, "تهران، تهران");
     assert.equal(kept.name, "سارا محمدی");
+    assert.equal(kept.phone, "09121234567");
+    const userAfter = await users.findOneByOrFail({ id: "user-a" });
+    assert.equal(userAfter.email, userBefore.email);
+    assert.equal(userAfter.name, userBefore.name);
+    assert.equal(userAfter.phone, userBefore.phone);
+    assert.equal(userAfter.passwordHash, userBefore.passwordHash);
+  });
+
+  test("the API refuses to start when CustomerAddress has not been migrated", async () => {
+    const url = (dataSource.options as { url?: string }).url;
+    assert.equal(typeof url, "string");
+    await dataSource.query(`DROP TABLE IF EXISTS "CustomerAddress"`);
+    const [gone] = await dataSource.query(
+      `SELECT to_regclass('public."CustomerAddress"') AS present`,
+    );
+    assert.equal(gone.present, null);
+
+    @Controller()
+    class AddressBootController {
+      constructor(readonly addresses: AddressesService) {}
+    }
+
+    @Module({
+      imports: [
+        TypeOrmModule.forRoot({
+          type: "postgres",
+          url,
+          entities: [...entities],
+          synchronize: false,
+        }),
+        TypeOrmModule.forFeature([...entities]),
+      ],
+      controllers: [AddressBootController],
+      providers: [AddressesService],
+    })
+    class AddressBootModule {}
+
+    const app = await NestFactory.create(AddressBootModule, { logger: false });
+    try {
+      // NestFactory.create() wires providers; onModuleInit runs from init(),
+      // which is what listen() calls before accepting traffic.
+      await assert.rejects(
+        () => app.init(),
+        /1793600000000-AddCustomerAddressBook/,
+      );
+    } finally {
+      await app.close();
+    }
+
+    const migration = new AddCustomerAddressBook1793600000000();
+    const runner = dataSource.createQueryRunner();
+    await runner.connect();
+    try {
+      await migration.up(runner);
+    } finally {
+      await runner.release();
+    }
+    const started = await NestFactory.create(AddressBootModule, {
+      logger: false,
+    });
+    try {
+      await started.init();
+    } finally {
+      await started.close();
+    }
   });
 });
