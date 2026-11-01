@@ -33,6 +33,10 @@ jobs:
         with:
           node-version: 22
           cache: npm
+      # Fails the Lint job, which CI passed already requires. A separate
+      # workflow would not block merge: the ruleset only requires CI passed.
+      - name: RAD skill mirrors
+        run: node scripts/check-agent-skill-mirrors.cjs
       - run: npm ci
       - run: npm run lint
       - name: Unused files, exports and dependencies
