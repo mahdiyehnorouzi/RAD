@@ -3,9 +3,9 @@ import {
   formatIranMobileDraft,
 } from "@/lib/phone/iran-mobile";
 
-export const PROFILE_NAME_MAX = 80;
+const PROFILE_NAME_MAX = 80;
 
-export type ProfileDraft = {
+type ProfileDraft = {
   name: string;
   phone: string;
 };
@@ -16,9 +16,9 @@ export type ProfileUser = {
   phone?: string | null;
 };
 
-export type ProfileField = "name" | "phone";
+type ProfileField = "name" | "phone";
 
-export type ProfileFormState = {
+type ProfileFormState = {
   draft: ProfileDraft;
   saved: ProfileDraft;
   phase: "idle" | "saving" | "saved" | "error";
@@ -32,7 +32,7 @@ export type ProfileCopy = {
   phoneInvalid: string;
 };
 
-export function profileDraftFromUser(user: {
+function profileDraftFromUser(user: {
   name: string;
   phone?: string | null;
 }): ProfileDraft {
