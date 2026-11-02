@@ -25,6 +25,7 @@ import {
   type ShapeQuestion,
   type ShapeQuestionInput,
 } from "../lib/admin-data";
+import { assertOrderList } from "../lib/order-queue";
 import {
   buildUploadRequest,
   resolveUploadedObjectKey,
@@ -81,7 +82,7 @@ const resourceKeys: ResourceKey[] = [
 const sectionResources: Record<AdminSection, ResourceKey[]> = {
   overview: ["products", "orders", "commissions"],
   products: ["products"],
-  orders: ["orders", "messages", "damageReports"],
+  orders: ["orders", "products", "messages", "damageReports"],
   messages: ["messages", "orders"],
   damage: ["damageReports", "orders"],
   commissions: ["commissions"],
@@ -169,7 +170,7 @@ export function useAdminWorkspace() {
       case "products":
         return api<AdminProduct[]>("/admin/products");
       case "orders":
-        return api<AdminOrder[]>("/admin/orders");
+        return assertOrderList(await api<unknown>("/admin/orders"));
       case "members":
         return api<AdminMember[]>("/admin/members");
       case "users":
@@ -703,7 +704,12 @@ export function useAdminWorkspace() {
       async updateOrder(order: AdminOrder) {
         const saved = await api<AdminOrder>(`/admin/orders/${order.id}`, {
           method: "PATCH",
-          body: JSON.stringify({ status: order.status }),
+          body: JSON.stringify({
+            status: order.status,
+            ...(order.trackingCode
+              ? { trackingCode: order.trackingCode }
+              : {}),
+          }),
         });
         setOrders((items) =>
           items.map((item) => (item.id === saved.id ? saved : item)),
