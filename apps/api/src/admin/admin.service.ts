@@ -63,6 +63,7 @@ import { InventoryService } from "../inventory/inventory.service";
 import type { ProductStatus } from "../inventory/type";
 import { PaymentReviewService } from "../orders/payment-review.service";
 import { OrdersService } from "../orders/orders.service";
+import { normalizeTrackingNumber } from "../orders/payment-receipt";
 import { ProductAttributesService } from "../product-attributes/product-attributes.service";
 import {
   canManuallyTransitionOrder,
@@ -467,8 +468,18 @@ export class AdminService {
     const slugs = order.items.map((item) => item.productSlug);
     const currentStatus = normalizeStoreOrderStatus(order.status);
     const nextStatus = normalizeStoreOrderStatus(input.status);
+    const rawTrackingCode = input.trackingCode?.trim() ?? "";
+    const normalizedTrackingCode = rawTrackingCode
+      ? normalizeTrackingNumber(rawTrackingCode)
+      : null;
+    if (rawTrackingCode && !normalizedTrackingCode) {
+      throw new BadRequestException({
+        message: "کد رهگیری نامعتبر است (۴ تا ۳۲ رقم یا حرف لاتین).",
+        code: "tracking_invalid",
+      });
+    }
     const trackingCode =
-      input.trackingCode?.trim() ||
+      normalizedTrackingCode ||
       (nextStatus === "shipped"
         ? order.trackingCode || `RAD-POST-${id.slice(-4)}`
         : order.trackingCode);

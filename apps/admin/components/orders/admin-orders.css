@@ -329,6 +329,10 @@
   color: var(--ink);
   font-size: 1rem;
 }
+.orders-ship-error {
+  color: var(--oxide);
+  font-size: 0.85rem;
+}
 .orders-workspace ::selection {
   background: #d5e0d6;
   color: var(--ink);
