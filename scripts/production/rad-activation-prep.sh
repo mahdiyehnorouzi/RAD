@@ -251,8 +251,12 @@ production_environments_verified = False
 # whose approval isn't carried forward here (e.g. a corrupt/unreadable prior
 # candidate) simply requires re-approval — never silently inherited as
 # approved.
+# migration_exception is the same kind of human authorization. This script
+# copies a prior object through and never creates one. The broker, not this
+# script, decides whether that object matches a release.
 approved_migrations = {}
 offsite_backup_pipeline_verified = False
+migration_exception = None
 existing = Path(candidate)
 if existing.exists():
     try:
@@ -264,6 +268,8 @@ if existing.exists():
             prior_approved = prior.get("approved_migrations")
             if isinstance(prior_approved, dict):
                 approved_migrations = {k: v for k, v in prior_approved.items() if isinstance(k, str) and isinstance(v, str)}
+            if isinstance(prior.get("migration_exception"), dict):
+                migration_exception = prior["migration_exception"]
     except (json.JSONDecodeError, OSError):
         pass  # no prior candidate to preserve from — start empty/false, as before.
 
@@ -278,6 +284,8 @@ policy = dict(
     approved_migrations=approved_migrations,
     offsite_backup_pipeline_verified=offsite_backup_pipeline_verified,
 )
+if migration_exception is not None:
+    policy["migration_exception"] = migration_exception
 with open(candidate, "w") as out:
     json.dump(policy, out, indent=2); out.write("\n")
 PY

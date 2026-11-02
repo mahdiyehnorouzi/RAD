@@ -1,4 +1,15 @@
-export { requestPasswordReset, resetAccountPassword } from "./auth";
+export {
+  changeAccountPassword,
+  requestPasswordReset,
+  resetAccountPassword,
+} from "./auth";
+export {
+  createAddress,
+  deleteAddress,
+  fetchAddresses,
+  setDefaultAddress,
+  updateAddress,
+} from "./addresses";
 export { submitArtistApplication } from "./artist-collaboration";
 export { fetchArtwork, fetchArtworks } from "./artworks";
 export { fetchProduct } from "./catalog";

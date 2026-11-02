@@ -47,6 +47,7 @@ export function ProductCardThumbs({
       {hidden > 0 ? (
         <Link
           href={productHref}
+          prefetch={false}
           className="rad-card-thumb-more"
           aria-label={`${format(hidden)} ${c.moreViews}`}
         >

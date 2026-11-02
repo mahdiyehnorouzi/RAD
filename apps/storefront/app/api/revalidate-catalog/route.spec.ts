@@ -2,10 +2,15 @@ import assert from "node:assert/strict";
 import { test, mock } from "node:test";
 
 let updateTagCalls: string[] = [];
+let revalidatePathCalls: Array<[string, string?]> = [];
 let resetCalls = 0;
 
 mock.module("next/cache", {
-  namedExports: { updateTag: (tag: string) => updateTagCalls.push(tag) },
+  namedExports: {
+    updateTag: (tag: string) => updateTagCalls.push(tag),
+    revalidatePath: (path: string, type?: string) =>
+      revalidatePathCalls.push([path, type]),
+  },
 });
 mock.module("@/lib/catalog/get-catalog-works", {
   namedExports: { resetProcessCatalogCache: () => resetCalls++ },
@@ -19,6 +24,7 @@ function withSecret(value: string | undefined, fn: () => Promise<void>) {
   if (value === undefined) delete process.env.CATALOG_REVALIDATE_SECRET;
   else process.env.CATALOG_REVALIDATE_SECRET = value;
   updateTagCalls = [];
+  revalidatePathCalls = [];
   resetCalls = 0;
   return fn().finally(() => {
     if (ORIGINAL_SECRET === undefined)
@@ -54,6 +60,7 @@ test("invalidates the catalog cache when the secret matches", () =>
     assert.equal(response.status, 200);
     assert.deepEqual(updateTagCalls, ["catalog"]);
     assert.equal(resetCalls, 1);
+    assert.deepEqual(revalidatePathCalls, [["/[locale]", "page"]]);
   }));
 
 test("a secret of the wrong length is rejected, not thrown on", () =>

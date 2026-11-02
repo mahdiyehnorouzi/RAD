@@ -1,5 +1,6 @@
 "use client";
 import { useId, type Ref } from "react";
+import Link from "next/link";
 import { Info, ShoppingBag } from "lucide-react";
 import type { Artwork, Product } from "@rad/types";
 import { useLocale } from "@/components/i18n";
@@ -47,7 +48,7 @@ export function ProductSummary({
   /** Mirrors the inline AddToBag's BagAddedSheet visibility up to the page. */
   onSheetVisibleChange?: (visible: boolean) => void;
 }) {
-  const { locale, t, number } = useLocale();
+  const { locale, t, number, href } = useLocale();
   const c = pdpCopy[locale];
   const noteId = useId();
   const copy = productCopy(product, locale);
@@ -60,16 +61,25 @@ export function ProductSummary({
       ? product.vendor.displayName
       : product.vendor.displayNameEn
     : c.studio;
-  const open = state.status === "available" && !state.inBag && !state.reserved;
-  const availability = open ? c.available : state.label;
-  const closed = state.sold || state.withdrawn;
+  const open = state.open;
+  const availability =
+    state.button === "add"
+      ? c.available
+      : state.button === "resume"
+        ? t("reservedForYou")
+        : state.button === "reserved"
+          ? c.reservedNow
+          : state.button === "sold" || state.button === "withdrawn"
+            ? t("soldOut")
+            : state.label;
+  const closed = state.button === "sold" || state.button === "withdrawn";
   // Reserved is disabled too, but handled as its own explicit branch (not
   // folded into `closed`/routed through AddToBag's own generic label) so
   // its text matches the floating bar's `c.reservedNow` exactly — relying
   // on AddToBag's internal useProductStatus() label here previously showed
   // a *different* string ("رزرو شده") than the floating bar's "فعلاً رزرو شده"
   // for the identical state.
-  const unavailableInline = closed || state.reserved;
+  const unavailableInline = closed || state.button === "reserved";
   const unavailableInlineLabel = state.reserved ? c.reservedNow : t("soldOut");
   const change = artwork?.passport?.unexpectedChanges?.[locale];
 
@@ -108,9 +118,9 @@ export function ProductSummary({
         <p className={styles.price}>{productPrice(product, locale)}</p>
       </div>
 
-      {state.sold ? (
+      {state.button === "sold" ? (
         <p className={styles.contextNote}>{c.soldFoundNote}</p>
-      ) : state.reserved ? (
+      ) : state.button === "reserved" ? (
         <p className={styles.contextNote}>{c.reservedAvailableNote}</p>
       ) : null}
 
@@ -119,16 +129,26 @@ export function ProductSummary({
         live={live}
         inBag={state.inBag}
         reserved={state.reserved}
+        heldByOther={state.heldByOther}
       />
 
       <div className={styles.buy} ref={buyRef}>
-        {unavailableInline ? (
+        {state.button === "resume" && state.ownOrderId ? (
+          <div className="add-to-bag">
+            <Link
+              className="button add"
+              href={href(`/checkout/${encodeURIComponent(state.ownOrderId)}`)}
+            >
+              {t("resumePayment")}
+            </Link>
+          </div>
+        ) : unavailableInline ? (
           <div className="add-to-bag">
             <button
               type="button"
               className="button add"
               disabled
-              aria-describedby={state.sold ? noteId : undefined}
+              aria-describedby={state.button === "sold" ? noteId : undefined}
             >
               <ShoppingBag aria-hidden="true" />
               {unavailableInlineLabel}
@@ -143,7 +163,7 @@ export function ProductSummary({
             onSheetVisibleChange={onSheetVisibleChange}
           />
         )}
-        {state.sold ? (
+        {state.button === "sold" ? (
           <p id={noteId} className={styles.buyNote}>
             <Info aria-hidden="true" />
             {c.soldNote}

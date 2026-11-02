@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import Link from "next/link";
 import { Check, ChevronLeft, ChevronRight, ShoppingBag } from "lucide-react";
 import type { Product } from "@rad/types";
@@ -156,17 +156,17 @@ export function AddToBag({
   /** Suppresses the built-in `BagAddedSheet` modal for callers rendering their own success state. */
   hideSheet?: boolean;
 }) {
-  const { add } = useCart();
+  const { add, reload } = useCart();
   const { locale, t, href } = useLocale();
   const Forward = locale === "fa" ? ChevronLeft : ChevronRight;
   const { addNotice } = useCommerce();
   const refresh = useCatalogRefresh();
   const [error, setError] = useState("");
-  const [blocked, setBlocked] = useState(false);
   const [busy, setBusy] = useState(false);
+  const busyRef = useRef(false);
   const [addedSheet, setAddedSheet] = useState(false);
   const { inBag: added, purchasable, label } = useProductStatus(product);
-  const unavailable = blocked || (!added && !purchasable);
+  const unavailable = !added && !purchasable;
   const unavailableLabel = label && !purchasable ? label : t("soldOut");
 
   useEffect(() => {
@@ -177,18 +177,14 @@ export function AddToBag({
     onSheetVisibleChange?.(addedSheet);
   }, [addedSheet, onSheetVisibleChange]);
 
-  useEffect(() => {
-    if (product.status !== "available") return;
-    setBlocked(false);
-    setError("");
-  }, [product.status, product.reservedUntil]);
   return (
     <div className={`add-to-bag${compact ? " add-to-bag--compact" : ""}`}>
       <button
         type="button"
         className={`${compact ? "plp-bag-button" : "button"} add${added ? " add--in-bag" : ""}`}
         onClick={async () => {
-          if (busy || added) return;
+          if (busyRef.current || added) return;
+          busyRef.current = true;
           try {
             setBusy(true);
             setError("");
@@ -196,28 +192,35 @@ export function AddToBag({
             // optimistic flip to lean on, so a second click here before the
             // request settles must not fire a second POST.
             const addedToBag = await add(product);
-            setBusy(false);
             if (addedToBag) {
               if (!hideSheet) setAddedSheet(true);
               void addNotice("cart", product.slug).catch(() => {});
             }
           } catch (err) {
-            setBusy(false);
             if (
               err instanceof ApiError &&
               (err.status === 409 || err.status === 404)
             ) {
-              setBlocked(true);
               setError(
-                err.status === 404 ? t("liveDeletedTitle") : t("addBagTaken"),
+                err.status === 404
+                  ? t("liveDeletedTitle")
+                  : err.code === "reserved_for_you"
+                    ? t("addBagOwnOrder")
+                    : err.code === "sold"
+                      ? t("soldOut")
+                      : t("addBagTaken"),
               );
               onConflict?.();
+              await reload();
               await refresh();
               return;
             }
             setError(
               isNetworkError(err) ? t("addBagNetwork") : t("addBagFailed"),
             );
+          } finally {
+            busyRef.current = false;
+            setBusy(false);
           }
         }}
         disabled={added || unavailable || busy}

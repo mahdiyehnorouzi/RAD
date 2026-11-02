@@ -124,6 +124,11 @@ jobs:
     env:
       RAD_VPS_TAILSCALE_IP: "100.103.104.79"
     steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
       - name: Download signed artifact (this exact run/attempt only)
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
@@ -155,10 +160,11 @@ jobs:
       - name: Ship manifest and trigger release over the tailnet
         run: |
           set -euo pipefail
-          ssh_args=(-o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=15)
-          tar -cf - -C stage release.json release.sigstore.json \
-            | ssh "${ssh_args[@]}" "rad-deploy@${RAD_VPS_TAILSCALE_IP}" \
-              "deploy kind=frontend commit=${GITHUB_SHA} run_id=${GITHUB_RUN_ID} run_attempt=${GITHUB_RUN_ATTEMPT}"
+          bash scripts/production/rad-deploy-ship.sh \
+            --host "rad-deploy@${RAD_VPS_TAILSCALE_IP}" \
+            --stage stage \
+            --remote-command "deploy kind=frontend commit=${GITHUB_SHA} run_id=${GITHUB_RUN_ID} run_attempt=${GITHUB_RUN_ATTEMPT}" \
+            -- release.json release.sigstore.json
 
       - name: Remove runner SSH credentials
         if: always()

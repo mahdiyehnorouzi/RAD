@@ -72,7 +72,7 @@ test("catalogSource and registryFallbackAllowed treat next build's static-genera
       assert.equal(
         catalogSource(),
         "auto",
-        "generateStaticParams' build-time prerender must still be able to fall back to the registry",
+        "generateStaticParams' build-time prerender must still be able to fall back to the registry; Latest Works must not use this origin (see liveFeaturedHomeWorks)",
       );
       assert.equal(registryFallbackAllowed(), true);
     },
