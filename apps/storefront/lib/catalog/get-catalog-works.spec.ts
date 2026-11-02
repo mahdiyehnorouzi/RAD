@@ -18,8 +18,15 @@ mock.module("@/lib/artworks/server", {
     },
   },
 });
+mock.module("@/lib/artworks", {
+  namedExports: {
+    shopProducts: (artworks: Array<{ slug: string }>) =>
+      artworks.map((artwork) => ({ slug: artwork.slug })),
+  },
+});
 
-const { getCatalog } = await import("./get-catalog-works");
+const { getCatalog, getCatalogIndex, resetProcessCatalogCache } =
+  await import("./get-catalog-works");
 
 test("a genuinely empty API response is re-checked sooner than a non-empty one", async (t) => {
   t.mock.timers.enable({ apis: ["Date"] });
@@ -37,4 +44,22 @@ test("a genuinely empty API response is re-checked sooner than a non-empty one",
   t.mock.timers.tick(2_000);
   await getCatalog();
   assert.equal(loadArtworksCalls, 2);
+});
+
+test("getCatalogIndex does not publish bundled registry rows as the customer catalog", async () => {
+  resetProcessCatalogCache();
+  nextResult = {
+    origin: "registry",
+    artworks: [
+      {
+        slug: "croissant-handle-mug",
+        title: { fa: "demo", en: "demo" },
+        radNumber: 1,
+        category: "ceramics",
+        difference: null,
+      },
+    ],
+  };
+  const index = await getCatalogIndex();
+  assert.deepEqual(index, []);
 });

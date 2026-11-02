@@ -27,8 +27,10 @@
 #                 "deploy kind=api" of the same commit would)
 #                 with a tar stream of exactly { release.json, release.sigstore.json[, api-release.tar.gz] }
 #                 piped to that session's stdin.
-#   this script:  validates SSH_ORIGINAL_COMMAND, reads a SIZE-BOUNDED copy of stdin to a temp
-#                 file, hands it to scripts/production/rad_deploy_entrypoint.py for member-by-member
+#   this script:  validates SSH_ORIGINAL_COMMAND, reads a SIZE-BOUNDED and DEADLINE-BOUNDED
+#                 copy of stdin to a temp file (idle silence and an overall transfer
+#                 deadline both fail closed — ConnectTimeout on the client does not
+#                 cover an already-open channel), hands it to scripts/production/rad_deploy_entrypoint.py for member-by-member
 #                 validation (type/name/size/count - no traversal, no symlinks/hardlinks, no
 #                 special files, no duplicates, no unexpected entries) and extraction into a fresh
 #                 /var/lib/rad-release/incoming/release-* staging directory (the same convention
@@ -56,13 +58,24 @@ set -euo pipefail
 INCOMING_BASE="${RAD_DEPLOY_INCOMING_BASE:-/var/lib/rad-release/incoming}"
 BROKER="${RAD_DEPLOY_BROKER:-/usr/local/sbin/rad-release}"
 VALIDATOR="${RAD_DEPLOY_VALIDATOR:-/usr/local/libexec/rad_deploy_entrypoint.py}"
+TRANSPORT="${RAD_DEPLOY_TRANSPORT:-/usr/local/libexec/rad_deploy_transport.py}"
 # ~2 GiB (the broker's own api-release.tar.gz cap) plus headroom for tar
 # block padding and the two small manifest files alongside it.
 MAX_TRANSPORT_BYTES="${RAD_DEPLOY_MAX_TRANSPORT_BYTES:-2200000000}"
+# These bound the upload only. They do not bound the broker's migrate/release
+# work, which starts only after transfer_complete and validation_complete.
+IDLE_SECONDS="${RAD_DEPLOY_TRANSFER_IDLE_SECONDS:-45}"
+DEADLINE_SECONDS="${RAD_DEPLOY_TRANSFER_DEADLINE_SECONDS:-600}"
 
 fail() {
   echo "rad-deploy-ssh-entrypoint: $1" >&2
   exit 1
+}
+
+stage() {
+  # stderr is unbuffered. Stage names are fixed tokens; values are counts and
+  # the already-validated command fields, never payload bytes or the environment.
+  printf 'rad-deploy: stage=%s%s\n' "$1" "${2:+ $2}" >&2
 }
 
 [[ -n "${SSH_ORIGINAL_COMMAND:-}" ]] || fail "no command given (interactive access is not permitted for this key)"
@@ -86,26 +99,52 @@ else
   fail "rejected command (does not match the fixed 'deploy kind=... commit=... run_id=... run_attempt=...' or 'migrate commit=... run_id=... run_attempt=...' grammar)"
 fi
 
+[[ "$MAX_TRANSPORT_BYTES" =~ ^[1-9][0-9]{0,10}$ ]] || fail "invalid transport size cap"
+[[ "$IDLE_SECONDS" =~ ^[1-9][0-9]{0,5}$ ]] || fail "invalid transfer idle timeout"
+[[ "$DEADLINE_SECONDS" =~ ^[1-9][0-9]{0,5}$ ]] || fail "invalid transfer deadline"
+
+# Logged before any disk or network read so a hang after this line is the
+# upload, and a hang before it is SSH session setup rather than the broker.
+stage "command_accepted" "action=${ACTION} kind=${KIND} run_id=${RUN_ID} run_attempt=${RUN_ATTEMPT}"
+
+WORKDIR=""
+STAGE_DIR=""
+cleanup() {
+  # Never a release transaction. Those are created only by the broker, after
+  # this script has validated the upload and invoked sudo. A failed or
+  # interrupted transfer removes its temp files and does not call the broker.
+  if [[ -n "$WORKDIR" || -n "$STAGE_DIR" ]]; then
+    rm -rf -- ${WORKDIR:+"$WORKDIR"} ${STAGE_DIR:+"$STAGE_DIR"}
+  fi
+}
+trap cleanup EXIT
+trap 'cleanup; exit 129' HUP
+trap 'cleanup; exit 143' TERM
+trap 'cleanup; exit 130' INT
+
 WORKDIR="$(mktemp -d)"
 STAGE_DIR="$(mktemp -d "${INCOMING_BASE}/release-XXXXXXXXXXXX")"
-cleanup() { rm -rf -- "$WORKDIR" "$STAGE_DIR"; }
-trap cleanup EXIT
-
-# Bounded read: write at most MAX_TRANSPORT_BYTES+1 bytes so we can tell
-# "exactly at the cap" apart from "truncated because it was larger" without
-# ever buffering an unbounded upload in memory or on disk.
 UPLOAD_TAR="${WORKDIR}/upload.tar"
-head -c "$(( MAX_TRANSPORT_BYTES + 1 ))" > "$UPLOAD_TAR"
-UPLOAD_SIZE="$(wc -c < "$UPLOAD_TAR" | tr -d '[:space:]')"
-[[ "$UPLOAD_SIZE" -gt 0 ]] || fail "empty upload"
-[[ "$UPLOAD_SIZE" -le "$MAX_TRANSPORT_BYTES" ]] || fail "upload exceeds ${MAX_TRANSPORT_BYTES} bytes"
+
+# Idle and deadline are enforced in rad_deploy_transport.py. `head -c` was
+# not used here because it waits forever for EOF and ConnectTimeout does not
+# apply once the session is open.
+python3 -B "$TRANSPORT" recv \
+  --output "$UPLOAD_TAR" \
+  --max-bytes "$MAX_TRANSPORT_BYTES" \
+  --idle-seconds "$IDLE_SECONDS" \
+  --deadline-seconds "$DEADLINE_SECONDS" \
+  || fail "transfer failed; partial upload removed and broker not invoked"
 
 # Member-by-member validation and extraction - see
 # scripts/production/rad_deploy_entrypoint.py. Fails closed on anything
 # other than the exact expected flat file set: no traversal, no symlinks or
 # hard links, no special files, no duplicates, no unexpected or oversized
 # entries. Nothing is extracted at all unless every member passes.
-python3 "$VALIDATOR" --tar-path "$UPLOAD_TAR" --stage-dir "$STAGE_DIR" --kind "$KIND"
+stage "validation_start"
+python3 -B "$VALIDATOR" --tar-path "$UPLOAD_TAR" --stage-dir "$STAGE_DIR" --kind "$KIND" \
+  || fail "validation failed; staging removed and broker not invoked"
+stage "validation_complete"
 
 STAGE_NAME="$(basename "$STAGE_DIR")"
 
@@ -120,6 +159,7 @@ STAGE_NAME="$(basename "$STAGE_DIR")"
 # failure. This script never touches /opt/rad*, systemd, or Docker
 # directly, and passes the request body over stdin only - never as a
 # command-line argument.
+stage "broker_start" "action=${ACTION}"
 python3 - <<PY_REQUEST | sudo -n "$BROKER"
 import json
 print(json.dumps({

@@ -85,8 +85,9 @@ self-hosted runner as the *transport* only:
   root-owned, non-group/world-writable directory (`/usr/local/libexec`, mode
   `0755`) so `rad-deploy` cannot delete or replace it either, even though it
   can't write the file itself.
-- The entrypoint reads a **size-bounded** copy of its own stdin to a temp
-  file, then hands it to
+- The entrypoint reads a **size-bounded and deadline-bounded** copy of its own stdin to a temp
+  file (idle silence and an overall transfer deadline both fail closed; SSH
+  `ConnectTimeout` does not cover an already-open channel), then hands it to
   [`scripts/production/rad_deploy_entrypoint.py`](../scripts/production/rad_deploy_entrypoint.py)
   for member-by-member validation *before* extracting anything: every member
   must be an ordinary regular file (no symlinks, hard links, directories,
@@ -191,11 +192,15 @@ this account.
 
 ### 2. Install the forced-command entrypoint, its Python validator, and the restricted shell
 
-All three must be **root-owned and not writable by `rad-deploy`** — only
+All of these must be **root-owned and not writable by `rad-deploy`** — only
 readable/executable by it (via the `rad-deploy` group), so the account that
 is reachable over the network can run them but never modify them. The
 containing directory must not be group/world-writable either, so
 `rad-deploy` can't delete or replace them that way instead.
+
+`rad_deploy_transport.py` is the bounded stdin reader the entrypoint calls
+before validation. Without that installed copy, the entrypoint cannot
+receive an upload. It does not invoke the broker and it is not the broker.
 
 ```bash
 install -d -o root -g root -m 0755 /usr/local/libexec
@@ -203,6 +208,8 @@ install -o root -g rad-deploy -m 0750 scripts/production/rad-deploy-ssh-entrypoi
   /usr/local/libexec/rad-deploy-ssh-entrypoint.sh
 install -o root -g rad-deploy -m 0640 scripts/production/rad_deploy_entrypoint.py \
   /usr/local/libexec/rad_deploy_entrypoint.py
+install -o root -g rad-deploy -m 0640 scripts/production/rad_deploy_transport.py \
+  /usr/local/libexec/rad_deploy_transport.py
 install -o root -g rad-deploy -m 0750 scripts/production/rad-deploy-shell.sh \
   /usr/local/libexec/rad-deploy-shell.sh
 ```
