@@ -388,6 +388,31 @@ describe("AdminService.saveProduct — cloudinary images (Phase 2)", () => {
     assert.equal(saved.images.length, 2);
   });
 
+  test("reordering gallery images persists the first as cover (sortOrder 0)", async () => {
+    const slug = `cover-order-${Date.now()}`;
+    const created = await admin.saveProduct(
+      baseInput(slug, [
+        { storage: "static", src: "/images/cover-a.jpg" },
+        { storage: "static", src: "/images/cover-b.jpg" },
+      ]) as never,
+    );
+    const saved = await admin.saveProduct(
+      baseInput(slug, [
+        { storage: "static", src: "/images/cover-b.jpg" },
+        { storage: "static", src: "/images/cover-a.jpg" },
+      ]) as never,
+      created.id,
+    );
+    assert.equal(saved.images[0].src, "/images/cover-b.jpg");
+    const rows = await dataSource
+      .getRepository(ProductImage)
+      .find({ where: { productSlug: slug }, order: { sortOrder: "ASC" } });
+    assert.equal(rows[0].src, "/images/cover-b.jpg");
+    assert.equal(rows[0].sortOrder, 0);
+    assert.equal(rows[1].src, "/images/cover-a.jpg");
+    assert.equal(rows[1].sortOrder, 1);
+  });
+
   test("a failed Cloudinary delete during cleanup is logged/non-fatal — the save itself still succeeds", async () => {
     const slug = `cloudinary-delete-fails-${Date.now()}`;
     const created = await admin.saveProduct(

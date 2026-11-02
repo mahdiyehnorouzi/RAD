@@ -12,7 +12,21 @@ import {
 import type { CartPriceAtAdd, CartSnapshot, Product } from "@rad/types";
 import { isPurchasableStatus } from "@rad/types";
 import { api } from "@/lib/api";
+import { browserGuestId } from "@/lib/api/guest-id";
+import { useCommerce } from "@/components/commerce";
 import { useCatalogRefresh } from "@/hooks/use-catalog-refresh";
+import {
+  adoptVisitor,
+  createCartQueue,
+  readBagMemory,
+  reconcileBagBaseline,
+  runQueuedCartMutation,
+  sessionOwnerFromEvent,
+  shouldReloadBagOnPageShow,
+  visitorOwner,
+  writeBagMemory,
+  type BagMemoryMode,
+} from "./bag-sync";
 
 type CartContextValue = {
   slugs: string[];
@@ -22,6 +36,8 @@ type CartContextValue = {
   prices: Record<string, CartPriceAtAdd>;
   /** Earliest hold deadline in the bag, if any. */
   holdEndsAt: number | null;
+  /** Unpaid orders that already received works from this bag. */
+  pendingOrders: CartSnapshot["pendingOrders"];
   /** Works that left the bag without the visitor removing them (hold ran out). */
   released: string[];
   dismissReleased: () => void;
@@ -40,84 +56,72 @@ type CartContextValue = {
 };
 
 const CartContext = createContext<CartContextValue | null>(null);
-const emptyCart: CartSnapshot = { slugs: [], holds: {}, prices: {} };
-const knownKey = "rad-cart-known";
-const releasedKey = "rad-cart-released";
+const emptyCart: CartSnapshot = {
+  slugs: [],
+  holds: {},
+  prices: {},
+  pendingOrders: [],
+};
 
-function readList(key: string): string[] | null {
-  try {
-    const parsed = JSON.parse(
-      window.localStorage.getItem(key) ?? "null",
-    ) as unknown;
-    return Array.isArray(parsed)
-      ? parsed.filter((item): item is string => typeof item === "string")
-      : null;
-  } catch {
-    return null;
-  }
-}
-
-function writeList(key: string, value: string[] | null) {
-  try {
-    if (value === null) window.localStorage.removeItem(key);
-    else window.localStorage.setItem(key, JSON.stringify(value));
-  } catch {
-    /* private mode or quota */
-  }
+function snapshotOf(payload: CartSnapshot): CartSnapshot {
+  return {
+    slugs: payload.slugs,
+    holds: payload.holds ?? {},
+    prices: payload.prices ?? {},
+    pendingOrders: payload.pendingOrders ?? [],
+  };
 }
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const refreshCatalog = useCatalogRefresh();
+  const { user, ready: sessionReady } = useCommerce();
   const [cart, setCart] = useState<CartSnapshot>(emptyCart);
   const [ready, setReady] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [loadError, setLoadError] = useState(false);
   const [released, setReleased] = useState<string[]>([]);
-  /** Slugs in the last snapshot this browser saw; `null` = no baseline yet. */
-  const known = useRef<string[] | null>(null);
+  const ownerRef = useRef<string | null>(null);
+  const ownerEpoch = useRef(0);
+  const resetBaseline = useRef(false);
+  const pendingSnapshot = useRef<CartSnapshot | null>(null);
+  const enqueue = useRef(createCartQueue()).current;
 
-  useEffect(() => {
-    known.current = readList(knownKey);
-    setReleased(readList(releasedKey) ?? []);
-  }, []);
-
-  const updateReleased = useCallback((map: (current: string[]) => string[]) => {
-    setReleased((current) => {
-      const next = map(current);
-      writeList(releasedKey, next);
-      return next;
-    });
-  }, []);
-
-  const apply = useCallback(
-    (payload: CartSnapshot, detectReleased = false) => {
-      const slugs = payload.slugs;
-      if (detectReleased && known.current) {
-        const gone = known.current.filter((slug) => !slugs.includes(slug));
-        if (gone.length) {
-          updateReleased((current) => [...new Set([...current, ...gone])]);
-        }
+  const commitBag = useCallback(
+    (payload: CartSnapshot, mode: BagMemoryMode) => {
+      const next = snapshotOf(payload);
+      setCart(next);
+      const owner = ownerRef.current;
+      if (!owner) {
+        pendingSnapshot.current = payload;
+        return;
       }
-      known.current = slugs;
-      writeList(knownKey, slugs);
-      updateReleased((current) => {
-        const next = current.filter((slug) => !slugs.includes(slug));
-        return next.length === current.length ? current : next;
-      });
-      setCart({
-        slugs,
-        holds: payload.holds ?? {},
-        prices: payload.prices ?? {},
-      });
+      pendingSnapshot.current = null;
+      const resolved = resetBaseline.current ? "reset" : mode;
+      resetBaseline.current = false;
+      try {
+        const memory = reconcileBagBaseline(
+          readBagMemory(window.localStorage),
+          owner,
+          next.slugs,
+          next.pendingOrders ?? [],
+          resolved,
+        );
+        writeBagMemory(window.localStorage, memory);
+        setReleased(memory.released);
+      } catch {
+        /* private mode */
+      }
     },
-    [updateReleased],
+    [],
   );
 
-  const load = useCallback(
-    () =>
+  const load = useCallback(() => {
+    const epoch = ownerEpoch.current;
+    return enqueue(() =>
       api<CartSnapshot>("/cart")
         .then((payload) => {
-          apply(payload, true);
+          if (epoch !== ownerEpoch.current) return;
+          commitBag(payload, "detect");
           setLoaded(true);
           setLoadError(false);
         })
@@ -126,26 +130,71 @@ export function CartProvider({ children }: { children: ReactNode }) {
           setLoadError(true);
         })
         .finally(() => setReady(true)),
-    [apply],
-  );
+    );
+  }, [commitBag, enqueue]);
+
+  useEffect(() => {
+    if (!sessionReady) return;
+    const nextOwner = visitorOwner(user?.id, browserGuestId());
+    const adopted = adoptVisitor(
+      {
+        owner: ownerRef.current,
+        epoch: ownerEpoch.current,
+        resetBaseline: resetBaseline.current,
+      },
+      nextOwner,
+    );
+    ownerRef.current = adopted.clock.owner;
+    ownerEpoch.current = adopted.clock.epoch;
+    resetBaseline.current = adopted.clock.resetBaseline;
+    if (adopted.reload) {
+      pendingSnapshot.current = null;
+      setReleased([]);
+      void load();
+    }
+    const pending = pendingSnapshot.current;
+    if (pending && nextOwner) commitBag(pending, "detect");
+  }, [sessionReady, user?.id, commitBag, load]);
 
   useEffect(() => {
     void load();
-    const onSession = () => {
-      // A different owner's bag: nothing was "released", the baseline just changed.
-      known.current = null;
-      writeList(knownKey, null);
-      updateReleased(() => []);
+    const onSession = (event: Event) => {
+      const owner = sessionOwnerFromEvent(
+        event instanceof CustomEvent ? event.detail : undefined,
+        browserGuestId(),
+      );
+      if (owner.known) {
+        // The previous visitor's baseline must not explain this bag.
+        ownerEpoch.current += 1;
+        ownerRef.current = owner.owner;
+        resetBaseline.current = true;
+        pendingSnapshot.current = null;
+        setReleased([]);
+      }
       void load();
     };
     const onOnline = () => void load();
+    const onShow = () => {
+      // `pageshow` covers a Safari bfcache restore, which does not remount React.
+      if (!shouldReloadBagOnPageShow()) return;
+      void load().then(() => refreshCatalog());
+    };
+    const onVisible = () => {
+      if (document.visibilityState === "visible") {
+        void load().then(() => refreshCatalog());
+      }
+    };
     window.addEventListener("rad:session", onSession);
     window.addEventListener("online", onOnline);
+    window.addEventListener("pageshow", onShow);
+    document.addEventListener("visibilitychange", onVisible);
     return () => {
       window.removeEventListener("rad:session", onSession);
       window.removeEventListener("online", onOnline);
+      window.removeEventListener("pageshow", onShow);
+      document.removeEventListener("visibilitychange", onVisible);
     };
-  }, [load, updateReleased]);
+  }, [load, refreshCatalog]);
 
   const holdEndsAt = useMemo(() => {
     const deadlines = Object.values(cart.holds);
@@ -169,8 +218,20 @@ export function CartProvider({ children }: { children: ReactNode }) {
       holds: cart.holds,
       prices: cart.prices ?? {},
       holdEndsAt,
+      pendingOrders: cart.pendingOrders ?? [],
       released,
-      dismissReleased: () => updateReleased(() => []),
+      dismissReleased: () => {
+        setReleased([]);
+        const owner = ownerRef.current;
+        if (!owner) return;
+        try {
+          const memory = readBagMemory(window.localStorage);
+          if (!memory || memory.owner !== owner) return;
+          writeBagMemory(window.localStorage, { ...memory, released: [] });
+        } catch {
+          /* private mode */
+        }
+      },
       ready,
       loaded,
       loadError,
@@ -181,26 +242,41 @@ export function CartProvider({ children }: { children: ReactNode }) {
         // No optimistic flip here: `has(slug)`/`count` must only ever reflect
         // a confirmed server snapshot, so the UI can never read "added"
         // while the request is still in flight or has actually failed
-        // (e.g. a 5xx from the API) — only `apply()` on real success moves
-        // the needle.
-        apply(
-          await api<CartSnapshot>("/cart/items", {
-            method: "POST",
-            body: JSON.stringify({ slug }),
-          }),
+        // (e.g. a 5xx from the API).
+        const applied = await runQueuedCartMutation(
+          enqueue,
+          ownerEpoch.current,
+          () => ownerEpoch.current,
+          () =>
+            api<CartSnapshot>("/cart/items", {
+              method: "POST",
+              body: JSON.stringify({ slug }),
+            }),
+          (payload) => commitBag(payload, "keep"),
         );
+        if (!applied) return false;
         void refreshCatalog();
         return true;
       },
       remove: async (slug) => {
-        apply(
-          await api<CartSnapshot>(`/cart/items/${slug}`, { method: "DELETE" }),
+        const applied = await runQueuedCartMutation(
+          enqueue,
+          ownerEpoch.current,
+          () => ownerEpoch.current,
+          () => api<CartSnapshot>(`/cart/items/${slug}`, { method: "DELETE" }),
+          (payload) => commitBag(payload, "keep"),
         );
-        void refreshCatalog();
+        if (applied) void refreshCatalog();
       },
       clear: async () => {
-        apply(await api<CartSnapshot>("/cart", { method: "DELETE" }));
-        void refreshCatalog();
+        const applied = await runQueuedCartMutation(
+          enqueue,
+          ownerEpoch.current,
+          () => ownerEpoch.current,
+          () => api<CartSnapshot>("/cart", { method: "DELETE" }),
+          (payload) => commitBag(payload, "keep"),
+        );
+        if (applied) void refreshCatalog();
       },
       has: (slug) => cart.slugs.includes(slug),
       count: cart.slugs.length,
@@ -213,9 +289,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
       loaded,
       loadError,
       load,
-      apply,
+      commitBag,
+      enqueue,
       refreshCatalog,
-      updateReleased,
     ],
   );
 

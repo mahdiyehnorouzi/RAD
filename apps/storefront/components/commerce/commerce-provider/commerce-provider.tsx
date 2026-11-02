@@ -44,6 +44,7 @@ type CommerceContextValue = {
     password: string;
   }) => Promise<void>;
   logout: () => Promise<void>;
+  updateProfile: (input: { name: string; phone: string }) => Promise<AuthUser>;
   favorites: string[];
   toggleFavorite: (slug: string) => Promise<void>;
   isFavorite: (slug: string) => boolean;
@@ -76,6 +77,10 @@ const CommerceContext = createContext<CommerceContextValue | null>(null);
 
 const NOTICE_POLL_MS = 30_000;
 const FAVORITES_CACHE_KEY = "rad.favorites.cache";
+
+function publishSession(userId: string | null) {
+  window.dispatchEvent(new CustomEvent("rad:session", { detail: { userId } }));
+}
 
 function upsertOrder(orders: Order[], order: Order) {
   return orders.some((item) => item.id === order.id)
@@ -167,10 +172,11 @@ export function CommerceProvider({ children }: { children: React.ReactNode }) {
   }, [loadOrders]);
 
   const syncSession = async () => {
-    applySession(await api<SessionState>("/session"));
+    const session = await api<SessionState>("/session");
+    applySession(session);
     if (ordersWanted.current) await loadOrders();
     else setOrders([]);
-    window.dispatchEvent(new Event("rad:session"));
+    publishSession(session.user?.id ?? null);
   };
 
   useEffect(() => {
@@ -242,6 +248,14 @@ export function CommerceProvider({ children }: { children: React.ReactNode }) {
         setUser(null);
         await syncSession();
       },
+      updateProfile: async (input) => {
+        const result = await api<{ user: AuthUser }>("/auth/profile", {
+          method: "PATCH",
+          body: JSON.stringify(input),
+        });
+        setUser(result.user);
+        return result.user;
+      },
       favorites,
       toggleFavorite: async (slug) => {
         const payload = await api<{ slugs: string[]; added: boolean }>(
@@ -284,7 +298,7 @@ export function CommerceProvider({ children }: { children: React.ReactNode }) {
         });
         setOrders((current) => upsertOrder(current, created));
         await refresh();
-        window.dispatchEvent(new Event("rad:session"));
+        publishSession(user?.id ?? null);
         return created;
       },
       // Every order-affecting action resyncs the cart the same way placeOrder
@@ -298,7 +312,7 @@ export function CommerceProvider({ children }: { children: React.ReactNode }) {
         });
         setOrders((current) => upsertOrder(current, updated));
         await refresh();
-        window.dispatchEvent(new Event("rad:session"));
+        publishSession(user?.id ?? null);
         return updated;
       },
       verifyPayment: async (id, input) => {
@@ -308,7 +322,7 @@ export function CommerceProvider({ children }: { children: React.ReactNode }) {
         });
         setOrders((current) => upsertOrder(current, updated));
         await refresh();
-        window.dispatchEvent(new Event("rad:session"));
+        publishSession(user?.id ?? null);
         return updated;
       },
       retryPayment: async (id) => {
@@ -317,7 +331,7 @@ export function CommerceProvider({ children }: { children: React.ReactNode }) {
         });
         setOrders((current) => upsertOrder(current, updated));
         await refresh();
-        window.dispatchEvent(new Event("rad:session"));
+        publishSession(user?.id ?? null);
         return updated;
       },
       cancelOrder: async (id) => {
@@ -326,7 +340,7 @@ export function CommerceProvider({ children }: { children: React.ReactNode }) {
         });
         setOrders((current) => upsertOrder(current, updated));
         await refresh();
-        window.dispatchEvent(new Event("rad:session"));
+        publishSession(user?.id ?? null);
         return updated;
       },
       reviews,

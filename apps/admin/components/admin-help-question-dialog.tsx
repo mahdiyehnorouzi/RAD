@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { createSingleFlight } from "../lib/admin-mutation";
 import { POLICY_SLUGS, type PolicySlug } from "@rad/types";
 import {
   policyTitleLabels,
@@ -39,32 +40,55 @@ export function AdminHelpQuestionDialog({
   onSave: (input: HelpQuestionInput) => Promise<void>;
 }) {
   const [draft, setDraft] = useState(() => toDraft(question));
-  const [errors, setErrors] = useState<Partial<Record<keyof Draft, string>>>({});
+  const [errors, setErrors] = useState<Partial<Record<keyof Draft, string>>>(
+    {},
+  );
+  const [submitError, setSubmitError] = useState("");
   const [saving, setSaving] = useState(false);
-  const set = (key: keyof Draft) => (
-    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
-  ) => setDraft({ ...draft, [key]: event.target.value });
+  const saveFlight = useRef(createSingleFlight());
+  const set =
+    (key: keyof Draft) =>
+    (
+      event: React.ChangeEvent<
+        HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+      >,
+    ) =>
+      setDraft({ ...draft, [key]: event.target.value });
 
   const submit = async (event: React.FormEvent) => {
     event.preventDefault();
     const next: typeof errors = {};
-    if (!draft.questionFa.trim()) next.questionFa = "متن فارسی سؤال را بنویسید.";
-    if (!draft.questionEn.trim()) next.questionEn = "متن انگلیسی سؤال را بنویسید.";
+    if (!draft.questionFa.trim())
+      next.questionFa = "متن فارسی سؤال را بنویسید.";
+    if (!draft.questionEn.trim())
+      next.questionEn = "متن انگلیسی سؤال را بنویسید.";
     if (!draft.answerFa.trim()) next.answerFa = "جواب فارسی را بنویسید.";
     if (!draft.answerEn.trim()) next.answerEn = "جواب انگلیسی را بنویسید.";
     if (draft.section && !/^[a-z0-9-]+$/.test(draft.section.trim()))
       next.section = "فقط حروف انگلیسی کوچک، عدد و خط تیره.";
     setErrors(next);
     if (Object.keys(next).length) return;
-    setSaving(true);
-    await onSave({
-      question: { fa: draft.questionFa, en: draft.questionEn },
-      answer: { fa: draft.answerFa, en: draft.answerEn },
-      more: draft.slug
-        ? { slug: draft.slug, section: draft.section.trim() || undefined }
-        : undefined,
+    setSubmitError("");
+    void saveFlight.current.run(async () => {
+      setSaving(true);
+      try {
+        await onSave({
+          question: { fa: draft.questionFa, en: draft.questionEn },
+          answer: { fa: draft.answerFa, en: draft.answerEn },
+          more: draft.slug
+            ? { slug: draft.slug, section: draft.section.trim() || undefined }
+            : undefined,
+        });
+      } catch (caught) {
+        setSubmitError(
+          caught instanceof Error && caught.message
+            ? caught.message
+            : "ذخیره نشد. متن‌ها سر جایشان است. دوباره تلاش کنید.",
+        );
+      } finally {
+        setSaving(false);
+      }
     });
-    setSaving(false);
   };
 
   return (
@@ -127,12 +151,17 @@ export function AdminHelpQuestionDialog({
             />
           </Field>
         </div>
+        {submitError ? (
+          <p className="admin-inline-error" role="alert">
+            {submitError}
+          </p>
+        ) : null}
         <div className="dialog-actions">
           <button className="secondary-action" type="button" onClick={onClose}>
             انصراف
           </button>
           <button className="primary-action" type="submit" disabled={saving}>
-            ذخیره
+            {saving ? "در حال ذخیره…" : "ذخیره"}
           </button>
         </div>
       </form>

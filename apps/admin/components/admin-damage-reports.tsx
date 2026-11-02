@@ -2,7 +2,10 @@
 
 import { useMemo, useState } from "react";
 import type { AdminDamageReport, AdminOrder } from "../lib/admin-data";
-import { AdminDamageReportItem, type DamageReview } from "./admin-damage-report";
+import {
+  AdminDamageReportItem,
+  type DamageReview,
+} from "./admin-damage-report";
 
 type Filter = "open" | "decided" | "all";
 
@@ -18,12 +21,18 @@ const isOpen = (report: AdminDamageReport) =>
 /** Transit-damage claims from order pages; each also appears on its order card. */
 export function AdminDamageReports({
   reports,
+  loading,
+  loadError,
+  onRetry,
   orders,
   canWrite,
   onReview,
   onOpenOrder,
 }: {
   reports: AdminDamageReport[];
+  loading: boolean;
+  loadError: boolean;
+  onRetry: () => void;
   orders: AdminOrder[];
   canWrite: boolean;
   onReview: (id: string, review: DamageReview) => Promise<boolean>;
@@ -41,8 +50,13 @@ export function AdminDamageReports({
   const visible =
     filter === "all"
       ? reports
-      : reports.filter((report) => (filter === "open" ? isOpen(report) : !isOpen(report)));
-  const orderById = useMemo(() => new Map(orders.map((order) => [order.id, order])), [orders]);
+      : reports.filter((report) =>
+          filter === "open" ? isOpen(report) : !isOpen(report),
+        );
+  const orderById = useMemo(
+    () => new Map(orders.map((order) => [order.id, order])),
+    [orders],
+  );
 
   return (
     <section className="paper-panel data-view">
@@ -50,13 +64,18 @@ export function AdminDamageReports({
         <div>
           <h2>گزارش‌های آسیب</h2>
           <p>
-            مشتری تا ۲۴ ساعت بعد از تحویل، با عکس جعبه و عکس آسیب گزارش می‌دهد. گزارش دیرتر هم
-            پذیرفته و علامت‌گذاری می‌شود. جبران: مرمت به دست سازنده یا بازگشت کامل مبلغ.
+            مشتری تا ۲۴ ساعت بعد از تحویل، با عکس جعبه و عکس آسیب گزارش می‌دهد.
+            گزارش دیرتر هم پذیرفته و علامت‌گذاری می‌شود. جبران: مرمت به دست
+            سازنده یا بازگشت کامل مبلغ.
           </p>
         </div>
       </div>
 
-      <div className="message-filters" role="group" aria-label="فیلتر گزارش‌های آسیب">
+      <div
+        className="message-filters"
+        role="group"
+        aria-label="فیلتر گزارش‌های آسیب"
+      >
         {filters.map(({ id, label }) => (
           <button
             key={id}
@@ -71,7 +90,19 @@ export function AdminDamageReports({
         ))}
       </div>
 
-      {visible.length ? (
+      {loadError ? (
+        <div className="auth-error-state">
+          <p>
+            دریافت گزارش‌های آسیب ناموفق بود. اتصال اینترنت را بررسی و دوباره
+            تلاش کنید.
+          </p>
+          <button className="primary-action" type="button" onClick={onRetry}>
+            تلاش دوباره
+          </button>
+        </div>
+      ) : loading ? (
+        <p className="admin-loading">در حال بارگذاری گزارش‌های آسیب…</p>
+      ) : visible.length ? (
         <div className="contact-message-list">
           {visible.map((report) => (
             <AdminDamageReportItem
@@ -86,7 +117,9 @@ export function AdminDamageReports({
         </div>
       ) : (
         <p className="contact-message-empty">
-          {filter === "open" ? "گزارش بازی نیست." : "هنوز گزارشی در این دسته نیست."}
+          {filter === "open"
+            ? "گزارش بازی نیست."
+            : "هنوز گزارشی در این دسته نیست."}
         </p>
       )}
     </section>

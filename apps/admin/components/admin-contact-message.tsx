@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { createSingleFlight } from "../lib/admin-mutation";
 import { AlertTriangle, Check, Mail, Phone, RotateCcw } from "lucide-react";
 import {
   contactSourceLabels,
@@ -42,24 +43,48 @@ export function AdminContactMessageItem({
   const [busy, setBusy] = useState(false);
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
+  const [actionError, setActionError] = useState("");
+  const statusFlight = useRef(createSingleFlight());
+  const replyFlight = useRef(createSingleFlight());
   const isEmail = message.contact.includes("@");
   const resolved = message.status === "resolved";
 
-  const toggle = async () => {
-    setBusy(true);
-    await onSetStatus(message.id, resolved ? "new" : "resolved");
-    setBusy(false);
+  const toggle = () => {
+    void statusFlight.current.run(async () => {
+      setBusy(true);
+      setActionError("");
+      try {
+        await onSetStatus(message.id, resolved ? "new" : "resolved");
+      } catch (error) {
+        setActionError(
+          error instanceof Error && error.message
+            ? error.message
+            : "ثبت وضعیت پیام ناموفق بود. دوباره تلاش کنید.",
+        );
+      } finally {
+        setBusy(false);
+      }
+    });
   };
 
-  const sendReply = async () => {
-    if (!onReply || !draft.trim()) return;
-    setSending(true);
-    try {
-      await onReply(message.id, draft.trim());
-      setDraft("");
-    } finally {
-      setSending(false);
-    }
+  const sendReply = () => {
+    if (!onReply || !draft.trim() || sending) return;
+    void replyFlight.current.run(async () => {
+      setSending(true);
+      setActionError("");
+      try {
+        await onReply(message.id, draft.trim());
+        setDraft("");
+      } catch (error) {
+        setActionError(
+          error instanceof Error && error.message
+            ? error.message
+            : "ارسال پاسخ ناموفق بود. متن پیام حفظ شده است.",
+        );
+      } finally {
+        setSending(false);
+      }
+    });
   };
 
   return (
@@ -170,6 +195,11 @@ export function AdminContactMessageItem({
           </button>
         ) : null}
       </footer>
+      {actionError ? (
+        <p className="admin-inline-error" role="alert">
+          {actionError}
+        </p>
+      ) : null}
     </article>
   );
 }

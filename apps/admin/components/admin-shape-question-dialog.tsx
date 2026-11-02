@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { createSingleFlight } from "../lib/admin-mutation";
 import { SHAPE_TRAITS } from "@rad/types";
 import {
   shapeTraitLabels,
@@ -48,6 +49,7 @@ export function AdminShapeQuestionDialog({
   );
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
+  const saveFlight = useRef(createSingleFlight());
 
   const setChoice = (
     index: 0 | 1,
@@ -78,9 +80,20 @@ export function AdminShapeQuestionDialog({
       return;
     }
     setError("");
-    setSaving(true);
-    await onSave(draft);
-    setSaving(false);
+    void saveFlight.current.run(async () => {
+      setSaving(true);
+      try {
+        await onSave(draft);
+      } catch (caught) {
+        setError(
+          caught instanceof Error && caught.message
+            ? caught.message
+            : "ذخیره نشد. متن‌ها سر جایشان است. دوباره تلاش کنید.",
+        );
+      } finally {
+        setSaving(false);
+      }
+    });
   };
 
   return (
@@ -291,7 +304,7 @@ export function AdminShapeQuestionDialog({
             انصراف
           </button>
           <button className="primary-action" type="submit" disabled={saving}>
-            ذخیره
+            {saving ? "در حال ذخیره…" : "ذخیره"}
           </button>
         </div>
       </form>

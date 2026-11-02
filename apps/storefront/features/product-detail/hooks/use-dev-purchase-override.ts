@@ -16,15 +16,45 @@ export function useDevPurchaseOverride(): Partial<PurchaseState> | null {
   const devState = params.get("__devState");
   switch (devState) {
     case "available":
-      return { inBag: false, reserved: false, withdrawn: false, sold: false };
+      return {
+        inBag: false,
+        reserved: false,
+        withdrawn: false,
+        sold: false,
+        ownOrderId: null,
+      };
     case "loading":
-      return { inBag: false, reserved: false, withdrawn: false, sold: false };
+      return {
+        inBag: false,
+        reserved: false,
+        withdrawn: false,
+        sold: false,
+        ownOrderId: null,
+      };
     case "added":
-      return { inBag: true, reserved: false, withdrawn: false, sold: false };
+      return {
+        inBag: true,
+        reserved: false,
+        withdrawn: false,
+        sold: false,
+        ownOrderId: null,
+      };
     case "sold":
-      return { inBag: false, reserved: false, withdrawn: false, sold: true };
+      return {
+        inBag: false,
+        reserved: false,
+        withdrawn: false,
+        sold: true,
+        ownOrderId: null,
+      };
     case "reserved":
-      return { inBag: false, reserved: true, withdrawn: false, sold: false };
+      return {
+        inBag: false,
+        reserved: true,
+        withdrawn: false,
+        sold: false,
+        ownOrderId: null,
+      };
     default:
       return null;
   }

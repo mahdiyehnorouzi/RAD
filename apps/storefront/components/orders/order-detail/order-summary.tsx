@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import {
   CalendarDays,
   ChevronLeft,
@@ -45,6 +46,23 @@ export function OrderSummary({
 }) {
   const { locale, t, number } = useLocale();
   const c = orderDetailCopy[locale];
+  const [copyState, setCopyState] = useState<"idle" | "copied" | "error">(
+    "idle",
+  );
+  const timer = useRef<number | undefined>(undefined);
+  useEffect(() => () => window.clearTimeout(timer.current), []);
+  const payableDigits = String(order.payment?.amount ?? total);
+
+  async function copyAmount() {
+    window.clearTimeout(timer.current);
+    try {
+      await navigator.clipboard.writeText(payableDigits);
+      setCopyState("copied");
+      timer.current = window.setTimeout(() => setCopyState("idle"), 2500);
+    } catch {
+      setCopyState("error");
+    }
+  }
   const tone = ORDER_STATUS_TONE[order.status];
   const StatusIcon = TONE_ICON[tone];
   const Forward = locale === "fa" ? ChevronLeft : ChevronRight;
@@ -129,10 +147,38 @@ export function OrderSummary({
               <Icon aria-hidden="true" />
               {label}
             </dt>
-            <dd dir={ltr ? "ltr" : undefined}>{value}</dd>
+            {label === t("orderTotal") ? (
+              <dd className="track-amount">
+                <span>{value}</span>
+                <button
+                  type="button"
+                  className="track-amount-copy"
+                  data-state={copyState}
+                  onClick={() => void copyAmount()}
+                >
+                  {copyState === "error"
+                    ? c.copyFailed
+                    : copyState === "copied"
+                      ? c.copied
+                      : c.copyAmount}
+                </button>
+              </dd>
+            ) : (
+              <dd dir={ltr ? "ltr" : undefined}>{value}</dd>
+            )}
           </div>
         ))}
       </dl>
+      <p
+        className="track-amount-live"
+        role={copyState === "error" ? "alert" : "status"}
+      >
+        {copyState === "copied"
+          ? c.copied
+          : copyState === "error"
+            ? c.copyFailed
+            : ""}
+      </p>
 
       <a className="track-cta" href={progressHref}>
         <span>{c.viewProgress}</span>
