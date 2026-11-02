@@ -50,8 +50,42 @@ export function visitorOwner(
   return null;
 }
 
-export type SessionOwner =
-  { known: false } | { known: true; owner: string | null };
+type SessionOwner = { known: false } | { known: true; owner: string | null };
+
+type VisitorClock = {
+  owner: string | null;
+  epoch: number;
+  resetBaseline: boolean;
+};
+
+/**
+ * Records the next visitor before any reload is started. The first time we
+ * learn who this is, the in-flight read stays valid. A real change bumps
+ * the epoch so a snapshot from the previous visitor is dropped.
+ */
+export function adoptVisitor(
+  current: VisitorClock,
+  nextOwner: string | null,
+): { clock: VisitorClock; reload: boolean } {
+  if (current.owner && current.owner !== nextOwner) {
+    return {
+      clock: {
+        owner: nextOwner,
+        epoch: current.epoch + 1,
+        resetBaseline: true,
+      },
+      reload: true,
+    };
+  }
+  return {
+    clock: {
+      owner: nextOwner,
+      epoch: current.epoch,
+      resetBaseline: current.resetBaseline,
+    },
+    reload: false,
+  };
+}
 
 /** `rad:session` carries the visitor id. Events without that detail are ignored. */
 export function sessionOwnerFromEvent(
@@ -92,7 +126,32 @@ export function createCartQueue() {
   };
 }
 
-export type BagMemory = {
+/**
+ * Runs a bag mutation only if it still belongs to the session that requested
+ * it. The check happens before the request, so a login, logout, or account
+ * switch that landed while this was queued cannot write the new visitor's cart.
+ * A request already on the wire keeps the cookie it started with; its body
+ * is still ignored if the session changed before the response.
+ */
+export async function runQueuedCartMutation<T>(
+  enqueue: <R>(task: () => Promise<R>) => Promise<R>,
+  epochAtIssue: number,
+  currentEpoch: () => number,
+  perform: () => Promise<T>,
+  apply: (value: T) => void,
+): Promise<boolean> {
+  let applied = false;
+  await enqueue(async () => {
+    if (!isCurrentCartEpoch(epochAtIssue, currentEpoch())) return;
+    const value = await perform();
+    if (!isCurrentCartEpoch(epochAtIssue, currentEpoch())) return;
+    apply(value);
+    applied = true;
+  });
+  return applied;
+}
+
+type BagMemory = {
   owner: string;
   slugs: string[];
   released: string[];

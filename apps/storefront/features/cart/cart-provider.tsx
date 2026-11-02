@@ -16,10 +16,11 @@ import { browserGuestId } from "@/lib/api/guest-id";
 import { useCommerce } from "@/components/commerce";
 import { useCatalogRefresh } from "@/hooks/use-catalog-refresh";
 import {
+  adoptVisitor,
   createCartQueue,
-  isCurrentCartEpoch,
   readBagMemory,
   reconcileBagBaseline,
+  runQueuedCartMutation,
   sessionOwnerFromEvent,
   shouldReloadBagOnPageShow,
   visitorOwner,
@@ -119,7 +120,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     return enqueue(() =>
       api<CartSnapshot>("/cart")
         .then((payload) => {
-          if (!isCurrentCartEpoch(epoch, ownerEpoch.current)) return;
+          if (epoch !== ownerEpoch.current) return;
           commitBag(payload, "detect");
           setLoaded(true);
           setLoadError(false);
@@ -135,14 +136,22 @@ export function CartProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!sessionReady) return;
     const nextOwner = visitorOwner(user?.id, browserGuestId());
-    if (ownerRef.current && ownerRef.current !== nextOwner) {
-      ownerEpoch.current += 1;
-      resetBaseline.current = true;
+    const adopted = adoptVisitor(
+      {
+        owner: ownerRef.current,
+        epoch: ownerEpoch.current,
+        resetBaseline: resetBaseline.current,
+      },
+      nextOwner,
+    );
+    ownerRef.current = adopted.clock.owner;
+    ownerEpoch.current = adopted.clock.epoch;
+    resetBaseline.current = adopted.clock.resetBaseline;
+    if (adopted.reload) {
       pendingSnapshot.current = null;
       setReleased([]);
       void load();
     }
-    ownerRef.current = nextOwner;
     const pending = pendingSnapshot.current;
     if (pending && nextOwner) commitBag(pending, "detect");
   }, [sessionReady, user?.id, commitBag, load]);
@@ -230,43 +239,44 @@ export function CartProvider({ children }: { children: ReactNode }) {
       add: async (product) => {
         if (!isPurchasableStatus(product.status)) return false;
         const slug = product.slug;
-        const epoch = ownerEpoch.current;
         // No optimistic flip here: `has(slug)`/`count` must only ever reflect
         // a confirmed server snapshot, so the UI can never read "added"
         // while the request is still in flight or has actually failed
         // (e.g. a 5xx from the API).
-        await enqueue(async () => {
-          const payload = await api<CartSnapshot>("/cart/items", {
-            method: "POST",
-            body: JSON.stringify({ slug }),
-          });
-          if (!isCurrentCartEpoch(epoch, ownerEpoch.current)) return;
-          commitBag(payload, "keep");
-        });
+        const applied = await runQueuedCartMutation(
+          enqueue,
+          ownerEpoch.current,
+          () => ownerEpoch.current,
+          () =>
+            api<CartSnapshot>("/cart/items", {
+              method: "POST",
+              body: JSON.stringify({ slug }),
+            }),
+          (payload) => commitBag(payload, "keep"),
+        );
+        if (!applied) return false;
         void refreshCatalog();
         return true;
       },
       remove: async (slug) => {
-        const epoch = ownerEpoch.current;
-        await enqueue(async () => {
-          const payload = await api<CartSnapshot>(`/cart/items/${slug}`, {
-            method: "DELETE",
-          });
-          if (!isCurrentCartEpoch(epoch, ownerEpoch.current)) return;
-          commitBag(payload, "keep");
-        });
-        void refreshCatalog();
+        const applied = await runQueuedCartMutation(
+          enqueue,
+          ownerEpoch.current,
+          () => ownerEpoch.current,
+          () => api<CartSnapshot>(`/cart/items/${slug}`, { method: "DELETE" }),
+          (payload) => commitBag(payload, "keep"),
+        );
+        if (applied) void refreshCatalog();
       },
       clear: async () => {
-        const epoch = ownerEpoch.current;
-        await enqueue(async () => {
-          const payload = await api<CartSnapshot>("/cart", {
-            method: "DELETE",
-          });
-          if (!isCurrentCartEpoch(epoch, ownerEpoch.current)) return;
-          commitBag(payload, "keep");
-        });
-        void refreshCatalog();
+        const applied = await runQueuedCartMutation(
+          enqueue,
+          ownerEpoch.current,
+          () => ownerEpoch.current,
+          () => api<CartSnapshot>("/cart", { method: "DELETE" }),
+          (payload) => commitBag(payload, "keep"),
+        );
+        if (applied) void refreshCatalog();
       },
       has: (slug) => cart.slugs.includes(slug),
       count: cart.slugs.length,

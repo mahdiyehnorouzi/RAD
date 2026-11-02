@@ -2,11 +2,13 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import type { CartPendingOrder } from "@rad/types";
 import {
+  adoptVisitor,
   createCartQueue,
   isCurrentCartEpoch,
   pendingOrderForSlug,
   readBagMemory,
   reconcileBagBaseline,
+  runQueuedCartMutation,
   sessionOwnerFromEvent,
   shouldReloadBagOnPageShow,
   slugsThatLeftBag,
@@ -118,6 +120,134 @@ test("a session change drops the previous released list", () => {
 test("a cart response from an older session is not current", () => {
   assert.equal(isCurrentCartEpoch(1, 1), true);
   assert.equal(isCurrentCartEpoch(1, 2), false);
+});
+
+test("learning the visitor does not retire the read already in flight", () => {
+  const adopted = adoptVisitor(
+    { owner: null, epoch: 0, resetBaseline: false },
+    "user:1",
+  );
+  assert.equal(adopted.reload, false);
+  assert.equal(adopted.clock.owner, "user:1");
+  assert.equal(adopted.clock.epoch, 0);
+});
+
+test("a visitor change is stored before a reload would start", () => {
+  const adopted = adoptVisitor(
+    { owner: "guest:old", epoch: 2, resetBaseline: false },
+    "user:new",
+  );
+  assert.equal(adopted.reload, true);
+  assert.deepEqual(adopted.clock, {
+    owner: "user:new",
+    epoch: 3,
+    resetBaseline: true,
+  });
+});
+
+test("the same visitor keeps the epoch, including a baseline reset already requested", () => {
+  const adopted = adoptVisitor(
+    { owner: "user:new", epoch: 3, resetBaseline: true },
+    "user:new",
+  );
+  assert.equal(adopted.reload, false);
+  assert.equal(adopted.clock.epoch, 3);
+  assert.equal(adopted.clock.resetBaseline, true);
+});
+
+test("a mutation waiting behind another request is not sent after the session changes", async () => {
+  const enqueue = createCartQueue();
+  let epoch = 1;
+  const calls: string[] = [];
+  let release!: () => void;
+  const blocking = enqueue(
+    () =>
+      new Promise<void>((resolve) => {
+        release = resolve;
+      }),
+  );
+  const stale = runQueuedCartMutation(
+    enqueue,
+    epoch,
+    () => epoch,
+    async () => {
+      calls.push("stale-request");
+    },
+    () => {
+      calls.push("stale-apply");
+    },
+  );
+  epoch += 1;
+  epoch += 1;
+  const current = runQueuedCartMutation(
+    enqueue,
+    epoch,
+    () => epoch,
+    async () => {
+      calls.push("current-request");
+      return "ok";
+    },
+    () => {
+      calls.push("current-apply");
+    },
+  );
+  await Promise.resolve();
+  release();
+  await blocking;
+  assert.equal(await stale, false);
+  assert.equal(await current, true);
+  assert.deepEqual(calls, ["current-request", "current-apply"]);
+});
+
+test("a request already sent is not applied after a session change, and a failure does not block the next one", async () => {
+  const enqueue = createCartQueue();
+  let epoch = 1;
+  let applied = "";
+  let release!: () => void;
+  const inFlight = runQueuedCartMutation(
+    enqueue,
+    epoch,
+    () => epoch,
+    () =>
+      new Promise<string>((resolve) => {
+        release = () => {
+          epoch += 1;
+          resolve("old");
+        };
+      }),
+    (value) => {
+      applied = value;
+    },
+  );
+  await Promise.resolve();
+  release();
+  assert.equal(await inFlight, false);
+  assert.equal(applied, "");
+
+  await assert.rejects(
+    runQueuedCartMutation(
+      enqueue,
+      epoch,
+      () => epoch,
+      () => Promise.reject(new Error("offline")),
+      () => {
+        applied = "failed";
+      },
+    ),
+  );
+  assert.equal(
+    await runQueuedCartMutation(
+      enqueue,
+      epoch,
+      () => epoch,
+      async () => "fresh",
+      (value) => {
+        applied = value;
+      },
+    ),
+    true,
+  );
+  assert.equal(applied, "fresh");
 });
 
 test("cart tasks run one at a time and a failure does not block the next snapshot", async () => {
