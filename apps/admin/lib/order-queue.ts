@@ -61,6 +61,29 @@ export function foldSearchText(value: string) {
     .trim();
 }
 
+/**
+ * Early, carrier-agnostic feedback only — a UI mirror of the API's
+ * `normalizeTrackingNumber` (4-32 Latin letters/digits after stripping
+ * spaces/dashes and folding Persian/Arabic digits). The API remains the
+ * authority (ADR-006); this never blocks a submit the API would accept, it
+ * only lets staff see the problem before the round trip. Returns `null`
+ * when the field is empty (tracking codes are optional) or looks valid.
+ */
+export function trackingCodeHint(raw: string): string | null {
+  const persian = "۰۱۲۳۴۵۶۷۸۹";
+  const arabic = "٠١٢٣٤٥٦٧٨٩";
+  const trimmed = raw.trim();
+  if (!trimmed) return null;
+  const normalized = trimmed
+    .replace(/[۰-۹]/g, (digit) => String(persian.indexOf(digit)))
+    .replace(/[٠-٩]/g, (digit) => String(arabic.indexOf(digit)))
+    .replace(/[\s-]/g, "")
+    .toUpperCase();
+  return /^[A-Z0-9]{4,32}$/.test(normalized)
+    ? null
+    : "کد رهگیری باید ۴ تا ۳۲ رقم یا حرف لاتین باشد.";
+}
+
 function orderHaystack(order: AdminOrder) {
   const rads = order.products.flatMap((product) => {
     if (product.radNumber == null) return [product.slug, product.name];

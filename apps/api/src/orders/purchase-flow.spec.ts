@@ -668,4 +668,131 @@ describe("E2E purchase (card-to-card)", () => {
       },
     );
   });
+
+  describe("Issue #145: admin shipment tracking-code validation", () => {
+    /** Product → checkout → receipt → admin approve → `confirmed` order. */
+    async function confirmedOrder(tag: string) {
+      const slug = await rad.product();
+      const buyer = rad.buyer(tag);
+      const order = await rad.placeOrder(buyer, slug);
+      await rad.orders.confirmPayment(buyer, order.id, {
+        receiptImage: rad.receipt(),
+      });
+      await rad.admin.approvePayment(order.id, "staff-1");
+      return order.id;
+    }
+
+    function assertTrackingInvalid(error: unknown) {
+      assert.ok(error instanceof BadRequestException);
+      const body = error.getResponse();
+      assert.equal(
+        typeof body === "object" && body !== null
+          ? (body as { code?: string }).code
+          : undefined,
+        "tracking_invalid",
+      );
+      return true;
+    }
+
+    test("a numeric tracking code is accepted and persisted as-is", async () => {
+      const id = await confirmedOrder("tracking-numeric");
+      const saved = await rad.admin.updateOrder(id, {
+        status: "shipped",
+        trackingCode: "123456789012",
+      });
+      assert.equal(saved.trackingCode, "123456789012");
+    });
+
+    test("an alphanumeric carrier tracking code (with dashes) is accepted and normalized", async () => {
+      const id = await confirmedOrder("tracking-alnum");
+      const saved = await rad.admin.updateOrder(id, {
+        status: "shipped",
+        trackingCode: "IR-POST-123456789",
+      });
+      assert.equal(saved.trackingCode, "IRPOST123456789");
+    });
+
+    test("an existing lowercase/spaced tracking code format is still accepted (backward compatible)", async () => {
+      const id = await confirmedOrder("tracking-legacy-format");
+      const saved = await rad.admin.updateOrder(id, {
+        status: "shipped",
+        trackingCode: " rad post 9876 ",
+      });
+      assert.equal(saved.trackingCode, "RADPOST9876");
+    });
+
+    test("punctuation-only input such as `!!` is rejected with the tracking_invalid code", async () => {
+      const id = await confirmedOrder("tracking-punctuation");
+      await assert.rejects(
+        rad.admin.updateOrder(id, { status: "shipped", trackingCode: "!!" }),
+        assertTrackingInvalid,
+      );
+    });
+
+    test("whitespace-only input is treated as no tracking code (optional), not rejected", async () => {
+      const id = await confirmedOrder("tracking-whitespace");
+      const saved = await rad.admin.updateOrder(id, {
+        status: "packing",
+        trackingCode: "   ",
+      });
+      assert.equal(saved.status, "packing");
+      assert.equal(saved.trackingCode, undefined);
+    });
+
+    test("an empty tracking code at the shipped transition still gets an auto-generated code (optional field preserved)", async () => {
+      const id = await confirmedOrder("tracking-empty-shipped");
+      const saved = await rad.admin.updateOrder(id, { status: "shipped" });
+      assert.ok(saved.trackingCode, "a tracking code is auto-generated");
+    });
+
+    test("a too-short code (under 4 characters) is rejected", async () => {
+      const id = await confirmedOrder("tracking-too-short");
+      await assert.rejects(
+        rad.admin.updateOrder(id, { status: "shipped", trackingCode: "A1" }),
+        assertTrackingInvalid,
+      );
+    });
+
+    test("an excessively long code (over 32 normalized characters) is rejected", async () => {
+      const id = await confirmedOrder("tracking-too-long");
+      await assert.rejects(
+        rad.admin.updateOrder(id, {
+          status: "shipped",
+          trackingCode: "A".repeat(33),
+        }),
+        assertTrackingInvalid,
+      );
+    });
+
+    test("Persian digits in a tracking code are normalized to Latin digits", async () => {
+      const id = await confirmedOrder("tracking-persian-digits");
+      const saved = await rad.admin.updateOrder(id, {
+        status: "shipped",
+        trackingCode: "۱۲۳۴۵۶",
+      });
+      assert.equal(saved.trackingCode, "123456");
+    });
+
+    test("an invalid tracking code does not sneak through alongside a valid status transition", async () => {
+      const id = await confirmedOrder("tracking-no-partial-write");
+      await assert.rejects(
+        rad.admin.updateOrder(id, { status: "packing", trackingCode: "!!" }),
+        assertTrackingInvalid,
+      );
+      const unchanged = await rad.adminOrder(id);
+      assert.equal(unchanged.status, "confirmed");
+      assert.equal(unchanged.trackingCode, undefined);
+    });
+
+    test("an invalid status transition is still rejected even with a valid tracking code (unaffected by this change)", async () => {
+      const id = await confirmedOrder("tracking-bad-transition");
+      await assert.rejects(
+        rad.admin.updateOrder(id, {
+          status: "delivered",
+          trackingCode: "VALIDCODE1",
+        }),
+        BadRequestException,
+      );
+    });
+  });
 });
