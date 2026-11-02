@@ -42,19 +42,12 @@ import { passwordChangeError } from "../lib/password-change";
 import {
   commissionStageLabels,
   isVideoStorage,
-  orderStatusLabels,
-  orderStatusOptions,
-  orderStatusProgress,
-  isTerminalOrderStatus,
   productStatusLabel,
   productStatusLabels,
   productStatusOptions,
   PRODUCT_CATEGORY_LABELS,
   roleLabels,
-  stageCountLabel,
   type AdminContactMessage,
-  type AdminDamageReport,
-  type AdminOrder,
   type AdminProduct,
   type AdminRemoteMediaStorage,
   type AdminSection,
@@ -62,12 +55,10 @@ import {
   type ProductAttributeValue,
 } from "../lib/admin-data";
 import { AdminCommissions } from "./admin-commissions";
-import { AdminOrderPayment } from "./admin-order-payment";
 import { AdminMessages } from "./admin-messages";
-import { AdminOrderMessages } from "./admin-order-messages";
 import { AdminDamageReports } from "./admin-damage-reports";
-import { AdminOrderDamage } from "./admin-order-damage";
-import { AdminOrderPolicies } from "./admin-order-policies";
+import { AdminOrders } from "./orders/admin-orders";
+import "./orders/admin-orders.css";
 import type { DamageReview } from "./admin-damage-report";
 import {
   ConfirmDialog,
@@ -93,7 +84,6 @@ import {
   selectAsCover,
   selectAsCoverBySrc,
 } from "../lib/product-cover";
-import { StageMeter } from "@rad/ui";
 
 const navItems: { id: AdminSection; label: string; icon: typeof Package }[] = [
   { id: "overview", label: "مرور استودیو", icon: LayoutDashboard },
@@ -115,11 +105,6 @@ const number = new Intl.NumberFormat("fa-IR");
 const money = (value: number) => `${number.format(value)} تومان`;
 const date = (value: number) =>
   new Intl.DateTimeFormat("fa-IR", { dateStyle: "medium" }).format(value);
-const dateTime = (value: number) =>
-  new Intl.DateTimeFormat("fa-IR", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(value);
 
 function parsePriceInput(raw: string) {
   const persian = "۰۱۲۳۴۵۶۷۸۹";
@@ -215,6 +200,7 @@ export function AdminDashboard() {
   const [deleteTarget, setDeleteTarget] = useState<AdminProduct | null>(null);
   const [inviteOpen, setInviteOpen] = useState(false);
   const [toast, setToast] = useState("");
+  const [focusOrderId, setFocusOrderId] = useState<string | null>(null);
 
   const announce = (message: string) => {
     setToast(message);
@@ -239,6 +225,7 @@ export function AdminDashboard() {
   }, [workspace.authStatus]);
 
   const openOrder = (orderId: string) => {
+    setFocusOrderId(orderId);
     go("orders");
     window.requestAnimationFrame(() => {
       document
@@ -452,8 +439,10 @@ export function AdminDashboard() {
           />
         )}
         {section === "orders" && (
-          <Orders
+          <AdminOrders
             orders={workspace.orders}
+            products={workspace.products}
+            focusOrderId={focusOrderId}
             loading={
               !workspace.loadedKeys.has("orders") &&
               !workspace.loadErrors.has("orders")
@@ -1254,214 +1243,6 @@ function ProductThumb({ product }: { product: AdminProduct }) {
       {cover?.src ? <img src={cover.src} alt="" /> : <Package />}
       <span>{number.format(product.images.length)} عکس</span>
     </div>
-  );
-}
-
-function Orders({
-  orders,
-  loading,
-  loadError,
-  onRetry,
-  messages,
-  onSetMessageStatus,
-  onReplyMessage,
-  damageReports,
-  onReviewDamage,
-  canWrite,
-  onChange,
-  onApprovePayment,
-  onRejectPayment,
-}: {
-  orders: AdminOrder[];
-  loading: boolean;
-  loadError: boolean;
-  onRetry: () => void;
-  messages: AdminContactMessage[];
-  onSetMessageStatus: (
-    id: string,
-    status: AdminContactMessage["status"],
-  ) => Promise<void>;
-  onReplyMessage: (id: string, body: string) => Promise<void>;
-  damageReports: AdminDamageReport[];
-  onReviewDamage: (id: string, review: DamageReview) => Promise<boolean>;
-  canWrite: boolean;
-  onChange: (order: AdminOrder) => void | Promise<void>;
-  onApprovePayment: (id: string) => Promise<boolean>;
-  onRejectPayment: (id: string, reason: string) => Promise<boolean>;
-}) {
-  return (
-    <section className="paper-panel data-view">
-      <div className="view-heading">
-        <div>
-          <span className="eyebrow">از ثبت تا تحویل</span>
-          <h2>سفارش‌های فروشگاه</h2>
-          <p>
-            این فهرست خرید آثار آماده است: پرداخت، بسته‌بندی و ارسال. ساخت
-            سفارشی در بخش سفارش اختصاصی است.
-          </p>
-        </div>
-      </div>
-      {loadError ? (
-        <div className="auth-error-state">
-          <p>
-            دریافت سفارش‌ها ناموفق بود. اتصال اینترنت را بررسی و دوباره تلاش
-            کنید.
-          </p>
-          <button className="primary-action" type="button" onClick={onRetry}>
-            تلاش دوباره
-          </button>
-        </div>
-      ) : loading ? (
-        <p className="admin-loading">در حال بارگذاری سفارش‌ها…</p>
-      ) : orders.length ? (
-        <div className="order-process-list">
-          {orders.map((order) => {
-            const terminal = isTerminalOrderStatus(order.status);
-            const progressIndex = orderStatusProgress.indexOf(order.status);
-            const current = terminal
-              ? orderStatusProgress.length - 1
-              : Math.max(0, progressIndex);
-            const nextStatus =
-              terminal || progressIndex < 0
-                ? undefined
-                : orderStatusProgress[progressIndex + 1];
-            const next = nextStatus ? orderStatusLabels[nextStatus] : undefined;
-            const awaitingReceiptReview =
-              order.status === "pending_verification";
-            // No automated process ever resolves these (see orders.service.ts
-            // retryGatewayPayment/verifyAndApplyGatewayResult): a gateway
-            // payment stuck here waits on the buyer's own retry, or forever
-            // if they never click it. Surface it the same way a manual-card
-            // receipt review is surfaced, so staff can find it without
-            // opening every order.
-            const awaitingGatewayReview =
-              order.paymentProvider === "zarinpal" &&
-              (order.paymentStatus === "verify_error" ||
-                order.paymentStatus === "verify_conflict");
-            const statusOptions = orderStatusOptions(order.status);
-            return (
-              <article
-                id={`order-${order.id}`}
-                className={`order-process-card${awaitingReceiptReview || awaitingGatewayReview ? " needs-receipt-review" : ""}${terminal ? " is-terminal" : ""}`}
-                key={order.id}
-              >
-                <header>
-                  <div>
-                    <strong>سفارش #{order.id}</strong>
-                    <small>{orderStatusLabels[order.status]}</small>
-                  </div>
-                  <div className="order-process-meta">
-                    <b>{order.productName}</b>
-                    <span>{money(order.amount)}</span>
-                  </div>
-                  <select
-                    value={order.status}
-                    disabled={!canWrite || statusOptions.length < 2}
-                    onChange={(event) =>
-                      onChange({
-                        ...order,
-                        status: event.target.value as AdminOrder["status"],
-                      })
-                    }
-                    aria-label={`وضعیت سفارش ${order.id}`}
-                  >
-                    {statusOptions.map((value) => (
-                      <option key={value} value={value}>
-                        {orderStatusLabels[value]}
-                      </option>
-                    ))}
-                  </select>
-                </header>
-                <dl className="order-facts">
-                  <div>
-                    <dt>مشتری</dt>
-                    <dd>{order.customer}</dd>
-                  </div>
-                  <div>
-                    <dt>تلفن</dt>
-                    <dd dir="ltr">
-                      {order.phone ? (
-                        <a href={`tel:${order.phone}`}>{order.phone}</a>
-                      ) : (
-                        "—"
-                      )}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt>اثر</dt>
-                    <dd>
-                      {order.products.map((product) => (
-                        <span key={product.slug}>
-                          {product.name}
-                          {product.radNumber
-                            ? ` · RAD/${String(product.radNumber).padStart(3, "0")}`
-                            : ""}
-                        </span>
-                      ))}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt>مبلغ</dt>
-                    <dd>{money(order.amount)}</dd>
-                  </div>
-                  <div>
-                    <dt>زمان ثبت</dt>
-                    <dd>{dateTime(order.createdAt)}</dd>
-                  </div>
-                  {order.deliveredAt ? (
-                    <div>
-                      <dt>تحویل</dt>
-                      <dd>{dateTime(order.deliveredAt)}</dd>
-                    </div>
-                  ) : null}
-                </dl>
-                <AdminOrderPayment
-                  order={order}
-                  canWrite={canWrite}
-                  onApprove={onApprovePayment}
-                  onReject={onRejectPayment}
-                />
-                <AdminOrderMessages
-                  messages={messages.filter(
-                    (message) => message.orderId === order.id,
-                  )}
-                  canWrite={canWrite}
-                  onSetStatus={onSetMessageStatus}
-                  onReply={onReplyMessage}
-                />
-                <AdminOrderDamage
-                  reports={damageReports.filter(
-                    (report) => report.orderId === order.id,
-                  )}
-                  canWrite={canWrite}
-                  onReview={onReviewDamage}
-                />
-                <AdminOrderPolicies order={order} />
-                <StageMeter
-                  index={current}
-                  total={orderStatusProgress.length}
-                  label={orderStatusLabels[order.status]}
-                  countLabel={
-                    terminal
-                      ? "شاخهٔ استثنایی"
-                      : stageCountLabel(current, orderStatusProgress.length)
-                  }
-                  kicker="وضعیت فعلی"
-                  nextKicker={next ? "مرحله بعد" : undefined}
-                  nextLabel={next}
-                  compact
-                />
-              </article>
-            );
-          })}
-        </div>
-      ) : (
-        <EmptyState
-          title="سفارشی در پایگاه داده نیست"
-          description="پس از ثبت سفارش فروشگاه، مسیر کارگاه اینجا دیده می‌شود."
-        />
-      )}
-    </section>
   );
 }
 
