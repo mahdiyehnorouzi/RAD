@@ -1,102 +1,92 @@
 ---
 name: rad-pr-review
 description: >-
-  Perform an independent, evidence-based review of a RAD pull request or
-  proposed diff for correctness, regression risk, architectural boundaries,
-  tests, security, and release safety. Use for PR review, code review,
-  pre-merge assessment, or review of an agent-generated patch.
+  Independent, evidence-based review of a RAD pull request or diff for
+  correctness, security, regressions, tests, and release safety. Use for
+  PR review, pre-merge assessment, or review of an agent-generated patch.
+  A review-only task does not approve, merge, deploy, or edit code.
 ---
 
 # RAD PR review
 
-## Applies to
+## What this skill owns
 
-Use for an independent review of a PR, commit series, or diff. Review-only
-by default: do **not** edit files, approve GitHub checks, push commits,
-merge, deploy, or mark a PR ready unless expressly authorized. Do not
-review your own patch as though the review were independent.
+This skill owns independent review and the findings report.
 
-## Establish the exact review target
+- `rad-safe-refactor` owns structural-refactor safety: readiness class, the characterization commit before the structural commit, and the freeze on transaction, lock, validation, and error-code boundaries. Check whether that procedure was followed. Do not restate it or run a refactor from this skill.
+- Test selection, characterization design, and the test-evidence report belong to `rad-testing` only when `.claude/skills/rad-testing/SKILL.md` is in the commit under review. Absence of that file is not a dependency and is not a finding. Apply [ADR-007](../../../docs/engineering/adr/adr-007-test-first-refactoring.md), root `AGENTS.md` §§3 and 10, and [task-to-PR](../../../docs/engineering/workflows/task-to-pr.md) directly.
+- Do not copy those procedures into the review.
 
-1. Record repository, PR URL/number, base/head branches and immutable head
-   SHA, worktree, status, draft status, and whether the PR is stacked.
-2. Inspect the full diff **against the actual PR base**, including changed
-   file list and relevant surrounding callers/consumers. Do not compare
-   every stacked PR against `main` and report inherited changes as new.
-3. Check `git status` before local read/validation; never overwrite
-   existing work. If GitHub access or file context is incomplete, say so.
-4. Read root and applicable app `AGENTS.md`, relevant ADRs and test scripts.
-   Treat PR description and author test claims as hypotheses to verify.
+## Review-only boundary
 
-## Review order
+On a review-only task, do not edit files, commit, push, approve a GitHub review, request reviewers, merge, deploy, retarget, or mark the PR ready. Do not treat your own patch as an independent review. A separate task that explicitly authorizes an update is not this review. This skill never grants permission to merge.
 
-1. **Behavior and product invariants:** intended change matches request;
-   check 1/1 product availability, cart holds, pricing authority, localized
-   Persian/RTL UI states, and complete user flows where touched.
-2. **Security and correctness:** authentication, authorization/ownership,
-   data validation, upload controls, secrets, SSR boundaries, API contracts,
-   handling of errors/retries, and client/server trust boundaries.
-3. **Transactions and concurrency:** ensure TypeORM transaction boundaries,
-   pessimistic locks, reservation windows, idempotency and gateway
-   verification are preserved when applicable. Never infer safety from
-   moving code alone.
-4. **Architecture and scope:** ADR-001 state ownership, ADR-002/003 admin
-   routing and features, ADR-004 incremental payment extraction, ADR-005
-   shared package boundaries, ADR-006 shared contracts, ADR-007 testing,
-   ADR-008 agent rules. Check actual current structure, not a proposed
-   architecture as though it already existed.
-5. **Tests:** confirm relevant baseline/characterization tests against
-   pre-change code when required, test quality and negative paths, CI and
-   exact command results. Consider missing coverage a finding, not proof
-   of failure. Inspect CI job logs when checks fail.
-6. **Release and scope:** unrelated edits, credentials, migrations,
-   generated artifacts, production impact and rollback. Preserve isolation
-   of `apps/Rad-App` and its own test system. New mirrored `rad-*` skills
-   must be identical across `.claude/skills`, `.agents/skills`, and
-   `.cursor/skills`.
+## Exact target
 
-## Severity and evidence
+1. Fetch. Record the repository, PR URL and number, draft state, GitHub base ref, **base SHA**, head ref, **head SHA**, and whether the PR is independent or stacked. Review those SHAs. A branch tip that moved after the fetch is a different target.
+2. Review the complete PR diff: `git diff <baseSha>...<headSha>` and the full changed-file list. Read callers and consumers the diff can affect. Name files you did not open.
+3. **Independent PR.** The default base is the latest `origin/main`. Review only that three-dot diff.
+4. **Stacked PR.** Review only changes reachable from `headSha` and not from the declared base SHA. Do not report the dependency's diff as findings of this PR. Confirm the declared base is still the dependency these commits need.
+5. A historical foundation branch, a base that is not that dependency, or a head that does not contain current `main` after the dependency has merged, is a merge-readiness finding. Report it. Do not retarget during a review-only task. A green check on an older SHA does not cover a new head.
+6. Read `git status --short` before any local command. Do not switch, reset, or commit on an unrelated worktree. If GitHub access or the diff is incomplete, say **not verified**.
 
-Report findings by severity:
+## What to read
 
-- **P0 Blocker:** immediately exploitable critical issue, destructive
-  production risk, or a clearly unsafe merge.
-- **P1 High:** concrete correctness/security regression in a critical path.
-- **P2 Medium:** credible bug, test gap on affected behavior, or architectural
-  violation that should be addressed before merge.
-- **P3 Low:** non-blocking maintainability, documentation, or ergonomics issue.
+From the reviewed tree: root `AGENTS.md`, the touched app's `AGENTS.md`, ADRs whose subject matches the diff, and `docs/engineering/workflows/task-to-pr.md` when that file exists. Current source wins over audit notes and architecture docs. Treat the PR body and the author's test claims as claims to check.
 
-Each finding must have a precise changed-file path/line or diff hunk,
-the observable failure scenario, why it matters, and the smallest
-actionable correction. Avoid speculative claims and generic style
-comments that existing lint/format checks already cover. Label uncertain
-findings as **needs verification**, not confirmed bugs.
+## Priority
 
-Do not suppress a bug just because all CI jobs are green. Conversely,
-a red CI check does not prove the new diff caused it: identify the failing
-job and compare baseline evidence.
+Correctness, security, regressions, and business invariants come before style. Do not file formatting or lint comments that CI already enforces, unless they hide a behavior bug.
 
-## Independent review and approval
+Where the diff touches them, check:
 
-For root `AGENTS.md` §9 security-sensitive changes, require a second
-review by an independent reviewer/invocation and explicit Tech Lead
-approval before merge. If you are the implementing agent, flag that an
-independent review is still pending. Never self-certify the gate.
+- Authentication, authorization, and ownership (`AuthGuard`, `AdminGuard`, `session.middleware.ts`). Re-derive ownership, availability, and price on the server.
+- Validation and structured error `code`s. The tracking-number business rule is `normalizeTrackingNumber`. DTO `MaxLength` is only a sanity bound.
+- Transaction boundaries, `pessimistic_write`, inventory holds and the reservation window, receipt idempotency, duplicate receipt and tracking checks, submission caps, and payment or gateway verification. A move or rename is not evidence those survived.
+- API contracts used by storefront and admin, including Persian `message` text the UI already branches on.
+- 1/1 availability. A disabled control is not the lock.
+- Migrations, secrets, generated artifacts, and isolation of `apps/Rad-App`.
 
-A review does not authorize merging, retargeting or deploying. Existing
-stacked PRs keep their requested base until separately approved.
+For a structural refactor, require the `rad-safe-refactor` evidence: readiness class, characterization tests of **observed** behavior that passed on **pre-change** code ([ADR-007](../../../docs/engineering/adr/adr-007-test-first-refactoring.md)), and unchanged lock, transaction, validation, and error-code boundaries. Missing evidence is the finding. Do not invent the functional bug the evidence might have caught.
 
-## Expected report
+## Tests and CI
 
-- PR / base / head SHA / scope, and CI checks **actually observed**.
-- **Findings first**, highest severity first, with file/line evidence and
-  impact; say **No actionable findings identified** when appropriate,
-  not **bug-free**.
-- Tests reviewed or executed, including missing/not-run checks.
-- Sensitive-area and human-approval gates.
-- Residual risks / context not inspected.
-- Recommendation: **BLOCK / CHANGES REQUESTED / READY FOR HUMAN REVIEW**
-  (not permission to merge).
+- Judge whether tests pin the behavior this diff can break, including rejection and authorization paths that the code has. A characterization assertion that was loosened to fit the new code is a finding.
+- Missing coverage is a test-gap finding. It is not proof the production code is wrong, and a passing suite is not proof the gap does not matter.
+- Do not claim a command passed unless you ran it, or you read a log for **this head SHA**. Otherwise write **not verified**.
+- `CI passed` means the jobs in `.github/workflows/ci.yml` succeeded for that SHA. It does not prove a UI flow, a pre-change characterization run, or a production deploy. The `main` ruleset requires that check on a head that is up to date with the base. A red job is not automatically this diff's fault: name the job and compare it with the base when the logs are available. Do not invent a green result.
+- When `.github/workflows/ci.yml` in the reviewed tree has the Lint step `RAD skill mirrors`, that job runs `node scripts/check-agent-skill-mirrors.cjs`. If that step is absent, do not say the check ran.
 
-Explicitly distinguish **inspected**, **tested**, **manually verified**
-and **not verified**.
+## Skill mirrors and discovery
+
+For a `rad-*` skill edit, `.claude/skills/<name>/SKILL.md` is canonical. The `.agents/skills/` and `.cursor/skills/` copies must be byte-identical files, not symlinks. Frontmatter `name` must equal the directory name, and `description` must be non-empty. When `scripts/check-agent-skill-mirrors.cjs` is in the tree, run it and record the exit code. A pass proves bytes and frontmatter shape only.
+
+[ADR-008](../../../docs/engineering/adr/adr-008-agent-engineering-system.md) still says no script keeps the mirrors in sync. Prefer the script that is actually in the reviewed tree. Do not edit the ADR from a review.
+
+Native discovery follows `docs/engineering/workflows/skill-discovery.md` when that file is in the tree. **VERIFIED** requires this session's own listing and a successful native invoke. Reading `SKILL.md` is **MANUAL FALLBACK**. File presence does not verify Claude Code, Cursor, Codex, or any other tool.
+
+## Release and human approval
+
+- Read migration files in the diff. A schema change needs the justification in `AGENTS.md` §8. Do not run migrations.
+- A push to `main` starts `.github/workflows/deploy.yml`, which deploys only the services its path filter marks. Docs-only paths do not deploy. State the impact from the workflow in the reviewed tree, or **not verified** if you did not read it. Do not deploy, roll back, SSH, or edit deploy configuration.
+- Rollback for this class of change is reverting the PR. Say so. Do not weaken production config to make a revert easier.
+- An `AGENTS.md` §9 area needs explicit human approval before merge, from a person other than the implementing agent. This review does not supply that approval. If `rad-safe-refactor` would stop for a Tech Lead decision, the recommendation stays **BLOCK** until that decision is recorded. Ambiguous payment, inventory, authentication, authorization, or database behavior stays **BLOCK** (`AGENTS.md` §13). Do not invent the business rule.
+
+## Findings
+
+- **P0 Blocker** — exploitable issue, data loss, or a merge that is unsafe now.
+- **P1 High** — a concrete correctness or security regression on a critical path.
+- **P2 Medium** — a credible bug, missing characterization or test coverage for behavior this diff can break, or a boundary break that should be fixed before merge.
+- **P3 Low** — maintainability or docs, not a behavior bug.
+
+Each finding names the file and line or the diff hunk, the observable failure, why it matters, and the smallest fix. Label uncertain items **needs verification**. Do not file a bug you cannot point at.
+
+## Report
+
+- PR, base ref, base SHA, head ref, head SHA, independent or stacked, draft state.
+- Findings first, highest severity first, or **No actionable findings identified**. That sentence is not "bug-free".
+- Commands and CI actually observed on this head. Separate **inspected**, **tested**, **manually verified**, and **not verified**.
+- §9 gate: required and still pending, or not applicable. This review did not approve it.
+- Deploy impact and rollback.
+- What was not inspected.
+- Recommendation: **BLOCK**, **CHANGES REQUESTED**, or **READY FOR HUMAN REVIEW**. None of these merges the PR.
