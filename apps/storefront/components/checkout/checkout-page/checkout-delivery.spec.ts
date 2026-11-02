@@ -3,6 +3,7 @@ import { test } from "node:test";
 import type { CustomerAddress } from "@rad/types";
 import { ApiError } from "@/lib/api";
 import { IRAN_PROVINCES } from "@/lib/geo/iran-locations";
+import { canonicalIranMobile } from "@/lib/phone/iran-mobile";
 import {
   addressChoiceOf,
   checkoutAddressLoadStatus,
@@ -122,6 +123,33 @@ test("switching addresses copies that card onto the order and leaves the record 
     deliveryFromSaved(home).address,
     deliveryFromSaved(work).address,
   );
+});
+
+test("a selected saved address is the order payload and carries no address id", () => {
+  assert.ok(alborz && karaj);
+  const fields = deliveryFromSaved(home);
+  const postal = validPostalOrEmpty(fields.postalCode);
+  assert.equal(postal.ok, true);
+  if (!postal.ok) return;
+  const payload = {
+    name: fields.name.trim(),
+    phone: canonicalIranMobile(fields.phone),
+    city: orderCitySnapshot(fields.provinceId, fields.cityId),
+    address: orderAddressSnapshot(
+      fields.address,
+      postal.postal,
+      "کد پستی",
+      "fa",
+    ),
+  };
+  assert.deepEqual(payload, {
+    name: "نگار راد",
+    phone: "09121234567",
+    city: "البرز، کرج",
+    address: "خیابان خانه ۱۲، کد پستی 1234567890",
+  });
+  assert.equal("customerAddressId" in payload, false);
+  assert.equal(sameDelivery(fields, home), true);
 });
 
 test("guest checkout still builds a name, city, and address snapshot", () => {
