@@ -47,6 +47,10 @@ MIGRATION_FILE_2 = API_DIR / "src" / "database" / "migrations" / "1793032301266-
 # migrations directory, not just the ones that existed when this test was
 # first written.
 MIGRATION_FILE_3 = API_DIR / "src" / "database" / "migrations" / "1793190798704-AddOtpCode.ts"
+# Phase 2 (SMS OTP rate limiting): a new `OtpRequestLog` table, purely
+# additive — see that migration file's own header. Same reasoning as
+# MIGRATION_FILE_3's comment above.
+MIGRATION_FILE_4 = API_DIR / "src" / "database" / "migrations" / "1793190800000-AddOtpRequestLog.ts"
 CLI_DATA_SOURCE = API_DIR / "src" / "database" / "cli-data-source.ts"
 
 DOCKER = shutil.which("docker")
@@ -227,16 +231,19 @@ class RealPostgresMigrationTests(unittest.TestCase):
         return {line.strip() for line in result.stdout.splitlines() if line.strip()}
 
     def test_full_migration_lifecycle_against_real_postgres(self):
-        manifest = self.manifest_for(MIGRATION_FILE, MIGRATION_FILE_2, MIGRATION_FILE_3)
+        manifest = self.manifest_for(MIGRATION_FILE, MIGRATION_FILE_2, MIGRATION_FILE_3, MIGRATION_FILE_4)
 
         # 1. Initial state: nothing applied yet, correctly detected as pending.
         shown = broker.migration_show(NPM, API_DIR, self.database_url, "127.0.0.1")
         pending = broker.reconcile_migrations(manifest, shown)
         self.assertEqual(
             {m["name"] for m in pending},
-            {MIGRATION_FILE.name, MIGRATION_FILE_2.name, MIGRATION_FILE_3.name},
+            {MIGRATION_FILE.name, MIGRATION_FILE_2.name, MIGRATION_FILE_3.name, MIGRATION_FILE_4.name},
         )
-        self.assertEqual(self.table_names() & {"ProductAttribute", "ProductAttributeValue", "OtpCode"}, set())
+        self.assertEqual(
+            self.table_names() & {"ProductAttribute", "ProductAttributeValue", "OtpCode", "OtpRequestLog"},
+            set(),
+        )
         self.assertEqual(self.payment_intent_columns() & {"gatewayAuthority", "gatewayRefId", "verifiedAt"}, set())
 
         # 2. A real backup, with a real, non-empty, structurally-valid dump.
@@ -249,7 +256,7 @@ class RealPostgresMigrationTests(unittest.TestCase):
 
         tables = self.table_names()
         for table in ("ProductAttribute", "ProductAttributeOption",
-                      "ProductAttributeCategory", "ProductAttributeValue", "OtpCode"):
+                      "ProductAttributeCategory", "ProductAttributeValue", "OtpCode", "OtpRequestLog"):
             self.assertIn(table, tables)
         for column in ("gatewayAuthority", "gatewayRefId", "verifiedAt"):
             self.assertIn(column, self.payment_intent_columns())
