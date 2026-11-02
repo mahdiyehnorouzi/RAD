@@ -1,0 +1,6387 @@
+{
+  "source": {
+    "provider": "Iranian Post address divisions (GNAF), republished by masterking32/iran-states-cities-districts",
+    "url": "https://github.com/masterking32/iran-states-cities-districts",
+    "upstream": "https://post.ir",
+    "license": "MIT",
+    "snapshot": "2025-01-18",
+    "commit": "ef80f5bab604",
+    "notes": "Selectable places are Post cities plus county centers. County centers such as تهران and کرج are not repeated in the city rows, so both are included. Villages are omitted. Ids are prefixed with province, city, or county because Post reuses numbers across those lists. Three province labels gain the conventional Persian spacing."
+  },
+  "provinces": [
+    {
+      "id": "province:1",
+      "label": "آذربایجان شرقی",
+      "cities": [
+        {
+          "id": "city:800",
+          "label": "آبش احمد"
+        },
+        {
+          "id": "county:1",
+          "label": "آذرشهر"
+        },
+        {
+          "id": "city:1417",
+          "label": "آقکند"
+        },
+        {
+          "id": "city:1661",
+          "label": "آچاچی"
+        },
+        {
+          "id": "city:485",
+          "label": "اربطان"
+        },
+        {
+          "id": "city:18738",
+          "label": "اسفهلان"
+        },
+        {
+          "id": "county:2",
+          "label": "اسکو"
+        },
+        {
+          "id": "county:3",
+          "label": "اهر"
+        },
+        {
+          "id": "city:807",
+          "label": "ایلخچی"
+        },
+        {
+          "id": "city:1285",
+          "label": "باسمنج"
+        },
+        {
+          "id": "city:682",
+          "label": "بخشایش"
+        },
+        {
+          "id": "county:4",
+          "label": "بستان آباد"
+        },
+        {
+          "id": "county:5",
+          "label": "بناب"
+        },
+        {
+          "id": "city:1828",
+          "label": "بناب مرند"
+        },
+        {
+          "id": "county:6",
+          "label": "تبریز"
+        },
+        {
+          "id": "city:1016",
+          "label": "ترک"
+        },
+        {
+          "id": "city:1597",
+          "label": "ترکمانچای"
+        },
+        {
+          "id": "city:1519",
+          "label": "تسوج"
+        },
+        {
+          "id": "city:1021",
+          "label": "تیمورلو"
+        },
+        {
+          "id": "city:473",
+          "label": "تیکمه داش"
+        },
+        {
+          "id": "county:7",
+          "label": "جلفا"
+        },
+        {
+          "id": "city:1141",
+          "label": "جوان قلعه"
+        },
+        {
+          "id": "city:1575",
+          "label": "خاروانا"
+        },
+        {
+          "id": "city:1331",
+          "label": "خامنه"
+        },
+        {
+          "id": "county:9",
+          "label": "خدا آفرین"
+        },
+        {
+          "id": "city:1535",
+          "label": "خداجو"
+        },
+        {
+          "id": "city:1409",
+          "label": "خسروشاه"
+        },
+        {
+          "id": "city:1837",
+          "label": "خمارلو"
+        },
+        {
+          "id": "city:1774",
+          "label": "خواجه"
+        },
+        {
+          "id": "city:912",
+          "label": "خوشه مهر"
+        },
+        {
+          "id": "city:1002",
+          "label": "داریان"
+        },
+        {
+          "id": "city:541",
+          "label": "دوزدوزان"
+        },
+        {
+          "id": "city:1356",
+          "label": "دیزج حسین بیگ"
+        },
+        {
+          "id": "city:1790",
+          "label": "زرنق"
+        },
+        {
+          "id": "city:1494",
+          "label": "زنوز"
+        },
+        {
+          "id": "county:10",
+          "label": "سراب"
+        },
+        {
+          "id": "city:1697",
+          "label": "سردرود"
+        },
+        {
+          "id": "city:1606",
+          "label": "سیس"
+        },
+        {
+          "id": "city:1058",
+          "label": "سیه رود"
+        },
+        {
+          "id": "county:11",
+          "label": "شبستر"
+        },
+        {
+          "id": "city:492",
+          "label": "شربیان"
+        },
+        {
+          "id": "city:1573",
+          "label": "شرفخانه"
+        },
+        {
+          "id": "city:1559",
+          "label": "شند آباد"
+        },
+        {
+          "id": "city:1631",
+          "label": "شهرجدیدسهند"
+        },
+        {
+          "id": "city:573",
+          "label": "صوفیان"
+        },
+        {
+          "id": "city:10169",
+          "label": "عاشقلو"
+        },
+        {
+          "id": "county:12",
+          "label": "عجب شیر"
+        },
+        {
+          "id": "city:1086",
+          "label": "علیشاه (علی آباد)"
+        },
+        {
+          "id": "city:750",
+          "label": "قره آغاج"
+        },
+        {
+          "id": "city:1080",
+          "label": "لاریجان"
+        },
+        {
+          "id": "city:18739",
+          "label": "لاهیجان"
+        },
+        {
+          "id": "county:1197",
+          "label": "لیلان"
+        },
+        {
+          "id": "city:1769",
+          "label": "مبارک شهر"
+        },
+        {
+          "id": "county:14",
+          "label": "مراغه"
+        },
+        {
+          "id": "county:15",
+          "label": "مرند"
+        },
+        {
+          "id": "county:16",
+          "label": "ملکان"
+        },
+        {
+          "id": "city:686",
+          "label": "ممقان"
+        },
+        {
+          "id": "city:1833",
+          "label": "مهربان"
+        },
+        {
+          "id": "county:17",
+          "label": "میانه"
+        },
+        {
+          "id": "city:617",
+          "label": "نظر کهریزی"
+        },
+        {
+          "id": "city:1175",
+          "label": "هادیشهر"
+        },
+        {
+          "id": "county:18",
+          "label": "هریس"
+        },
+        {
+          "id": "county:19",
+          "label": "هشترود"
+        },
+        {
+          "id": "county:20",
+          "label": "هوراند"
+        },
+        {
+          "id": "city:764",
+          "label": "وایقان"
+        },
+        {
+          "id": "county:21",
+          "label": "ورزقان"
+        },
+        {
+          "id": "county:8",
+          "label": "چاراویماق"
+        },
+        {
+          "id": "city:1297",
+          "label": "کردکندی"
+        },
+        {
+          "id": "city:949",
+          "label": "کشکسرای"
+        },
+        {
+          "id": "city:1179",
+          "label": "کلوانق"
+        },
+        {
+          "id": "county:13",
+          "label": "کلیبر"
+        },
+        {
+          "id": "city:1816",
+          "label": "کوزه کنان"
+        },
+        {
+          "id": "city:1054",
+          "label": "گوگان"
+        },
+        {
+          "id": "city:1398",
+          "label": "یامچی"
+        }
+      ]
+    },
+    {
+      "id": "province:2",
+      "label": "آذربایجان غربی",
+      "cities": [
+        {
+          "id": "city:1026",
+          "label": "آواجیق"
+        },
+        {
+          "id": "county:22",
+          "label": "ارومیه"
+        },
+        {
+          "id": "county:23",
+          "label": "اشنویه"
+        },
+        {
+          "id": "city:993",
+          "label": "ایواوغلی"
+        },
+        {
+          "id": "county:24",
+          "label": "باروق"
+        },
+        {
+          "id": "city:550",
+          "label": "بازرگان"
+        },
+        {
+          "id": "county:25",
+          "label": "بوکان"
+        },
+        {
+          "id": "city:1301",
+          "label": "بکتاش"
+        },
+        {
+          "id": "city:520",
+          "label": "تازه شهر"
+        },
+        {
+          "id": "city:741",
+          "label": "تخت سلیمان"
+        },
+        {
+          "id": "county:28",
+          "label": "تکاب"
+        },
+        {
+          "id": "city:634",
+          "label": "حاجیلار"
+        },
+        {
+          "id": "city:943",
+          "label": "خلیفان"
+        },
+        {
+          "id": "county:32",
+          "label": "خوی"
+        },
+        {
+          "id": "city:653",
+          "label": "دیزج دیز"
+        },
+        {
+          "id": "city:1450",
+          "label": "ربط"
+        },
+        {
+          "id": "city:801",
+          "label": "زرآباد"
+        },
+        {
+          "id": "county:33",
+          "label": "سردشت"
+        },
+        {
+          "id": "city:1777",
+          "label": "سرو"
+        },
+        {
+          "id": "county:34",
+          "label": "سلماس"
+        },
+        {
+          "id": "city:785",
+          "label": "سیلوانه"
+        },
+        {
+          "id": "city:1867",
+          "label": "سیمینه"
+        },
+        {
+          "id": "city:753",
+          "label": "سیه چشمه"
+        },
+        {
+          "id": "county:35",
+          "label": "شاهین دژ"
+        },
+        {
+          "id": "county:36",
+          "label": "شوط"
+        },
+        {
+          "id": "city:1354",
+          "label": "فیرورق"
+        },
+        {
+          "id": "city:1799",
+          "label": "قره ضیاءالدین"
+        },
+        {
+          "id": "city:1112",
+          "label": "قطور"
+        },
+        {
+          "id": "city:691",
+          "label": "قوشچی"
+        },
+        {
+          "id": "city:955",
+          "label": "لاجان"
+        },
+        {
+          "id": "county:37",
+          "label": "ماکو"
+        },
+        {
+          "id": "city:1870",
+          "label": "محمدیار"
+        },
+        {
+          "id": "city:1004",
+          "label": "محمودآباد"
+        },
+        {
+          "id": "city:1750",
+          "label": "مرگنلر"
+        },
+        {
+          "id": "county:38",
+          "label": "مهاباد"
+        },
+        {
+          "id": "county:39",
+          "label": "میاندوآب"
+        },
+        {
+          "id": "county:1266",
+          "label": "میرآباد"
+        },
+        {
+          "id": "city:1024",
+          "label": "نازک علیا"
+        },
+        {
+          "id": "city:1690",
+          "label": "نالوس"
+        },
+        {
+          "id": "county:40",
+          "label": "نقده"
+        },
+        {
+          "id": "city:604",
+          "label": "نلاس"
+        },
+        {
+          "id": "city:1048",
+          "label": "نوشین"
+        },
+        {
+          "id": "county:26",
+          "label": "پلدشت"
+        },
+        {
+          "id": "county:27",
+          "label": "پیرانشهر"
+        },
+        {
+          "id": "county:29",
+          "label": "چالدران"
+        },
+        {
+          "id": "county:30",
+          "label": "چایپاره"
+        },
+        {
+          "id": "county:31",
+          "label": "چهاربرج"
+        },
+        {
+          "id": "city:822",
+          "label": "کشاورز"
+        },
+        {
+          "id": "city:1715",
+          "label": "گوگ تپه"
+        },
+        {
+          "id": "city:1549",
+          "label": "یولاگلدی"
+        }
+      ]
+    },
+    {
+      "id": "province:3",
+      "label": "اردبیل",
+      "cities": [
+        {
+          "id": "city:1763",
+          "label": "آبی بیگلو"
+        },
+        {
+          "id": "city:1468",
+          "label": "آراللو"
+        },
+        {
+          "id": "city:681",
+          "label": "آلنی"
+        },
+        {
+          "id": "county:41",
+          "label": "اردبیل"
+        },
+        {
+          "id": "city:1433",
+          "label": "اردیموسی"
+        },
+        {
+          "id": "city:1293",
+          "label": "اسلام آباد"
+        },
+        {
+          "id": "county:42",
+          "label": "اصلاندوز"
+        },
+        {
+          "id": "county:1190",
+          "label": "انگوت"
+        },
+        {
+          "id": "city:1679",
+          "label": "اولتان"
+        },
+        {
+          "id": "city:12955",
+          "label": "بران علیا"
+        },
+        {
+          "id": "county:43",
+          "label": "بیله سوار"
+        },
+        {
+          "id": "city:1612",
+          "label": "تازه کندانگوت"
+        },
+        {
+          "id": "city:1728",
+          "label": "ثمرین"
+        },
+        {
+          "id": "city:1633",
+          "label": "جعفر آباد"
+        },
+        {
+          "id": "county:45",
+          "label": "خلخال"
+        },
+        {
+          "id": "city:609",
+          "label": "رضی"
+        },
+        {
+          "id": "city:552",
+          "label": "زهرا"
+        },
+        {
+          "id": "city:18642",
+          "label": "زیوه"
+        },
+        {
+          "id": "county:46",
+          "label": "سرعین"
+        },
+        {
+          "id": "city:1445",
+          "label": "عنبران"
+        },
+        {
+          "id": "city:1508",
+          "label": "فخرآباد"
+        },
+        {
+          "id": "city:12954",
+          "label": "فیروزآباد"
+        },
+        {
+          "id": "city:1101",
+          "label": "قصابه"
+        },
+        {
+          "id": "city:533",
+          "label": "لاهرود"
+        },
+        {
+          "id": "city:1140",
+          "label": "مرادلو"
+        },
+        {
+          "id": "county:49",
+          "label": "مشگین شهر"
+        },
+        {
+          "id": "city:1634",
+          "label": "مغانسر"
+        },
+        {
+          "id": "county:50",
+          "label": "نمین"
+        },
+        {
+          "id": "county:51",
+          "label": "نیر"
+        },
+        {
+          "id": "city:1500",
+          "label": "هشتجین"
+        },
+        {
+          "id": "city:1302",
+          "label": "هیر"
+        },
+        {
+          "id": "county:44",
+          "label": "پارس آباد"
+        },
+        {
+          "id": "city:730",
+          "label": "کلور"
+        },
+        {
+          "id": "county:47",
+          "label": "کوثر"
+        },
+        {
+          "id": "city:1257",
+          "label": "کورائیم"
+        },
+        {
+          "id": "county:48",
+          "label": "گرمی"
+        },
+        {
+          "id": "city:1793",
+          "label": "گیوی"
+        }
+      ]
+    },
+    {
+      "id": "province:4",
+      "label": "اصفهان",
+      "cities": [
+        {
+          "id": "county:52",
+          "label": "آران و بیدگل"
+        },
+        {
+          "id": "city:820",
+          "label": "ابریشم"
+        },
+        {
+          "id": "city:1622",
+          "label": "ابوزیدآباد"
+        },
+        {
+          "id": "county:53",
+          "label": "اردستان"
+        },
+        {
+          "id": "city:1336",
+          "label": "اشتر جان"
+        },
+        {
+          "id": "city:1025",
+          "label": "اصغرآباد"
+        },
+        {
+          "id": "county:54",
+          "label": "اصفهان"
+        },
+        {
+          "id": "city:961",
+          "label": "افوس"
+        },
+        {
+          "id": "city:1434",
+          "label": "انارک"
+        },
+        {
+          "id": "city:1795",
+          "label": "اژیه"
+        },
+        {
+          "id": "city:554",
+          "label": "بادرود"
+        },
+        {
+          "id": "city:711",
+          "label": "باغ بهادران"
+        },
+        {
+          "id": "city:645",
+          "label": "باغشاد"
+        },
+        {
+          "id": "city:1804",
+          "label": "بافران"
+        },
+        {
+          "id": "county:55",
+          "label": "برخوار"
+        },
+        {
+          "id": "city:1153",
+          "label": "برزک"
+        },
+        {
+          "id": "city:1031",
+          "label": "برف انبار"
+        },
+        {
+          "id": "city:1028",
+          "label": "بهاران شهر"
+        },
+        {
+          "id": "city:1095",
+          "label": "بهارستان"
+        },
+        {
+          "id": "county:56",
+          "label": "بوئین میاندشت"
+        },
+        {
+          "id": "city:1579",
+          "label": "بوستان"
+        },
+        {
+          "id": "city:1203",
+          "label": "بیده"
+        },
+        {
+          "id": "city:643",
+          "label": "تودشک"
+        },
+        {
+          "id": "city:1730",
+          "label": "تیران"
+        },
+        {
+          "id": "county:57",
+          "label": "تیران و کرون"
+        },
+        {
+          "id": "county:58",
+          "label": "جرقویه"
+        },
+        {
+          "id": "city:1544",
+          "label": "جندق"
+        },
+        {
+          "id": "city:639",
+          "label": "جوزدان"
+        },
+        {
+          "id": "city:766",
+          "label": "جوشقان قالی"
+        },
+        {
+          "id": "city:709",
+          "label": "حبیب آباد"
+        },
+        {
+          "id": "city:1852",
+          "label": "حسن آباد"
+        },
+        {
+          "id": "city:1702",
+          "label": "حنا"
+        },
+        {
+          "id": "city:626",
+          "label": "خالدآ باد"
+        },
+        {
+          "id": "county:60",
+          "label": "خمینی شهر"
+        },
+        {
+          "id": "county:61",
+          "label": "خوانسار"
+        },
+        {
+          "id": "city:1522",
+          "label": "خور"
+        },
+        {
+          "id": "county:62",
+          "label": "خور و بیابانک"
+        },
+        {
+          "id": "city:1608",
+          "label": "خورزوق"
+        },
+        {
+          "id": "city:1074",
+          "label": "داران"
+        },
+        {
+          "id": "city:1085",
+          "label": "دامنه"
+        },
+        {
+          "id": "city:688",
+          "label": "درچه"
+        },
+        {
+          "id": "city:635",
+          "label": "دستگرد"
+        },
+        {
+          "id": "county:63",
+          "label": "دهاقان"
+        },
+        {
+          "id": "city:1818",
+          "label": "دهسرخ"
+        },
+        {
+          "id": "city:1444",
+          "label": "دهق"
+        },
+        {
+          "id": "city:1343",
+          "label": "دولت آباد"
+        },
+        {
+          "id": "city:808",
+          "label": "دیزیچه"
+        },
+        {
+          "id": "city:1841",
+          "label": "رزوه"
+        },
+        {
+          "id": "city:778",
+          "label": "رضوانشهر"
+        },
+        {
+          "id": "city:1187",
+          "label": "زازران"
+        },
+        {
+          "id": "city:979",
+          "label": "زاینده رود"
+        },
+        {
+          "id": "city:1515",
+          "label": "زرین شهر"
+        },
+        {
+          "id": "city:1701",
+          "label": "زواره"
+        },
+        {
+          "id": "city:781",
+          "label": "زیار"
+        },
+        {
+          "id": "city:1521",
+          "label": "زیباشهر"
+        },
+        {
+          "id": "city:1275",
+          "label": "سده لنجان"
+        },
+        {
+          "id": "city:793",
+          "label": "سفیدشهر"
+        },
+        {
+          "id": "county:64",
+          "label": "سمیرم"
+        },
+        {
+          "id": "city:1266",
+          "label": "سگزی"
+        },
+        {
+          "id": "city:1696",
+          "label": "سین"
+        },
+        {
+          "id": "city:1059",
+          "label": "شاهین شهر"
+        },
+        {
+          "id": "county:65",
+          "label": "شاهین شهر و میمه"
+        },
+        {
+          "id": "city:478",
+          "label": "شاپورآباد"
+        },
+        {
+          "id": "city:1109",
+          "label": "شهر جدید مجلسی"
+        },
+        {
+          "id": "county:66",
+          "label": "شهرضا"
+        },
+        {
+          "id": "city:1069",
+          "label": "طاد"
+        },
+        {
+          "id": "city:1435",
+          "label": "طالخونچه"
+        },
+        {
+          "id": "city:1707",
+          "label": "طرق رود"
+        },
+        {
+          "id": "city:1348",
+          "label": "عسگران"
+        },
+        {
+          "id": "city:1567",
+          "label": "علویجه"
+        },
+        {
+          "id": "city:1083",
+          "label": "فتح آباد"
+        },
+        {
+          "id": "city:1428",
+          "label": "فرخی"
+        },
+        {
+          "id": "county:67",
+          "label": "فریدن"
+        },
+        {
+          "id": "county:68",
+          "label": "فریدونشهر"
+        },
+        {
+          "id": "county:69",
+          "label": "فلاورجان"
+        },
+        {
+          "id": "city:1157",
+          "label": "فولادشهر"
+        },
+        {
+          "id": "city:1042",
+          "label": "قمصر"
+        },
+        {
+          "id": "city:886",
+          "label": "قهجاورستان"
+        },
+        {
+          "id": "city:625",
+          "label": "قهدریجان"
+        },
+        {
+          "id": "city:1011",
+          "label": "لای بید"
+        },
+        {
+          "id": "county:72",
+          "label": "لنجان"
+        },
+        {
+          "id": "county:73",
+          "label": "مبارکه"
+        },
+        {
+          "id": "city:1771",
+          "label": "محمدآباد"
+        },
+        {
+          "id": "city:1096",
+          "label": "مشکات"
+        },
+        {
+          "id": "city:498",
+          "label": "منظریه"
+        },
+        {
+          "id": "city:649",
+          "label": "مهاباد"
+        },
+        {
+          "id": "city:690",
+          "label": "میمه"
+        },
+        {
+          "id": "city:1291",
+          "label": "مینادشت"
+        },
+        {
+          "id": "county:74",
+          "label": "نائین"
+        },
+        {
+          "id": "county:75",
+          "label": "نجف آباد"
+        },
+        {
+          "id": "city:1018",
+          "label": "نصرآباد"
+        },
+        {
+          "id": "county:76",
+          "label": "نطنز"
+        },
+        {
+          "id": "city:1255",
+          "label": "نوش آباد"
+        },
+        {
+          "id": "city:1419",
+          "label": "نیاسر"
+        },
+        {
+          "id": "city:699",
+          "label": "نیک آباد"
+        },
+        {
+          "id": "county:77",
+          "label": "هرند"
+        },
+        {
+          "id": "county:78",
+          "label": "ورزنه"
+        },
+        {
+          "id": "city:683",
+          "label": "ورنامخواست"
+        },
+        {
+          "id": "city:1035",
+          "label": "وزوان"
+        },
+        {
+          "id": "city:1209",
+          "label": "ونک"
+        },
+        {
+          "id": "city:745",
+          "label": "ویست"
+        },
+        {
+          "id": "city:1131",
+          "label": "پیربکران"
+        },
+        {
+          "id": "county:59",
+          "label": "چادگان"
+        },
+        {
+          "id": "city:1698",
+          "label": "چرمهین"
+        },
+        {
+          "id": "city:1499",
+          "label": "چمگردان"
+        },
+        {
+          "id": "county:70",
+          "label": "کاشان"
+        },
+        {
+          "id": "city:1548",
+          "label": "کامووچوگان"
+        },
+        {
+          "id": "city:1139",
+          "label": "کرکوند"
+        },
+        {
+          "id": "city:1061",
+          "label": "کلیشادوسودرجان"
+        },
+        {
+          "id": "city:1234",
+          "label": "کمشچه"
+        },
+        {
+          "id": "city:1242",
+          "label": "کمه"
+        },
+        {
+          "id": "city:1498",
+          "label": "کهریزسنگ"
+        },
+        {
+          "id": "city:1271",
+          "label": "کوشک"
+        },
+        {
+          "id": "county:1185",
+          "label": "کوهپایه"
+        },
+        {
+          "id": "city:1775",
+          "label": "گرگاب"
+        },
+        {
+          "id": "city:1821",
+          "label": "گزبرخوار"
+        },
+        {
+          "id": "city:1410",
+          "label": "گلدشت"
+        },
+        {
+          "id": "city:1068",
+          "label": "گلشن"
+        },
+        {
+          "id": "city:1138",
+          "label": "گلشهر"
+        },
+        {
+          "id": "county:71",
+          "label": "گلپایگان"
+        },
+        {
+          "id": "city:1383",
+          "label": "گوگد"
+        }
+      ]
+    },
+    {
+      "id": "province:5",
+      "label": "البرز",
+      "cities": [
+        {
+          "id": "city:1190",
+          "label": "آسارا"
+        },
+        {
+          "id": "county:79",
+          "label": "اشتهارد"
+        },
+        {
+          "id": "city:765",
+          "label": "تنکمان"
+        },
+        {
+          "id": "county:81",
+          "label": "ساوجبلاغ"
+        },
+        {
+          "id": "city:1292",
+          "label": "شهرجدیدهشتگرد"
+        },
+        {
+          "id": "county:82",
+          "label": "طالقان"
+        },
+        {
+          "id": "county:83",
+          "label": "فردیس"
+        },
+        {
+          "id": "city:1583",
+          "label": "ماهدشت"
+        },
+        {
+          "id": "city:1693",
+          "label": "محمدشهر"
+        },
+        {
+          "id": "city:1020",
+          "label": "مشکین دشت"
+        },
+        {
+          "id": "county:85",
+          "label": "نظرآباد"
+        },
+        {
+          "id": "city:525",
+          "label": "هشتگرد"
+        },
+        {
+          "id": "city:1192",
+          "label": "پلنگ آباد"
+        },
+        {
+          "id": "county:80",
+          "label": "چهار باغ"
+        },
+        {
+          "id": "county:84",
+          "label": "کرج"
+        },
+        {
+          "id": "city:906",
+          "label": "کمالشهر"
+        },
+        {
+          "id": "city:958",
+          "label": "کوهسار"
+        },
+        {
+          "id": "city:486",
+          "label": "گرمدره"
+        },
+        {
+          "id": "city:1561",
+          "label": "گلسار"
+        }
+      ]
+    },
+    {
+      "id": "province:6",
+      "label": "ایلام",
+      "cities": [
+        {
+          "id": "county:86",
+          "label": "آبدانان"
+        },
+        {
+          "id": "city:1511",
+          "label": "آسمان آباد"
+        },
+        {
+          "id": "city:1780",
+          "label": "ارکواز"
+        },
+        {
+          "id": "county:87",
+          "label": "ایلام"
+        },
+        {
+          "id": "county:88",
+          "label": "ایوان"
+        },
+        {
+          "id": "county:89",
+          "label": "بدره"
+        },
+        {
+          "id": "city:923",
+          "label": "بلاوه"
+        },
+        {
+          "id": "city:1007",
+          "label": "توحید"
+        },
+        {
+          "id": "city:669",
+          "label": "جعفرآباد"
+        },
+        {
+          "id": "county:91",
+          "label": "دره شهر"
+        },
+        {
+          "id": "city:18775",
+          "label": "دشت عباس"
+        },
+        {
+          "id": "city:1162",
+          "label": "دلگشا"
+        },
+        {
+          "id": "county:92",
+          "label": "دهلران"
+        },
+        {
+          "id": "city:1313",
+          "label": "زرنه"
+        },
+        {
+          "id": "city:999",
+          "label": "سرآبله"
+        },
+        {
+          "id": "city:602",
+          "label": "سراب باغ"
+        },
+        {
+          "id": "county:93",
+          "label": "سیروان"
+        },
+        {
+          "id": "city:505",
+          "label": "شباب"
+        },
+        {
+          "id": "city:632",
+          "label": "صالح آباد"
+        },
+        {
+          "id": "city:931",
+          "label": "لومار"
+        },
+        {
+          "id": "city:861",
+          "label": "ماژین"
+        },
+        {
+          "id": "county:94",
+          "label": "ملکشاهی"
+        },
+        {
+          "id": "city:1376",
+          "label": "مهر"
+        },
+        {
+          "id": "county:95",
+          "label": "مهران"
+        },
+        {
+          "id": "city:1022",
+          "label": "مورموری"
+        },
+        {
+          "id": "city:638",
+          "label": "موسیان"
+        },
+        {
+          "id": "city:976",
+          "label": "میمه"
+        },
+        {
+          "id": "county:1183",
+          "label": "هلیلان"
+        },
+        {
+          "id": "city:570",
+          "label": "پهله"
+        },
+        {
+          "id": "county:90",
+          "label": "چرداول"
+        },
+        {
+          "id": "city:851",
+          "label": "چشمه شیرین"
+        },
+        {
+          "id": "county:1184",
+          "label": "چوار"
+        }
+      ]
+    },
+    {
+      "id": "province:7",
+      "label": "بوشهر",
+      "cities": [
+        {
+          "id": "city:580",
+          "label": "آباد"
+        },
+        {
+          "id": "city:1805",
+          "label": "آبدان"
+        },
+        {
+          "id": "city:980",
+          "label": "آبپخش"
+        },
+        {
+          "id": "city:1052",
+          "label": "امام حسن"
+        },
+        {
+          "id": "city:1876",
+          "label": "انارستان"
+        },
+        {
+          "id": "city:1534",
+          "label": "اهرم"
+        },
+        {
+          "id": "city:1471",
+          "label": "بادوله"
+        },
+        {
+          "id": "city:767",
+          "label": "برازجان"
+        },
+        {
+          "id": "city:515",
+          "label": "بردخون"
+        },
+        {
+          "id": "city:987",
+          "label": "بردستان"
+        },
+        {
+          "id": "city:1049",
+          "label": "بندر دیلم"
+        },
+        {
+          "id": "city:804",
+          "label": "بندر ریگ"
+        },
+        {
+          "id": "city:532",
+          "label": "بندردیر"
+        },
+        {
+          "id": "city:1227",
+          "label": "بندرکنگان"
+        },
+        {
+          "id": "city:1208",
+          "label": "بندرگناوه"
+        },
+        {
+          "id": "city:530",
+          "label": "بنک"
+        },
+        {
+          "id": "city:1832",
+          "label": "بهارستان"
+        },
+        {
+          "id": "county:96",
+          "label": "بوشهر"
+        },
+        {
+          "id": "city:1195",
+          "label": "بوشکان"
+        },
+        {
+          "id": "city:727",
+          "label": "بید خون"
+        },
+        {
+          "id": "city:1785",
+          "label": "تنگ ارم"
+        },
+        {
+          "id": "county:97",
+          "label": "تنگستان"
+        },
+        {
+          "id": "county:98",
+          "label": "جم"
+        },
+        {
+          "id": "city:1740",
+          "label": "خارک"
+        },
+        {
+          "id": "city:577",
+          "label": "خورموج"
+        },
+        {
+          "id": "city:1389",
+          "label": "دالکی"
+        },
+        {
+          "id": "county:99",
+          "label": "دشتستان"
+        },
+        {
+          "id": "county:100",
+          "label": "دشتی"
+        },
+        {
+          "id": "city:1791",
+          "label": "دلوار"
+        },
+        {
+          "id": "city:1568",
+          "label": "دوراهک"
+        },
+        {
+          "id": "county:101",
+          "label": "دیر"
+        },
+        {
+          "id": "county:102",
+          "label": "دیلم"
+        },
+        {
+          "id": "city:1305",
+          "label": "ریز"
+        },
+        {
+          "id": "city:885",
+          "label": "سعدآباد"
+        },
+        {
+          "id": "city:847",
+          "label": "سیراف"
+        },
+        {
+          "id": "city:1441",
+          "label": "شبانکاره"
+        },
+        {
+          "id": "city:1079",
+          "label": "شنبه"
+        },
+        {
+          "id": "city:584",
+          "label": "عالی شهر"
+        },
+        {
+          "id": "county:103",
+          "label": "عسلویه"
+        },
+        {
+          "id": "city:1244",
+          "label": "نخل تقی"
+        },
+        {
+          "id": "city:1523",
+          "label": "وحدتیه"
+        },
+        {
+          "id": "city:1677",
+          "label": "چاه مبارک"
+        },
+        {
+          "id": "city:641",
+          "label": "چغادک"
+        },
+        {
+          "id": "city:1099",
+          "label": "کاکی"
+        },
+        {
+          "id": "city:1352",
+          "label": "کلمه"
+        },
+        {
+          "id": "county:104",
+          "label": "کنگان"
+        },
+        {
+          "id": "county:105",
+          "label": "گناوه"
+        }
+      ]
+    },
+    {
+      "id": "province:8",
+      "label": "تهران",
+      "cities": [
+        {
+          "id": "city:1648",
+          "label": "آبسرد"
+        },
+        {
+          "id": "city:889",
+          "label": "آبعلی"
+        },
+        {
+          "id": "city:1532",
+          "label": "ارجمند"
+        },
+        {
+          "id": "county:118",
+          "label": "اسلامشهر"
+        },
+        {
+          "id": "city:1611",
+          "label": "باغستان"
+        },
+        {
+          "id": "city:1665",
+          "label": "باقر شهر"
+        },
+        {
+          "id": "county:119",
+          "label": "بهارستان"
+        },
+        {
+          "id": "city:1530",
+          "label": "بومهن"
+        },
+        {
+          "id": "city:18644",
+          "label": "تجریش"
+        },
+        {
+          "id": "county:106",
+          "label": "تهران"
+        },
+        {
+          "id": "city:12956",
+          "label": "جلیل آباد"
+        },
+        {
+          "id": "city:904",
+          "label": "جواد آباد"
+        },
+        {
+          "id": "city:760",
+          "label": "حسن آباد"
+        },
+        {
+          "id": "city:902",
+          "label": "خسرو آباد"
+        },
+        {
+          "id": "county:115",
+          "label": "دماوند"
+        },
+        {
+          "id": "county:123",
+          "label": "رباط کریم"
+        },
+        {
+          "id": "city:1765",
+          "label": "رودهن"
+        },
+        {
+          "id": "county:124",
+          "label": "ری"
+        },
+        {
+          "id": "city:871",
+          "label": "سعیدآباد"
+        },
+        {
+          "id": "city:1473",
+          "label": "شاهد شهر"
+        },
+        {
+          "id": "city:1593",
+          "label": "شریف آباد"
+        },
+        {
+          "id": "city:637",
+          "label": "شمشک"
+        },
+        {
+          "id": "county:1194",
+          "label": "شمیرانات"
+        },
+        {
+          "id": "city:642",
+          "label": "شهر جدید اندیشه"
+        },
+        {
+          "id": "city:1641",
+          "label": "شهرجدیدپردیس"
+        },
+        {
+          "id": "city:746",
+          "label": "شهرجدیدپرند"
+        },
+        {
+          "id": "county:108",
+          "label": "شهریار"
+        },
+        {
+          "id": "city:694",
+          "label": "صالحیه"
+        },
+        {
+          "id": "city:490",
+          "label": "صبا شهر"
+        },
+        {
+          "id": "city:1393",
+          "label": "صفادشت"
+        },
+        {
+          "id": "city:863",
+          "label": "فردوسیه"
+        },
+        {
+          "id": "city:1859",
+          "label": "فرون آباد"
+        },
+        {
+          "id": "city:1183",
+          "label": "فشم"
+        },
+        {
+          "id": "county:116",
+          "label": "فیروزکوه"
+        },
+        {
+          "id": "county:110",
+          "label": "قدس"
+        },
+        {
+          "id": "county:125",
+          "label": "قرچک"
+        },
+        {
+          "id": "city:1454",
+          "label": "قلعه نو"
+        },
+        {
+          "id": "city:790",
+          "label": "قیامدشت"
+        },
+        {
+          "id": "city:832",
+          "label": "لواسان"
+        },
+        {
+          "id": "county:111",
+          "label": "ملارد"
+        },
+        {
+          "id": "city:1756",
+          "label": "نسیم شهر"
+        },
+        {
+          "id": "city:1318",
+          "label": "نصیرشهر"
+        },
+        {
+          "id": "city:1542",
+          "label": "وحیدیه"
+        },
+        {
+          "id": "county:126",
+          "label": "ورامین"
+        },
+        {
+          "id": "county:120",
+          "label": "پاکدشت"
+        },
+        {
+          "id": "county:113",
+          "label": "پردیس"
+        },
+        {
+          "id": "county:121",
+          "label": "پیشوا"
+        },
+        {
+          "id": "city:1218",
+          "label": "چهاردانگه"
+        },
+        {
+          "id": "city:1621",
+          "label": "کهریزک"
+        },
+        {
+          "id": "city:1283",
+          "label": "کوره فرنگی"
+        },
+        {
+          "id": "city:1675",
+          "label": "کیلان"
+        },
+        {
+          "id": "city:1128",
+          "label": "گلستان"
+        }
+      ]
+    },
+    {
+      "id": "province:16",
+      "label": "چهارمحال و بختیاری",
+      "cities": [
+        {
+          "id": "city:685",
+          "label": "آلونی"
+        },
+        {
+          "id": "county:129",
+          "label": "اردل"
+        },
+        {
+          "id": "city:1838",
+          "label": "باباحیدر"
+        },
+        {
+          "id": "city:698",
+          "label": "بازفت"
+        },
+        {
+          "id": "county:130",
+          "label": "بروجن"
+        },
+        {
+          "id": "city:1546",
+          "label": "بلداجی"
+        },
+        {
+          "id": "county:131",
+          "label": "بن"
+        },
+        {
+          "id": "city:826",
+          "label": "جونقان"
+        },
+        {
+          "id": "county:132",
+          "label": "خانمیرزا"
+        },
+        {
+          "id": "city:809",
+          "label": "دستناء"
+        },
+        {
+          "id": "city:743",
+          "label": "دشتک"
+        },
+        {
+          "id": "county:133",
+          "label": "سامان"
+        },
+        {
+          "id": "city:1120",
+          "label": "سرخون"
+        },
+        {
+          "id": "city:1558",
+          "label": "سردشت لردگان"
+        },
+        {
+          "id": "city:1307",
+          "label": "سفید دشت"
+        },
+        {
+          "id": "city:834",
+          "label": "سودجان"
+        },
+        {
+          "id": "city:744",
+          "label": "سورشجان"
+        },
+        {
+          "id": "city:957",
+          "label": "شلمزار"
+        },
+        {
+          "id": "county:134",
+          "label": "شهرکرد"
+        },
+        {
+          "id": "city:1632",
+          "label": "صمصامی"
+        },
+        {
+          "id": "city:1592",
+          "label": "طاقانک"
+        },
+        {
+          "id": "county:135",
+          "label": "فارسان"
+        },
+        {
+          "id": "city:956",
+          "label": "فرادنبه"
+        },
+        {
+          "id": "county:1267",
+          "label": "فرخشهر"
+        },
+        {
+          "id": "county:1187",
+          "label": "فلارد"
+        },
+        {
+          "id": "city:12842",
+          "label": "فیل آباد"
+        },
+        {
+          "id": "county:138",
+          "label": "لردگان"
+        },
+        {
+          "id": "city:1482",
+          "label": "مال خلیفه"
+        },
+        {
+          "id": "city:1749",
+          "label": "منج"
+        },
+        {
+          "id": "city:1246",
+          "label": "ناغان"
+        },
+        {
+          "id": "city:696",
+          "label": "نافچ"
+        },
+        {
+          "id": "city:1269",
+          "label": "نقنه"
+        },
+        {
+          "id": "city:1614",
+          "label": "هارونی"
+        },
+        {
+          "id": "city:1414",
+          "label": "هفشجان"
+        },
+        {
+          "id": "city:1055",
+          "label": "هوره"
+        },
+        {
+          "id": "city:1836",
+          "label": "وردنجان"
+        },
+        {
+          "id": "city:1221",
+          "label": "پردنجان"
+        },
+        {
+          "id": "city:1377",
+          "label": "چلگرد"
+        },
+        {
+          "id": "city:1497",
+          "label": "چلیچه"
+        },
+        {
+          "id": "city:1280",
+          "label": "کاج"
+        },
+        {
+          "id": "county:136",
+          "label": "کوهرنگ"
+        },
+        {
+          "id": "county:137",
+          "label": "کیار"
+        },
+        {
+          "id": "city:1005",
+          "label": "کیان"
+        },
+        {
+          "id": "city:1526",
+          "label": "گندمان"
+        },
+        {
+          "id": "city:656",
+          "label": "گهرو"
+        },
+        {
+          "id": "city:1397",
+          "label": "گوجان"
+        },
+        {
+          "id": "city:1562",
+          "label": "یان چشمه"
+        }
+      ]
+    },
+    {
+      "id": "province:17",
+      "label": "خراسان جنوبی",
+      "cities": [
+        {
+          "id": "city:1225",
+          "label": "آبیز"
+        },
+        {
+          "id": "city:665",
+          "label": "آرین شهر"
+        },
+        {
+          "id": "city:1210",
+          "label": "آیسک"
+        },
+        {
+          "id": "city:557",
+          "label": "ارسک"
+        },
+        {
+          "id": "city:1023",
+          "label": "اسدیه"
+        },
+        {
+          "id": "city:537",
+          "label": "اسفدن"
+        },
+        {
+          "id": "city:536",
+          "label": "اسلامیه"
+        },
+        {
+          "id": "city:700",
+          "label": "باغستان"
+        },
+        {
+          "id": "county:139",
+          "label": "بشرویه"
+        },
+        {
+          "id": "county:140",
+          "label": "بیرجند"
+        },
+        {
+          "id": "city:1646",
+          "label": "حاجی آباد"
+        },
+        {
+          "id": "city:720",
+          "label": "خضری دشت بیاض"
+        },
+        {
+          "id": "county:141",
+          "label": "خوسف"
+        },
+        {
+          "id": "city:1806",
+          "label": "درح"
+        },
+        {
+          "id": "county:142",
+          "label": "درمیان"
+        },
+        {
+          "id": "city:1735",
+          "label": "دیهوک"
+        },
+        {
+          "id": "city:633",
+          "label": "زهان"
+        },
+        {
+          "id": "county:143",
+          "label": "زیرکوه"
+        },
+        {
+          "id": "county:144",
+          "label": "سرایان"
+        },
+        {
+          "id": "county:145",
+          "label": "سربیشه"
+        },
+        {
+          "id": "city:731",
+          "label": "سه قلعه"
+        },
+        {
+          "id": "city:1304",
+          "label": "شوسف"
+        },
+        {
+          "id": "county:146",
+          "label": "طبس"
+        },
+        {
+          "id": "city:1082",
+          "label": "طبس مسینا"
+        },
+        {
+          "id": "city:819",
+          "label": "عشق آباد"
+        },
+        {
+          "id": "county:147",
+          "label": "فردوس"
+        },
+        {
+          "id": "county:148",
+          "label": "قائنات"
+        },
+        {
+          "id": "city:1284",
+          "label": "قاین"
+        },
+        {
+          "id": "city:953",
+          "label": "قهستان"
+        },
+        {
+          "id": "city:613",
+          "label": "ماژان"
+        },
+        {
+          "id": "city:1110",
+          "label": "محمدشهر"
+        },
+        {
+          "id": "city:1792",
+          "label": "مود"
+        },
+        {
+          "id": "county:149",
+          "label": "نهبندان"
+        },
+        {
+          "id": "city:493",
+          "label": "نیمبلوک"
+        },
+        {
+          "id": "city:898",
+          "label": "گزیک"
+        }
+      ]
+    },
+    {
+      "id": "province:18",
+      "label": "خراسان رضوی",
+      "cities": [
+        {
+          "id": "city:1236",
+          "label": "آلماجق"
+        },
+        {
+          "id": "city:989",
+          "label": "احمدآبادصولت"
+        },
+        {
+          "id": "city:1186",
+          "label": "اسحق آباد"
+        },
+        {
+          "id": "city:922",
+          "label": "انابد"
+        },
+        {
+          "id": "city:1688",
+          "label": "باجگیران"
+        },
+        {
+          "id": "county:150",
+          "label": "باخرز"
+        },
+        {
+          "id": "city:870",
+          "label": "بار"
+        },
+        {
+          "id": "city:1156",
+          "label": "بایک"
+        },
+        {
+          "id": "county:151",
+          "label": "بجستان"
+        },
+        {
+          "id": "county:152",
+          "label": "بردسکن"
+        },
+        {
+          "id": "city:1358",
+          "label": "بیدخت"
+        },
+        {
+          "id": "county:154",
+          "label": "تایباد"
+        },
+        {
+          "id": "county:155",
+          "label": "تربت جام"
+        },
+        {
+          "id": "county:156",
+          "label": "تربت حیدریه"
+        },
+        {
+          "id": "county:157",
+          "label": "جغتای"
+        },
+        {
+          "id": "city:1863",
+          "label": "جنت آباد"
+        },
+        {
+          "id": "city:841",
+          "label": "جنگل"
+        },
+        {
+          "id": "county:158",
+          "label": "جوین"
+        },
+        {
+          "id": "city:1012",
+          "label": "حکم آباد"
+        },
+        {
+          "id": "city:712",
+          "label": "خرو"
+        },
+        {
+          "id": "county:160",
+          "label": "خلیل آباد"
+        },
+        {
+          "id": "county:161",
+          "label": "خواف"
+        },
+        {
+          "id": "county:162",
+          "label": "خوشاب"
+        },
+        {
+          "id": "county:163",
+          "label": "داورزن"
+        },
+        {
+          "id": "city:1796",
+          "label": "درود"
+        },
+        {
+          "id": "county:164",
+          "label": "درگز"
+        },
+        {
+          "id": "city:1077",
+          "label": "دولت آباد"
+        },
+        {
+          "id": "city:1345",
+          "label": "رادکان"
+        },
+        {
+          "id": "city:1332",
+          "label": "رباط سنگ"
+        },
+        {
+          "id": "county:165",
+          "label": "رشتخوار"
+        },
+        {
+          "id": "city:755",
+          "label": "رضویه"
+        },
+        {
+          "id": "city:1248",
+          "label": "روداب"
+        },
+        {
+          "id": "city:1547",
+          "label": "روشناوند"
+        },
+        {
+          "id": "city:959",
+          "label": "ریواده"
+        },
+        {
+          "id": "city:975",
+          "label": "ریوش"
+        },
+        {
+          "id": "city:646",
+          "label": "ریوند"
+        },
+        {
+          "id": "county:166",
+          "label": "زاوه"
+        },
+        {
+          "id": "county:167",
+          "label": "زبرخان"
+        },
+        {
+          "id": "county:168",
+          "label": "سبزوار"
+        },
+        {
+          "id": "city:917",
+          "label": "سده"
+        },
+        {
+          "id": "county:169",
+          "label": "سرخس"
+        },
+        {
+          "id": "city:852",
+          "label": "سفید سنگ"
+        },
+        {
+          "id": "city:487",
+          "label": "سلامی"
+        },
+        {
+          "id": "city:1517",
+          "label": "سلطان آباد"
+        },
+        {
+          "id": "city:1662",
+          "label": "سمیع آباد"
+        },
+        {
+          "id": "city:1395",
+          "label": "سنگان"
+        },
+        {
+          "id": "city:587",
+          "label": "سیدآباد"
+        },
+        {
+          "id": "city:1477",
+          "label": "شادمهر"
+        },
+        {
+          "id": "city:875",
+          "label": "شاندیز"
+        },
+        {
+          "id": "county:170",
+          "label": "ششتمد"
+        },
+        {
+          "id": "city:1289",
+          "label": "شهرآباد"
+        },
+        {
+          "id": "city:1261",
+          "label": "شهرزو"
+        },
+        {
+          "id": "city:1091",
+          "label": "شهرکهنه"
+        },
+        {
+          "id": "county:171",
+          "label": "صالح آباد"
+        },
+        {
+          "id": "city:1224",
+          "label": "طرقبه"
+        },
+        {
+          "id": "county:153",
+          "label": "طرقبه شاندیز"
+        },
+        {
+          "id": "city:470",
+          "label": "عشق آباد"
+        },
+        {
+          "id": "city:1170",
+          "label": "فرهادگرد"
+        },
+        {
+          "id": "city:18666",
+          "label": "فرگ قلعه"
+        },
+        {
+          "id": "county:172",
+          "label": "فریمان"
+        },
+        {
+          "id": "county:173",
+          "label": "فیروزه"
+        },
+        {
+          "id": "city:1013",
+          "label": "فیض آباد"
+        },
+        {
+          "id": "city:1699",
+          "label": "قاسم آباد"
+        },
+        {
+          "id": "city:962",
+          "label": "قدمگاه"
+        },
+        {
+          "id": "city:1557",
+          "label": "قلعه نوعلیا"
+        },
+        {
+          "id": "city:494",
+          "label": "قلندرآباد"
+        },
+        {
+          "id": "county:174",
+          "label": "قوچان"
+        },
+        {
+          "id": "city:1314",
+          "label": "لطف آباد"
+        },
+        {
+          "id": "city:1194",
+          "label": "مزدآوند"
+        },
+        {
+          "id": "city:849",
+          "label": "مزرج"
+        },
+        {
+          "id": "county:180",
+          "label": "مشهد"
+        },
+        {
+          "id": "city:1448",
+          "label": "مشهدریزه"
+        },
+        {
+          "id": "city:697",
+          "label": "مشکان"
+        },
+        {
+          "id": "city:1726",
+          "label": "ملک آباد"
+        },
+        {
+          "id": "county:181",
+          "label": "مه ولات"
+        },
+        {
+          "id": "county:1191",
+          "label": "میان جلگه"
+        },
+        {
+          "id": "city:12948",
+          "label": "نسر"
+        },
+        {
+          "id": "city:1420",
+          "label": "نشتیفان"
+        },
+        {
+          "id": "city:1686",
+          "label": "نصرآباد"
+        },
+        {
+          "id": "city:977",
+          "label": "نقاب"
+        },
+        {
+          "id": "city:971",
+          "label": "نوخندان"
+        },
+        {
+          "id": "city:1825",
+          "label": "نوده انقلاب"
+        },
+        {
+          "id": "county:182",
+          "label": "نیشابور"
+        },
+        {
+          "id": "city:1480",
+          "label": "نیل شهر"
+        },
+        {
+          "id": "city:1845",
+          "label": "همت آباد"
+        },
+        {
+          "id": "city:1369",
+          "label": "چاپشلو"
+        },
+        {
+          "id": "city:1258",
+          "label": "چخماق"
+        },
+        {
+          "id": "city:1406",
+          "label": "چنار"
+        },
+        {
+          "id": "county:159",
+          "label": "چناران"
+        },
+        {
+          "id": "city:805",
+          "label": "چکنه"
+        },
+        {
+          "id": "city:1019",
+          "label": "کاخک"
+        },
+        {
+          "id": "city:937",
+          "label": "کاریز"
+        },
+        {
+          "id": "county:175",
+          "label": "کاشمر"
+        },
+        {
+          "id": "city:1094",
+          "label": "کدکن"
+        },
+        {
+          "id": "county:176",
+          "label": "کلات"
+        },
+        {
+          "id": "city:1513",
+          "label": "کندر"
+        },
+        {
+          "id": "county:177",
+          "label": "کوهسرخ"
+        },
+        {
+          "id": "city:770",
+          "label": "گرماب"
+        },
+        {
+          "id": "county:178",
+          "label": "گلبهار"
+        },
+        {
+          "id": "city:1372",
+          "label": "گلمکان"
+        },
+        {
+          "id": "county:179",
+          "label": "گناباد"
+        },
+        {
+          "id": "city:1673",
+          "label": "یونسی"
+        }
+      ]
+    },
+    {
+      "id": "province:19",
+      "label": "خراسان شمالی",
+      "cities": [
+        {
+          "id": "city:918",
+          "label": "آشخانه"
+        },
+        {
+          "id": "city:1403",
+          "label": "آوا"
+        },
+        {
+          "id": "county:183",
+          "label": "اسفراین"
+        },
+        {
+          "id": "city:1642",
+          "label": "ایور"
+        },
+        {
+          "id": "county:1193",
+          "label": "بام و صفی آباد"
+        },
+        {
+          "id": "county:184",
+          "label": "بجنورد"
+        },
+        {
+          "id": "city:1222",
+          "label": "تیتکانلو"
+        },
+        {
+          "id": "county:185",
+          "label": "جاجرم"
+        },
+        {
+          "id": "city:969",
+          "label": "حصار گرمخان"
+        },
+        {
+          "id": "city:1325",
+          "label": "خانلق"
+        },
+        {
+          "id": "city:803",
+          "label": "درق"
+        },
+        {
+          "id": "city:1298",
+          "label": "راز"
+        },
+        {
+          "id": "county:186",
+          "label": "راز و جرگلان"
+        },
+        {
+          "id": "city:1382",
+          "label": "زیارت"
+        },
+        {
+          "id": "county:190",
+          "label": "سملقان"
+        },
+        {
+          "id": "city:1613",
+          "label": "سنخواست"
+        },
+        {
+          "id": "city:1745",
+          "label": "شوقان"
+        },
+        {
+          "id": "county:187",
+          "label": "شیروان"
+        },
+        {
+          "id": "city:921",
+          "label": "صفی آباد"
+        },
+        {
+          "id": "city:18629",
+          "label": "غلامان"
+        },
+        {
+          "id": "county:188",
+          "label": "فاروج"
+        },
+        {
+          "id": "city:1520",
+          "label": "قاضی"
+        },
+        {
+          "id": "city:752",
+          "label": "قوشخانه"
+        },
+        {
+          "id": "city:1130",
+          "label": "لوجلی"
+        },
+        {
+          "id": "county:1264",
+          "label": "مانه"
+        },
+        {
+          "id": "city:780",
+          "label": "پیش قلعه"
+        },
+        {
+          "id": "city:18832",
+          "label": "پیش قلعه(جدید)"
+        },
+        {
+          "id": "city:879",
+          "label": "چناران شهر"
+        },
+        {
+          "id": "county:189",
+          "label": "گرمه"
+        },
+        {
+          "id": "city:1034",
+          "label": "یکه سعود"
+        },
+        {
+          "id": "city:18628",
+          "label": "یکه سعود جدید"
+        }
+      ]
+    },
+    {
+      "id": "province:20",
+      "label": "خوزستان",
+      "cities": [
+        {
+          "id": "county:191",
+          "label": "آبادان"
+        },
+        {
+          "id": "city:884",
+          "label": "آبژدان"
+        },
+        {
+          "id": "city:1491",
+          "label": "آزادی"
+        },
+        {
+          "id": "county:192",
+          "label": "آغاجاری"
+        },
+        {
+          "id": "city:1319",
+          "label": "ابوحمیظه"
+        },
+        {
+          "id": "city:1014",
+          "label": "اروندکنار"
+        },
+        {
+          "id": "city:1126",
+          "label": "الهائی"
+        },
+        {
+          "id": "city:1274",
+          "label": "الوان"
+        },
+        {
+          "id": "county:193",
+          "label": "امیدیه"
+        },
+        {
+          "id": "county:195",
+          "label": "اندیمشک"
+        },
+        {
+          "id": "county:194",
+          "label": "اندیکا"
+        },
+        {
+          "id": "county:196",
+          "label": "اهواز"
+        },
+        {
+          "id": "county:197",
+          "label": "ایذه"
+        },
+        {
+          "id": "county:198",
+          "label": "باغ ملک"
+        },
+        {
+          "id": "city:657",
+          "label": "باوج"
+        },
+        {
+          "id": "county:199",
+          "label": "باوی"
+        },
+        {
+          "id": "city:991",
+          "label": "بستان"
+        },
+        {
+          "id": "city:684",
+          "label": "بندرامام خمینی"
+        },
+        {
+          "id": "county:200",
+          "label": "بندرماهشهر"
+        },
+        {
+          "id": "county:201",
+          "label": "بهبهان"
+        },
+        {
+          "id": "city:1660",
+          "label": "بیدروبه"
+        },
+        {
+          "id": "city:1405",
+          "label": "ترکالکی"
+        },
+        {
+          "id": "city:1857",
+          "label": "تشان"
+        },
+        {
+          "id": "city:610",
+          "label": "جایزان"
+        },
+        {
+          "id": "city:1493",
+          "label": "جنت مکان"
+        },
+        {
+          "id": "city:1367",
+          "label": "جندی شاپور"
+        },
+        {
+          "id": "city:18643",
+          "label": "جولکی"
+        },
+        {
+          "id": "city:829",
+          "label": "حر"
+        },
+        {
+          "id": "city:1299",
+          "label": "حسینیه"
+        },
+        {
+          "id": "city:1324",
+          "label": "حمزه"
+        },
+        {
+          "id": "county:202",
+          "label": "حمیدیه"
+        },
+        {
+          "id": "county:203",
+          "label": "خرمشهر"
+        },
+        {
+          "id": "city:1576",
+          "label": "خنافره"
+        },
+        {
+          "id": "city:651",
+          "label": "دارخوین"
+        },
+        {
+          "id": "county:204",
+          "label": "دزفول"
+        },
+        {
+          "id": "county:1189",
+          "label": "دزپارت"
+        },
+        {
+          "id": "county:205",
+          "label": "دشت آزادگان"
+        },
+        {
+          "id": "city:564",
+          "label": "دهدز"
+        },
+        {
+          "id": "county:206",
+          "label": "رامشیر"
+        },
+        {
+          "id": "county:207",
+          "label": "رامهرمز"
+        },
+        {
+          "id": "city:1321",
+          "label": "رفیع"
+        },
+        {
+          "id": "city:1540",
+          "label": "رود زرد ماشین"
+        },
+        {
+          "id": "city:591",
+          "label": "زاووت"
+        },
+        {
+          "id": "city:1391",
+          "label": "زهره"
+        },
+        {
+          "id": "city:1193",
+          "label": "سالند"
+        },
+        {
+          "id": "city:1538",
+          "label": "سرداران"
+        },
+        {
+          "id": "city:1452",
+          "label": "سردشت"
+        },
+        {
+          "id": "city:579",
+          "label": "سلطان آباد"
+        },
+        {
+          "id": "city:1653",
+          "label": "سماله"
+        },
+        {
+          "id": "city:972",
+          "label": "سوسنگرد"
+        },
+        {
+          "id": "city:1387",
+          "label": "سیاه منصور"
+        },
+        {
+          "id": "county:208",
+          "label": "شادگان"
+        },
+        {
+          "id": "city:761",
+          "label": "شاوور"
+        },
+        {
+          "id": "city:1703",
+          "label": "شرافت"
+        },
+        {
+          "id": "city:1462",
+          "label": "شمس آباد"
+        },
+        {
+          "id": "city:589",
+          "label": "شهرامام"
+        },
+        {
+          "id": "county:209",
+          "label": "شوش"
+        },
+        {
+          "id": "county:210",
+          "label": "شوشتر"
+        },
+        {
+          "id": "city:806",
+          "label": "شیبان"
+        },
+        {
+          "id": "city:590",
+          "label": "شیرین شهر"
+        },
+        {
+          "id": "city:558",
+          "label": "صالح شهر"
+        },
+        {
+          "id": "city:1188",
+          "label": "صفی آباد"
+        },
+        {
+          "id": "county:1231",
+          "label": "صیدون"
+        },
+        {
+          "id": "city:978",
+          "label": "عنبر"
+        },
+        {
+          "id": "city:926",
+          "label": "فتح المبین"
+        },
+        {
+          "id": "city:1566",
+          "label": "قلعه تل"
+        },
+        {
+          "id": "city:1201",
+          "label": "قلعه خواجه"
+        },
+        {
+          "id": "county:214",
+          "label": "لالی"
+        },
+        {
+          "id": "county:215",
+          "label": "مسجدسلیمان"
+        },
+        {
+          "id": "city:1072",
+          "label": "مشراگه"
+        },
+        {
+          "id": "city:1553",
+          "label": "ملاثانی"
+        },
+        {
+          "id": "city:1708",
+          "label": "منتظران"
+        },
+        {
+          "id": "city:914",
+          "label": "منصوریه"
+        },
+        {
+          "id": "city:1229",
+          "label": "میانرود"
+        },
+        {
+          "id": "city:853",
+          "label": "میانکوه"
+        },
+        {
+          "id": "city:1272",
+          "label": "میداود"
+        },
+        {
+          "id": "city:1202",
+          "label": "مینوشهر"
+        },
+        {
+          "id": "county:216",
+          "label": "هفتگل"
+        },
+        {
+          "id": "county:217",
+          "label": "هندیجان"
+        },
+        {
+          "id": "county:218",
+          "label": "هویزه"
+        },
+        {
+          "id": "city:1335",
+          "label": "ویس"
+        },
+        {
+          "id": "city:1046",
+          "label": "چغامیش"
+        },
+        {
+          "id": "city:1605",
+          "label": "چم گلک"
+        },
+        {
+          "id": "city:1616",
+          "label": "چمران"
+        },
+        {
+          "id": "city:566",
+          "label": "چوئبده"
+        },
+        {
+          "id": "county:211",
+          "label": "کارون"
+        },
+        {
+          "id": "county:212",
+          "label": "کرخه"
+        },
+        {
+          "id": "city:1136",
+          "label": "کوت سیدنعیم"
+        },
+        {
+          "id": "city:1342",
+          "label": "کوت عبدالله"
+        },
+        {
+          "id": "county:213",
+          "label": "گتوند"
+        },
+        {
+          "id": "city:1668",
+          "label": "گلگیر"
+        },
+        {
+          "id": "city:938",
+          "label": "گوریه"
+        }
+      ]
+    },
+    {
+      "id": "province:21",
+      "label": "زنجان",
+      "cities": [
+        {
+          "id": "city:495",
+          "label": "آب بر"
+        },
+        {
+          "id": "county:219",
+          "label": "ابهر"
+        },
+        {
+          "id": "city:647",
+          "label": "ارمغانخانه"
+        },
+        {
+          "id": "county:220",
+          "label": "ایجرود"
+        },
+        {
+          "id": "city:1659",
+          "label": "حلب"
+        },
+        {
+          "id": "county:221",
+          "label": "خدابنده"
+        },
+        {
+          "id": "county:222",
+          "label": "خرمدره"
+        },
+        {
+          "id": "city:1786",
+          "label": "دندی"
+        },
+        {
+          "id": "city:704",
+          "label": "زرین آباد"
+        },
+        {
+          "id": "city:1260",
+          "label": "زرین رود"
+        },
+        {
+          "id": "county:223",
+          "label": "زنجان"
+        },
+        {
+          "id": "city:1247",
+          "label": "سجاس"
+        },
+        {
+          "id": "county:224",
+          "label": "سلطانیه"
+        },
+        {
+          "id": "city:583",
+          "label": "سهرورد"
+        },
+        {
+          "id": "city:1129",
+          "label": "صائین قلعه"
+        },
+        {
+          "id": "county:225",
+          "label": "طارم"
+        },
+        {
+          "id": "city:695",
+          "label": "قیدار"
+        },
+        {
+          "id": "county:226",
+          "label": "ماهنشان"
+        },
+        {
+          "id": "city:996",
+          "label": "نوربهار"
+        },
+        {
+          "id": "city:848",
+          "label": "نیکپی"
+        },
+        {
+          "id": "city:648",
+          "label": "هیدج"
+        },
+        {
+          "id": "city:543",
+          "label": "چورزق"
+        },
+        {
+          "id": "city:1390",
+          "label": "کرسف"
+        },
+        {
+          "id": "city:1329",
+          "label": "گرماب"
+        }
+      ]
+    },
+    {
+      "id": "province:22",
+      "label": "سمنان",
+      "cities": [
+        {
+          "id": "county:227",
+          "label": "آرادان"
+        },
+        {
+          "id": "city:1719",
+          "label": "امیریه"
+        },
+        {
+          "id": "city:908",
+          "label": "ایوانکی"
+        },
+        {
+          "id": "city:555",
+          "label": "بسطام"
+        },
+        {
+          "id": "city:812",
+          "label": "بیارجمند"
+        },
+        {
+          "id": "county:228",
+          "label": "دامغان"
+        },
+        {
+          "id": "city:1488",
+          "label": "درجزین"
+        },
+        {
+          "id": "city:891",
+          "label": "دیباج"
+        },
+        {
+          "id": "city:772",
+          "label": "رضوان"
+        },
+        {
+          "id": "city:1027",
+          "label": "رویان"
+        },
+        {
+          "id": "county:229",
+          "label": "سرخه"
+        },
+        {
+          "id": "county:230",
+          "label": "سمنان"
+        },
+        {
+          "id": "county:231",
+          "label": "شاهرود"
+        },
+        {
+          "id": "city:968",
+          "label": "شهمیرزاد"
+        },
+        {
+          "id": "city:553",
+          "label": "مجن"
+        },
+        {
+          "id": "county:233",
+          "label": "مهدی شهر"
+        },
+        {
+          "id": "county:234",
+          "label": "میامی"
+        },
+        {
+          "id": "city:544",
+          "label": "کلاته"
+        },
+        {
+          "id": "city:901",
+          "label": "کلاته خیج"
+        },
+        {
+          "id": "city:984",
+          "label": "کهن آباد"
+        },
+        {
+          "id": "county:232",
+          "label": "گرمسار"
+        }
+      ]
+    },
+    {
+      "id": "province:23",
+      "label": "سیستان و بلوچستان",
+      "cities": [
+        {
+          "id": "city:8776",
+          "label": "آشار"
+        },
+        {
+          "id": "city:1346",
+          "label": "ادیمی"
+        },
+        {
+          "id": "city:13135",
+          "label": "اسفندک"
+        },
+        {
+          "id": "city:12865",
+          "label": "اسماعیل آباد"
+        },
+        {
+          "id": "city:499",
+          "label": "اسپکه"
+        },
+        {
+          "id": "county:235",
+          "label": "ایرانشهر"
+        },
+        {
+          "id": "city:8755",
+          "label": "بریس"
+        },
+        {
+          "id": "city:659",
+          "label": "بزمان"
+        },
+        {
+          "id": "county:236",
+          "label": "بمپور"
+        },
+        {
+          "id": "city:1496",
+          "label": "بنت"
+        },
+        {
+          "id": "city:748",
+          "label": "بنجار"
+        },
+        {
+          "id": "county:237",
+          "label": "تفتان"
+        },
+        {
+          "id": "city:974",
+          "label": "جالق"
+        },
+        {
+          "id": "city:1165",
+          "label": "جزینک"
+        },
+        {
+          "id": "county:239",
+          "label": "خاش"
+        },
+        {
+          "id": "county:240",
+          "label": "دشتیاری"
+        },
+        {
+          "id": "county:241",
+          "label": "دلگان"
+        },
+        {
+          "id": "city:1784",
+          "label": "ده رئیس"
+        },
+        {
+          "id": "city:1714",
+          "label": "دوست محمد"
+        },
+        {
+          "id": "county:242",
+          "label": "راسک"
+        },
+        {
+          "id": "city:1308",
+          "label": "ریگ ملک"
+        },
+        {
+          "id": "county:243",
+          "label": "زابل"
+        },
+        {
+          "id": "city:759",
+          "label": "زابلی"
+        },
+        {
+          "id": "county:244",
+          "label": "زاهدان"
+        },
+        {
+          "id": "county:245",
+          "label": "زرآباد"
+        },
+        {
+          "id": "county:246",
+          "label": "زهک"
+        },
+        {
+          "id": "city:890",
+          "label": "ساربوک"
+        },
+        {
+          "id": "county:247",
+          "label": "سراوان"
+        },
+        {
+          "id": "county:248",
+          "label": "سرباز"
+        },
+        {
+          "id": "city:551",
+          "label": "سرجنگل"
+        },
+        {
+          "id": "city:1384",
+          "label": "سوران"
+        },
+        {
+          "id": "city:1770",
+          "label": "سیب"
+        },
+        {
+          "id": "county:249",
+          "label": "سیب و سوران"
+        },
+        {
+          "id": "city:823",
+          "label": "سیرکان"
+        },
+        {
+          "id": "city:1585",
+          "label": "علی اکبر"
+        },
+        {
+          "id": "county:250",
+          "label": "فنوج"
+        },
+        {
+          "id": "city:12863",
+          "label": "قاسم آباد"
+        },
+        {
+          "id": "city:1669",
+          "label": "قرقری"
+        },
+        {
+          "id": "county:251",
+          "label": "قصرقند"
+        },
+        {
+          "id": "city:1009",
+          "label": "لادیز"
+        },
+        {
+          "id": "county:1148",
+          "label": "لاشار"
+        },
+        {
+          "id": "city:514",
+          "label": "محمدآباد"
+        },
+        {
+          "id": "city:1847",
+          "label": "محمدان"
+        },
+        {
+          "id": "city:586",
+          "label": "محمدی"
+        },
+        {
+          "id": "county:254",
+          "label": "مهرستان"
+        },
+        {
+          "id": "county:255",
+          "label": "میرجاوه"
+        },
+        {
+          "id": "city:1430",
+          "label": "نصرت آباد"
+        },
+        {
+          "id": "city:1599",
+          "label": "نوک آباد"
+        },
+        {
+          "id": "city:8685",
+          "label": "نگور"
+        },
+        {
+          "id": "county:257",
+          "label": "نیمروز"
+        },
+        {
+          "id": "county:256",
+          "label": "نیک شهر"
+        },
+        {
+          "id": "county:258",
+          "label": "هامون"
+        },
+        {
+          "id": "city:1206",
+          "label": "هیدوچ"
+        },
+        {
+          "id": "county:259",
+          "label": "هیرمند"
+        },
+        {
+          "id": "city:1067",
+          "label": "پارود"
+        },
+        {
+          "id": "city:12864",
+          "label": "پلان"
+        },
+        {
+          "id": "city:1033",
+          "label": "پیشین"
+        },
+        {
+          "id": "county:238",
+          "label": "چابهار"
+        },
+        {
+          "id": "city:8779",
+          "label": "چانف"
+        },
+        {
+          "id": "city:12866",
+          "label": "چگرد"
+        },
+        {
+          "id": "county:252",
+          "label": "کنارک"
+        },
+        {
+          "id": "city:1065",
+          "label": "گتیج"
+        },
+        {
+          "id": "city:924",
+          "label": "گشت"
+        },
+        {
+          "id": "county:253",
+          "label": "گلشن"
+        },
+        {
+          "id": "city:1267",
+          "label": "گلمورتی"
+        }
+      ]
+    },
+    {
+      "id": "province:24",
+      "label": "فارس",
+      "cities": [
+        {
+          "id": "county:260",
+          "label": "آباده"
+        },
+        {
+          "id": "city:593",
+          "label": "آباده طشک"
+        },
+        {
+          "id": "city:858",
+          "label": "ارد"
+        },
+        {
+          "id": "city:1598",
+          "label": "اردکان"
+        },
+        {
+          "id": "county:261",
+          "label": "ارسنجان"
+        },
+        {
+          "id": "county:262",
+          "label": "استهبان"
+        },
+        {
+          "id": "city:846",
+          "label": "اسیر"
+        },
+        {
+          "id": "city:1666",
+          "label": "اشکنان"
+        },
+        {
+          "id": "city:1071",
+          "label": "افزر"
+        },
+        {
+          "id": "county:263",
+          "label": "اقلید"
+        },
+        {
+          "id": "city:725",
+          "label": "امام شهر"
+        },
+        {
+          "id": "city:1873",
+          "label": "اهل"
+        },
+        {
+          "id": "county:264",
+          "label": "اوز"
+        },
+        {
+          "id": "city:1150",
+          "label": "اکبرآباد"
+        },
+        {
+          "id": "city:1827",
+          "label": "ایج"
+        },
+        {
+          "id": "city:988",
+          "label": "ایزدخواست"
+        },
+        {
+          "id": "city:1265",
+          "label": "باب انار"
+        },
+        {
+          "id": "city:1602",
+          "label": "بابامنیر"
+        },
+        {
+          "id": "city:12952",
+          "label": "باغ صفا"
+        },
+        {
+          "id": "city:1647",
+          "label": "بالاده"
+        },
+        {
+          "id": "county:265",
+          "label": "بختگان"
+        },
+        {
+          "id": "city:576",
+          "label": "بنارویه"
+        },
+        {
+          "id": "city:1689",
+          "label": "بهمن"
+        },
+        {
+          "id": "county:266",
+          "label": "بوانات"
+        },
+        {
+          "id": "city:1650",
+          "label": "بیرم"
+        },
+        {
+          "id": "county:267",
+          "label": "بیضا"
+        },
+        {
+          "id": "city:1010",
+          "label": "جنت شهر"
+        },
+        {
+          "id": "county:269",
+          "label": "جهرم"
+        },
+        {
+          "id": "county:270",
+          "label": "جویم"
+        },
+        {
+          "id": "city:788",
+          "label": "حاجی آباد"
+        },
+        {
+          "id": "city:1294",
+          "label": "حسامی"
+        },
+        {
+          "id": "city:1565",
+          "label": "حسن آباد"
+        },
+        {
+          "id": "city:1843",
+          "label": "خانه زنیان"
+        },
+        {
+          "id": "city:1365",
+          "label": "خانیمن"
+        },
+        {
+          "id": "city:1125",
+          "label": "خاوران"
+        },
+        {
+          "id": "county:271",
+          "label": "خرامه"
+        },
+        {
+          "id": "county:272",
+          "label": "خرم بید"
+        },
+        {
+          "id": "city:1643",
+          "label": "خشت"
+        },
+        {
+          "id": "county:273",
+          "label": "خفر"
+        },
+        {
+          "id": "county:274",
+          "label": "خنج"
+        },
+        {
+          "id": "city:1533",
+          "label": "خور"
+        },
+        {
+          "id": "city:1846",
+          "label": "خوزی"
+        },
+        {
+          "id": "city:791",
+          "label": "خومه زار"
+        },
+        {
+          "id": "city:928",
+          "label": "خیراباد"
+        },
+        {
+          "id": "city:782",
+          "label": "خیرگو"
+        },
+        {
+          "id": "county:275",
+          "label": "داراب"
+        },
+        {
+          "id": "city:1361",
+          "label": "داریان"
+        },
+        {
+          "id": "city:1168",
+          "label": "دبیران"
+        },
+        {
+          "id": "city:644",
+          "label": "دهرم"
+        },
+        {
+          "id": "city:1797",
+          "label": "دهکویه"
+        },
+        {
+          "id": "city:631",
+          "label": "دوبرجی"
+        },
+        {
+          "id": "city:678",
+          "label": "دوزه"
+        },
+        {
+          "id": "city:1123",
+          "label": "دژکرد"
+        },
+        {
+          "id": "city:1353",
+          "label": "رامجرد"
+        },
+        {
+          "id": "city:528",
+          "label": "رحمت آباد"
+        },
+        {
+          "id": "city:474",
+          "label": "رستاق"
+        },
+        {
+          "id": "county:276",
+          "label": "رستم"
+        },
+        {
+          "id": "city:913",
+          "label": "رونیز"
+        },
+        {
+          "id": "city:1245",
+          "label": "زاهدشهر"
+        },
+        {
+          "id": "county:277",
+          "label": "زرقان"
+        },
+        {
+          "id": "county:278",
+          "label": "زرین دشت"
+        },
+        {
+          "id": "city:1300",
+          "label": "زنگی آباد"
+        },
+        {
+          "id": "city:1839",
+          "label": "سده"
+        },
+        {
+          "id": "county:281",
+          "label": "سروستان"
+        },
+        {
+          "id": "county:280",
+          "label": "سرچهان"
+        },
+        {
+          "id": "city:986",
+          "label": "سعادت شهر"
+        },
+        {
+          "id": "city:1440",
+          "label": "سلطان شهر"
+        },
+        {
+          "id": "city:862",
+          "label": "سورمق"
+        },
+        {
+          "id": "county:279",
+          "label": "سپیدان"
+        },
+        {
+          "id": "city:1164",
+          "label": "سیدان"
+        },
+        {
+          "id": "city:1205",
+          "label": "ششده"
+        },
+        {
+          "id": "city:1328",
+          "label": "شهرجدیدصدرا"
+        },
+        {
+          "id": "city:1757",
+          "label": "شهرپیر"
+        },
+        {
+          "id": "county:282",
+          "label": "شیراز"
+        },
+        {
+          "id": "city:640",
+          "label": "صغاد"
+        },
+        {
+          "id": "city:1868",
+          "label": "صفاشهر"
+        },
+        {
+          "id": "city:1543",
+          "label": "طسوج"
+        },
+        {
+          "id": "city:859",
+          "label": "علامرودشت"
+        },
+        {
+          "id": "city:1878",
+          "label": "عمادشهر"
+        },
+        {
+          "id": "city:608",
+          "label": "فاروق"
+        },
+        {
+          "id": "city:1132",
+          "label": "فال"
+        },
+        {
+          "id": "city:1667",
+          "label": "فتح آباد"
+        },
+        {
+          "id": "city:1615",
+          "label": "فدامی"
+        },
+        {
+          "id": "county:283",
+          "label": "فراشبند"
+        },
+        {
+          "id": "county:284",
+          "label": "فسا"
+        },
+        {
+          "id": "county:285",
+          "label": "فیروزآباد"
+        },
+        {
+          "id": "city:1115",
+          "label": "قائمیه"
+        },
+        {
+          "id": "city:973",
+          "label": "قادرآباد"
+        },
+        {
+          "id": "city:1810",
+          "label": "قره بلاغ"
+        },
+        {
+          "id": "city:1536",
+          "label": "قطب آباد"
+        },
+        {
+          "id": "city:784",
+          "label": "قطرویه"
+        },
+        {
+          "id": "city:1092",
+          "label": "قیر"
+        },
+        {
+          "id": "county:286",
+          "label": "قیروکارزین"
+        },
+        {
+          "id": "city:963",
+          "label": "لار"
+        },
+        {
+          "id": "county:291",
+          "label": "لارستان"
+        },
+        {
+          "id": "county:292",
+          "label": "لامرد"
+        },
+        {
+          "id": "city:992",
+          "label": "لطیفی"
+        },
+        {
+          "id": "city:1685",
+          "label": "لپویی"
+        },
+        {
+          "id": "city:1766",
+          "label": "مادرسلیمان"
+        },
+        {
+          "id": "city:1146",
+          "label": "مبارک آباد"
+        },
+        {
+          "id": "city:729",
+          "label": "محمله"
+        },
+        {
+          "id": "county:293",
+          "label": "مرودشت"
+        },
+        {
+          "id": "city:813",
+          "label": "مزایجان"
+        },
+        {
+          "id": "city:484",
+          "label": "مشکان"
+        },
+        {
+          "id": "city:1449",
+          "label": "مصیری"
+        },
+        {
+          "id": "city:1098",
+          "label": "مظفری"
+        },
+        {
+          "id": "city:713",
+          "label": "معزابادجابری"
+        },
+        {
+          "id": "county:294",
+          "label": "ممسنی"
+        },
+        {
+          "id": "county:295",
+          "label": "مهر"
+        },
+        {
+          "id": "city:1649",
+          "label": "میانشهر"
+        },
+        {
+          "id": "city:603",
+          "label": "میمند"
+        },
+        {
+          "id": "city:1375",
+          "label": "نوبندگان"
+        },
+        {
+          "id": "city:500",
+          "label": "نوجین"
+        },
+        {
+          "id": "city:739",
+          "label": "نودان"
+        },
+        {
+          "id": "city:1864",
+          "label": "نور آباد"
+        },
+        {
+          "id": "county:296",
+          "label": "نی ریز"
+        },
+        {
+          "id": "city:1290",
+          "label": "هماشهر"
+        },
+        {
+          "id": "city:1400",
+          "label": "وراوی"
+        },
+        {
+          "id": "county:268",
+          "label": "پاسارگاد"
+        },
+        {
+          "id": "city:1813",
+          "label": "پاسخن"
+        },
+        {
+          "id": "city:1824",
+          "label": "چاه ورز"
+        },
+        {
+          "id": "city:1084",
+          "label": "کارزین"
+        },
+        {
+          "id": "county:287",
+          "label": "کازرون"
+        },
+        {
+          "id": "city:702",
+          "label": "کامفیروز"
+        },
+        {
+          "id": "city:1729",
+          "label": "کره ای"
+        },
+        {
+          "id": "city:740",
+          "label": "کنار تخته"
+        },
+        {
+          "id": "county:288",
+          "label": "کوار"
+        },
+        {
+          "id": "city:1107",
+          "label": "کوره"
+        },
+        {
+          "id": "county:289",
+          "label": "کوه چنار"
+        },
+        {
+          "id": "city:1200",
+          "label": "کوهنجان"
+        },
+        {
+          "id": "city:1759",
+          "label": "کوپن"
+        },
+        {
+          "id": "county:290",
+          "label": "گراش"
+        },
+        {
+          "id": "city:1337",
+          "label": "گله دار"
+        }
+      ]
+    },
+    {
+      "id": "province:25",
+      "label": "قزوین",
+      "cities": [
+        {
+          "id": "city:857",
+          "label": "آبگرم"
+        },
+        {
+          "id": "county:297",
+          "label": "آبیک"
+        },
+        {
+          "id": "county:298",
+          "label": "آوج"
+        },
+        {
+          "id": "city:722",
+          "label": "ارداق"
+        },
+        {
+          "id": "city:717",
+          "label": "اسفرورین"
+        },
+        {
+          "id": "city:1357",
+          "label": "اقبالیه"
+        },
+        {
+          "id": "county:299",
+          "label": "البرز"
+        },
+        {
+          "id": "city:1722",
+          "label": "الوند"
+        },
+        {
+          "id": "county:300",
+          "label": "بوئین زهرا"
+        },
+        {
+          "id": "city:843",
+          "label": "بیدستان"
+        },
+        {
+          "id": "county:301",
+          "label": "تاکستان"
+        },
+        {
+          "id": "city:1807",
+          "label": "خاکعلی"
+        },
+        {
+          "id": "city:1724",
+          "label": "خرمدشت"
+        },
+        {
+          "id": "city:585",
+          "label": "دانسفهان"
+        },
+        {
+          "id": "city:1060",
+          "label": "رازمیان"
+        },
+        {
+          "id": "city:572",
+          "label": "زیاران"
+        },
+        {
+          "id": "city:1781",
+          "label": "سگزآباد"
+        },
+        {
+          "id": "city:1317",
+          "label": "سیردان"
+        },
+        {
+          "id": "city:620",
+          "label": "شال"
+        },
+        {
+          "id": "city:1733",
+          "label": "شریفیه"
+        },
+        {
+          "id": "city:797",
+          "label": "ضیاءآباد"
+        },
+        {
+          "id": "city:601",
+          "label": "عصمت آباد"
+        },
+        {
+          "id": "county:302",
+          "label": "قزوین"
+        },
+        {
+          "id": "city:475",
+          "label": "قشلاق"
+        },
+        {
+          "id": "city:1438",
+          "label": "محمدیه"
+        },
+        {
+          "id": "city:575",
+          "label": "محمودآبادنمونه"
+        },
+        {
+          "id": "city:1437",
+          "label": "معلم کلایه"
+        },
+        {
+          "id": "city:18777",
+          "label": "مهرگان"
+        },
+        {
+          "id": "city:874",
+          "label": "نرجه"
+        },
+        {
+          "id": "city:936",
+          "label": "کوهین"
+        }
+      ]
+    },
+    {
+      "id": "province:26",
+      "label": "قم",
+      "cities": [
+        {
+          "id": "county:1195",
+          "label": "جعفرآباد"
+        },
+        {
+          "id": "city:628",
+          "label": "جعفریه"
+        },
+        {
+          "id": "city:561",
+          "label": "دستجرد"
+        },
+        {
+          "id": "city:1311",
+          "label": "سلفچگان"
+        },
+        {
+          "id": "city:18735",
+          "label": "قاهان"
+        },
+        {
+          "id": "county:303",
+          "label": "قم"
+        },
+        {
+          "id": "city:556",
+          "label": "قنوات"
+        },
+        {
+          "id": "county:1196",
+          "label": "کهک"
+        }
+      ]
+    },
+    {
+      "id": "province:27",
+      "label": "کردستان",
+      "cities": [
+        {
+          "id": "city:1349",
+          "label": "آرمرده"
+        },
+        {
+          "id": "city:615",
+          "label": "اورامان تخت"
+        },
+        {
+          "id": "city:1595",
+          "label": "بابارشانی"
+        },
+        {
+          "id": "county:304",
+          "label": "بانه"
+        },
+        {
+          "id": "city:1704",
+          "label": "برده رشه"
+        },
+        {
+          "id": "city:1198",
+          "label": "بلبان آباد"
+        },
+        {
+          "id": "city:1474",
+          "label": "بوئین سفلی"
+        },
+        {
+          "id": "county:305",
+          "label": "بیجار"
+        },
+        {
+          "id": "city:952",
+          "label": "توپ آغاج"
+        },
+        {
+          "id": "city:1705",
+          "label": "حسین آباد"
+        },
+        {
+          "id": "city:1700",
+          "label": "دزج"
+        },
+        {
+          "id": "city:1717",
+          "label": "دلبران"
+        },
+        {
+          "id": "county:306",
+          "label": "دهگلان"
+        },
+        {
+          "id": "county:307",
+          "label": "دیواندره"
+        },
+        {
+          "id": "city:563",
+          "label": "زرینه"
+        },
+        {
+          "id": "county:308",
+          "label": "سروآباد"
+        },
+        {
+          "id": "city:1447",
+          "label": "سریش آباد"
+        },
+        {
+          "id": "county:309",
+          "label": "سقز"
+        },
+        {
+          "id": "city:502",
+          "label": "سنته"
+        },
+        {
+          "id": "county:310",
+          "label": "سنندج"
+        },
+        {
+          "id": "city:1787",
+          "label": "شویشه"
+        },
+        {
+          "id": "city:1862",
+          "label": "صاحب"
+        },
+        {
+          "id": "county:311",
+          "label": "قروه"
+        },
+        {
+          "id": "city:738",
+          "label": "مالوجه"
+        },
+        {
+          "id": "county:313",
+          "label": "مریوان"
+        },
+        {
+          "id": "city:1316",
+          "label": "موچش"
+        },
+        {
+          "id": "city:1524",
+          "label": "هزارکانیان"
+        },
+        {
+          "id": "city:1235",
+          "label": "پیرتاج"
+        },
+        {
+          "id": "city:838",
+          "label": "چناره"
+        },
+        {
+          "id": "county:312",
+          "label": "کامیاران"
+        },
+        {
+          "id": "city:1794",
+          "label": "کانی دینار"
+        },
+        {
+          "id": "city:1073",
+          "label": "کانی سور"
+        },
+        {
+          "id": "city:1829",
+          "label": "یاسوکند"
+        }
+      ]
+    },
+    {
+      "id": "province:28",
+      "label": "کرمان",
+      "cities": [
+        {
+          "id": "city:831",
+          "label": "اختیارآباد"
+        },
+        {
+          "id": "county:314",
+          "label": "ارزوئیه"
+        },
+        {
+          "id": "city:915",
+          "label": "امین شهر"
+        },
+        {
+          "id": "county:315",
+          "label": "انار"
+        },
+        {
+          "id": "city:1815",
+          "label": "اندوهجرد"
+        },
+        {
+          "id": "city:1487",
+          "label": "باغین"
+        },
+        {
+          "id": "county:316",
+          "label": "بافت"
+        },
+        {
+          "id": "county:317",
+          "label": "بردسیر"
+        },
+        {
+          "id": "city:1154",
+          "label": "بروات"
+        },
+        {
+          "id": "city:508",
+          "label": "بزنجان"
+        },
+        {
+          "id": "city:810",
+          "label": "بلورد"
+        },
+        {
+          "id": "city:1143",
+          "label": "بلوک"
+        },
+        {
+          "id": "county:318",
+          "label": "بم"
+        },
+        {
+          "id": "city:1429",
+          "label": "بهرمان"
+        },
+        {
+          "id": "county:1265",
+          "label": "جازموریان"
+        },
+        {
+          "id": "city:1683",
+          "label": "جبالبارز"
+        },
+        {
+          "id": "city:1486",
+          "label": "جوادیه الهیه"
+        },
+        {
+          "id": "city:1320",
+          "label": "جوزم"
+        },
+        {
+          "id": "city:1849",
+          "label": "جوپار"
+        },
+        {
+          "id": "county:319",
+          "label": "جیرفت"
+        },
+        {
+          "id": "city:522",
+          "label": "حور پاسفید"
+        },
+        {
+          "id": "city:1001",
+          "label": "خاتون آباد"
+        },
+        {
+          "id": "city:897",
+          "label": "خانوک"
+        },
+        {
+          "id": "city:605",
+          "label": "خواجوشهر"
+        },
+        {
+          "id": "city:1739",
+          "label": "خورسند"
+        },
+        {
+          "id": "city:945",
+          "label": "درب بهشت"
+        },
+        {
+          "id": "city:828",
+          "label": "دشتکار"
+        },
+        {
+          "id": "city:534",
+          "label": "دهج"
+        },
+        {
+          "id": "city:1087",
+          "label": "دهنو اسلام اباد"
+        },
+        {
+          "id": "city:762",
+          "label": "دهکهان"
+        },
+        {
+          "id": "city:892",
+          "label": "دوساری"
+        },
+        {
+          "id": "county:320",
+          "label": "رابر"
+        },
+        {
+          "id": "county:321",
+          "label": "راور"
+        },
+        {
+          "id": "city:1214",
+          "label": "راین"
+        },
+        {
+          "id": "city:1695",
+          "label": "رحمت آباد"
+        },
+        {
+          "id": "county:322",
+          "label": "رفسنجان"
+        },
+        {
+          "id": "city:517",
+          "label": "رمشک"
+        },
+        {
+          "id": "city:1081",
+          "label": "رودبار"
+        },
+        {
+          "id": "county:323",
+          "label": "رودبارجنوب"
+        },
+        {
+          "id": "city:1334",
+          "label": "ریحان"
+        },
+        {
+          "id": "county:324",
+          "label": "ریگان"
+        },
+        {
+          "id": "county:325",
+          "label": "زرند"
+        },
+        {
+          "id": "city:817",
+          "label": "زنگی آباد"
+        },
+        {
+          "id": "city:758",
+          "label": "زهکلوت"
+        },
+        {
+          "id": "city:1402",
+          "label": "زیدآباد"
+        },
+        {
+          "id": "county:326",
+          "label": "سیرجان"
+        },
+        {
+          "id": "city:1718",
+          "label": "سیریز"
+        },
+        {
+          "id": "city:677",
+          "label": "شهداد"
+        },
+        {
+          "id": "county:327",
+          "label": "شهربابک"
+        },
+        {
+          "id": "city:866",
+          "label": "صفائیه"
+        },
+        {
+          "id": "city:1211",
+          "label": "عباس آبادسردار"
+        },
+        {
+          "id": "city:611",
+          "label": "علی آباد"
+        },
+        {
+          "id": "county:328",
+          "label": "عنبرآباد"
+        },
+        {
+          "id": "county:329",
+          "label": "فاریاب"
+        },
+        {
+          "id": "county:330",
+          "label": "فهرج"
+        },
+        {
+          "id": "county:331",
+          "label": "قلعه گنج"
+        },
+        {
+          "id": "city:630",
+          "label": "لاله زار"
+        },
+        {
+          "id": "city:929",
+          "label": "ماهان"
+        },
+        {
+          "id": "city:1263",
+          "label": "محمدآباد"
+        },
+        {
+          "id": "city:666",
+          "label": "محی آباد"
+        },
+        {
+          "id": "city:479",
+          "label": "مردهک"
+        },
+        {
+          "id": "city:480",
+          "label": "مس سرچشمه"
+        },
+        {
+          "id": "county:335",
+          "label": "منوجان"
+        },
+        {
+          "id": "city:1609",
+          "label": "نجف شهر"
+        },
+        {
+          "id": "county:336",
+          "label": "نرماشیر"
+        },
+        {
+          "id": "city:1394",
+          "label": "نظام شهر"
+        },
+        {
+          "id": "city:477",
+          "label": "نودژ"
+        },
+        {
+          "id": "city:900",
+          "label": "نگار"
+        },
+        {
+          "id": "city:1658",
+          "label": "هجدک"
+        },
+        {
+          "id": "city:1476",
+          "label": "هماشهر"
+        },
+        {
+          "id": "city:489",
+          "label": "هنزا"
+        },
+        {
+          "id": "city:1812",
+          "label": "پاریز"
+        },
+        {
+          "id": "city:1747",
+          "label": "چاه دادخدا"
+        },
+        {
+          "id": "city:814",
+          "label": "چاه مرید"
+        },
+        {
+          "id": "city:768",
+          "label": "چترود"
+        },
+        {
+          "id": "city:1439",
+          "label": "کاظم آباد"
+        },
+        {
+          "id": "county:332",
+          "label": "کرمان"
+        },
+        {
+          "id": "city:1426",
+          "label": "کشکوئیه"
+        },
+        {
+          "id": "county:333",
+          "label": "کهنوج"
+        },
+        {
+          "id": "county:334",
+          "label": "کوهبنان"
+        },
+        {
+          "id": "city:1875",
+          "label": "کیانشهر"
+        },
+        {
+          "id": "city:1041",
+          "label": "گلباف"
+        },
+        {
+          "id": "city:1603",
+          "label": "گلزار"
+        },
+        {
+          "id": "city:481",
+          "label": "گنبکی"
+        },
+        {
+          "id": "city:471",
+          "label": "یزدان شهر"
+        }
+      ]
+    },
+    {
+      "id": "province:29",
+      "label": "کرمانشاه",
+      "cities": [
+        {
+          "id": "city:773",
+          "label": "ازگله"
+        },
+        {
+          "id": "county:337",
+          "label": "اسلام آباد غرب"
+        },
+        {
+          "id": "city:1639",
+          "label": "بان وره"
+        },
+        {
+          "id": "city:1682",
+          "label": "باینگان"
+        },
+        {
+          "id": "city:1422",
+          "label": "بیستون"
+        },
+        {
+          "id": "city:1089",
+          "label": "تازه آباد"
+        },
+        {
+          "id": "county:339",
+          "label": "ثلاث باباجانی"
+        },
+        {
+          "id": "county:340",
+          "label": "جوانرود"
+        },
+        {
+          "id": "city:802",
+          "label": "حمیل"
+        },
+        {
+          "id": "county:341",
+          "label": "دالاهو"
+        },
+        {
+          "id": "city:497",
+          "label": "رباط"
+        },
+        {
+          "id": "county:342",
+          "label": "روانسر"
+        },
+        {
+          "id": "city:1767",
+          "label": "ریجاب"
+        },
+        {
+          "id": "city:1731",
+          "label": "سرمست"
+        },
+        {
+          "id": "county:343",
+          "label": "سرپل ذهاب"
+        },
+        {
+          "id": "city:1432",
+          "label": "سطر"
+        },
+        {
+          "id": "county:344",
+          "label": "سنقر"
+        },
+        {
+          "id": "city:1388",
+          "label": "سومار"
+        },
+        {
+          "id": "city:983",
+          "label": "شاهو"
+        },
+        {
+          "id": "city:1779",
+          "label": "شروینه"
+        },
+        {
+          "id": "county:345",
+          "label": "صحنه"
+        },
+        {
+          "id": "county:346",
+          "label": "قصرشیرین"
+        },
+        {
+          "id": "city:1163",
+          "label": "قلعه"
+        },
+        {
+          "id": "city:1169",
+          "label": "میان راهان"
+        },
+        {
+          "id": "city:1268",
+          "label": "میرآباد"
+        },
+        {
+          "id": "city:546",
+          "label": "نودشه"
+        },
+        {
+          "id": "city:1327",
+          "label": "نوسود"
+        },
+        {
+          "id": "county:350",
+          "label": "هرسین"
+        },
+        {
+          "id": "city:864",
+          "label": "هلشی"
+        },
+        {
+          "id": "county:338",
+          "label": "پاوه"
+        },
+        {
+          "id": "county:347",
+          "label": "کرمانشاه"
+        },
+        {
+          "id": "city:1552",
+          "label": "کرندغرب"
+        },
+        {
+          "id": "county:348",
+          "label": "کنگاور"
+        },
+        {
+          "id": "city:1421",
+          "label": "کوزران"
+        },
+        {
+          "id": "city:1453",
+          "label": "گهواره"
+        },
+        {
+          "id": "city:1572",
+          "label": "گودین"
+        },
+        {
+          "id": "county:349",
+          "label": "گیلانغرب"
+        }
+      ]
+    },
+    {
+      "id": "province:30",
+      "label": "کهگیلویه و بویراحمد",
+      "cities": [
+        {
+          "id": "county:351",
+          "label": "باشت"
+        },
+        {
+          "id": "county:352",
+          "label": "بهمئی"
+        },
+        {
+          "id": "city:504",
+          "label": "بوستان"
+        },
+        {
+          "id": "county:353",
+          "label": "بویراحمد"
+        },
+        {
+          "id": "county:355",
+          "label": "دنا"
+        },
+        {
+          "id": "city:905",
+          "label": "دهدشت"
+        },
+        {
+          "id": "city:622",
+          "label": "دوگنبدان"
+        },
+        {
+          "id": "city:1053",
+          "label": "دیشموک"
+        },
+        {
+          "id": "city:910",
+          "label": "سرفاریاب"
+        },
+        {
+          "id": "city:571",
+          "label": "سوق"
+        },
+        {
+          "id": "city:18857",
+          "label": "سپیدار"
+        },
+        {
+          "id": "city:1601",
+          "label": "سی سخت"
+        },
+        {
+          "id": "city:524",
+          "label": "قلعه رییسی"
+        },
+        {
+          "id": "county:358",
+          "label": "لنده"
+        },
+        {
+          "id": "city:1015",
+          "label": "لیکک"
+        },
+        {
+          "id": "city:1481",
+          "label": "مادوان"
+        },
+        {
+          "id": "county:1188",
+          "label": "مارگون"
+        },
+        {
+          "id": "city:1753",
+          "label": "پاتاوه"
+        },
+        {
+          "id": "county:354",
+          "label": "چرام"
+        },
+        {
+          "id": "city:1172",
+          "label": "چیتاب"
+        },
+        {
+          "id": "county:356",
+          "label": "کهگیلویه"
+        },
+        {
+          "id": "city:582",
+          "label": "گراب سفلی"
+        },
+        {
+          "id": "county:357",
+          "label": "گچساران"
+        },
+        {
+          "id": "city:1264",
+          "label": "یاسوج"
+        }
+      ]
+    },
+    {
+      "id": "province:31",
+      "label": "گلستان",
+      "cities": [
+        {
+          "id": "county:359",
+          "label": "آزادشهر"
+        },
+        {
+          "id": "county:360",
+          "label": "آق قلا"
+        },
+        {
+          "id": "city:18843",
+          "label": "القجر"
+        },
+        {
+          "id": "city:1492",
+          "label": "انبار آلوم"
+        },
+        {
+          "id": "city:1850",
+          "label": "اینچه برون"
+        },
+        {
+          "id": "city:1502",
+          "label": "بندرترکمن"
+        },
+        {
+          "id": "county:361",
+          "label": "بندرگز"
+        },
+        {
+          "id": "city:1671",
+          "label": "تاتارعلیا"
+        },
+        {
+          "id": "county:362",
+          "label": "ترکمن"
+        },
+        {
+          "id": "city:894",
+          "label": "جلین"
+        },
+        {
+          "id": "city:1713",
+          "label": "خان ببین"
+        },
+        {
+          "id": "city:1407",
+          "label": "دلند"
+        },
+        {
+          "id": "city:990",
+          "label": "دوزین"
+        },
+        {
+          "id": "county:363",
+          "label": "رامیان"
+        },
+        {
+          "id": "city:1436",
+          "label": "سرخنکلاته"
+        },
+        {
+          "id": "city:1425",
+          "label": "سنگدوین"
+        },
+        {
+          "id": "city:12817",
+          "label": "سیجوال"
+        },
+        {
+          "id": "city:559",
+          "label": "سیمین شهر"
+        },
+        {
+          "id": "city:1582",
+          "label": "صادق آباد"
+        },
+        {
+          "id": "city:672",
+          "label": "علی آباد"
+        },
+        {
+          "id": "county:364",
+          "label": "علی آباد کتول"
+        },
+        {
+          "id": "city:1233",
+          "label": "فاضل آباد"
+        },
+        {
+          "id": "city:1783",
+          "label": "فراغی"
+        },
+        {
+          "id": "city:1861",
+          "label": "قرق"
+        },
+        {
+          "id": "county:371",
+          "label": "مراوه تپه"
+        },
+        {
+          "id": "city:1374",
+          "label": "مزرعه"
+        },
+        {
+          "id": "county:372",
+          "label": "مینودشت"
+        },
+        {
+          "id": "city:578",
+          "label": "نوده خاندوز"
+        },
+        {
+          "id": "city:1620",
+          "label": "نوکنده"
+        },
+        {
+          "id": "city:523",
+          "label": "نگین شهر"
+        },
+        {
+          "id": "county:365",
+          "label": "کردکوی"
+        },
+        {
+          "id": "city:1489",
+          "label": "کرند"
+        },
+        {
+          "id": "county:366",
+          "label": "کلاله"
+        },
+        {
+          "id": "county:367",
+          "label": "گالیکش"
+        },
+        {
+          "id": "county:368",
+          "label": "گرگان"
+        },
+        {
+          "id": "city:850",
+          "label": "گلیداغ"
+        },
+        {
+          "id": "city:1591",
+          "label": "گمیش تپه"
+        },
+        {
+          "id": "county:369",
+          "label": "گمیشان"
+        },
+        {
+          "id": "county:370",
+          "label": "گنبدکاووس"
+        },
+        {
+          "id": "city:18639",
+          "label": "ینقاق"
+        }
+      ]
+    },
+    {
+      "id": "province:32",
+      "label": "گیلان",
+      "cities": [
+        {
+          "id": "county:373",
+          "label": "آستارا"
+        },
+        {
+          "id": "county:374",
+          "label": "آستانه اشرفیه"
+        },
+        {
+          "id": "city:1315",
+          "label": "احمد سر گوراب"
+        },
+        {
+          "id": "city:1772",
+          "label": "اسالم"
+        },
+        {
+          "id": "city:811",
+          "label": "اطاقور"
+        },
+        {
+          "id": "county:375",
+          "label": "املش"
+        },
+        {
+          "id": "city:1359",
+          "label": "بازار جمعه"
+        },
+        {
+          "id": "city:1226",
+          "label": "بره سر"
+        },
+        {
+          "id": "county:376",
+          "label": "بندر انزلی"
+        },
+        {
+          "id": "city:1528",
+          "label": "توتکابن"
+        },
+        {
+          "id": "city:1725",
+          "label": "جیرنده"
+        },
+        {
+          "id": "city:1124",
+          "label": "حویق"
+        },
+        {
+          "id": "city:728",
+          "label": "خشکبیجار"
+        },
+        {
+          "id": "county:1182",
+          "label": "خمام"
+        },
+        {
+          "id": "city:783",
+          "label": "دیلمان"
+        },
+        {
+          "id": "city:1029",
+          "label": "رانکوه"
+        },
+        {
+          "id": "city:1712",
+          "label": "رحیم آباد"
+        },
+        {
+          "id": "city:903",
+          "label": "رستم آباد"
+        },
+        {
+          "id": "county:377",
+          "label": "رشت"
+        },
+        {
+          "id": "county:378",
+          "label": "رضوانشهر"
+        },
+        {
+          "id": "county:379",
+          "label": "رودبار"
+        },
+        {
+          "id": "city:737",
+          "label": "رودبنه"
+        },
+        {
+          "id": "county:380",
+          "label": "رودسر"
+        },
+        {
+          "id": "city:873",
+          "label": "سنگر"
+        },
+        {
+          "id": "county:381",
+          "label": "سیاهکل"
+        },
+        {
+          "id": "county:382",
+          "label": "شفت"
+        },
+        {
+          "id": "city:706",
+          "label": "شلمان"
+        },
+        {
+          "id": "county:383",
+          "label": "صومعه سرا"
+        },
+        {
+          "id": "county:384",
+          "label": "طوالش"
+        },
+        {
+          "id": "county:385",
+          "label": "فومن"
+        },
+        {
+          "id": "county:386",
+          "label": "لاهیجان"
+        },
+        {
+          "id": "city:1541",
+          "label": "لشت نشاء"
+        },
+        {
+          "id": "county:387",
+          "label": "لنگرود"
+        },
+        {
+          "id": "city:1638",
+          "label": "لوشان"
+        },
+        {
+          "id": "city:1173",
+          "label": "لولمان"
+        },
+        {
+          "id": "city:1114",
+          "label": "لوندویل"
+        },
+        {
+          "id": "city:1586",
+          "label": "لیسار"
+        },
+        {
+          "id": "county:388",
+          "label": "ماسال"
+        },
+        {
+          "id": "city:476",
+          "label": "ماسوله"
+        },
+        {
+          "id": "city:1782",
+          "label": "ماکلوان"
+        },
+        {
+          "id": "city:1610",
+          "label": "مرجقل"
+        },
+        {
+          "id": "city:1339",
+          "label": "منجیل"
+        },
+        {
+          "id": "city:1443",
+          "label": "هشتپر"
+        },
+        {
+          "id": "city:1149",
+          "label": "واجارگاه"
+        },
+        {
+          "id": "city:1273",
+          "label": "پره سر"
+        },
+        {
+          "id": "city:1008",
+          "label": "پیربازار"
+        },
+        {
+          "id": "city:619",
+          "label": "چابکسر"
+        },
+        {
+          "id": "city:1310",
+          "label": "چاف وچمخاله"
+        },
+        {
+          "id": "city:1056",
+          "label": "چوبر"
+        },
+        {
+          "id": "city:588",
+          "label": "کلاچای"
+        },
+        {
+          "id": "city:1102",
+          "label": "کومله"
+        },
+        {
+          "id": "city:1507",
+          "label": "کوچصفهان"
+        },
+        {
+          "id": "city:1744",
+          "label": "کیاشهر"
+        },
+        {
+          "id": "city:661",
+          "label": "گوراب زرمیخ"
+        }
+      ]
+    },
+    {
+      "id": "province:33",
+      "label": "لرستان",
+      "cities": [
+        {
+          "id": "county:389",
+          "label": "ازنا"
+        },
+        {
+          "id": "city:652",
+          "label": "اشترینان"
+        },
+        {
+          "id": "city:1000",
+          "label": "الشتر"
+        },
+        {
+          "id": "county:390",
+          "label": "الیگودرز"
+        },
+        {
+          "id": "city:12793",
+          "label": "برخوردار"
+        },
+        {
+          "id": "county:391",
+          "label": "بروجرد"
+        },
+        {
+          "id": "city:1240",
+          "label": "بیران شهر"
+        },
+        {
+          "id": "county:394",
+          "label": "خرم آباد"
+        },
+        {
+          "id": "city:1550",
+          "label": "درب گنبد"
+        },
+        {
+          "id": "county:395",
+          "label": "دلفان"
+        },
+        {
+          "id": "county:396",
+          "label": "دورود"
+        },
+        {
+          "id": "county:397",
+          "label": "رومشکان"
+        },
+        {
+          "id": "city:594",
+          "label": "زاغه"
+        },
+        {
+          "id": "city:1574",
+          "label": "سراب حمام"
+        },
+        {
+          "id": "city:940",
+          "label": "سراب دوره"
+        },
+        {
+          "id": "county:398",
+          "label": "سلسله"
+        },
+        {
+          "id": "city:9991",
+          "label": "سوری"
+        },
+        {
+          "id": "city:1312",
+          "label": "سپید دشت"
+        },
+        {
+          "id": "city:1840",
+          "label": "شاپور آباد"
+        },
+        {
+          "id": "city:1241",
+          "label": "شول آباد"
+        },
+        {
+          "id": "city:881",
+          "label": "فیروز آباد"
+        },
+        {
+          "id": "city:1514",
+          "label": "مسکن مهر فاز2"
+        },
+        {
+          "id": "city:769",
+          "label": "معمولان"
+        },
+        {
+          "id": "city:835",
+          "label": "مومن آباد"
+        },
+        {
+          "id": "city:12941",
+          "label": "ناصرالدین"
+        },
+        {
+          "id": "city:1093",
+          "label": "نورآباد"
+        },
+        {
+          "id": "city:1554",
+          "label": "هفت چشمه"
+        },
+        {
+          "id": "city:1344",
+          "label": "ونایی"
+        },
+        {
+          "id": "city:865",
+          "label": "ویسیان"
+        },
+        {
+          "id": "county:392",
+          "label": "پلدختر"
+        },
+        {
+          "id": "city:1564",
+          "label": "چالانچولان"
+        },
+        {
+          "id": "city:1370",
+          "label": "چقابل"
+        },
+        {
+          "id": "city:1581",
+          "label": "چم پلک"
+        },
+        {
+          "id": "city:660",
+          "label": "چمن سلطان"
+        },
+        {
+          "id": "county:393",
+          "label": "چگنی"
+        },
+        {
+          "id": "county:399",
+          "label": "کوهدشت"
+        },
+        {
+          "id": "city:1589",
+          "label": "کوهنانی"
+        },
+        {
+          "id": "city:1465",
+          "label": "گراب"
+        }
+      ]
+    },
+    {
+      "id": "province:34",
+      "label": "مازندران",
+      "cities": [
+        {
+          "id": "city:483",
+          "label": "آستانه سرا"
+        },
+        {
+          "id": "city:1539",
+          "label": "آلاشت"
+        },
+        {
+          "id": "county:400",
+          "label": "آمل"
+        },
+        {
+          "id": "city:1484",
+          "label": "آکند"
+        },
+        {
+          "id": "city:606",
+          "label": "ارطه"
+        },
+        {
+          "id": "city:895",
+          "label": "امام زاده عبدالله"
+        },
+        {
+          "id": "city:927",
+          "label": "امیرکلا"
+        },
+        {
+          "id": "city:567",
+          "label": "ایزدشهر"
+        },
+        {
+          "id": "county:401",
+          "label": "بابل"
+        },
+        {
+          "id": "county:402",
+          "label": "بابلسر"
+        },
+        {
+          "id": "city:754",
+          "label": "بابکان"
+        },
+        {
+          "id": "city:1630",
+          "label": "بلده"
+        },
+        {
+          "id": "county:403",
+          "label": "بهشهر"
+        },
+        {
+          "id": "city:1152",
+          "label": "بهنمیر"
+        },
+        {
+          "id": "county:404",
+          "label": "تنکابن"
+        },
+        {
+          "id": "county:405",
+          "label": "جویبار"
+        },
+        {
+          "id": "city:1504",
+          "label": "خرم آباد"
+        },
+        {
+          "id": "city:1464",
+          "label": "خلیل شهر"
+        },
+        {
+          "id": "city:985",
+          "label": "خوشرودپی"
+        },
+        {
+          "id": "city:1189",
+          "label": "دابودشت"
+        },
+        {
+          "id": "city:12953",
+          "label": "دالخانی"
+        },
+        {
+          "id": "county:407",
+          "label": "رامسر"
+        },
+        {
+          "id": "city:735",
+          "label": "رستمکلا"
+        },
+        {
+          "id": "city:1604",
+          "label": "رویان"
+        },
+        {
+          "id": "city:1737",
+          "label": "رینه"
+        },
+        {
+          "id": "city:512",
+          "label": "زرگر"
+        },
+        {
+          "id": "city:562",
+          "label": "زیر آب"
+        },
+        {
+          "id": "county:408",
+          "label": "ساری"
+        },
+        {
+          "id": "city:1860",
+          "label": "سرخ رود"
+        },
+        {
+          "id": "city:1761",
+          "label": "سلمانشهر"
+        },
+        {
+          "id": "county:409",
+          "label": "سوادکوه"
+        },
+        {
+          "id": "county:410",
+          "label": "سوادکوه شمالی"
+        },
+        {
+          "id": "city:545",
+          "label": "سورک"
+        },
+        {
+          "id": "county:411",
+          "label": "سیمرغ"
+        },
+        {
+          "id": "city:1341",
+          "label": "شیرود"
+        },
+        {
+          "id": "city:1330",
+          "label": "شیرگاه"
+        },
+        {
+          "id": "city:1161",
+          "label": "طبقده"
+        },
+        {
+          "id": "county:412",
+          "label": "عباس آباد"
+        },
+        {
+          "id": "city:779",
+          "label": "فرح آباد"
+        },
+        {
+          "id": "county:413",
+          "label": "فریدونکنار"
+        },
+        {
+          "id": "city:734",
+          "label": "فریم"
+        },
+        {
+          "id": "county:414",
+          "label": "قائم شهر"
+        },
+        {
+          "id": "county:417",
+          "label": "محمودآباد"
+        },
+        {
+          "id": "city:821",
+          "label": "مرزن آباد"
+        },
+        {
+          "id": "city:1587",
+          "label": "مرزی کلا"
+        },
+        {
+          "id": "county:418",
+          "label": "میاندورود"
+        },
+        {
+          "id": "city:513",
+          "label": "نشتارود"
+        },
+        {
+          "id": "county:420",
+          "label": "نور"
+        },
+        {
+          "id": "county:421",
+          "label": "نوشهر"
+        },
+        {
+          "id": "county:419",
+          "label": "نکا"
+        },
+        {
+          "id": "city:1692",
+          "label": "هادی شهر"
+        },
+        {
+          "id": "city:893",
+          "label": "هچیرود"
+        },
+        {
+          "id": "city:786",
+          "label": "پایین هولار"
+        },
+        {
+          "id": "city:1674",
+          "label": "پل سفید"
+        },
+        {
+          "id": "city:1174",
+          "label": "پول"
+        },
+        {
+          "id": "county:406",
+          "label": "چالوس"
+        },
+        {
+          "id": "city:1278",
+          "label": "چمستان"
+        },
+        {
+          "id": "city:1216",
+          "label": "کتالم وسادات شهر"
+        },
+        {
+          "id": "city:1537",
+          "label": "کجور"
+        },
+        {
+          "id": "city:1569",
+          "label": "کلارآباد"
+        },
+        {
+          "id": "county:415",
+          "label": "کلاردشت"
+        },
+        {
+          "id": "city:1844",
+          "label": "کوهی خیل"
+        },
+        {
+          "id": "city:538",
+          "label": "کیاسر"
+        },
+        {
+          "id": "city:1629",
+          "label": "کیاکلا"
+        },
+        {
+          "id": "city:1457",
+          "label": "گتاب"
+        },
+        {
+          "id": "city:527",
+          "label": "گزنک"
+        },
+        {
+          "id": "county:416",
+          "label": "گلوگاه"
+        }
+      ]
+    },
+    {
+      "id": "province:35",
+      "label": "مرکزی",
+      "cities": [
+        {
+          "id": "city:663",
+          "label": "آستانه"
+        },
+        {
+          "id": "county:422",
+          "label": "آشتیان"
+        },
+        {
+          "id": "city:1820",
+          "label": "آوه"
+        },
+        {
+          "id": "county:423",
+          "label": "اراک"
+        },
+        {
+          "id": "county:424",
+          "label": "تفرش"
+        },
+        {
+          "id": "city:687",
+          "label": "تلخاب"
+        },
+        {
+          "id": "city:1135",
+          "label": "توره"
+        },
+        {
+          "id": "city:872",
+          "label": "جاورسیان"
+        },
+        {
+          "id": "city:1256",
+          "label": "خشکرود"
+        },
+        {
+          "id": "county:425",
+          "label": "خمین"
+        },
+        {
+          "id": "city:679",
+          "label": "خنجین"
+        },
+        {
+          "id": "county:426",
+          "label": "خنداب"
+        },
+        {
+          "id": "city:789",
+          "label": "داودآباد"
+        },
+        {
+          "id": "county:427",
+          "label": "دلیجان"
+        },
+        {
+          "id": "city:982",
+          "label": "رازقان"
+        },
+        {
+          "id": "city:1858",
+          "label": "زاویه"
+        },
+        {
+          "id": "county:428",
+          "label": "زرندیه"
+        },
+        {
+          "id": "city:1223",
+          "label": "ساروق"
+        },
+        {
+          "id": "county:429",
+          "label": "ساوه"
+        },
+        {
+          "id": "county:430",
+          "label": "شازند"
+        },
+        {
+          "id": "city:689",
+          "label": "شهباز"
+        },
+        {
+          "id": "city:599",
+          "label": "شهرجدید امیرکبیر"
+        },
+        {
+          "id": "city:1555",
+          "label": "شهرجدیدمهاجران"
+        },
+        {
+          "id": "city:1097",
+          "label": "غرق آباد"
+        },
+        {
+          "id": "county:431",
+          "label": "فراهان"
+        },
+        {
+          "id": "city:966",
+          "label": "فرمهین"
+        },
+        {
+          "id": "city:1461",
+          "label": "قورچی باشی"
+        },
+        {
+          "id": "city:1178",
+          "label": "مامونیه"
+        },
+        {
+          "id": "county:433",
+          "label": "محلات"
+        },
+        {
+          "id": "city:547",
+          "label": "میلاجرد"
+        },
+        {
+          "id": "city:1656",
+          "label": "نراق"
+        },
+        {
+          "id": "city:844",
+          "label": "نوبران"
+        },
+        {
+          "id": "city:1133",
+          "label": "نیمور"
+        },
+        {
+          "id": "city:1877",
+          "label": "هندودر"
+        },
+        {
+          "id": "city:673",
+          "label": "پرندک"
+        },
+        {
+          "id": "city:919",
+          "label": "کارچان"
+        },
+        {
+          "id": "county:432",
+          "label": "کمیجان"
+        }
+      ]
+    },
+    {
+      "id": "province:36",
+      "label": "هرمزگان",
+      "cities": [
+        {
+          "id": "county:434",
+          "label": "ابوموسی"
+        },
+        {
+          "id": "city:1386",
+          "label": "بالاشهر"
+        },
+        {
+          "id": "county:435",
+          "label": "بستک"
+        },
+        {
+          "id": "county:436",
+          "label": "بشاگرد"
+        },
+        {
+          "id": "city:749",
+          "label": "بندرجاسک"
+        },
+        {
+          "id": "county:437",
+          "label": "بندرعباس"
+        },
+        {
+          "id": "county:438",
+          "label": "بندرلنگه"
+        },
+        {
+          "id": "city:1626",
+          "label": "بندزرک"
+        },
+        {
+          "id": "city:510",
+          "label": "بیکاه"
+        },
+        {
+          "id": "city:816",
+          "label": "تازیان پایین"
+        },
+        {
+          "id": "city:1466",
+          "label": "تخت"
+        },
+        {
+          "id": "city:1529",
+          "label": "تیرور"
+        },
+        {
+          "id": "county:440",
+          "label": "جاسک"
+        },
+        {
+          "id": "city:496",
+          "label": "جناح"
+        },
+        {
+          "id": "county:441",
+          "label": "حاجی آباد"
+        },
+        {
+          "id": "county:442",
+          "label": "خمیر"
+        },
+        {
+          "id": "city:1624",
+          "label": "درگهان"
+        },
+        {
+          "id": "city:1196",
+          "label": "دشتی"
+        },
+        {
+          "id": "city:1134",
+          "label": "دهبارز"
+        },
+        {
+          "id": "city:867",
+          "label": "رمکان"
+        },
+        {
+          "id": "county:443",
+          "label": "رودان"
+        },
+        {
+          "id": "city:1485",
+          "label": "رویدر"
+        },
+        {
+          "id": "city:1734",
+          "label": "زهوکی"
+        },
+        {
+          "id": "city:1636",
+          "label": "زیارتعلی"
+        },
+        {
+          "id": "city:723",
+          "label": "سردشت"
+        },
+        {
+          "id": "city:1340",
+          "label": "سرگز"
+        },
+        {
+          "id": "city:616",
+          "label": "سندرک"
+        },
+        {
+          "id": "city:1501",
+          "label": "سوزا"
+        },
+        {
+          "id": "county:444",
+          "label": "سیریک"
+        },
+        {
+          "id": "city:774",
+          "label": "شهر جدیدعلوی"
+        },
+        {
+          "id": "city:1842",
+          "label": "طبل"
+        },
+        {
+          "id": "city:896",
+          "label": "فارغان"
+        },
+        {
+          "id": "city:1600",
+          "label": "فین"
+        },
+        {
+          "id": "county:445",
+          "label": "قشم"
+        },
+        {
+          "id": "city:1495",
+          "label": "قلعه قاضی"
+        },
+        {
+          "id": "city:1075",
+          "label": "لمزان"
+        },
+        {
+          "id": "city:1204",
+          "label": "لیردف"
+        },
+        {
+          "id": "county:446",
+          "label": "میناب"
+        },
+        {
+          "id": "city:1590",
+          "label": "هرمز"
+        },
+        {
+          "id": "city:1118",
+          "label": "هشتبندی"
+        },
+        {
+          "id": "city:970",
+          "label": "هنگویه"
+        },
+        {
+          "id": "county:439",
+          "label": "پارسیان"
+        },
+        {
+          "id": "city:1627",
+          "label": "پل"
+        },
+        {
+          "id": "city:710",
+          "label": "چارک"
+        },
+        {
+          "id": "city:569",
+          "label": "کرگان"
+        },
+        {
+          "id": "city:856",
+          "label": "کنگ"
+        },
+        {
+          "id": "city:1032",
+          "label": "کوخردهرنگ"
+        },
+        {
+          "id": "city:1503",
+          "label": "کوشکنار"
+        },
+        {
+          "id": "city:503",
+          "label": "کوهستک"
+        },
+        {
+          "id": "city:693",
+          "label": "کوهیچ"
+        },
+        {
+          "id": "city:1625",
+          "label": "کیش"
+        },
+        {
+          "id": "city:1347",
+          "label": "گروک"
+        },
+        {
+          "id": "city:1182",
+          "label": "گوهران"
+        }
+      ]
+    },
+    {
+      "id": "province:37",
+      "label": "همدان",
+      "cities": [
+        {
+          "id": "city:1580",
+          "label": "آجین"
+        },
+        {
+          "id": "city:954",
+          "label": "ازندریان"
+        },
+        {
+          "id": "county:447",
+          "label": "اسدآباد"
+        },
+        {
+          "id": "city:1563",
+          "label": "اسلامشهر آق گل"
+        },
+        {
+          "id": "city:878",
+          "label": "برزول"
+        },
+        {
+          "id": "county:448",
+          "label": "بهار"
+        },
+        {
+          "id": "county:449",
+          "label": "تویسرکان"
+        },
+        {
+          "id": "city:1373",
+          "label": "جورقان"
+        },
+        {
+          "id": "city:1835",
+          "label": "جوکار"
+        },
+        {
+          "id": "county:450",
+          "label": "درگزین"
+        },
+        {
+          "id": "city:1709",
+          "label": "دمق"
+        },
+        {
+          "id": "county:451",
+          "label": "رزن"
+        },
+        {
+          "id": "city:796",
+          "label": "زنگنه"
+        },
+        {
+          "id": "city:1408",
+          "label": "سامن"
+        },
+        {
+          "id": "city:680",
+          "label": "سرکان"
+        },
+        {
+          "id": "city:18662",
+          "label": "شاهنجرین"
+        },
+        {
+          "id": "city:1281",
+          "label": "شیرین سو"
+        },
+        {
+          "id": "city:658",
+          "label": "صالح آباد"
+        },
+        {
+          "id": "county:452",
+          "label": "فامنین"
+        },
+        {
+          "id": "city:1831",
+          "label": "فرسفج"
+        },
+        {
+          "id": "city:1040",
+          "label": "فیروزان"
+        },
+        {
+          "id": "city:1252",
+          "label": "قروه درگزین"
+        },
+        {
+          "id": "city:777",
+          "label": "قهاوند"
+        },
+        {
+          "id": "city:1119",
+          "label": "لالجین"
+        },
+        {
+          "id": "city:1427",
+          "label": "مریانج"
+        },
+        {
+          "id": "county:454",
+          "label": "ملایر"
+        },
+        {
+          "id": "city:1657",
+          "label": "مهاجران"
+        },
+        {
+          "id": "county:455",
+          "label": "نهاوند"
+        },
+        {
+          "id": "county:456",
+          "label": "همدان"
+        },
+        {
+          "id": "city:1764",
+          "label": "پالیز"
+        },
+        {
+          "id": "county:453",
+          "label": "کبودرآهنگ"
+        },
+        {
+          "id": "city:1531",
+          "label": "کرفس"
+        },
+        {
+          "id": "city:1166",
+          "label": "گل تپه"
+        },
+        {
+          "id": "city:724",
+          "label": "گیان"
+        }
+      ]
+    },
+    {
+      "id": "province:38",
+      "label": "یزد",
+      "cities": [
+        {
+          "id": "county:457",
+          "label": "ابرکوه"
+        },
+        {
+          "id": "city:888",
+          "label": "احمدآباد"
+        },
+        {
+          "id": "county:458",
+          "label": "اردکان"
+        },
+        {
+          "id": "county:459",
+          "label": "اشکذر"
+        },
+        {
+          "id": "county:460",
+          "label": "بافق"
+        },
+        {
+          "id": "city:574",
+          "label": "بخ"
+        },
+        {
+          "id": "city:655",
+          "label": "بفروئیه"
+        },
+        {
+          "id": "county:461",
+          "label": "بهاباد"
+        },
+        {
+          "id": "county:462",
+          "label": "تفت"
+        },
+        {
+          "id": "city:1117",
+          "label": "حمیدیا"
+        },
+        {
+          "id": "county:463",
+          "label": "خاتم"
+        },
+        {
+          "id": "city:1415",
+          "label": "خرانق"
+        },
+        {
+          "id": "city:860",
+          "label": "خضرآباد"
+        },
+        {
+          "id": "county:1192",
+          "label": "زارچ"
+        },
+        {
+          "id": "city:1385",
+          "label": "شاهدیه"
+        },
+        {
+          "id": "city:1560",
+          "label": "عقدا"
+        },
+        {
+          "id": "city:12812",
+          "label": "مجومرد"
+        },
+        {
+          "id": "county:464",
+          "label": "مروست"
+        },
+        {
+          "id": "city:612",
+          "label": "مهردشت"
+        },
+        {
+          "id": "county:465",
+          "label": "مهریز"
+        },
+        {
+          "id": "county:466",
+          "label": "میبد"
+        },
+        {
+          "id": "city:623",
+          "label": "ندوشن"
+        },
+        {
+          "id": "city:472",
+          "label": "نیر"
+        },
+        {
+          "id": "city:654",
+          "label": "هرات"
+        },
+        {
+          "id": "county:467",
+          "label": "یزد"
+        }
+      ]
+    }
+  ]
+}

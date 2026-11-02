@@ -28,6 +28,18 @@
   overflow-x: hidden;
   overscroll-behavior-y: contain;
   -webkit-overflow-scrolling: touch;
+  /* A classic (non-overlay) scrollbar renders on the *left* in this RTL
+     document (the logical start side) — right where the PDP's own content
+     lives, so its track/thumb paints a vertical strip over the gallery and
+     page chrome behind it, looking like leaked underlying-page content.
+     The PLP/Home page behind the overlay scrolls its own route container,
+     never this one, so hiding this bar loses no functionality — the card's
+     own vertical swipe/drag still scrolls it. */
+  scrollbar-width: none;
+}
+
+.scroll::-webkit-scrollbar {
+  display: none;
 }
 
 /* An invisible placeholder the same size/position as the PDP's own hero —
