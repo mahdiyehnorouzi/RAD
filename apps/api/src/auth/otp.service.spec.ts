@@ -8,7 +8,7 @@ import { BadRequestException, NotFoundException } from "@nestjs/common";
 import EmbeddedPostgres from "embedded-postgres";
 import type { DataSource } from "typeorm";
 import { createAppDataSource } from "../database/data-source";
-import { OtpCode } from "../database/entities";
+import { OtpCode, OtpRequestLog } from "../database/entities";
 import { OtpService } from "./otp.service";
 import type { MelipayamakService } from "../sms/melipayamak.service";
 
@@ -60,7 +60,12 @@ before(async () => {
     },
   } as unknown as MelipayamakService;
 
-  otp = new OtpService(dataSource.getRepository(OtpCode), fakeSms, dataSource);
+  otp = new OtpService(
+    dataSource.getRepository(OtpCode),
+    dataSource.getRepository(OtpRequestLog),
+    fakeSms,
+    dataSource,
+  );
 });
 
 after(async () => {
@@ -195,6 +200,85 @@ test("a later request for the same phone invalidates the earlier unconsumed code
   await assert.rejects(() => otp.verifyCode("09127777777", firstCode));
   const result = await otp.verifyCode("09127777777", secondCode);
   assert.equal(result.verified, true);
+});
+
+test("a phone that sends 5 codes in the window is rate-limited on the 6th, even after each cooldown", async () => {
+  sent = [];
+  const phone = "09129999999";
+
+  for (let i = 0; i < 5; i++) {
+    await otp.requestCode(phone);
+    // Clear the cooldown-triggering row so the *next* send isn't blocked
+    // by the 60s cooldown — isolates this test to the rate limit, not the
+    // cooldown (already covered above).
+    await dataSource
+      .getRepository(OtpCode)
+      .update({ phone }, { createdAt: new Date(0) });
+  }
+  assert.equal(sent.length, 5);
+
+  await assert.rejects(
+    () => otp.requestCode(phone),
+    (error: unknown) => {
+      assert.ok(error instanceof BadRequestException);
+      assert.equal(
+        (error.getResponse() as { code?: string }).code,
+        "otp_rate_limited",
+      );
+      return true;
+    },
+  );
+  // The 6th attempt never reached the SMS provider.
+  assert.equal(sent.length, 5);
+});
+
+test("a rate-limited phone's failed sends still count toward the limit (no free retries via forced failures)", async () => {
+  sent = [];
+  sendShouldFail = true;
+  const phone = "09121010101";
+
+  for (let i = 0; i < 5; i++) {
+    await assert.rejects(() => otp.requestCode(phone));
+    // Each failed send clears its own cooldown-triggering row (restoring
+    // the existing failure-recovery guarantee) but leaves its
+    // `OtpRequestLog` row behind.
+  }
+  sendShouldFail = false;
+
+  await assert.rejects(
+    () => otp.requestCode(phone),
+    (error: unknown) => {
+      assert.ok(error instanceof BadRequestException);
+      assert.equal(
+        (error.getResponse() as { code?: string }).code,
+        "otp_rate_limited",
+      );
+      return true;
+    },
+  );
+  assert.equal(sent.length, 0, "no SMS should ever have been sent");
+});
+
+test("a burst of parallel requests for a fresh phone cannot together exceed the rate limit (concurrency-safe sending)", async () => {
+  sent = [];
+  const phone = "09121212121";
+
+  // 10 simultaneous first-time requests for the same phone. Without the
+  // advisory-lock serialization, every one of them can count 0 prior
+  // sends before any single insert commits, so all 10 would pass the
+  // "< 5" check and all 10 would page the SMS provider.
+  const results = await Promise.allSettled(
+    Array.from({ length: 10 }, () => otp.requestCode(phone)),
+  );
+  const succeeded = results.filter((result) => result.status === "fulfilled");
+  const failed = results.filter((result) => result.status === "rejected");
+
+  // The cooldown (60s, one active send at a time) means at most 1 of the
+  // 10 concurrent sends should actually go through — the rest must fail
+  // on cooldown or the rate limit, never by all silently succeeding.
+  assert.ok(succeeded.length <= 1, "cooldown must cap concurrent sends to 1");
+  assert.equal(succeeded.length + failed.length, 10);
+  assert.equal(sent.length, succeeded.length);
 });
 
 test("a burst of parallel wrong guesses cannot bypass the attempt cap (concurrency-safe verification)", async () => {
