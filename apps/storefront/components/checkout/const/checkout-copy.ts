@@ -18,7 +18,25 @@ export const checkoutCopy = {
     addressLabel: "آدرس",
     addressPlaceholder: "خیابان، کوچه، پلاک، واحد",
     postalLabel: "کد پستی",
+    postalError: "کد پستی را با ۱۰ رقم بنویسید، یا خالی بگذارید.",
     optional: "اختیاری",
+    savedTitle: "نشانی‌های ذخیره‌شده",
+    savedLede:
+      "یکی را برای این سفارش انتخاب کنید. اگر چیزی را عوض کنید، فقط همین سفارش عوض می‌شود.",
+    savedDefault: "پیش‌فرض",
+    savedManual: "نشانی دیگر برای همین سفارش",
+    savedLoading: "در حال خواندن نشانی‌ها…",
+    savedEmpty:
+      "هنوز نشانی ذخیره‌شده‌ای ندارید. نشانی این سفارش را پایین بنویسید.",
+    savedError:
+      "نشانی‌ها خوانده نشد. می‌توانید نشانی این سفارش را پایین بنویسید.",
+    savedExpired:
+      "نشست شما تمام شده. نشانی را برای همین سفارش بنویسید، یا دوباره وارد شوید.",
+    savedRetry: "تلاش دوباره",
+    savedEdited:
+      "این تغییرها فقط برای همین سفارش است و دفترچه آدرس را عوض نمی‌کند.",
+    savedMissing:
+      "این نشانی دیگر در دفترچه نیست. جزئیاتی که می‌بینید برای همین سفارش می‌ماند.",
     nameError: "نام و نام خانوادگی گیرنده را بنویسید.",
     phoneEmpty: "شماره موبایل را بنویسید.",
     phoneError: "شماره موبایل را با ۰۹ و یازده رقم بنویسید؛ مثلاً ۰۹۱۲۱۲۳۴۵۶۷.",
@@ -172,7 +190,25 @@ export const checkoutCopy = {
     addressLabel: "Full address",
     addressPlaceholder: "Street, alley, number, unit",
     postalLabel: "Postal code",
+    postalError: "Enter a 10-digit postal code, or leave it empty.",
     optional: "optional",
+    savedTitle: "Saved addresses",
+    savedLede:
+      "Choose one for this order. Changes here stay on this order and do not update your address book.",
+    savedDefault: "Default",
+    savedManual: "A different address for this order",
+    savedLoading: "Loading saved addresses…",
+    savedEmpty:
+      "You have no saved addresses yet. Enter this order's address below.",
+    savedError:
+      "Saved addresses could not be loaded. You can still enter an address for this order.",
+    savedExpired:
+      "Your session has expired. Enter an address for this order, or sign in again.",
+    savedRetry: "Try again",
+    savedEdited:
+      "These changes apply only to this order and do not change your address book.",
+    savedMissing:
+      "This address is no longer in your book. The details below stay on this order.",
     nameError: "Enter the recipient's full name.",
     phoneEmpty: "Enter a mobile number.",
     phoneError: "Enter an Iranian mobile number, for example 09121234567.",
