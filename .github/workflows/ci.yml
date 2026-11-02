@@ -1,9 +1,15 @@
 name: CI
 
+# No direct `push: branches: [main]` trigger here on purpose: every push to
+# main already runs this exact workflow via deploy.yml's own `checks` job
+# (`uses: ./.github/workflows/ci.yml`, called before anything is deployed —
+# see deploy.yml and docs/cicd-pipeline.md). Keeping a direct push trigger
+# too would run the full suite (lint/typecheck/test/build/release-policy/
+# release-signatures) twice, back to back, for the same commit. The
+# `pull_request` trigger below is unaffected and is what the branch
+# protection "CI passed" required check is actually keyed off.
 on:
   pull_request:
-  push:
-    branches: [main]
   workflow_call:
 
 permissions:
