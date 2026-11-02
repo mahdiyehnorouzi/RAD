@@ -4,16 +4,13 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import type { AdminOrder } from "./admin-data";
 import { AdminOrders } from "../components/orders/admin-orders";
-import {
-  assertOrderList,
-  orderMatchesQuery,
-  queryOrders,
-} from "./order-queue";
+import { assertOrderList, orderMatchesQuery, queryOrders } from "./order-queue";
 
 const now = Date.UTC(2026, 9, 28, 12);
 
 function order(
-  partial: Partial<AdminOrder> & Pick<AdminOrder, "id" | "status" | "createdAt">,
+  partial: Partial<AdminOrder> &
+    Pick<AdminOrder, "id" | "status" | "createdAt">,
 ): AdminOrder {
   return {
     customer: "مهدیه نوروزی",

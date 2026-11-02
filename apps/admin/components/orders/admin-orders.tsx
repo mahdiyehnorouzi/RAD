@@ -293,8 +293,8 @@ export function AdminOrders({
             <div className="orders-layout">
               <div className="orders-queue">
                 <p className="orders-range" aria-live="polite">
-                  {number.format(result.start)} تا {number.format(result.end)} از{" "}
-                  {number.format(result.total)}
+                  {number.format(result.start)} تا {number.format(result.end)}{" "}
+                  از {number.format(result.total)}
                 </p>
                 <ul className="orders-list">
                   {result.items.map((order) => {
@@ -307,32 +307,37 @@ export function AdminOrders({
                       order.paymentStatus === "verify_conflict";
                     return (
                       <li key={order.id}>
-                      <button
-                        id={`order-${order.id}`}
-                        type="button"
-                        className={`orders-row${selected ? " is-active" : ""}${review ? " is-review" : ""}`}
-                        aria-current={selected ? "true" : undefined}
-                        onClick={() => setSelectedId(order.id)}
-                      >
-                        <span className="orders-row-top">
-                          <StatusBadge label={payment.label} tone={payment.tone} />
-                          <StatusBadge
-                            label={fulfillment.label}
-                            tone={fulfillment.tone}
-                          />
-                          <time dateTime={new Date(order.createdAt).toISOString()}>
-                            {dateLabel(order.createdAt)}
-                          </time>
-                        </span>
-                        <strong>{order.customer}</strong>
-                        <span className="orders-row-product">
-                          {order.productName || "اثر بدون نام"}
-                        </span>
-                        <span className="orders-row-foot">
-                          <b>{money(order.amount)}</b>
-                          <small dir="ltr">{order.id}</small>
-                        </span>
-                      </button>
+                        <button
+                          id={`order-${order.id}`}
+                          type="button"
+                          className={`orders-row${selected ? " is-active" : ""}${review ? " is-review" : ""}`}
+                          aria-current={selected ? "true" : undefined}
+                          onClick={() => setSelectedId(order.id)}
+                        >
+                          <span className="orders-row-top">
+                            <StatusBadge
+                              label={payment.label}
+                              tone={payment.tone}
+                            />
+                            <StatusBadge
+                              label={fulfillment.label}
+                              tone={fulfillment.tone}
+                            />
+                            <time
+                              dateTime={new Date(order.createdAt).toISOString()}
+                            >
+                              {dateLabel(order.createdAt)}
+                            </time>
+                          </span>
+                          <strong>{order.customer}</strong>
+                          <span className="orders-row-product">
+                            {order.productName || "اثر بدون نام"}
+                          </span>
+                          <span className="orders-row-foot">
+                            <b>{money(order.amount)}</b>
+                            <small dir="ltr">{order.id}</small>
+                          </span>
+                        </button>
                       </li>
                     );
                   })}
@@ -347,7 +352,8 @@ export function AdminOrders({
                       قبلی
                     </button>
                     <span>
-                      {number.format(result.page)} از {number.format(result.pages)}
+                      {number.format(result.page)} از{" "}
+                      {number.format(result.pages)}
                     </span>
                     <button
                       type="button"
@@ -431,9 +437,7 @@ function OrderDetail({
   const transitions = orderStatusOptions(order.status)
     .filter((status) => status !== order.status)
     .slice()
-    .sort(
-      (a, b) => actionOrder.indexOf(a) - actionOrder.indexOf(b),
-    );
+    .sort((a, b) => actionOrder.indexOf(a) - actionOrder.indexOf(b));
   const [tracking, setTracking] = useState(order.trackingCode ?? "");
   const [pending, setPending] = useState<AdminOrderStatus | "tracking" | null>(
     null,
@@ -460,9 +464,16 @@ function OrderDetail({
     transitions.includes("shipped");
 
   return (
-    <article className="orders-detail" aria-labelledby={`order-title-${order.id}`}>
+    <article
+      className="orders-detail"
+      aria-labelledby={`order-title-${order.id}`}
+    >
       {mobile ? (
-        <button className="orders-back text-action" type="button" onClick={onBack}>
+        <button
+          className="orders-back text-action"
+          type="button"
+          onClick={onBack}
+        >
           <ChevronRight aria-hidden="true" />
           بازگشت به فهرست
         </button>
@@ -495,7 +506,11 @@ function OrderDetail({
                   ? "is-current"
                   : "";
             return (
-              <li key={status} className={state} aria-current={index === progressIndex ? "step" : undefined}>
+              <li
+                key={status}
+                className={state}
+                aria-current={index === progressIndex ? "step" : undefined}
+              >
                 {stepLabel(status)}
               </li>
             );
@@ -602,7 +617,10 @@ function OrderDetail({
           <p>هنوز به مرحله ارسال نرسیده است.</p>
         )}
         {transitions.includes("shipped") && !tracking.trim() ? (
-          <p>اگر کد رهگیری را خالی بگذارید، هنگام ثبت ارسال یک کد موقت ساخته می‌شود.</p>
+          <p>
+            اگر کد رهگیری را خالی بگذارید، هنگام ثبت ارسال یک کد موقت ساخته
+            می‌شود.
+          </p>
         ) : null}
         {order.deliveredAt ? (
           <p>تحویل در {dateTime(order.deliveredAt)} ثبت شده است.</p>
@@ -613,10 +631,7 @@ function OrderDetail({
             type="button"
             disabled={pending !== null || tracking.trim().length === 0}
             onClick={() =>
-              void run(
-                { ...order, trackingCode: tracking.trim() },
-                "tracking",
-              )
+              void run({ ...order, trackingCode: tracking.trim() }, "tracking")
             }
           >
             {pending === "tracking" ? "در حال ثبت…" : "ثبت کد رهگیری"}
@@ -624,7 +639,10 @@ function OrderDetail({
         ) : null}
       </section>
 
-      <section className="orders-actions" aria-labelledby={`actions-${order.id}`}>
+      <section
+        className="orders-actions"
+        aria-labelledby={`actions-${order.id}`}
+      >
         <h4 id={`actions-${order.id}`}>اقدام</h4>
         {!canWrite ? (
           <p>نقش شما اجازه تغییر وضعیت این سفارش را نمی‌دهد.</p>
@@ -681,17 +699,13 @@ function OrderDetail({
 
       {confirming ? (
         <ConfirmDialog
-          title={
-            confirming === "cancelled" ? "لغو این سفارش؟" : "ثبت مرجوعی؟"
-          }
+          title={confirming === "cancelled" ? "لغو این سفارش؟" : "ثبت مرجوعی؟"}
           description={
             confirming === "cancelled"
               ? "سفارش لغو می‌شود و اثر دوباره در فروشگاه قرار می‌گیرد."
               : "سفارش مرجوع می‌شود و اثر دوباره در فروشگاه قرار می‌گیرد."
           }
-          confirmLabel={
-            confirming === "cancelled" ? "لغو سفارش" : "ثبت مرجوعی"
-          }
+          confirmLabel={confirming === "cancelled" ? "لغو سفارش" : "ثبت مرجوعی"}
           onCancel={() => setConfirming(null)}
           onConfirm={() =>
             run(

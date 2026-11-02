@@ -706,9 +706,7 @@ export function useAdminWorkspace() {
           method: "PATCH",
           body: JSON.stringify({
             status: order.status,
-            ...(order.trackingCode
-              ? { trackingCode: order.trackingCode }
-              : {}),
+            ...(order.trackingCode ? { trackingCode: order.trackingCode } : {}),
           }),
         });
         setOrders((items) =>

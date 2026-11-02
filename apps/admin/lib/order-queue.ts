@@ -66,12 +66,12 @@ function orderHaystack(order: AdminOrder) {
     if (product.radNumber == null) return [product.slug, product.name];
     const padded = String(product.radNumber).padStart(3, "0");
     return [
-        product.slug,
-        product.name,
-        String(product.radNumber),
-        padded,
-        `rad/${padded}`,
-      ];
+      product.slug,
+      product.name,
+      String(product.radNumber),
+      padded,
+      `rad/${padded}`,
+    ];
   });
   return foldSearchText(
     [
@@ -112,7 +112,10 @@ export function orderNeedsAttention(order: AdminOrder) {
   );
 }
 
-export function orderMatchesFilter(order: AdminOrder, filter: OrderQueueFilter) {
+export function orderMatchesFilter(
+  order: AdminOrder,
+  filter: OrderQueueFilter,
+) {
   if (filter === "all") return true;
   if (filter === "needs_attention") return orderNeedsAttention(order);
   return order.status === filter;
@@ -130,8 +133,10 @@ export function orderMatchesDate(
 export function compareOrders(sort: OrderSort) {
   return (a: AdminOrder, b: AdminOrder) => {
     if (sort === "oldest") return a.createdAt - b.createdAt;
-    if (sort === "amount_desc") return b.amount - a.amount || b.createdAt - a.createdAt;
-    if (sort === "amount_asc") return a.amount - b.amount || b.createdAt - a.createdAt;
+    if (sort === "amount_desc")
+      return b.amount - a.amount || b.createdAt - a.createdAt;
+    if (sort === "amount_asc")
+      return a.amount - b.amount || b.createdAt - a.createdAt;
     return b.createdAt - a.createdAt;
   };
 }
@@ -141,16 +146,17 @@ export function paymentPresentation(order: AdminOrder): {
   tone: BadgeTone;
 } {
   const status = order.paymentStatus;
-  const labels: Record<AdminPaymentStatus, { label: string; tone: BadgeTone }> = {
-    verified: { label: "پرداخت تأیید شد", tone: "green" },
-    submitted: { label: "رسید ثبت شد", tone: "sand" },
-    rejected: { label: "پرداخت رد شد", tone: "oxide" },
-    failed: { label: "پرداخت ناموفق", tone: "oxide" },
-    verify_error: { label: "تأیید درگاه نامشخص", tone: "oxide" },
-    verify_conflict: { label: "تعارض رزرو", tone: "oxide" },
-    redirected: { label: "در بازگشت از درگاه", tone: "sand" },
-    created: { label: "در انتظار پرداخت", tone: "muted" },
-  };
+  const labels: Record<AdminPaymentStatus, { label: string; tone: BadgeTone }> =
+    {
+      verified: { label: "پرداخت تأیید شد", tone: "green" },
+      submitted: { label: "رسید ثبت شد", tone: "sand" },
+      rejected: { label: "پرداخت رد شد", tone: "oxide" },
+      failed: { label: "پرداخت ناموفق", tone: "oxide" },
+      verify_error: { label: "تأیید درگاه نامشخص", tone: "oxide" },
+      verify_conflict: { label: "تعارض رزرو", tone: "oxide" },
+      redirected: { label: "در بازگشت از درگاه", tone: "sand" },
+      created: { label: "در انتظار پرداخت", tone: "muted" },
+    };
   if (status && labels[status]) return labels[status];
   if (order.status === "pending_payment") {
     return { label: "در انتظار پرداخت", tone: "muted" };
@@ -196,7 +202,8 @@ export function queryOrders({
 }) {
   const inWindow = orders.filter(
     (order) =>
-      orderMatchesQuery(order, query) && orderMatchesDate(order, dateRange, now),
+      orderMatchesQuery(order, query) &&
+      orderMatchesDate(order, dateRange, now),
   );
   const counts = Object.fromEntries(
     orderQueueFilters.map((item) => [
