@@ -9,6 +9,8 @@ import { HelpQuestion } from "./help-question.entity";
 import { Notice } from "./notice.entity";
 import { Order } from "./order.entity";
 import { OrderItem } from "./order-item.entity";
+import { OtpCode } from "./otp-code.entity";
+import { OtpRequestLog } from "./otp-request-log.entity";
 import { PasswordResetToken } from "./password-reset-token.entity";
 import { PaymentIntent } from "./payment-intent.entity";
 import { Product } from "./product.entity";
@@ -37,6 +39,8 @@ export const entities = [
   Review,
   Order,
   OrderItem,
+  OtpCode,
+  OtpRequestLog,
   Notice,
   Commission,
   PaymentIntent,
@@ -62,6 +66,8 @@ export {
   Notice,
   Order,
   OrderItem,
+  OtpCode,
+  OtpRequestLog,
   PasswordResetToken,
   PaymentIntent,
   Product,

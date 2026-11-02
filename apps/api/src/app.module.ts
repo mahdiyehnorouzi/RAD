@@ -29,6 +29,7 @@ import { ContactModule } from "./contact/contact.module";
 import { DamageReportsModule } from "./damage/damage-reports.module";
 import { ArtistApplicationsModule } from "./artist-applications/artist-applications.module";
 import { MailModule } from "./mail/mail.module";
+import { SmsModule } from "./sms/sms.module";
 import { HealthController } from "./health/health.controller";
 
 @Module({
@@ -64,6 +65,7 @@ import { HealthController } from "./health/health.controller";
     CommonModule,
     InventoryModule,
     MailModule,
+    SmsModule,
     AuthModule,
     AddressesModule,
     CatalogModule,
