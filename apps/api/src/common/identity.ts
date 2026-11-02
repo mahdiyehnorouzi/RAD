@@ -2,6 +2,8 @@ export type AuthUser = {
   id: string;
   name: string;
   email: string;
+  /** Canonical Iranian mobile, or null when the customer has not saved one. */
+  phone: string | null;
   role: "customer" | "artist" | "admin";
   adminRole?: "owner" | "manager" | "editor" | "viewer" | null;
 };
@@ -19,6 +21,7 @@ export function toAuthUser(user: {
   id: string;
   name: string;
   email: string;
+  phone?: string | null;
   role: string;
   adminRole?: string | null;
 }): AuthUser {
@@ -26,6 +29,7 @@ export function toAuthUser(user: {
     id: user.id,
     name: user.name,
     email: user.email,
+    phone: user.phone ?? null,
     role: user.role as AuthUser["role"],
     adminRole: (user.adminRole as AuthUser["adminRole"]) ?? null,
   };

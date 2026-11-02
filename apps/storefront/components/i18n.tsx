@@ -93,6 +93,7 @@ export function LocaleProvider({
     const catalog = messages[locale];
     const labels: Array<[string, MessageKey]> = [
       ["account/notifications", "titleNotifications"],
+      ["account/addresses", "titleAddresses"],
       ["account/info", "titleAccountInfo"],
       ["account/making", "titleCustomOrders"],
       ["account", "titleAccount"],

@@ -13,6 +13,7 @@ import type { CartPriceAtAdd, CartSnapshot, Product } from "@rad/types";
 import { isPurchasableStatus } from "@rad/types";
 import { api } from "@/lib/api";
 import { useCatalogRefresh } from "@/hooks/use-catalog-refresh";
+import { shouldReloadBagOnPageShow, slugsThatLeftBag } from "./bag-sync";
 
 type CartContextValue = {
   slugs: string[];
@@ -22,6 +23,8 @@ type CartContextValue = {
   prices: Record<string, CartPriceAtAdd>;
   /** Earliest hold deadline in the bag, if any. */
   holdEndsAt: number | null;
+  /** Unpaid orders that already received works from this bag. */
+  pendingOrders: CartSnapshot["pendingOrders"];
   /** Works that left the bag without the visitor removing them (hold ran out). */
   released: string[];
   dismissReleased: () => void;
@@ -40,7 +43,12 @@ type CartContextValue = {
 };
 
 const CartContext = createContext<CartContextValue | null>(null);
-const emptyCart: CartSnapshot = { slugs: [], holds: {}, prices: {} };
+const emptyCart: CartSnapshot = {
+  slugs: [],
+  holds: {},
+  prices: {},
+  pendingOrders: [],
+};
 const knownKey = "rad-cart-known";
 const releasedKey = "rad-cart-released";
 
@@ -92,8 +100,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const apply = useCallback(
     (payload: CartSnapshot, detectReleased = false) => {
       const slugs = payload.slugs;
-      if (detectReleased && known.current) {
-        const gone = known.current.filter((slug) => !slugs.includes(slug));
+      const pendingOrders = payload.pendingOrders ?? [];
+      if (detectReleased) {
+        const gone = slugsThatLeftBag(known.current, slugs, pendingOrders);
         if (gone.length) {
           updateReleased((current) => [...new Set([...current, ...gone])]);
         }
@@ -108,6 +117,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         slugs,
         holds: payload.holds ?? {},
         prices: payload.prices ?? {},
+        pendingOrders,
       });
     },
     [updateReleased],
@@ -139,13 +149,27 @@ export function CartProvider({ children }: { children: ReactNode }) {
       void load();
     };
     const onOnline = () => void load();
+    const onShow = () => {
+      // `pageshow` covers a Safari bfcache restore, which does not remount React.
+      if (!shouldReloadBagOnPageShow()) return;
+      void load().then(() => refreshCatalog());
+    };
+    const onVisible = () => {
+      if (document.visibilityState === "visible") {
+        void load().then(() => refreshCatalog());
+      }
+    };
     window.addEventListener("rad:session", onSession);
     window.addEventListener("online", onOnline);
+    window.addEventListener("pageshow", onShow);
+    document.addEventListener("visibilitychange", onVisible);
     return () => {
       window.removeEventListener("rad:session", onSession);
       window.removeEventListener("online", onOnline);
+      window.removeEventListener("pageshow", onShow);
+      document.removeEventListener("visibilitychange", onVisible);
     };
-  }, [load, updateReleased]);
+  }, [load, refreshCatalog, updateReleased]);
 
   const holdEndsAt = useMemo(() => {
     const deadlines = Object.values(cart.holds);
@@ -169,6 +193,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       holds: cart.holds,
       prices: cart.prices ?? {},
       holdEndsAt,
+      pendingOrders: cart.pendingOrders ?? [],
       released,
       dismissReleased: () => updateReleased(() => []),
       ready,

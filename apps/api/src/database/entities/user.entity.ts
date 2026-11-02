@@ -3,6 +3,7 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  Index,
   OneToMany,
   PrimaryColumn,
 } from "typeorm";
@@ -10,6 +11,12 @@ import { newDbId } from "../ids";
 import { PasswordResetToken } from "./password-reset-token.entity";
 import { Review } from "./review.entity";
 
+/**
+ * `phone` is a contact number, not a login identifier. The unique index
+ * allows many nulls (PostgreSQL) and rejects two accounts sharing one
+ * canonical mobile.
+ */
+@Index("UQ_User_phone", ["phone"], { unique: true })
 @Entity("User")
 export class User {
   @PrimaryColumn("text")
@@ -20,6 +27,10 @@ export class User {
 
   @Column("text", { unique: true })
   email!: string;
+
+  /** Canonical Iranian mobile `09` + nine digits, or null when unset. */
+  @Column("text", { nullable: true })
+  phone!: string | null;
 
   // Column is NOT NULL today (no migration here makes it nullable - that's
   // scoped to the Google Sign-In migration). Typed as nullable anyway: if

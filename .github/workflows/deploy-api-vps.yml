@@ -113,6 +113,11 @@ jobs:
     env:
       RAD_VPS_TAILSCALE_IP: "100.103.104.79"
     steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
       - name: Download signed artifact (this exact run/attempt only)
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
@@ -140,8 +145,8 @@ jobs:
 
       # Same trust boundary as the `release` job's "Ship artifact and
       # trigger release" step below: this account can run nothing but the
-      # fixed forced command, which hands the request to the unchanged
-      # root-owned broker. The broker cross-checks this artifact's signed
+      # fixed forced command, which hands the request to the root-owned
+      # broker. The broker cross-checks this artifact's signed
       # migration list against what TypeORM's own `migration:show` reports
       # against the live database (never trusting its own detection logic
       # alone - see docs/automated-migrations.md), and refuses to run
@@ -151,13 +156,17 @@ jobs:
       # or inconsistent fails this step closed - and therefore this job and
       # `release`, which needs it - rather than deploying API code against
       # an un-migrated database or guessing at ambiguous migration state.
+      # ConnectTimeout only covers the handshake. The ship helper fails the
+      # upload itself when bytes stop moving or the transfer deadline passes,
+      # and it does not raise this job's 30 minute cap.
       - name: Ship artifact and trigger migration check over the tailnet
         run: |
           set -euo pipefail
-          ssh_args=(-o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=15)
-          tar -cf - -C stage release.json release.sigstore.json api-release.tar.gz \
-            | ssh "${ssh_args[@]}" "rad-deploy@${RAD_VPS_TAILSCALE_IP}" \
-              "migrate commit=${GITHUB_SHA} run_id=${GITHUB_RUN_ID} run_attempt=${GITHUB_RUN_ATTEMPT}"
+          bash scripts/production/rad-deploy-ship.sh \
+            --host "rad-deploy@${RAD_VPS_TAILSCALE_IP}" \
+            --stage stage \
+            --remote-command "migrate commit=${GITHUB_SHA} run_id=${GITHUB_RUN_ID} run_attempt=${GITHUB_RUN_ATTEMPT}" \
+            -- release.json release.sigstore.json api-release.tar.gz
 
       - name: Remove runner SSH credentials
         if: always()
@@ -178,6 +187,11 @@ jobs:
     env:
       RAD_VPS_TAILSCALE_IP: "100.103.104.79"
     steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
       - name: Download signed artifact (this exact run/attempt only)
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
@@ -208,19 +222,19 @@ jobs:
       # whose SSH key can run exactly one forced command
       # (scripts/production/rad-deploy-ssh-entrypoint.sh) and nothing else - no
       # shell, no other remote command, no root key. That entrypoint hands the
-      # request to the exact same root-owned broker
-      # (scripts/production/rad_release.py) the self-hosted-runner design used,
-      # unchanged, which performs the real verification, release, health check
+      # request to the same root-owned broker
+      # (scripts/production/rad_release.py), which performs the real verification, release, health check
       # and rollback. A broker rejection (health check failure, activation not
       # enabled, manifest mismatch, etc.) makes this ssh command exit non-zero,
       # which fails this step and this job - never a silent skip.
       - name: Ship artifact and trigger release over the tailnet
         run: |
           set -euo pipefail
-          ssh_args=(-o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=15)
-          tar -cf - -C stage release.json release.sigstore.json api-release.tar.gz \
-            | ssh "${ssh_args[@]}" "rad-deploy@${RAD_VPS_TAILSCALE_IP}" \
-              "deploy kind=api commit=${GITHUB_SHA} run_id=${GITHUB_RUN_ID} run_attempt=${GITHUB_RUN_ATTEMPT}"
+          bash scripts/production/rad-deploy-ship.sh \
+            --host "rad-deploy@${RAD_VPS_TAILSCALE_IP}" \
+            --stage stage \
+            --remote-command "deploy kind=api commit=${GITHUB_SHA} run_id=${GITHUB_RUN_ID} run_attempt=${GITHUB_RUN_ATTEMPT}" \
+            -- release.json release.sigstore.json api-release.tar.gz
 
       - name: Remove runner SSH credentials
         if: always()

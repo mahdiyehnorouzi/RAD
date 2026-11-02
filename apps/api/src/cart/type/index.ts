@@ -1,1 +1,5 @@
-export type { CartPriceAtAdd, CartSnapshot } from "./cart-snapshot";
+export type {
+  CartPendingOrder,
+  CartPriceAtAdd,
+  CartSnapshot,
+} from "./cart-snapshot";

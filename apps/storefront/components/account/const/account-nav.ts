@@ -5,6 +5,7 @@ import {
   ShoppingBag,
   Truck,
   UserRound,
+  MapPin,
   type LucideIcon,
 } from "lucide-react";
 import type { MessageKey } from "@/i18n/fa";
@@ -45,6 +46,12 @@ export const ACCOUNT_NAV: AccountNavItem[] = [
     label: "notifications",
     hint: "navHintNotifications",
     icon: Bell,
+  },
+  {
+    href: "/account/addresses",
+    label: "addressesNav",
+    hint: "navHintAddresses",
+    icon: MapPin,
   },
   {
     href: "/account/info",
