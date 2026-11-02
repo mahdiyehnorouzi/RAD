@@ -141,7 +141,7 @@ function readControl(
 }
 
 export function CheckoutPage() {
-  const { slugs, holds, holdEndsAt, ready, clear, reload } = useCart();
+  const { slugs, holds, holdEndsAt, ready, reload } = useCart();
   const { user, placeOrder, ready: sessionReady } = useCommerce();
   const { products, getProduct, refresh: refreshCatalog } = useCatalog();
   const { locale, href, number } = useLocale();
@@ -430,7 +430,10 @@ export function CheckoutPage() {
       // payment.tsx is what actually shows the summary and the "پرداخت و
       // تکمیل خرید" button that starts the real redirect.
       router.push(href(`/checkout/${encodeURIComponent(created.id)}`));
-      void clear().catch(() => {});
+      // Checkout already deleted this bag. A second DELETE would release a
+      // hold created after that transaction — another tab can add a work
+      // while catalog refresh is still in flight. `placeOrder` reloads the
+      // bag from the server instead.
     } catch (err) {
       if (
         err instanceof ApiError &&
