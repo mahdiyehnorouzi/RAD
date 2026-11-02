@@ -14,7 +14,7 @@ description: >-
 This skill owns independent review and the findings report.
 
 - `rad-safe-refactor` owns structural-refactor safety: readiness class, the characterization commit before the structural commit, and the freeze on transaction, lock, validation, and error-code boundaries. Check whether that procedure was followed. Do not restate it or run a refactor from this skill.
-- Test selection, characterization design, and the test-evidence report belong to `rad-testing` only when `.claude/skills/rad-testing/SKILL.md` is in the commit under review. Absence of that file is not a dependency and is not a finding. Apply [ADR-007](../../../docs/engineering/adr/adr-007-test-first-refactoring.md), root `AGENTS.md` §§3 and 10, and [task-to-PR](../../../docs/engineering/workflows/task-to-pr.md) directly.
+- `rad-testing` owns test selection, characterization design, and the test-evidence report. Current `main` includes that skill. When `.claude/skills/rad-testing/SKILL.md` is in the reviewed tree, check the PR's evidence against it and do not restate its commands or coverage notes. A tree that predates the skill is not a finding; apply [ADR-007](../../../docs/engineering/adr/adr-007-test-first-refactoring.md), root `AGENTS.md` §§3 and 10, and [task-to-PR](../../../docs/engineering/workflows/task-to-pr.md) directly.
 - Do not copy those procedures into the review.
 
 ## Review-only boundary
