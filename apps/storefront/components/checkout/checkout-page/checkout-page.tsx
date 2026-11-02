@@ -40,13 +40,28 @@ import {
   iranMobileMessage,
 } from "@/lib/phone/iran-mobile";
 import { seedCheckoutName, seedCheckoutPhone } from "./checkout-contact";
-import { toLatinDigits } from "@/lib/payment/receipt";
+import {
+  addressChoiceOf,
+  defaultAddressToApply,
+  deliveryFromSaved,
+  emptyDeliveryFields,
+  orderAddressSnapshot,
+  orderCitySnapshot,
+  sameDelivery,
+  savedAddressIdOf,
+  validPostalOrEmpty,
+  type CheckoutDraft,
+  type DeliveryFields,
+} from "./checkout-delivery";
+import { SavedAddressPicker } from "./saved-address-picker";
+import { useCheckoutAddresses } from "./use-checkout-addresses";
 import { checkoutCopy, fillCopy } from "../const";
 import { CheckoutMeter, CheckoutSteps, CheckoutSummary } from "../flow";
 import { CheckoutField } from "./checkout-field";
 import { LocationFields } from "./location-fields";
 
-type FieldName = "name" | "phone" | "province" | "city" | "address";
+type FieldName =
+  "name" | "phone" | "province" | "city" | "address" | "postalCode";
 type FieldErrors = Partial<Record<FieldName, string>>;
 
 /** Backend codes meaning the cart/hold this form was built from no longer matches reality. */
@@ -64,20 +79,10 @@ const FIELD_ORDER: FieldName[] = [
   "province",
   "city",
   "address",
+  "postalCode",
 ];
 const DRAFT_KEY = "rad.checkout.draft";
-type Draft = Partial<
-  Record<
-    | "name"
-    | "phone"
-    | "provinceId"
-    | "cityId"
-    | "city"
-    | "address"
-    | "postalCode",
-    string
-  >
->;
+type Draft = CheckoutDraft;
 
 /**
  * Inputs below are uncontrolled (`defaultValue`), so a browser back
@@ -109,19 +114,56 @@ function clearDraft() {
   } catch {}
 }
 
+function writeControls(form: HTMLFormElement, fields: DeliveryFields) {
+  for (const name of ["name", "address", "postalCode"] as const) {
+    const field = form.elements.namedItem(name);
+    if (
+      field instanceof HTMLInputElement ||
+      field instanceof HTMLTextAreaElement
+    ) {
+      field.value = fields[name];
+    }
+  }
+}
+
+function readControl(
+  form: HTMLFormElement,
+  name: "name" | "address" | "postalCode",
+) {
+  const field = form.elements.namedItem(name);
+  if (
+    field instanceof HTMLInputElement ||
+    field instanceof HTMLTextAreaElement
+  ) {
+    return field.value;
+  }
+  return "";
+}
+
 export function CheckoutPage() {
   const { slugs, holds, holdEndsAt, ready, clear, reload } = useCart();
-  const { user, placeOrder } = useCommerce();
+  const { user, placeOrder, ready: sessionReady } = useCommerce();
   const { products, getProduct, refresh: refreshCatalog } = useCatalog();
   const { locale, href, number } = useLocale();
   const c = checkoutCopy[locale];
   const router = useRouter();
+  const signedIn = sessionReady && Boolean(user);
+  const {
+    status: addressStatus,
+    addresses: savedAddresses,
+    retry: retryAddresses,
+  } = useCheckoutAddresses(signedIn ? (user?.id ?? "") : "");
 
   const [errors, setErrors] = useState<FieldErrors>({});
   const [phone, setPhone] = useState("");
   const [phoneTouched, setPhoneTouched] = useState(false);
   const [provinceId, setProvinceId] = useState("");
   const [cityId, setCityId] = useState("");
+  const [fields, setFields] = useState<DeliveryFields>(emptyDeliveryFields);
+  const [addressChoice, setAddressChoice] = useState<"" | "saved" | "manual">(
+    "",
+  );
+  const [savedAddressId, setSavedAddressId] = useState("");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [leaving, setLeaving] = useState(false);
@@ -154,7 +196,21 @@ export function CheckoutPage() {
     if (!formVisible) return;
     const form = formRef.current;
     if (!form) return;
-    const draft = readDraft();
+    let draft = readDraft();
+    const preset =
+      addressStatus === "ready"
+        ? defaultAddressToApply(draft, savedAddresses)
+        : null;
+    if (preset) {
+      const next = deliveryFromSaved(preset);
+      draft = {
+        ...next,
+        addressChoice: "saved",
+        savedAddressId: preset.id,
+      };
+      writeDraft(draft);
+      writeControls(form, next);
+    }
     for (const name of ["address", "postalCode"] as const) {
       const value = draft[name];
       if (!value) continue;
@@ -175,17 +231,29 @@ export function CheckoutPage() {
       });
     }
     const location = restoreCheckoutLocation(draft);
+    const nextPhone = seedCheckoutPhone({
+      // A saved address replaces the profile prefill. A draft or what the
+      // buyer already typed still wins inside seedCheckoutPhone.
+      current: preset ? "" : (phoneRef.current?.value ?? ""),
+      draftPhone: draft.phone,
+      profilePhone: user?.phone,
+    });
+    const choice = addressChoiceOf(draft);
     // Session storage is read after mount so the server render stays empty.
     setProvinceId(location.provinceId);
     setCityId(location.cityId);
-    setPhone((current) =>
-      seedCheckoutPhone({
-        current,
-        draftPhone: draft.phone,
-        profilePhone: user?.phone,
-      }),
-    );
-  }, [formVisible, user?.name, user?.phone]);
+    setPhone(nextPhone);
+    setAddressChoice(choice);
+    setSavedAddressId(savedAddressIdOf(draft));
+    setFields({
+      name: readControl(form, "name"),
+      phone: nextPhone,
+      provinceId: location.provinceId,
+      cityId: location.cityId,
+      address: readControl(form, "address"),
+      postalCode: readControl(form, "postalCode"),
+    });
+  }, [addressStatus, formVisible, savedAddresses, user?.name, user?.phone]);
 
   useLayoutEffect(() => {
     const node = phoneRef.current;
@@ -195,10 +263,56 @@ export function CheckoutPage() {
     phoneCaret.current = null;
   }, [phone]);
 
-  const persistDraft = (patch?: Partial<Draft>) => {
+  const remember = (draft: Draft) => {
+    const choice = addressChoiceOf(draft);
+    const next: DeliveryFields = {
+      name: draft.name ?? "",
+      phone: draft.phone ?? "",
+      provinceId: draft.provinceId ?? "",
+      cityId: draft.cityId ?? "",
+      address: draft.address ?? "",
+      postalCode: draft.postalCode ?? "",
+    };
+    writeDraft({
+      ...next,
+      addressChoice: choice || undefined,
+      savedAddressId: choice === "saved" ? (draft.savedAddressId ?? "") : "",
+    });
+    setFields(next);
+    setAddressChoice(choice);
+    setSavedAddressId(choice === "saved" ? (draft.savedAddressId ?? "") : "");
+    setPhone(next.phone);
+    setProvinceId(next.provinceId);
+    setCityId(next.cityId);
     const form = formRef.current;
-    if (!form) return;
+    if (form) writeControls(form, next);
+    setErrors({});
+  };
+
+  const selectSaved = (address: (typeof savedAddresses)[number]) => {
+    remember({
+      ...deliveryFromSaved(address),
+      addressChoice: "saved",
+      savedAddressId: address.id,
+    });
+  };
+
+  const selectManual = () => {
+    remember({
+      name: user?.name?.trim() ?? "",
+      phone: user?.phone ? formatIranMobileDraft(user.phone) : "",
+      provinceId: "",
+      cityId: "",
+      address: "",
+      postalCode: "",
+      addressChoice: "manual",
+      savedAddressId: "",
+    });
+  };
+
+  const storeDraft = (form: HTMLFormElement, patch?: Partial<Draft>) => {
     const data = new FormData(form);
+    const choice = addressChoiceOf({ addressChoice, ...patch });
     writeDraft({
       name: String(data.get("name") ?? ""),
       phone,
@@ -206,8 +320,24 @@ export function CheckoutPage() {
       cityId,
       address: String(data.get("address") ?? ""),
       postalCode: String(data.get("postalCode") ?? ""),
+      addressChoice: choice || undefined,
+      savedAddressId: choice === "saved" ? savedAddressId : "",
       ...patch,
     });
+    const stored = readDraft();
+    setFields({
+      name: stored.name ?? "",
+      phone: stored.phone ?? "",
+      provinceId: stored.provinceId ?? "",
+      cityId: stored.cityId ?? "",
+      address: stored.address ?? "",
+      postalCode: stored.postalCode ?? "",
+    });
+  };
+
+  const persistDraft = (patch?: Partial<Draft>) => {
+    const form = formRef.current;
+    if (form) storeDraft(form, patch);
   };
 
   const phoneCopy = { empty: c.phoneEmpty, invalid: c.phoneError };
@@ -225,6 +355,9 @@ export function CheckoutPage() {
       else next.city = c.cityError;
     }
     if (value("address").length < 8) next.address = c.addressError;
+    if (!validPostalOrEmpty(String(data.get("postalCode") ?? "")).ok) {
+      next.postalCode = c.postalError;
+    }
     return next;
   };
 
@@ -269,23 +402,23 @@ export function CheckoutPage() {
     }
 
     const field = (key: string) => String(data.get(key) ?? "").trim();
-    const postalCode = toLatinDigits(field("postalCode"));
+    const postal = validPostalOrEmpty(field("postalCode"));
     const mobile = canonicalIranMobile(phone);
-    const place = locationSelection(provinceId, cityId);
-    if (!mobile || !place.ok) return;
+    const city = orderCitySnapshot(provinceId, cityId);
+    if (!mobile || !city || !postal.ok) return;
     try {
       setError("");
       setSubmitting(true);
       const created = await placeOrder({
         name: field("name"),
         phone: mobile,
-        city: place.snapshot,
-        address: [
+        city,
+        address: orderAddressSnapshot(
           field("address"),
-          postalCode && `${c.postalLabel} ${postalCode}`,
-        ]
-          .filter(Boolean)
-          .join(locale === "fa" ? "، " : ", "),
+          postal.postal,
+          c.postalLabel,
+          locale,
+        ),
         acceptedPolicies: currentPolicyVersions(ORDER_POLICY_SLUGS),
       });
       setLeaving(true);
@@ -362,14 +495,27 @@ export function CheckoutPage() {
   }
 
   const busy = submitting;
+  const selectedAddress = savedAddresses.find(
+    (item) => item.id === savedAddressId,
+  );
+  const deliveryDiverged =
+    addressChoice === "saved" && selectedAddress
+      ? !sameDelivery(fields, selectedAddress)
+      : false;
+  const savedMissing =
+    addressChoice === "saved" &&
+    addressStatus === "ready" &&
+    savedAddressId !== "" &&
+    !selectedAddress;
   const fieldProps = (name: FieldName) => ({
     id: `checkout-${name}`,
     name,
     "aria-invalid": errors[name] ? true : undefined,
     "aria-describedby": errors[name] ? `checkout-${name}-error` : undefined,
-    onInput: () => {
+    onInput: (event: FormEvent<HTMLInputElement | HTMLTextAreaElement>) => {
       clearFieldError(name);
-      persistDraft();
+      const form = event.currentTarget.form;
+      if (form) storeDraft(form);
     },
     disabled: busy,
   });
@@ -390,6 +536,21 @@ export function CheckoutPage() {
           onSubmit={submit}
           noValidate
         >
+          {signedIn ? (
+            <SavedAddressPicker
+              status={addressStatus === "idle" ? "loading" : addressStatus}
+              addresses={savedAddresses}
+              choice={addressChoice}
+              savedAddressId={savedAddressId}
+              diverged={deliveryDiverged}
+              missing={savedMissing}
+              disabled={busy}
+              copy={c}
+              onSelect={selectSaved}
+              onManual={selectManual}
+              onRetry={retryAddresses}
+            />
+          ) : null}
           <CheckoutField
             id="checkout-name"
             label={c.nameLabel}
@@ -517,6 +678,7 @@ export function CheckoutPage() {
             id="checkout-postal"
             label={c.postalLabel}
             optional={c.optional}
+            error={errors.postalCode}
           >
             <input
               id="checkout-postal"
@@ -527,7 +689,22 @@ export function CheckoutPage() {
               autoComplete="postal-code"
               dir="ltr"
               disabled={busy}
-              onInput={() => persistDraft()}
+              aria-invalid={errors.postalCode ? true : undefined}
+              aria-describedby={
+                errors.postalCode ? "checkout-postal-error" : undefined
+              }
+              onInput={(event) => {
+                clearFieldError("postalCode");
+                const form = event.currentTarget.form;
+                if (form) storeDraft(form);
+              }}
+              onBlur={(event) => {
+                const postal = validPostalOrEmpty(event.currentTarget.value);
+                setFieldError(
+                  "postalCode",
+                  postal.ok ? undefined : c.postalError,
+                );
+              }}
             />
           </CheckoutField>
         </form>
