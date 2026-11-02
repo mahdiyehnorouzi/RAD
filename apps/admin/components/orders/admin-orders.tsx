@@ -21,6 +21,7 @@ import {
   orderQueueFilters,
   paymentPresentation,
   queryOrders,
+  trackingCodeHint,
   type OrderDateRange,
   type OrderQueueFilter,
   type OrderSort,
@@ -455,6 +456,7 @@ function OrderDetail({
   };
 
   const trackingDirty = tracking.trim() !== (order.trackingCode ?? "");
+  const trackingIssue = trackingCodeHint(tracking);
   const showTracking =
     Boolean(order.trackingCode) ||
     order.status === "confirmed" ||
@@ -611,11 +613,20 @@ function OrderDetail({
               maxLength={40}
               autoComplete="off"
               spellCheck={false}
+              aria-invalid={trackingIssue ? true : undefined}
+              aria-describedby={
+                trackingIssue ? `tracking-issue-${order.id}` : undefined
+              }
             />
           </label>
         ) : (
           <p>هنوز به مرحله ارسال نرسیده است.</p>
         )}
+        {trackingIssue ? (
+          <p className="orders-ship-error" id={`tracking-issue-${order.id}`}>
+            {trackingIssue}
+          </p>
+        ) : null}
         {transitions.includes("shipped") && !tracking.trim() ? (
           <p>
             اگر کد رهگیری را خالی بگذارید، هنگام ثبت ارسال یک کد موقت ساخته
@@ -629,7 +640,11 @@ function OrderDetail({
           <button
             className="secondary-action"
             type="button"
-            disabled={pending !== null || tracking.trim().length === 0}
+            disabled={
+              pending !== null ||
+              tracking.trim().length === 0 ||
+              Boolean(trackingIssue)
+            }
             onClick={() =>
               void run({ ...order, trackingCode: tracking.trim() }, "tracking")
             }
@@ -652,12 +667,14 @@ function OrderDetail({
           <div className="orders-action-row">
             {transitions.map((status) => {
               const destructive = isDestructiveOrderStatus(status);
+              const blockedByTracking =
+                status === "shipped" && Boolean(trackingIssue);
               return (
                 <button
                   key={status}
                   type="button"
                   className={destructive ? "danger-action" : "primary-action"}
-                  disabled={pending !== null}
+                  disabled={pending !== null || blockedByTracking}
                   onClick={() => {
                     const next = {
                       ...order,

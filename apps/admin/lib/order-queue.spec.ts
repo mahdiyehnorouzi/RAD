@@ -4,7 +4,12 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import type { AdminOrder } from "./admin-data";
 import { AdminOrders } from "../components/orders/admin-orders";
-import { assertOrderList, orderMatchesQuery, queryOrders } from "./order-queue";
+import {
+  assertOrderList,
+  orderMatchesQuery,
+  queryOrders,
+  trackingCodeHint,
+} from "./order-queue";
 
 const now = Date.UTC(2026, 9, 28, 12);
 
@@ -242,4 +247,22 @@ test("orders render distinguishes failure, an empty database, and real rows", ()
   );
   assert.match(corruptHtml, /دریافت سفارش‌ها ناموفق بود/);
   assert.doesNotMatch(corruptHtml, /هنوز سفارشی ثبت نشده/);
+});
+
+test("trackingCodeHint: Issue #145 regression cases", () => {
+  // Optional — empty or whitespace-only input is not an error.
+  assert.equal(trackingCodeHint(""), null);
+  assert.equal(trackingCodeHint("   "), null);
+
+  // Valid, carrier-agnostic formats remain accepted.
+  assert.equal(trackingCodeHint("123456789012"), null);
+  assert.equal(trackingCodeHint("IR-POST-123456789"), null);
+  assert.equal(trackingCodeHint("RAD-POST-1234"), null);
+  assert.equal(trackingCodeHint("۱۲۳۴۵۶"), null);
+
+  // Obviously invalid input is rejected with a Persian hint.
+  assert.equal(typeof trackingCodeHint("!!"), "string");
+  assert.equal(typeof trackingCodeHint("A1"), "string");
+  assert.equal(typeof trackingCodeHint("A".repeat(33)), "string");
+  assert.equal(typeof trackingCodeHint("کد نامعتبر"), "string");
 });
