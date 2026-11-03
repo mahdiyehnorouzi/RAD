@@ -675,7 +675,11 @@ describe("AuthService.signInWithPhone", () => {
     // Simulates ProfileService.update writing only the contact field.
     rows[0].phone = "09120000000";
 
-    assert.equal(rows[0].verifiedPhone, "09121234567", "sign-in identifier is untouched");
+    assert.equal(
+      rows[0].verifiedPhone,
+      "09121234567",
+      "sign-in identifier is untouched",
+    );
     assert.equal(rows[0].phone, "09120000000");
   });
 
