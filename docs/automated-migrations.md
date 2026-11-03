@@ -157,10 +157,13 @@ already-established off-server backup pipeline (the one that, per this
 PR's own originating context, already produces a SHA256-verified off-server
 copy of production backups) actually covers
 `/var/lib/rad-release/backups/`. It is checked independently of, and in
-addition to, per-migration approval — both must hold. The broker itself
-still does not gain any new network-destination credentials to push backups
-off-host directly; see "What is not automated" below for why that remains a
-deliberate boundary, not an oversight.
+addition to, per-migration approval — both must hold.
+
+**As of the offsite-upload change below, `backup_database()` itself also
+performs and verifies that off-server copy synchronously, in-process, for
+every pre-migration dump** — not only when `offsite_backup_pipeline_verified`
+is set. See "Synchronous offsite backup upload" below for how, and why the
+broker still does not hold the upload credentials itself.
 
 ### 5. Broker-upgrade / activation-transition safety
 
@@ -203,20 +206,102 @@ unrelated releases.
   database "undo" this feature or the manual process offers is restoring
   the pre-migration backup — a human decision, never automatic.
 
+## Synchronous offsite backup upload
+
+`backup_database()` now requires a verified offsite copy of the pre-migration
+dump before it returns the dump to `migrate_api()` — and `migrate_api()`
+only reaches `run_pending_migrations()` with a dump `backup_database()`
+actually returned. Concretely, after the existing local steps (`pg_dump`,
+`pg_restore --list`, and `verify_restore()`'s optional real-restore check),
+`backup_database()` calls a new function, `upload_offsite_backup(dump)`,
+which:
+
+1. Invokes a separate, root-owned executable,
+   `/usr/local/libexec/rad-backup-offsite.py` (installed from
+   `scripts/production/rad_backup_offsite.py`, the same way `rad_release.py`
+   itself is installed — see "Setup" below), passing it only the local dump
+   path.
+2. That helper uploads the exact dump to the private Liara S3 bucket
+   `ad-prod-db-backups` via the root-configured rclone remote `liara-rad`,
+   using `rclone copyto ... --s3-no-check-bucket`.
+3. It then verifies the **remote** object against the **local** dump: the
+   remote object's byte size must match exactly (`rclone size --json`), and
+   when the remote reports a checksum (`rclone hashsum sha256`), that must
+   match the local dump's SHA256 too. A missing checksum is logged as a
+   size-only verification, never silently treated as a full match.
+4. Any missing rclone remote configuration, a non-zero upload exit, or a
+   verification mismatch makes the helper exit non-zero. `rad_release.py`
+   treats that exactly like any other `run()` failure: it raises before
+   `backup_database()` can return a dump, which — by the same control flow
+   the existing `test_migrate_backup_failure_stops_before_running_any_migration`
+   test already covers for any other backup failure — stops `migrate_api()`
+   before `run_pending_migrations()` is ever called.
+5. Neither this helper nor `rad_release.py` ever logs, prints, or otherwise
+   handles the rclone/S3 credentials themselves. They live solely in the
+   invoking root user's own rclone config
+   (`/root/.config/rclone/rclone.conf`, outside this repository), read by
+   `rclone` itself. This preserves the original design decision recorded
+   above and in `rad_release.py`'s `BACKUP_DIR`/`OFFSITE_BACKUP_UPLOAD`
+   comments: the privileged release broker itself never gains new
+   network-destination credentials — only a narrowly-scoped, root-owned
+   helper does, exactly as `docs/self-hosted-production-release.md`'s
+   trust/privilege section already requires for anything the broker shells
+   out to (`gh`, `node`, `pg_dump`, `pg_restore`, `psql`).
+
+`offsite_backup_pipeline_verified` / `migration_exception` in
+`activation.json` are unchanged by this: they still gate whether a *pending
+migration* may proceed at all, independent of and in addition to this
+backup-level offsite upload, which now runs unconditionally for every backup
+`backup_database()` takes.
+
+### Setup
+
+1. On the VPS, as root, configure the `liara-rad` rclone remote (type `s3`,
+   pointed at Liara's S3-compatible endpoint, with that bucket's access
+   key/secret) in `/root/.config/rclone/rclone.conf` — exactly the config
+   `rclone config` normally produces; nothing in this repo writes or reads
+   that file's contents.
+2. Confirm the private bucket `ad-prod-db-backups` exists and that remote's
+   credentials can write to it (`rclone copyto` requires write access;
+   `--s3-no-check-bucket` only skips an extra existence probe, it does not
+   skip the actual write).
+3. Install the helper the same way `rad_release.py` is installed (see
+   `docs/self-hosted-production-release.md`):
+   ```
+   install -o root -g root -m 0755 scripts/production/rad_backup_offsite.py /usr/local/libexec/rad-backup-offsite.py
+   ```
+4. Re-approve the broker as usual — `rad_release.py`'s own content changed,
+   so `activation.json`'s `broker_sha256` must be updated to match before
+   any release/migrate request is accepted again.
+
+### Operator verification
+
+Before relying on this in production, confirm the chain end to end:
+
+```
+sudo -u root /usr/bin/rclone listremotes          # must list "liara-rad:"
+sudo -u root /usr/bin/rclone lsd liara-rad:ad-prod-db-backups   # must succeed
+echo test-dump-contents > /tmp/rad-offsite-smoke.dump
+sudo -u root /usr/local/libexec/rad-backup-offsite.py /tmp/rad-offsite-smoke.dump
+# must print "rad-backup-offsite: verified offsite copy of ... bytes)"
+sudo -u root /usr/bin/rclone cat liara-rad:ad-prod-db-backups/rad-offsite-smoke.dump
+# must echo back test-dump-contents
+```
+
+Then remove the smoke-test object from the bucket, and confirm a failure
+case fails closed, e.g. temporarily renaming the remote in
+`rclone.conf` and re-running the helper against any local file — it must
+exit non-zero with `rad-backup-offsite: rclone remote 'liara-rad' is not
+configured` on stderr, never silently succeed.
+
 ## What is *not* automated (and why)
 
-- **Off-server/encrypted long-term retention of the backup.** The broker
-  writes a verified `pg_dump` into `/var/lib/rad-release/backups/`
-  (root-private, local to the VPS). Shipping that file off-host, encrypting
-  it at rest, and long-term retention are **not** added here — they remain
-  this repo's existing, already-established backup pipeline's job.
-  `offsite_backup_pipeline_verified` (point 4 above) is how this PR makes
-  that dependency an explicit, checked gate rather than an assumption.
-  Wiring the broker itself to push backups off-host would mean giving the
-  root-owned broker new, permanent, broad network-destination credentials —
-  exactly the kind of new privileged credential this repo's security model
-  avoids by design (see `docs/self-hosted-production-release.md`'s
-  trust/privilege section).
+- **Encryption at rest and long-term retention policy for the offsite
+  copy.** The offsite upload above proves the object exists and matches the
+  local dump; it does not add encryption-at-rest configuration or a
+  retention/lifecycle policy for the bucket — those remain the operator's
+  responsibility on the Liara S3 side (bucket policy, lifecycle rules), same
+  as for any other object already in that bucket.
 - **Non-additive / destructive migrations.** This PR does not add schema-
   change classification. A migration that would be destructive (dropping/
   renaming a populated column, etc.) must still be reviewed by a human as

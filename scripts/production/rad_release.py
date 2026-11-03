@@ -47,6 +47,13 @@ ACTIVATION = Path("/etc/rad-release/activation.json")
 # docs/automated-migrations.md for why that stays a separate, already-
 # existing operator backup pipeline rather than new broker-held credentials).
 BACKUP_DIR = BASE / "backups"
+# Separate, root-owned executable that performs the actual offsite copy
+# (rclone, against the "liara-rad" remote / "ad-prod-db-backups" bucket) and
+# confirms the remote object matches before returning success. This broker
+# invokes it and fails closed on any nonzero exit - it never reads, parses,
+# or holds the rclone/S3 credentials itself; those live solely in that
+# helper's own rclone config (see docs/automated-migrations.md).
+OFFSITE_BACKUP_UPLOAD = Path("/usr/local/libexec/rad-backup-offsite.py")
 # A migration filename is always "<13-digit-ms-timestamp>-<ClassName>.ts"
 # (TypeORM's own `migration:generate` convention, unchanged by this repo —
 # see apps/api/src/database/migrations/*.ts). TypeORM's `migrations` table
@@ -488,6 +495,25 @@ def verify_restore(database_url, dump):
         run(PSQL, verify_url, "-c", *reset, timeout=120, check=False)
 
 
+def upload_offsite_backup(dump):
+    """Mandatory, synchronous offsite copy of an already locally-verified
+    dump, required before any migration runs (see docs/automated-migrations.md).
+    Delegates the actual upload/verification to the separate, root-owned
+    OFFSITE_BACKUP_UPLOAD executable - this broker holds no S3/rclone
+    credentials and never logs any. Any missing helper/config, upload
+    error, or verification mismatch raises and must stop the caller before
+    run_pending_migrations() is reached."""
+    protected(OFFSITE_BACKUP_UPLOAD)
+    require(OFFSITE_BACKUP_UPLOAD.stat().st_mode & 0o022 == 0, "Offsite backup helper must not be group/world writable")
+    try:
+        run(OFFSITE_BACKUP_UPLOAD, dump, timeout=1800)
+    except subprocess.CalledProcessError as error:
+        raise RuntimeError(
+            "Offsite backup upload/verification failed; refusing to migrate without a verified offsite copy "
+            f"of {dump.name} (see docs/automated-migrations.md)"
+        ) from error
+
+
 def backup_database(database_url, label):
     protected(BASE)
     BACKUP_DIR.mkdir(mode=0o700, exist_ok=True)
@@ -503,6 +529,7 @@ def backup_database(database_url, label):
     listing = run(PG_RESTORE, "--list", dump, timeout=300).stdout
     require(listing.strip(), "Backup dump has no restorable table of contents")
     verify_restore(database_url, dump)
+    upload_offsite_backup(dump)
     return dump
 
 

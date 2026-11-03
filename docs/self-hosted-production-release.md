@@ -70,6 +70,7 @@ No existing user changes, branches, worktrees, or unrelated files were discarded
 | `scripts/production/package-api.sh` | Retain complete workspace/runtime packaging, normalize hard links into regular archive files |
 | `scripts/production/make-manifest.py` | Bind source SHA, run/attempt, archive SHA256/version or selected image digests |
 | `scripts/production/rad_release.py` | Installed privileged verifier, fixed release operations, locking, health checks, audit transactions, rollback |
+| `scripts/production/rad_backup_offsite.py` | Installed separate helper: offsite rclone upload + verification of the pre-migration dump, invoked by `rad_release.py`; holds no application logic and is the only place rclone/S3 credentials are touched (see `docs/automated-migrations.md`) |
 | `scripts/production/rad-release` | Root-owned Python isolated-mode launcher |
 | `scripts/production/rad-runner.sudoers` | Exact no-argument launcher permission, no shell/Docker/systemctl/general sudo grant |
 | `scripts/production/test_rad_release.py` | Local isolated policy, extraction, failure and rollback regression tests |
@@ -218,6 +219,7 @@ root-owned, non-symlinked and not group/world writable.
 cd /root/rad-reviewed-release
 install -d -o root -g root -m 0755 /usr/local/libexec /usr/local/sbin
 install -o root -g root -m 0755 scripts/production/rad_release.py /usr/local/libexec/rad-release.py
+install -o root -g root -m 0755 scripts/production/rad_backup_offsite.py /usr/local/libexec/rad-backup-offsite.py
 install -o root -g root -m 0755 scripts/production/rad-release /usr/local/sbin/rad-release
 install -d -o root -g root -m 0711 /var/lib/rad-release
 install -d -o root -g root -m 0700 /var/lib/rad-release/transactions
