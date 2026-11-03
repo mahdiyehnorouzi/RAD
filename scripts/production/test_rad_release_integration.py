@@ -216,6 +216,18 @@ class RealPostgresMigrationTests(unittest.TestCase):
         # root, same as every other test in this suite that exercises a
         # function calling protected().
         patch.object(broker, "protected", lambda _path: None).start()
+        # backup_database() now requires a verified offsite copy via the
+        # separate OFFSITE_BACKUP_UPLOAD helper (see rad_backup_offsite.py /
+        # docs/automated-migrations.md). That helper's own rclone/S3 upload
+        # and verification logic is already exercised in isolation by
+        # test_rad_release.py's OffsiteBackupUploadTests - this real-Postgres
+        # lifecycle test has nothing to do with offsite storage, so it
+        # stands in a trivial, always-succeeding helper here rather than
+        # requiring a production-installed executable or real S3 access.
+        self.offsite_helper = Path(self.tmp.name) / "fake-offsite-upload.py"
+        self.offsite_helper.write_text("#!/usr/bin/env python3\nprint('fake offsite upload ok')\n")
+        self.offsite_helper.chmod(0o700)
+        patch.object(broker, "OFFSITE_BACKUP_UPLOAD", self.offsite_helper).start()
         self.env_file = Path(self.tmp.name) / "api.env"
         self.env_file.write_text("NODE_ENV=production\nTYPEORM_SYNCHRONIZE=false\n")
         patch.object(broker, "ENV_FILE", self.env_file).start()
