@@ -76,6 +76,15 @@ SHA = re.compile(r"[0-9a-f]{40}")
 HEX64 = re.compile(r"[0-9a-f]{64}")
 DIGEST = re.compile(r"sha256:[0-9a-f]{64}")
 STAGE = re.compile(r"release-[A-Za-z0-9_-]{6,80}")
+# rad_backup_offsite.py's own controlled failure stages (see its `fail()`).
+# Anything else in its captured stderr - command argv, rclone/psql output,
+# config paths, partial/garbled lines, and the free-form message text that
+# follows the stage tag itself - is never trusted or logged; only the stage
+# NAME is ever pulled out, and only when it is one of these exact values.
+HELPER_STAGES = frozenset({"input", "remote_config", "upload", "verify_size", "verify_checksum"})
+HELPER_DIAGNOSTIC_LINE = re.compile(
+    r"rad-backup-offsite: stage=(input|remote_config|upload|verify_size|verify_checksum)(?:\s|$)"
+)
 # UTC with a Z suffix only. Offsets and fractional seconds are rejected so an
 # expiry cannot be ambiguous.
 EXCEPTION_EXPIRES = re.compile(r"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z")
@@ -495,6 +504,32 @@ def verify_restore(database_url, dump):
         run(PSQL, verify_url, "-c", *reset, timeout=120, check=False)
 
 
+def extract_helper_diagnostic(stderr):
+    """Pull only a validated STAGE NAME out of rad_backup_offsite.py's
+    captured stderr, and return a brand-new, fully static diagnostic string
+    built from that name alone - never return None.
+
+    Only a line starting with "rad-backup-offsite: stage=<one of
+    HELPER_STAGES>" is recognized, and only to read which of those five
+    fixed names it names. Everything else on that line or anywhere else in
+    stderr - the helper's own free-form message, command argv, raw
+    rclone/psql output, access keys, secrets, DATABASE_URLs, other URLs,
+    dump paths, control characters, injected extra lines, anything over the
+    length bound - is discarded unread: it is never copied into the
+    returned string, logged, or re-raised. An unrecognized/malformed line,
+    or no matching line at all, yields the generic fallback below, which is
+    just as static."""
+    if isinstance(stderr, str) and stderr:
+        # Bound how much of a possibly huge/garbled blob is ever scanned.
+        for line in stderr[:4096].splitlines():
+            match = HELPER_DIAGNOSTIC_LINE.match(line.strip())
+            if match:
+                stage = match.group(1)
+                require(stage in HELPER_STAGES, "unreachable: regex only matches known stages")
+                return f"rad-backup-offsite: stage={stage} failed"
+    return "offsite backup helper failed without a recognized diagnostic"
+
+
 def upload_offsite_backup(dump):
     """Mandatory, synchronous offsite copy of an already locally-verified
     dump, required before any migration runs (see docs/automated-migrations.md).
@@ -508,10 +543,31 @@ def upload_offsite_backup(dump):
     try:
         run(OFFSITE_BACKUP_UPLOAD, dump, timeout=1800)
     except subprocess.CalledProcessError as error:
+        # error.stderr is the helper's own captured output - never the
+        # broker's, never rclone's/psql's raw output, and never logged or
+        # re-raised except through the strict allowlist above.
+        detail = extract_helper_diagnostic(error.stderr)
         raise RuntimeError(
             "Offsite backup upload/verification failed; refusing to migrate without a verified offsite copy "
-            f"of {dump.name} (see docs/automated-migrations.md)"
+            f"of {dump.name} ({detail}) (see docs/automated-migrations.md)"
         ) from error
+
+
+def sanitized_stage_failure(error):
+    """One-line, credential-free summary of a stage failure, safe to log and
+    to re-raise. subprocess.CalledProcessError carries the full argv (which
+    can include a DATABASE_URL with an embedded password, e.g. the psql/
+    pg_dump/pg_restore calls above) and raw stderr (which can echo rclone's
+    or psql's own internals) - neither is ever read here, only the process
+    name and exit code. A RuntimeError's own text is already hand-written to
+    be safe (see `require()` call sites and upload_offsite_backup()), so it
+    is passed through as-is; anything else is reduced to its type name."""
+    if isinstance(error, subprocess.CalledProcessError):
+        command = Path(str(error.cmd[0])).name if error.cmd else "subprocess"
+        return f"{command} exited {error.returncode}"
+    if isinstance(error, RuntimeError):
+        return str(error)
+    return f"{type(error).__name__} (see broker host logs for detail)"
 
 
 def backup_database(database_url, label):
@@ -528,8 +584,20 @@ def backup_database(database_url, label):
     # the migration's rollback path.
     listing = run(PG_RESTORE, "--list", dump, timeout=300).stdout
     require(listing.strip(), "Backup dump has no restorable table of contents")
-    verify_restore(database_url, dump)
-    upload_offsite_backup(dump)
+    try:
+        verify_restore(database_url, dump)
+    except Exception as error:
+        detail = sanitized_stage_failure(error)
+        print(f"rad-release: stage=backup_verify_restore_failed dump={dump.name} error={detail}",
+              file=sys.stderr, flush=True)
+        raise RuntimeError(f"stage=backup_verify_restore dump={dump.name}: {detail}") from error
+    try:
+        upload_offsite_backup(dump)
+    except Exception as error:
+        detail = sanitized_stage_failure(error)
+        print(f"rad-release: stage=backup_offsite_upload_failed dump={dump.name} error={detail}",
+              file=sys.stderr, flush=True)
+        raise RuntimeError(f"stage=backup_offsite_upload dump={dump.name}: {detail}") from error
     return dump
 
 

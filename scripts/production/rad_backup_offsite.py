@@ -29,8 +29,12 @@ RCLONE = "/usr/bin/rclone"
 SAFE_ENV = {"PATH": "/usr/local/bin:/usr/bin:/bin", "HOME": "/root", "LANG": "C.UTF-8"}
 
 
-def fail(message):
-    print(f"rad-backup-offsite: {message}", file=sys.stderr)
+def fail(stage, message):
+    """Exit non-zero with a stage-tagged, sanitized message. `message` must
+    never include raw subprocess output (rclone stderr can echo remote
+    config/paths) - callers pass only their own hand-written text, never
+    `result.stderr` itself."""
+    print(f"rad-backup-offsite: stage={stage} {message}", file=sys.stderr)
     sys.exit(1)
 
 
@@ -45,43 +49,43 @@ def local_sha256(path):
 
 def main(argv):
     if len(argv) != 2:
-        fail("usage: rad-backup-offsite.py DUMP_PATH")
+        fail("usage", "usage: rad-backup-offsite.py DUMP_PATH")
     dump = Path(argv[1])
     if not dump.is_file():
-        fail(f"dump path does not exist or is not a regular file: {dump}")
+        fail("input", f"dump path does not exist or is not a regular file: {dump}")
     size = dump.stat().st_size
     if size <= 0:
-        fail("refusing to upload an empty dump")
+        fail("input", "refusing to upload an empty dump")
 
     listed = run(RCLONE, "listremotes")
     if listed.returncode != 0:
-        fail("rclone is not available or failed to list configured remotes")
+        fail("remote_config", "rclone is not available or failed to list configured remotes")
     if f"{REMOTE}:" not in listed.stdout.split():
-        fail(f"rclone remote '{REMOTE}' is not configured")
+        fail("remote_config", f"rclone remote '{REMOTE}' is not configured")
 
     remote_path = f"{REMOTE}:{BUCKET}/{dump.name}"
     upload = run(RCLONE, "copyto", dump, remote_path, "--s3-no-check-bucket", "--checksum", timeout=1800)
     if upload.returncode != 0:
-        fail(f"upload to the offsite bucket failed (exit {upload.returncode})")
+        fail("upload", f"upload to the offsite bucket failed (rclone exit {upload.returncode})")
 
     size_check = run(RCLONE, "size", "--json", remote_path)
     if size_check.returncode != 0:
-        fail("could not confirm the remote object was written")
+        fail("verify_size", "could not confirm the remote object was written")
     try:
         remote_size = json.loads(size_check.stdout)["bytes"]
     except (ValueError, KeyError, TypeError):
-        fail("could not parse remote object size")
+        fail("verify_size", "could not parse remote object size")
     if remote_size != size:
-        fail(f"remote object size ({remote_size}) does not match local dump size ({size})")
+        fail("verify_size", f"remote object size ({remote_size}) does not match local dump size ({size})")
 
     hash_check = run(RCLONE, "hashsum", "sha256", remote_path)
     if hash_check.returncode == 0 and hash_check.stdout.strip():
         remote_hash = hash_check.stdout.strip().split()[0]
         if remote_hash != local_sha256(dump):
-            fail("remote checksum does not match the local dump")
+            fail("verify_checksum", "remote checksum does not match the local dump")
     else:
-        print(f"rad-backup-offsite: remote does not report a checksum for {dump.name}; "
-              "verified by size only", file=sys.stderr)
+        print(f"rad-backup-offsite: stage=verify_checksum remote does not report a checksum for "
+              f"{dump.name}; verified by size only", file=sys.stderr)
 
     print(f"rad-backup-offsite: verified offsite copy of {dump.name} ({size} bytes)")
 
