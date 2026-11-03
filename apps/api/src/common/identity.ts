@@ -1,8 +1,13 @@
 export type AuthUser = {
   id: string;
   name: string;
-  email: string;
-  /** Canonical Iranian mobile, or null when the customer has not saved one. */
+  /** Null for a phone-only (SMS OTP) account that has never set an email. */
+  email: string | null;
+  /**
+   * Canonical Iranian mobile, or null when the customer has not saved one.
+   * Contact info only — not a sign-in identifier. `User.verifiedPhone`
+   * (OTP-verified) is the sign-in identifier and is never exposed here.
+   */
   phone: string | null;
   role: "customer" | "artist" | "admin";
   adminRole?: "owner" | "manager" | "editor" | "viewer" | null;
@@ -20,7 +25,7 @@ export function ownerKey(actor: Actor) {
 export function toAuthUser(user: {
   id: string;
   name: string;
-  email: string;
+  email: string | null;
   phone?: string | null;
   role: string;
   adminRole?: string | null;

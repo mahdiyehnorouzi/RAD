@@ -1934,7 +1934,7 @@ function AccountSettings({
   onChangePassword,
   onDone,
 }: {
-  user: { name: string; email: string };
+  user: { name: string; email: string | null };
   onChangePassword: (input: {
     currentPassword: string;
     newPassword: string;
@@ -1960,7 +1960,13 @@ function AccountSettings({
           <span className="eyebrow">امنیت حساب</span>
           <h2>حساب کاربری</h2>
           <p>
-            {user.name} · <span dir="ltr">{user.email}</span>
+            {user.name}
+            {user.email ? (
+              <>
+                {" · "}
+                <span dir="ltr">{user.email}</span>
+              </>
+            ) : null}
           </p>
         </div>
       </div>

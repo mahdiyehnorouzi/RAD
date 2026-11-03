@@ -74,10 +74,12 @@ export function MessageForm({
   const contactRef = useRef<HTMLInputElement>(null);
   const bodyRef = useRef<HTMLTextAreaElement>(null);
   const sentRef = useRef<HTMLDivElement>(null);
-  const askOrder = !orderId && !subject && topic !== "" && ORDER_TOPICS.includes(topic);
+  const askOrder =
+    !orderId && !subject && topic !== "" && ORDER_TOPICS.includes(topic);
 
   useEffect(() => {
-    if (user?.email) setContact((current) => current || user.email);
+    const email = user?.email;
+    if (email) setContact((current) => current || email);
   }, [user?.email]);
 
   useEffect(() => {
@@ -123,7 +125,9 @@ export function MessageForm({
         source,
         contact: reply || undefined,
         body: [body.trim(), ...notes].join("\n\n").slice(0, 2000),
-        orderId: orderId ?? (askOrder && orderRef.trim() ? orderRef.trim() : undefined),
+        orderId:
+          orderId ??
+          (askOrder && orderRef.trim() ? orderRef.trim() : undefined),
       });
       setSent({ contact: reply, orderId: receipt.orderId });
     } catch (err) {
@@ -197,7 +201,12 @@ export function MessageForm({
             </option>
           ))}
         </select>
-        <ChevronDown className="message-select-icon" size={18} strokeWidth={1.6} aria-hidden="true" />
+        <ChevronDown
+          className="message-select-icon"
+          size={18}
+          strokeWidth={1.6}
+          aria-hidden="true"
+        />
       </div>
     ) : (
       <fieldset className="message-topics">
@@ -226,7 +235,9 @@ export function MessageForm({
       {c.orderAttached.split("{id}")[1]}
     </p>
   ) : subject ? (
-    <p className="message-attached">{c.subjectAttached.replace("{subject}", subject)}</p>
+    <p className="message-attached">
+      {c.subjectAttached.replace("{subject}", subject)}
+    </p>
   ) : null;
 
   const orderField = askOrder ? (
@@ -280,7 +291,8 @@ export function MessageForm({
         value={contact}
         onChange={(event) => {
           setContact(event.target.value);
-          if (errors.contact) setErrors((current) => ({ ...current, contact: undefined }));
+          if (errors.contact)
+            setErrors((current) => ({ ...current, contact: undefined }));
         }}
         aria-invalid={errors.contact ? true : undefined}
         aria-describedby={
@@ -316,7 +328,8 @@ export function MessageForm({
         value={body}
         onChange={(event) => {
           setBody(event.target.value);
-          if (errors.body) setErrors((current) => ({ ...current, body: undefined }));
+          if (errors.body)
+            setErrors((current) => ({ ...current, body: undefined }));
         }}
         aria-invalid={errors.body ? true : undefined}
         aria-describedby={errors.body ? `${id}-body-error` : undefined}
@@ -360,9 +373,21 @@ export function MessageForm({
       ) : null}
 
       <div className="message-submit">
-        <button className="button" type="submit" disabled={sending} aria-busy={sending}>
+        <button
+          className="button"
+          type="submit"
+          disabled={sending}
+          aria-busy={sending}
+        >
           <span>{sending ? c.sending : c.submit}</span>
-          {page ? <Send className="message-send-icon" size={17} strokeWidth={1.6} aria-hidden="true" /> : null}
+          {page ? (
+            <Send
+              className="message-send-icon"
+              size={17}
+              strokeWidth={1.6}
+              aria-hidden="true"
+            />
+          ) : null}
         </button>
         <small>{c.replyNote}</small>
       </div>
