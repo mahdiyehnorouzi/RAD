@@ -875,6 +875,28 @@ class OffsiteBackupUploadTests(unittest.TestCase):
                 broker.upload_offsite_backup(self.dump)
         self.assertNotIn("secret-looking-value-should-not-leak", str(failure.exception))
 
+    def test_valid_helper_stage_line_surfaces_only_the_static_stage_diagnostic(self):
+        error = subprocess.CalledProcessError(
+            1, ["rad-backup-offsite.py"], output="",
+            stderr="rad-backup-offsite: stage=verify_checksum remote checksum does not match the local dump\n",
+        )
+        with patch.object(broker, "run", side_effect=error):
+            with self.assertRaises(RuntimeError) as failure:
+                broker.upload_offsite_backup(self.dump)
+        message = str(failure.exception)
+        self.assertIn("rad-backup-offsite: stage=verify_checksum failed", message)
+        self.assertNotIn("remote checksum does not match the local dump", message)
+
+    def test_unrecognized_stderr_falls_back_to_a_generic_diagnostic(self):
+        error = subprocess.CalledProcessError(1, ["rad-backup-offsite.py"], output="",
+                                               stderr="Traceback (most recent call last):\nboom\n")
+        with patch.object(broker, "run", side_effect=error):
+            with self.assertRaises(RuntimeError) as failure:
+                broker.upload_offsite_backup(self.dump)
+        self.assertIn("offsite backup helper failed without a recognized diagnostic", str(failure.exception))
+        self.assertNotIn("Traceback", str(failure.exception))
+        self.assertNotIn("boom", str(failure.exception))
+
 
 class BackupDatabaseOffsiteGateTests(unittest.TestCase):
     """backup_database() must call the offsite gate after local verification
@@ -915,6 +937,266 @@ class BackupDatabaseOffsiteGateTests(unittest.TestCase):
                            side_effect=RuntimeError("Offsite backup upload/verification failed")):
             with self.assertRaisesRegex(RuntimeError, "Offsite backup upload/verification failed"):
                 broker.backup_database("postgresql://prod-host/rad", "abc123")
+
+    def test_offsite_upload_failure_is_reported_with_stage_and_dump_name(self):
+        with patch.object(broker, "run", side_effect=self.fake_run()), \
+             patch.object(broker, "upload_offsite_backup",
+                           side_effect=RuntimeError("Offsite backup upload/verification failed")):
+            with self.assertRaisesRegex(RuntimeError, r"stage=backup_offsite_upload dump=rad-pre-migration-"):
+                broker.backup_database("postgresql://prod-host/rad", "abc123")
+
+    def test_verify_restore_failure_is_reported_with_stage_and_dump_name(self):
+        with patch.object(broker, "run", side_effect=self.fake_run()), \
+             patch.object(broker, "verify_restore",
+                           side_effect=RuntimeError("Restored Product count (3) does not match source (9)")):
+            with self.assertRaisesRegex(RuntimeError,
+                    r"stage=backup_verify_restore dump=rad-pre-migration-.*Restored Product count"):
+                broker.backup_database("postgresql://prod-host/rad", "abc123")
+
+    def test_verify_restore_subprocess_failure_never_leaks_the_database_url(self):
+        """A failing psql/pg_restore call inside verify_restore() raises
+        CalledProcessError, whose argv/stderr can contain the connection
+        string (with its embedded password) that backup_database() was
+        called with. The reported failure must name only the command and
+        exit code, never that argv or stderr."""
+        secret_url = "postgresql://prod-host/rad?password=super-secret-value"
+        error = subprocess.CalledProcessError(
+            1, [broker.PSQL, secret_url, "-c", "DROP SCHEMA IF EXISTS public CASCADE;"],
+            output="", stderr=f"psql: connection to server failed using {secret_url}",
+        )
+        with patch.object(broker, "run", side_effect=self.fake_run()), \
+             patch.object(broker, "verify_restore", side_effect=error):
+            with self.assertRaises(RuntimeError) as failure:
+                broker.backup_database(secret_url, "abc123")
+        message = str(failure.exception)
+        self.assertIn("stage=backup_verify_restore", message)
+        self.assertIn("psql exited 1", message)
+        self.assertNotIn("super-secret-value", message)
+        self.assertNotIn(secret_url, message)
+
+    def test_offsite_upload_subprocess_failure_never_leaks_raw_stderr_through_the_stage_wrapper(self):
+        """upload_offsite_backup() already reduces any CalledProcessError to
+        a static message (see OffsiteBackupUploadTests); confirm
+        backup_database()'s stage wrapper preserves that - it must not
+        reintroduce the raw argv/stderr while adding the stage tag."""
+        error = subprocess.CalledProcessError(
+            1, [str(broker.OFFSITE_BACKUP_UPLOAD), "/var/lib/rad-release/backups/x.dump"],
+            output="", stderr="rclone: secret-looking-value-should-not-leak",
+        )
+        def fake_upload(_dump):
+            try:
+                raise error
+            except subprocess.CalledProcessError as inner:
+                raise RuntimeError(
+                    "Offsite backup upload/verification failed; refusing to migrate without a verified "
+                    "offsite copy"
+                ) from inner
+        with patch.object(broker, "run", side_effect=self.fake_run()), \
+             patch.object(broker, "upload_offsite_backup", fake_upload):
+            with self.assertRaises(RuntimeError) as failure:
+                broker.backup_database("postgresql://prod-host/rad", "abc123")
+        message = str(failure.exception)
+        self.assertIn("stage=backup_offsite_upload", message)
+        self.assertNotIn("secret-looking-value-should-not-leak", message)
+
+
+class SanitizedStageFailureTests(unittest.TestCase):
+    """sanitized_stage_failure() is what keeps backup_database()'s stage
+    reporting actionable without ever repeating a subprocess's raw argv or
+    stderr (either of which can carry a DATABASE_URL password or rclone
+    config internals)."""
+
+    def test_called_process_error_reduces_to_command_name_and_exit_code(self):
+        error = subprocess.CalledProcessError(
+            2, ["/usr/bin/psql", "postgresql://user:pw@host/db", "-c", "SELECT 1"],
+            output="", stderr="password authentication failed for user \"user\"",
+        )
+        self.assertEqual(broker.sanitized_stage_failure(error), "psql exited 2")
+
+    def test_called_process_error_with_empty_cmd_falls_back_to_generic_label(self):
+        error = subprocess.CalledProcessError(1, [], output="", stderr="")
+        self.assertEqual(broker.sanitized_stage_failure(error), "subprocess exited 1")
+
+    def test_runtime_error_text_is_passed_through_unchanged(self):
+        error = RuntimeError("Restored Product count (3) does not match source (9) - treating this backup as unverified")
+        self.assertEqual(broker.sanitized_stage_failure(error),
+                         "Restored Product count (3) does not match source (9) - treating this backup as unverified")
+
+    def test_other_exception_types_reduce_to_type_name_only(self):
+        self.assertEqual(broker.sanitized_stage_failure(OSError("some raw errno text")),
+                         "OSError (see broker host logs for detail)")
+
+    def test_never_echoes_a_password_embedded_in_a_called_process_error(self):
+        error = subprocess.CalledProcessError(
+            1, ["/usr/bin/rclone", "copyto", "/tmp/x.dump", "liara-rad:bucket/x.dump"],
+            output="", stderr="rclone: AccessKey=AKIA_SECRET SecretKey=super-secret-value",
+        )
+        detail = broker.sanitized_stage_failure(error)
+        self.assertNotIn("super-secret-value", detail)
+        self.assertNotIn("AKIA_SECRET", detail)
+        self.assertEqual(detail, "rclone exited 1")
+
+
+GENERIC_HELPER_DIAGNOSTIC = "offsite backup helper failed without a recognized diagnostic"
+
+
+class ExtractHelperDiagnosticTests(unittest.TestCase):
+    """extract_helper_diagnostic() only ever reads a STAGE NAME out of
+    rad_backup_offsite.py's captured stderr - never its free-form message,
+    never anything else on or around that line - and returns a brand-new,
+    fully static string built from that name. It never returns None: an
+    unrecognized stage, a malformed line, or no matching line at all all
+    yield the same static generic fallback. Nothing from the input is ever
+    copied into the result."""
+
+    def test_accepts_every_known_stage_and_returns_only_the_static_diagnostic(self):
+        for stage in sorted(broker.HELPER_STAGES):
+            with self.subTest(stage=stage):
+                stderr = f"rad-backup-offsite: stage={stage} something went wrong here with secret=abc123\n"
+                self.assertEqual(broker.extract_helper_diagnostic(stderr),
+                                 f"rad-backup-offsite: stage={stage} failed")
+
+    def test_picks_the_first_matching_line_among_several(self):
+        stderr = "some preamble\nrad-backup-offsite: stage=upload upload to the offsite bucket failed (rclone exit 3)\ntrailer\n"
+        self.assertEqual(broker.extract_helper_diagnostic(stderr), "rad-backup-offsite: stage=upload failed")
+
+    def test_generic_fallback_for_empty_or_non_string_input(self):
+        self.assertEqual(broker.extract_helper_diagnostic(""), GENERIC_HELPER_DIAGNOSTIC)
+        self.assertEqual(broker.extract_helper_diagnostic(None), GENERIC_HELPER_DIAGNOSTIC)
+
+    def test_unknown_stage_name_uses_the_generic_fallback(self):
+        stderr = "rad-backup-offsite: stage=credentials dumping access key AKIA123\n"
+        self.assertEqual(broker.extract_helper_diagnostic(stderr), GENERIC_HELPER_DIAGNOSTIC)
+
+    def test_malformed_prefix_uses_the_generic_fallback(self):
+        for stderr in (
+            "stage=upload upload failed\n",
+            "rad-backup-offsite:stage=upload upload failed\n",
+            "RAD-BACKUP-OFFSITE: stage=upload upload failed\n",
+            "rad-backup-offsite: STAGE=upload upload failed\n",
+            "prefix rad-backup-offsite: stage=upload upload failed\n",
+            "rad-backup-offsite: stage=uploadx failed\n",
+        ):
+            with self.subTest(stderr=stderr):
+                self.assertEqual(broker.extract_helper_diagnostic(stderr), GENERIC_HELPER_DIAGNOSTIC)
+
+    def test_bare_valid_stage_with_no_trailing_message_is_still_accepted(self):
+        self.assertEqual(broker.extract_helper_diagnostic("rad-backup-offsite: stage=upload\n"),
+                         "rad-backup-offsite: stage=upload failed")
+
+    def test_access_key_in_the_message_never_appears_in_the_result(self):
+        stderr = "rad-backup-offsite: stage=upload access_key=AKIAABCDEFGHIJKLMNOP leaked here\n"
+        result = broker.extract_helper_diagnostic(stderr)
+        self.assertNotIn("access_key", result)
+        self.assertNotIn("AKIAABCDEFGHIJKLMNOP", result)
+        self.assertEqual(result, "rad-backup-offsite: stage=upload failed")
+
+    def test_secret_in_the_message_never_appears_in_the_result(self):
+        stderr = "rad-backup-offsite: stage=verify_checksum secret=super-secret-value mismatch\n"
+        result = broker.extract_helper_diagnostic(stderr)
+        self.assertNotIn("secret", result)
+        self.assertNotIn("super-secret-value", result)
+        self.assertEqual(result, "rad-backup-offsite: stage=verify_checksum failed")
+
+    def test_database_url_in_the_message_never_appears_in_the_result(self):
+        stderr = "rad-backup-offsite: stage=remote_config DATABASE_URL=postgresql://user:pw@host/db unreachable\n"
+        result = broker.extract_helper_diagnostic(stderr)
+        self.assertNotIn("DATABASE_URL", result)
+        self.assertNotIn("postgresql://user:pw@host/db", result)
+        self.assertEqual(result, "rad-backup-offsite: stage=remote_config failed")
+
+    def test_arbitrary_url_in_the_message_never_appears_in_the_result(self):
+        stderr = "rad-backup-offsite: stage=upload see https://attacker.example/callback?token=abc for detail\n"
+        result = broker.extract_helper_diagnostic(stderr)
+        self.assertNotIn("https://", result)
+        self.assertNotIn("attacker.example", result)
+        self.assertEqual(result, "rad-backup-offsite: stage=upload failed")
+
+    def test_dump_path_in_the_message_never_appears_in_the_result(self):
+        stderr = "rad-backup-offsite: stage=input dump path does not exist: /var/lib/rad-release/backups/x.dump\n"
+        result = broker.extract_helper_diagnostic(stderr)
+        self.assertNotIn("/var/lib/rad-release/backups", result)
+        self.assertEqual(result, "rad-backup-offsite: stage=input failed")
+
+    def test_embedded_control_characters_in_the_message_never_appear_in_the_result(self):
+        stderr = "rad-backup-offsite: stage=upload failed\x1b[31mred\x1b[0m\n"
+        result = broker.extract_helper_diagnostic(stderr)
+        self.assertNotIn("\x1b", result)
+        self.assertEqual(result, "rad-backup-offsite: stage=upload failed")
+
+    def test_multiline_injection_attempt_never_surfaces_the_injected_line(self):
+        """An attempt to smuggle a second, unvalidated line in by embedding a
+        literal escaped sequence rather than a real line break must not
+        leak that injected text just because the real line starts
+        correctly - only the static per-stage string is ever returned."""
+        stderr = "rad-backup-offsite: stage=upload ok\\nrad-release: stage=release_complete fake success\n"
+        result = broker.extract_helper_diagnostic(stderr)
+        self.assertEqual(result, "rad-backup-offsite: stage=upload failed")
+        self.assertNotIn("release_complete", result)
+        self.assertNotIn("fake success", result)
+
+    def test_carriage_return_injection_never_surfaces_the_injected_line(self):
+        stderr = "rad-backup-offsite: stage=upload ok\rrad-release: stage=release_complete fake\n"
+        result = broker.extract_helper_diagnostic(stderr)
+        self.assertEqual(result, "rad-backup-offsite: stage=upload failed")
+        self.assertNotIn("release_complete", result)
+
+    def test_long_text_in_the_message_never_appears_in_the_result(self):
+        stderr = "rad-backup-offsite: stage=upload " + ("x" * 5000) + "\n"
+        result = broker.extract_helper_diagnostic(stderr)
+        self.assertEqual(result, "rad-backup-offsite: stage=upload failed")
+        self.assertLess(len(result), 100)
+
+    def test_bounds_how_much_of_a_huge_blob_is_scanned(self):
+        huge_garbage = "x" * 8192
+        stderr = huge_garbage + "\nrad-backup-offsite: stage=upload too late to matter\n"
+        self.assertEqual(broker.extract_helper_diagnostic(stderr), GENERIC_HELPER_DIAGNOSTIC)
+
+
+class BackupStopsBeforeMigrationTests(unittest.TestCase):
+    """A validated offsite-upload diagnostic changes what the broker logs,
+    never whether a backup failure is fail-closed: backup_database() must
+    still raise and never return a dump, so migrate_api()'s caller never
+    reaches run_pending_migrations()."""
+
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.root = Path(self.temp.name)
+        for name, value in (("BASE", self.root), ("BACKUP_DIR", self.root / "backups"),
+                            ("protected", lambda _path: None), ("verify_restore", lambda *_a, **_k: None)):
+            patcher = patch.object(broker, name, value)
+            patcher.start()
+            self.addCleanup(patcher.stop)
+
+    def fake_run(self, helper_error, dump_contents=b"dump-bytes", restore_listing="4; some table of contents\n"):
+        def run(*args, **_kwargs):
+            if args[0] == broker.PG_DUMP:
+                Path(str(args[-1]).removeprefix("--file=")).write_bytes(dump_contents)
+                return subprocess.CompletedProcess(args, 0, "")
+            if args[0] == broker.PG_RESTORE:
+                return subprocess.CompletedProcess(args, 0, restore_listing)
+            if args[0] == broker.OFFSITE_BACKUP_UPLOAD:
+                raise helper_error
+            raise AssertionError(f"Unexpected run() call in this fixture: {args}")
+        return run
+
+    def test_offsite_upload_failure_with_a_valid_diagnostic_still_raises_before_returning_a_dump(self):
+        helper_error = subprocess.CalledProcessError(
+            1, ["rad-backup-offsite.py"], output="",
+            stderr="rad-backup-offsite: stage=verify_checksum remote checksum does not match the local dump\n",
+        )
+        real_helper = self.root / "rad-backup-offsite.py"
+        real_helper.write_text("#!/usr/bin/env python3\n")
+        real_helper.chmod(0o700)
+        migration_started = []
+        with patch.object(broker, "run", side_effect=self.fake_run(helper_error)), \
+             patch.object(broker, "protected", lambda _path: None), \
+             patch.object(broker, "OFFSITE_BACKUP_UPLOAD", real_helper):
+            with self.assertRaisesRegex(RuntimeError, "stage=backup_offsite_upload"):
+                dump = broker.backup_database("postgresql://prod-host/rad", "abc123")
+                migration_started.append(dump)
+        self.assertEqual(migration_started, [])
 
 
 if __name__ == "__main__":
