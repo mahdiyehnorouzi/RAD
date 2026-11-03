@@ -813,5 +813,109 @@ class ReleaseTests(unittest.TestCase):
         self.assertEqual(json.loads((transaction / "rolled-back.json").read_text()), {"verified": True})
 
 
+class OffsiteBackupUploadTests(unittest.TestCase):
+    """upload_offsite_backup() is the mandatory, synchronous gate backup_database()
+    calls after local verification and before a dump is trusted to back a
+    migration. It never runs rclone/holds credentials itself - it only invokes
+    the separate, root-owned OFFSITE_BACKUP_UPLOAD executable and fails closed
+    on any problem reaching or running it."""
+
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.root = Path(self.temp.name)
+        self.helper = self.root / "rad-backup-offsite.py"
+        self.helper.write_text("#!/usr/bin/env python3\n")
+        self.helper.chmod(0o700)
+        self.dump = self.root / "rad-pre-migration-abc123-20261101T000000Z.dump"
+        self.dump.write_bytes(b"dump-bytes")
+        for name, value in (("OFFSITE_BACKUP_UPLOAD", self.helper), ("protected", lambda _path: None)):
+            patcher = patch.object(broker, name, value)
+            patcher.start()
+            self.addCleanup(patcher.stop)
+
+    def test_succeeds_when_helper_reports_success(self):
+        with patch.object(broker, "run", return_value=subprocess.CompletedProcess([], 0, "ok")) as fake_run:
+            broker.upload_offsite_backup(self.dump)
+        fake_run.assert_called_once_with(self.helper, self.dump, timeout=1800)
+
+    def test_fails_closed_on_upload_error(self):
+        error = subprocess.CalledProcessError(1, ["rad-backup-offsite.py"], output="", stderr="upload failed")
+        with patch.object(broker, "run", side_effect=error):
+            with self.assertRaisesRegex(RuntimeError, "Offsite backup upload/verification failed"):
+                broker.upload_offsite_backup(self.dump)
+
+    def test_fails_closed_on_verification_mismatch(self):
+        error = subprocess.CalledProcessError(1, ["rad-backup-offsite.py"], output="",
+                                               stderr="remote checksum does not match the local dump")
+        with patch.object(broker, "run", side_effect=error):
+            with self.assertRaisesRegex(RuntimeError, "Offsite backup upload/verification failed"):
+                broker.upload_offsite_backup(self.dump)
+
+    def test_fails_closed_when_helper_missing(self):
+        missing = self.root / "does-not-exist.py"
+        with patch.object(broker, "OFFSITE_BACKUP_UPLOAD", missing):
+            with self.assertRaises((RuntimeError, OSError)):
+                broker.upload_offsite_backup(self.dump)
+
+    def test_fails_closed_when_helper_is_group_or_world_writable(self):
+        self.helper.chmod(0o777)
+        with self.assertRaisesRegex(RuntimeError, "group/world writable"):
+            broker.upload_offsite_backup(self.dump)
+
+    def test_error_message_never_includes_raw_stderr(self):
+        """Subprocess stderr could echo rclone's own invocation/config path;
+        the broker's own exception text must never repeat it (no credential
+        value, since none ever reaches this process, but also no incidental
+        leakage of the helper's internal diagnostics into broker-level logs)."""
+        error = subprocess.CalledProcessError(1, ["rad-backup-offsite.py"], output="",
+                                               stderr="rclone: secret-looking-value-should-not-leak")
+        with patch.object(broker, "run", side_effect=error):
+            with self.assertRaises(RuntimeError) as failure:
+                broker.upload_offsite_backup(self.dump)
+        self.assertNotIn("secret-looking-value-should-not-leak", str(failure.exception))
+
+
+class BackupDatabaseOffsiteGateTests(unittest.TestCase):
+    """backup_database() must call the offsite gate after local verification
+    and must not return a dump that failed it - run_pending_migrations() is
+    only ever reached with a dump backup_database() actually returned."""
+
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.root = Path(self.temp.name)
+        for name, value in (("BASE", self.root), ("BACKUP_DIR", self.root / "backups"),
+                            ("protected", lambda _path: None), ("verify_restore", lambda *_a, **_k: None)):
+            patcher = patch.object(broker, name, value)
+            patcher.start()
+            self.addCleanup(patcher.stop)
+
+    def fake_run(self, dump_contents=b"dump-bytes", restore_listing="4; some table of contents\n"):
+        def run(*args, **_kwargs):
+            if args[0] == broker.PG_DUMP:
+                # Mirrors what pg_dump --file=... would actually leave on disk.
+                Path(str(args[-1]).removeprefix("--file=")).write_bytes(dump_contents)
+                return subprocess.CompletedProcess(args, 0, "")
+            if args[0] == broker.PG_RESTORE:
+                return subprocess.CompletedProcess(args, 0, restore_listing)
+            raise AssertionError(f"Unexpected run() call in this fixture: {args}")
+        return run
+
+    def test_offsite_upload_is_called_with_the_produced_dump_after_local_verification(self):
+        with patch.object(broker, "run", side_effect=self.fake_run()), \
+             patch.object(broker, "upload_offsite_backup") as fake_upload:
+            dump = broker.backup_database("postgresql://prod-host/rad", "abc123")
+        fake_upload.assert_called_once_with(dump)
+        self.assertTrue(dump.exists())
+
+    def test_offsite_upload_failure_prevents_backup_database_from_returning(self):
+        with patch.object(broker, "run", side_effect=self.fake_run()), \
+             patch.object(broker, "upload_offsite_backup",
+                           side_effect=RuntimeError("Offsite backup upload/verification failed")):
+            with self.assertRaisesRegex(RuntimeError, "Offsite backup upload/verification failed"):
+                broker.backup_database("postgresql://prod-host/rad", "abc123")
+
+
 if __name__ == "__main__":
     unittest.main()
