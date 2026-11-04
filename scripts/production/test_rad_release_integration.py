@@ -48,6 +48,13 @@ ADDRESS_BOOK_MIGRATION = "1793600000000-AddCustomerAddressBook.ts"
 # the newest migration as of this PR, so it is the one `migration:revert`
 # below actually reverts.
 VERIFIED_PHONE_MIGRATION = "1793700000000-AddUserVerifiedPhone.ts"
+# Google Sign-In: `User.googleId` (nullable, unique) + dropping NOT NULL on
+# `User.passwordHash` (a Google-only account never gets one). Additive/
+# loosening only on top of the baseline "User" stand-in below, same
+# reasoning as VERIFIED_PHONE_MIGRATION. Chronologically the newest
+# migration as of this PR, so it is the one `migration:revert` reverts
+# first below.
+GOOGLE_AUTH_MIGRATION = "1793800000000-AddUserGoogleAuth.ts"
 CLI_DATA_SOURCE = API_DIR / "src" / "database" / "cli-data-source.ts"
 
 DOCKER = shutil.which("docker")
@@ -292,7 +299,8 @@ class RealPostgresMigrationTests(unittest.TestCase):
         self.assertIn(PHONE_MIGRATION, names)
         self.assertIn(ADDRESS_BOOK_MIGRATION, names)
         self.assertIn(VERIFIED_PHONE_MIGRATION, names)
-        self.assertEqual(names[-1], VERIFIED_PHONE_MIGRATION)
+        self.assertIn(GOOGLE_AUTH_MIGRATION, names)
+        self.assertEqual(names[-1], GOOGLE_AUTH_MIGRATION)
         return self.manifest_for(*files)
 
     def user_rows(self):
@@ -333,6 +341,25 @@ class RealPostgresMigrationTests(unittest.TestCase):
             "WHERE conrelid = '\"User\"'::regclass AND contype = 'u' "
             "AND conname LIKE '%verifiedPhone%' OR pg_get_constraintdef(oid) LIKE '%verifiedPhone%';")
         return nullable, constraint.stdout.strip()
+
+    def google_auth_facts(self):
+        password_hash_nullable = broker.run(
+            broker.PSQL, self.database_url, "-tAc",
+            "SELECT is_nullable FROM information_schema.columns "
+            "WHERE table_name = 'User' AND column_name = 'passwordHash';"
+        ).stdout.strip()
+        google_id_column = broker.run(
+            broker.PSQL, self.database_url, "-tAc",
+            "SELECT is_nullable FROM information_schema.columns "
+            "WHERE table_name = 'User' AND column_name = 'googleId';"
+        ).stdout.strip()
+        google_id_constraint = broker.run(
+            broker.PSQL, self.database_url, "-tAc",
+            "SELECT conname FROM pg_constraint "
+            "WHERE conrelid = '\"User\"'::regclass AND contype = 'u' "
+            "AND pg_get_constraintdef(oid) LIKE '%googleId%';"
+        ).stdout.strip()
+        return password_hash_nullable, google_id_column, google_id_constraint
 
     def email_nullable(self):
         result = broker.run(
@@ -438,15 +465,62 @@ class RealPostgresMigrationTests(unittest.TestCase):
             """UPDATE "User" SET "verifiedPhone" = NULL WHERE id = 'u1';""")
         self.assertEqual(self.user_rows(), before)
 
+        # googleId (this PR's migration): nullable, unique, and additive —
+        # the pre-existing NOT NULL on passwordHash is loosened, but no
+        # existing row's passwordHash value changes, so every
+        # email/password account keeps signing in exactly as before.
+        password_hash_nullable, google_id_nullable, google_id_constraint = (
+            self.google_auth_facts())
+        self.assertEqual(password_hash_nullable, "YES")
+        self.assertEqual(google_id_nullable, "YES")
+        self.assertTrue(google_id_constraint, "googleId must have a unique constraint")
+        self.assertEqual(self.user_rows(), before)
+        broker.run(
+            broker.PSQL, self.database_url, "-c",
+            """UPDATE "User" SET "googleId" = 'g-1' WHERE id = 'u1';""")
+        with self.assertRaises(subprocess.CalledProcessError):
+            broker.run(
+                broker.PSQL, self.database_url, "-c",
+                """UPDATE "User" SET "googleId" = 'g-1' WHERE id = 'u2';""")
+        broker.run(
+            broker.PSQL, self.database_url, "-c",
+            """UPDATE "User" SET "googleId" = NULL WHERE id = 'u1';""")
+        self.assertEqual(self.user_rows(), before)
+
         # 4. migration:show now reports every signed migration applied.
         shown_after = broker.migration_show(NPM, self.api_dir, self.database_url, "127.0.0.1")
         self.assertEqual(broker.reconcile_migrations(manifest, shown_after), [])
 
-        # 5. Reverting the last migration (verifiedPhone, chronologically
-        #    newest as of this PR) drops only that column and restores
-        #    email's NOT NULL. The address book, and the unrelated contact
-        #    `phone` column/index from an earlier migration, stay exactly
-        #    as they were, and accounts are unchanged.
+        # 5. Reverting the last migration (googleId, chronologically newest
+        #    as of this PR) drops only that column and restores
+        #    passwordHash's NOT NULL. Everything added by earlier
+        #    migrations — the address book, verifiedPhone, the unrelated
+        #    contact `phone` column/index — stays exactly as it was, and
+        #    accounts are unchanged.
+        broker.run(
+            NPM, "run", "migration:revert",
+            env={**broker.SAFE_ENV, "PATH": os.environ.get("PATH", ""),
+                 "DATABASE_URL": self.database_url, "RAD_ALLOW_REMOTE_DB_WRITE": "127.0.0.1"},
+            cwd=self.api_dir, timeout=1800)
+        self.assertIn("CustomerAddress", self.table_names())
+        password_hash_nullable, google_id_nullable, _ = self.google_auth_facts()
+        self.assertEqual(password_hash_nullable, "NO")
+        self.assertEqual(google_id_nullable, "")
+        self.assertNotEqual(self.verified_phone_facts()[0], "")
+        self.assertEqual(self.user_rows(), before)
+        self.assertEqual(self.order_rows(), orders_before)
+        shown_after_first_revert = broker.migration_show(
+            NPM, self.api_dir, self.database_url, "127.0.0.1")
+        pending_after_first_revert = broker.reconcile_migrations(
+            manifest, shown_after_first_revert)
+        self.assertEqual(
+            [entry["name"] for entry in pending_after_first_revert],
+            [GOOGLE_AUTH_MIGRATION],
+        )
+
+        # 6. Reverting again now hits verifiedPhone (the next-newest
+        #    migration) — exactly the same assertions this test made before
+        #    the Google Sign-In migration existed.
         broker.run(
             NPM, "run", "migration:revert",
             env={**broker.SAFE_ENV, "PATH": os.environ.get("PATH", ""),
@@ -463,7 +537,10 @@ class RealPostgresMigrationTests(unittest.TestCase):
         self.assertIn("sara@example.com", self.previous_api_user_read())
         shown_reverted = broker.migration_show(NPM, self.api_dir, self.database_url, "127.0.0.1")
         pending_again = broker.reconcile_migrations(manifest, shown_reverted)
-        self.assertEqual([entry["name"] for entry in pending_again], [VERIFIED_PHONE_MIGRATION])
+        self.assertEqual(
+            [entry["name"] for entry in pending_again],
+            [VERIFIED_PHONE_MIGRATION, GOOGLE_AUTH_MIGRATION],
+        )
 
     @unittest.skipUnless(os.environ.get("RAD_TEST_BACKUP_VERIFY_DATABASE_URL"),
                          "Set RAD_TEST_BACKUP_VERIFY_DATABASE_URL to a second, already-reachable, "

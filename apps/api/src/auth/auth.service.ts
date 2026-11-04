@@ -173,6 +173,129 @@ export class AuthService {
     return { user: actor.user };
   }
 
+  /**
+   * Called after the Google OAuth authorization-code exchange has already
+   * verified `googleId`/`email` server-side (`GoogleAuthService`) — never
+   * trusts a client-asserted identity. Matches an existing account by
+   * `googleId` first (repeat sign-in), then by verified email (first
+   * Google sign-in on an account that already has a password — Google has
+   * already proven ownership of that email, so this links rather than
+   * creating a duplicate identity), then creates a new, password-less
+   * account. `emailVerified` must be true or this refuses to match/create
+   * by email at all, since an unverified email proves nothing.
+   *
+   * Everything that can mutate a row — linking, creating — happens inside
+   * one transaction, behind a Postgres advisory lock keyed on this exact
+   * `googleId` (same pattern as `OtpService.requestCode`'s phone-keyed
+   * lock) plus a `pessimistic_write` row lock on whatever existing row is
+   * found (same pattern as `OtpService.verifyCode`). Two overlapping
+   * callbacks for the same Google identity — e.g. two tabs finishing the
+   * same linking flow — are fully serialized by that pair of locks, so
+   * the second one always sees the first's committed result rather than
+   * racing it: it can never create a duplicate account, and it can never
+   * read a stale (not-yet-linked) `googleId` and overwrite a linking
+   * decision the first one already made.
+   *
+   * Every rejection below (invited account, already linked to a
+   * *different* Google identity, unverified email) happens strictly
+   * before any `save`/`update` call in this method — an account this
+   * refuses to sign into is never mutated first and rejected after.
+   */
+  async signInWithGoogle(
+    profile: {
+      googleId: string;
+      email: string;
+      emailVerified: boolean;
+      name: string;
+    },
+    actor: Actor,
+  ) {
+    const email = profile.email.trim().toLowerCase();
+
+    const user = await this.users.manager.transaction(async (manager) => {
+      const users = manager.getRepository(User);
+
+      await manager.query("SELECT pg_advisory_xact_lock(hashtext($1))", [
+        `google-auth:${profile.googleId}`,
+      ]);
+
+      let existing = await users.findOne({
+        where: { googleId: profile.googleId },
+        lock: { mode: "pessimistic_write" },
+      });
+
+      if (!existing && profile.emailVerified) {
+        const byEmail = await users.findOne({
+          where: { email },
+          lock: { mode: "pessimistic_write" },
+        });
+        if (byEmail) {
+          if (byEmail.status === "invited") {
+            throw new UnauthorizedException({
+              message: "این حساب هنوز فعال نشده است.",
+              code: "account_inactive",
+            });
+          }
+          // A different Google identity than whatever is already linked
+          // here must never silently take over this account — that would
+          // let anyone who controls a Google account sharing this exact
+          // verified email hijack future Google sign-ins to it. Refuse
+          // outright rather than guessing which identity should win.
+          if (byEmail.googleId && byEmail.googleId !== profile.googleId) {
+            throw new UnauthorizedException({
+              message: "این ایمیل قبلاً به یک حساب گوگل دیگر متصل شده است.",
+              code: "google_account_mismatch",
+            });
+          }
+          if (!byEmail.googleId) {
+            await users.update(
+              { id: byEmail.id },
+              { googleId: profile.googleId },
+            );
+            byEmail.googleId = profile.googleId;
+          }
+          existing = byEmail;
+        }
+      }
+
+      if (!existing) {
+        if (!profile.emailVerified) {
+          throw new UnauthorizedException({
+            message: "ایمیل گوگل تأیید نشده است.",
+            code: "google_email_unverified",
+          });
+        }
+        existing = await users.save(
+          users.create({
+            name: profile.name.trim() || email,
+            email,
+            passwordHash: null,
+            googleId: profile.googleId,
+            role: "customer",
+            status: "active",
+          }),
+        );
+        await manager.getRepository(Notice).save(
+          manager.getRepository(Notice).create({
+            ownerKey: `user:${existing.id}`,
+            kind: "welcome",
+          }),
+        );
+      }
+
+      if (existing.status === "invited") {
+        throw new UnauthorizedException({
+          message: "این حساب هنوز فعال نشده است.",
+          code: "account_inactive",
+        });
+      }
+
+      return existing;
+    });
+
+    return this.openSession(toAuthUser(user), actor);
+  }
+
   async changePassword(
     actor: Actor,
     input: { currentPassword: string; newPassword: string },

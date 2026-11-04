@@ -1,7 +1,20 @@
-import { Body, Controller, Get, Patch, Post, Req, Res } from "@nestjs/common";
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Get,
+  Logger,
+  Patch,
+  Post,
+  Query,
+  Req,
+  Res,
+  UnauthorizedException,
+} from "@nestjs/common";
 import { Throttle } from "@nestjs/throttler";
 import type { Response } from "express";
 import { AuthService } from "./auth.service";
+import { GoogleAuthService } from "./google-auth.service";
 import { OtpService } from "./otp.service";
 import { ProfileService } from "./profile.service";
 import { ChangePasswordDto } from "./dto/change-password.dto";
@@ -14,12 +27,39 @@ import { SessionDto } from "./dto/session.dto";
 import { UpdateProfileDto } from "./dto/update-profile.dto";
 import { IdentityService } from "../common/identity.service";
 import type { AuthedRequest } from "../common/session.middleware";
-import { AUTH_COOKIE, sessionCookieOptions } from "../common/cookies";
+import {
+  AUTH_COOKIE,
+  GOOGLE_OAUTH_COOKIE,
+  oauthCookieOptions,
+  sessionCookieOptions,
+} from "../common/cookies";
+import { safeReturnPath, storefrontOrigin } from "../common/storefront-origin";
+
+const GOOGLE_OAUTH_MAX_AGE_MS = 10 * 60 * 1000;
+
+/**
+ * `signInWithGoogle` codes that are safe to echo back to the browser as
+ * `?authError=` — fixed, non-sensitive reason codes the storefront maps to
+ * its own translated copy (`GOOGLE_AUTH_ERROR_CODE` in account-login.tsx),
+ * never the thrown error's own message. Anything else (an unexpected
+ * exception, a Google API failure, a DB error) falls back to the generic
+ * `google_oauth_failed` below rather than being forwarded — this allowlist
+ * is what keeps an unanticipated internal error message from ever reaching
+ * the client.
+ */
+const SAFE_GOOGLE_AUTH_ERROR_CODES = new Set([
+  "account_inactive",
+  "google_email_unverified",
+  "google_account_mismatch",
+]);
 
 @Controller("auth")
 export class AuthController {
+  private readonly logger = new Logger(AuthController.name);
+
   constructor(
     private readonly auth: AuthService,
+    private readonly google: GoogleAuthService,
     private readonly otp: OtpService,
     private readonly profiles: ProfileService,
     private readonly identity: IdentityService,
@@ -141,5 +181,101 @@ export class AuthController {
   logout(@Res({ passthrough: true }) response: Response) {
     response.clearCookie(AUTH_COOKIE, { path: "/" });
     return { user: null };
+  }
+
+  /**
+   * Starts the Google sign-in redirect. `from` is a same-site path only —
+   * see `safeReturnPath`. The storefront links here via `/backend/auth/google`
+   * (same-origin, proxied), never this API's own domain directly, so the
+   * `rad.google_oauth` cookie this sets eventually lands on the
+   * storefront's domain — see `.env.example`'s `GOOGLE_CALLBACK_URL` note.
+   */
+  @Get("google")
+  @Throttle({ default: { limit: 20, ttl: 60_000 } })
+  googleStart(
+    @Query("from") from: string | undefined,
+    @Res() response: Response,
+  ) {
+    if (!this.google.configured) {
+      throw new BadRequestException({
+        message: "ورود با گوگل در این محیط فعال نیست.",
+        code: "google_not_configured",
+      });
+    }
+    const { url, state, codeVerifier } =
+      this.google.buildAuthorizationRequest();
+    response.cookie(
+      GOOGLE_OAUTH_COOKIE,
+      JSON.stringify({ state, codeVerifier, from: safeReturnPath(from) }),
+      oauthCookieOptions(GOOGLE_OAUTH_MAX_AGE_MS),
+    );
+    response.redirect(url);
+  }
+
+  /** Google's redirect target. Always redirects the browser back into the storefront — success or failure. */
+  @Get("google/callback")
+  async googleCallback(
+    @Query("code") code: string | undefined,
+    @Query("state") state: string | undefined,
+    @Query("error") error: string | undefined,
+    @Req() request: AuthedRequest,
+    @Res() response: Response,
+  ) {
+    const origin = storefrontOrigin();
+    const fail = (reason: string, from = "/account") => {
+      response.clearCookie(GOOGLE_OAUTH_COOKIE, { path: "/" });
+      response.redirect(
+        `${origin}${from}?authError=${encodeURIComponent(reason)}`,
+      );
+    };
+
+    let saved: { state?: string; codeVerifier?: string; from?: string } = {};
+    try {
+      saved = JSON.parse(request.cookies?.[GOOGLE_OAUTH_COOKIE] ?? "{}");
+    } catch {
+      // malformed/expired cookie — handled by the missing-field checks below
+    }
+    const returnPath = safeReturnPath(saved.from);
+
+    if (error) return fail(error, returnPath);
+    if (!code || !state || !saved.state || !saved.codeVerifier) {
+      return fail("google_oauth_missing_params", returnPath);
+    }
+    if (state !== saved.state) {
+      return fail("google_oauth_state_mismatch", returnPath);
+    }
+
+    try {
+      const profile = await this.google.resolveProfile(
+        code,
+        saved.codeVerifier,
+      );
+      const actor = await this.identity.fromRequest(request);
+      const result = await this.auth.signInWithGoogle(profile, actor);
+      response.clearCookie(GOOGLE_OAUTH_COOKIE, { path: "/" });
+      response.cookie(
+        AUTH_COOKIE,
+        result.sessionToken,
+        sessionCookieOptions(result.maxAgeMs),
+      );
+      response.redirect(`${origin}${returnPath}`);
+    } catch (err) {
+      // Never log the authorization code, state, PKCE verifier, or the
+      // resolved Google profile (email/name) — only that the callback
+      // failed and, when known, its safe reason code.
+      const code =
+        err instanceof UnauthorizedException
+          ? (err.getResponse() as { code?: string } | undefined)?.code
+          : undefined;
+      this.logger.warn(
+        `Google OAuth callback failed${code ? ` (${code})` : ""}`,
+      );
+      fail(
+        code && SAFE_GOOGLE_AUTH_ERROR_CODES.has(code)
+          ? code
+          : "google_oauth_failed",
+        returnPath,
+      );
+    }
   }
 }

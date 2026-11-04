@@ -210,6 +210,13 @@ export const en = {
   accountInactive: "This account is not active yet.",
   otpTab: "One-time code",
   passwordTab: "Email and password",
+  continueWithGoogle: "Continue with Google",
+  authDivider: "or",
+  googleAuthFailed: "Google sign-in failed. Please try again.",
+  googleAuthCancelled: "Google sign-in was cancelled.",
+  googleAuthUnavailable: "Google sign-in isn't available in this environment.",
+  googleAccountMismatch:
+    "This email is already linked to a different Google account.",
   authMethodLabel: "Sign-in method",
   loginPhoneLabel: "Mobile number",
   phonePlaceholder: "0912 345 6789",
