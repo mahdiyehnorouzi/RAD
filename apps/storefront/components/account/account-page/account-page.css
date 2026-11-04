@@ -37,7 +37,7 @@
   text-align: start;
 }
 
-.auth-form > small {
+.auth-stack > small {
   color: var(--muted);
 }
 
@@ -90,7 +90,96 @@
   border-radius: var(--radius);
   background: var(--canvas);
   display: grid;
+  gap: 0.9rem;
+  min-width: 0;
+}
+
+.auth-stack {
+  display: grid;
   gap: 0.7rem;
+  min-width: 0;
+}
+
+.auth-method-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.4rem;
+}
+
+.auth-method-tabs button {
+  min-height: 48px;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--line);
+  border-radius: 0.8rem;
+  background: var(--paper);
+  font: inherit;
+  font-weight: 600;
+  line-height: 1.35;
+  cursor: pointer;
+}
+
+.auth-method-tabs button.active {
+  background: var(--clay);
+  border-color: var(--clay);
+  color: var(--paper);
+}
+
+.auth-method-tabs button:disabled {
+  cursor: default;
+}
+
+/* Sign in / sign up sits under the method switch, so it reads as a
+   secondary choice instead of a second row of filled tabs. */
+.auth-stack .auth-tabs button.active {
+  background: var(--paper);
+  border-color: var(--moss);
+  box-shadow: inset 0 0 0 1px var(--moss);
+  color: var(--moss);
+  font-weight: 600;
+}
+
+.auth-otp-sent {
+  margin: 0;
+  color: #71665b;
+  overflow-wrap: anywhere;
+}
+
+.auth-otp-sent bdi {
+  color: var(--ink, inherit);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.auth-otp-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.auth-otp-actions .auth-switch {
+  min-height: 44px;
+}
+
+.auth-otp-actions .auth-switch:disabled {
+  color: var(--muted);
+}
+
+.auth-no-account {
+  display: grid;
+  gap: 0.25rem;
+  margin-top: 0.5rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--line);
+  border-radius: 0.8rem;
+  background: color-mix(in srgb, var(--clay) 8%, var(--paper));
+  font-size: 0.86rem;
+  color: #71665b;
+}
+
+.auth-no-account strong {
+  color: var(--ink, inherit);
 }
 
 .auth-form input {
@@ -132,12 +221,12 @@
   cursor: pointer;
 }
 
-.auth-form > .button {
+.auth-stack > .button {
   width: 100%;
   margin-top: 1rem;
 }
 
-.auth-form > small {
+.auth-stack > small {
   color: #71665b;
 }
 
