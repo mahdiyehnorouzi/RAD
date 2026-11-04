@@ -51,8 +51,13 @@ test("googleStart refuses with a coded 400 when Google OAuth isn't configured", 
         redirect: () => undefined,
       } as never),
     (error: unknown) => {
-      const response = (error as { getResponse?: () => unknown }).getResponse?.();
-      assert.equal((response as { code?: string })?.code, "google_not_configured");
+      const response = (
+        error as { getResponse?: () => unknown }
+      ).getResponse?.();
+      assert.equal(
+        (response as { code?: string })?.code,
+        "google_not_configured",
+      );
       return true;
     },
   );

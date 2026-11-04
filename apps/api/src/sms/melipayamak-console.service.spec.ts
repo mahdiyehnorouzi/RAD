@@ -107,8 +107,9 @@ describe("MelipayamakConsoleService: request shape", () => {
 
 describe("MelipayamakConsoleService: response handling", () => {
   test("a 2xx response with a positive numeric recId is a success", async () => {
-    stubFetch(async () =>
-      new Response(JSON.stringify({ recId: 987654321 }), { status: 200 }),
+    stubFetch(
+      async () =>
+        new Response(JSON.stringify({ recId: 987654321 }), { status: 200 }),
     );
     await new MelipayamakConsoleService(configured()).sendSimple(
       "09121234567",
@@ -141,8 +142,8 @@ describe("MelipayamakConsoleService: response handling", () => {
   });
 
   test("a non-2xx HTTP response throws even with a plausible-looking body", async () => {
-    stubFetch(async () =>
-      new Response(JSON.stringify({ recId: 1 }), { status: 500 }),
+    stubFetch(
+      async () => new Response(JSON.stringify({ recId: 1 }), { status: 500 }),
     );
     await assert.rejects(
       () =>

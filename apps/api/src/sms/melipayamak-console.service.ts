@@ -41,7 +41,7 @@ export class MelipayamakConsoleService {
   isConfigured() {
     return Boolean(
       this.config.get<string>("MELIPAYAMAK_CONSOLE_API_TOKEN") &&
-        this.config.get<string>("MELIPAYAMAK_CONSOLE_SENDER"),
+      this.config.get<string>("MELIPAYAMAK_CONSOLE_SENDER"),
     );
   }
 

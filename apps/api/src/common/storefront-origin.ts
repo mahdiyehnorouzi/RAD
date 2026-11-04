@@ -7,9 +7,7 @@
  * same-site redirect, not an open redirect to an attacker's domain.
  */
 export function storefrontOrigin(env: NodeJS.ProcessEnv = process.env) {
-  return (
-    env.STOREFRONT_ORIGIN?.replace(/\/+$/, "") || "http://localhost:3000"
-  );
+  return env.STOREFRONT_ORIGIN?.replace(/\/+$/, "") || "http://localhost:3000";
 }
 
 /** Only a same-site relative path (`/...`) is accepted; anything else falls back to `/`. */
