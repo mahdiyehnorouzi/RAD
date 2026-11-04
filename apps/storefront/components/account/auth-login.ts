@@ -12,7 +12,7 @@ export const OTP_RESEND_COOLDOWN_SECONDS = 60;
 /** The API sends six-digit codes (`generateVerificationCode`). */
 const OTP_CODE_LENGTH = 6;
 
-export type AuthStage = "password" | "otpRequest" | "otpSignIn";
+type AuthStage = "password" | "otpRequest" | "otpSignIn";
 
 /** Structured API codes from `AuthService` and `OtpService`, in the active language. */
 const AUTH_ERROR_CODE: Partial<Record<string, MessageKey>> = {
