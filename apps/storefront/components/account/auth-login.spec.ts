@@ -142,7 +142,7 @@ test("the resend cooldown matches the API's resend cooldown", () => {
   assert.equal(Number(match[1]), OTP_RESEND_COOLDOWN_SECONDS);
 });
 
-test("the login form signs in through /auth/otp/signin and never adds a Google link", () => {
+test("the login form signs in through /auth/otp/signin, unaffected by Google sign-in", () => {
   const provider = readFileSync(
     join(here, "../commerce/commerce-provider/commerce-provider.tsx"),
     "utf8",
@@ -150,9 +150,22 @@ test("the login form signs in through /auth/otp/signin and never adds a Google l
   assert.match(provider, /"\/auth\/otp\/request"/);
   assert.match(provider, /"\/auth\/otp\/signin"/);
   assert.doesNotMatch(provider, /"\/auth\/otp\/verify"/);
+});
+
+/**
+ * The Google sign-in link must go through the storefront's own
+ * `/backend/*` proxy (`app/backend/[...path]/route.ts`), never straight at
+ * the API's own origin — that's what makes the session cookie the
+ * callback eventually sets land on the storefront's domain, the one every
+ * other `/backend/*` call already reads from (see `.env.example`'s
+ * `GOOGLE_CALLBACK_URL` note). A link built from a bare "/auth/google"
+ * (no "/backend" prefix) would silently break this.
+ */
+test("the Google sign-in link is same-origin, through the /backend proxy", () => {
   const login = readFileSync(
     join(here, "account-page/account-login.tsx"),
     "utf8",
   );
-  assert.doesNotMatch(login, /auth\/google/);
+  assert.match(login, /\/backend\/auth\/google\?from=/);
+  assert.doesNotMatch(login, /href=\{`https?:\/\//);
 });

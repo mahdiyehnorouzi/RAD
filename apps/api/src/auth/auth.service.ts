@@ -173,6 +173,71 @@ export class AuthService {
     return { user: actor.user };
   }
 
+  /**
+   * Called after the Google OAuth authorization-code exchange has already
+   * verified `googleId`/`email` server-side (`GoogleAuthService`) — never
+   * trusts a client-asserted identity. Matches an existing account by
+   * `googleId` first (repeat sign-in), then by verified email (first
+   * Google sign-in on an account that already has a password — Google has
+   * already proven ownership of that email, so this links rather than
+   * creating a duplicate identity), then creates a new, password-less
+   * account. `emailVerified` must be true or this refuses to match/create
+   * by email at all, since an unverified email proves nothing.
+   */
+  async signInWithGoogle(
+    profile: {
+      googleId: string;
+      email: string;
+      emailVerified: boolean;
+      name: string;
+    },
+    actor: Actor,
+  ) {
+    const email = profile.email.trim().toLowerCase();
+    let user = await this.users.findOne({
+      where: { googleId: profile.googleId },
+    });
+    if (!user && profile.emailVerified) {
+      const byEmail = await this.users.findOne({ where: { email } });
+      if (byEmail) {
+        await this.users.update(
+          { id: byEmail.id },
+          { googleId: profile.googleId },
+        );
+        byEmail.googleId = profile.googleId;
+        user = byEmail;
+      }
+    }
+    if (!user) {
+      if (!profile.emailVerified) {
+        throw new UnauthorizedException({
+          message: "ایمیل گوگل تأیید نشده است.",
+          code: "google_email_unverified",
+        });
+      }
+      user = await this.users.save(
+        this.users.create({
+          name: profile.name.trim() || email,
+          email,
+          passwordHash: null,
+          googleId: profile.googleId,
+          role: "customer",
+          status: "active",
+        }),
+      );
+      await this.notices.save(
+        this.notices.create({ ownerKey: `user:${user.id}`, kind: "welcome" }),
+      );
+    }
+    if (user.status === "invited") {
+      throw new UnauthorizedException({
+        message: "این حساب هنوز فعال نشده است.",
+        code: "account_inactive",
+      });
+    }
+    return this.openSession(toAuthUser(user), actor);
+  }
+
   async changePassword(
     actor: Actor,
     input: { currentPassword: string; newPassword: string },

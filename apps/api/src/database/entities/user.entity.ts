@@ -36,13 +36,17 @@ export class User {
   @Column("text", { nullable: true })
   phone!: string | null;
 
-  // Phone-only (SMS OTP) accounts never set a real password — see
-  // `AuthService.signInWithPhone` for why `passwordHash` stays required
-  // (an unusable random hash) rather than nullable here: that keeps this
-  // migration independent of PR #96's own nullable-passwordHash migration
-  // (Google sign-in), avoiding two PRs racing to alter the same column.
-  @Column("text")
+  // Phone-only (SMS OTP) accounts never set a real password (an unusable
+  // random hash instead — see `AuthService.signInWithPhone`); a
+  // Google-only account genuinely has none, hence nullable here (added by
+  // `AddUserGoogleAuth1793800000000`, together with `googleId` below).
+  @Column("text", { nullable: true })
   passwordHash!: string | null;
+
+  // Google's stable per-account subject id. Set once a Google sign-in
+  // links or creates this user — see `AuthService.signInWithGoogle`.
+  @Column("text", { nullable: true, unique: true })
+  googleId!: string | null;
 
   // OTP-verified sign-in identifier. Deliberately a separate column from
   // `phone` above: `phone` is self-reported contact info (`ProfileService`
