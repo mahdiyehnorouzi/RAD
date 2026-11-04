@@ -3,11 +3,13 @@ import {
   Body,
   Controller,
   Get,
+  Logger,
   Patch,
   Post,
   Query,
   Req,
   Res,
+  UnauthorizedException,
 } from "@nestjs/common";
 import { Throttle } from "@nestjs/throttler";
 import type { Response } from "express";
@@ -35,8 +37,26 @@ import { safeReturnPath, storefrontOrigin } from "../common/storefront-origin";
 
 const GOOGLE_OAUTH_MAX_AGE_MS = 10 * 60 * 1000;
 
+/**
+ * `signInWithGoogle` codes that are safe to echo back to the browser as
+ * `?authError=` — fixed, non-sensitive reason codes the storefront maps to
+ * its own translated copy (`GOOGLE_AUTH_ERROR_CODE` in account-login.tsx),
+ * never the thrown error's own message. Anything else (an unexpected
+ * exception, a Google API failure, a DB error) falls back to the generic
+ * `google_oauth_failed` below rather than being forwarded — this allowlist
+ * is what keeps an unanticipated internal error message from ever reaching
+ * the client.
+ */
+const SAFE_GOOGLE_AUTH_ERROR_CODES = new Set([
+  "account_inactive",
+  "google_email_unverified",
+  "google_account_mismatch",
+]);
+
 @Controller("auth")
 export class AuthController {
+  private readonly logger = new Logger(AuthController.name);
+
   constructor(
     private readonly auth: AuthService,
     private readonly google: GoogleAuthService,
@@ -239,8 +259,23 @@ export class AuthController {
         sessionCookieOptions(result.maxAgeMs),
       );
       response.redirect(`${origin}${returnPath}`);
-    } catch {
-      fail("google_oauth_failed", returnPath);
+    } catch (err) {
+      // Never log the authorization code, state, PKCE verifier, or the
+      // resolved Google profile (email/name) — only that the callback
+      // failed and, when known, its safe reason code.
+      const code =
+        err instanceof UnauthorizedException
+          ? (err.getResponse() as { code?: string } | undefined)?.code
+          : undefined;
+      this.logger.warn(
+        `Google OAuth callback failed${code ? ` (${code})` : ""}`,
+      );
+      fail(
+        code && SAFE_GOOGLE_AUTH_ERROR_CODES.has(code)
+          ? code
+          : "google_oauth_failed",
+        returnPath,
+      );
     }
   }
 }

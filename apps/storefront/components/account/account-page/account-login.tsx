@@ -69,6 +69,7 @@ const GOOGLE_AUTH_ERROR_CODE: Record<string, MessageKey> = {
   google_oauth_failed: "googleAuthFailed",
   google_email_unverified: "googleAuthFailed",
   account_inactive: "accountInactive",
+  google_account_mismatch: "googleAccountMismatch",
 };
 
 export function AccountLogin({ returnTo }: { returnTo?: string }) {

@@ -212,6 +212,7 @@ export const fa = {
   googleAuthFailed: "ورود با گوگل ناموفق بود. دوباره تلاش کنید.",
   googleAuthCancelled: "ورود با گوگل لغو شد.",
   googleAuthUnavailable: "ورود با گوگل در این محیط فعال نیست.",
+  googleAccountMismatch: "این ایمیل قبلاً به یک حساب گوگل دیگر متصل شده است.",
   authMethodLabel: "روش ورود",
   loginPhoneLabel: "شماره موبایل",
   phonePlaceholder: "۰۹۱۲ ۳۴۵ ۶۷۸۹",

@@ -215,6 +215,8 @@ export const en = {
   googleAuthFailed: "Google sign-in failed. Please try again.",
   googleAuthCancelled: "Google sign-in was cancelled.",
   googleAuthUnavailable: "Google sign-in isn't available in this environment.",
+  googleAccountMismatch:
+    "This email is already linked to a different Google account.",
   authMethodLabel: "Sign-in method",
   loginPhoneLabel: "Mobile number",
   phonePlaceholder: "0912 345 6789",

@@ -241,3 +241,170 @@ test("an invited (not yet active) account cannot sign in via Google", async () =
     },
   );
 });
+
+/**
+ * Hardening pass: account-linking security/correctness regression tests
+ * (see the task that added them for the full scenario list). These cover
+ * what the happy-path tests above don't — an existing account already
+ * linked to a *different* Google identity, linking never mutating an
+ * invited account, preserved fields on link, and the same-googleId
+ * concurrency case the advisory lock in `signInWithGoogle` exists for.
+ */
+
+test("an email already linked to a DIFFERENT Google identity is refused, never silently re-linked", async () => {
+  const existing = await dataSource.getRepository(User).save(
+    dataSource.getRepository(User).create({
+      name: "Already Linked",
+      email: "already-linked@example.com",
+      passwordHash: null,
+      googleId: "google-sub-original",
+      role: "customer",
+      status: "active",
+    }),
+  );
+
+  await assert.rejects(
+    () =>
+      auth.signInWithGoogle(
+        {
+          googleId: "google-sub-attacker",
+          email: "already-linked@example.com",
+          emailVerified: true,
+          name: "Already Linked",
+        },
+        guestActor(),
+      ),
+    (error: unknown) => {
+      assert.ok(error instanceof UnauthorizedException);
+      assert.equal(
+        (error.getResponse() as { code?: string }).code,
+        "google_account_mismatch",
+      );
+      return true;
+    },
+  );
+
+  // No mutation: the original googleId is untouched and no second account
+  // was created for this email.
+  const row = await dataSource
+    .getRepository(User)
+    .findOneOrFail({ where: { id: existing.id } });
+  assert.equal(row.googleId, "google-sub-original");
+  const count = await dataSource
+    .getRepository(User)
+    .count({ where: { email: "already-linked@example.com" } });
+  assert.equal(count, 1);
+});
+
+test("re-signing in with the SAME already-linked googleId is still allowed (not a mismatch)", async () => {
+  const existing = await dataSource.getRepository(User).save(
+    dataSource.getRepository(User).create({
+      name: "Already Linked",
+      email: "same-identity@example.com",
+      passwordHash: null,
+      googleId: "google-sub-same",
+      role: "customer",
+      status: "active",
+    }),
+  );
+
+  const { user } = await auth.signInWithGoogle(
+    {
+      googleId: "google-sub-same",
+      email: "same-identity@example.com",
+      emailVerified: true,
+      name: "Already Linked",
+    },
+    guestActor(),
+  );
+  assert.equal(user.id, existing.id);
+});
+
+test("linking an invited account is refused before any mutation — googleId stays unset", async () => {
+  const invited = await dataSource.getRepository(User).save(
+    dataSource.getRepository(User).create({
+      name: "Invited Buyer",
+      email: "invited-link@example.com",
+      passwordHash: "not-touched-hash",
+      role: "customer",
+      status: "invited",
+    }),
+  );
+
+  await assert.rejects(
+    () =>
+      auth.signInWithGoogle(
+        {
+          googleId: "google-sub-invited",
+          email: "invited-link@example.com",
+          emailVerified: true,
+          name: "Invited Buyer",
+        },
+        guestActor(),
+      ),
+    (error: unknown) => {
+      assert.ok(error instanceof UnauthorizedException);
+      assert.equal(
+        (error.getResponse() as { code?: string }).code,
+        "account_inactive",
+      );
+      return true;
+    },
+  );
+
+  const row = await dataSource
+    .getRepository(User)
+    .findOneOrFail({ where: { id: invited.id } });
+  assert.equal(row.googleId, null);
+  assert.equal(row.passwordHash, "not-touched-hash");
+});
+
+test("linking preserves the existing password hash and verified phone, touching only googleId", async () => {
+  const existing = await dataSource.getRepository(User).save(
+    dataSource.getRepository(User).create({
+      name: "Phone And Password",
+      email: "phone-and-password@example.com",
+      passwordHash: "existing-hash",
+      verifiedPhone: "09121234567",
+      role: "customer",
+      status: "active",
+    }),
+  );
+
+  await auth.signInWithGoogle(
+    {
+      googleId: "google-sub-preserve",
+      email: "phone-and-password@example.com",
+      emailVerified: true,
+      name: "Phone And Password",
+    },
+    guestActor(),
+  );
+
+  const row = await dataSource
+    .getRepository(User)
+    .findOneOrFail({ where: { id: existing.id } });
+  assert.equal(row.passwordHash, "existing-hash");
+  assert.equal(row.verifiedPhone, "09121234567");
+  assert.equal(row.googleId, "google-sub-preserve");
+});
+
+test("two concurrent sign-ins with the same new googleId create exactly one account, not a duplicate or a crash", async () => {
+  const profile = {
+    googleId: "google-sub-concurrent",
+    email: "concurrent@example.com",
+    emailVerified: true,
+    name: "Concurrent Buyer",
+  };
+
+  const [first, second] = await Promise.all([
+    auth.signInWithGoogle(profile, guestActor("guest-x")),
+    auth.signInWithGoogle(profile, guestActor("guest-y")),
+  ]);
+
+  assert.equal(first.user.id, second.user.id);
+  const count = await dataSource
+    .getRepository(User)
+    .count({ where: { email: "concurrent@example.com" } });
+  assert.equal(count, 1);
+});
