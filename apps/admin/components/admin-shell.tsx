@@ -3,6 +3,7 @@
 import {
   createContext,
   useContext,
+  useCallback,
   useEffect,
   useRef,
   useState,
@@ -35,13 +36,17 @@ import { roleLabels, type AdminSection } from "../lib/admin-data";
 import {
   initialDashboardSection,
   isHelpPath,
+  isMessagesPath,
   isReviewsPath,
   settleStudioPath,
   staffGate,
   startHelpLink,
+  startMessagesLink,
   startReviewsLink,
   startSectionSelect,
   studioHistoryHref,
+  studioNavHref,
+  withOrderFocus,
   type PendingNavigation,
 } from "../lib/staff-navigation";
 import { AdminLogin } from "./admin-login";
@@ -71,6 +76,11 @@ type AdminChrome = {
   section: AdminSection;
   go: (section: AdminSection) => void;
   announce: (message: string) => void;
+  /** Opens an order on `/` after leaving a studio route such as `/messages`. */
+  openOrder: (orderId: string) => void;
+  /** Order id from the Messages handoff that just committed. Null after it is used or canceled. */
+  handedOrderId: string | null;
+  clearHandedOrder: () => void;
 };
 
 const AdminChromeContext = createContext<AdminChrome | null>(null);
@@ -96,7 +106,8 @@ export function AdminShell({ children }: { children: ReactNode }) {
   const [toast, setToast] = useState("");
   const reviewsActive = isReviewsPath(pathname);
   const helpActive = isHelpPath(pathname);
-  const routeActive = reviewsActive || helpActive;
+  const messagesActive = isMessagesPath(pathname);
+  const routeActive = reviewsActive || helpActive || messagesActive;
   // skip: go() already fetched for a path change. pending: latest choice
   // whose URL has not committed. seen: last pathname this effect applied.
   const skipPathLoad = useRef<AdminSection | null>(null);
@@ -133,6 +144,28 @@ export function AdminShell({ children }: { children: ReactNode }) {
       );
     }
     if (action.load) void workspace.loadSection(action.load);
+    return action;
+  };
+
+  const [handedOrderId, setHandedOrderId] = useState<string | null>(null);
+  const clearHandedOrder = useCallback(() => setHandedOrderId(null), []);
+  const openOrder = (orderId: string) => {
+    const action = go("orders");
+    pendingNav.current = withOrderFocus(action.pending, orderId);
+  };
+
+  const followStudioLink = (route: "reviews" | "help" | "messages") => {
+    setMobileNav(false);
+    const visible = { pathname, section: sectionRef.current };
+    const action =
+      route === "reviews"
+        ? startReviewsLink(visible, pendingNav.current)
+        : route === "help"
+          ? startHelpLink(visible, pendingNav.current)
+          : startMessagesLink(visible, pendingNav.current);
+    pendingNav.current = action.pending;
+    skipPathLoad.current = action.skip;
+    if (action.replace) router.replace(action.replace);
   };
 
   // Back/Forward cancels an uncommitted choice before React paints the
@@ -142,6 +175,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
     const onPop = () => {
       pendingNav.current = null;
       skipPathLoad.current = null;
+      setHandedOrderId(null);
     };
     window.addEventListener("popstate", onPop);
     return () => window.removeEventListener("popstate", onPop);
@@ -164,6 +198,9 @@ export function AdminShell({ children }: { children: ReactNode }) {
     skipPathLoad.current = settled.skip;
     pendingNav.current = settled.pending;
     sectionRef.current = settled.section;
+    setHandedOrderId((current) =>
+      current === settled.focusOrderId ? current : settled.focusOrderId,
+    );
     if (settled.section !== section) setSection(settled.section);
     if (settled.load) void workspace.loadSection(settled.load);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -224,10 +261,22 @@ export function AdminShell({ children }: { children: ReactNode }) {
     ? "نظر مشتریان"
     : helpActive
       ? "پرسش‌های راهنما"
-      : navItems.find((item) => item.id === section)?.label;
+      : messagesActive
+        ? "پیام‌ها"
+        : navItems.find((item) => item.id === section)?.label;
 
   return (
-    <AdminChromeContext.Provider value={{ workspace, section, go, announce }}>
+    <AdminChromeContext.Provider
+      value={{
+        workspace,
+        section,
+        go,
+        announce,
+        openOrder,
+        handedOrderId,
+        clearHandedOrder,
+      }}
+    >
       <div className="admin-shell">
         <aside
           className={`admin-sidebar ${mobileNav ? "is-open" : ""}`}
@@ -261,9 +310,13 @@ export function AdminShell({ children }: { children: ReactNode }) {
                     ? helpActive
                       ? "active"
                       : ""
-                    : !routeActive && section === id
-                      ? "active"
-                      : "";
+                    : id === "messages"
+                      ? messagesActive
+                        ? "active"
+                        : ""
+                      : !routeActive && section === id
+                        ? "active"
+                        : "";
               const body = (
                 <>
                   <Icon />
@@ -289,26 +342,13 @@ export function AdminShell({ children }: { children: ReactNode }) {
                   <ChevronLeft />
                 </>
               );
-              if (id === "reviews" || id === "help") {
+              if (id === "reviews" || id === "help" || id === "messages") {
                 return (
                   <Link
                     key={id}
-                    href={id === "reviews" ? "/reviews" : "/help"}
+                    href={studioNavHref(id)}
                     className={className}
-                    onClick={() => {
-                      setMobileNav(false);
-                      const visible = {
-                        pathname,
-                        section: sectionRef.current,
-                      };
-                      const action =
-                        id === "reviews"
-                          ? startReviewsLink(visible, pendingNav.current)
-                          : startHelpLink(visible, pendingNav.current);
-                      pendingNav.current = action.pending;
-                      skipPathLoad.current = action.skip;
-                      if (action.replace) router.replace(action.replace);
-                    }}
+                    onClick={() => followStudioLink(id)}
                   >
                     {body}
                   </Link>
@@ -369,10 +409,10 @@ export function AdminShell({ children }: { children: ReactNode }) {
               <span className="context-label">رَد / عملیات استودیو</span>
               <h1>{title}</h1>
             </div>
-            <button
+            <Link
+              href="/messages"
               className="topbar-bell"
-              type="button"
-              onClick={() => go("messages")}
+              onClick={() => followStudioLink("messages")}
               aria-label={
                 openMessages
                   ? `${number.format(openMessages)} پیام رسیدگی‌نشده`
@@ -383,7 +423,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
               {openMessages > 0 && (
                 <em className="nav-count">{number.format(openMessages)}</em>
               )}
-            </button>
+            </Link>
             <div className="topbar-status">
               <span className="live-dot" />
               پایگاه داده Postgres

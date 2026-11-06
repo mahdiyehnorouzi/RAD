@@ -16,7 +16,7 @@ import { InviteDialog, Members } from "../components/admin-members";
 import { UsersPanel } from "../components/admin-users";
 import { ConfirmDialog } from "../components/admin-dialog";
 import { AdminHelpQuestions } from "../features/help/admin-help-questions";
-import { AdminMessages } from "../components/admin-messages";
+import { AdminMessages } from "../features/messages/admin-messages";
 import { AdminReviews } from "../features/reviews/admin-reviews";
 import { AdminShapeQuestions } from "../components/admin-shape-questions";
 
