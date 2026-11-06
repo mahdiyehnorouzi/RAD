@@ -51,8 +51,39 @@ function sandboxMode() {
   return !process.env.ZARINPAL_MERCHANT_ID?.trim();
 }
 
+/**
+ * Test-only escape hatch (RAD-134): lets a local E2E run point this adapter
+ * at a local mock gateway instead of ZarinPal's real sandbox/live hosts.
+ * Refused outright in production, and refused for anything but a loopback
+ * host, so a copied/exported env var can never redirect real payment
+ * traffic. Unset in every normal deployment and in every existing test —
+ * `host()` falls back to the original sandbox/live selection unchanged.
+ */
+function baseUrlOverride(): string | undefined {
+  const override = process.env.ZARINPAL_BASE_URL?.trim();
+  if (!override) return undefined;
+  if (process.env.NODE_ENV === "production") {
+    throw new Error(
+      "ZARINPAL_BASE_URL is not allowed when NODE_ENV=production.",
+    );
+  }
+  const hostname = (() => {
+    try {
+      return new URL(override).hostname;
+    } catch {
+      return "";
+    }
+  })();
+  if (hostname !== "localhost" && hostname !== "127.0.0.1") {
+    throw new Error(
+      `ZARINPAL_BASE_URL must point at a local host (localhost/127.0.0.1), got "${hostname || override}".`,
+    );
+  }
+  return override;
+}
+
 function host() {
-  return sandboxMode() ? SANDBOX_HOST : LIVE_HOST;
+  return baseUrlOverride() ?? (sandboxMode() ? SANDBOX_HOST : LIVE_HOST);
 }
 
 function merchantId() {
