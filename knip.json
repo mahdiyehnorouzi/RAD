@@ -1,5 +1,6 @@
 {
   "$schema": "https://unpkg.com/knip@5/schema.json",
+  "ignoreWorkspaces": ["apps/Rad-App"],
   "workspaces": {
     "apps/storefront": {
       "entry": ["proxy.ts", "vite.config.ts", "**/*.spec.ts"],
@@ -21,6 +22,48 @@
         "features/product-detail/transition/product-transition-store.ts"
       ],
       "ignoreDependencies": ["sharp"]
+    },
+    "apps/admin": {
+      "entry": ["vite.config.ts", "**/*.spec.ts"],
+      "project": ["**/*.{ts,tsx,mjs}"]
+    },
+    "apps/api": {
+      "entry": [
+        "src/main.ts",
+        "src/pricing/cli.ts",
+        "src/database/cli-data-source.ts",
+        "src/database/migrations/*.ts",
+        "**/*.spec.ts",
+        "scripts/**/*.ts",
+        "scripts/**/*.mjs",
+        "seed/**/*.ts"
+      ],
+      "project": [
+        "src/**/*.ts",
+        "scripts/**/*.ts",
+        "scripts/**/*.mjs",
+        "seed/**/*.ts"
+      ]
+    },
+    "packages/i18n": {
+      "entry": ["src/fa.ts", "src/en.ts"],
+      "project": ["src/**/*.ts"]
+    },
+    "packages/types": {
+      "entry": ["src/index.ts", "src/**/*.spec.ts"],
+      "project": ["src/**/*.ts"]
+    },
+    "packages/artworks": {
+      "entry": ["src/index.ts", "src/copy.ts", "src/families.ts"],
+      "project": ["src/**/*.ts"]
+    },
+    "packages/ui": {
+      "entry": ["src/index.ts"],
+      "project": ["src/**/*.{ts,tsx}"]
+    },
+    "packages/state": {
+      "entry": ["src/index.ts"],
+      "project": ["src/**/*.ts"]
     }
   }
 }
