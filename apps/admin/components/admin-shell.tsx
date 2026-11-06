@@ -34,9 +34,11 @@ import { useAdminWorkspace } from "../hooks/use-admin-workspace";
 import { roleLabels, type AdminSection } from "../lib/admin-data";
 import {
   initialDashboardSection,
+  isHelpPath,
   isReviewsPath,
   settleStudioPath,
   staffGate,
+  startHelpLink,
   startReviewsLink,
   startSectionSelect,
   studioHistoryHref,
@@ -93,6 +95,8 @@ export function AdminShell({ children }: { children: ReactNode }) {
   const [mobileNav, setMobileNav] = useState(false);
   const [toast, setToast] = useState("");
   const reviewsActive = isReviewsPath(pathname);
+  const helpActive = isHelpPath(pathname);
+  const routeActive = reviewsActive || helpActive;
   // skip: go() already fetched for a path change. pending: latest choice
   // whose URL has not committed. seen: last pathname this effect applied.
   const skipPathLoad = useRef<AdminSection | null>(null);
@@ -143,7 +147,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
     return () => window.removeEventListener("popstate", onPop);
   }, []);
 
-  // First authenticated paint, refresh, the Reviews link, and browser
+  // First authenticated paint, refresh, a studio link, and browser
   // history. Explicit choices load inside go(); skipPathLoad stops the
   // matching path change from fetching again. Logout clears skip, because
   // it also clears loaded data.
@@ -218,7 +222,9 @@ export function AdminShell({ children }: { children: ReactNode }) {
   ).length;
   const title = reviewsActive
     ? "نظر مشتریان"
-    : navItems.find((item) => item.id === section)?.label;
+    : helpActive
+      ? "پرسش‌های راهنما"
+      : navItems.find((item) => item.id === section)?.label;
 
   return (
     <AdminChromeContext.Provider value={{ workspace, section, go, announce }}>
@@ -251,9 +257,13 @@ export function AdminShell({ children }: { children: ReactNode }) {
                   ? reviewsActive
                     ? "active"
                     : ""
-                  : !reviewsActive && section === id
-                    ? "active"
-                    : "";
+                  : id === "help"
+                    ? helpActive
+                      ? "active"
+                      : ""
+                    : !routeActive && section === id
+                      ? "active"
+                      : "";
               const body = (
                 <>
                   <Icon />
@@ -279,18 +289,22 @@ export function AdminShell({ children }: { children: ReactNode }) {
                   <ChevronLeft />
                 </>
               );
-              if (id === "reviews") {
+              if (id === "reviews" || id === "help") {
                 return (
                   <Link
                     key={id}
-                    href="/reviews"
+                    href={id === "reviews" ? "/reviews" : "/help"}
                     className={className}
                     onClick={() => {
                       setMobileNav(false);
-                      const action = startReviewsLink({
+                      const visible = {
                         pathname,
                         section: sectionRef.current,
-                      });
+                      };
+                      const action =
+                        id === "reviews"
+                          ? startReviewsLink(visible)
+                          : startHelpLink(visible);
                       pendingNav.current = action.pending;
                       skipPathLoad.current = action.skip;
                     }}

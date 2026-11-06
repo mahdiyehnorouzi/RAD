@@ -6,13 +6,13 @@ import {
   policyTitleLabels,
   type HelpQuestion,
   type HelpQuestionInput,
-} from "../lib/admin-data";
-import { createSingleFlight } from "../lib/admin-mutation";
-import { storefrontUrl } from "../lib/storefront-url";
-import { AdminAsyncRegion } from "./admin-async-region";
-import { ConfirmDialog } from "./admin-dialog";
+} from "../../lib/admin-data";
+import { createSingleFlight } from "../../lib/admin-mutation";
+import { storefrontUrl } from "../../lib/storefront-url";
+import { AdminAsyncRegion } from "../../components/admin-async-region";
+import { ConfirmDialog } from "../../components/admin-dialog";
 import { AdminHelpQuestionDialog } from "./admin-help-question-dialog";
-import { AdminRowActions, movedIds } from "./admin-row-actions";
+import { AdminRowActions, movedIds } from "../../components/admin-row-actions";
 
 const number = new Intl.NumberFormat("fa-IR");
 

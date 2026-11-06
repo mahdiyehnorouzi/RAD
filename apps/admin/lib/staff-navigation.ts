@@ -4,16 +4,27 @@ export function isReviewsPath(pathname: string) {
   return pathname === "/reviews" || pathname.startsWith("/reviews/");
 }
 
+export function isHelpPath(pathname: string) {
+  return pathname === "/help" || pathname.startsWith("/help/");
+}
+
+/** Independent studio routes. Every other section still lives on `/`. */
+function studioRoute(pathname: string): "reviews" | "help" | null {
+  if (isReviewsPath(pathname)) return "reviews";
+  if (isHelpPath(pathname)) return "help";
+  return null;
+}
+
 /**
- * Data to load for the URL the user is actually on. `/reviews` is the
- * reviews section even when the in-memory dashboard section is something
- * else. Every other section still lives on `/`.
+ * Data to load for the URL the user is actually on. `/reviews` and `/help`
+ * stay those sections even when the in-memory dashboard section is
+ * something else. Every other section still lives on `/`.
  */
 export function sectionDataTarget(
   pathname: string,
   section: AdminSection,
 ): AdminSection {
-  return isReviewsPath(pathname) ? "reviews" : section;
+  return studioRoute(pathname) ?? section;
 }
 
 /**
@@ -37,19 +48,23 @@ export type NavigationPlan = {
 };
 
 /**
- * Explicit nav choice. Reviews keeps the previous dashboard section in
- * memory. Overview, Orders, Messages, and every other `/` section replace
- * that memory. Choosing the section already on screen does not fetch.
+ * Explicit nav choice. Reviews and Help keep the previous dashboard
+ * section in memory. Overview, Orders, Messages, and every other `/`
+ * section replace that memory. Choosing the section already on screen
+ * does not fetch.
  */
 export function planSectionSelect(
   current: StudioView,
   next: AdminSection,
 ): NavigationPlan {
-  if (next === "reviews") {
-    if (isReviewsPath(current.pathname)) return { view: current, load: null };
+  if (next === "reviews" || next === "help") {
+    const pathname = next === "reviews" ? "/reviews" : "/help";
+    if (normalizeStudioPath(current.pathname) === pathname) {
+      return { view: current, load: null };
+    }
     return {
-      view: { pathname: "/reviews", section: current.section },
-      load: "reviews",
+      view: { pathname, section: current.section },
+      load: next,
     };
   }
   const view = { pathname: "/", section: next };
@@ -59,16 +74,18 @@ export function planSectionSelect(
 
 /**
  * Browser Back/Forward or a `<Link>`. The in-memory section is kept, so
- * Back from Reviews returns to whatever `/` was showing. A pop that does
- * not change the path does not fetch.
+ * Back from Reviews or Help returns to whatever `/` was showing. A pop
+ * that does not change the path does not fetch.
  */
 export function planHistoryNavigation(
   current: StudioView,
   pathname: string,
 ): NavigationPlan {
+  const nextRoute = studioRoute(pathname);
+  const currentRoute = studioRoute(current.pathname);
   if (
     pathname === current.pathname ||
-    (isReviewsPath(pathname) && isReviewsPath(current.pathname))
+    (nextRoute !== null && nextRoute === currentRoute)
   ) {
     return { view: { ...current, pathname }, load: null };
   }
@@ -77,13 +94,16 @@ export function planHistoryNavigation(
 }
 
 export function normalizeStudioPath(pathname: string) {
-  return isReviewsPath(pathname) ? "/reviews" : pathname;
+  const route = studioRoute(pathname);
+  if (route === "reviews") return "/reviews";
+  if (route === "help") return "/help";
+  return pathname;
 }
 
-/** Keep a commissions hash when replacing `/`. A reviews URL never carries it. */
+/** Keep a commissions hash when replacing `/`. A reviews or help URL never carries it. */
 export function studioHistoryHref(pathname: string, hash: string) {
   const path = normalizeStudioPath(pathname);
-  if (path === "/reviews" || hash === "") return path;
+  if (path === "/reviews" || path === "/help" || hash === "") return path;
   return `/${hash.startsWith("#") ? hash : `#${hash}`}`;
 }
 
@@ -152,19 +172,31 @@ export function startSectionSelect(
   };
 }
 
-/** Reviews is a link. It keeps the dashboard section and clears a stale skip. */
-export function startReviewsLink(visible: StudioView): {
-  pending: PendingNavigation;
-  skip: null;
-} {
+/**
+ * Reviews and Help are links. Each keeps the dashboard section and clears
+ * a stale skip. The pathname effect performs the one fetch.
+ */
+function startStudioLink(
+  visible: StudioView,
+  route: "reviews" | "help",
+): { pending: PendingNavigation; skip: null } {
+  const pathname = route === "reviews" ? "/reviews" : "/help";
   return {
     pending: {
-      pathname: "/reviews",
+      pathname,
       section: visible.section,
-      load: isReviewsPath(visible.pathname) ? null : "reviews",
+      load: normalizeStudioPath(visible.pathname) === pathname ? null : route,
     },
     skip: null,
   };
+}
+
+export function startReviewsLink(visible: StudioView) {
+  return startStudioLink(visible, "reviews");
+}
+
+export function startHelpLink(visible: StudioView) {
+  return startStudioLink(visible, "help");
 }
 
 export type StudioAuth =
