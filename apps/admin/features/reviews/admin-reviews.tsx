@@ -2,11 +2,11 @@
 
 import { useMemo, useRef, useState } from "react";
 import { Eye, EyeOff, Trash2 } from "lucide-react";
-import type { AdminReview } from "../lib/admin-data";
-import { createSingleFlight } from "../lib/admin-mutation";
-import { storefrontUrl } from "../lib/storefront-url";
-import { AdminAsyncRegion } from "./admin-async-region";
-import { ConfirmDialog } from "./admin-dialog";
+import type { AdminReview } from "../../lib/admin-data";
+import { createSingleFlight } from "../../lib/admin-mutation";
+import { storefrontUrl } from "../../lib/storefront-url";
+import { AdminAsyncRegion } from "../../components/admin-async-region";
+import { ConfirmDialog } from "../../components/admin-dialog";
 
 type Filter = "visible" | "hidden" | "all";
 
