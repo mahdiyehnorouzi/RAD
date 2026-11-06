@@ -47,6 +47,8 @@ jobs:
       - run: npm run lint
       - name: Unused files, exports and dependencies
         run: npm run knip
+      - name: Shared package consumer regressions
+        run: npm run test:package-consumers
       # Export-level findings outside the blocking command still mix Nest
       # metadata, TypeORM migrations, and real unused symbols. They are
       # printed for review and do not fail this job.
