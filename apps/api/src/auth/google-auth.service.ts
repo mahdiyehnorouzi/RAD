@@ -182,10 +182,13 @@ export class GoogleAuthService {
       };
     } catch (err) {
       if (err instanceof GoogleOAuthStageError) throw err;
-      const reason = reasonFromError(err);
+      // Anything that reaches here (and wasn't the explicit missing-claims
+      // check above) could be a certs-fetch network failure just as easily
+      // as a token-validation failure — `verifyIdToken` doesn't distinguish
+      // them in its thrown shape, so don't guess "invalid_token" for it.
       throw new GoogleOAuthStageError(
         "id_token_verification",
-        reason === "unknown" ? "invalid_token" : reason,
+        reasonFromError(err),
         err,
       );
     }
