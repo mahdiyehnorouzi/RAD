@@ -109,20 +109,13 @@ test("only a cooldown refusal means a code is already on its way", () => {
   assert.equal(otpCodeAlreadySent(new Error("otp_cooldown")), false);
 });
 
-test("the code accepts Persian and Arabic digits, within the API's 4-10 digit bound", () => {
+test("the six-digit code accepts Persian and Arabic digits", () => {
   assert.equal(normalizeOtpCode("۱۲۳۴۵۶"), "123456");
   assert.equal(normalizeOtpCode("١٢٣٤٥٦"), "123456");
   assert.equal(normalizeOtpCode(" 123 456 "), "123456");
-  // Below the API's OtpVerifyDto minimum (4).
-  assert.equal(normalizeOtpCode("123"), null);
-  // A 6-digit code (the provider's typical length) and a shorter/longer
-  // one within the DTO's 4-10 bound must both be accepted — the client
-  // must not assume a fixed length the provider doesn't guarantee.
-  assert.equal(normalizeOtpCode("1234567"), "1234567");
-  assert.equal(normalizeOtpCode("1234"), "1234");
-  // Above the API's OtpVerifyDto maximum (10).
-  assert.equal(normalizeOtpCode("12345678901"), null);
-  assert.equal(otpCodeDraft("۱۲a۳-۴۵۶۷۸۹۰۱"), "1234567890");
+  assert.equal(normalizeOtpCode("12345"), null);
+  assert.equal(normalizeOtpCode("1234567"), null);
+  assert.equal(otpCodeDraft("۱۲a۳-۴۵۶۷"), "123456");
 });
 
 test("the phone sent to the API is the canonical 09 form the API accepts", () => {

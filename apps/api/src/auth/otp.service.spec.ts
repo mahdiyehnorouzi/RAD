@@ -10,7 +10,7 @@ import type { DataSource } from "typeorm";
 import { createAppDataSource } from "../database/data-source";
 import { OtpCode, OtpRequestLog } from "../database/entities";
 import { OtpService } from "./otp.service";
-import type { MelipayamakConsoleOtpService } from "../sms/melipayamak-console-otp.service";
+import type { MelipayamakService } from "../sms/melipayamak.service";
 
 function freePort() {
   return new Promise<number>((resolve, reject) => {
@@ -53,17 +53,12 @@ before(async () => {
   await dataSource.initialize();
 
   sent = [];
-  let codeCounter = 0;
   const fakeSms = {
-    // The real Console OTP endpoint generates and returns the code itself;
-    // this mock does the same, rather than accepting one from the caller.
-    sendOtp: async (to: string) => {
+    sendOtp: async (to: string, code: string) => {
       if (sendShouldFail) throw new Error("send failed");
-      const code = String(100000 + (codeCounter++ % 900000)).padStart(6, "0");
       sent.push({ to, code });
-      return code;
     },
-  } as unknown as MelipayamakConsoleOtpService;
+  } as unknown as MelipayamakService;
 
   otp = new OtpService(
     dataSource.getRepository(OtpCode),

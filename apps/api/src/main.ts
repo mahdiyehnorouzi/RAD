@@ -6,8 +6,8 @@ import cookieParser from "cookie-parser";
 import { AppModule } from "./app.module";
 import { allowedOrigins, isAllowedOrigin } from "./common/cors-origins";
 import { MailService } from "./mail/mail.service";
-import { MelipayamakConsoleOtpService } from "./sms/melipayamak-console-otp.service";
 import { MelipayamakConsoleService } from "./sms/melipayamak-console.service";
+import { MelipayamakService } from "./sms/melipayamak.service";
 import { setupSwagger } from "./swagger";
 
 async function bootstrap() {
@@ -51,7 +51,7 @@ async function bootstrap() {
   );
   setupSwagger(app);
   app.get(MailService).logConfigurationStatus();
-  app.get(MelipayamakConsoleOtpService).logConfigurationStatus();
+  app.get(MelipayamakService).logConfigurationStatus();
   app.get(MelipayamakConsoleService).logConfigurationStatus();
   const port = Number(process.env.PORT) || 4000;
   await app.listen(port, process.env.HOST || "0.0.0.0");

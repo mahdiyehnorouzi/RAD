@@ -455,7 +455,7 @@ function AccountLoginForm({ returnTo }: { returnTo?: string }) {
                     inputMode="numeric"
                     autoComplete="one-time-code"
                     dir="ltr"
-                    maxLength={10}
+                    maxLength={6}
                     value={code}
                     onChange={(event) =>
                       setCode(otpCodeDraft(event.currentTarget.value))

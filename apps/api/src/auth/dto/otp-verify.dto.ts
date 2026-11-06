@@ -8,11 +8,6 @@ export class OtpVerifyDto {
   @MaxLength(20)
   phone!: string;
 
-  // Bound is a sanity limit only, not a guarantee of the provider's actual
-  // code length (the Melipayamak Console OTP endpoint generates and
-  // returns the code itself — see `MelipayamakConsoleOtpService`); do not
-  // tighten this to a single length without confirming the provider's
-  // contract.
   @ApiProperty({ example: "123456" })
   @IsString()
   @MinLength(4)

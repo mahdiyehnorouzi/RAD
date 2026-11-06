@@ -1,4 +1,3 @@
-import { randomBytes } from "node:crypto";
 import {
   BadRequestException,
   Injectable,
@@ -8,18 +7,16 @@ import {
 import { InjectRepository } from "@nestjs/typeorm";
 import { DataSource, EntityManager, MoreThan, Repository } from "typeorm";
 import { OtpCode, OtpRequestLog } from "../database/entities";
-import { MelipayamakConsoleOtpService } from "../sms/melipayamak-console-otp.service";
+import { MelipayamakService } from "../sms/melipayamak.service";
 import { normalizeIranianMobile } from "../sms/phone";
-import { hashVerificationCode } from "./reset-token.util";
+import {
+  generateVerificationCode,
+  hashVerificationCode,
+} from "./reset-token.util";
 
 const OTP_TTL_MS = 2 * 60 * 1000;
 const RESEND_COOLDOWN_MS = 60 * 1000;
 const MAX_VERIFY_ATTEMPTS = 5;
-
-/** Reserves a code row's cooldown slot before the real code is known; never a valid SHA-256 digest a real guess could ever hash to. */
-function randomPlaceholderHash() {
-  return `pending:${randomBytes(32).toString("hex")}`;
-}
 
 // Phone-keyed send rate limit, on top of (never instead of) the resend
 // cooldown above: the cooldown only stops *rapid-fire* resends, not an
@@ -47,7 +44,7 @@ export class OtpService {
     private readonly codes: Repository<OtpCode>,
     @InjectRepository(OtpRequestLog)
     private readonly requestLogs: Repository<OtpRequestLog>,
-    private readonly sms: MelipayamakConsoleOtpService,
+    private readonly sms: MelipayamakService,
     private readonly dataSource: DataSource,
   ) {}
 
@@ -65,112 +62,88 @@ export class OtpService {
   async requestCode(rawPhone: string) {
     const phone = this.requirePhone(rawPhone);
 
-    // Cooldown + rate-limit checks, logging this attempt, and reserving the
-    // cooldown slot all happen inside one transaction, serialized per phone
-    // via a Postgres advisory lock (`pg_advisory_xact_lock`, auto-released
-    // on commit/rollback) — the same reason `verifyCode` uses a row lock:
-    // without it, two concurrent requests for the same phone can each read
-    // "0 recent sends" before either one's insert commits, so both pass
-    // both checks and both page the SMS provider, overshooting the cap.
-    // There's no existing row to lock a fresh phone's checks against,
-    // which is what the advisory lock (keyed by the phone string, not any
-    // row) is for.
+    // Cooldown + rate-limit checks and reserving the new code all happen
+    // inside one transaction, serialized per phone via a Postgres advisory
+    // lock (`pg_advisory_xact_lock`, auto-released on commit/rollback) —
+    // the same reason `verifyCode` uses a row lock: without it, two
+    // concurrent requests for the same phone can each read "0 recent sends"
+    // before either one's insert commits, so both pass both checks and
+    // both page the SMS provider, overshooting the cap. There's no
+    // existing row to lock a fresh phone's checks against, which is what
+    // the advisory lock (keyed by the phone string, not any row) is for.
     //
-    // Unlike the previous (legacy `SendOtp`) provider, the Console OTP
-    // endpoint generates the code itself and returns it in its response —
-    // the real code isn't known until the provider answers, so the row
-    // reserving this phone's cooldown slot is created here with a random
-    // placeholder hash that can never match a real guess, then updated
-    // with the provider's actual code hash once the send succeeds below
-    // (or deleted if it fails). Without reserving the slot here, two
-    // concurrent requests could both pass this cooldown check before
-    // either one's real code is ever stored, overshooting the same cap
-    // this lock exists to enforce.
-    const reservedCodeId = await this.dataSource.transaction(
-      async (manager: EntityManager) => {
-        await manager.query("SELECT pg_advisory_xact_lock(hashtext($1))", [
+    // RAD generates the code itself (unlike Melipayamak's Console
+    // "send/otp" product, this legacy method only delivers a code RAD
+    // already decided on) — it's known upfront, so the row reserving this
+    // phone's cooldown slot can hold the real code hash from the start.
+    const { code, tokenHash, expiresAt } = generateVerificationCode(OTP_TTL_MS);
+    await this.dataSource.transaction(async (manager: EntityManager) => {
+      await manager.query("SELECT pg_advisory_xact_lock(hashtext($1))", [
+        phone,
+      ]);
+
+      const codes = manager.getRepository(OtpCode);
+      const requestLogs = manager.getRepository(OtpRequestLog);
+
+      const recent = await codes.findOne({
+        where: {
           phone,
-        ]);
-
-        const codes = manager.getRepository(OtpCode);
-        const requestLogs = manager.getRepository(OtpRequestLog);
-
-        const recent = await codes.findOne({
-          where: {
-            phone,
-            createdAt: MoreThan(new Date(Date.now() - RESEND_COOLDOWN_MS)),
-          },
-          order: { createdAt: "DESC" },
+          createdAt: MoreThan(new Date(Date.now() - RESEND_COOLDOWN_MS)),
+        },
+        order: { createdAt: "DESC" },
+      });
+      if (recent) {
+        throw new BadRequestException({
+          message:
+            "کد ورود به‌تازگی ارسال شده؛ کمی صبر کنید و دوباره تلاش کنید.",
+          code: "otp_cooldown",
         });
-        if (recent) {
-          throw new BadRequestException({
-            message:
-              "کد ورود به‌تازگی ارسال شده؛ کمی صبر کنید و دوباره تلاش کنید.",
-            code: "otp_cooldown",
-          });
-        }
+      }
 
-        // Unlike `OtpCode` (replaced on every request so verification only
-        // ever sees one active code), `OtpRequestLog` rows are never deleted
-        // — that history is exactly what this count needs, and is also why
-        // it lives in its own table rather than being derived from `codes`.
-        const sentInWindow = await requestLogs.count({
-          where: {
-            phone,
-            createdAt: MoreThan(new Date(Date.now() - RATE_LIMIT_WINDOW_MS)),
-          },
+      // Unlike `OtpCode` (replaced on every request so verification only
+      // ever sees one active code), `OtpRequestLog` rows are never deleted
+      // — that history is exactly what this count needs, and is also why
+      // it lives in its own table rather than being derived from `codes`.
+      const sentInWindow = await requestLogs.count({
+        where: {
+          phone,
+          createdAt: MoreThan(new Date(Date.now() - RATE_LIMIT_WINDOW_MS)),
+        },
+      });
+      if (sentInWindow >= RATE_LIMIT_MAX_REQUESTS) {
+        // Same generic shape as every other OTP error here: the phone's
+        // existence/account status is never distinguishable from the
+        // response, rate-limited or not.
+        throw new BadRequestException({
+          message:
+            "تعداد درخواست‌های کد برای این شماره بیش از حد مجاز است؛ کمی بعد دوباره تلاش کنید.",
+          code: "otp_rate_limited",
         });
-        if (sentInWindow >= RATE_LIMIT_MAX_REQUESTS) {
-          // Same generic shape as every other OTP error here: the phone's
-          // existence/account status is never distinguishable from the
-          // response, rate-limited or not.
-          throw new BadRequestException({
-            message:
-              "تعداد درخواست‌های کد برای این شماره بیش از حد مجاز است؛ کمی بعد دوباره تلاش کنید.",
-            code: "otp_rate_limited",
-          });
-        }
+      }
 
-        // Logged before the SMS call, inside the same locked transaction, so
-        // it counts against the limit whether or not the send below actually
-        // succeeds — an attacker forcing provider failures (or hitting real
-        // ones) doesn't get free, uncounted attempts at this gate.
-        await requestLogs.save(requestLogs.create({ phone }));
+      // Logged before the SMS call, inside the same locked transaction, so
+      // it counts against the limit whether or not the send below actually
+      // succeeds — an attacker forcing provider failures (or hitting real
+      // ones) doesn't get free, uncounted attempts at this gate.
+      await requestLogs.save(requestLogs.create({ phone }));
 
-        // One active code per phone: an old, unconsumed code from a prior
-        // request must never still verify once a newer one has been sent.
-        await codes.delete({ phone });
-        const reserved = await codes.save(
-          codes.create({
-            phone,
-            codeHash: randomPlaceholderHash(),
-            expiresAt: new Date(Date.now() + OTP_TTL_MS),
-          }),
-        );
-        return reserved.id;
-      },
-    );
+      // One active code per phone: an old, unconsumed code from a prior
+      // request must never still verify once a newer one has been sent.
+      await codes.delete({ phone });
+      await codes.save(codes.create({ phone, codeHash: tokenHash, expiresAt }));
+    });
 
-    let code: string;
     try {
-      // The provider generates and returns the code; it is used verbatim as
-      // the OTP (hashed below), never regenerated locally — a locally
-      // generated code could diverge from what was actually texted.
-      code = await this.sms.sendOtp(phone);
+      await this.sms.sendOtp(phone, code);
     } catch (error) {
-      // Don't leave an unusable, unreachable placeholder sitting active and
-      // blocking the cooldown: the next request should be a normal retry,
-      // not blocked by the cooldown for a send that never actually reached
-      // the phone. The `OtpRequestLog` row stays — the attempt still counts
-      // toward the rate limit even though the cooldown clears.
-      await this.codes.delete({ id: reservedCodeId });
+      // Don't leave an unusable, unreachable code sitting active: the next
+      // request should be a normal retry, not blocked by the cooldown for
+      // a send that never actually reached the phone. The `OtpRequestLog`
+      // row stays — the attempt still counts toward the rate limit even
+      // though the cooldown clears.
+      await this.codes.delete({ phone });
       throw error;
     }
-
-    await this.codes.update(
-      { id: reservedCodeId },
-      { codeHash: hashVerificationCode(code) },
-    );
 
     return {
       message: "کد ورود برای شما پیامک شد.",
