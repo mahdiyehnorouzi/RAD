@@ -77,9 +77,7 @@ export async function fillCheckoutFormAndSubmit(page: Page): Promise<string> {
   // The address field is a <textarea>, not an <input> — `input[name=...]`
   // silently never matches it.
   await page.locator('[name="address"]').fill("Test street, no. 1");
-  await page
-    .getByRole("checkbox", { name: /terms of sale/i })
-    .check();
+  await page.getByRole("checkbox", { name: /terms of sale/i }).check();
   await page.getByRole("button", { name: "Continue to payment" }).click();
   await waitForUrl(page, /\/checkout\/[^/?]+(\?.*)?$/);
   const match = page.url().match(/\/checkout\/([^/?]+)/);
@@ -93,11 +91,14 @@ export async function fillCheckoutFormAndSubmit(page: Page): Promise<string> {
  * off the mock StartPay URL — the real API never exposes it in order
  * responses, so this is the only place a test can observe it.
  */
-export async function clickPayAndFollowMockGateway(page: Page): Promise<string> {
+export async function clickPayAndFollowMockGateway(
+  page: Page,
+): Promise<string> {
   await page.getByRole("button", { name: "Pay and complete order" }).click();
   await waitForUrl(page, /\/pg\/StartPay\//);
   const match = page.url().match(/\/pg\/StartPay\/([^/?]+)/);
-  if (!match) throw new Error(`Could not read Authority from URL ${page.url()}`);
+  if (!match)
+    throw new Error(`Could not read Authority from URL ${page.url()}`);
   return decodeURIComponent(match[1]);
 }
 

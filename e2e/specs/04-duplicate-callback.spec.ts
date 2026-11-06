@@ -14,7 +14,10 @@ test("a duplicate/retried callback never creates a second order or payment", asy
 }) => {
   const { api } = urls();
 
-  await addTestProductToCartAndStartCheckout(page, E2E_TEST_PRODUCT_SLUGS.duplicateCallback);
+  await addTestProductToCartAndStartCheckout(
+    page,
+    E2E_TEST_PRODUCT_SLUGS.duplicateCallback,
+  );
   const orderId = await fillCheckoutFormAndSubmit(page);
 
   const authority = await clickPayAndFollowMockGateway(page);

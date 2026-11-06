@@ -15,7 +15,10 @@ test("returning from the gateway without paying preserves the order and the inve
 }) => {
   const { api } = urls();
 
-  await addTestProductToCartAndStartCheckout(page, E2E_TEST_PRODUCT_SLUGS.cancelReturn);
+  await addTestProductToCartAndStartCheckout(
+    page,
+    E2E_TEST_PRODUCT_SLUGS.cancelReturn,
+  );
   const orderId = await fillCheckoutFormAndSubmit(page);
 
   await clickPayAndFollowMockGateway(page);

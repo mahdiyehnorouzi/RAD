@@ -32,7 +32,10 @@ test("verify_error (gateway unreachable at verify time) is safe to retry and nev
 }) => {
   const { api } = urls();
 
-  await addTestProductToCartAndStartCheckout(page, E2E_TEST_PRODUCT_SLUGS.gatewayErrorRetry);
+  await addTestProductToCartAndStartCheckout(
+    page,
+    E2E_TEST_PRODUCT_SLUGS.gatewayErrorRetry,
+  );
   const orderId = await fillCheckoutFormAndSubmit(page);
 
   await clickPayAndFollowMockGateway(page);
@@ -54,9 +57,7 @@ test("verify_error (gateway unreachable at verify time) is safe to retry and nev
     await page.request.get(`${api}/orders/${orderId}`)
   ).json();
   expect(ambiguous.status).toBe("pending_payment"); // never silently confirmed
-  await expect(
-    page.getByText("Payment result not yet clear"),
-  ).toBeVisible();
+  await expect(page.getByText("Payment result not yet clear")).toBeVisible();
 
   // The gateway recovers; a retry must re-check the SAME attempt and land
   // on confirmed, not start (or double-count) a new charge.

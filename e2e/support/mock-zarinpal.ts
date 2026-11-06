@@ -54,7 +54,9 @@ export class MockZarinpalGateway {
     this.server = createServer((req, res) => {
       void this.handle(req, res).catch((error) => {
         res.writeHead(500, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ data: {}, errors: { message: String(error) } }));
+        res.end(
+          JSON.stringify({ data: {}, errors: { message: String(error) } }),
+        );
       });
     });
     await new Promise<void>((resolve) => {
@@ -77,7 +79,10 @@ export class MockZarinpalGateway {
   ) {
     const url = new URL(req.url ?? "/", this.baseUrl);
 
-    if (req.method === "POST" && url.pathname === "/pg/v4/payment/request.json") {
+    if (
+      req.method === "POST" &&
+      url.pathname === "/pg/v4/payment/request.json"
+    ) {
       const body = (await readJson(req)) as {
         amount: number;
         callback_url: string;
@@ -85,7 +90,10 @@ export class MockZarinpalGateway {
       };
       return this.handleRequest(body, res);
     }
-    if (req.method === "POST" && url.pathname === "/pg/v4/payment/verify.json") {
+    if (
+      req.method === "POST" &&
+      url.pathname === "/pg/v4/payment/verify.json"
+    ) {
       const body = (await readJson(req)) as { authority: string };
       return this.handleVerify(body, res);
     }
@@ -120,7 +128,11 @@ export class MockZarinpalGateway {
   }
 
   private handleRequest(
-    body: { amount: number; callback_url: string; metadata?: { order_id?: string } },
+    body: {
+      amount: number;
+      callback_url: string;
+      metadata?: { order_id?: string };
+    },
     res: import("node:http").ServerResponse,
   ) {
     const orderId = body.metadata?.order_id ?? "";
@@ -147,7 +159,10 @@ export class MockZarinpalGateway {
         res.end(
           JSON.stringify({
             data: {},
-            errors: { code: -1, message: "ارتباط با درگاه پرداخت برقرار نشد (شبیه‌سازی‌شده)." },
+            errors: {
+              code: -1,
+              message: "ارتباط با درگاه پرداخت برقرار نشد (شبیه‌سازی‌شده).",
+            },
           }),
         );
         return;
@@ -166,7 +181,12 @@ export class MockZarinpalGateway {
       requestFailedOnce: outcome === "request_down_once",
     });
     res.writeHead(200, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ data: { code: 100, message: "Success", authority }, errors: [] }));
+    res.end(
+      JSON.stringify({
+        data: { code: 100, message: "Success", authority },
+        errors: [],
+      }),
+    );
   }
 
   private handleVerify(
@@ -177,7 +197,10 @@ export class MockZarinpalGateway {
     if (!session) {
       res.writeHead(200, { "Content-Type": "application/json" });
       res.end(
-        JSON.stringify({ data: {}, errors: { code: -50, message: "Authority نامعتبر است." } }),
+        JSON.stringify({
+          data: {},
+          errors: { code: -50, message: "Authority نامعتبر است." },
+        }),
       );
       return;
     }
@@ -186,10 +209,16 @@ export class MockZarinpalGateway {
     // id after checkout() already called request.json, so `setOutcome` is
     // commonly called between request.json and verify.json for the same
     // order — it must still take effect.
-    const liveOutcome = this.pendingOutcomeByOrder.get(session.orderId) ?? session.outcome;
+    const liveOutcome =
+      this.pendingOutcomeByOrder.get(session.orderId) ?? session.outcome;
     if (liveOutcome === "verify_error") {
       res.writeHead(500, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ data: {}, errors: { message: "simulated gateway outage" } }));
+      res.end(
+        JSON.stringify({
+          data: {},
+          errors: { message: "simulated gateway outage" },
+        }),
+      );
       return;
     }
     if (!session.paid) {
@@ -207,14 +236,22 @@ export class MockZarinpalGateway {
     res.writeHead(200, { "Content-Type": "application/json" });
     res.end(
       JSON.stringify({
-        data: { code, message: "Success", ref_id: 123456, card_pan: "602137******1234" },
+        data: {
+          code,
+          message: "Success",
+          ref_id: 123456,
+          card_pan: "602137******1234",
+        },
         errors: [],
       }),
     );
   }
 
   /** The simulated gateway page a Playwright test actually clicks through. */
-  private handleStartPay(authority: string, res: import("node:http").ServerResponse) {
+  private handleStartPay(
+    authority: string,
+    res: import("node:http").ServerResponse,
+  ) {
     const session = this.sessionsByAuthority.get(authority);
     if (!session) {
       res.writeHead(404, { "Content-Type": "text/html" });
@@ -237,7 +274,10 @@ export class MockZarinpalGateway {
 </html>`);
   }
 
-  private handleMarkPaid(authority: string, res: import("node:http").ServerResponse) {
+  private handleMarkPaid(
+    authority: string,
+    res: import("node:http").ServerResponse,
+  ) {
     const session = this.sessionsByAuthority.get(authority);
     if (!session) {
       res.writeHead(404, { "Content-Type": "text/html" });

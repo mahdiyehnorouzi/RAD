@@ -33,7 +33,10 @@ export async function seedE2eDatabase(
     return record;
   });
 
-  const dataSource = createAppDataSource({ url: databaseUrl, synchronize: true });
+  const dataSource = createAppDataSource({
+    url: databaseUrl,
+    synchronize: true,
+  });
   await dataSource.initialize();
   await seedArtists(dataSource);
   await seedArtworks(dataSource, records, (record) => records.indexOf(record));

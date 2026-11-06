@@ -35,7 +35,9 @@ test("cart, checkout, order and payment amount/item-count agree with the same so
   // Server-side truth for this order: exactly one item, and the order
   // total agrees with the payment amount the gateway will be asked to
   // collect — the same two numbers the admin reconciliation flow compares.
-  const order = await (await page.request.get(`${api}/orders/${orderId}`)).json();
+  const order = await (
+    await page.request.get(`${api}/orders/${orderId}`)
+  ).json();
   expect(order.slugs).toEqual([productSlug]);
   expect(order.payment?.amount).toBe(order.total);
 
@@ -43,7 +45,9 @@ test("cart, checkout, order and payment amount/item-count agree with the same so
   // no silent currency/unit drift between cart, checkout and payment.
   const amountDigits = String(order.payment?.amount ?? order.total);
   const expectedPattern = formatThousands(amountDigits);
-  await expect(page.getByText(new RegExp(expectedPattern)).first()).toBeVisible();
+  await expect(
+    page.getByText(new RegExp(expectedPattern)).first(),
+  ).toBeVisible();
   expect(cartAmountText).toMatch(new RegExp(expectedPattern));
 });
 

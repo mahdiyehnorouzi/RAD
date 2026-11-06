@@ -158,7 +158,9 @@ export default async function globalSetup() {
       { stdio: "inherit" },
     );
     seed.on("exit", (code) =>
-      code === 0 ? resolve() : reject(new Error(`seed-e2e-db-cli exited ${code}`)),
+      code === 0
+        ? resolve()
+        : reject(new Error(`seed-e2e-db-cli exited ${code}`)),
     );
   });
 
@@ -176,8 +178,13 @@ export default async function globalSetup() {
   const storefrontPort = await freePort();
   const storefrontUrl = `http://127.0.0.1:${storefrontPort}`;
   await new Promise<void>((resolve, reject) => {
-    const build = spawn("npm", ["run", "build"], { cwd: API_DIR, stdio: "inherit" });
-    build.on("exit", (code) => (code === 0 ? resolve() : reject(new Error(`api build exited ${code}`))));
+    const build = spawn("npm", ["run", "build"], {
+      cwd: API_DIR,
+      stdio: "inherit",
+    });
+    build.on("exit", (code) =>
+      code === 0 ? resolve() : reject(new Error(`api build exited ${code}`)),
+    );
   });
   apiProcess = spawnLogged("node", ["dist/main.js"], {
     cwd: API_DIR,

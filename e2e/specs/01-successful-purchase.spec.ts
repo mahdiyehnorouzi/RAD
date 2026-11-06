@@ -14,7 +14,10 @@ test("successful purchase: PDP -> cart -> checkout -> mocked gateway success -> 
 }) => {
   const { api } = urls();
 
-  await addTestProductToCartAndStartCheckout(page, E2E_TEST_PRODUCT_SLUGS.successfulPurchase);
+  await addTestProductToCartAndStartCheckout(
+    page,
+    E2E_TEST_PRODUCT_SLUGS.successfulPurchase,
+  );
   const orderId = await fillCheckoutFormAndSubmit(page);
 
   await clickPayAndFollowMockGateway(page);
@@ -35,7 +38,9 @@ test("successful purchase: PDP -> cart -> checkout -> mocked gateway success -> 
     )
     .toBe("confirmed");
 
-  const order = await (await page.request.get(`${api}/orders/${orderId}`)).json();
+  const order = await (
+    await page.request.get(`${api}/orders/${orderId}`)
+  ).json();
   expect(order.payment?.status).toBe("verified");
 
   // What the buyer actually sees: a non-pending result, not the gateway button.

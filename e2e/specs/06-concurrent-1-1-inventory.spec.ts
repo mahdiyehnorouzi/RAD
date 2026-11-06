@@ -27,7 +27,9 @@ test("two concurrent buyers can never both reserve the same 1/1 item", async ({
 
   const clickAddAndWait = async (page: typeof pageA) => {
     const response = page.waitForResponse(
-      (res) => res.url().includes("/backend/cart/items") && res.request().method() === "POST",
+      (res) =>
+        res.url().includes("/backend/cart/items") &&
+        res.request().method() === "POST",
     );
     await page.getByRole("button", { name: /add to bag/i }).click();
     await response;
@@ -49,26 +51,46 @@ test("two concurrent buyers can never both reserve the same 1/1 item", async ({
   await Promise.all([
     pageA
       .getByRole("button", { name: "In your bag" })
-      .or(pageA.getByText(/took this work|another collector|currently reserved|sold/i))
+      .or(
+        pageA.getByText(
+          /took this work|another collector|currently reserved|sold/i,
+        ),
+      )
       .first()
       .waitFor(),
     pageB
       .getByRole("button", { name: "In your bag" })
-      .or(pageB.getByText(/took this work|another collector|currently reserved|sold/i))
+      .or(
+        pageB.getByText(
+          /took this work|another collector|currently reserved|sold/i,
+        ),
+      )
       .first()
       .waitFor(),
   ]);
 
-  const inBagA = await pageA.getByRole("button", { name: "In your bag" }).count();
-  const inBagB = await pageB.getByRole("button", { name: "In your bag" }).count();
+  const inBagA = await pageA
+    .getByRole("button", { name: "In your bag" })
+    .count();
+  const inBagB = await pageB
+    .getByRole("button", { name: "In your bag" })
+    .count();
 
   // Exactly one of the two browser sessions actually got the hold.
   expect(inBagA + inBagB).toBe(1);
 
   if (inBagB === 1) {
-    await expect(pageA.getByText(/took this work|another collector|currently reserved|sold/i).first()).toBeVisible();
+    await expect(
+      pageA
+        .getByText(/took this work|another collector|currently reserved|sold/i)
+        .first(),
+    ).toBeVisible();
   } else {
-    await expect(pageB.getByText(/took this work|another collector|currently reserved|sold/i).first()).toBeVisible();
+    await expect(
+      pageB
+        .getByText(/took this work|another collector|currently reserved|sold/i)
+        .first(),
+    ).toBeVisible();
   }
 
   // Server-side truth: the product is held (publicly shown as "sold" while

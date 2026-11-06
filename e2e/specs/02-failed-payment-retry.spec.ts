@@ -15,7 +15,10 @@ test("failed payment (NOK) stays payable, and retry succeeds", async ({
 }) => {
   const { api } = urls();
 
-  await addTestProductToCartAndStartCheckout(page, E2E_TEST_PRODUCT_SLUGS.failedPaymentRetry);
+  await addTestProductToCartAndStartCheckout(
+    page,
+    E2E_TEST_PRODUCT_SLUGS.failedPaymentRetry,
+  );
   const orderId = await fillCheckoutFormAndSubmit(page);
 
   await clickPayAndFollowMockGateway(page);
@@ -32,7 +35,9 @@ test("failed payment (NOK) stays payable, and retry succeeds", async ({
     })
     .toBe("failed");
 
-  const afterNok = await (await page.request.get(`${api}/orders/${orderId}`)).json();
+  const afterNok = await (
+    await page.request.get(`${api}/orders/${orderId}`)
+  ).json();
   expect(afterNok.status).toBe("pending_payment");
 
   // The retry button the UI shows for a plain failed payment.
@@ -54,6 +59,8 @@ test("failed payment (NOK) stays payable, and retry succeeds", async ({
 
   // Exactly one order and one product sale came out of this, despite the
   // first failed attempt and the retry.
-  const final = await (await page.request.get(`${api}/orders/${orderId}`)).json();
+  const final = await (
+    await page.request.get(`${api}/orders/${orderId}`)
+  ).json();
   expect(final.payment?.status).toBe("verified");
 });
