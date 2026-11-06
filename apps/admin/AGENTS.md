@@ -14,10 +14,10 @@ Hand-maintained content below the Next.js block. Never edit between the `BEGIN` 
 
 ## What exists now
 
-- The staff UI is one client shell. `app/page.tsx` only renders `components/admin-dashboard.tsx`. Sections are React state, not routes: `AdminSection` in `lib/admin-data.ts` and `navItems` in the dashboard.
-- Routes that exist today are `/`, `/reset-password`, `/api/health`, and the API proxy `/backend/[...path]`. There is no `features/` tree and no per-section route. Do not import or document those as if they exist.
-- The October audit's domain list (orders, inventory, damage, reviews) is incomplete, and there is no `inventory` section id. Read `AdminSection` before choosing a migration. On current `main` the sections are overview, products, orders, messages, damage, commissions, reviews, shape, help, attributes, users, members, and account.
-- Sibling components (`admin-login.tsx`, reviews, commissions, damage, messages, and others) and `hooks/use-admin-workspace.ts` already exist. They are still mounted by the shell. That is not ADR-002. Leave them in place until a route PR moves one section.
+- The staff UI is one client shell, `components/admin-shell.tsx`, mounted by `app/(studio)/layout.tsx`. `useAdminWorkspace()` runs once there. `/` still renders `components/admin-dashboard.tsx`. Customer reviews are the route `app/(studio)/reviews/page.tsx` (`/reviews`) and live in `features/reviews/`. The other sections are still React state on `/`: overview, products, orders, messages, damage, commissions, shape, help, attributes, users, members, and account.
+- Routes that exist today are `/`, `/reviews`, `/reset-password`, `/api/health`, and the API proxy `/backend/[...path]`. Do not add another section route in a reviews change.
+- The October audit's domain list (orders, inventory, damage, reviews) is incomplete, and there is no `inventory` section id. Read `AdminSection` before choosing the next migration.
+- Sibling components (commissions, damage, messages, and others) and `hooks/use-admin-workspace.ts` stay mounted by the shell. Leave them in place until a route PR moves that one section.
 - The only in-shell deep link is the `#commissions/<id>` hash read in `admin-dashboard.tsx`. Every other section still opens on overview. Preserve that hash, or replace it with a redirect the PR demonstrates.
 - `app/layout.tsx` sets `<html lang="fa" dir="rtl">`. Keep Persian copy, RTL, and that document language and direction on every admin route.
 - Login is `AdminLogin` inside the dashboard. Session restore and sign-in live in `use-admin-workspace.ts` (`/auth/me`, `/auth/session`). Do not add a second auth gate, and do not drop a valid session because one section request failed.

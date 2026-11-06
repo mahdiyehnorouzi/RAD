@@ -17,7 +17,7 @@ import { UsersPanel } from "../components/admin-users";
 import { ConfirmDialog } from "../components/admin-dialog";
 import { AdminHelpQuestions } from "../components/admin-help-questions";
 import { AdminMessages } from "../components/admin-messages";
-import { AdminReviews } from "../components/admin-reviews";
+import { AdminReviews } from "../features/reviews/admin-reviews";
 import { AdminShapeQuestions } from "../components/admin-shape-questions";
 
 const retry = () => {};
@@ -222,6 +222,54 @@ test("reviews distinguish loading, failure, empty, and a real row", () => {
     }),
   );
   assert.match(ready, /سارا تست/);
+});
+
+test("a visible review offers hide and delete only to a writer, and does not confirm yet", () => {
+  const writer = html(
+    createElement(AdminReviews, {
+      reviews: [review],
+      loading: false,
+      loadError: false,
+      onRetry: retry,
+      canWrite: true,
+      onSetHidden: noop,
+      onDelete: noop,
+    }),
+  );
+  assert.match(writer, /پنهان کردن/);
+  assert.match(writer, /حذف/);
+  assert.doesNotMatch(writer, /حذف نظر سارا تست؟/);
+  assert.doesNotMatch(writer, /نظر برای همیشه حذف می‌شود/);
+
+  const hidden = html(
+    createElement(AdminReviews, {
+      reviews: [{ ...review, hidden: true }],
+      loading: false,
+      loadError: false,
+      onRetry: retry,
+      canWrite: true,
+      onSetHidden: noop,
+      onDelete: noop,
+    }),
+  );
+  assert.match(hidden, /aria-pressed="true">در فروشگاه/);
+  assert.match(hidden, /پنهان<span>۱/);
+  assert.match(hidden, /هنوز نظری در این دسته نیست/);
+  assert.doesNotMatch(hidden, /سارا تست/);
+
+  const reader = html(
+    createElement(AdminReviews, {
+      reviews: [review],
+      loading: false,
+      loadError: false,
+      onRetry: retry,
+      canWrite: false,
+      onSetHidden: noop,
+      onDelete: noop,
+    }),
+  );
+  assert.doesNotMatch(reader, /پنهان کردن/);
+  assert.doesNotMatch(reader, /حذف نظر/);
 });
 
 test("a loaded review stays visible when a background refresh fails", () => {

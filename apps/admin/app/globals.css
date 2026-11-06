@@ -238,7 +238,8 @@ textarea:focus-visible {
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
 }
-.admin-nav button {
+.admin-nav button,
+.admin-nav a {
   width: 100%;
   display: grid;
   grid-template-columns: 22px 1fr 18px;
@@ -249,21 +250,25 @@ textarea:focus-visible {
   background: transparent;
   color: #c5ccc8;
   text-align: right;
+  text-decoration: none;
   cursor: pointer;
   border-radius: 3px;
 }
-.admin-nav button:hover {
+.admin-nav button:hover,
+.admin-nav a:hover {
   background: #ffffff0c;
   color: #fff;
 }
-.admin-nav button.active {
+.admin-nav button.active,
+.admin-nav a.active {
   background: var(--paper);
   color: var(--ink);
 }
 .admin-nav svg {
   width: 19px;
 }
-.admin-nav button svg:last-child {
+.admin-nav button svg:last-child,
+.admin-nav a svg:last-child {
   width: 15px;
   opacity: 0.6;
 }
@@ -1849,7 +1854,8 @@ td select,
   font-variant-numeric: tabular-nums;
   vertical-align: 1px;
 }
-.admin-nav button.active .nav-count {
+.admin-nav button.active .nav-count,
+.admin-nav a.active .nav-count {
   background: var(--oxide);
   color: #fff;
 }
