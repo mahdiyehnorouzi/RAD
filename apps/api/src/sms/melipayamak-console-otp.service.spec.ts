@@ -82,9 +82,7 @@ describe("MelipayamakConsoleOtpService: request shape", () => {
       });
     });
 
-    await new MelipayamakConsoleOtpService(configured()).sendOtp(
-      "09121234567",
-    );
+    await new MelipayamakConsoleOtpService(configured()).sendOtp("09121234567");
 
     assert.equal(
       capturedUrl,
@@ -103,9 +101,9 @@ describe("MelipayamakConsoleOtpService: response handling", () => {
           status: 200,
         }),
     );
-    const code = await new MelipayamakConsoleOtpService(
-      configured(),
-    ).sendOtp("09121234567");
+    const code = await new MelipayamakConsoleOtpService(configured()).sendOtp(
+      "09121234567",
+    );
     assert.equal(code, "4821");
   });
 
@@ -116,19 +114,20 @@ describe("MelipayamakConsoleOtpService: response handling", () => {
           status: 200,
         }),
     );
-    const code = await new MelipayamakConsoleOtpService(
-      configured(),
-    ).sendOtp("09121234567");
+    const code = await new MelipayamakConsoleOtpService(configured()).sendOtp(
+      "09121234567",
+    );
     assert.equal(code, "0812");
   });
 
   test("a response with no `status` field at all is still treated as a success (status presence, not absence, drives failure)", async () => {
     stubFetch(
-      async () => new Response(JSON.stringify({ code: "5566" }), { status: 200 }),
+      async () =>
+        new Response(JSON.stringify({ code: "5566" }), { status: 200 }),
     );
-    const code = await new MelipayamakConsoleOtpService(
-      configured(),
-    ).sendOtp("09121234567");
+    const code = await new MelipayamakConsoleOtpService(configured()).sendOtp(
+      "09121234567",
+    );
     assert.equal(code, "5566");
   });
 
@@ -156,9 +155,7 @@ describe("MelipayamakConsoleOtpService: response handling", () => {
       );
       await assert.rejects(
         () =>
-          new MelipayamakConsoleOtpService(configured()).sendOtp(
-            "09121234567",
-          ),
+          new MelipayamakConsoleOtpService(configured()).sendOtp("09121234567"),
         InternalServerErrorException,
       );
     }
@@ -171,9 +168,7 @@ describe("MelipayamakConsoleOtpService: response handling", () => {
     );
     await assert.rejects(
       () =>
-        new MelipayamakConsoleOtpService(configured()).sendOtp(
-          "09121234567",
-        ),
+        new MelipayamakConsoleOtpService(configured()).sendOtp("09121234567"),
       InternalServerErrorException,
     );
   });
@@ -187,9 +182,7 @@ describe("MelipayamakConsoleOtpService: response handling", () => {
     );
     await assert.rejects(
       () =>
-        new MelipayamakConsoleOtpService(configured()).sendOtp(
-          "09121234567",
-        ),
+        new MelipayamakConsoleOtpService(configured()).sendOtp("09121234567"),
       InternalServerErrorException,
     );
   });
@@ -198,9 +191,7 @@ describe("MelipayamakConsoleOtpService: response handling", () => {
     stubFetch(async () => new Response("not json", { status: 200 }));
     await assert.rejects(
       () =>
-        new MelipayamakConsoleOtpService(configured()).sendOtp(
-          "09121234567",
-        ),
+        new MelipayamakConsoleOtpService(configured()).sendOtp("09121234567"),
       InternalServerErrorException,
     );
   });
@@ -214,9 +205,7 @@ describe("MelipayamakConsoleOtpService: response handling", () => {
     );
     await assert.rejects(
       () =>
-        new MelipayamakConsoleOtpService(configured()).sendOtp(
-          "09121234567",
-        ),
+        new MelipayamakConsoleOtpService(configured()).sendOtp("09121234567"),
       InternalServerErrorException,
     );
   });
@@ -227,9 +216,7 @@ describe("MelipayamakConsoleOtpService: response handling", () => {
     }) as typeof fetch;
     await assert.rejects(
       () =>
-        new MelipayamakConsoleOtpService(configured()).sendOtp(
-          "09121234567",
-        ),
+        new MelipayamakConsoleOtpService(configured()).sendOtp("09121234567"),
       InternalServerErrorException,
     );
   });
@@ -240,9 +227,7 @@ describe("MelipayamakConsoleOtpService: response handling", () => {
     });
     await assert.rejects(
       () =>
-        new MelipayamakConsoleOtpService(configured()).sendOtp(
-          "09121234567",
-        ),
+        new MelipayamakConsoleOtpService(configured()).sendOtp("09121234567"),
       InternalServerErrorException,
     );
   });

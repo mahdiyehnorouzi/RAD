@@ -89,7 +89,5 @@ export function normalizeOtpCode(raw: string) {
 
 /** What the code input shows while typing: Latin digits, at most the API's max length. */
 export function otpCodeDraft(raw: string) {
-  return toLatinDigits(raw)
-    .replace(/\D/g, "")
-    .slice(0, OTP_CODE_MAX_LENGTH);
+  return toLatinDigits(raw).replace(/\D/g, "").slice(0, OTP_CODE_MAX_LENGTH);
 }
