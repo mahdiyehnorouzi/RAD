@@ -35,10 +35,12 @@ import { roleLabels, type AdminSection } from "../lib/admin-data";
 import {
   initialDashboardSection,
   isReviewsPath,
-  planHistoryNavigation,
-  planSectionSelect,
-  sectionDataTarget,
+  settleStudioPath,
   staffGate,
+  startReviewsLink,
+  startSectionSelect,
+  studioHistoryHref,
+  type PendingNavigation,
 } from "../lib/staff-navigation";
 import { AdminLogin } from "./admin-login";
 
@@ -91,10 +93,15 @@ export function AdminShell({ children }: { children: ReactNode }) {
   const [mobileNav, setMobileNav] = useState(false);
   const [toast, setToast] = useState("");
   const reviewsActive = isReviewsPath(pathname);
-  // Set when go() already fetched for a path change, so the effect below
-  // does not fetch that same section again.
+  // skip: go() already fetched for a path change. pending: latest choice
+  // whose URL has not committed. seen: last pathname this effect applied.
   const skipPathLoad = useRef<AdminSection | null>(null);
   const seenPath = useRef<string | null>(null);
+  const pendingNav = useRef<PendingNavigation | null>(null);
+  const sectionRef = useRef(section);
+  useEffect(() => {
+    sectionRef.current = section;
+  }, [section]);
 
   const announce = (message: string) => {
     setToast(message);
@@ -103,32 +110,58 @@ export function AdminShell({ children }: { children: ReactNode }) {
 
   const go = (next: AdminSection) => {
     setMobileNav(false);
-    const plan = planSectionSelect({ pathname, section }, next);
-    if (plan.view.section !== section) setSection(plan.view.section);
-    if (plan.view.pathname !== pathname) {
-      skipPathLoad.current = plan.load;
-      router.push(isReviewsPath(plan.view.pathname) ? "/reviews" : "/");
-    } else {
-      skipPathLoad.current = null;
+    const action = startSectionSelect(
+      { pathname, section },
+      pendingNav.current,
+      next,
+    );
+    pendingNav.current = action.pending;
+    skipPathLoad.current = action.skip;
+    if (action.section !== section) setSection(action.section);
+    sectionRef.current = action.section;
+    if (action.push) router.push(action.push);
+    else if (action.replace) {
+      router.replace(
+        studioHistoryHref(
+          action.replace,
+          typeof window === "undefined" ? "" : window.location.hash,
+        ),
+      );
     }
-    if (plan.load) void workspace.loadSection(plan.load);
+    if (action.load) void workspace.loadSection(action.load);
   };
+
+  // Back/Forward cancels an uncommitted choice before React paints the
+  // restored URL, so that choice cannot overwrite the remembered section
+  // or skip its fetch. Hash updates use pushState and do not fire this.
+  useEffect(() => {
+    const onPop = () => {
+      pendingNav.current = null;
+      skipPathLoad.current = null;
+    };
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
 
   // First authenticated paint, refresh, the Reviews link, and browser
   // history. Explicit choices load inside go(); skipPathLoad stops the
-  // path change from fetching a second time. The section value is the
-  // in-memory one, so Back restores it instead of resetting to Overview.
+  // matching path change from fetching again. Logout clears skip, because
+  // it also clears loaded data.
   useEffect(() => {
-    if (workspace.authStatus !== "authenticated") return;
-    const skipped = skipPathLoad.current;
-    skipPathLoad.current = null;
-    const previous = seenPath.current;
-    seenPath.current = pathname;
-    const load =
-      previous === null || previous === pathname
-        ? sectionDataTarget(pathname, section)
-        : planHistoryNavigation({ pathname: previous, section }, pathname).load;
-    if (load && skipped !== load) void workspace.loadSection(load);
+    const settled = settleStudioPath({
+      auth: workspace.authStatus,
+      pathname,
+      section,
+      seen: seenPath.current,
+      skip: skipPathLoad.current,
+      pending: pendingNav.current,
+    });
+    seenPath.current = settled.seen;
+    skipPathLoad.current = settled.skip;
+    pendingNav.current = settled.pending;
+    sectionRef.current = settled.section;
+    if (settled.section !== section) setSection(settled.section);
+    if (settled.load) void workspace.loadSection(settled.load);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [workspace.authStatus, pathname]);
 
@@ -252,7 +285,15 @@ export function AdminShell({ children }: { children: ReactNode }) {
                     key={id}
                     href="/reviews"
                     className={className}
-                    onClick={() => setMobileNav(false)}
+                    onClick={() => {
+                      setMobileNav(false);
+                      const action = startReviewsLink({
+                        pathname,
+                        section: sectionRef.current,
+                      });
+                      pendingNav.current = action.pending;
+                      skipPathLoad.current = action.skip;
+                    }}
                   >
                     {body}
                   </Link>
