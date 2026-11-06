@@ -55,7 +55,6 @@ import {
   useIsMobileViewport,
 } from "./admin-dialog";
 import { AdminShapeQuestions } from "./admin-shape-questions";
-import { AdminHelpQuestions } from "./admin-help-questions";
 import { AdminProductAttributes } from "./admin-product-attributes";
 import { EmptyState, StatusBadge } from "./admin-list-chrome";
 import { InviteDialog, Members } from "./admin-members";
@@ -124,13 +123,7 @@ function relativeTime(value: number) {
 // set by AdminCommissions) must land back in that section, not Overview —
 // this is the one spot in the shell that reads the hash; every other
 // section still opens on "overview" as before.
-type AsyncKey =
-  | "messages"
-  | "reviews"
-  | "shapeQuestions"
-  | "helpQuestions"
-  | "users"
-  | "members";
+type AsyncKey = "messages" | "reviews" | "shapeQuestions" | "users" | "members";
 
 function sectionAsync(
   workspace: {
@@ -355,27 +348,6 @@ export function AdminDashboard() {
           }}
           onReorder={async (ids) => {
             await workspace.reorderShapeQuestions(ids);
-          }}
-        />
-      )}
-      {section === "help" && (
-        <AdminHelpQuestions
-          questions={workspace.helpQuestions}
-          {...sectionAsync(workspace, "helpQuestions")}
-          canWrite={workspace.can("content.write")}
-          onSave={async (input, id) => {
-            await workspace.saveHelpQuestion(input, id);
-            announce(
-              id ? "سؤال ذخیره شد." : "سؤال تازه به صفحه‌ی راهنما اضافه شد.",
-            );
-            return true;
-          }}
-          onDelete={async (id) => {
-            await workspace.deleteHelpQuestion(id);
-            announce("سؤال از صفحه‌ی راهنما حذف شد.");
-          }}
-          onReorder={async (ids) => {
-            await workspace.reorderHelpQuestions(ids);
           }}
         />
       )}

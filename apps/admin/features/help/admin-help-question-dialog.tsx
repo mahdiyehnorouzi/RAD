@@ -1,14 +1,14 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { createSingleFlight } from "../lib/admin-mutation";
+import { createSingleFlight } from "../../lib/admin-mutation";
 import { POLICY_SLUGS, type PolicySlug } from "@rad/types";
 import {
   policyTitleLabels,
   type HelpQuestion,
   type HelpQuestionInput,
-} from "../lib/admin-data";
-import { DialogShell, Field } from "./admin-dialog";
+} from "../../lib/admin-data";
+import { DialogShell, Field } from "../../components/admin-dialog";
 
 type Draft = {
   questionFa: string;
