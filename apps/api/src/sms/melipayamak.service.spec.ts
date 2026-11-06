@@ -232,7 +232,125 @@ describe("MelipayamakService: response handling", () => {
       InternalServerErrorException,
     );
   });
+});
 
+describe("MelipayamakService: REST JSON response shape", () => {
+  test("a JSON body with a numeric-string Value is a success (the real REST wrapper shape)", async () => {
+    stubFetch(
+      async () =>
+        new Response(JSON.stringify({ Value: "246813579" }), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        }),
+    );
+    await new MelipayamakService(configured()).sendOtp("09121234567", "123456");
+  });
+
+  test("a JSON body with a numeric (not string) Value is a success", async () => {
+    stubFetch(
+      async () =>
+        new Response(JSON.stringify({ Value: 246813579 }), { status: 200 }),
+    );
+    await new MelipayamakService(configured()).sendOtp("09121234567", "123456");
+  });
+
+  test("a lowercase `value` key is also recognized (case-insensitive field match)", async () => {
+    stubFetch(
+      async () =>
+        new Response(JSON.stringify({ value: "13579" }), { status: 200 }),
+    );
+    await new MelipayamakService(configured()).sendOtp("09121234567", "123456");
+  });
+
+  test("other fields alongside Value (e.g. a status flag) don't change the classification", async () => {
+    stubFetch(
+      async () =>
+        new Response(
+          JSON.stringify({
+            Value: "13579",
+            RetStatus: 1,
+            StrRetStatus: "Success",
+          }),
+          { status: 200 },
+        ),
+    );
+    await new MelipayamakService(configured()).sendOtp("09121234567", "123456");
+  });
+
+  for (const code of ["0", "2", "16", "18", "35", "111", "-110"]) {
+    test(`a JSON Value holding a documented error code ("${code}") is rejected, never mistaken for a recId`, async () => {
+      stubFetch(
+        async () =>
+          new Response(JSON.stringify({ Value: code }), { status: 200 }),
+      );
+      await assert.rejects(
+        () =>
+          new MelipayamakService(configured()).sendOtp("09121234567", "123456"),
+        InternalServerErrorException,
+      );
+    });
+  }
+
+  test("a JSON body with no Value field is rejected rather than assumed successful", async () => {
+    stubFetch(
+      async () =>
+        new Response(JSON.stringify({ RetStatus: 1 }), { status: 200 }),
+    );
+    await assert.rejects(
+      () =>
+        new MelipayamakService(configured()).sendOtp("09121234567", "123456"),
+      InternalServerErrorException,
+    );
+  });
+
+  test("a Value that is neither a string nor a number is rejected", async () => {
+    stubFetch(
+      async () =>
+        new Response(JSON.stringify({ Value: { recId: 1 } }), { status: 200 }),
+    );
+    await assert.rejects(
+      () =>
+        new MelipayamakService(configured()).sendOtp("09121234567", "123456"),
+      InternalServerErrorException,
+    );
+  });
+
+  test("malformed JSON (truncated/invalid syntax) is rejected rather than crashing", async () => {
+    stubFetch(async () => new Response('{"Value": "13579"', { status: 200 }));
+    await assert.rejects(
+      () =>
+        new MelipayamakService(configured()).sendOtp("09121234567", "123456"),
+      InternalServerErrorException,
+    );
+  });
+
+  test("a JSON array body (not an object) is rejected rather than crashing", async () => {
+    stubFetch(
+      async () => new Response(JSON.stringify(["13579"]), { status: 200 }),
+    );
+    await assert.rejects(
+      () =>
+        new MelipayamakService(configured()).sendOtp("09121234567", "123456"),
+      InternalServerErrorException,
+    );
+  });
+
+  test("the plain-text and XML response shapes still work alongside the JSON one", async () => {
+    stubFetch(async () => new Response("13579", { status: 200 }));
+    await new MelipayamakService(configured()).sendOtp("09121234567", "123456");
+
+    stubFetch(
+      async () =>
+        new Response(
+          '<?xml version="1.0" encoding="utf-8"?><string xmlns="http://tempuri.org/">24681</string>',
+          { status: 200 },
+        ),
+    );
+    await new MelipayamakService(configured()).sendOtp("09121234567", "123456");
+  });
+});
+
+describe("MelipayamakService: failure logging", () => {
   test("the failure message never includes the OTP code or phone number", async () => {
     stubFetch(async () => new Response("0", { status: 200 }));
     await assert.rejects(
