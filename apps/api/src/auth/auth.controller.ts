@@ -14,7 +14,13 @@ import {
 import { Throttle } from "@nestjs/throttler";
 import type { Response } from "express";
 import { AuthService } from "./auth.service";
-import { GoogleAuthService } from "./google-auth.service";
+import {
+  GoogleAuthService,
+  GoogleOAuthStageError,
+  GOOGLE_OAUTH_REASON_CODES,
+  type GoogleOAuthReason,
+  type GoogleOAuthStage,
+} from "./google-auth.service";
 import { OtpService } from "./otp.service";
 import { ProfileService } from "./profile.service";
 import { ChangePasswordDto } from "./dto/change-password.dto";
@@ -52,6 +58,39 @@ const SAFE_GOOGLE_AUTH_ERROR_CODES = new Set([
   "google_email_unverified",
   "google_account_mismatch",
 ]);
+
+/**
+ * Turns whatever `googleCallback`'s try block threw into a stage + safe
+ * reason for the warn log, plus (when it's one of the known account-state
+ * codes above) the `authError` value to redirect the browser with. `stage`
+ * is the last stage we entered before throwing — accurate for everything
+ * except a network/DB error inside `identity_lookup`/`account_session`,
+ * which carries a system error code we can still safely report.
+ */
+function classifyFailure(
+  err: unknown,
+  stage: GoogleOAuthStage | "identity_lookup" | "account_session",
+): { stage: string; reason: GoogleOAuthReason; safeCode?: string } {
+  if (err instanceof GoogleOAuthStageError) {
+    return { stage: err.stage, reason: err.reason };
+  }
+  if (err instanceof UnauthorizedException) {
+    const code = (err.getResponse() as { code?: string } | undefined)?.code;
+    return {
+      stage,
+      reason: "unknown",
+      safeCode:
+        code && SAFE_GOOGLE_AUTH_ERROR_CODES.has(code) ? code : undefined,
+    };
+  }
+  const systemCode = (err as { code?: unknown } | null)?.code;
+  const reason = (GOOGLE_OAUTH_REASON_CODES as readonly string[]).includes(
+    systemCode as string,
+  )
+    ? (systemCode as GoogleOAuthReason)
+    : "unknown";
+  return { stage, reason };
+}
 
 @Controller("auth")
 export class AuthController {
@@ -245,12 +284,16 @@ export class AuthController {
       return fail("google_oauth_state_mismatch", returnPath);
     }
 
+    let stage: GoogleOAuthStage | "identity_lookup" | "account_session" =
+      "token_exchange";
     try {
       const profile = await this.google.resolveProfile(
         code,
         saved.codeVerifier,
       );
+      stage = "identity_lookup";
       const actor = await this.identity.fromRequest(request);
+      stage = "account_session";
       const result = await this.auth.signInWithGoogle(profile, actor);
       response.clearCookie(GOOGLE_OAUTH_COOKIE, { path: "/" });
       response.cookie(
@@ -260,22 +303,19 @@ export class AuthController {
       );
       response.redirect(`${origin}${returnPath}`);
     } catch (err) {
-      // Never log the authorization code, state, PKCE verifier, or the
-      // resolved Google profile (email/name) — only that the callback
-      // failed and, when known, its safe reason code.
-      const code =
-        err instanceof UnauthorizedException
-          ? (err.getResponse() as { code?: string } | undefined)?.code
-          : undefined;
+      // Never log the authorization code, state, PKCE verifier, the
+      // resolved Google profile (email/name), or any raw error
+      // message/stack — only the stage that failed and a safe reason code
+      // from the fixed allowlist in `google-auth.service.ts`.
+      const {
+        stage: finalStage,
+        reason,
+        safeCode,
+      } = classifyFailure(err, stage);
       this.logger.warn(
-        `Google OAuth callback failed${code ? ` (${code})` : ""}`,
+        `Google OAuth callback failed stage=${finalStage} reason=${reason}`,
       );
-      fail(
-        code && SAFE_GOOGLE_AUTH_ERROR_CODES.has(code)
-          ? code
-          : "google_oauth_failed",
-        returnPath,
-      );
+      fail(safeCode ?? "google_oauth_failed", returnPath);
     }
   }
 }
