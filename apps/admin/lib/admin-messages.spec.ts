@@ -4,7 +4,7 @@ import { test } from "node:test";
 import { act, createElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import type { AdminContactMessage } from "./admin-data";
-import { AdminMessages } from "../components/admin-messages";
+import { AdminMessages } from "../features/messages/admin-messages";
 import {
   click,
   domDocument,
@@ -72,7 +72,7 @@ async function mount(props: Partial<Parameters<typeof AdminMessages>[0]> = {}) {
   const doc = domDocument();
   const host = doc.createElement("div");
   doc.body.appendChild(host);
-  const root: Root = createRoot(host);
+  const root: Root = createRoot(host as unknown as Element);
   const view = {
     async render(next: Partial<Parameters<typeof AdminMessages>[0]> = {}) {
       await act(async () => {

@@ -6,6 +6,7 @@ import { test } from "node:test";
 import {
   initialDashboardSection,
   isHelpPath,
+  isMessagesPath,
   isReviewsPath,
   planHistoryNavigation,
   planSectionSelect,
@@ -14,6 +15,7 @@ import {
   settleStudioPath,
   staffGate,
   startHelpLink,
+  startMessagesLink,
   startReviewsLink,
   startSectionSelect,
   studioHistoryHref,
@@ -44,7 +46,7 @@ test("direct /reviews loads reviews and does not let a stale hash replace it", (
   );
 });
 
-test("the studio shell owns the one workspace hook for /, /reviews, and /help", () => {
+test("the studio shell owns the one workspace hook for /, /reviews, /help, and /messages", () => {
   const root = join(dirname(fileURLToPath(import.meta.url)), "..");
   const read = (relative: string) => readFileSync(join(root, relative), "utf8");
   const calls = (source: string) =>
@@ -53,13 +55,25 @@ test("the studio shell owns the one workspace hook for /, /reviews, and /help", 
   assert.equal(calls(read("components/admin-dashboard.tsx")), 0);
   assert.equal(calls(read("features/reviews/reviews-page.tsx")), 0);
   assert.equal(calls(read("features/help/help-page.tsx")), 0);
-  assert.match(read("components/admin-shell.tsx"), /"\/reviews" : "\/help"/);
+  assert.equal(calls(read("features/messages/messages-page.tsx")), 0);
+  assert.match(read("components/admin-shell.tsx"), /studioNavHref\(id\)/);
+  assert.match(read("components/admin-shell.tsx"), /href="\/messages"/);
   assert.match(read("app/(studio)/reviews/page.tsx"), /ReviewsPage/);
   assert.match(read("app/(studio)/help/page.tsx"), /HelpPage/);
+  assert.match(read("app/(studio)/messages/page.tsx"), /MessagesPage/);
   assert.doesNotMatch(read("components/admin-dashboard.tsx"), /AdminReviews/);
   assert.doesNotMatch(
     read("components/admin-dashboard.tsx"),
     /AdminHelpQuestions/,
+  );
+  assert.doesNotMatch(read("components/admin-dashboard.tsx"), /AdminMessages/);
+  assert.doesNotMatch(
+    read("features/messages/messages-page.tsx"),
+    /loadSection\(/,
+  );
+  assert.match(
+    read("features/messages/messages-page.tsx"),
+    /workspace\.can\("order\.write"\)/,
   );
 });
 
@@ -93,7 +107,10 @@ test("explicit section choices replace memory, and history back restores it", ()
   assert.deepEqual(chooseOrders.view, { pathname: "/", section: "orders" });
   assert.equal(chooseOrders.load, "orders");
   const chooseMessages = planSectionSelect(ordersToReviews.view, "messages");
-  assert.deepEqual(chooseMessages.view, { pathname: "/", section: "messages" });
+  assert.deepEqual(chooseMessages.view, {
+    pathname: "/messages",
+    section: "orders",
+  });
   assert.equal(chooseMessages.load, "messages");
 
   assert.equal(planSectionSelect(overview, "overview").load, null);
@@ -153,6 +170,7 @@ test("the shell gates session restore and logs out through the one workspace", (
   assert.match(shell, /startSectionSelect\(/);
   assert.match(shell, /startReviewsLink\(visible, pendingNav\.current\)/);
   assert.match(shell, /startHelpLink\(visible, pendingNav\.current\)/);
+  assert.match(shell, /startMessagesLink\(visible, pendingNav\.current\)/);
   assert.match(
     shell,
     /if \(action\.replace\) router\.replace\(action\.replace\)/,
@@ -271,6 +289,16 @@ function openHelp(shell: RaceShell) {
   shell.inFlight = action.replace ?? "/help";
 }
 
+function openMessages(shell: RaceShell) {
+  const action = startMessagesLink(
+    { pathname: shell.renderedPath, section: shell.sectionNow },
+    shell.pending,
+  );
+  shell.pending = action.pending;
+  shell.skip = action.skip;
+  shell.inFlight = action.replace ?? "/messages";
+}
+
 function commit(shell: RaceShell) {
   if (!shell.inFlight || shell.inFlight === shell.pathname) {
     shell.inFlight = null;
@@ -325,8 +353,8 @@ test("navigation races still load the section that remains on screen", () => {
   select(burst, "orders");
   select(burst, "messages");
   commit(burst);
-  assert.equal(burst.pathname, "/");
-  assert.equal(burst.section, "messages");
+  assert.equal(burst.pathname, "/messages");
+  assert.equal(burst.section, "orders");
   assert.equal(visible(burst), "messages");
   assert.ok(burst.loaded.includes("messages"));
 
@@ -578,14 +606,14 @@ test("pending help and reviews navigation cannot overwrite a newer choice", () =
   const fromReviews = boot("/reviews", "overview");
   openHelp(fromReviews);
   select(fromReviews, "messages");
-  assert.equal(fromReviews.pending?.pathname, "/");
-  assert.equal(fromReviews.pending?.section, "messages");
+  assert.equal(fromReviews.pending?.pathname, "/messages");
+  assert.equal(fromReviews.pending?.section, "overview");
   arrive(fromReviews, "/help");
-  assert.equal(fromReviews.pending?.pathname, "/");
+  assert.equal(fromReviews.pending?.pathname, "/messages");
   assert.equal(count(fromReviews, "help"), 0);
   commit(fromReviews);
-  assert.equal(fromReviews.pathname, "/");
-  assert.equal(fromReviews.section, "messages");
+  assert.equal(fromReviews.pathname, "/messages");
+  assert.equal(fromReviews.section, "overview");
   assert.equal(visible(fromReviews), "messages");
 
   const backSame = boot("/reviews", "orders");
@@ -631,6 +659,81 @@ test("pending help and reviews navigation cannot overwrite a newer choice", () =
   assert.equal(refresh.section, "overview");
   assert.equal(count(refresh, "reviews"), 1);
   assert.equal(count(refresh, "help"), 1);
+});
+
+test("messages is a route, and one entry does not fetch it twice", () => {
+  assert.equal(isMessagesPath("/messages"), true);
+  assert.equal(isMessagesPath("/messages/"), true);
+  assert.equal(isMessagesPath("/"), false);
+  assert.equal(isMessagesPath("/help"), false);
+  assert.equal(sectionDataTarget("/messages", "orders"), "messages");
+  assert.equal(sectionDataTarget("/messages", "commissions"), "messages");
+  assert.equal(initialDashboardSection("#messages"), "overview");
+  assert.equal(initialDashboardSection("#commissions/c1"), "commissions");
+  assert.equal(studioHistoryHref("/messages", "#commissions/c1"), "/messages");
+  assert.equal(studioHistoryHref("/", "#commissions/c1"), "/#commissions/c1");
+
+  const direct = boot("/messages", "overview");
+  assert.deepEqual(
+    direct.loads.filter((section) => section === "messages"),
+    ["messages"],
+  );
+  assert.equal(direct.section, "overview");
+  assert.equal(visible(direct), "messages");
+  openMessages(direct);
+  commit(direct);
+  assert.equal(count(direct, "messages"), 1);
+
+  const fromOrders = boot("/", "orders");
+  openMessages(fromOrders);
+  commit(fromOrders);
+  assert.equal(fromOrders.pathname, "/messages");
+  assert.equal(fromOrders.section, "orders");
+  assert.equal(count(fromOrders, "messages"), 1);
+  pop(fromOrders, "/");
+  assert.equal(fromOrders.pathname, "/");
+  assert.equal(fromOrders.section, "orders");
+  assert.equal(visible(fromOrders), "orders");
+  pop(fromOrders, "/messages");
+  assert.equal(visible(fromOrders), "messages");
+  assert.equal(fromOrders.section, "orders");
+
+  const rapid = boot("/", "orders");
+  openMessages(rapid);
+  openHelp(rapid);
+  openMessages(rapid);
+  commit(rapid);
+  assert.equal(rapid.pathname, "/messages");
+  assert.equal(rapid.section, "orders");
+  assert.equal(rapid.pending, null);
+  assert.equal(count(rapid, "messages"), 1);
+  assert.equal(count(rapid, "help"), 0);
+
+  const cancelHelp = boot("/messages", "orders");
+  openHelp(cancelHelp);
+  openMessages(cancelHelp);
+  assert.equal(cancelHelp.pending, null);
+  assert.equal(cancelHelp.inFlight, "/messages");
+  arrive(cancelHelp, "/help");
+  assert.equal(cancelHelp.pending, null);
+  assert.ok(cancelHelp.loads.includes("help"));
+  commit(cancelHelp);
+  assert.equal(cancelHelp.pathname, "/messages");
+  assert.equal(visible(cancelHelp), "messages");
+  assert.equal(cancelHelp.section, "orders");
+  assert.equal(cancelHelp.pending, null);
+
+  const logout = boot("/reviews", "orders");
+  openMessages(logout);
+  setAuth(logout, "unauthenticated");
+  assert.equal(logout.pending, null);
+  assert.equal(logout.skip, null);
+  commit(logout);
+  assert.equal(logout.loads.length, 0);
+  setAuth(logout, "authenticated");
+  assert.equal(logout.pathname, "/messages");
+  assert.equal(visible(logout), "messages");
+  assert.equal(count(logout, "messages"), 1);
 });
 
 test("session restore stays on the loading gate, and a failed restore is not the login screen", () => {

@@ -43,7 +43,6 @@ import {
   type ProductAttributeValue,
 } from "../lib/admin-data";
 import { AdminCommissions } from "./admin-commissions";
-import { AdminMessages } from "./admin-messages";
 import { AdminDamageReports } from "./admin-damage-reports";
 import { AdminOrders } from "./orders/admin-orders";
 import "./orders/admin-orders.css";
@@ -123,7 +122,7 @@ function relativeTime(value: number) {
 // set by AdminCommissions) must land back in that section, not Overview —
 // this is the one spot in the shell that reads the hash; every other
 // section still opens on "overview" as before.
-type AsyncKey = "messages" | "reviews" | "shapeQuestions" | "users" | "members";
+type AsyncKey = "reviews" | "shapeQuestions" | "users" | "members";
 
 function sectionAsync(
   workspace: {
@@ -147,7 +146,8 @@ function sectionAsync(
 }
 
 export function AdminDashboard() {
-  const { workspace, section, go, announce } = useAdminChrome();
+  const { workspace, section, go, announce, takeFocusedOrder } =
+    useAdminChrome();
   const [productEditor, setProductEditor] = useState<
     AdminProduct | "new" | null
   >(null);
@@ -164,6 +164,18 @@ export function AdminDashboard() {
         ?.scrollIntoView({ block: "start", behavior: "smooth" });
     });
   };
+
+  useEffect(() => {
+    if (section !== "orders") return;
+    const id = takeFocusedOrder();
+    if (!id) return;
+    setFocusOrderId(id);
+    window.requestAnimationFrame(() => {
+      document
+        .getElementById(`order-${id}`)
+        ?.scrollIntoView({ block: "start", behavior: "smooth" });
+    });
+  }, [section, takeFocusedOrder]);
 
   const setMessageStatus = async (
     id: string,
@@ -257,17 +269,6 @@ export function AdminDashboard() {
               return false;
             }
           }}
-        />
-      )}
-      {section === "messages" && (
-        <AdminMessages
-          messages={workspace.messages}
-          {...sectionAsync(workspace, "messages")}
-          orders={workspace.orders}
-          canWrite={workspace.can("order.write")}
-          onSetStatus={setMessageStatus}
-          onReply={replyToMessage}
-          onOpenOrder={openOrder}
         />
       )}
       {section === "damage" && (
