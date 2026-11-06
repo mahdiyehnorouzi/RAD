@@ -1,7 +1,9 @@
 import {
   PRODUCT_STATUSES,
+  STORE_ORDER_PROGRESS,
   canTransitionProductStatus,
   effectiveProductStatus,
+  isTerminalStoreOrderStatus,
   type ContactMessageStatus,
   type ContactSource,
   type ContactTopic,
@@ -13,6 +15,7 @@ import {
   type ProductAttributeValue,
   type ProductStatus,
   type ShapeTrait,
+  type StoreOrderStatus,
 } from "@rad/types";
 
 export type {
@@ -132,17 +135,7 @@ export function isRemoteMediaStorage(
 export function isVideoStorage(storage: AdminProductImage["storage"]) {
   return storage === "cloudinary_video" || storage === "seaweedfs_video";
 }
-export type AdminOrderStatus =
-  | "pending_payment"
-  | "pending_verification"
-  | "confirmed"
-  | "packing"
-  | "shipped"
-  | "delivered"
-  | "expired"
-  | "rejected"
-  | "cancelled"
-  | "returned";
+export type AdminOrderStatus = StoreOrderStatus;
 
 export type AdminPaymentStatus =
   | "created"
@@ -361,22 +354,10 @@ export const orderStatusLabels: Record<AdminOrderStatus, string> = {
 };
 
 /** Happy path only — expired/rejected/cancel/return are exceptional branches. */
-export const orderStatusProgress: AdminOrderStatus[] = [
-  "pending_payment",
-  "pending_verification",
-  "confirmed",
-  "packing",
-  "shipped",
-  "delivered",
-];
+export const orderStatusProgress: AdminOrderStatus[] = STORE_ORDER_PROGRESS;
 
 export function isTerminalOrderStatus(status: AdminOrderStatus) {
-  return (
-    status === "expired" ||
-    status === "rejected" ||
-    status === "cancelled" ||
-    status === "returned"
-  );
+  return isTerminalStoreOrderStatus(status);
 }
 
 /**
