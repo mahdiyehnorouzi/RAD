@@ -52,18 +52,46 @@ function isSuccessfulReturnValue(value: string) {
 }
 
 /**
- * Some documented response shapes wrap the return value in an XML tag
- * (`<string xmlns="...">VALUE</string>`, the documented shape for a plain
- * GET/POST against the ASMX host) rather than returning it as bare text
- * (the shape the REST wrapper used here is expected to return, per the
- * vendor's own PHP sample). Extracting the inner text either way means a
+ * The REST wrapper (`rest.payamak-panel.com`) actually answers with a JSON
+ * body carrying the return value under a `Value` field (confirmed against
+ * production traffic — every real send was previously logged as "an
+ * unrecognized, non-success value" because this parser only handled bare
+ * text/XML, never JSON). Two other shapes stay supported as fallbacks: the
+ * documented `<string xmlns="...">VALUE</string>` XML wrapper (the ASMX
+ * host's plain GET/POST shape) and bare text (the vendor's own PHP sample
+ * shows no response body, so this was the previous best guess). Checking
+ * JSON first, then XML, then falling back to the raw trimmed body, means a
  * provider-side response-format change doesn't turn into "every OTP send
- * suddenly fails to parse".
+ * suddenly fails to parse" — whichever shape comes back, the same
+ * documented-return-code classification below still applies to whatever
+ * string this extracts.
  */
 function extractReturnValue(body: string): string {
   const trimmed = body.trim();
+
+  const json = tryParseJson(trimmed);
+  if (json && typeof json === "object" && !Array.isArray(json)) {
+    const valueKey = Object.keys(json).find(
+      (key) => key.toLowerCase() === "value",
+    );
+    if (valueKey) {
+      const value = (json as Record<string, unknown>)[valueKey];
+      if (typeof value === "string" || typeof value === "number") {
+        return String(value).trim();
+      }
+    }
+  }
+
   const xmlMatch = trimmed.match(/<string[^>]*>([^<]*)<\/string>/i);
   return (xmlMatch ? xmlMatch[1] : trimmed).trim();
+}
+
+function tryParseJson(text: string): unknown {
+  try {
+    return JSON.parse(text);
+  } catch {
+    return undefined;
+  }
 }
 
 /**
@@ -78,7 +106,9 @@ function extractReturnValue(body: string): string {
  *
  * The request is `application/x-www-form-urlencoded` — the vendor's own
  * sample posts with `http_build_query`, not JSON; see this method's own
- * documentation before assuming otherwise for any change here.
+ * documentation before assuming otherwise for any change here. The
+ * *response*, unlike the request, is JSON on the REST wrapper used here
+ * (see `extractReturnValue`) — don't conflate the two.
  *
  * Mirrors `MailService`'s isConfigured()/disabled-until-configured
  * pattern: missing credentials never crash the API, but every call fails
