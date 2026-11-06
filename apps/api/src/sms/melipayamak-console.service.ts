@@ -10,22 +10,22 @@ const REQUEST_TIMEOUT_MS = 10_000;
 /**
  * Sends a single plain-text SMS via Melipayamak's Console "send/simple"
  * REST API (`POST https://console.melipayamak.com/api/send/simple/{TOKEN}`,
- * JSON body `{ from, to, text }`) — a different Melipayamak Console product
- * from `MelipayamakConsoleOtpService`'s "send/otp" endpoint (used by
- * `OtpService` for SMS OTP sign-in). This one is token-based and sends
- * arbitrary text, not a fixed OTP template, and needs a sender line
- * (`MELIPAYAMAK_CONSOLE_SENDER`) that the OTP endpoint does not.
+ * JSON body `{ from, to, text }`) — a completely different Melipayamak
+ * product/account scheme from `MelipayamakService`'s legacy `SendOtp`
+ * method (used by `OtpService` for SMS OTP sign-in, see that class). This
+ * one is token-based and sends arbitrary text, not a fixed OTP template.
  *
  * Deliberately NOT wired into order-status notifications yet: the
  * statuses to notify on, timing, message count, retry policy, and
  * duplicate-send prevention are all still undecided — see this feature's
  * task notes. This class is a general-purpose send primitive only; nothing
- * in the API calls it yet (see `OrdersService`/`PaymentReviewService` and
- * `NoticesService` for the existing post-payment notification path this
- * would hook into once that policy is decided).
+ * in the API calls it yet (see `OrdersService` and `AdminService`'s
+ * payment-review methods, and `NoticesService`, for the existing
+ * post-payment notification path this would hook into once that policy is
+ * decided).
  *
- * Mirrors `MelipayamakConsoleOtpService`'s isConfigured()/disabled-until-
- * configured pattern: missing credentials never crash the API, but every call fails
+ * Mirrors `MelipayamakService`'s isConfigured()/disabled-until-configured
+ * pattern: missing credentials never crash the API, but every call fails
  * loud and coded until `MELIPAYAMAK_CONSOLE_API_TOKEN` and
  * `MELIPAYAMAK_CONSOLE_SENDER` are set (see `apps/api/.env.example`).
  *
