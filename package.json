@@ -9,6 +9,7 @@
     "packages/*"
   ],
   "scripts": {
+    "test:e2e": "playwright test --config e2e/playwright.config.ts",
     "dev": "npm run dev --workspace @rad/storefront",
     "dev:all": "node scripts/dev-stack.mjs",
     "build": "npm run build --workspace @rad/storefront",
@@ -80,6 +81,7 @@
   "devDependencies": {
     "@cloudflare/vite-plugin": "^1.53.1",
     "@opennextjs/cloudflare": "^1.20.2",
+    "@playwright/test": "^1.65.0",
     "@types/node": "^22",
     "@types/react": "^19",
     "@types/react-dom": "^19",
