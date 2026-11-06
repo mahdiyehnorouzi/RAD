@@ -1,0 +1,181 @@
+#!/usr/bin/env node
+// RAD-129: decision logic for the manual production-release workflows
+// (deploy.yml, deploy-api-vps.yml, deploy-frontend-vps.yml).
+//
+// `affectedServices` is the dependency map deploy.yml's `detect` job used to
+// apply as inline bash (see docs/cicd-pipeline.md's "Dependency map"); it is
+// pulled out here so it has a real, committed test
+// (release-gate.spec.mjs), not just a one-off manual check. The CLI's
+// `affected-services` subcommand is the thin wrapper the workflow calls.
+//
+// `verifyCommit` is the fail-closed gate RAD-129 requires before any release
+// workflow builds or ships anything: the requested commit must (a) actually
+// be reachable from `main` and (b) have a passing "CI passed" check run
+// recorded against that exact SHA (not re-run - re-running against a
+// possibly-stale checkout of `main`'s tip would silently check the wrong
+// commit's code when `commit_sha` is an older, already-merged commit). Both
+// checks shell out (`git`, `gh`) and are exercised for real in CI via
+// `node scripts/production/release-gate.mjs verify-commit` against this
+// commit's own repo state - see the "Shell syntax" / release-policy job in
+// ci.yml for where that happens, and docs/cicd-pipeline.md for the manual
+// dry-run evidence recorded for this change.
+import { execFileSync } from "node:child_process";
+import { readFileSync } from "node:fs";
+
+export function affectedServices(changedFiles) {
+  const matches = (re) => changedFiles.some((f) => re.test(f));
+
+  let api = false;
+  let storefront = false;
+  let admin = false;
+
+  if (matches(/^apps\/api\//)) api = true;
+  if (matches(/^apps\/storefront\//)) storefront = true;
+  if (matches(/^apps\/admin\//)) admin = true;
+  if (matches(/^packages\/artworks\//)) {
+    api = true;
+    storefront = true;
+  }
+  if (matches(/^packages\/types\//)) {
+    storefront = true;
+    admin = true;
+  }
+  if (matches(/^packages\/ui\//)) {
+    storefront = true;
+    admin = true;
+  }
+  if (matches(/^packages\/i18n\//)) storefront = true;
+  if (matches(/^packages\/state\//)) {
+    storefront = true;
+    admin = true;
+  }
+
+  // Shared root-level config/infra any app's build could depend on -
+  // conservative on purpose (mirrors the previous inline-bash behavior).
+  const sharedInfra =
+    /^(package\.json|package-lock\.json|tsconfig.*\.json|apps\/api\/Dockerfile(\..*)?|apps\/storefront\/Dockerfile|apps\/admin\/Dockerfile|docker-compose\.frontend-vps\.yml|scripts\/production\/.*|scripts\/deploy-api-systemd-artifact\.sh|scripts\/lib\/deploy-api-remote-artifact\.sh|scripts\/deploy-api-systemd\.sh|scripts\/lib\/deploy-api-remote\.sh|\.github\/workflows\/deploy\.yml|\.github\/workflows\/deploy-api-vps\.yml|\.github\/workflows\/deploy-frontend-vps\.yml)$/;
+  if (matches(sharedInfra)) {
+    api = true;
+    storefront = true;
+    admin = true;
+  }
+
+  const any = api || storefront || admin;
+  return { api, storefront, admin, any };
+}
+
+/**
+ * @param {{repo: string, commitSha: string, requiredCheck: string, exec?: typeof execFileSync}} opts
+ * @returns {{allowed: boolean, reason: string}}
+ */
+export function verifyCommit({
+  repo,
+  commitSha,
+  requiredCheck,
+  exec = execFileSync,
+}) {
+  if (!/^[0-9a-f]{40}$/i.test(commitSha)) {
+    return {
+      allowed: false,
+      reason: `commit_sha "${commitSha}" is not a full 40-character SHA`,
+    };
+  }
+
+  try {
+    exec("git", ["merge-base", "--is-ancestor", commitSha, "origin/main"], {
+      stdio: "pipe",
+    });
+  } catch {
+    return {
+      allowed: false,
+      reason: `${commitSha} is not an ancestor of origin/main - refusing to release a commit that is not on main`,
+    };
+  }
+
+  let checkRuns;
+  try {
+    const raw = exec(
+      "gh",
+      [
+        "api",
+        `repos/${repo}/commits/${commitSha}/check-runs`,
+        "--jq",
+        ".check_runs",
+      ],
+      { stdio: ["ignore", "pipe", "pipe"], encoding: "utf8" },
+    );
+    checkRuns = JSON.parse(raw);
+  } catch (error) {
+    return {
+      allowed: false,
+      reason: `could not read check runs for ${commitSha}: ${error instanceof Error ? error.message : String(error)}`,
+    };
+  }
+
+  const match = checkRuns.find((run) => run.name === requiredCheck);
+  if (!match) {
+    return {
+      allowed: false,
+      reason: `no "${requiredCheck}" check run found for ${commitSha} - CI must have run for this exact commit`,
+    };
+  }
+  if (match.status !== "completed" || match.conclusion !== "success") {
+    return {
+      allowed: false,
+      reason: `"${requiredCheck}" for ${commitSha} is ${match.status}/${match.conclusion ?? "pending"}, not a passing completed run`,
+    };
+  }
+
+  return {
+    allowed: true,
+    reason: `${commitSha} is on main with a passing "${requiredCheck}" check`,
+  };
+}
+
+function parseFlags(args) {
+  const flags = {};
+  for (let i = 0; i < args.length; i += 2) {
+    const key = args[i].replace(/^--/, "");
+    flags[key] = args[i + 1];
+  }
+  return flags;
+}
+
+function main() {
+  const [command, ...rest] = process.argv.slice(2);
+
+  if (command === "affected-services") {
+    const flags = parseFlags(rest);
+    const changedFiles = readFileSync(flags["changed-files"], "utf8")
+      .split("\n")
+      .map((l) => l.trim())
+      .filter(Boolean);
+    const result = affectedServices(changedFiles);
+    console.log(`api=${result.api}`);
+    console.log(`storefront=${result.storefront}`);
+    console.log(`admin=${result.admin}`);
+    console.log(`any=${result.any}`);
+    return;
+  }
+
+  if (command === "verify-commit") {
+    const flags = parseFlags(rest);
+    const result = verifyCommit({
+      repo: flags.repo,
+      commitSha: flags["commit-sha"],
+      requiredCheck: flags["required-check"],
+    });
+    console.error(result.reason);
+    if (!result.allowed) process.exit(1);
+    return;
+  }
+
+  console.error(
+    `Unknown command: ${command}. Expected "affected-services" or "verify-commit".`,
+  );
+  process.exit(1);
+}
+
+if (import.meta.url === `file://${process.argv[1]}`) {
+  main();
+}

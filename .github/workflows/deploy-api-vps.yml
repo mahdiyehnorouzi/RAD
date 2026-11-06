@@ -17,6 +17,20 @@
 # against a database it expects but that doesn't exist yet. See
 # docs/automated-migrations.md for the one-time operator approval this
 # requires and what it does and doesn't automate.
+#
+# RAD-129: this workflow releases exactly `inputs.commit_sha`, never
+# `github.sha` - the two are no longer guaranteed equal, since the caller
+# (deploy.yml) is a manual, human-triggered release of a specific,
+# already-merged commit, not a push-triggered deploy of whatever is
+# currently at the tip of `main`. Every checkout, tag, and remote command
+# below is keyed off `inputs.commit_sha` for that reason. `confirm` is now
+# a `workflow_call` input too (previously only `workflow_dispatch` had it),
+# so the "must type deploy to actually release" gate behaves identically
+# whether this runs standalone (emergency `workflow_dispatch`) or via
+# deploy.yml - no reliance on `github.event_name`, which is *inherited*
+# from the top-level caller inside a `workflow_call` and does not reliably
+# distinguish "called by deploy.yml" from "dispatched directly" (see
+# docs/cicd-pipeline.md's "Correctness fixes from review").
 name: API VPS release
 on:
   workflow_call:
@@ -24,24 +38,27 @@ on:
       commit_sha:
         required: true
         type: string
+      confirm:
+        required: true
+        type: string
   workflow_dispatch:
     inputs:
       confirm:
-        description: "Type deploy to release the selected main commit"
+        description: "Type deploy to release the selected commit"
         required: true
         default: build-check-only
       commit_sha:
-        description: "Full SHA; must equal this main workflow run's commit"
+        description: "Full SHA to release; must already be on main and have a passing CI passed check"
         required: true
 permissions:
   contents: read
 jobs:
   checks:
-    if: github.repository == 'mahdiyehnorouzi/RAD' && github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && inputs.commit_sha == github.sha
+    if: github.repository == 'mahdiyehnorouzi/RAD'
     uses: ./.github/workflows/ci.yml
   build-artifact:
     needs: checks
-    if: github.repository == 'mahdiyehnorouzi/RAD' && github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && inputs.commit_sha == github.sha && (github.event_name != 'workflow_dispatch' || inputs.confirm == 'deploy')
+    if: github.repository == 'mahdiyehnorouzi/RAD' && inputs.confirm == 'deploy'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -50,12 +67,20 @@ jobs:
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
-          ref: ${{ github.sha }}
+          ref: ${{ inputs.commit_sha }}
+          fetch-depth: 0
           persist-credentials: false
-      - name: Refuse a stale main run
+      - name: Refuse a commit that is not on main, or has no passing CI passed check
         env:
           GH_TOKEN: ${{ github.token }}
-        run: test "$(gh api repos/mahdiyehnorouzi/RAD/git/ref/heads/main --jq .object.sha)" = "$GITHUB_SHA"
+          COMMIT_SHA: ${{ inputs.commit_sha }}
+        run: |
+          set -euo pipefail
+          git fetch origin main --quiet
+          node scripts/production/release-gate.mjs verify-commit \
+            --repo mahdiyehnorouzi/RAD \
+            --commit-sha "$COMMIT_SHA" \
+            --required-check "CI passed"
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: 22
@@ -67,6 +92,7 @@ jobs:
       - name: Bind artifact digest to this exact source and run
         env:
           RELEASE_KIND: api
+          GITHUB_SHA: ${{ inputs.commit_sha }}
         run: python3 scripts/production/make-manifest.py
       - uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a
         id: attest
@@ -77,7 +103,7 @@ jobs:
           BUNDLE: ${{ steps.attest.outputs.bundle-path }}
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: api-release-${{ github.sha }}-${{ github.run_attempt }}
+          name: api-release-${{ inputs.commit_sha }}-${{ github.run_attempt }}
           path: |
             api-release.tar.gz
             release.json
@@ -97,7 +123,7 @@ jobs:
   migrate:
     name: Apply pending migrations
     needs: build-artifact
-    if: github.repository == 'mahdiyehnorouzi/RAD' && github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && inputs.commit_sha == github.sha && (github.event_name != 'workflow_dispatch' || inputs.confirm == 'deploy')
+    if: github.repository == 'mahdiyehnorouzi/RAD' && inputs.confirm == 'deploy'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     environment: production-api-vps
@@ -115,13 +141,13 @@ jobs:
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
-          ref: ${{ github.sha }}
+          ref: ${{ inputs.commit_sha }}
           persist-credentials: false
 
       - name: Download signed artifact (this exact run/attempt only)
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
-          name: api-release-${{ github.sha }}-${{ github.run_attempt }}
+          name: api-release-${{ inputs.commit_sha }}-${{ github.run_attempt }}
           path: stage
 
       - name: Connect to RAD tailnet using GitHub OIDC
@@ -160,12 +186,14 @@ jobs:
       # upload itself when bytes stop moving or the transfer deadline passes,
       # and it does not raise this job's 30 minute cap.
       - name: Ship artifact and trigger migration check over the tailnet
+        env:
+          COMMIT_SHA: ${{ inputs.commit_sha }}
         run: |
           set -euo pipefail
           bash scripts/production/rad-deploy-ship.sh \
             --host "rad-deploy@${RAD_VPS_TAILSCALE_IP}" \
             --stage stage \
-            --remote-command "migrate commit=${GITHUB_SHA} run_id=${GITHUB_RUN_ID} run_attempt=${GITHUB_RUN_ATTEMPT}" \
+            --remote-command "migrate commit=${COMMIT_SHA} run_id=${GITHUB_RUN_ID} run_attempt=${GITHUB_RUN_ATTEMPT}" \
             -- release.json release.sigstore.json api-release.tar.gz
 
       - name: Remove runner SSH credentials
@@ -174,7 +202,7 @@ jobs:
 
   release:
     needs: [build-artifact, migrate]
-    if: github.repository == 'mahdiyehnorouzi/RAD' && github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && inputs.commit_sha == github.sha && (github.event_name != 'workflow_dispatch' || inputs.confirm == 'deploy') && needs.migrate.result == 'success'
+    if: github.repository == 'mahdiyehnorouzi/RAD' && inputs.confirm == 'deploy' && needs.migrate.result == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     environment: production-api-vps
@@ -189,13 +217,13 @@ jobs:
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
-          ref: ${{ github.sha }}
+          ref: ${{ inputs.commit_sha }}
           persist-credentials: false
 
       - name: Download signed artifact (this exact run/attempt only)
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
-          name: api-release-${{ github.sha }}-${{ github.run_attempt }}
+          name: api-release-${{ inputs.commit_sha }}-${{ github.run_attempt }}
           path: stage
 
       - name: Connect to RAD tailnet using GitHub OIDC
@@ -228,12 +256,14 @@ jobs:
       # enabled, manifest mismatch, etc.) makes this ssh command exit non-zero,
       # which fails this step and this job - never a silent skip.
       - name: Ship artifact and trigger release over the tailnet
+        env:
+          COMMIT_SHA: ${{ inputs.commit_sha }}
         run: |
           set -euo pipefail
           bash scripts/production/rad-deploy-ship.sh \
             --host "rad-deploy@${RAD_VPS_TAILSCALE_IP}" \
             --stage stage \
-            --remote-command "deploy kind=api commit=${GITHUB_SHA} run_id=${GITHUB_RUN_ID} run_attempt=${GITHUB_RUN_ATTEMPT}" \
+            --remote-command "deploy kind=api commit=${COMMIT_SHA} run_id=${GITHUB_RUN_ID} run_attempt=${GITHUB_RUN_ATTEMPT}" \
             -- release.json release.sigstore.json api-release.tar.gz
 
       - name: Remove runner SSH credentials
@@ -247,8 +277,8 @@ jobs:
     steps:
       - name: Fail on rejected, skipped or unsuccessful requested release
         env:
-          TRUSTED: ${{ github.repository == 'mahdiyehnorouzi/RAD' && github.ref == 'refs/heads/main' && inputs.commit_sha == github.sha && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') }}
-          REQUESTED: ${{ github.event_name != 'workflow_dispatch' || inputs.confirm == 'deploy' }}
+          TRUSTED: ${{ github.repository == 'mahdiyehnorouzi/RAD' }}
+          REQUESTED: ${{ inputs.confirm == 'deploy' }}
           CHECKS: ${{ needs.checks.result }}
           MIGRATE: ${{ needs.migrate.result }}
           RELEASE: ${{ needs.release.result }}

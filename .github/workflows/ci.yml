@@ -170,6 +170,8 @@ jobs:
       - run: npm ci
       - name: Privilege boundary and rollback regressions (isolated fixtures + a real ephemeral Postgres 16)
         run: python3 -B -m unittest discover -s scripts/production -p 'test_*.py' -v
+      - name: Manual-release gate policy (RAD-129 - ancestry/CI-check decision, affected-service mapping)
+        run: npm run test:release-gate
       - name: Shell syntax
         run: |
           bash -n scripts/production/package-api.sh
