@@ -31,9 +31,13 @@
 // merge commits, so requiring the check run directly on `commit_sha` would
 // refuse every single real release candidate. `verifyCommit` therefore
 // falls back to `GET /repos/{repo}/commits/{sha}/pulls` when `commit_sha`
-// itself has no matching check run: if that lookup finds exactly one PR
-// merged into `main`, it checks that PR's head commit instead - the commit
-// CI actually ran against - and reports which SHA it verified.
+// has NO check run by the required name at all: if that lookup finds
+// exactly one PR merged into `main`, it checks that PR's head commit
+// instead - the commit CI actually ran against - and reports which SHA it
+// verified. A check run that *does* exist directly on `commit_sha` but
+// failed, was cancelled, or is still pending never falls back - that
+// refuses immediately, on its own result, regardless of what any other
+// commit's check run says.
 import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 
@@ -115,18 +119,34 @@ function findMergedPrHeadSha({ repo, sha, exec }) {
   return merged.length === 1 ? merged[0].head.sha : undefined;
 }
 
+/**
+ * `found` distinguishes "no check run by this name at all" (the expected,
+ * safe-to-fall-back-to-the-PR-head case for a synthetic merge commit) from
+ * "a check run by this name exists but didn't pass" (failed, cancelled,
+ * still pending, etc.) - the latter must refuse outright, never fall back
+ * to a *different* commit's check run just because it happens to pass.
+ */
 function evaluateCheckRuns(checkRuns, requiredCheck) {
   const match = checkRuns.find((run) => run.name === requiredCheck);
   if (!match) {
-    return { ok: false, reason: `no "${requiredCheck}" check run found` };
+    return {
+      ok: false,
+      found: false,
+      reason: `no "${requiredCheck}" check run found`,
+    };
   }
   if (match.status !== "completed" || match.conclusion !== "success") {
     return {
       ok: false,
+      found: true,
       reason: `"${requiredCheck}" is ${match.status}/${match.conclusion ?? "pending"}, not a passing completed run`,
     };
   }
-  return { ok: true, reason: `a passing "${requiredCheck}" check` };
+  return {
+    ok: true,
+    found: true,
+    reason: `a passing "${requiredCheck}" check`,
+  };
 }
 
 /**
@@ -175,10 +195,20 @@ export function verifyCommit({
     };
   }
 
-  // `commitSha` itself has no (or a failing) check run - this is the
-  // expected, common case for a "Merge pull request" commit, since CI only
-  // ever runs against the PR's head commit. Fall back to that head commit
-  // before giving up.
+  // A check run by this exact name exists on commitSha but did not pass
+  // (failed, cancelled, still pending, ...) - refuse immediately. Never
+  // fall back to the PR head commit here: that would let a *different*
+  // commit's passing check override this commit's own known-bad result,
+  // which is not "CI passed for this exact SHA" by any reasonable reading.
+  // The fallback below is only for "no check run by this name at all",
+  // the expected case for a synthetic "Merge pull request" commit.
+  if (direct.found) {
+    return {
+      allowed: false,
+      reason: `${commitSha}: ${direct.reason}`,
+    };
+  }
+
   const headSha = findMergedPrHeadSha({ repo, sha: commitSha, exec });
   if (!headSha) {
     return {

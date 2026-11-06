@@ -167,12 +167,26 @@ test("verifyCommit refuses when neither the commit nor its merged PR has the req
   );
 });
 
-test("verifyCommit refuses when the required check run did not succeed", () => {
+test("verifyCommit refuses a failed direct check even when the PR head check passes (never falls back)", () => {
   const sha = "c".repeat(40);
-  const { exec } = makeExec({
+  const headSha = "c1".repeat(20);
+  const { exec, calls } = makeExec({
     checkRunsBySha: {
       [sha]: [
         { name: "CI passed", status: "completed", conclusion: "failure" },
+      ],
+      [headSha]: [
+        { name: "CI passed", status: "completed", conclusion: "success" },
+      ],
+    },
+    pullsBySha: {
+      [sha]: [
+        {
+          number: 99,
+          merged_at: "2026-01-01T00:00:00Z",
+          base: { ref: "main" },
+          head: { sha: headSha },
+        },
       ],
     },
   });
@@ -187,13 +201,32 @@ test("verifyCommit refuses when the required check run did not succeed", () => {
     result.reason,
     /completed\/failure, not a passing completed run/,
   );
+  // The fallback must never even be consulted: a direct, found-but-failed
+  // check run refuses on its own result alone.
+  const ghCalls = calls.filter(([cmd]) => cmd === "gh");
+  assert.equal(ghCalls.length, 1);
+  assert.match(ghCalls[0][1][1], /check-runs$/);
 });
 
-test("verifyCommit refuses when the required check run has not completed yet", () => {
+test("verifyCommit refuses a pending direct check even when the PR head check passes (never falls back)", () => {
   const sha = "d".repeat(40);
-  const { exec } = makeExec({
+  const headSha = "d1".repeat(20);
+  const { exec, calls } = makeExec({
     checkRunsBySha: {
       [sha]: [{ name: "CI passed", status: "in_progress", conclusion: null }],
+      [headSha]: [
+        { name: "CI passed", status: "completed", conclusion: "success" },
+      ],
+    },
+    pullsBySha: {
+      [sha]: [
+        {
+          number: 100,
+          merged_at: "2026-01-01T00:00:00Z",
+          base: { ref: "main" },
+          head: { sha: headSha },
+        },
+      ],
     },
   });
   const result = verifyCommit({
@@ -204,6 +237,9 @@ test("verifyCommit refuses when the required check run has not completed yet", (
   });
   assert.equal(result.allowed, false);
   assert.match(result.reason, /in_progress\/pending/);
+  const ghCalls = calls.filter(([cmd]) => cmd === "gh");
+  assert.equal(ghCalls.length, 1);
+  assert.match(ghCalls[0][1][1], /check-runs$/);
 });
 
 test("verifyCommit allows an ancestor commit with a passing CI passed check directly on that SHA", () => {
