@@ -151,8 +151,12 @@ test("the shell gates session restore and logs out through the one workspace", (
   assert.match(shell, /workspace\.retryAuth\(\)/);
   assert.match(shell, /workspace\.logout\(\)/);
   assert.match(shell, /startSectionSelect\(/);
-  assert.match(shell, /startReviewsLink\(/);
-  assert.match(shell, /startHelpLink\(/);
+  assert.match(shell, /startReviewsLink\(visible, pendingNav\.current\)/);
+  assert.match(shell, /startHelpLink\(visible, pendingNav\.current\)/);
+  assert.match(
+    shell,
+    /if \(action\.replace\) router\.replace\(action\.replace\)/,
+  );
   assert.match(shell, /settleStudioPath\(/);
   assert.match(shell, /addEventListener\("popstate"/);
   assert.equal(shell.match(/useAdminWorkspace\(/g)?.length ?? 0, 1);
@@ -248,23 +252,23 @@ function select(shell: RaceShell, next: StudioView["section"]) {
 }
 
 function openReviews(shell: RaceShell) {
-  const action = startReviewsLink({
-    pathname: shell.renderedPath,
-    section: shell.sectionNow,
-  });
+  const action = startReviewsLink(
+    { pathname: shell.renderedPath, section: shell.sectionNow },
+    shell.pending,
+  );
   shell.pending = action.pending;
   shell.skip = action.skip;
-  shell.inFlight = "/reviews";
+  shell.inFlight = action.replace ?? "/reviews";
 }
 
 function openHelp(shell: RaceShell) {
-  const action = startHelpLink({
-    pathname: shell.renderedPath,
-    section: shell.sectionNow,
-  });
+  const action = startHelpLink(
+    { pathname: shell.renderedPath, section: shell.sectionNow },
+    shell.pending,
+  );
   shell.pending = action.pending;
   shell.skip = action.skip;
-  shell.inFlight = "/help";
+  shell.inFlight = action.replace ?? "/help";
 }
 
 function commit(shell: RaceShell) {
@@ -272,8 +276,13 @@ function commit(shell: RaceShell) {
     shell.inFlight = null;
     return;
   }
-  shell.pathname = shell.inFlight;
+  arrive(shell, shell.inFlight);
   shell.inFlight = null;
+}
+
+/** An older navigation can still commit after a newer click replaced it. */
+function arrive(shell: RaceShell, pathname: string) {
+  shell.pathname = pathname;
   paint(shell);
   settle(shell);
 }
@@ -494,6 +503,134 @@ test("help navigation fetches once, and logout does not keep a stale skip", () =
   pop(hashed, "/");
   assert.equal(hashed.section, "commissions");
   assert.equal(visible(hashed), "commissions");
+});
+
+function count(shell: RaceShell, section: StudioView["section"]) {
+  return shell.loads.filter((loaded) => loaded === section).length;
+}
+
+test("pending help and reviews navigation cannot overwrite a newer choice", () => {
+  const reviewsHelpReviews = boot("/", "orders");
+  openReviews(reviewsHelpReviews);
+  openHelp(reviewsHelpReviews);
+  openReviews(reviewsHelpReviews);
+  commit(reviewsHelpReviews);
+  assert.equal(reviewsHelpReviews.pathname, "/reviews");
+  assert.equal(reviewsHelpReviews.section, "orders");
+  assert.equal(reviewsHelpReviews.pending, null);
+  assert.equal(count(reviewsHelpReviews, "reviews"), 1);
+  assert.equal(count(reviewsHelpReviews, "help"), 0);
+
+  const helpReviewsHelp = boot("/", "messages");
+  openHelp(helpReviewsHelp);
+  openReviews(helpReviewsHelp);
+  openHelp(helpReviewsHelp);
+  commit(helpReviewsHelp);
+  assert.equal(helpReviewsHelp.pathname, "/help");
+  assert.equal(helpReviewsHelp.section, "messages");
+  assert.equal(helpReviewsHelp.pending, null);
+  assert.equal(count(helpReviewsHelp, "help"), 1);
+  assert.equal(count(helpReviewsHelp, "reviews"), 0);
+
+  // The rendered URL is still Reviews. Help is pending. Clicking Reviews
+  // again must cancel that pending choice. If the older Help URL lands
+  // first, it must not stay stuck behind a no-load Reviews pending.
+  const cancelHelp = boot("/reviews", "orders");
+  openHelp(cancelHelp);
+  openReviews(cancelHelp);
+  assert.equal(cancelHelp.pending, null);
+  assert.equal(cancelHelp.inFlight, "/reviews");
+  arrive(cancelHelp, "/help");
+  assert.equal(cancelHelp.pending, null);
+  assert.ok(cancelHelp.loads.includes("help"));
+  commit(cancelHelp);
+  assert.equal(cancelHelp.pathname, "/reviews");
+  assert.equal(cancelHelp.section, "orders");
+  assert.equal(visible(cancelHelp), "reviews");
+  assert.equal(cancelHelp.pending, null);
+
+  const cancelReviews = boot("/help", "orders");
+  openReviews(cancelReviews);
+  openHelp(cancelReviews);
+  assert.equal(cancelReviews.pending, null);
+  assert.equal(cancelReviews.inFlight, "/help");
+  arrive(cancelReviews, "/reviews");
+  assert.equal(cancelReviews.pending, null);
+  assert.ok(cancelReviews.loads.includes("reviews"));
+  commit(cancelReviews);
+  assert.equal(cancelReviews.pathname, "/help");
+  assert.equal(visible(cancelReviews), "help");
+  assert.equal(cancelReviews.pending, null);
+
+  const duringHelp = boot("/", "overview");
+  openHelp(duringHelp);
+  select(duringHelp, "orders");
+  assert.equal(duringHelp.section, "orders");
+  assert.equal(duringHelp.pending, null);
+  assert.equal(duringHelp.inFlight, "/");
+  arrive(duringHelp, "/help");
+  commit(duringHelp);
+  assert.equal(duringHelp.pathname, "/");
+  assert.equal(duringHelp.section, "orders");
+  assert.equal(visible(duringHelp), "orders");
+  assert.equal(duringHelp.pending, null);
+
+  const fromReviews = boot("/reviews", "overview");
+  openHelp(fromReviews);
+  select(fromReviews, "messages");
+  assert.equal(fromReviews.pending?.pathname, "/");
+  assert.equal(fromReviews.pending?.section, "messages");
+  arrive(fromReviews, "/help");
+  assert.equal(fromReviews.pending?.pathname, "/");
+  assert.equal(count(fromReviews, "help"), 0);
+  commit(fromReviews);
+  assert.equal(fromReviews.pathname, "/");
+  assert.equal(fromReviews.section, "messages");
+  assert.equal(visible(fromReviews), "messages");
+
+  const backSame = boot("/reviews", "orders");
+  const beforeBack = backSame.loads.length;
+  openHelp(backSame);
+  backSame.inFlight = null;
+  backSame.pending = null;
+  backSame.skip = null;
+  assert.equal(backSame.pathname, "/reviews");
+  assert.equal(backSame.loads.length, beforeBack);
+  assert.equal(count(backSame, "help"), 0);
+
+  const back = boot("/help", "orders");
+  openReviews(back);
+  pop(back, "/");
+  assert.equal(back.pending, null);
+  assert.equal(back.skip, null);
+  assert.equal(back.pathname, "/");
+  assert.equal(back.section, "orders");
+  assert.equal(visible(back), "orders");
+  assert.equal(count(back, "reviews"), 0);
+
+  const logout = boot("/reviews", "messages");
+  openHelp(logout);
+  setAuth(logout, "unauthenticated");
+  assert.equal(logout.pending, null);
+  assert.equal(logout.skip, null);
+  commit(logout);
+  assert.equal(logout.loads.length, 0);
+  setAuth(logout, "authenticated");
+  assert.equal(logout.pathname, "/help");
+  assert.equal(visible(logout), "help");
+  assert.ok(logout.loads.includes("help"));
+
+  const refresh = boot("/help", "overview");
+  assert.deepEqual(
+    refresh.loads.filter((section) => section === "help"),
+    ["help"],
+  );
+  select(refresh, "reviews");
+  commit(refresh);
+  assert.equal(refresh.pathname, "/reviews");
+  assert.equal(refresh.section, "overview");
+  assert.equal(count(refresh, "reviews"), 1);
+  assert.equal(count(refresh, "help"), 1);
 });
 
 test("session restore stays on the loading gate, and a failed restore is not the login screen", () => {

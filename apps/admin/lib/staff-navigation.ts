@@ -172,31 +172,60 @@ export function startSectionSelect(
   };
 }
 
+export type StudioLinkAction = {
+  pending: PendingNavigation | null;
+  skip: null;
+  /**
+   * The visible URL is already this route, but another choice has not
+   * committed. Replace back to it so that older navigation cannot land
+   * and leave its pending choice stuck.
+   */
+  replace: string | null;
+};
+
 /**
- * Reviews and Help are links. Each keeps the dashboard section and clears
- * a stale skip. The pathname effect performs the one fetch.
+ * Reviews and Help are links. Plan from the uncommitted choice when one
+ * exists, so a second click does not treat the stale rendered URL as
+ * current. The pathname effect performs the one fetch. `skip` stays null.
  */
 function startStudioLink(
   visible: StudioView,
   route: "reviews" | "help",
-): { pending: PendingNavigation; skip: null } {
+  pending: PendingNavigation | null,
+): StudioLinkAction {
+  const current = pending
+    ? { pathname: pending.pathname, section: pending.section }
+    : visible;
   const pathname = route === "reviews" ? "/reviews" : "/help";
+  const visiblePath = normalizeStudioPath(visible.pathname);
+  const inFlightElsewhere =
+    pending !== null && normalizeStudioPath(pending.pathname) !== pathname;
+  if (visiblePath === pathname && inFlightElsewhere) {
+    return { pending: null, skip: null, replace: pathname };
+  }
   return {
     pending: {
       pathname,
-      section: visible.section,
-      load: normalizeStudioPath(visible.pathname) === pathname ? null : route,
+      section: current.section,
+      load: normalizeStudioPath(current.pathname) === pathname ? null : route,
     },
     skip: null,
+    replace: null,
   };
 }
 
-export function startReviewsLink(visible: StudioView) {
-  return startStudioLink(visible, "reviews");
+export function startReviewsLink(
+  visible: StudioView,
+  pending: PendingNavigation | null = null,
+) {
+  return startStudioLink(visible, "reviews", pending);
 }
 
-export function startHelpLink(visible: StudioView) {
-  return startStudioLink(visible, "help");
+export function startHelpLink(
+  visible: StudioView,
+  pending: PendingNavigation | null = null,
+) {
+  return startStudioLink(visible, "help", pending);
 }
 
 export type StudioAuth =

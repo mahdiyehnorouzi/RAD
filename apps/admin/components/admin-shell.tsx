@@ -303,10 +303,11 @@ export function AdminShell({ children }: { children: ReactNode }) {
                       };
                       const action =
                         id === "reviews"
-                          ? startReviewsLink(visible)
-                          : startHelpLink(visible);
+                          ? startReviewsLink(visible, pendingNav.current)
+                          : startHelpLink(visible, pendingNav.current);
                       pendingNav.current = action.pending;
                       skipPathLoad.current = action.skip;
+                      if (action.replace) router.replace(action.replace);
                     }}
                   >
                     {body}
