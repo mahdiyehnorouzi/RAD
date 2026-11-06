@@ -10,6 +10,71 @@ export type GoogleProfile = {
   name: string;
 };
 
+/** Which step of `resolveProfile` failed — logged alongside a safe `reason`, never the raw error. */
+export type GoogleOAuthStage = "token_exchange" | "id_token_verification";
+
+/**
+ * Explicit allowlist of safe reason codes for a failed OAuth step: the
+ * OAuth 2.0 token-endpoint `error` values we actually expect from Google
+ * (https://www.rfc-editor.org/rfc/rfc6749#section-5.2), plus the DNS/network
+ * `code`s seen on this VPS, plus our own `invalid_token` for an ID token
+ * that fails local verification. Never log the underlying error message —
+ * it may contain request/response details.
+ */
+export const GOOGLE_OAUTH_REASON_CODES = [
+  "invalid_client",
+  "invalid_grant",
+  "invalid_request",
+  "unauthorized_client",
+  "unsupported_grant_type",
+  "invalid_token",
+  "EAI_AGAIN",
+  "ETIMEDOUT",
+  "ECONNREFUSED",
+  "ECONNRESET",
+  "unknown",
+] as const;
+export type GoogleOAuthReason = (typeof GOOGLE_OAUTH_REASON_CODES)[number];
+
+function isSafeReason(value: unknown): value is GoogleOAuthReason {
+  return (
+    typeof value === "string" &&
+    (GOOGLE_OAUTH_REASON_CODES as readonly string[]).includes(value)
+  );
+}
+
+/**
+ * Duck-typed in place of `instanceof GaxiosError`: `gaxios` is only a
+ * transitive dependency of `google-auth-library`, not one of ours, so we
+ * don't import its class directly. Both the token-exchange and the
+ * certs-fetch HTTP calls throw this shape on a network failure or a
+ * non-2xx response.
+ */
+function reasonFromError(err: unknown): GoogleOAuthReason {
+  if (typeof err !== "object" || err === null) return "unknown";
+  const data = (err as { response?: { data?: unknown } }).response?.data;
+  const oauthError =
+    data && typeof data === "object"
+      ? (data as { error?: unknown }).error
+      : undefined;
+  if (isSafeReason(oauthError)) return oauthError;
+  const code = (err as { code?: unknown }).code;
+  if (isSafeReason(code)) return code;
+  return "unknown";
+}
+
+/** Thrown by `resolveProfile` so the caller can log a stage + safe reason without the raw error. */
+export class GoogleOAuthStageError extends Error {
+  constructor(
+    readonly stage: GoogleOAuthStage,
+    readonly reason: GoogleOAuthReason,
+    cause?: unknown,
+  ) {
+    super(`Google OAuth ${stage} failed: ${reason}`);
+    this.cause = cause;
+  }
+}
+
 function base64url(buffer: Buffer) {
   return buffer
     .toString("base64")
@@ -82,24 +147,50 @@ export class GoogleAuthService {
     codeVerifier: string,
   ): Promise<GoogleProfile> {
     const client = this.client();
-    const { tokens } = await client.getToken({
-      code,
-      codeVerifier,
-    } as never);
-    if (!tokens.id_token) throw new Error("Google did not return an ID token");
-    const ticket = await client.verifyIdToken({
-      idToken: tokens.id_token,
-      audience: this.clientId,
-    });
-    const payload = ticket.getPayload();
-    if (!payload?.sub || !payload.email) {
-      throw new Error("Google ID token is missing sub/email");
+    let tokens: import("google-auth-library").Credentials;
+    try {
+      const result = await client.getToken({ code, codeVerifier } as never);
+      tokens = result.tokens;
+    } catch (err) {
+      throw new GoogleOAuthStageError(
+        "token_exchange",
+        reasonFromError(err),
+        err,
+      );
     }
-    return {
-      googleId: payload.sub,
-      email: payload.email,
-      emailVerified: Boolean(payload.email_verified),
-      name: payload.name ?? payload.email,
-    };
+    if (!tokens.id_token) {
+      throw new GoogleOAuthStageError("token_exchange", "unknown");
+    }
+
+    try {
+      const ticket = await client.verifyIdToken({
+        idToken: tokens.id_token,
+        audience: this.clientId,
+      });
+      const payload = ticket.getPayload();
+      if (!payload?.sub || !payload.email) {
+        throw new GoogleOAuthStageError(
+          "id_token_verification",
+          "invalid_token",
+        );
+      }
+      return {
+        googleId: payload.sub,
+        email: payload.email,
+        emailVerified: Boolean(payload.email_verified),
+        name: payload.name ?? payload.email,
+      };
+    } catch (err) {
+      if (err instanceof GoogleOAuthStageError) throw err;
+      // Anything that reaches here (and wasn't the explicit missing-claims
+      // check above) could be a certs-fetch network failure just as easily
+      // as a token-validation failure — `verifyIdToken` doesn't distinguish
+      // them in its thrown shape, so don't guess "invalid_token" for it.
+      throw new GoogleOAuthStageError(
+        "id_token_verification",
+        reasonFromError(err),
+        err,
+      );
+    }
   }
 }
