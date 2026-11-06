@@ -9,8 +9,15 @@ import type { MessageKey } from "@/i18n/fa";
  */
 export const OTP_RESEND_COOLDOWN_SECONDS = 60;
 
-/** The API sends six-digit codes (`generateVerificationCode`). */
-const OTP_CODE_LENGTH = 6;
+/**
+ * The Melipayamak Console OTP endpoint generates the code and returns it
+ * in its own response — its exact length is not a guaranteed, documented
+ * contract, so this only mirrors the API's own DTO bound
+ * (`OtpVerifyDto`, `apps/api/src/auth/dto/otp-verify.dto.ts`:
+ * `@MinLength(4) @MaxLength(10)`), rather than assuming a fixed length.
+ */
+const OTP_CODE_MIN_LENGTH = 4;
+const OTP_CODE_MAX_LENGTH = 10;
 
 type AuthStage = "password" | "otpRequest" | "otpSignIn";
 
@@ -71,13 +78,16 @@ export function otpCodeAlreadySent(error: unknown) {
   return authErrorCode(error) === "otp_cooldown";
 }
 
-/** Latin digits only, or `null` when it is not a six-digit code. */
+/** Latin digits only, or `null` when it is outside the API's accepted code length. */
 export function normalizeOtpCode(raw: string) {
   const digits = toLatinDigits(raw).replace(/\D/g, "");
-  return digits.length === OTP_CODE_LENGTH ? digits : null;
+  return digits.length >= OTP_CODE_MIN_LENGTH &&
+    digits.length <= OTP_CODE_MAX_LENGTH
+    ? digits
+    : null;
 }
 
-/** What the code input shows while typing: Latin digits, at most six. */
+/** What the code input shows while typing: Latin digits, at most the API's max length. */
 export function otpCodeDraft(raw: string) {
-  return toLatinDigits(raw).replace(/\D/g, "").slice(0, OTP_CODE_LENGTH);
+  return toLatinDigits(raw).replace(/\D/g, "").slice(0, OTP_CODE_MAX_LENGTH);
 }
