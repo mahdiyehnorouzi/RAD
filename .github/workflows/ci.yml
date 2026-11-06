@@ -47,6 +47,11 @@ jobs:
       - run: npm run lint
       - name: Unused files, exports and dependencies
         run: npm run knip
+      # Export-level findings outside the blocking command still mix Nest
+      # metadata, TypeORM migrations, and real unused symbols. They are
+      # printed for review and do not fail this job.
+      - name: Knip export report (non-blocking)
+        run: npm run knip:report
       # Only files this PR touches, so formatting lands gradually instead of one repo-wide rewrite.
       - name: Prettier (changed files)
         if: github.event_name == 'pull_request'

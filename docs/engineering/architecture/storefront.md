@@ -52,7 +52,7 @@ flagged for extraction in this PR.
 
 ## Testing boundary (current)
 
-`knip` watches `apps/storefront` only for dead exports/code. No
+`npm run knip` still checks Storefront exports, and also unused files and direct dependencies in Admin, the API, `@rad/types`, and `@rad/artworks`, plus `@rad/i18n` exports. `npm run knip:report` prints the remaining export findings without failing CI. No
 component-level tests exist for checkout/payment UI, consistent with no
 DOM-testing library being installed — a known, accepted scope limit of
 current tooling, not a gap this PR proposes closing.
