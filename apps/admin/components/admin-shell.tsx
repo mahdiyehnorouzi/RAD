@@ -4,6 +4,7 @@ import {
   createContext,
   useContext,
   useEffect,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -34,6 +35,8 @@ import { roleLabels, type AdminSection } from "../lib/admin-data";
 import {
   initialDashboardSection,
   isReviewsPath,
+  planHistoryNavigation,
+  planSectionSelect,
   sectionDataTarget,
   staffGate,
 } from "../lib/staff-navigation";
@@ -88,6 +91,10 @@ export function AdminShell({ children }: { children: ReactNode }) {
   const [mobileNav, setMobileNav] = useState(false);
   const [toast, setToast] = useState("");
   const reviewsActive = isReviewsPath(pathname);
+  // Set when go() already fetched for a path change, so the effect below
+  // does not fetch that same section again.
+  const skipPathLoad = useRef<AdminSection | null>(null);
+  const seenPath = useRef<string | null>(null);
 
   const announce = (message: string) => {
     setToast(message);
@@ -96,21 +103,32 @@ export function AdminShell({ children }: { children: ReactNode }) {
 
   const go = (next: AdminSection) => {
     setMobileNav(false);
-    if (next === "reviews") {
-      router.push("/reviews");
-      return;
+    const plan = planSectionSelect({ pathname, section }, next);
+    if (plan.view.section !== section) setSection(plan.view.section);
+    if (plan.view.pathname !== pathname) {
+      skipPathLoad.current = plan.load;
+      router.push(isReviewsPath(plan.view.pathname) ? "/reviews" : "/");
+    } else {
+      skipPathLoad.current = null;
     }
-    setSection(next);
-    if (pathname !== "/") router.push("/");
-    void workspace.loadSection(next);
+    if (plan.load) void workspace.loadSection(plan.load);
   };
 
-  // Loads the visible section once a session is confirmed, and again when
-  // the URL changes (refresh, Link, or browser history). In-page section
-  // changes call loadSection from go() and must not re-enter this effect.
+  // First authenticated paint, refresh, the Reviews link, and browser
+  // history. Explicit choices load inside go(); skipPathLoad stops the
+  // path change from fetching a second time. The section value is the
+  // in-memory one, so Back restores it instead of resetting to Overview.
   useEffect(() => {
     if (workspace.authStatus !== "authenticated") return;
-    void workspace.loadSection(sectionDataTarget(pathname, section));
+    const skipped = skipPathLoad.current;
+    skipPathLoad.current = null;
+    const previous = seenPath.current;
+    seenPath.current = pathname;
+    const load =
+      previous === null || previous === pathname
+        ? sectionDataTarget(pathname, section)
+        : planHistoryNavigation({ pathname: previous, section }, pathname).load;
+    if (load && skipped !== load) void workspace.loadSection(load);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [workspace.authStatus, pathname]);
 
