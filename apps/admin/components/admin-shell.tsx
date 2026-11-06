@@ -46,6 +46,7 @@ import {
   startSectionSelect,
   studioHistoryHref,
   studioNavHref,
+  withOrderFocus,
   type PendingNavigation,
 } from "../lib/staff-navigation";
 import { AdminLogin } from "./admin-login";
@@ -77,7 +78,9 @@ type AdminChrome = {
   announce: (message: string) => void;
   /** Opens an order on `/` after leaving a studio route such as `/messages`. */
   openOrder: (orderId: string) => void;
-  takeFocusedOrder: () => string | null;
+  /** Order id from the Messages handoff that just committed. Null after it is used or canceled. */
+  handedOrderId: string | null;
+  clearHandedOrder: () => void;
 };
 
 const AdminChromeContext = createContext<AdminChrome | null>(null);
@@ -141,18 +144,15 @@ export function AdminShell({ children }: { children: ReactNode }) {
       );
     }
     if (action.load) void workspace.loadSection(action.load);
+    return action;
   };
 
-  const focusedOrderId = useRef<string | null>(null);
+  const [handedOrderId, setHandedOrderId] = useState<string | null>(null);
+  const clearHandedOrder = useCallback(() => setHandedOrderId(null), []);
   const openOrder = (orderId: string) => {
-    focusedOrderId.current = orderId;
-    go("orders");
+    const action = go("orders");
+    pendingNav.current = withOrderFocus(action.pending, orderId);
   };
-  const takeFocusedOrder = useCallback(() => {
-    const id = focusedOrderId.current;
-    focusedOrderId.current = null;
-    return id;
-  }, []);
 
   const followStudioLink = (route: "reviews" | "help" | "messages") => {
     setMobileNav(false);
@@ -175,6 +175,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
     const onPop = () => {
       pendingNav.current = null;
       skipPathLoad.current = null;
+      setHandedOrderId(null);
     };
     window.addEventListener("popstate", onPop);
     return () => window.removeEventListener("popstate", onPop);
@@ -197,6 +198,9 @@ export function AdminShell({ children }: { children: ReactNode }) {
     skipPathLoad.current = settled.skip;
     pendingNav.current = settled.pending;
     sectionRef.current = settled.section;
+    setHandedOrderId((current) =>
+      current === settled.focusOrderId ? current : settled.focusOrderId,
+    );
     if (settled.section !== section) setSection(settled.section);
     if (settled.load) void workspace.loadSection(settled.load);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -263,7 +267,15 @@ export function AdminShell({ children }: { children: ReactNode }) {
 
   return (
     <AdminChromeContext.Provider
-      value={{ workspace, section, go, announce, openOrder, takeFocusedOrder }}
+      value={{
+        workspace,
+        section,
+        go,
+        announce,
+        openOrder,
+        handedOrderId,
+        clearHandedOrder,
+      }}
     >
       <div className="admin-shell">
         <aside

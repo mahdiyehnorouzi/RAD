@@ -19,6 +19,7 @@ import {
   startReviewsLink,
   startSectionSelect,
   studioHistoryHref,
+  withOrderFocus,
   type PendingNavigation,
   type StudioAuth,
   type StudioView,
@@ -176,6 +177,12 @@ test("the shell gates session restore and logs out through the one workspace", (
     /if \(action\.replace\) router\.replace\(action\.replace\)/,
   );
   assert.match(shell, /settleStudioPath\(/);
+  assert.match(shell, /withOrderFocus\(action\.pending, orderId\)/);
+  assert.match(shell, /setHandedOrderId\(null\)/);
+  assert.match(
+    readFileSync(join(root, "components/admin-dashboard.tsx"), "utf8"),
+    /handedOrderId/,
+  );
   assert.match(shell, /addEventListener\("popstate"/);
   assert.equal(shell.match(/useAdminWorkspace\(/g)?.length ?? 0, 1);
 });
@@ -196,6 +203,8 @@ type RaceShell = {
   loaded: StudioView["section"][];
   /** Every fetch request, including a repeat of a section already loaded. */
   loads: StudioView["section"][];
+  /** Order id delivered when the navigation that carried it commits. */
+  focus: string | null;
 };
 
 function remember(shell: RaceShell, load: StudioView["section"] | null) {
@@ -230,6 +239,7 @@ function settle(shell: RaceShell) {
   shell.pending = settled.pending;
   shell.section = settled.section;
   shell.sectionNow = settled.section;
+  shell.focus = settled.focusOrderId;
   remember(shell, settled.load);
 }
 
@@ -247,6 +257,7 @@ function boot(pathname: string, section: StudioView["section"]): RaceShell {
     inFlight: null,
     loaded: [],
     loads: [],
+    focus: null,
   };
   settle(shell);
   shell.auth = "authenticated";
@@ -335,6 +346,18 @@ function setAuth(shell: RaceShell, auth: StudioAuth) {
 
 function visible(shell: RaceShell) {
   return sectionDataTarget(shell.pathname, shell.section);
+}
+
+function openOrderFromMessages(shell: RaceShell, orderId: string) {
+  select(shell, "orders");
+  shell.pending = withOrderFocus(shell.pending, orderId);
+}
+
+function consumeFocus(shell: RaceShell) {
+  if (visible(shell) !== "orders") return null;
+  const id = shell.focus;
+  shell.focus = null;
+  return id;
 }
 
 test("navigation races still load the section that remains on screen", () => {
@@ -734,6 +757,65 @@ test("messages is a route, and one entry does not fetch it twice", () => {
   assert.equal(logout.pathname, "/messages");
   assert.equal(visible(logout), "messages");
   assert.equal(count(logout, "messages"), 1);
+});
+
+test("an order handoff from messages is kept only for that navigation", () => {
+  const done = boot("/messages", "overview");
+  openOrderFromMessages(done, "ord-9");
+  assert.equal(done.pending?.focusOrderId, "ord-9");
+  assert.equal(done.focus, null);
+  commit(done);
+  assert.equal(done.pathname, "/");
+  assert.equal(done.section, "orders");
+  assert.equal(done.pending, null);
+  assert.equal(consumeFocus(done), "ord-9");
+  assert.equal(done.focus, null);
+  select(done, "products");
+  select(done, "orders");
+  assert.equal(done.section, "orders");
+  assert.equal(done.focus, null);
+  assert.equal(consumeFocus(done), null);
+
+  const replaced = boot("/messages", "overview");
+  openOrderFromMessages(replaced, "ord-9");
+  select(replaced, "products");
+  assert.equal(replaced.pending?.section, "products");
+  assert.equal(replaced.pending?.focusOrderId, undefined);
+  commit(replaced);
+  assert.equal(replaced.focus, null);
+  select(replaced, "orders");
+  assert.equal(replaced.focus, null);
+  assert.equal(consumeFocus(replaced), null);
+
+  const backed = boot("/messages", "overview");
+  openOrderFromMessages(backed, "ord-9");
+  pop(backed, "/messages");
+  assert.equal(backed.pending, null);
+  assert.equal(backed.focus, null);
+  select(backed, "orders");
+  commit(backed);
+  assert.equal(backed.pathname, "/");
+  assert.equal(backed.section, "orders");
+  assert.equal(backed.focus, null);
+  assert.equal(consumeFocus(backed), null);
+
+  const signedOut = boot("/messages", "overview");
+  openOrderFromMessages(signedOut, "ord-9");
+  setAuth(signedOut, "unauthenticated");
+  assert.equal(signedOut.pending, null);
+  assert.equal(signedOut.focus, null);
+  commit(signedOut);
+  setAuth(signedOut, "authenticated");
+  select(signedOut, "orders");
+  commit(signedOut);
+  assert.equal(signedOut.focus, null);
+  assert.equal(consumeFocus(signedOut), null);
+
+  const reset = boot("/messages", "overview");
+  openOrderFromMessages(reset, "ord-9");
+  setAuth(reset, "error");
+  assert.equal(reset.pending, null);
+  assert.equal(reset.focus, null);
 });
 
 test("session restore stays on the loading gate, and a failed restore is not the login screen", () => {

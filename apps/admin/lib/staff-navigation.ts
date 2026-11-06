@@ -128,7 +128,27 @@ export type PendingNavigation = {
   pathname: string;
   section: AdminSection;
   load: AdminSection | null;
+  /** Set only on the navigation from Messages to Orders. Not copied onto a later choice. */
+  focusOrderId?: string;
 };
+
+/**
+ * The order to reveal when this exact navigation commits on `/`.
+ * A missing pending, or a pending choice that is not Orders, carries no id.
+ */
+export function withOrderFocus(
+  pending: PendingNavigation | null,
+  orderId: string,
+): PendingNavigation | null {
+  if (
+    !pending ||
+    normalizeStudioPath(pending.pathname) !== "/" ||
+    pending.section !== "orders"
+  ) {
+    return pending;
+  }
+  return { ...pending, focusOrderId: orderId };
+}
 
 export type SectionSelectAction = {
   pending: PendingNavigation | null;
@@ -261,6 +281,8 @@ export type PathSettle = {
   pending: PendingNavigation | null;
   section: AdminSection;
   load: AdminSection | null;
+  /** Present only when the navigation that carried this id commits. */
+  focusOrderId: string | null;
 };
 
 export function sectionForCommittedPath(
@@ -297,6 +319,7 @@ export function settleStudioPath(input: {
       pending: null,
       section: input.section,
       load: null,
+      focusOrderId: null,
     };
   }
   const pending = input.pending;
@@ -311,6 +334,7 @@ export function settleStudioPath(input: {
       pending,
       section: input.section,
       load: null,
+      focusOrderId: null,
     };
   }
   const section = sectionForCommittedPath(
@@ -330,6 +354,8 @@ export function settleStudioPath(input: {
     pending: null,
     section,
     load: load && input.skip !== load ? load : null,
+    focusOrderId:
+      pathMatchesPending && pending?.focusOrderId ? pending.focusOrderId : null,
   };
 }
 

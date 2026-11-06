@@ -146,7 +146,7 @@ function sectionAsync(
 }
 
 export function AdminDashboard() {
-  const { workspace, section, go, announce, takeFocusedOrder } =
+  const { workspace, section, go, announce, handedOrderId, clearHandedOrder } =
     useAdminChrome();
   const [productEditor, setProductEditor] = useState<
     AdminProduct | "new" | null
@@ -166,16 +166,16 @@ export function AdminDashboard() {
   };
 
   useEffect(() => {
-    if (section !== "orders") return;
-    const id = takeFocusedOrder();
-    if (!id) return;
+    if (section !== "orders" || !handedOrderId) return;
+    const id = handedOrderId;
     setFocusOrderId(id);
+    clearHandedOrder();
     window.requestAnimationFrame(() => {
       document
         .getElementById(`order-${id}`)
         ?.scrollIntoView({ block: "start", behavior: "smooth" });
     });
-  }, [section, takeFocusedOrder]);
+  }, [section, handedOrderId, clearHandedOrder]);
 
   const setMessageStatus = async (
     id: string,
