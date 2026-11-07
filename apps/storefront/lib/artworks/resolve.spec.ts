@@ -79,10 +79,10 @@ test("resolveArtwork returns a successful empty-images response as-is, never bac
     withFetch(
       (async () =>
         jsonResponse(
-          artwork({ slug: "woven-garden", images: [], media: [] }),
+          artwork({ slug: "mint-angular-cup", images: [], media: [] }),
         )) as typeof fetch,
       async () => {
-        const result = await resolveArtwork("woven-garden");
+        const result = await resolveArtwork("mint-angular-cup");
         assert.ok(result);
         assert.deepEqual(result!.images, []);
       },
@@ -98,7 +98,7 @@ test("resolveArtwork never returns registry data in production when the API thro
       }) as typeof fetch,
       async () => {
         await assert.rejects(
-          () => resolveArtwork("woven-garden"),
+          () => resolveArtwork("mint-angular-cup"),
           ArtworkUnreachableError,
         );
       },
@@ -113,9 +113,9 @@ test("resolveArtwork falls back to the registry when the API throws outside prod
         throw new TypeError("network down");
       }) as typeof fetch,
       async () => {
-        const result = await resolveArtwork("woven-garden");
+        const result = await resolveArtwork("mint-angular-cup");
         assert.ok(result, "expected the bundled registry entry as a fallback");
-        assert.equal(result!.slug, "woven-garden");
+        assert.equal(result!.slug, "mint-angular-cup");
       },
     ),
   );
