@@ -52,12 +52,80 @@ function freePort() {
   });
 }
 
+/** How long a single embedded-Postgres startup stage may take before we give
+ * up and surface a timeout rather than hang the test run forever. */
+const STARTUP_STAGE_TIMEOUT_MS = 30_000;
+
+/** Caps how much embedded-Postgres stdout/stderr we keep around for a
+ * failure message — enough to diagnose a crash, never an unbounded dump. */
+const LOG_TAIL_LIMIT = 4_000;
+
+class BoundedLogTail {
+  private chunks: string[] = [];
+  private length = 0;
+
+  push(message: string) {
+    this.chunks.push(message);
+    this.length += message.length;
+    while (this.length > LOG_TAIL_LIMIT && this.chunks.length > 1) {
+      this.length -= this.chunks.shift()!.length;
+    }
+  }
+
+  text() {
+    const joined = this.chunks.join("");
+    return joined.length > LOG_TAIL_LIMIT
+      ? `…${joined.slice(-LOG_TAIL_LIMIT)}`
+      : joined;
+  }
+}
+
+/** Runs `fn`, and if it doesn't settle within `ms`, rejects with a
+ * recognizable timeout error instead of hanging indefinitely (embedded-
+ * postgres's own `start()` has no internal timeout — if the server process
+ * never prints its "ready" line and never exits, the returned promise never
+ * settles). */
+function withStageTimeout<T>(
+  stage: string,
+  fn: () => Promise<T>,
+  ms = STARTUP_STAGE_TIMEOUT_MS,
+): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => {
+      reject(new Error(`timed out after ${ms}ms waiting for stage "${stage}"`));
+    }, ms);
+    fn().then(
+      (value) => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      (error) => {
+        clearTimeout(timer);
+        reject(error);
+      },
+    );
+  });
+}
+
 /**
  * Real services wired to a throwaway embedded Postgres, never the `.env`
  * database. Mirrors how Nest composes them in `AppModule`.
+ *
+ * Startup diagnostics: embedded-postgres's own `start()` can reject with
+ * `undefined` (no Error, no message) if the spawned `postgres` process exits
+ * before printing its "ready" line — e.g. killed by the OOM killer or a
+ * fork failure on a resource-starved CI runner. Previously this harness
+ * passed `onLog`/`onError` no-ops, which threw away the only diagnostic
+ * information (the server's own stdout/stderr) for exactly that failure, so
+ * a `before` hook failure here showed up as a bare, unexplained rejection.
+ * We now capture a bounded tail of that output and always surface it,
+ * stage-labelled and chained via `cause`, on any setup failure — and clean
+ * up whatever was already started rather than leaking a process/data dir
+ * for the next test run to collide with.
  */
 export async function startPurchaseHarness() {
   const databaseDir = mkdtempSync(path.join(tmpdir(), "rad-purchase-"));
+  const logTail = new BoundedLogTail();
   const port = await freePort();
   const pg = new EmbeddedPostgres({
     databaseDir,
@@ -65,18 +133,58 @@ export async function startPurchaseHarness() {
     password: "rad",
     port,
     persistent: false,
-    onLog: () => {},
-    onError: () => {},
+    onLog: (message) => logTail.push(message),
+    onError: (message) => logTail.push(String(message)),
   });
-  await pg.initialise();
-  await pg.start();
-  await pg.createDatabase("rad_test");
 
-  const dataSource: DataSource = createAppDataSource({
-    url: `postgresql://rad:rad@127.0.0.1:${port}/rad_test`,
-    synchronize: true,
-  } as never);
-  await dataSource.initialize();
+  let pgStarted = false;
+
+  async function cleanupAfterFailure() {
+    // Best-effort: a failure during cleanup must never hide the original
+    // setup error, and must not throw past this function.
+    try {
+      if (pgStarted) {
+        await pg.stop();
+      }
+    } catch {
+      // ignored — we're already failing; cleanup is best-effort.
+    }
+    try {
+      rmSync(databaseDir, { recursive: true, force: true });
+    } catch {
+      // ignored, same reason.
+    }
+  }
+
+  async function setupStage<T>(stage: string, fn: () => Promise<T>): Promise<T> {
+    try {
+      return await withStageTimeout(stage, fn);
+    } catch (cause) {
+      await cleanupAfterFailure();
+      throw new Error(
+        `purchase harness setup failed at stage "${stage}": ${
+          cause instanceof Error ? cause.message : String(cause)
+        }\n--- embedded-postgres log tail ---\n${logTail.text() || "(no output captured)"}`,
+        { cause },
+      );
+    }
+  }
+
+  await setupStage("pg.initialise", () => pg.initialise());
+  await setupStage("pg.start", async () => {
+    await pg.start();
+    pgStarted = true;
+  });
+  await setupStage("pg.createDatabase", () => pg.createDatabase("rad_test"));
+
+  const dataSource: DataSource = await setupStage("dataSource.initialize", async () => {
+    const ds = createAppDataSource({
+      url: `postgresql://rad:rad@127.0.0.1:${port}/rad_test`,
+      synchronize: true,
+    } as never);
+    await ds.initialize();
+    return ds;
+  });
 
   let catalogRevalidationCalls = 0;
   const catalogRevalidation: CatalogRevalidationService = {
