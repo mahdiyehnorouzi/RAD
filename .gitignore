@@ -12,6 +12,7 @@ work/
 *.db
 *.db-journal
 apps/api/data/
+apps/api/sms-send.log
 pricing.config.json
 pricing-report.json
 test-results/

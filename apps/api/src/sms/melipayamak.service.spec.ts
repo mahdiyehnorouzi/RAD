@@ -2,7 +2,12 @@ import assert from "node:assert/strict";
 import { afterEach, describe, test } from "node:test";
 import { ConfigService } from "@nestjs/config";
 import { InternalServerErrorException, Logger } from "@nestjs/common";
+import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import path from "node:path";
 import { MelipayamakService } from "./melipayamak.service";
+
+process.env.RAD_DISABLE_SMS_TRACE = "1";
 
 function configured(overrides: Record<string, string> = {}) {
   return new ConfigService({
@@ -497,5 +502,56 @@ describe("MelipayamakService: RetStatus delivery status", () => {
     assert.equal(blob.includes("username="), false);
     assert.match(blob, /RetStatus 35/);
     assert.match(blob, /Melipayamak SendOtp request failed: Error/);
+  });
+});
+
+describe("MelipayamakService: SMS trace file", () => {
+  test("writes a replayable curl and the full provider response", async () => {
+    const dir = mkdtempSync(path.join(tmpdir(), "rad-sms-trace-"));
+    const file = path.join(dir, "sms-send.log");
+    const previousDisable = process.env.RAD_DISABLE_SMS_TRACE;
+    const previousFile = process.env.SMS_TRACE_FILE;
+    process.env.RAD_DISABLE_SMS_TRACE = "0";
+    process.env.SMS_TRACE_FILE = file;
+    try {
+      stubFetch(
+        async () =>
+          new Response(
+            JSON.stringify({
+              Value: "999999",
+              RetStatus: 0,
+              StrRetStatus: "InvalidData",
+            }),
+            {
+              status: 200,
+              headers: { "content-type": "application/json" },
+            },
+          ),
+      );
+      await assert.rejects(() =>
+        new MelipayamakService(configured()).sendOtp("09121234567", "654321"),
+      );
+      const trace = readFileSync(file, "utf8");
+      assert.match(
+        trace,
+        /curl -sS -X POST 'https:\/\/rest\.payamak-panel\.com\/api\/SendSMS\/SendOtp'/,
+      );
+      assert.match(trace, /--data-urlencode 'username=rad-user'/);
+      assert.match(trace, /--data-urlencode 'password=rad-pass'/);
+      assert.match(trace, /--data-urlencode 'to=09121234567'/);
+      assert.match(trace, /--data-urlencode 'from=3000123456'/);
+      assert.match(trace, /--data-urlencode 'code=654321'/);
+      assert.match(trace, /HTTP 200/);
+      assert.match(trace, /content-type: application\/json/);
+      assert.match(trace, /"RetStatus":0/);
+      assert.match(trace, /"Value":"999999"/);
+    } finally {
+      if (previousDisable === undefined)
+        delete process.env.RAD_DISABLE_SMS_TRACE;
+      else process.env.RAD_DISABLE_SMS_TRACE = previousDisable;
+      if (previousFile === undefined) delete process.env.SMS_TRACE_FILE;
+      else process.env.SMS_TRACE_FILE = previousFile;
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 });
