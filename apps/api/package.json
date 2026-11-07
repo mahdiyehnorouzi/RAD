@@ -28,7 +28,7 @@
     "test:pricing": "tsx --test src/pricing/*.spec.ts",
     "test:collaboration": "tsx --test src/artist-applications/*.spec.ts",
     "test:commissions": "tsx --test src/commissions/*.spec.ts",
-    "test:purchase": "tsx --test src/orders/*.spec.ts src/admin/dto/*.spec.ts",
+    "test:purchase": "tsx --test src/orders/*.spec.ts src/orders/testing/*.spec.ts src/admin/dto/*.spec.ts",
     "test:payment": "tsx --test src/payment/*.spec.ts",
     "test:catalog": "tsx --test src/catalog/*.spec.ts",
     "test:attributes": "tsx --test src/product-attributes/*.spec.ts",
