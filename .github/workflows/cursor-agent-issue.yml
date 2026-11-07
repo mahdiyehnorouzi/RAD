@@ -75,7 +75,7 @@ jobs:
             echo "::error::Missing repository secret CURSOR_API_KEY"
             exit 1
           fi
-          agent -p "$(cat "$RUNNER_TEMP/rad-agent-task.md")" --output-format text 2>&1 | tee "$RUNNER_TEMP/rad-agent-report.txt"
+          cursor-agent -p "$(cat "$RUNNER_TEMP/rad-agent-task.md")" --output-format text 2>&1 | tee "$RUNNER_TEMP/rad-agent-report.txt"
 
       - name: Check and publish a draft PR
         env:
