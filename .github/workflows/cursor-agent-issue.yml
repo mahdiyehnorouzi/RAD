@@ -8,7 +8,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: cursor-agent-issue-${{ github.event.issue.number }}
+  group: cursor-agent-repository-budget
   cancel-in-progress: false
 
 jobs:
@@ -18,11 +18,12 @@ jobs:
       ${{ github.event.label.name == 'agent-ready' &&
           github.event.issue.user.login == github.repository_owner }}
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 20
     permissions:
       contents: write
       pull-requests: write
       issues: write
+      actions: read
     steps:
       - name: Check out main
         uses: actions/checkout@v4
@@ -36,6 +37,20 @@ jobs:
         run: |
           if git ls-remote --exit-code --heads origin "agent/issue-${ISSUE_NUMBER}" >/dev/null 2>&1; then
             echo "::error::An agent branch already exists for this issue. Inspect that branch/PR before retrying."
+            exit 1
+          fi
+
+      - name: Enforce rolling seven-day run budget
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          since="$(date -u -d '7 days ago' +%Y-%m-%dT%H:%M:%SZ)"
+          attempts="$(gh api --paginate --slurp --method GET "repos/$REPOSITORY/actions/runs" -f event=issues -f created=">=$since" -f per_page=100 | jq '[.[] | .workflow_runs[] | select(.path == ".github/workflows/cursor-agent-issue.yml") | .run_attempt] | add // 0')"
+          echo "Rolling seven-day attempts including this run: $attempts / 5" >> "$GITHUB_STEP_SUMMARY"
+          if [ "$attempts" -gt 5 ]; then
+            echo "::error::Weekly Cursor budget reached. Wait for the seven-day window to free a slot."
             exit 1
           fi
 
@@ -61,21 +76,30 @@ jobs:
           Do not change authentication, authorization, payment, inventory, order ownership, pricing, file authorization, or database behavior. Stop and report if the task requires any of these sensitive areas or if requirements are ambiguous.
           Do not merge, deploy, modify GitHub settings, or create additional branches/PRs. Only edit this checkout and run safe local checks.
           If acceptance criteria are missing or contradictory, do not guess; explain what is missing and make no code changes.
+          Use a single agent. Do not delegate or launch parallel agents. Inspect only relevant files; summarize long command output. Run focused checks first and required broad checks once after edits stabilize. Repeat checks only after a new change or failure. Stop with a useful report after two unsuccessful attempts at the same blocker. Do not switch models or restart yourself.
           Finish with a concise evidence report separating inspected, tested, manually verified, and not verified. Never claim checks ran unless they did.
           PROMPT
             printf '\nIssue #%s: %s\n%s\n\nSource: %s\n' "$ISSUE_NUMBER" "$ISSUE_TITLE" "$ISSUE_BODY" "$ISSUE_URL"
           } > "$RUNNER_TEMP/rad-agent-task.md"
 
       - name: Run Cursor Agent
+        timeout-minutes: 13
         id: agent
         env:
           CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
+          CURSOR_MODEL: composer-2.5
         run: |
+          set -euo pipefail
           if [ -z "${CURSOR_API_KEY:-}" ]; then
             echo "::error::Missing repository secret CURSOR_API_KEY"
             exit 1
           fi
-          cursor-agent -p "$(cat "$RUNNER_TEMP/rad-agent-task.md")" --output-format text 2>&1 | tee "$RUNNER_TEMP/rad-agent-report.txt"
+          echo "Model: $CURSOR_MODEL; agent time limit: 12 minutes; single invocation." >> "$GITHUB_STEP_SUMMARY"
+          timeout --signal=TERM --kill-after=30s 12m cursor-agent --model "$CURSOR_MODEL" --trust -p "$(cat "$RUNNER_TEMP/rad-agent-task.md")" --output-format text 2>&1 | tee "$RUNNER_TEMP/rad-agent-report.txt"
+          if grep -q "Workspace Trust Required" "$RUNNER_TEMP/rad-agent-report.txt"; then
+            echo "::error::Cursor stopped at workspace trust before executing the task."
+            exit 1
+          fi
 
       - name: Check and publish a draft PR
         env:
