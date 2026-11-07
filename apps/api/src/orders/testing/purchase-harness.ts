@@ -41,6 +41,7 @@ import { ProductAttributesService } from "../../product-attributes/product-attri
 import { CloudinaryStorageService } from "../../storage/cloudinary-storage.service";
 import {
   describe,
+  ProcessTerminationTimeoutError,
   runCleanupStep,
   runStageWithTimeout,
   SpawnedProcessTracker,
@@ -168,11 +169,19 @@ export async function startPurchaseHarness(
   // Tracks the real OS process independently of whether `pg.start()`'s own
   // promise has resolved — it only resolves once Postgres reports ready,
   // but the process can be alive well before that, or need killing after a
-  // stage has already timed out waiting on it. Watches continuously from
-  // here so a late spawn is still caught even if the stage that triggered
-  // it already failed.
+  // stage has already timed out waiting on it. Watches continuously —
+  // including throughout cleanup, not just until some stage's own timeout
+  // fires — so a process that is discovered only AFTER a timeout is still
+  // found and terminated rather than leaked.
   const processTracker = new SpawnedProcessTracker();
   processTracker.watch(() => pg.process);
+
+  // Set synchronously the moment `pg.start()` is actually CALLED (not once
+  // it resolves) — from that point on, a real OS process may legitimately
+  // still be about to appear, even if this exact stage times out before it
+  // does, and cleanup must keep looking for it rather than assume there's
+  // nothing to terminate.
+  let pgStartCalled = false;
 
   // Set as soon as the DataSource object exists — even if `initialize()`
   // itself is still pending or times out — so cleanup can still `destroy()`
@@ -180,23 +189,33 @@ export async function startPurchaseHarness(
   let dataSource: DataSource | undefined;
 
   async function cleanupAfterFailure(): Promise<string[]> {
-    processTracker.stopWatching();
     const notes: string[] = [];
-    // Order matters: stop the real process (confirmed exited, not just
+    const cleanupTimeoutMs = overrides.cleanupTimeoutMs ?? 5_000;
+
+    // Order matters: stop the real process (CONFIRMED exited — never just
     // asked to exit) BEFORE touching the data directory it may still be
     // writing to, and before destroying the DataSource that may still hold
-    // an open connection to it.
-    const cleanupTimeoutMs = overrides.cleanupTimeoutMs ?? 5_000;
-    // `processTracker.terminate()` keeps its own longer internal grace
-    // period (it always resolves, never throws) — the OUTER bound here is
-    // what actually turns "the process won't die" into a reported cleanup
-    // failure, rather than silently waiting on it.
-    const terminateNote = await runCleanupStep(
-      "terminate postgres process",
-      () => processTracker.terminate(),
-      cleanupTimeoutMs,
-    );
-    if (terminateNote) notes.push(terminateNote);
+    // an open connection to it. The watcher keeps running for the whole of
+    // this call, so a process that only appears mid-cleanup is still
+    // caught; it's `terminate()`'s own `expectPossibleLateArrival` flag —
+    // not a stale "we stopped watching" — that decides whether a missing
+    // process yet is itself something to wait on.
+    let processConfirmedGone = false;
+    try {
+      await processTracker.terminate(cleanupTimeoutMs, {
+        expectPossibleLateArrival: pgStartCalled,
+      });
+      processConfirmedGone = true;
+    } catch (error) {
+      const message =
+        error instanceof ProcessTerminationTimeoutError
+          ? error.message
+          : describe(error);
+      notes.push(`terminate postgres process failed: ${message}`);
+      processConfirmedGone = false;
+    } finally {
+      processTracker.stopWatching();
+    }
 
     if (dataSource) {
       const destroyNote = await runCleanupStep(
@@ -207,10 +226,22 @@ export async function startPurchaseHarness(
       if (destroyNote) notes.push(destroyNote);
     }
 
-    try {
-      rmSync(databaseDir, { recursive: true, force: true });
-    } catch (error) {
-      notes.push(`remove data directory failed: ${describe(error)}`);
+    // Only ever delete the directory once the process is CONFIRMED gone.
+    // If we can't be sure, leaving it on disk (and saying so, with its
+    // path) is far safer than deleting out from under a process that might
+    // still be using it — an orphaned directory is a human cleanup task;
+    // a corrupted/attached-to-nothing one, or a live process writing into
+    // a directory that no longer exists, is a much worse failure mode.
+    if (processConfirmedGone) {
+      try {
+        rmSync(databaseDir, { recursive: true, force: true });
+      } catch (error) {
+        notes.push(`remove data directory failed: ${describe(error)}`);
+      }
+    } else {
+      notes.push(
+        `data directory NOT removed (postgres process termination unconfirmed) — left at ${databaseDir} for manual inspection/cleanup`,
+      );
     }
     return notes;
   }
@@ -231,6 +262,23 @@ export async function startPurchaseHarness(
           logTail.push(
             `[late settlement, after "${info.stage}" had already timed out] ${info.outcome}: ${describe(info.value)}\n`,
           );
+          // A DataSource that finishes initializing AFTER we'd already
+          // given up may now hold a live, unused connection — closing it
+          // is not optional just because nothing else needs it; leaving it
+          // open is exactly the kind of leak this whole rework exists to
+          // avoid. Best-effort and asynchronous: nothing here is awaited by
+          // the caller, since by definition we're long past that stage.
+          if (
+            info.stage === "dataSource.initialize" &&
+            info.outcome === "resolved" &&
+            dataSource
+          ) {
+            void dataSource.destroy().catch((error) => {
+              logTail.push(
+                `[late cleanup] failed to destroy a DataSource that finished initializing after its own timeout: ${describe(error)}\n`,
+              );
+            });
+          }
         },
       });
     } catch (cause) {
@@ -246,7 +294,10 @@ export async function startPurchaseHarness(
   }
 
   await setupStage("pg.initialise", () => pg.initialise());
-  await setupStage("pg.start", () => pg.start());
+  await setupStage("pg.start", () => {
+    pgStartCalled = true;
+    return pg.start();
+  });
   await setupStage("pg.createDatabase", () => pg.createDatabase("rad_test"));
 
   const initializedDataSource: DataSource = await setupStage(

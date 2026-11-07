@@ -32,6 +32,23 @@ function describe(value: unknown): string {
 export { describe };
 
 /**
+ * Thrown by `terminate()` when it could not CONFIRM the process is gone
+ * within its bound — either because it was signalled but never reported
+ * exiting, or because it's unclear whether a process might still appear.
+ * Callers must treat this differently from a clean resolution: it means
+ * "do not assume it's safe to remove anything this process might still be
+ * using" (see `purchase-harness.ts`'s cleanup, which keeps the data
+ * directory on disk rather than delete it out from under a process it
+ * couldn't confirm was dead).
+ */
+export class ProcessTerminationTimeoutError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "ProcessTerminationTimeoutError";
+  }
+}
+
+/**
  * Tracks the actual OS process behind an embedded-postgres instance,
  * independent of whether the higher-level `start()` promise has resolved.
  * `start()` only resolves once Postgres prints its "ready" line, but the
@@ -48,7 +65,13 @@ export class SpawnedProcessTracker {
 
   /** Starts polling `read()` every `intervalMs` until `stopWatching()` is
    * called, attaching to whatever process handle appears (and to a later
-   * one too, if `read()` ever returns a different handle). */
+   * one too, if `read()` ever returns a different handle). Watching is
+   * deliberately cheap to leave running for the lifetime of a setup
+   * attempt PLUS its cleanup — ownership of "a process might still show up
+   * here" starts the moment the caller believes `start()`-equivalent has
+   * been invoked, not when some stage's timeout happens to fire, and a
+   * late-appearing process must still be discovered by whoever is
+   * watching at the time. */
   watch(read: () => ProcessHandle | undefined, intervalMs = 5) {
     this.pollTimer = setInterval(() => {
       const current = read();
@@ -78,33 +101,71 @@ export class SpawnedProcessTracker {
     return !!this.handle && !this.exited;
   }
 
+  /** True once a real process handle has ever been attached (regardless of
+   * whether it has since exited). Used to tell "nothing was ever spawned"
+   * apart from "something was spawned and is now gone". */
+  everAttached(): boolean {
+    return !!this.handle;
+  }
+
   /**
-   * Best-effort termination. Resolves once the process has actually exited
-   * (confirmed via its own `exit` event — never assumed just because
-   * `kill()` was called), or after `timeoutMs` if it never does. Safe to
-   * call when no process was ever attached, or it already exited.
+   * Terminates the tracked process and CONFIRMS it (via its own `exit`
+   * event — never assumed just because `kill()` was called) within
+   * `timeoutMs`, rejecting with `ProcessTerminationTimeoutError` if it
+   * cannot confirm that in time. The caller MUST treat a reject here as
+   * "unsafe to assume this process, or whatever it was using, is gone" —
+   * never as equivalent to a clean resolution.
+   *
+   * `expectPossibleLateArrival`: when true, and no process is attached yet,
+   * this keeps waiting (up to `timeoutMs`) for one to appear via whatever
+   * `watch()` discovers in the background, rather than immediately
+   * declaring "nothing to terminate" — because the caller has told us a
+   * process may still legitimately show up (e.g. `start()` was called but
+   * hadn't spawned anything the instant we looked). When false and nothing
+   * is attached, resolves immediately: there is nothing that could ever
+   * appear (e.g. `start()` was never even called), so declaring "confirmed,
+   * nothing to terminate" is safe, not just convenient.
    */
-  async terminate(timeoutMs = 5_000): Promise<void> {
-    if (!this.isAlive()) return;
-    const handle = this.handle!;
-    await new Promise<void>((resolve) => {
-      let settled = false;
-      const done = () => {
-        if (!settled) {
-          settled = true;
+  terminate(
+    timeoutMs = 5_000,
+    options: { expectPossibleLateArrival?: boolean } = {},
+  ): Promise<void> {
+    if (!this.handle && !options.expectPossibleLateArrival) {
+      return Promise.resolve();
+    }
+
+    const deadline = Date.now() + timeoutMs;
+    let killed = false;
+
+    return new Promise<void>((resolve, reject) => {
+      const poll = () => {
+        if (this.handle && this.exited) {
+          // Confirmed — no further timer is scheduled, so nothing lingers
+          // past this point.
           resolve();
+          return;
         }
+        if (this.handle && !killed) {
+          killed = true;
+          try {
+            this.handle.kill("SIGKILL");
+          } catch {
+            // Process may already be gone between our check and here.
+          }
+        }
+        if (Date.now() >= deadline) {
+          reject(
+            new ProcessTerminationTimeoutError(
+              this.handle
+                ? `process was signalled but did not confirm exit within ${timeoutMs}ms`
+                : `no process was observed within ${timeoutMs}ms — termination could not be confirmed`,
+            ),
+          );
+          return;
+        }
+        setTimeout(poll, 5);
       };
-      handle.once("exit", done);
-      try {
-        handle.kill("SIGKILL");
-      } catch {
-        // Process may already be gone between our liveness check and here.
-      }
-      // Not unref'd: this timer is what guarantees `terminate()` itself
-      // eventually settles, so it must be allowed to keep the process
-      // alive if it's the only thing left pending.
-      setTimeout(done, timeoutMs);
+      poll();
     });
   }
 }

@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { EventEmitter } from "node:events";
 import { test } from "node:test";
 import {
+  ProcessTerminationTimeoutError,
   runCleanupStep,
   runStageWithTimeout,
   SpawnedProcessTracker,
@@ -69,20 +70,47 @@ test("SpawnedProcessTracker: terminate() waits for the real exit, not just for k
   assert.equal(tracker.isAlive(), false);
 });
 
-test("SpawnedProcessTracker: terminate() gives up after its own timeout if the process never exits", async () => {
+test("SpawnedProcessTracker: terminate() REJECTS (never resolves) when a known process never confirms exit", async () => {
   const proc = new FakeProcess(); // never calls simulateExit()
   const tracker = new SpawnedProcessTracker();
   tracker.attach(proc);
 
   const start = Date.now();
-  await tracker.terminate(30);
+  await assert.rejects(
+    () => tracker.terminate(30),
+    (error: unknown) => {
+      assert.ok(error instanceof ProcessTerminationTimeoutError);
+      assert.match(error.message, /did not confirm exit within 30ms/);
+      return true;
+    },
+  );
   assert.ok(
     Date.now() - start < 2_000,
     "terminate() should give up quickly, not hang",
   );
+  assert.equal(proc.killed, true, "it should still have tried to kill it");
 });
 
-test("SpawnedProcessTracker: watch() picks up a process that appears only after a delay (late spawn)", async () => {
+test("SpawnedProcessTracker: terminate() resolves immediately when nothing was ever attached and no late arrival is expected", async () => {
+  const tracker = new SpawnedProcessTracker();
+  const start = Date.now();
+  await tracker.terminate(5_000, { expectPossibleLateArrival: false });
+  assert.ok(Date.now() - start < 100);
+});
+
+test("SpawnedProcessTracker: terminate() with expectPossibleLateArrival WAITS for (and rejects without) a process that never shows up", async () => {
+  const tracker = new SpawnedProcessTracker();
+  await assert.rejects(
+    () => tracker.terminate(30, { expectPossibleLateArrival: true }),
+    (error: unknown) => {
+      assert.ok(error instanceof ProcessTerminationTimeoutError);
+      assert.match(error.message, /no process was observed within 30ms/);
+      return true;
+    },
+  );
+});
+
+test("SpawnedProcessTracker: watch() picks up a process that appears only after a delay (late spawn), and terminate() still confirms it", async () => {
   const holder: { current?: FakeProcess } = {};
   const tracker = new SpawnedProcessTracker();
   tracker.watch(() => holder.current, 2);
@@ -94,10 +122,13 @@ test("SpawnedProcessTracker: watch() picks up a process that appears only after 
   await new Promise((r) => setTimeout(r, 20)); // let the poll pick it up
 
   assert.equal(tracker.isAlive(), true, "watch() never noticed the late spawn");
-  tracker.stopWatching();
 
-  await tracker.terminate(1_000);
+  const terminatePromise = tracker.terminate(1_000);
+  await new Promise((r) => setTimeout(r, 10));
   assert.equal(holder.current.killed, true);
+  holder.current.simulateExit();
+  await terminatePromise;
+  tracker.stopWatching();
 });
 
 test("runStageWithTimeout: a stage that never settles is reported as a timeout, not left hanging", async () => {

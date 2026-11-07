@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { EventEmitter } from "node:events";
-import { existsSync } from "node:fs";
+import { existsSync, rmSync } from "node:fs";
 import { test } from "node:test";
 import { startPurchaseHarness } from "./purchase-harness";
 
@@ -175,7 +175,7 @@ test("cleanup failure is attached as secondary diagnostic, and never replaces th
       assert.match(error.message, /cleanup diagnostics/);
       assert.match(
         error.message,
-        /terminate postgres process failed:.*timed out after 20ms/,
+        /terminate postgres process failed:.*did not confirm exit within 20ms/,
       );
       assert.equal(error.cause instanceof Error, true);
       assert.match(
@@ -190,5 +190,138 @@ test("cleanup failure is attached as secondary diagnostic, and never replaces th
     fakeProc.killed,
     true,
     "cleanup should still have attempted to kill it",
+  );
+});
+
+/**
+ * Regression coverage for three gaps a later review round found in the
+ * lifecycle fix above: these assert actual resource/filesystem state and
+ * call ordering — not just the shape of a thrown error message, which the
+ * tests above already cover.
+ */
+
+test("REGRESSION: a process that never confirms exit leaves the data directory INTACT, never deleted out from under it", async () => {
+  let capturedDatabaseDir = "";
+  const fakeProc = new FakeProcess({ exitsOnKill: false }); // kill() is called, 'exit' never fires
+
+  try {
+    await assert.rejects(() =>
+      startPurchaseHarness({
+        stageTimeoutMs: 20,
+        cleanupTimeoutMs: 20,
+        createEmbeddedPostgres: (options) => {
+          capturedDatabaseDir = options.databaseDir;
+          return {
+            initialise: async () => undefined,
+            start: () => neverSettles(),
+            createDatabase: async () => undefined,
+            stop: async () => undefined,
+            get process() {
+              return fakeProc;
+            },
+          };
+        },
+        createDataSource: () => fakeDataSource(),
+      }),
+    );
+
+    assert.equal(fakeProc.killed, true, "it should still have been signalled");
+    assert.equal(
+      existsSync(capturedDatabaseDir),
+      true,
+      "the data directory was deleted even though the process's exit was never confirmed",
+    );
+  } finally {
+    // The harness correctly refuses to delete this directory itself (that's
+    // the whole point of the test) — clean it up here so the test suite
+    // doesn't leak real temp directories across runs.
+    if (capturedDatabaseDir)
+      rmSync(capturedDatabaseDir, { recursive: true, force: true });
+  }
+});
+
+test("REGRESSION: a process discovered only AFTER the setup timeout already fired is still found and terminated by cleanup, not leaked", async () => {
+  let capturedDatabaseDir = "";
+  const holder: { proc?: FakeProcess } = {};
+
+  await assert.rejects(() =>
+    startPurchaseHarness({
+      stageTimeoutMs: 20,
+      // The process doesn't exist yet when "pg.start" times out at 20ms —
+      // it only appears ~50ms in, well after that stage has already
+      // rejected and cleanup has begun. Cleanup must still be watching.
+      cleanupTimeoutMs: 500,
+      createEmbeddedPostgres: (options) => {
+        capturedDatabaseDir = options.databaseDir;
+        setTimeout(() => {
+          holder.proc = new FakeProcess();
+        }, 50);
+        return {
+          initialise: async () => undefined,
+          start: () => neverSettles(),
+          createDatabase: async () => undefined,
+          stop: async () => undefined,
+          get process() {
+            return holder.proc;
+          },
+        };
+      },
+      createDataSource: () => fakeDataSource(),
+    }),
+  );
+
+  assert.ok(holder.proc, "the late-appearing process was never even observed");
+  assert.equal(
+    holder.proc!.killed,
+    true,
+    "a process that appeared after the timeout was leaked, never terminated",
+  );
+  assert.equal(
+    existsSync(capturedDatabaseDir),
+    false,
+    "termination was confirmed, so the data directory should have been removed",
+  );
+});
+
+test("REGRESSION: a DataSource whose initialize() resolves AFTER its timeout still gets destroy()ed, not just logged", async () => {
+  let resolveInitialize!: () => void;
+  const initializePromise = new Promise<void>((resolve) => {
+    resolveInitialize = resolve;
+  });
+  let destroyCalls = 0;
+
+  await assert.rejects(() =>
+    startPurchaseHarness({
+      stageTimeoutMs: 20,
+      cleanupTimeoutMs: 1_000,
+      createEmbeddedPostgres: () => ({
+        initialise: async () => undefined,
+        start: async () => undefined,
+        createDatabase: async () => undefined,
+        stop: async () => undefined,
+      }),
+      createDataSource: () =>
+        ({
+          initialize: () => initializePromise,
+          destroy: async () => {
+            destroyCalls += 1;
+          },
+        }) as unknown as import("typeorm").DataSource,
+    }),
+  );
+
+  // Cleanup already attempted one destroy() while initialize() was still
+  // pending (it may well have been a no-op against a not-yet-initialized
+  // DataSource — that's fine, it's bounded and best-effort).
+  const destroyCallsRightAfterCleanup = destroyCalls;
+
+  // The DataSource finishes initializing well after we'd already given up
+  // and moved on — simulating a slow connection that eventually succeeds.
+  resolveInitialize();
+  await new Promise((r) => setTimeout(r, 30));
+
+  assert.ok(
+    destroyCalls > destroyCallsRightAfterCleanup,
+    "a DataSource that finished initializing after its timeout was never destroy()ed — only logged",
   );
 });
