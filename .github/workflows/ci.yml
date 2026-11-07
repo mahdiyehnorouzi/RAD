@@ -189,7 +189,7 @@ jobs:
           echo '023070a287cd8cccd71515fedc843f1985bf96c436b7effaecce67290e7e0757  actionlint.tar.gz' | sha256sum -c -
           tar -xzf actionlint.tar.gz actionlint
           cd "$GITHUB_WORKSPACE"
-          "$RUNNER_TEMP/actionlint" -shellcheck= .github/workflows/ci.yml .github/workflows/deploy.yml .github/workflows/deploy-api-vps.yml .github/workflows/deploy-frontend-vps.yml .github/workflows/verify-rad-deploy-ssh.yml
+          "$RUNNER_TEMP/actionlint" -shellcheck= .github/workflows/ci.yml .github/workflows/cursor-agent-issue.yml .github/workflows/deploy.yml .github/workflows/deploy-api-vps.yml .github/workflows/deploy-frontend-vps.yml .github/workflows/verify-rad-deploy-ssh.yml
 
   release-signatures:
     name: Release signature verification (real cryptography)
