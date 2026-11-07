@@ -18,7 +18,7 @@ import { ConfirmDialog } from "../components/admin-dialog";
 import { AdminHelpQuestions } from "../features/help/admin-help-questions";
 import { AdminMessages } from "../features/messages/admin-messages";
 import { AdminReviews } from "../features/reviews/admin-reviews";
-import { AdminShapeQuestions } from "../components/admin-shape-questions";
+import { AdminShapeQuestions } from "../features/shape/admin-shape-questions";
 
 const retry = () => {};
 const noop = async () => {};

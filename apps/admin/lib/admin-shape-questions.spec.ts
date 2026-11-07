@@ -4,7 +4,7 @@ import { test } from "node:test";
 import { act, createElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import type { ShapeQuestion, ShapeQuestionInput } from "./admin-data";
-import { AdminShapeQuestions } from "../components/admin-shape-questions";
+import { AdminShapeQuestions } from "../features/shape/admin-shape-questions";
 import {
   click,
   domDocument,
