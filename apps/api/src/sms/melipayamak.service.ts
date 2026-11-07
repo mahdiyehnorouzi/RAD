@@ -94,6 +94,68 @@ function tryParseJson(text: string): unknown {
   }
 }
 
+function namedField(record: Record<string, unknown>, name: string) {
+  const key = Object.keys(record).find(
+    (candidate) => candidate.toLowerCase() === name.toLowerCase(),
+  );
+  return {
+    present: key !== undefined,
+    value: key === undefined ? undefined : record[key],
+  };
+}
+
+function retStatusLabel(value: unknown) {
+  if (typeof value === "number" && Number.isInteger(value))
+    return String(value);
+  if (typeof value === "string" && /^-?\d{1,6}$/.test(value.trim())) {
+    return value.trim();
+  }
+  return "unrecognized";
+}
+
+/**
+ * JSON `RetStatus` / `StrRetStatus` are delivery status only.
+ * `{"Value":"...","RetStatus":1,"StrRetStatus":"Ok"}` is a successful send
+ * even when `Value` is not a recId — `Value` is never the OTP. A RetStatus
+ * other than 1, or a StrRetStatus other than "Ok"/"Success", is a failure
+ * even when `Value` looks like a recId. Bodies without those fields keep
+ * the recId classification in `extractReturnValue`.
+ */
+function explicitDelivery(
+  body: string,
+):
+  | { kind: "accept" }
+  | { kind: "reject"; retStatus: string }
+  | { kind: "receipt" } {
+  const json = tryParseJson(body.trim());
+  if (!json || typeof json !== "object" || Array.isArray(json)) {
+    return { kind: "receipt" };
+  }
+  const record = json as Record<string, unknown>;
+  const ret = namedField(record, "RetStatus");
+  const str = namedField(record, "StrRetStatus");
+  const label = ret.present ? retStatusLabel(ret.value) : undefined;
+  if (ret.present && label !== "1") {
+    return {
+      kind: "reject",
+      retStatus: label && /^-?\d{1,4}$/.test(label) ? label : "unrecognized",
+    };
+  }
+  if (!str.present) return { kind: "receipt" };
+  const text =
+    typeof str.value === "string" ? str.value.trim().toLowerCase() : "";
+  if (text !== "ok" && text !== "success") {
+    return { kind: "reject", retStatus: label === "1" ? "1" : "missing" };
+  }
+  if (label === "1" && text === "ok") return { kind: "accept" };
+  return { kind: "receipt" };
+}
+
+function configuredSetting(value: string | undefined) {
+  const trimmed = value?.trim();
+  return trimmed ? trimmed : undefined;
+}
+
 /**
  * Sends a single OTP SMS via Melipayamak's legacy `SendOtp` web service
  * (REST form-encoded wrapper documented at
@@ -119,10 +181,11 @@ function tryParseJson(text: string): unknown {
  * "send/simple" product (`MelipayamakConsoleService`), a different
  * Melipayamak account/auth scheme.
  *
- * Never logs the username, password, OTP code, or recipient phone number
- * — on failure, only the mapped, generic error code/classification is
- * logged, never the raw response body (which could, per the documented
- * shapes above, echo back request data).
+ * Never logs the username, password, OTP code, recipient phone number, or
+ * the request body — on failure, only the mapped, generic error
+ * code/classification is logged, never the raw response body (which
+ * could echo back request data). `Value` is a delivery receipt, never
+ * the OTP `OtpService` generated.
  */
 @Injectable()
 export class MelipayamakService {
@@ -132,9 +195,9 @@ export class MelipayamakService {
 
   isConfigured() {
     return Boolean(
-      this.config.get<string>("MELIPAYAMAK_USERNAME") &&
-      this.config.get<string>("MELIPAYAMAK_PASSWORD") &&
-      this.config.get<string>("MELIPAYAMAK_SENDER"),
+      configuredSetting(this.config.get<string>("MELIPAYAMAK_USERNAME")) &&
+      configuredSetting(this.config.get<string>("MELIPAYAMAK_PASSWORD")) &&
+      configuredSetting(this.config.get<string>("MELIPAYAMAK_SENDER")),
     );
   }
 
@@ -158,9 +221,15 @@ export class MelipayamakService {
    * generated per request, never a fixed/env value.
    */
   async sendOtp(to: string, code: string): Promise<void> {
-    const username = this.config.get<string>("MELIPAYAMAK_USERNAME");
-    const password = this.config.get<string>("MELIPAYAMAK_PASSWORD");
-    const from = this.config.get<string>("MELIPAYAMAK_SENDER");
+    const username = configuredSetting(
+      this.config.get<string>("MELIPAYAMAK_USERNAME"),
+    );
+    const password = configuredSetting(
+      this.config.get<string>("MELIPAYAMAK_PASSWORD"),
+    );
+    const from = configuredSetting(
+      this.config.get<string>("MELIPAYAMAK_SENDER"),
+    );
     if (!username || !password || !from) {
       throw new InternalServerErrorException({
         message:
@@ -180,11 +249,8 @@ export class MelipayamakService {
         signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
       });
     } catch (error) {
-      this.logger.error(
-        `Melipayamak SendOtp request failed: ${
-          error instanceof Error ? error.message : String(error)
-        }`,
-      );
+      const reason = error instanceof Error ? error.name : "Error";
+      this.logger.error(`Melipayamak SendOtp request failed: ${reason}`);
       throw new InternalServerErrorException(
         "ارسال پیامک ناموفق بود. دوباره تلاش کنید.",
       );
@@ -197,9 +263,21 @@ export class MelipayamakService {
       );
     }
 
+    const text = await response.text();
+    const explicit = explicitDelivery(text);
+    if (explicit.kind === "accept") return;
+    if (explicit.kind === "reject") {
+      this.logger.warn(
+        `Melipayamak SendOtp was not accepted (HTTP ${response.status}, RetStatus ${explicit.retStatus})`,
+      );
+      throw new InternalServerErrorException(
+        "ارسال پیامک ناموفق بود. دوباره تلاش کنید.",
+      );
+    }
+
     let returnValue: string;
     try {
-      returnValue = extractReturnValue(await response.text());
+      returnValue = extractReturnValue(text);
     } catch {
       this.logger.warn("Melipayamak SendOtp returned an unreadable body");
       throw new InternalServerErrorException(

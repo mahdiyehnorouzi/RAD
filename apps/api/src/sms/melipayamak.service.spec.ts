@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { afterEach, describe, test } from "node:test";
 import { ConfigService } from "@nestjs/config";
-import { InternalServerErrorException } from "@nestjs/common";
+import { InternalServerErrorException, Logger } from "@nestjs/common";
 import { MelipayamakService } from "./melipayamak.service";
 
 function configured(overrides: Record<string, string> = {}) {
@@ -50,6 +50,21 @@ describe("MelipayamakService: configuration validation", () => {
 
   test("isConfigured() is true once all three are present", () => {
     assert.equal(new MelipayamakService(configured()).isConfigured(), true);
+  });
+
+  test("blank or whitespace-only settings count as missing", () => {
+    assert.equal(
+      new MelipayamakService(
+        configured({ MELIPAYAMAK_PASSWORD: "   " }),
+      ).isConfigured(),
+      false,
+    );
+    assert.equal(
+      new MelipayamakService(
+        configured({ MELIPAYAMAK_SENDER: "" }),
+      ).isConfigured(),
+      false,
+    );
   });
 
   test("sending with missing config throws a coded error instead of silently succeeding", async () => {
@@ -363,5 +378,124 @@ describe("MelipayamakService: failure logging", () => {
         return true;
       },
     );
+  });
+});
+
+describe("MelipayamakService: RetStatus delivery status", () => {
+  test("RetStatus 1 and StrRetStatus Ok succeeds and still sends the generated code", async () => {
+    let capturedCode = "";
+    stubFetch(async (_url, init) => {
+      capturedCode = new URLSearchParams(String(init.body)).get("code") ?? "";
+      return new Response(
+        JSON.stringify({
+          Value: "999999",
+          RetStatus: 1,
+          StrRetStatus: "Ok",
+        }),
+        { status: 200 },
+      );
+    });
+    await new MelipayamakService(configured()).sendOtp("09121234567", "654321");
+    assert.equal(capturedCode, "654321");
+    assert.notEqual(capturedCode, "999999");
+  });
+
+  test("Value is not the OTP: RetStatus 1 and Ok succeeds even when Value is an error code", async () => {
+    stubFetch(
+      async () =>
+        new Response(
+          JSON.stringify({ Value: "0", RetStatus: "1", StrRetStatus: "ok" }),
+          { status: 200 },
+        ),
+    );
+    await new MelipayamakService(configured()).sendOtp("09121234567", "654321");
+  });
+
+  test("RetStatus other than 1 is not a successful send, even with a recId Value", async () => {
+    stubFetch(
+      async () =>
+        new Response(
+          JSON.stringify({
+            Value: "654321",
+            RetStatus: 0,
+            StrRetStatus: "Ok",
+          }),
+          { status: 200 },
+        ),
+    );
+    await assert.rejects(
+      () =>
+        new MelipayamakService(configured()).sendOtp("09121234567", "654321"),
+      InternalServerErrorException,
+    );
+  });
+
+  test("RetStatus 1 without StrRetStatus Ok is not a successful send", async () => {
+    stubFetch(
+      async () =>
+        new Response(
+          JSON.stringify({
+            Value: "13579",
+            RetStatus: 1,
+            StrRetStatus: "InvalidData",
+          }),
+          { status: 200 },
+        ),
+    );
+    await assert.rejects(
+      () =>
+        new MelipayamakService(configured()).sendOtp("09121234567", "654321"),
+      InternalServerErrorException,
+    );
+  });
+
+  test("logs omit the OTP, credentials, recipient, and request body", async () => {
+    const lines: string[] = [];
+    const original = {
+      error: Logger.prototype.error,
+      warn: Logger.prototype.warn,
+      log: Logger.prototype.log,
+    };
+    const record = (method: "error" | "warn" | "log") =>
+      function (this: Logger, ...args: unknown[]) {
+        lines.push(args.map((arg) => String(arg)).join(" "));
+        return original[method].apply(this, args as never);
+      };
+    Logger.prototype.error = record("error");
+    Logger.prototype.warn = record("warn");
+    Logger.prototype.log = record("log");
+    try {
+      stubFetch(
+        async () =>
+          new Response(
+            JSON.stringify({
+              Value: "654321",
+              RetStatus: 35,
+              StrRetStatus: "InvalidData",
+            }),
+            { status: 200 },
+          ),
+      );
+      await assert.rejects(() =>
+        new MelipayamakService(configured()).sendOtp("09121234567", "654321"),
+      );
+      stubFetch(async () => {
+        throw new Error("ECONNREFUSED password=rad-pass");
+      });
+      await assert.rejects(() =>
+        new MelipayamakService(configured()).sendOtp("09121234567", "654321"),
+      );
+    } finally {
+      Logger.prototype.error = original.error;
+      Logger.prototype.warn = original.warn;
+      Logger.prototype.log = original.log;
+    }
+    const blob = lines.join("\n");
+    assert.equal(blob.includes("654321"), false);
+    assert.equal(blob.includes("rad-pass"), false);
+    assert.equal(blob.includes("09121234567"), false);
+    assert.equal(blob.includes("username="), false);
+    assert.match(blob, /RetStatus 35/);
+    assert.match(blob, /Melipayamak SendOtp request failed: Error/);
   });
 });

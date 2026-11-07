@@ -78,6 +78,8 @@ export function ProductDetail({
   // is suppressed (never unmounted — same pattern as its scroll-visibility
   // hide) so the two never show a competing "go to bag" CTA at once.
   const [sheetOpen, setSheetOpen] = useState(false);
+  /** Shared while either PDP AddToBag (inline or floating) is posting to the cart API. */
+  const [addPending, setAddPending] = useState(false);
 
   const live = useLiveProduct(product.slug);
   const resolved = overlayLiveProduct(product, live.product);
@@ -147,6 +149,8 @@ export function ProductDetail({
           textures={textures}
           buyRef={buyRef}
           onSheetVisibleChange={setSheetOpen}
+          addPending={addPending}
+          onAddPendingChange={setAddPending}
         />
         <div className={styles.rest}>
           <ProductStory
@@ -210,6 +214,8 @@ export function ProductDetail({
         live={live}
         forceBusy={devBusy}
         visible={!inlineBuyInView && !sheetOpen}
+        addPending={addPending}
+        onAddPendingChange={setAddPending}
       />
     </article>
   );

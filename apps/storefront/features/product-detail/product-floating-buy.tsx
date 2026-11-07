@@ -34,6 +34,8 @@ export function ProductFloatingBuy({
   live,
   forceBusy = false,
   visible = true,
+  addPending = false,
+  onAddPendingChange,
 }: {
   product: Product;
   state: PurchaseState;
@@ -42,11 +44,13 @@ export function ProductFloatingBuy({
   forceBusy?: boolean;
   /** Whether the inline CTA is currently out of view (so this bar should show). */
   visible?: boolean;
+  /** Shared while either PDP AddToBag is posting to the cart API. */
+  addPending?: boolean;
+  onAddPendingChange?: (pending: boolean) => void;
 }) {
   const { locale, t, href } = useLocale();
   const c = pdpCopy[locale];
   const [compact, setCompact] = useState(false);
-  const [busy, setBusy] = useState(false);
   // Points toward forward navigation (into the cart), mirrored per locale —
   // not a loading/decorative mark, which is why the "added" state never
   // reuses the spinner glyph.
@@ -73,7 +77,7 @@ export function ProductFloatingBuy({
       : state.button === "sold" || state.button === "withdrawn"
         ? t("soldOut")
         : (state.label ?? t("soldOut"));
-  const isBusy = busy || forceBusy;
+  const isBusy = addPending || forceBusy;
 
   return (
     <div
@@ -112,9 +116,14 @@ export function ProductFloatingBuy({
             {t("goToBag")}
             <ShoppingBag aria-hidden="true" />
           </Link>
-        ) : forceBusy ? (
+        ) : forceBusy || addPending ? (
           <div className="add-to-bag">
-            <button type="button" className="button add" disabled>
+            <button
+              type="button"
+              className="button add"
+              disabled
+              aria-busy={isBusy}
+            >
               <span className={styles.spinner} aria-hidden="true" />
               {c.addingBag}
             </button>
@@ -125,7 +134,8 @@ export function ProductFloatingBuy({
             onConflict={() => void live.check()}
             icon={<ShoppingBag aria-hidden="true" />}
             busyLabel={c.addingBag}
-            onBusyChange={setBusy}
+            pending={addPending}
+            onBusyChange={onAddPendingChange}
             hideSheet
           />
         )}

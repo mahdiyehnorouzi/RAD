@@ -14,6 +14,7 @@ import {
 } from "@/lib/catalog/filters";
 import { catalogArtists, refineCatalog, shopFloor } from "@/lib/catalog/refine";
 import { useProductStatus } from "@/hooks/use-product-status";
+import { addToBagShowsPending } from "../add-to-bag-pending";
 import { BagAddedSheet } from "./bag-added-sheet";
 import { CatalogBar } from "./catalog-bar";
 import { CatalogCategories } from "./catalog-categories";
@@ -136,6 +137,7 @@ export function AddToBag({
   icon,
   compact = false,
   busyLabel,
+  pending: sharedPending,
   onBusyChange,
   onSheetVisibleChange,
   hideSheet = false,
@@ -147,6 +149,11 @@ export function AddToBag({
   compact?: boolean;
   /** Overrides the default "submitting" label shown while the add is in flight. */
   busyLabel?: string;
+  /**
+   * Opt-in: parent-owned pending flag so two `AddToBag` instances (e.g. PDP
+   * inline + floating) stay disabled while either one's request is in flight.
+   */
+  pending?: boolean;
   /** Lets a caller (e.g. a bar that renders its own busy/added chrome) mirror the in-flight state. */
   onBusyChange?: (busy: boolean) => void;
   /** Mirrors whether the built-in `BagAddedSheet` is currently showing, so a
@@ -162,7 +169,8 @@ export function AddToBag({
   const { addNotice } = useCommerce();
   const refresh = useCatalogRefresh();
   const [error, setError] = useState("");
-  const [busy, setBusy] = useState(false);
+  const [localPending, setLocalPending] = useState(false);
+  const showingPending = addToBagShowsPending(sharedPending, localPending);
   const busyRef = useRef(false);
   const [addedSheet, setAddedSheet] = useState(false);
   const { inBag: added, purchasable, label } = useProductStatus(product);
@@ -170,8 +178,8 @@ export function AddToBag({
   const unavailableLabel = label && !purchasable ? label : t("soldOut");
 
   useEffect(() => {
-    onBusyChange?.(busy);
-  }, [busy, onBusyChange]);
+    onBusyChange?.(showingPending);
+  }, [showingPending, onBusyChange]);
 
   useEffect(() => {
     onSheetVisibleChange?.(addedSheet);
@@ -183,10 +191,11 @@ export function AddToBag({
         type="button"
         className={`${compact ? "plp-bag-button" : "button"} add${added ? " add--in-bag" : ""}`}
         onClick={async () => {
-          if (busyRef.current || added) return;
+          if (busyRef.current || added || showingPending) return;
           busyRef.current = true;
           try {
-            setBusy(true);
+            setLocalPending(true);
+            onBusyChange?.(true);
             setError("");
             // Stay busy/disabled until the API confirms the add — there's no
             // optimistic flip to lean on, so a second click here before the
@@ -220,10 +229,12 @@ export function AddToBag({
             );
           } finally {
             busyRef.current = false;
-            setBusy(false);
+            setLocalPending(false);
+            onBusyChange?.(false);
           }
         }}
-        disabled={added || unavailable || busy}
+        disabled={added || unavailable || showingPending}
+        aria-busy={showingPending}
         aria-live="polite"
       >
         {added ? <Check aria-hidden="true" /> : icon}
@@ -232,7 +243,7 @@ export function AddToBag({
             ? t("inBag")
             : unavailable
               ? unavailableLabel
-              : busy
+              : showingPending
                 ? (busyLabel ?? t("submitting"))
                 : t("addBag")}
         </span>

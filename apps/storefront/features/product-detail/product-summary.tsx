@@ -34,6 +34,8 @@ export function ProductSummary({
   textures,
   buyRef,
   onSheetVisibleChange,
+  addPending,
+  onAddPendingChange,
 }: {
   className: string;
   product: Product;
@@ -47,6 +49,9 @@ export function ProductSummary({
   buyRef?: Ref<HTMLDivElement>;
   /** Mirrors the inline AddToBag's BagAddedSheet visibility up to the page. */
   onSheetVisibleChange?: (visible: boolean) => void;
+  /** Shared PDP add-to-bag pending (inline + floating). */
+  addPending?: boolean;
+  onAddPendingChange?: (pending: boolean) => void;
 }) {
   const { locale, t, number, href } = useLocale();
   const c = pdpCopy[locale];
@@ -160,6 +165,8 @@ export function ProductSummary({
             onConflict={() => void live.check()}
             icon={<ShoppingBag aria-hidden="true" />}
             busyLabel={c.addingBag}
+            pending={addPending}
+            onBusyChange={onAddPendingChange}
             onSheetVisibleChange={onSheetVisibleChange}
           />
         )}
