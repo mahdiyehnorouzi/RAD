@@ -8,6 +8,7 @@ import {
   isHelpPath,
   isMessagesPath,
   isReviewsPath,
+  isShapePath,
   planHistoryNavigation,
   planSectionSelect,
   sectionDataTarget,
@@ -18,6 +19,7 @@ import {
   startMessagesLink,
   startReviewsLink,
   startSectionSelect,
+  startShapeLink,
   studioHistoryHref,
   withOrderFocus,
   type PendingNavigation,
@@ -308,6 +310,16 @@ function openMessages(shell: RaceShell) {
   shell.pending = action.pending;
   shell.skip = action.skip;
   shell.inFlight = action.replace ?? "/messages";
+}
+
+function openShape(shell: RaceShell) {
+  const action = startShapeLink(
+    { pathname: shell.renderedPath, section: shell.sectionNow },
+    shell.pending,
+  );
+  shell.pending = action.pending;
+  shell.skip = action.skip;
+  shell.inFlight = action.replace ?? "/shape";
 }
 
 function commit(shell: RaceShell) {
@@ -816,6 +828,160 @@ test("an order handoff from messages is kept only for that navigation", () => {
   setAuth(reset, "error");
   assert.equal(reset.pending, null);
   assert.equal(reset.focus, null);
+});
+
+test("shape is a route, and direct entry or refresh loads it once without a duplicate request", () => {
+  assert.equal(isShapePath("/shape"), true);
+  assert.equal(isShapePath("/shape/"), true);
+  assert.equal(isShapePath("/"), false);
+  assert.equal(isShapePath("/help"), false);
+  assert.equal(sectionDataTarget("/shape", "orders"), "shape");
+  assert.equal(sectionDataTarget("/shape", "commissions"), "shape");
+  assert.equal(initialDashboardSection("#shape"), "overview");
+  assert.equal(studioHistoryHref("/shape", "#commissions/c1"), "/shape");
+  assert.equal(studioHistoryHref("/", "#commissions/c1"), "/#commissions/c1");
+
+  // Direct entry: one request, no duplicate.
+  const direct = boot("/shape", "overview");
+  assert.deepEqual(
+    direct.loads.filter((section) => section === "shape"),
+    ["shape"],
+  );
+  assert.equal(direct.section, "overview");
+  assert.equal(visible(direct), "shape");
+
+});
+
+test("shape keeps the dashboard section across back/forward and other independent routes", () => {
+  const fromOrders = boot("/", "orders");
+  openShape(fromOrders);
+  commit(fromOrders);
+  assert.equal(fromOrders.pathname, "/shape");
+  assert.equal(fromOrders.section, "orders");
+  assert.equal(count(fromOrders, "shape"), 1);
+  pop(fromOrders, "/");
+  assert.equal(fromOrders.pathname, "/");
+  assert.equal(fromOrders.section, "orders");
+  assert.equal(visible(fromOrders), "orders");
+  pop(fromOrders, "/shape");
+  assert.equal(visible(fromOrders), "shape");
+  assert.equal(fromOrders.section, "orders");
+
+  // Back/Forward between Shape and another independent route (Help).
+  const shapeHelp = boot("/shape", "messages");
+  openHelp(shapeHelp);
+  commit(shapeHelp);
+  assert.equal(shapeHelp.pathname, "/help");
+  pop(shapeHelp, "/shape");
+  assert.equal(visible(shapeHelp), "shape");
+  assert.equal(shapeHelp.section, "messages");
+  pop(shapeHelp, "/help");
+  assert.equal(visible(shapeHelp), "help");
+});
+
+test("rapid Shape<->Help clicks settle on the last choice and fetch it only once", () => {
+  const shapeThenHelp = boot("/", "orders");
+  openShape(shapeThenHelp);
+  openHelp(shapeThenHelp);
+  openShape(shapeThenHelp);
+  commit(shapeThenHelp);
+  assert.equal(shapeThenHelp.pathname, "/shape");
+  assert.equal(shapeThenHelp.section, "orders");
+  assert.equal(shapeThenHelp.pending, null);
+  assert.equal(count(shapeThenHelp, "shape"), 1);
+  assert.equal(count(shapeThenHelp, "help"), 0);
+
+  const helpThenShape = boot("/", "messages");
+  openHelp(helpThenShape);
+  openShape(helpThenShape);
+  openHelp(helpThenShape);
+  commit(helpThenShape);
+  assert.equal(helpThenShape.pathname, "/help");
+  assert.equal(helpThenShape.section, "messages");
+  assert.equal(helpThenShape.pending, null);
+  assert.equal(count(helpThenShape, "help"), 1);
+  assert.equal(count(helpThenShape, "shape"), 0);
+
+  // The rendered URL is already Help, but Shape has not committed yet.
+  // A second click back to Help must cancel the pending Shape choice so an
+  // older Shape arrival cannot land and get stuck.
+  const cancelShape = boot("/help", "orders");
+  openShape(cancelShape);
+  openHelp(cancelShape);
+  assert.equal(cancelShape.pending, null);
+  assert.equal(cancelShape.inFlight, "/help");
+  arrive(cancelShape, "/shape");
+  assert.equal(cancelShape.pending, null);
+  assert.ok(cancelShape.loads.includes("shape"));
+  commit(cancelShape);
+  assert.equal(cancelShape.pathname, "/help");
+  assert.equal(visible(cancelShape), "help");
+  assert.equal(cancelShape.section, "orders");
+  assert.equal(cancelShape.pending, null);
+});
+
+test("a dashboard selection or Back/Forward supersedes a pending Shape navigation", () => {
+  // An explicit dashboard choice (Orders) made while Shape is still
+  // in flight must win, and the superseded Shape arrival must not reopen it.
+  const supersededByDashboard = boot("/", "overview");
+  openShape(supersededByDashboard);
+  select(supersededByDashboard, "orders");
+  // The dashboard choice targets the URL already on screen ("/"), so it
+  // wins immediately rather than waiting behind the pending Shape link.
+  assert.equal(supersededByDashboard.pending, null);
+  assert.equal(supersededByDashboard.pathname, "/");
+  assert.equal(supersededByDashboard.section, "orders");
+  // If the superseded Shape navigation still arrives, it must not reopen.
+  arrive(supersededByDashboard, "/shape");
+  commit(supersededByDashboard);
+  // The visible section is never left unloaded by the superseded choice.
+  assert.ok(supersededByDashboard.loaded.includes("orders"));
+
+  // Back/Forward cancels an uncommitted Shape choice outright.
+  const supersededByPop = boot("/", "overview");
+  openShape(supersededByPop);
+  pop(supersededByPop, "/");
+  assert.equal(supersededByPop.pending, null);
+  assert.equal(visible(supersededByPop), "overview");
+  assert.ok(supersededByPop.loaded.includes("overview"));
+});
+
+test("logout or a failed session restore during a pending Shape navigation clears it cleanly", () => {
+  const logout = boot("/reviews", "orders");
+  openShape(logout);
+  setAuth(logout, "unauthenticated");
+  assert.equal(logout.pending, null);
+  assert.equal(logout.skip, null);
+  commit(logout);
+  assert.equal(logout.loads.length, 0);
+  setAuth(logout, "authenticated");
+  assert.equal(logout.pathname, "/shape");
+  assert.equal(visible(logout), "shape");
+  assert.equal(count(logout, "shape"), 1);
+
+  const failedRestore = boot("/", "overview");
+  openShape(failedRestore);
+  setAuth(failedRestore, "error");
+  assert.equal(failedRestore.pending, null);
+  assert.equal(failedRestore.skip, null);
+});
+
+test("navigating through Shape cannot resurrect a canceled order focus from Messages", () => {
+  const shell = boot("/messages", "overview");
+  openOrderFromMessages(shell, "ord-9");
+  // Before that handoff commits, the admin instead follows Shape.
+  openShape(shell);
+  assert.equal(shell.pending?.focusOrderId, undefined);
+  commit(shell);
+  assert.equal(shell.pathname, "/shape");
+  assert.equal(shell.focus, null);
+  // Landing on Orders afterward must not reveal a focus the superseded
+  // Messages handoff tried to carry.
+  select(shell, "orders");
+  commit(shell);
+  assert.equal(shell.section, "orders");
+  assert.equal(shell.focus, null);
+  assert.equal(consumeFocus(shell), null);
 });
 
 test("session restore stays on the loading gate, and a failed restore is not the login screen", () => {
