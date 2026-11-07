@@ -88,7 +88,13 @@ test("requesting a code sends exactly one SMS with a 6-digit code", async () => 
   assert.equal(sent.length, 1);
   assert.equal(sent[0].to, "09121111111");
   assert.match(sent[0].code, /^\d{6}$/);
-  assert.ok(result.expiresInSeconds > 0);
+  assert.equal(result.expiresInSeconds, 180);
+  const row = await dataSource
+    .getRepository(OtpCode)
+    .findOneByOrFail({ phone: "09121111111" });
+  const remainingMs = row.expiresAt.getTime() - Date.now();
+  assert.ok(remainingMs <= 180_000);
+  assert.ok(remainingMs > 180_000 - 5_000);
 });
 
 test("resending immediately for the same phone is refused (cooldown)", async () => {
@@ -119,6 +125,30 @@ test("the correct code verifies successfully, and consumes the code", async () =
   await assert.rejects(
     () => otp.verifyCode("09123333333", code),
     NotFoundException,
+  );
+});
+
+test("an expired code cannot be verified, even when the digits still match", async () => {
+  sent = [];
+  await otp.requestCode("09120000333");
+  const code = sent[0].code;
+  await dataSource
+    .getRepository(OtpCode)
+    .update(
+      { phone: "09120000333" },
+      { expiresAt: new Date(Date.now() - 1_000) },
+    );
+
+  await assert.rejects(
+    () => otp.verifyCode("09120000333", code),
+    (error: unknown) => {
+      assert.ok(error instanceof NotFoundException);
+      assert.equal(
+        (error.getResponse() as { code?: string }).code,
+        "otp_expired",
+      );
+      return true;
+    },
   );
 });
 
@@ -176,7 +206,7 @@ test("a failed SMS send does not leave a code active (no cooldown-blocked retry 
   // Immediately retrying must succeed — not blocked by the cooldown from
   // the failed attempt.
   const result = await otp.requestCode("09126666666");
-  assert.ok(result.expiresInSeconds > 0);
+  assert.equal(result.expiresInSeconds, 180);
 });
 
 test("a later request for the same phone invalidates the earlier unconsumed code", async () => {

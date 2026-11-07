@@ -103,13 +103,14 @@ export class MelipayamakConsoleService {
       );
     }
 
-    // ASSUMED success shape: `{ "recId": <number> }`, by analogy with
-    // Melipayamak's other REST products (the SendOtp API's numeric
-    // ReturnValue). This has not been confirmed against this endpoint's
-    // own documentation or a live account — see this feature's task
-    // notes. Any other body shape is treated as a failure rather than
-    // guessed at, since a 2xx HTTP status alone is not proof the message
-    // was accepted. Revisit once the real response shape is confirmed.
+    // ASSUMED success shape: `{ "recId": <number> }`. This has not been
+    // confirmed against this endpoint's own documentation or a live
+    // account — see this feature's task notes. SendOtp (the OTP provider)
+    // uses a different body (`RetStatus` / `StrRetStatus`) and is not a
+    // template for this one. Any other body shape is treated as a failure
+    // rather than guessed at, since a 2xx HTTP status alone is not proof
+    // the message was accepted. Revisit once the real response shape is
+    // confirmed.
     let body: unknown;
     try {
       body = await response.json();
