@@ -30,7 +30,7 @@ const q1: ShapeQuestion = {
 
 const q2: ShapeQuestion = {
   id: "s2",
-  trait: "glaze",
+  trait: "quiet",
   prompt: { fa: "لعاب روشنه؟", en: "bright glaze?" },
   hint: { fa: "به سطح نگاه کن", en: "look at the surface" },
   choices: [choice(0.1, "تیره", "dark"), choice(0.8, "روشن", "bright")],
@@ -152,7 +152,7 @@ test("editing an existing question opens the dialog pre-filled and submitting un
   assert.ok(savedInput);
   assert.equal((savedInput as unknown as ShapeQuestionInput).prompt.fa, "کج ایستاده؟");
   // Dialog closes after a successful save.
-  assert.doesNotMatch(textOf(host), /کج ایستاده؟.*کج ایستاده؟/s);
+  assert.doesNotMatch(textOf(host), /کج ایستاده؟[\s\S]*کج ایستاده؟/);
 });
 
 test("a rejected save keeps the dialog open and shows nothing silently swallowed", async () => {
