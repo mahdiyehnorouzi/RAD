@@ -5,7 +5,14 @@ import { act, createElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import type { ShapeQuestion, ShapeQuestionInput } from "./admin-data";
 import { AdminShapeQuestions } from "../features/shape/admin-shape-questions";
-import { click, domDocument, elements, textOf, type DomNode } from "./test-dom";
+import {
+  click,
+  domDocument,
+  elements,
+  setControlValue,
+  textOf,
+  type DomNode,
+} from "./test-dom";
 
 const choice = (value: number, fa: string, en: string) => ({
   label: { fa, en },
@@ -40,6 +47,31 @@ function buttonsByAriaLabel(root: DomNode, label: string) {
   return elements(root, "button").filter((node) =>
     (node.getAttribute("aria-label") ?? "").includes(label),
   );
+}
+
+/** Finds a `Field`'s `<label>` wrapper by its visible label text, scoped to `root`. */
+function fieldLabels(root: DomNode, label: string) {
+  return elements(root, "label").filter((node) => {
+    const span = elements(node, "span")[0];
+    return span ? textOf(span) === label : false;
+  });
+}
+
+/** The input/select control inside the first `Field` matching `label`, within `root`. */
+function field(root: DomNode, label: string) {
+  const wrapper = fieldLabels(root, label)[0];
+  assert.ok(wrapper, `expected a field labeled "${label}"`);
+  const control =
+    elements(wrapper, "input")[0] ?? elements(wrapper, "select")[0];
+  assert.ok(control, `expected a control inside the "${label}" field`);
+  return control;
+}
+
+async function fill(node: DomNode, value: string) {
+  await act(async () => {
+    setControlValue(node, value);
+    await Promise.resolve();
+  });
 }
 
 async function press(node: DomNode | undefined) {
@@ -152,27 +184,119 @@ test("editing an existing question opens the dialog pre-filled and submitting un
   assert.doesNotMatch(textOf(host), /کج ایستاده؟[\s\S]*کج ایستاده؟/);
 });
 
-test("a rejected save keeps the dialog open and shows nothing silently swallowed", async () => {
+async function fillNewQuestionForm(host: DomNode) {
+  await fill(field(host, "سؤال (فارسی)"), "آیا لبه صاف است؟");
+  await fill(field(host, "سؤال (انگلیسی)"), "is the rim straight?");
+  await fill(field(host, "راهنما (فارسی)"), "به لبه ظرف نگاه کن");
+  await fill(field(host, "راهنما (انگلیسی)"), "look at the rim of the piece");
+
+  const fieldsets = elements(host, "fieldset");
+  assert.equal(fieldsets.length, 2);
+  const [first, second] = fieldsets;
+
+  await fill(field(first, "عنوان (فارسی)"), "صاف");
+  await fill(field(first, "عنوان (انگلیسی)"), "straight");
+  await fill(field(first, "توضیح (فارسی)"), "صاف توضیح");
+  await fill(field(first, "توضیح (انگلیسی)"), "straight note");
+  await fill(
+    field(first, "آدرس عکس (مثل /shape/q1-straight.webp)"),
+    "/straight.jpg",
+  );
+  await fill(field(first, "توضیح عکس (فارسی)"), "صاف");
+  await fill(field(first, "توضیح عکس (انگلیسی)"), "straight");
+
+  await fill(field(second, "عنوان (فارسی)"), "کج");
+  await fill(field(second, "عنوان (انگلیسی)"), "crooked");
+  await fill(field(second, "توضیح (فارسی)"), "کج توضیح");
+  await fill(field(second, "توضیح (انگلیسی)"), "crooked note");
+  await fill(
+    field(second, "آدرس عکس (مثل /shape/q1-straight.webp)"),
+    "/crooked.jpg",
+  );
+  await fill(field(second, "توضیح عکس (فارسی)"), "کج");
+  await fill(field(second, "توضیح عکس (انگلیسی)"), "crooked");
+}
+
+test("creating a question fills bilingual fields and both choices, then saves with no id", async () => {
+  let savedInput: ShapeQuestionInput | null = null;
+  let savedId: string | undefined = "not-called";
+  let calls = 0;
+  const { host } = await mount({
+    onSave: async (input, id) => {
+      calls += 1;
+      savedInput = input;
+      savedId = id;
+      return true;
+    },
+  });
+
+  await press(buttons(host, "سؤال تازه")[0]);
+  // The dialog opened: its fieldsets for the two choices are now present.
+  assert.equal(elements(host, "fieldset").length, 2);
+  await fillNewQuestionForm(host);
+
+  const submit = buttons(host, "ذخیره")[0];
+  await press(submit);
+
+  assert.equal(calls, 1);
+  // A new question is saved with no id argument at all.
+  assert.equal(savedId, undefined);
+  assert.ok(savedInput);
+  const input = savedInput as unknown as ShapeQuestionInput;
+  assert.equal(input.trait, "crooked");
+  assert.deepEqual(input.prompt, {
+    fa: "آیا لبه صاف است؟",
+    en: "is the rim straight?",
+  });
+  assert.deepEqual(input.hint, {
+    fa: "به لبه ظرف نگاه کن",
+    en: "look at the rim of the piece",
+  });
+  assert.equal(input.choices.length, 2);
+  assert.deepEqual(input.choices[0].label, { fa: "صاف", en: "straight" });
+  assert.equal(input.choices[0].photo.src, "/straight.jpg");
+  assert.deepEqual(input.choices[1].label, { fa: "کج", en: "crooked" });
+  assert.equal(input.choices[1].photo.src, "/crooked.jpg");
+
+  // The dialog closes after a successful save: its form fields are gone,
+  // only the list (still showing the pre-existing questions) remains.
+  assert.equal(elements(host, "fieldset").length, 0);
+});
+
+test("a rejected save keeps the dialog open, shows the real error, keeps the entered values, and can be retried", async () => {
+  let calls = 0;
+  let succeedNext = false;
   const { host } = await mount({
     onSave: async () => {
-      throw new Error("ذخیره سؤال ناموفق بود.");
+      calls += 1;
+      if (!succeedNext) {
+        throw new Error("ذخیره سؤال ناموفق بود. دوباره تلاش کنید.");
+      }
+      return true;
     },
   });
   await press(buttons(host, "ویرایش")[0]);
+  await fill(field(host, "سؤال (فارسی)"), "متن ویرایش‌شده");
+
   const submit = buttons(host, "ذخیره")[0];
-  // The dialog's own save flow is exercised at the dialog level elsewhere;
-  // here we confirm the list does not optimistically remove/alter the row
-  // when onSave rejects, and the row is still present afterward.
-  await act(async () => {
-    try {
-      click(submit);
-      await Promise.resolve();
-      await Promise.resolve();
-      await Promise.resolve();
-    } catch {
-      // onSave rejection is handled inside the dialog; a rejection
-      // surfacing here would mean the list no longer guards against it.
-    }
-  });
-  assert.match(textOf(host), /کج ایستاده؟/);
+  await press(submit);
+
+  // onSave was actually called.
+  assert.equal(calls, 1);
+  // The dialog is still open (its form is still rendered).
+  assert.equal(elements(host, "fieldset").length, 2);
+  // The real, specific error message reaches the user, not a generic one.
+  assert.match(textOf(host), /ذخیره سؤال ناموفق بود\. دوباره تلاش کنید\./);
+  // The value the admin typed is not cleared by the failed save.
+  assert.equal(
+    (field(host, "سؤال (فارسی)") as DomNode).value,
+    "متن ویرایش‌شده",
+  );
+
+  // Retrying (same form, now configured to succeed) saves successfully.
+  succeedNext = true;
+  await press(buttons(host, "ذخیره")[0]);
+  assert.equal(calls, 2);
+  assert.doesNotMatch(textOf(host), /ذخیره سؤال ناموفق بود/);
+  assert.equal(elements(host, "fieldset").length, 0);
 });
