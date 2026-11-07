@@ -1,3 +1,5 @@
+import { appendFileSync, mkdirSync } from "node:fs";
+import { dirname, join, sep } from "node:path";
 import {
   Injectable,
   InternalServerErrorException,
@@ -156,6 +158,53 @@ function configuredSetting(value: string | undefined) {
   return trimmed ? trimmed : undefined;
 }
 
+function shellSingleQuoted(value: string) {
+  return `'${value.replace(/'/g, `'\\''`)}'`;
+}
+
+/** Curl the server can replay. Includes the password and OTP on purpose. */
+function sendOtpCurl(fields: Record<string, string>) {
+  const data = Object.entries(fields).map(
+    ([key, value], index, all) =>
+      `  --data-urlencode ${shellSingleQuoted(`${key}=${value}`)}${index === all.length - 1 ? "" : " \\"}`,
+  );
+  return [
+    `curl -sS -X POST ${shellSingleQuoted(SEND_OTP_URL)} \\`,
+    `  -H ${shellSingleQuoted("content-type: application/x-www-form-urlencoded")} \\`,
+    ...data,
+  ].join("\n");
+}
+
+/**
+ * Next to the API project: `/opt/rad/apps/api/sms-send.log` on the server
+ * (systemd WorkingDirectory), or `apps/api/sms-send.log` when the process
+ * is started from the repo root. Set `SMS_TRACE_FILE` to override.
+ * `RAD_DISABLE_SMS_TRACE=1` turns it off. The file is mode 0600 and holds
+ * the full request, including credentials.
+ */
+function smsTracePath() {
+  if (process.env.RAD_DISABLE_SMS_TRACE === "1") return undefined;
+  const override = process.env.SMS_TRACE_FILE?.trim();
+  if (override) return override;
+  const cwd = process.cwd();
+  const inApiDir = cwd.endsWith(`${sep}apps${sep}api`);
+  return join(inApiDir ? cwd : join(cwd, "apps", "api"), "sms-send.log");
+}
+
+function appendSmsTrace(entry: string) {
+  const file = smsTracePath();
+  if (!file) return;
+  try {
+    mkdirSync(dirname(file), { recursive: true });
+    appendFileSync(file, entry, { encoding: "utf8", mode: 0o600 });
+  } catch (error) {
+    const reason = error instanceof Error ? error.name : "Error";
+    new Logger("MelipayamakService").warn(
+      `SMS SendOtp trace could not be written (${reason})`,
+    );
+  }
+}
+
 /**
  * Sends a single OTP SMS via Melipayamak's legacy `SendOtp` web service
  * (REST form-encoded wrapper documented at
@@ -185,7 +234,8 @@ function configuredSetting(value: string | undefined) {
  * the request body — on failure, only the mapped, generic error
  * code/classification is logged, never the raw response body (which
  * could echo back request data). `Value` is a delivery receipt, never
- * the OTP `OtpService` generated.
+ * the OTP `OtpService` generated. A separate `sms-send.log` next to the
+ * API process records the full curl and provider response for debugging.
  */
 @Injectable()
 export class MelipayamakService {
@@ -238,7 +288,9 @@ export class MelipayamakService {
       });
     }
 
-    const body = new URLSearchParams({ username, password, to, from, code });
+    const fields = { username, password, to, from, code };
+    const body = new URLSearchParams(fields);
+    const curl = sendOtpCurl(fields);
 
     let response: Response;
     try {
@@ -250,11 +302,41 @@ export class MelipayamakService {
       });
     } catch (error) {
       const reason = error instanceof Error ? error.name : "Error";
+      appendSmsTrace(
+        [
+          `===== ${new Date().toISOString()} =====`,
+          curl,
+          "",
+          "--- response ---",
+          `(no HTTP response; ${reason})`,
+          "",
+          "",
+        ].join("\n"),
+      );
       this.logger.error(`Melipayamak SendOtp request failed: ${reason}`);
       throw new InternalServerErrorException(
         "ارسال پیامک ناموفق بود. دوباره تلاش کنید.",
       );
     }
+
+    const text = await response.text();
+    const headerLines = [...response.headers.entries()]
+      .map(([key, value]) => `${key}: ${value}`)
+      .join("\n");
+    appendSmsTrace(
+      [
+        `===== ${new Date().toISOString()} =====`,
+        curl,
+        "",
+        "--- response ---",
+        `HTTP ${response.status}`,
+        headerLines,
+        "",
+        text,
+        "",
+        "",
+      ].join("\n"),
+    );
 
     if (!response.ok) {
       this.logger.warn(`Melipayamak SendOtp returned HTTP ${response.status}`);
@@ -262,8 +344,6 @@ export class MelipayamakService {
         "ارسال پیامک ناموفق بود. دوباره تلاش کنید.",
       );
     }
-
-    const text = await response.text();
     const explicit = explicitDelivery(text);
     if (explicit.kind === "accept") return;
     if (explicit.kind === "reject") {
