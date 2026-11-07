@@ -819,6 +819,23 @@ def frontend_smoke(services):
         request_url("https://admin.rad-object.com/")
 
 
+def prune_unused_docker_images():
+    # Run only after a frontend release is healthy. Images used by any
+    # existing container remain; unreferenced historical release images do not.
+    try:
+        result = run("/usr/bin/docker", "image", "prune", "--all", "--force")
+        summary = result.stdout.strip().replace("\n", " ")
+        print(f"rad-release: stage=docker_image_prune_complete summary={summary}", flush=True)
+    except Exception as error:
+        # Cleanup must not turn a healthy frontend release into a failed deploy.
+        print(
+            f"rad-release: stage=docker_image_prune_failed "
+            f"error={type(error).__name__}: {error}",
+            file=sys.stderr,
+            flush=True,
+        )
+
+
 def release_frontend(manifest, directory, transaction):
     protected(COMPOSE)
     for name in (".env.storefront.production", ".env.admin.production"):
@@ -857,6 +874,8 @@ def release_frontend(manifest, directory, transaction):
     except BaseException:
         rollback(transaction)
         raise
+
+    prune_unused_docker_images()
 
 
 def rollback(transaction):
