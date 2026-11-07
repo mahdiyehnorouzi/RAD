@@ -849,7 +849,6 @@ test("shape is a route, and direct entry or refresh loads it once without a dupl
   );
   assert.equal(direct.section, "overview");
   assert.equal(visible(direct), "shape");
-
 });
 
 test("shape keeps the dashboard section across back/forward and other independent routes", () => {

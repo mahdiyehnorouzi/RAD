@@ -110,7 +110,8 @@ export function AdminShell({ children }: { children: ReactNode }) {
   const helpActive = isHelpPath(pathname);
   const messagesActive = isMessagesPath(pathname);
   const shapeActive = isShapePath(pathname);
-  const routeActive = reviewsActive || helpActive || messagesActive || shapeActive;
+  const routeActive =
+    reviewsActive || helpActive || messagesActive || shapeActive;
   // skip: go() already fetched for a path change. pending: latest choice
   // whose URL has not committed. seen: last pathname this effect applied.
   const skipPathLoad = useRef<AdminSection | null>(null);

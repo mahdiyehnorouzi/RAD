@@ -5,13 +5,7 @@ import { act, createElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import type { ShapeQuestion, ShapeQuestionInput } from "./admin-data";
 import { AdminShapeQuestions } from "../features/shape/admin-shape-questions";
-import {
-  click,
-  domDocument,
-  elements,
-  textOf,
-  type DomNode,
-} from "./test-dom";
+import { click, domDocument, elements, textOf, type DomNode } from "./test-dom";
 
 const choice = (value: number, fa: string, en: string) => ({
   label: { fa, en },
@@ -150,7 +144,10 @@ test("editing an existing question opens the dialog pre-filled and submitting un
   await press(submit);
   assert.equal(savedId, "s1");
   assert.ok(savedInput);
-  assert.equal((savedInput as unknown as ShapeQuestionInput).prompt.fa, "کج ایستاده؟");
+  assert.equal(
+    (savedInput as unknown as ShapeQuestionInput).prompt.fa,
+    "کج ایستاده؟",
+  );
   // Dialog closes after a successful save.
   assert.doesNotMatch(textOf(host), /کج ایستاده؟[\s\S]*کج ایستاده؟/);
 });
