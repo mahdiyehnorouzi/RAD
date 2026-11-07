@@ -5,27 +5,64 @@
 > The SSH-based procedures below describe an earlier, unrestricted-root-key path; do not
 > mix them with either of the above.
 
-# CI/CD pipeline: merge to `main` → automatic production deploy
+# CI/CD pipeline: merge to `main`, then an explicit manual release
 
 ## What this is
 
-`main` pushes automatically deploy. `.github/workflows/deploy.yml` is the single automatic
-entry point: it waits for CI, works out which of API / Storefront / Admin the push actually
-affects (dependency-aware, not naive path matching — see below), then releases API first (if
-affected), and only once that's healthy, Storefront/Admin (if affected). Nothing else in this
-repo deploys on its own.
+**RAD-129 (2026-11): merging to `main` no longer deploys anything.** `deploy.yml` has no
+`push` trigger — a push to `main` runs nothing beyond whatever the push itself is (nothing,
+in this repo; see "Verifying RAD-128's claim" below). Releasing to Production is always a
+separate, explicit action: a human goes to Actions → **"Production release (manual)"** → Run
+workflow, gives the exact commit SHA to release, and types `deploy` into `confirm`.
+`deploy.yml` then verifies that commit (on `main`, with a passing `CI passed` check recorded
+against that exact SHA — re-checked via GitHub's API, never re-run blind against whatever ref
+happens to be current), works out which of API / Storefront / Admin it actually affects
+relative to its parent commit (dependency-aware, not naive path matching — see below), then
+releases API first (if affected), and only once that's healthy, Storefront/Admin (if
+affected). Nothing else in this repo deploys on its own.
 
-Day-to-day workflow is now exactly:
+Day-to-day workflow is now:
 
 1. Work on a feature branch, open a PR.
-2. Wait for CI (`ci.yml`, required on the PR).
-3. Merge to `main`.
-4. `deploy.yml` fires, deploys whatever changed, runs health checks + smoke tests, and
-   automatically rolls back on failure. You watch the Actions tab; you do not SSH in, run a
-   script, or click "Run workflow" for a routine release.
+2. Wait for CI (`ci.yml`, required on the PR — this is the `CI passed` check the manual
+   release later re-verifies for the exact commit).
+3. Merge to `main`. **This step deploys nothing.**
+4. When you're ready to release (not necessarily right after merging, and not necessarily the
+   latest commit on `main`): Actions → "Production release (manual)" → Run workflow →
+   `commit_sha` = the exact SHA to release, `confirm` = `deploy`. Leaving `confirm` at its
+   default (`build-check-only`) runs the same verification — commit-on-main, CI-passed,
+   which services it would touch — without building or shipping anything; use that to sanity
+   check a SHA first.
+5. `deploy.yml` deploys whatever that commit changed, runs health checks + smoke tests, and
+   automatically rolls back on failure. You watch the Actions tab; you do not SSH in or run a
+   script for a routine release — you do now explicitly click "Run workflow", on purpose, as
+   the one human action this pipeline requires.
 
-This document is the one-time setup checklist, the dependency map the automatic path uses,
-and the emergency manual-recovery procedures — not a description of application behavior.
+This document is the one-time setup checklist, the dependency map the release path uses, and
+the emergency manual-recovery procedures — not a description of application behavior.
+
+### Why (RAD-129's own task)
+
+Decoupling "merge" from "deploy" means a PR can land on `main` (for stacking further work, for
+review, for keeping the trunk current) without forcing an immediate Production release, and
+means a release always names the exact commit being shipped rather than implicitly "whatever
+`main`'s tip is right now" — useful for releasing an older, already-verified commit, or for
+batching several merged commits into one deliberate release. Every existing safeguard —
+release broker verification, per-migration approval, artifact integrity checks, health checks,
+smoke tests, rollback — is unchanged; only the trigger moved from `push` to `workflow_dispatch`.
+
+### Verifying RAD-128's claim about post-merge CI
+
+RAD-128 (an earlier task) left `ci.yml` with **no direct `push: branches: [main]` trigger** —
+see its own header comment. Before RAD-129, the *only* thing that ran `ci.yml` against a push
+to `main` was `deploy.yml`'s own `checks` job (`uses: ./.github/workflows/ci.yml`, a
+`workflow_call`), itself only reachable via `deploy.yml`'s `on: push` trigger. With RAD-129
+removing that `push` trigger entirely, **a push to `main` now runs `ci.yml` zero times** — it
+already ran once, as the required `CI passed` check, on the pull request before merge; nothing
+re-runs it on merge itself. That PR-time run is exactly what the manual release's `preflight`
+job later looks up for the exact commit being released (`gh api
+repos/.../commits/<sha>/check-runs`), rather than re-running CI redundantly against a ref that,
+for an intentionally-older release commit, would be the wrong code to check.
 
 ## Correctness fixes from review (read this if you're re-reviewing)
 
@@ -123,6 +160,9 @@ named, and restored the matching env snapshot.
 
 ## Phase A — what was already there vs. what this adds
 
+*(Historical: describes the state before RAD-129. The trigger is no longer `push` — see "What
+this is" above — but the artifact/signing/health-check/rollback mechanics below are unchanged.)*
+
 **Already working, reused as-is (per the mission's "reuse existing scripts/workflows"):**
 
 - `rad-api.service` (systemd), `/opt/rad-releases/*`, `/opt/rad/apps/api` symlink —
@@ -144,10 +184,13 @@ named, and restored the matching env snapshot.
 **What was missing, now added:**
 
 - Both `deploy-api-vps.yml` and `deploy-frontend-vps.yml` previously **only** deployed via a
-  human clicking "Run workflow" (`workflow_dispatch`) — a push to `main` built artifacts but
-  never released them. Both now also accept `workflow_call`, so `deploy.yml` can trigger a real
-  release programmatically, with no human in the loop, while the manual `workflow_dispatch`
-  path is kept byte-for-byte as the emergency/recovery entry point.
+  human clicking "Run workflow" (`workflow_dispatch`). Both now also accept `workflow_call`, so
+  `deploy.yml` can orchestrate a release across both — but as of RAD-129, `deploy.yml` itself is
+  *also* only reachable by a human clicking "Run workflow": there is no push-triggered,
+  no-human-in-the-loop path anywhere in this repo. The direct `workflow_dispatch` on each of
+  `deploy-api-vps.yml`/`deploy-frontend-vps.yml` is kept, functionally equivalent, as the
+  single-service emergency/recovery entry point (see "Routine release and emergency
+  single-service recovery" above).
 - No change-detection existed at all. `deploy.yml`'s `detect` job is new.
 - Frontend releases always recreated **both** `storefront` and `admin` containers regardless of
   which one actually changed. The release job now takes `deploy_storefront`/`deploy_admin`
@@ -315,16 +358,27 @@ override, rather than editing the workflow files.
   job log, in one explicit `::error::` line, whether the automatic rollback itself also
   succeeded or failed, and tells you exactly what to check by hand if it did.
 
-## Emergency manual recovery
+## Routine release and emergency single-service recovery
 
-Both release workflows keep their original `workflow_dispatch` trigger, completely unchanged in
-behavior, for exactly this purpose — use when the automatic path can't run (e.g. CI is broken in
-a way that's blocking a hotfix) or you need to re-release an older, already-merged commit:
+**Routine release** (this is not an emergency path — it's the only way anything reaches
+Production now): Actions → **"Production release (manual)"** → Run workflow → `commit_sha` =
+the exact SHA to release, `confirm` = `deploy`. This is `deploy.yml`, described above.
 
-- **API**: Actions → "API VPS release" → Run workflow → type `deploy` into `confirm`, and give
-  the exact commit SHA to release (never "whatever main is").
-- **Frontend**: Actions → "Frontend VPS release" → Run workflow → `operation: deploy`, and choose
-  `deploy_storefront`/`deploy_admin` (both default to `true`).
+Both underlying release workflows (`deploy-api-vps.yml`, `deploy-frontend-vps.yml`) also keep
+their own direct `workflow_dispatch` trigger, for when you need to release (or re-release) a
+single service without going through `deploy.yml`'s own change-detection — e.g. CI is broken
+in a way that's blocking a hotfix for just the API, or you need to re-release an older,
+already-merged commit for one service only:
+
+- **API**: Actions → "API VPS release" → Run workflow → `commit_sha` = the exact commit SHA to
+  release (never "whatever main is"), `confirm` = `deploy`.
+- **Frontend**: Actions → "Frontend VPS release" → Run workflow → `commit_sha` = the exact
+  commit SHA to release, `confirm` = `deploy`, and choose `deploy_storefront`/`deploy_admin`
+  (both default to `true`).
+
+Either way, both workflows refuse a `commit_sha` that isn't an ancestor of `origin/main` or
+that has no passing `CI passed` check run recorded against that exact SHA
+(`scripts/production/release-gate.mjs verify-commit`) before building or shipping anything.
 - **Further-back API rollback**: `scripts/rollback-api-systemd.sh` (interactive, run against the
   VPS over SSH from an operator machine with access) — restores a named earlier release + its
   env snapshot from the manifest/history. Never touches the database; if a schema change
@@ -338,6 +392,12 @@ a way that's blocking a hotfix) or you need to re-release an older, already-merg
   pruned them).
 
 ## What still needs a real, live verification (Phase E)
+
+*(Historical, from before RAD-129 — "the next push to `main`" below no longer applies, since a
+push no longer deploys anything. The equivalent live check post-RAD-129 is: dispatch
+"Production release (manual)" with `confirm: build-check-only` against a real merged commit,
+confirm `preflight`/`detect` report correctly, then with `confirm: deploy` against a real
+change and watch the run in the Actions tab.)*
 
 This implementation was built and syntax-checked in a sandboxed environment with no access to
 the production VPS, GitHub Secrets, or GitHub Environment settings, and no SSH connectivity to
