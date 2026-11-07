@@ -22,12 +22,22 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
+      issues: write
     steps:
       - name: Check out main
         uses: actions/checkout@v4
         with:
           ref: main
           persist-credentials: false
+
+      - name: Prevent duplicate issue runs
+        env:
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          if git ls-remote --exit-code --heads origin "agent/issue-${ISSUE_NUMBER}" >/dev/null 2>&1; then
+            echo "::error::An agent branch already exists for this issue. Inspect that branch/PR before retrying."
+            exit 1
+          fi
 
       - name: Install Cursor CLI
         run: |
@@ -76,8 +86,13 @@ jobs:
         run: |
           set -euo pipefail
           if [ -z "$(git status --porcelain)" ]; then
-            echo "::error::Agent made no changes. Check the run log for a clarification request or blocker."
-            exit 1
+            {
+              printf 'Cursor Agent stopped without a patch for this issue.\n\n'
+              printf '## Agent report\n\n'
+              cat "$RUNNER_TEMP/rad-agent-report.txt"
+            } > "$RUNNER_TEMP/issue-comment.md"
+            gh issue comment "$ISSUE_NUMBER" --repo "$REPOSITORY" --body-file "$RUNNER_TEMP/issue-comment.md"
+            exit 0
           fi
 
           git add -A
