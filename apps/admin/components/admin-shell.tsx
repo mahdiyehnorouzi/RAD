@@ -38,12 +38,14 @@ import {
   isHelpPath,
   isMessagesPath,
   isReviewsPath,
+  isShapePath,
   settleStudioPath,
   staffGate,
   startHelpLink,
   startMessagesLink,
   startReviewsLink,
   startSectionSelect,
+  startShapeLink,
   studioHistoryHref,
   studioNavHref,
   withOrderFocus,
@@ -107,7 +109,9 @@ export function AdminShell({ children }: { children: ReactNode }) {
   const reviewsActive = isReviewsPath(pathname);
   const helpActive = isHelpPath(pathname);
   const messagesActive = isMessagesPath(pathname);
-  const routeActive = reviewsActive || helpActive || messagesActive;
+  const shapeActive = isShapePath(pathname);
+  const routeActive =
+    reviewsActive || helpActive || messagesActive || shapeActive;
   // skip: go() already fetched for a path change. pending: latest choice
   // whose URL has not committed. seen: last pathname this effect applied.
   const skipPathLoad = useRef<AdminSection | null>(null);
@@ -154,7 +158,9 @@ export function AdminShell({ children }: { children: ReactNode }) {
     pendingNav.current = withOrderFocus(action.pending, orderId);
   };
 
-  const followStudioLink = (route: "reviews" | "help" | "messages") => {
+  const followStudioLink = (
+    route: "reviews" | "help" | "messages" | "shape",
+  ) => {
     setMobileNav(false);
     const visible = { pathname, section: sectionRef.current };
     const action =
@@ -162,7 +168,9 @@ export function AdminShell({ children }: { children: ReactNode }) {
         ? startReviewsLink(visible, pendingNav.current)
         : route === "help"
           ? startHelpLink(visible, pendingNav.current)
-          : startMessagesLink(visible, pendingNav.current);
+          : route === "messages"
+            ? startMessagesLink(visible, pendingNav.current)
+            : startShapeLink(visible, pendingNav.current);
     pendingNav.current = action.pending;
     skipPathLoad.current = action.skip;
     if (action.replace) router.replace(action.replace);
@@ -263,7 +271,9 @@ export function AdminShell({ children }: { children: ReactNode }) {
       ? "پرسش‌های راهنما"
       : messagesActive
         ? "پیام‌ها"
-        : navItems.find((item) => item.id === section)?.label;
+        : shapeActive
+          ? "پرسشنامه‌ی شکل"
+          : navItems.find((item) => item.id === section)?.label;
 
   return (
     <AdminChromeContext.Provider
@@ -314,9 +324,13 @@ export function AdminShell({ children }: { children: ReactNode }) {
                       ? messagesActive
                         ? "active"
                         : ""
-                      : !routeActive && section === id
-                        ? "active"
-                        : "";
+                      : id === "shape"
+                        ? shapeActive
+                          ? "active"
+                          : ""
+                        : !routeActive && section === id
+                          ? "active"
+                          : "";
               const body = (
                 <>
                   <Icon />
@@ -342,7 +356,12 @@ export function AdminShell({ children }: { children: ReactNode }) {
                   <ChevronLeft />
                 </>
               );
-              if (id === "reviews" || id === "help" || id === "messages") {
+              if (
+                id === "reviews" ||
+                id === "help" ||
+                id === "messages" ||
+                id === "shape"
+              ) {
                 return (
                   <Link
                     key={id}

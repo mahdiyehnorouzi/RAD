@@ -12,12 +12,17 @@ export function isMessagesPath(pathname: string) {
   return pathname === "/messages" || pathname.startsWith("/messages/");
 }
 
-type StudioRoute = "reviews" | "help" | "messages";
+export function isShapePath(pathname: string) {
+  return pathname === "/shape" || pathname.startsWith("/shape/");
+}
+
+type StudioRoute = "reviews" | "help" | "messages" | "shape";
 
 const studioPath: Record<StudioRoute, string> = {
   reviews: "/reviews",
   help: "/help",
   messages: "/messages",
+  shape: "/shape",
 };
 
 /** Independent studio routes. Every other section still lives on `/`. */
@@ -25,6 +30,7 @@ function studioRoute(pathname: string): StudioRoute | null {
   if (isReviewsPath(pathname)) return "reviews";
   if (isHelpPath(pathname)) return "help";
   if (isMessagesPath(pathname)) return "messages";
+  if (isShapePath(pathname)) return "shape";
   return null;
 }
 
@@ -66,7 +72,7 @@ export type NavigationPlan = {
 };
 
 /**
- * Explicit nav choice. Reviews, Help, and Messages keep the previous
+ * Explicit nav choice. Reviews, Help, Messages, and Shape keep the previous
  * dashboard section in memory. Overview, Orders, and every other `/`
  * section replace that memory. Choosing the section already on screen
  * does not fetch.
@@ -75,7 +81,12 @@ export function planSectionSelect(
   current: StudioView,
   next: AdminSection,
 ): NavigationPlan {
-  if (next === "reviews" || next === "help" || next === "messages") {
+  if (
+    next === "reviews" ||
+    next === "help" ||
+    next === "messages" ||
+    next === "shape"
+  ) {
     const pathname = studioPath[next];
     if (normalizeStudioPath(current.pathname) === pathname) {
       return { view: current, load: null };
@@ -92,7 +103,7 @@ export function planSectionSelect(
 
 /**
  * Browser Back/Forward or a `<Link>`. The in-memory section is kept, so
- * Back from Reviews, Help, or Messages returns to whatever `/` was
+ * Back from Reviews, Help, Messages, or Shape returns to whatever `/` was
  * showing. A pop that does not change the path does not fetch.
  */
 export function planHistoryNavigation(
@@ -221,7 +232,7 @@ export type StudioLinkAction = {
 };
 
 /**
- * Reviews, Help, and Messages are links. Plan from the uncommitted choice
+ * Reviews, Help, Messages, and Shape are links. Plan from the uncommitted choice
  * when one exists, so a second click does not treat the stale rendered URL
  * as current. The pathname effect performs the one fetch. `skip` stays null.
  */
@@ -270,6 +281,13 @@ export function startMessagesLink(
   pending: PendingNavigation | null = null,
 ) {
   return startStudioLink(visible, "messages", pending);
+}
+
+export function startShapeLink(
+  visible: StudioView,
+  pending: PendingNavigation | null = null,
+) {
+  return startStudioLink(visible, "shape", pending);
 }
 
 export type StudioAuth =

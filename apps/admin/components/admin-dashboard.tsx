@@ -53,7 +53,6 @@ import {
   useBodyScrollLock,
   useIsMobileViewport,
 } from "./admin-dialog";
-import { AdminShapeQuestions } from "./admin-shape-questions";
 import { AdminProductAttributes } from "./admin-product-attributes";
 import { EmptyState, StatusBadge } from "./admin-list-chrome";
 import { InviteDialog, Members } from "./admin-members";
@@ -330,25 +329,6 @@ export function AdminDashboard() {
               // as a toast that's gone in 2.8s.
               throw error;
             }
-          }}
-        />
-      )}
-      {section === "shape" && (
-        <AdminShapeQuestions
-          questions={workspace.shapeQuestions}
-          {...sectionAsync(workspace, "shapeQuestions")}
-          canWrite={workspace.can("content.write")}
-          onSave={async (input, id) => {
-            await workspace.saveShapeQuestion(input, id);
-            announce(id ? "سؤال ذخیره شد." : "سؤال تازه به پرسشنامه اضافه شد.");
-            return true;
-          }}
-          onDelete={async (id) => {
-            await workspace.deleteShapeQuestion(id);
-            announce("سؤال از پرسشنامه حذف شد.");
-          }}
-          onReorder={async (ids) => {
-            await workspace.reorderShapeQuestions(ids);
           }}
         />
       )}
