@@ -6,12 +6,12 @@ import {
   shapeTraitLabels,
   type ShapeQuestion,
   type ShapeQuestionInput,
-} from "../lib/admin-data";
-import { createSingleFlight } from "../lib/admin-mutation";
-import { storefrontUrl } from "../lib/storefront-url";
-import { AdminAsyncRegion } from "./admin-async-region";
-import { ConfirmDialog } from "./admin-dialog";
-import { AdminRowActions, movedIds } from "./admin-row-actions";
+} from "../../lib/admin-data";
+import { createSingleFlight } from "../../lib/admin-mutation";
+import { storefrontUrl } from "../../lib/storefront-url";
+import { AdminAsyncRegion } from "../../components/admin-async-region";
+import { ConfirmDialog } from "../../components/admin-dialog";
+import { AdminRowActions, movedIds } from "../../components/admin-row-actions";
 import { AdminShapeQuestionDialog } from "./admin-shape-question-dialog";
 
 const number = new Intl.NumberFormat("fa-IR");

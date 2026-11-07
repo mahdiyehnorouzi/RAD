@@ -1,9 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import type { AdminContactMessage, AdminOrder } from "../lib/admin-data";
-import { AdminAsyncRegion } from "./admin-async-region";
-import { AdminContactMessageItem } from "./admin-contact-message";
+import type { AdminContactMessage, AdminOrder } from "../../lib/admin-data";
+import { AdminAsyncRegion } from "../../components/admin-async-region";
+import { AdminContactMessageItem } from "../../components/admin-contact-message";
 
 type Filter = "new" | "resolved" | "all";
 

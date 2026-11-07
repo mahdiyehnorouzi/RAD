@@ -1,16 +1,16 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { createSingleFlight } from "../lib/admin-mutation";
+import { createSingleFlight } from "../../lib/admin-mutation";
 import { SHAPE_TRAITS } from "@rad/types";
 import {
   shapeTraitLabels,
   type ShapeChoice,
   type ShapeQuestion,
   type ShapeQuestionInput,
-} from "../lib/admin-data";
-import { storefrontUrl } from "../lib/storefront-url";
-import { DialogShell, Field } from "./admin-dialog";
+} from "../../lib/admin-data";
+import { storefrontUrl } from "../../lib/storefront-url";
+import { DialogShell, Field } from "../../components/admin-dialog";
 
 const blankChoice = (value: number): ShapeChoice => ({
   label: { fa: "", en: "" },

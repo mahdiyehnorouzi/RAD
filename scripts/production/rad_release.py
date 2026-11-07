@@ -728,6 +728,33 @@ def restart_api(version):
     poll(lambda: health("http://127.0.0.1:4000/health", version))
 
 
+def prune_old_api_releases(active_release):
+    releases_root = RELEASES.resolve(strict=True)
+    active_release = active_release.resolve(strict=True)
+    require(active_release.parent == releases_root, "Active release is outside the release tree")
+    require(LIVE.resolve(strict=True) == active_release / "apps/api",
+            "Live API does not point to the release selected for retention")
+
+    # Prune only after the new API passed health and smoke checks. This keeps
+    # the old live release available for rollback throughout activation.
+    for old_release in releases_root.iterdir():
+        if old_release == active_release or not old_release.name.startswith("release-"):
+            continue
+        try:
+            if old_release.is_symlink() or not old_release.is_dir():
+                continue
+            shutil.rmtree(old_release)
+            print(f"rad-release: stage=release_pruned path={old_release}", flush=True)
+        except OSError as error:
+            # Cleanup must not turn a healthy release into a failed deployment.
+            print(
+                f"rad-release: stage=release_prune_failed path={old_release} "
+                f"error={type(error).__name__}: {error}",
+                file=sys.stderr,
+                flush=True,
+            )
+
+
 def release_api(manifest, directory, transaction):
     previous = api_preflight()
     archive = directory / "api-release.tar.gz"
@@ -753,6 +780,8 @@ def release_api(manifest, directory, transaction):
     except BaseException:
         rollback(transaction)
         raise
+
+    prune_old_api_releases(target)
 
 
 def inspect_container(service):
@@ -788,6 +817,23 @@ def frontend_smoke(services):
         # handled client-side on the root page itself, which is served
         # without requiring a session and returns 200 directly (no redirect).
         request_url("https://admin.rad-object.com/")
+
+
+def prune_unused_docker_images():
+    # Run only after a frontend release is healthy. Images used by any
+    # existing container remain; unreferenced historical release images do not.
+    try:
+        result = run("/usr/bin/docker", "image", "prune", "--all", "--force")
+        summary = result.stdout.strip().replace("\n", " ")
+        print(f"rad-release: stage=docker_image_prune_complete summary={summary}", flush=True)
+    except Exception as error:
+        # Cleanup must not turn a healthy frontend release into a failed deploy.
+        print(
+            f"rad-release: stage=docker_image_prune_failed "
+            f"error={type(error).__name__}: {error}",
+            file=sys.stderr,
+            flush=True,
+        )
 
 
 def release_frontend(manifest, directory, transaction):
@@ -828,6 +874,8 @@ def release_frontend(manifest, directory, transaction):
     except BaseException:
         rollback(transaction)
         raise
+
+    prune_unused_docker_images()
 
 
 def rollback(transaction):

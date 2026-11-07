@@ -10,18 +10,19 @@ const REQUEST_TIMEOUT_MS = 10_000;
 /**
  * Sends a single plain-text SMS via Melipayamak's Console "send/simple"
  * REST API (`POST https://console.melipayamak.com/api/send/simple/{TOKEN}`,
- * JSON body `{ from, to, text }`) — a different Melipayamak product from
- * `MelipayamakService`'s `SendOtp` API (username/password auth, used only
- * by `OtpService` for SMS OTP sign-in). This one is token-based and sends
- * arbitrary text, not a fixed OTP template.
+ * JSON body `{ from, to, text }`) — a completely different Melipayamak
+ * product/account scheme from `MelipayamakService`'s legacy `SendOtp`
+ * method (used by `OtpService` for SMS OTP sign-in, see that class). This
+ * one is token-based and sends arbitrary text, not a fixed OTP template.
  *
- * Deliberately NOT wired into order-status notifications or OTP sign-in
- * yet: the statuses to notify on, timing, message count, retry policy,
- * and duplicate-send prevention are all still undecided, and the OTP flow
- * already has its own tested provider (`MelipayamakService`) that this
- * must not be swapped in for — see this feature's task notes. This class
- * is a general-purpose send primitive only; nothing in the API calls it
- * yet.
+ * Deliberately NOT wired into order-status notifications yet: the
+ * statuses to notify on, timing, message count, retry policy, and
+ * duplicate-send prevention are all still undecided — see this feature's
+ * task notes. This class is a general-purpose send primitive only; nothing
+ * in the API calls it yet (see `OrdersService` and `AdminService`'s
+ * payment-review methods, and `NoticesService`, for the existing
+ * post-payment notification path this would hook into once that policy is
+ * decided).
  *
  * Mirrors `MelipayamakService`'s isConfigured()/disabled-until-configured
  * pattern: missing credentials never crash the API, but every call fails
@@ -103,14 +104,13 @@ export class MelipayamakConsoleService {
       );
     }
 
-    // ASSUMED success shape: `{ "recId": <number> }`. This has not been
-    // confirmed against this endpoint's own documentation or a live
-    // account — see this feature's task notes. SendOtp (the OTP provider)
-    // uses a different body (`RetStatus` / `StrRetStatus`) and is not a
-    // template for this one. Any other body shape is treated as a failure
-    // rather than guessed at, since a 2xx HTTP status alone is not proof
-    // the message was accepted. Revisit once the real response shape is
-    // confirmed.
+    // ASSUMED success shape: `{ "recId": <number> }`, by analogy with
+    // Melipayamak's other REST products (the SendOtp API's numeric
+    // ReturnValue). This has not been confirmed against this endpoint's
+    // own documentation or a live account — see this feature's task
+    // notes. Any other body shape is treated as a failure rather than
+    // guessed at, since a 2xx HTTP status alone is not proof the message
+    // was accepted. Revisit once the real response shape is confirmed.
     let body: unknown;
     try {
       body = await response.json();

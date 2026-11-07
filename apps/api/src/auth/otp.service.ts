@@ -69,9 +69,14 @@ export class OtpService {
     // the same reason `verifyCode` uses a row lock: without it, two
     // concurrent requests for the same phone can each read "0 recent sends"
     // before either one's insert commits, so both pass both checks and
-    // both pages the SMS provider, overshooting the cap. There's no
+    // both page the SMS provider, overshooting the cap. There's no
     // existing row to lock a fresh phone's checks against, which is what
     // the advisory lock (keyed by the phone string, not any row) is for.
+    //
+    // RAD generates the code itself (unlike Melipayamak's Console
+    // "send/otp" product, this legacy method only delivers a code RAD
+    // already decided on) — it's known upfront, so the row reserving this
+    // phone's cooldown slot can hold the real code hash from the start.
     const { code, tokenHash, expiresAt } = generateVerificationCode(OTP_TTL_MS);
     await this.dataSource.transaction(async (manager: EntityManager) => {
       await manager.query("SELECT pg_advisory_xact_lock(hashtext($1))", [

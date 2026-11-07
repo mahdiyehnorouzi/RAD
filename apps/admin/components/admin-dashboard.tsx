@@ -5,25 +5,16 @@ import { effectiveProductStatus } from "@rad/types";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Archive,
-  Bell,
   ChevronLeft,
   ChevronRight,
   CircleDollarSign,
   Eye,
   EyeOff,
-  CircleHelp,
   Image as ImageIcon,
-  MessageSquareQuote,
-  Shapes,
   ImagePlus,
   Inbox,
-  KeyRound,
-  LayoutDashboard,
-  LogOut,
-  Menu,
   Package,
   PackageCheck,
-  PackageX,
   Pencil,
   Plus,
   ScrollText,
@@ -33,11 +24,9 @@ import {
   SlidersHorizontal,
   Tag,
   Trash2,
-  UserRound,
-  Users,
   X,
 } from "lucide-react";
-import { useAdminWorkspace } from "../hooks/use-admin-workspace";
+import { useAdminChrome, type AdminWorkspace } from "./admin-shell";
 import { passwordChangeError } from "../lib/password-change";
 import {
   commissionStageLabels,
@@ -46,7 +35,6 @@ import {
   productStatusLabels,
   productStatusOptions,
   PRODUCT_CATEGORY_LABELS,
-  roleLabels,
   type AdminContactMessage,
   type AdminProduct,
   type AdminRemoteMediaStorage,
@@ -55,7 +43,6 @@ import {
   type ProductAttributeValue,
 } from "../lib/admin-data";
 import { AdminCommissions } from "./admin-commissions";
-import { AdminMessages } from "./admin-messages";
 import { AdminDamageReports } from "./admin-damage-reports";
 import { AdminOrders } from "./orders/admin-orders";
 import "./orders/admin-orders.css";
@@ -66,16 +53,12 @@ import {
   useBodyScrollLock,
   useIsMobileViewport,
 } from "./admin-dialog";
-import { AdminReviews } from "./admin-reviews";
-import { AdminShapeQuestions } from "./admin-shape-questions";
-import { AdminHelpQuestions } from "./admin-help-questions";
 import { AdminProductAttributes } from "./admin-product-attributes";
 import { EmptyState, StatusBadge } from "./admin-list-chrome";
 import { InviteDialog, Members } from "./admin-members";
 import { UsersPanel } from "./admin-users";
 import { ProductAttributeFields } from "./admin-product-attribute-fields";
 import { AdminRowMenu } from "./admin-row-menu";
-import { AdminLogin } from "./admin-login";
 import { OverviewStats } from "./admin-overview-stats";
 import {
   briefExcerpt,
@@ -84,22 +67,6 @@ import {
   selectAsCover,
   selectAsCoverBySrc,
 } from "../lib/product-cover";
-
-const navItems: { id: AdminSection; label: string; icon: typeof Package }[] = [
-  { id: "overview", label: "مرور استودیو", icon: LayoutDashboard },
-  { id: "products", label: "آثار و محصولات", icon: Archive },
-  { id: "orders", label: "سفارش‌های فروشگاه", icon: ShoppingBag },
-  { id: "messages", label: "پیام‌ها", icon: Inbox },
-  { id: "damage", label: "گزارش‌های آسیب", icon: PackageX },
-  { id: "commissions", label: "سفارش اختصاصی", icon: ScrollText },
-  { id: "reviews", label: "نظر مشتریان", icon: MessageSquareQuote },
-  { id: "shape", label: "پرسشنامه‌ی شکل", icon: Shapes },
-  { id: "help", label: "پرسش‌های راهنما", icon: CircleHelp },
-  { id: "attributes", label: "ویژگی‌های محصول", icon: SlidersHorizontal },
-  { id: "users", label: "مشتریان", icon: UserRound },
-  { id: "members", label: "افراد و دسترسی", icon: Users },
-  { id: "account", label: "حساب کاربری", icon: KeyRound },
-];
 
 const number = new Intl.NumberFormat("fa-IR");
 const money = (value: number) => `${number.format(value)} تومان`;
@@ -154,13 +121,7 @@ function relativeTime(value: number) {
 // set by AdminCommissions) must land back in that section, not Overview —
 // this is the one spot in the shell that reads the hash; every other
 // section still opens on "overview" as before.
-type AsyncKey =
-  | "messages"
-  | "reviews"
-  | "shapeQuestions"
-  | "helpQuestions"
-  | "users"
-  | "members";
+type AsyncKey = "reviews" | "shapeQuestions" | "users" | "members";
 
 function sectionAsync(
   workspace: {
@@ -183,46 +144,15 @@ function sectionAsync(
   };
 }
 
-function initialSectionFromHash(): AdminSection {
-  if (typeof window === "undefined") return "overview";
-  return window.location.hash.startsWith("#commissions/")
-    ? "commissions"
-    : "overview";
-}
-
 export function AdminDashboard() {
-  const workspace = useAdminWorkspace();
-  const [section, setSection] = useState<AdminSection>(initialSectionFromHash);
-  const [mobileNav, setMobileNav] = useState(false);
+  const { workspace, section, go, announce, handedOrderId, clearHandedOrder } =
+    useAdminChrome();
   const [productEditor, setProductEditor] = useState<
     AdminProduct | "new" | null
   >(null);
   const [deleteTarget, setDeleteTarget] = useState<AdminProduct | null>(null);
   const [inviteOpen, setInviteOpen] = useState(false);
-  const [toast, setToast] = useState("");
   const [focusOrderId, setFocusOrderId] = useState<string | null>(null);
-
-  const announce = (message: string) => {
-    setToast(message);
-    window.setTimeout(() => setToast(""), 2800);
-  };
-
-  const go = (next: AdminSection) => {
-    setSection(next);
-    setMobileNav(false);
-    void workspace.loadSection(next);
-  };
-
-  // Loads the starting section's data once a session is confirmed — not
-  // before (see `ready`/`authStatus` below), and not every resource.
-  useEffect(() => {
-    if (workspace.authStatus === "authenticated") {
-      void workspace.loadSection(section);
-    }
-    // Intentionally only re-runs when auth settles, not on every `section`
-    // change — `go()` above already loads the section being navigated to.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [workspace.authStatus]);
 
   const openOrder = (orderId: string) => {
     setFocusOrderId(orderId);
@@ -233,6 +163,18 @@ export function AdminDashboard() {
         ?.scrollIntoView({ block: "start", behavior: "smooth" });
     });
   };
+
+  useEffect(() => {
+    if (section !== "orders" || !handedOrderId) return;
+    const id = handedOrderId;
+    setFocusOrderId(id);
+    clearHandedOrder();
+    window.requestAnimationFrame(() => {
+      document
+        .getElementById(`order-${id}`)
+        ?.scrollIntoView({ block: "start", behavior: "smooth" });
+    });
+  }, [section, handedOrderId, clearHandedOrder]);
 
   const setMessageStatus = async (
     id: string,
@@ -249,13 +191,6 @@ export function AdminDashboard() {
     announce("پاسخ برای مشتری ارسال شد.");
   };
 
-  const openMessages = workspace.messages.filter(
-    (message) => !message.parentId && message.status === "new",
-  ).length;
-  const openDamage = workspace.damageReports.filter(
-    (report) => report.status === "submitted" || report.status === "reviewing",
-  ).length;
-
   const reviewDamage = async (id: string, review: DamageReview) => {
     try {
       await workspace.reviewDamageReport(id, review);
@@ -271,414 +206,190 @@ export function AdminDashboard() {
     }
   };
 
-  if (!workspace.ready)
-    return (
-      <div className="admin-shell">
-        <main className="admin-main">
-          <p className="admin-loading">در حال اتصال به پایگاه داده…</p>
-        </main>
-      </div>
-    );
-  if (workspace.authStatus === "error")
-    return (
-      <div className="admin-shell">
-        <main className="admin-main">
-          <div className="auth-error-state">
-            <p>
-              اتصال به پایگاه داده برقرار نشد. اتصال اینترنت را بررسی و دوباره
-              تلاش کنید.
-            </p>
-            <button
-              className="primary-action"
-              type="button"
-              onClick={() => {
-                void workspace.retryAuth();
-              }}
-            >
-              تلاش دوباره
-            </button>
-          </div>
-        </main>
-      </div>
-    );
-  if (!workspace.user?.adminRole)
-    return (
-      <AdminLogin
-        onLogin={workspace.login}
-        onForgotPassword={workspace.forgotPassword}
-      />
-    );
+  const signedInUser = workspace.user;
+  if (!signedInUser) return null;
 
   return (
-    <div className="admin-shell">
-      <aside
-        className={`admin-sidebar ${mobileNav ? "is-open" : ""}`}
-        aria-label="ناوبری مدیریت"
-      >
-        <button
-          className="nav-close"
-          type="button"
-          onClick={() => setMobileNav(false)}
-          aria-label="بستن منو"
-        >
-          <X />
-        </button>
-        <div className="brand-lockup">
-          <span className="brand-mark">
-            <img src="/rad-logo.png" alt="رَد" width={52} height={52} />
-          </span>
-          <div>
-            <strong>دفتر کوره</strong>
-            <small>پنل مدیریت استودیو</small>
-          </div>
-        </div>
-        <nav className="admin-nav">
-          {navItems.map(({ id, label, icon: Icon }) => (
-            <button
-              key={id}
-              type="button"
-              className={section === id ? "active" : ""}
-              onClick={() => go(id)}
-            >
-              <Icon />
-              <span>
-                {label}
-                {id === "messages" && openMessages ? (
-                  <em
-                    className="nav-count"
-                    aria-label={`${number.format(openMessages)} پیام رسیدگی‌نشده`}
-                  >
-                    {number.format(openMessages)}
-                  </em>
-                ) : null}
-                {id === "damage" && openDamage ? (
-                  <em
-                    className="nav-count"
-                    aria-label={`${number.format(openDamage)} گزارش آسیب باز`}
-                  >
-                    {number.format(openDamage)}
-                  </em>
-                ) : null}
-              </span>
-              <ChevronLeft />
-            </button>
-          ))}
-        </nav>
-        <div className="sidebar-foot">
-          <div className="avatar">{workspace.user.name.trim().charAt(0)}</div>
-          <div>
-            <strong>{workspace.user.name}</strong>
-            <small>{roleLabels[workspace.currentRole]}</small>
-          </div>
-          <button
-            type="button"
-            aria-label="خروج از حساب"
-            onClick={() => {
-              void workspace.logout();
-            }}
-          >
-            <LogOut />
-          </button>
-        </div>
-      </aside>
-
-      {mobileNav && (
-        <button
-          className="nav-scrim"
-          type="button"
-          onClick={() => setMobileNav(false)}
-          aria-label="بستن منو"
+    <>
+      {section === "overview" && (
+        <Overview workspace={workspace} onNavigate={go} />
+      )}
+      {section === "products" && (
+        <Products
+          products={workspace.products}
+          canWrite={workspace.can("product.write")}
+          onCreate={() => setProductEditor("new")}
+          onEdit={setProductEditor}
+          onDelete={setDeleteTarget}
         />
       )}
-
-      <main className="admin-main">
-        <header className="admin-topbar">
-          <button
-            className="menu-button"
-            type="button"
-            onClick={() => setMobileNav(true)}
-            aria-label="باز کردن منو"
-          >
-            <Menu />
-          </button>
-          <div>
-            <span className="context-label">رَد / عملیات استودیو</span>
-            <h1>{navItems.find((item) => item.id === section)?.label}</h1>
-          </div>
-          <button
-            className="topbar-bell"
-            type="button"
-            onClick={() => go("messages")}
-            aria-label={
-              openMessages
-                ? `${number.format(openMessages)} پیام رسیدگی‌نشده`
-                : "پیام‌ها"
+      {section === "orders" && (
+        <AdminOrders
+          orders={workspace.orders}
+          products={workspace.products}
+          focusOrderId={focusOrderId}
+          loading={
+            !workspace.loadedKeys.has("orders") &&
+            !workspace.loadErrors.has("orders")
+          }
+          loadError={workspace.loadErrors.has("orders")}
+          onRetry={() => workspace.retryResource("orders")}
+          messages={workspace.messages}
+          onSetMessageStatus={setMessageStatus}
+          onReplyMessage={replyToMessage}
+          damageReports={workspace.damageReports}
+          onReviewDamage={reviewDamage}
+          canWrite={workspace.can("order.write")}
+          onChange={async (order) => {
+            try {
+              await workspace.updateOrder(order);
+              announce("وضعیت سفارش ذخیره شد.");
+            } catch (error) {
+              announce((error as Error).message);
             }
-          >
-            <Bell />
-            {openMessages > 0 && (
-              <em className="nav-count">{number.format(openMessages)}</em>
-            )}
-          </button>
-          <div className="topbar-status">
-            <span className="live-dot" />
-            پایگاه داده Postgres
-          </div>
-        </header>
-
-        {section === "overview" && (
-          <Overview workspace={workspace} onNavigate={go} />
-        )}
-        {section === "products" && (
-          <Products
-            products={workspace.products}
-            canWrite={workspace.can("product.write")}
-            onCreate={() => setProductEditor("new")}
-            onEdit={setProductEditor}
-            onDelete={setDeleteTarget}
-          />
-        )}
-        {section === "orders" && (
-          <AdminOrders
-            orders={workspace.orders}
-            products={workspace.products}
-            focusOrderId={focusOrderId}
-            loading={
-              !workspace.loadedKeys.has("orders") &&
-              !workspace.loadErrors.has("orders")
-            }
-            loadError={workspace.loadErrors.has("orders")}
-            onRetry={() => workspace.retryResource("orders")}
-            messages={workspace.messages}
-            onSetMessageStatus={setMessageStatus}
-            onReplyMessage={replyToMessage}
-            damageReports={workspace.damageReports}
-            onReviewDamage={reviewDamage}
-            canWrite={workspace.can("order.write")}
-            onChange={async (order) => {
-              try {
-                await workspace.updateOrder(order);
-                announce("وضعیت سفارش ذخیره شد.");
-              } catch (error) {
-                announce((error as Error).message);
-              }
-            }}
-            onApprovePayment={async (id) => {
-              try {
-                await workspace.approvePayment(id);
-                announce("پرداخت تأیید شد و به مشتری اطلاع داده شد.");
-                return true;
-              } catch (error) {
-                announce((error as Error).message);
-                return false;
-              }
-            }}
-            onRejectPayment={async (id, reason) => {
-              try {
-                await workspace.rejectPayment(id, reason);
-                announce("پرداخت رد شد و اثر به فروشگاه برگشت.");
-                return true;
-              } catch (error) {
-                announce((error as Error).message);
-                return false;
-              }
-            }}
-          />
-        )}
-        {section === "messages" && (
-          <AdminMessages
-            messages={workspace.messages}
-            {...sectionAsync(workspace, "messages")}
-            orders={workspace.orders}
-            canWrite={workspace.can("order.write")}
-            onSetStatus={setMessageStatus}
-            onReply={replyToMessage}
-            onOpenOrder={openOrder}
-          />
-        )}
-        {section === "damage" && (
-          <AdminDamageReports
-            reports={workspace.damageReports}
-            loading={
-              !workspace.loadedKeys.has("damageReports") &&
-              !workspace.loadErrors.has("damageReports")
-            }
-            loadError={workspace.loadErrors.has("damageReports")}
-            onRetry={() => workspace.retryResource("damageReports")}
-            orders={workspace.orders}
-            canWrite={workspace.can("order.write")}
-            onReview={reviewDamage}
-            onOpenOrder={openOrder}
-          />
-        )}
-        {section === "commissions" && (
-          <AdminCommissions
-            commissions={workspace.commissions}
-            loading={
-              !workspace.loadedKeys.has("commissions") &&
-              !workspace.loadErrors.has("commissions")
-            }
-            loadError={workspace.loadErrors.has("commissions")}
-            onRetry={() => workspace.retryResource("commissions")}
-            canWrite={workspace.can("order.write")}
-            onBeginReview={async (id) => {
-              try {
-                await workspace.beginCommissionReview(id);
-              } catch (error) {
-                announce((error as Error).message);
-                throw error;
-              }
-            }}
-            onDecide={async (input) => {
-              try {
-                await workspace.decideCommission(input);
-                announce("تصمیم برای مشتری ارسال شد.");
-              } catch (error) {
-                announce((error as Error).message);
-                // Re-thrown (unlike this file's other section handlers,
-                // which only toast) so CommissionDecisionForm's own
-                // inline error + retry — more durable than a 2.8s toast
-                // for a failed stage decision — actually fires; see the
-                // same note on onMessage below.
-                throw error;
-              }
-            }}
-            onMessage={async (id, body, internal) => {
-              try {
-                await workspace.messageCommission(id, body, internal);
-                announce("پیام برای مشتری ارسال شد.");
-              } catch (error) {
-                announce((error as Error).message);
-                // Re-thrown so CommissionMessages sees the rejection and
-                // shows its inline error + retry button instead of the
-                // failure being swallowed here and only ever surfacing
-                // as a toast that's gone in 2.8s.
-                throw error;
-              }
-            }}
-          />
-        )}
-        {section === "reviews" && (
-          <AdminReviews
-            reviews={workspace.reviews}
-            {...sectionAsync(workspace, "reviews")}
-            canWrite={workspace.can("content.write")}
-            onSetHidden={async (id, hidden) => {
-              await workspace.setReviewHidden(id, hidden);
-              announce(
-                hidden
-                  ? "نظر از فروشگاه پنهان شد."
-                  : "نظر دوباره در فروشگاه دیده می‌شود.",
-              );
-            }}
-            onDelete={async (id) => {
-              await workspace.deleteReview(id);
-              announce("نظر حذف شد.");
-            }}
-          />
-        )}
-        {section === "shape" && (
-          <AdminShapeQuestions
-            questions={workspace.shapeQuestions}
-            {...sectionAsync(workspace, "shapeQuestions")}
-            canWrite={workspace.can("content.write")}
-            onSave={async (input, id) => {
-              await workspace.saveShapeQuestion(input, id);
-              announce(
-                id ? "سؤال ذخیره شد." : "سؤال تازه به پرسشنامه اضافه شد.",
-              );
+          }}
+          onApprovePayment={async (id) => {
+            try {
+              await workspace.approvePayment(id);
+              announce("پرداخت تأیید شد و به مشتری اطلاع داده شد.");
               return true;
-            }}
-            onDelete={async (id) => {
-              await workspace.deleteShapeQuestion(id);
-              announce("سؤال از پرسشنامه حذف شد.");
-            }}
-            onReorder={async (ids) => {
-              await workspace.reorderShapeQuestions(ids);
-            }}
-          />
-        )}
-        {section === "help" && (
-          <AdminHelpQuestions
-            questions={workspace.helpQuestions}
-            {...sectionAsync(workspace, "helpQuestions")}
-            canWrite={workspace.can("content.write")}
-            onSave={async (input, id) => {
-              await workspace.saveHelpQuestion(input, id);
-              announce(
-                id ? "سؤال ذخیره شد." : "سؤال تازه به صفحه‌ی راهنما اضافه شد.",
-              );
+            } catch (error) {
+              announce((error as Error).message);
+              return false;
+            }
+          }}
+          onRejectPayment={async (id, reason) => {
+            try {
+              await workspace.rejectPayment(id, reason);
+              announce("پرداخت رد شد و اثر به فروشگاه برگشت.");
               return true;
-            }}
-            onDelete={async (id) => {
-              await workspace.deleteHelpQuestion(id);
-              announce("سؤال از صفحه‌ی راهنما حذف شد.");
-            }}
-            onReorder={async (ids) => {
-              await workspace.reorderHelpQuestions(ids);
-            }}
-          />
-        )}
-        {section === "attributes" && (
-          <AdminProductAttributes
-            attributes={workspace.productAttributes}
-            canWrite={workspace.can("product.write")}
-            onSave={async (input, id) => {
-              try {
-                await workspace.saveProductAttribute(input, id);
-                announce(id ? "ویژگی ذخیره شد." : "ویژگی تازه اضافه شد.");
-                return true;
-              } catch (error) {
-                announce((error as Error).message);
-                return false;
-              }
-            }}
-            onDelete={async (id) => {
-              try {
-                await workspace.deleteProductAttribute(id);
-                announce("ویژگی حذف شد.");
-                return true;
-              } catch (error) {
-                announce((error as Error).message);
-                return false;
-              }
-            }}
-            onReorder={async (ids) => {
-              try {
-                await workspace.reorderProductAttributes(ids);
-              } catch (error) {
-                announce((error as Error).message);
-              }
-            }}
-          />
-        )}
-        {section === "users" && (
-          <UsersPanel
-            users={workspace.users}
-            {...sectionAsync(workspace, "users")}
-          />
-        )}
-        {section === "members" && (
-          <Members
-            members={workspace.members}
-            {...sectionAsync(workspace, "members")}
-            canWrite={workspace.can("member.write")}
-            onInvite={() => setInviteOpen(true)}
-            onChange={async (member) => {
-              await workspace.updateMember(member);
-              announce("سطح دسترسی به‌روزرسانی شد.");
-            }}
-          />
-        )}
-        {section === "account" && (
-          <AccountSettings
-            user={workspace.user}
-            onChangePassword={workspace.changePassword}
-            onDone={(message) => announce(message)}
-          />
-        )}
-      </main>
-
+            } catch (error) {
+              announce((error as Error).message);
+              return false;
+            }
+          }}
+        />
+      )}
+      {section === "damage" && (
+        <AdminDamageReports
+          reports={workspace.damageReports}
+          loading={
+            !workspace.loadedKeys.has("damageReports") &&
+            !workspace.loadErrors.has("damageReports")
+          }
+          loadError={workspace.loadErrors.has("damageReports")}
+          onRetry={() => workspace.retryResource("damageReports")}
+          orders={workspace.orders}
+          canWrite={workspace.can("order.write")}
+          onReview={reviewDamage}
+          onOpenOrder={openOrder}
+        />
+      )}
+      {section === "commissions" && (
+        <AdminCommissions
+          commissions={workspace.commissions}
+          loading={
+            !workspace.loadedKeys.has("commissions") &&
+            !workspace.loadErrors.has("commissions")
+          }
+          loadError={workspace.loadErrors.has("commissions")}
+          onRetry={() => workspace.retryResource("commissions")}
+          canWrite={workspace.can("order.write")}
+          onBeginReview={async (id) => {
+            try {
+              await workspace.beginCommissionReview(id);
+            } catch (error) {
+              announce((error as Error).message);
+              throw error;
+            }
+          }}
+          onDecide={async (input) => {
+            try {
+              await workspace.decideCommission(input);
+              announce("تصمیم برای مشتری ارسال شد.");
+            } catch (error) {
+              announce((error as Error).message);
+              // Re-thrown (unlike this file's other section handlers,
+              // which only toast) so CommissionDecisionForm's own
+              // inline error + retry — more durable than a 2.8s toast
+              // for a failed stage decision — actually fires; see the
+              // same note on onMessage below.
+              throw error;
+            }
+          }}
+          onMessage={async (id, body, internal) => {
+            try {
+              await workspace.messageCommission(id, body, internal);
+              announce("پیام برای مشتری ارسال شد.");
+            } catch (error) {
+              announce((error as Error).message);
+              // Re-thrown so CommissionMessages sees the rejection and
+              // shows its inline error + retry button instead of the
+              // failure being swallowed here and only ever surfacing
+              // as a toast that's gone in 2.8s.
+              throw error;
+            }
+          }}
+        />
+      )}
+      {section === "attributes" && (
+        <AdminProductAttributes
+          attributes={workspace.productAttributes}
+          canWrite={workspace.can("product.write")}
+          onSave={async (input, id) => {
+            try {
+              await workspace.saveProductAttribute(input, id);
+              announce(id ? "ویژگی ذخیره شد." : "ویژگی تازه اضافه شد.");
+              return true;
+            } catch (error) {
+              announce((error as Error).message);
+              return false;
+            }
+          }}
+          onDelete={async (id) => {
+            try {
+              await workspace.deleteProductAttribute(id);
+              announce("ویژگی حذف شد.");
+              return true;
+            } catch (error) {
+              announce((error as Error).message);
+              return false;
+            }
+          }}
+          onReorder={async (ids) => {
+            try {
+              await workspace.reorderProductAttributes(ids);
+            } catch (error) {
+              announce((error as Error).message);
+            }
+          }}
+        />
+      )}
+      {section === "users" && (
+        <UsersPanel
+          users={workspace.users}
+          {...sectionAsync(workspace, "users")}
+        />
+      )}
+      {section === "members" && (
+        <Members
+          members={workspace.members}
+          {...sectionAsync(workspace, "members")}
+          canWrite={workspace.can("member.write")}
+          onInvite={() => setInviteOpen(true)}
+          onChange={async (member) => {
+            await workspace.updateMember(member);
+            announce("سطح دسترسی به‌روزرسانی شد.");
+          }}
+        />
+      )}
+      {section === "account" && (
+        <AccountSettings
+          user={signedInUser}
+          onChangePassword={workspace.changePassword}
+          onDone={(message) => announce(message)}
+        />
+      )}
       {productEditor && (
         <ProductDialog
           product={productEditor === "new" ? null : productEditor}
@@ -734,14 +445,7 @@ export function AdminDashboard() {
           }}
         />
       )}
-      <div
-        className={`admin-toast ${toast ? "visible" : ""}`}
-        role="status"
-        aria-live="polite"
-      >
-        {toast}
-      </div>
-    </div>
+    </>
   );
 }
 
@@ -749,7 +453,7 @@ function Overview({
   workspace,
   onNavigate,
 }: {
-  workspace: ReturnType<typeof useAdminWorkspace>;
+  workspace: AdminWorkspace;
   onNavigate: (section: AdminSection) => void;
 }) {
   const recentProducts = [...workspace.products]

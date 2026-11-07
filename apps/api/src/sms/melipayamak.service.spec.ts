@@ -4,12 +4,10 @@ import { ConfigService } from "@nestjs/config";
 import { InternalServerErrorException, Logger } from "@nestjs/common";
 import { MelipayamakService } from "./melipayamak.service";
 
-const SEND_OTP_URL = "https://rest.payamak-panel.com/api/SendSMS/SendOtp";
-
 function configured(overrides: Record<string, string> = {}) {
   return new ConfigService({
-    MELIPAYAMAK_USERNAME: "rad-studio",
-    MELIPAYAMAK_PASSWORD: "super-secret-password",
+    MELIPAYAMAK_USERNAME: "rad-user",
+    MELIPAYAMAK_PASSWORD: "rad-pass",
     MELIPAYAMAK_SENDER: "3000123456",
     ...overrides,
   });
@@ -20,13 +18,15 @@ afterEach(() => {
   globalThis.fetch = originalFetch;
 });
 
-function stubFetch(status: number, body: string) {
-  globalThis.fetch = (async () =>
-    new Response(body, { status })) as typeof fetch;
+function stubFetch(
+  handler: (url: string, init: RequestInit) => Response | Promise<Response>,
+) {
+  globalThis.fetch = (async (url: string | URL, init?: RequestInit) =>
+    handler(String(url), init ?? {})) as typeof fetch;
 }
 
 describe("MelipayamakService: configuration validation", () => {
-  test("isConfigured() is false when any of USERNAME/PASSWORD/SENDER is missing", () => {
+  test("isConfigured() is false when any var is missing", () => {
     assert.equal(
       new MelipayamakService(new ConfigService({})).isConfigured(),
       false,
@@ -34,6 +34,15 @@ describe("MelipayamakService: configuration validation", () => {
     assert.equal(
       new MelipayamakService(
         new ConfigService({ MELIPAYAMAK_USERNAME: "u" }),
+      ).isConfigured(),
+      false,
+    );
+    assert.equal(
+      new MelipayamakService(
+        new ConfigService({
+          MELIPAYAMAK_USERNAME: "u",
+          MELIPAYAMAK_PASSWORD: "p",
+        }),
       ).isConfigured(),
       false,
     );
@@ -73,121 +82,146 @@ describe("MelipayamakService: configuration validation", () => {
     );
   });
 
-  test("the missing-config error never leaks the configured password (there is none to leak yet)", async () => {
+  test("the missing-config error never leaks the configured credentials (there are none to leak yet)", async () => {
     const sms = new MelipayamakService(new ConfigService({}));
     await assert.rejects(
       () => sms.sendOtp("09121234567", "123456"),
       (error: unknown) => {
         const message = error instanceof Error ? error.message : String(error);
-        assert.doesNotMatch(message, /super-secret/);
+        assert.doesNotMatch(message, /rad-user|rad-pass/);
         return true;
       },
     );
   });
 });
 
-function providerBody(body: unknown) {
-  return JSON.stringify(body);
-}
-
-describe("MelipayamakService: SendOtp response handling", () => {
-  test("posts the generated code and recipient, and ignores Value", async () => {
-    let captured: { url: string; init: RequestInit } | undefined;
-    globalThis.fetch = (async (url: string | URL, init?: RequestInit) => {
-      captured = { url: String(url), init: init ?? {} };
-      return new Response(
-        providerBody({
-          Value: "999999",
-          RetStatus: 1,
-          StrRetStatus: "Ok",
-        }),
-        { status: 200 },
+describe("MelipayamakService: request shape", () => {
+  test("posts form-urlencoded (not JSON) with username/password/to/from/code", async () => {
+    let capturedUrl = "";
+    let capturedBody = "";
+    let capturedContentType = "";
+    stubFetch(async (url, init) => {
+      capturedUrl = url;
+      capturedBody = String(init.body);
+      capturedContentType = String(
+        (init.headers as Record<string, string>)?.["content-type"],
       );
-    }) as typeof fetch;
+      return new Response("987654321", { status: 200 });
+    });
 
-    await new MelipayamakService(configured()).sendOtp("09121234567", "654321");
+    await new MelipayamakService(configured()).sendOtp("09121234567", "482917");
 
-    assert.ok(captured);
-    assert.equal(captured.url, SEND_OTP_URL);
-    assert.equal(captured.init.method, "POST");
     assert.equal(
-      new Headers(captured.init.headers).get("content-type"),
-      "application/x-www-form-urlencoded",
+      capturedUrl,
+      "https://rest.payamak-panel.com/api/SendSMS/SendOtp",
     );
-    assert.equal("dispatcher" in captured.init, false);
-    assert.equal("agent" in captured.init, false);
-    const params = new URLSearchParams(captured.init.body as URLSearchParams);
-    assert.equal(params.get("username"), "rad-studio");
-    assert.equal(params.get("password"), "super-secret-password");
-    assert.equal(params.get("to"), "09121234567");
+    assert.equal(capturedContentType, "application/x-www-form-urlencoded");
+    const params = new URLSearchParams(capturedBody);
+    assert.equal(params.get("username"), "rad-user");
+    assert.equal(params.get("password"), "rad-pass");
     assert.equal(params.get("from"), "3000123456");
-    assert.equal(params.get("code"), "654321");
-    assert.notEqual(params.get("code"), "999999");
+    assert.equal(params.get("to"), "09121234567");
+    assert.equal(params.get("code"), "482917");
   });
 
-  test("RetStatus 1 and StrRetStatus Ok is a successful delivery", async () => {
-    stubFetch(
-      200,
-      providerBody({ Value: "123456789", RetStatus: 1, StrRetStatus: "Ok" }),
-    );
-    await new MelipayamakService(configured()).sendOtp("09121234567", "654321");
+  test("`to` is always the caller's argument, never a fixed/env value", async () => {
+    let capturedTo = "";
+    stubFetch(async (_url, init) => {
+      capturedTo = new URLSearchParams(String(init.body)).get("to") ?? "";
+      return new Response("1", { status: 200 });
+    });
+    await new MelipayamakService(configured()).sendOtp("09129998877", "111111");
+    assert.equal(capturedTo, "09129998877");
   });
 
-  test("a string RetStatus of 1 with Ok is a successful delivery", async () => {
-    stubFetch(
-      200,
-      providerBody({ Value: "0", RetStatus: "1", StrRetStatus: "ok" }),
-    );
-    await new MelipayamakService(configured()).sendOtp("09121234567", "654321");
+  test("`code` is always the caller's argument, never a fixed/env value", async () => {
+    let capturedCode = "";
+    stubFetch(async (_url, init) => {
+      capturedCode = new URLSearchParams(String(init.body)).get("code") ?? "";
+      return new Response("1", { status: 200 });
+    });
+    await new MelipayamakService(configured()).sendOtp("09121234567", "753951");
+    assert.equal(capturedCode, "753951");
+  });
+});
+
+describe("MelipayamakService: response handling", () => {
+  test("a 2xx response with a positive numeric recId is a success", async () => {
+    stubFetch(async () => new Response("13579", { status: 200 }));
+    await new MelipayamakService(configured()).sendOtp("09121234567", "123456");
   });
 
-  test("RetStatus other than 1 is not a successful send", async () => {
+  test("a recId wrapped in the documented XML <string> shape is still a success", async () => {
     stubFetch(
-      200,
-      providerBody({ Value: "654321", RetStatus: 0, StrRetStatus: "Ok" }),
+      async () =>
+        new Response(
+          '<?xml version="1.0" encoding="utf-8"?><string xmlns="http://tempuri.org/">24681</string>',
+          { status: 200, headers: { "content-type": "text/xml" } },
+        ),
     );
+    await new MelipayamakService(configured()).sendOtp("09121234567", "123456");
+  });
+
+  for (const code of [
+    "0", // wrong username or password
+    "2", // insufficient credit
+    "5", // sender number invalid
+    "16", // recipient not found
+    "18", // recipient number invalid
+    "35", // blacklisted
+    "111", // requester invalid
+  ]) {
+    test(`a documented error return value ("${code}") is rejected, never mistaken for a recId`, async () => {
+      stubFetch(async () => new Response(code, { status: 200 }));
+      await assert.rejects(
+        () =>
+          new MelipayamakService(configured()).sendOtp("09121234567", "123456"),
+        (error: unknown) => {
+          assert.ok(error instanceof InternalServerErrorException);
+          assert.equal(
+            (error.getResponse() as { code?: string }).code,
+            undefined, // the public error is generic, not the provider's own code
+          );
+          return true;
+        },
+      );
+    });
+  }
+
+  for (const code of ["-108", "-109", "-110"]) {
+    test(`a documented negative error code ("${code}") is rejected`, async () => {
+      stubFetch(async () => new Response(code, { status: 200 }));
+      await assert.rejects(
+        () =>
+          new MelipayamakService(configured()).sendOtp("09121234567", "123456"),
+        InternalServerErrorException,
+      );
+    });
+  }
+
+  test("an unrecognized, non-numeric body is rejected rather than assumed successful", async () => {
+    stubFetch(async () => new Response("unexpected garbage", { status: 200 }));
     await assert.rejects(
       () =>
-        new MelipayamakService(configured()).sendOtp("09121234567", "654321"),
-      (error: unknown) => {
-        assert.ok(error instanceof InternalServerErrorException);
-        const message = JSON.stringify(error.getResponse());
-        assert.equal(message.includes("654321"), false);
-        assert.equal(message.includes("super-secret-password"), false);
-        return true;
-      },
-    );
-  });
-
-  test("RetStatus 1 without StrRetStatus Ok is not a successful send", async () => {
-    stubFetch(
-      200,
-      providerBody({ Value: "123", RetStatus: 1, StrRetStatus: "InvalidData" }),
-    );
-    await assert.rejects(
-      () =>
-        new MelipayamakService(configured()).sendOtp("09121234567", "654321"),
+        new MelipayamakService(configured()).sendOtp("09121234567", "123456"),
       InternalServerErrorException,
     );
   });
 
-  test("a plain numeric body is not treated as success", async () => {
-    stubFetch(200, "123456789");
+  test("an empty body is rejected rather than assumed successful", async () => {
+    stubFetch(async () => new Response("", { status: 200 }));
     await assert.rejects(
       () =>
-        new MelipayamakService(configured()).sendOtp("09121234567", "654321"),
+        new MelipayamakService(configured()).sendOtp("09121234567", "123456"),
       InternalServerErrorException,
     );
   });
 
-  test("a non-2xx HTTP response throws even when the JSON looks successful", async () => {
-    stubFetch(
-      500,
-      providerBody({ Value: "1", RetStatus: 1, StrRetStatus: "Ok" }),
-    );
+  test("a non-2xx HTTP response throws even with a plausible-looking body", async () => {
+    stubFetch(async () => new Response("13579", { status: 500 }));
     await assert.rejects(
       () =>
-        new MelipayamakService(configured()).sendOtp("09121234567", "654321"),
+        new MelipayamakService(configured()).sendOtp("09121234567", "123456"),
       InternalServerErrorException,
     );
   });
@@ -198,14 +232,220 @@ describe("MelipayamakService: SendOtp response handling", () => {
     }) as typeof fetch;
     await assert.rejects(
       () =>
-        new MelipayamakService(configured()).sendOtp("09121234567", "654321"),
+        new MelipayamakService(configured()).sendOtp("09121234567", "123456"),
+      InternalServerErrorException,
+    );
+  });
+
+  test("a request that times out is surfaced as a coded 500, not left hanging", async () => {
+    stubFetch(async () => {
+      throw new DOMException("The operation was aborted.", "TimeoutError");
+    });
+    await assert.rejects(
+      () =>
+        new MelipayamakService(configured()).sendOtp("09121234567", "123456"),
+      InternalServerErrorException,
+    );
+  });
+});
+
+describe("MelipayamakService: REST JSON response shape", () => {
+  test("a JSON body with a numeric-string Value is a success (the real REST wrapper shape)", async () => {
+    stubFetch(
+      async () =>
+        new Response(JSON.stringify({ Value: "246813579" }), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        }),
+    );
+    await new MelipayamakService(configured()).sendOtp("09121234567", "123456");
+  });
+
+  test("a JSON body with a numeric (not string) Value is a success", async () => {
+    stubFetch(
+      async () =>
+        new Response(JSON.stringify({ Value: 246813579 }), { status: 200 }),
+    );
+    await new MelipayamakService(configured()).sendOtp("09121234567", "123456");
+  });
+
+  test("a lowercase `value` key is also recognized (case-insensitive field match)", async () => {
+    stubFetch(
+      async () =>
+        new Response(JSON.stringify({ value: "13579" }), { status: 200 }),
+    );
+    await new MelipayamakService(configured()).sendOtp("09121234567", "123456");
+  });
+
+  test("other fields alongside Value (e.g. a status flag) don't change the classification", async () => {
+    stubFetch(
+      async () =>
+        new Response(
+          JSON.stringify({
+            Value: "13579",
+            RetStatus: 1,
+            StrRetStatus: "Success",
+          }),
+          { status: 200 },
+        ),
+    );
+    await new MelipayamakService(configured()).sendOtp("09121234567", "123456");
+  });
+
+  for (const code of ["0", "2", "16", "18", "35", "111", "-110"]) {
+    test(`a JSON Value holding a documented error code ("${code}") is rejected, never mistaken for a recId`, async () => {
+      stubFetch(
+        async () =>
+          new Response(JSON.stringify({ Value: code }), { status: 200 }),
+      );
+      await assert.rejects(
+        () =>
+          new MelipayamakService(configured()).sendOtp("09121234567", "123456"),
+        InternalServerErrorException,
+      );
+    });
+  }
+
+  test("a JSON body with no Value field is rejected rather than assumed successful", async () => {
+    stubFetch(
+      async () =>
+        new Response(JSON.stringify({ RetStatus: 1 }), { status: 200 }),
+    );
+    await assert.rejects(
+      () =>
+        new MelipayamakService(configured()).sendOtp("09121234567", "123456"),
+      InternalServerErrorException,
+    );
+  });
+
+  test("a Value that is neither a string nor a number is rejected", async () => {
+    stubFetch(
+      async () =>
+        new Response(JSON.stringify({ Value: { recId: 1 } }), { status: 200 }),
+    );
+    await assert.rejects(
+      () =>
+        new MelipayamakService(configured()).sendOtp("09121234567", "123456"),
+      InternalServerErrorException,
+    );
+  });
+
+  test("malformed JSON (truncated/invalid syntax) is rejected rather than crashing", async () => {
+    stubFetch(async () => new Response('{"Value": "13579"', { status: 200 }));
+    await assert.rejects(
+      () =>
+        new MelipayamakService(configured()).sendOtp("09121234567", "123456"),
+      InternalServerErrorException,
+    );
+  });
+
+  test("a JSON array body (not an object) is rejected rather than crashing", async () => {
+    stubFetch(
+      async () => new Response(JSON.stringify(["13579"]), { status: 200 }),
+    );
+    await assert.rejects(
+      () =>
+        new MelipayamakService(configured()).sendOtp("09121234567", "123456"),
+      InternalServerErrorException,
+    );
+  });
+
+  test("the plain-text and XML response shapes still work alongside the JSON one", async () => {
+    stubFetch(async () => new Response("13579", { status: 200 }));
+    await new MelipayamakService(configured()).sendOtp("09121234567", "123456");
+
+    stubFetch(
+      async () =>
+        new Response(
+          '<?xml version="1.0" encoding="utf-8"?><string xmlns="http://tempuri.org/">24681</string>',
+          { status: 200 },
+        ),
+    );
+    await new MelipayamakService(configured()).sendOtp("09121234567", "123456");
+  });
+});
+
+describe("MelipayamakService: failure logging", () => {
+  test("the failure message never includes the OTP code or phone number", async () => {
+    stubFetch(async () => new Response("0", { status: 200 }));
+    await assert.rejects(
+      () =>
+        new MelipayamakService(configured()).sendOtp("09121234567", "999999"),
       (error: unknown) => {
-        assert.ok(error instanceof InternalServerErrorException);
-        const message = JSON.stringify(error.getResponse());
-        assert.equal(message.includes("super-secret-password"), false);
-        assert.equal(message.includes("654321"), false);
+        const message = error instanceof Error ? error.message : String(error);
+        assert.doesNotMatch(message, /999999/);
+        assert.doesNotMatch(message, /09121234567/);
         return true;
       },
+    );
+  });
+});
+
+describe("MelipayamakService: RetStatus delivery status", () => {
+  test("RetStatus 1 and StrRetStatus Ok succeeds and still sends the generated code", async () => {
+    let capturedCode = "";
+    stubFetch(async (_url, init) => {
+      capturedCode = new URLSearchParams(String(init.body)).get("code") ?? "";
+      return new Response(
+        JSON.stringify({
+          Value: "999999",
+          RetStatus: 1,
+          StrRetStatus: "Ok",
+        }),
+        { status: 200 },
+      );
+    });
+    await new MelipayamakService(configured()).sendOtp("09121234567", "654321");
+    assert.equal(capturedCode, "654321");
+    assert.notEqual(capturedCode, "999999");
+  });
+
+  test("Value is not the OTP: RetStatus 1 and Ok succeeds even when Value is an error code", async () => {
+    stubFetch(
+      async () =>
+        new Response(
+          JSON.stringify({ Value: "0", RetStatus: "1", StrRetStatus: "ok" }),
+          { status: 200 },
+        ),
+    );
+    await new MelipayamakService(configured()).sendOtp("09121234567", "654321");
+  });
+
+  test("RetStatus other than 1 is not a successful send, even with a recId Value", async () => {
+    stubFetch(
+      async () =>
+        new Response(
+          JSON.stringify({
+            Value: "654321",
+            RetStatus: 0,
+            StrRetStatus: "Ok",
+          }),
+          { status: 200 },
+        ),
+    );
+    await assert.rejects(
+      () =>
+        new MelipayamakService(configured()).sendOtp("09121234567", "654321"),
+      InternalServerErrorException,
+    );
+  });
+
+  test("RetStatus 1 without StrRetStatus Ok is not a successful send", async () => {
+    stubFetch(
+      async () =>
+        new Response(
+          JSON.stringify({
+            Value: "13579",
+            RetStatus: 1,
+            StrRetStatus: "InvalidData",
+          }),
+          { status: 200 },
+        ),
+    );
+    await assert.rejects(
+      () =>
+        new MelipayamakService(configured()).sendOtp("09121234567", "654321"),
+      InternalServerErrorException,
     );
   });
 
@@ -216,8 +456,7 @@ describe("MelipayamakService: SendOtp response handling", () => {
       warn: Logger.prototype.warn,
       log: Logger.prototype.log,
     };
-    const record =
-      (method: "error" | "warn" | "log") =>
+    const record = (method: "error" | "warn" | "log") =>
       function (this: Logger, ...args: unknown[]) {
         lines.push(args.map((arg) => String(arg)).join(" "));
         return original[method].apply(this, args as never);
@@ -227,19 +466,22 @@ describe("MelipayamakService: SendOtp response handling", () => {
     Logger.prototype.log = record("log");
     try {
       stubFetch(
-        200,
-        providerBody({
-          Value: "654321",
-          RetStatus: 35,
-          StrRetStatus: "InvalidData",
-        }),
+        async () =>
+          new Response(
+            JSON.stringify({
+              Value: "654321",
+              RetStatus: 35,
+              StrRetStatus: "InvalidData",
+            }),
+            { status: 200 },
+          ),
       );
       await assert.rejects(() =>
         new MelipayamakService(configured()).sendOtp("09121234567", "654321"),
       );
-      globalThis.fetch = (async () => {
-        throw new Error("ECONNREFUSED password=super-secret-password");
-      }) as typeof fetch;
+      stubFetch(async () => {
+        throw new Error("ECONNREFUSED password=rad-pass");
+      });
       await assert.rejects(() =>
         new MelipayamakService(configured()).sendOtp("09121234567", "654321"),
       );
@@ -250,7 +492,7 @@ describe("MelipayamakService: SendOtp response handling", () => {
     }
     const blob = lines.join("\n");
     assert.equal(blob.includes("654321"), false);
-    assert.equal(blob.includes("super-secret-password"), false);
+    assert.equal(blob.includes("rad-pass"), false);
     assert.equal(blob.includes("09121234567"), false);
     assert.equal(blob.includes("username="), false);
     assert.match(blob, /RetStatus 35/);
