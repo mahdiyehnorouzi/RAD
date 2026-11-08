@@ -183,6 +183,39 @@ describe("MelipayamakService: BaseServiceNumber response", () => {
     );
   });
 
+  test("provider error 110 fails the send and records the API-key ambiguity", async () => {
+    const lines: string[] = [];
+    const originalWarn = Logger.prototype.warn;
+    Logger.prototype.warn = function (this: Logger, ...args: unknown[]) {
+      lines.push(args.map((arg) => String(arg)).join(" "));
+      return originalWarn.apply(this, args as never);
+    };
+    try {
+      stubFetch(async () =>
+        jsonResponse({ Value: "0", RetStatus: 110, StrRetStatus: "Error" }),
+      );
+      await assert.rejects(
+        () =>
+          new MelipayamakService(configured()).sendOtp("09121234567", "654321"),
+        (error: unknown) => {
+          assert.ok(error instanceof InternalServerErrorException);
+          const message = JSON.stringify(error.getResponse());
+          assert.equal(message.includes("rad-pass"), false);
+          assert.equal(message.includes("654321"), false);
+          return true;
+        },
+      );
+    } finally {
+      Logger.prototype.warn = originalWarn;
+    }
+    const blob = lines.join("\n");
+    assert.match(blob, /API key/);
+    assert.match(blob, /password/);
+    assert.equal(blob.includes("rad-pass"), false);
+    assert.equal(blob.includes("654321"), false);
+    assert.equal(blob.includes("09121234567"), false);
+  });
+
   test("StrRetStatus must be exactly OK", async () => {
     stubFetch(async () =>
       jsonResponse({
