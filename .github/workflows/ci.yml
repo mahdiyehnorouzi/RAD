@@ -204,10 +204,11 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v4
-      - name: Shell syntax and retry-helper regression
+      - name: Use the runner's preinstalled gh CLI
         run: |
-          bash -n scripts/ci/retry-curl.sh
-          bash scripts/test/test-retry-curl.sh
+          set -euo pipefail
+          command -v gh
+          gh --version
       # Official signed fixture; never executes artifact contents, accesses VPS,
       # requests OIDC, or inherits production secrets. Safe for fork PR CI too.
       - name: Verify valid, tampered and unsigned artifacts with live Sigstore trust
@@ -218,16 +219,13 @@ jobs:
           check_dir=$(mktemp -d "$RUNNER_TEMP/rad-signatures.XXXXXXXX")
           echo "path=$check_dir" >> "$GITHUB_OUTPUT"
           cd "$check_dir"
-          # The gh CLI release asset is a real, externally-hosted binary (not
-          # practical to vendor) and has been observed to intermittently 504
-          # from its CDN - retry-curl.sh bounds that retry to transient
-          # network failures only (timeouts, 429, 5xx); it never touches the
-          # signature-verification logic below, which always runs exactly
-          # once and is never retried.
-          "$GITHUB_WORKSPACE/scripts/ci/retry-curl.sh" https://github.com/cli/cli/releases/download/v2.83.2/gh_2.83.2_linux_amd64.tar.gz gh.tar.gz
-          echo 'ca6e7641214fbd0e21429cec4b64a7ba626fd946d8f9d6d191467545b092015e  gh.tar.gz' | sha256sum -c -
-          tar -xzf gh.tar.gz gh_2.83.2_linux_amd64/bin/gh
-          cli="$check_dir/gh_2.83.2_linux_amd64/bin/gh"
+          # GitHub-hosted ubuntu-latest runners ship the gh CLI preinstalled
+          # (see actions/runner-images), so this no longer downloads its own
+          # copy from github.com/cli/cli/releases - that CDN path intermittently
+          # 504'd, and the version actually on the runner is an OS-managed,
+          # auto-updated dependency either way, not a fixed one this job
+          # controls.
+          cli="$(command -v gh)"
           # signed.{whl,jsonl} are GitHub's own official Sigstore-signed test
           # fixtures, vendored byte-for-byte in the repo (see the README next
           # to them) instead of re-fetched from raw.githubusercontent.com on
