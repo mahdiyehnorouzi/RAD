@@ -20,7 +20,7 @@ import {
   isReserved,
 } from "@/lib/catalog/product-status";
 import { cartCopy } from "../const";
-import { resolveCartBackMode } from "../cart-back";
+import { resolveCartBackMode, type CartBackMode } from "../cart-back";
 import { CartEmpty } from "../cart-empty";
 import { hasNavigatedInApp } from "@/features/navigation/app-navigation";
 import { CartHold } from "./cart-hold";
@@ -39,9 +39,7 @@ export function CartPage() {
   // doesn't flip under a predictable Back control while the page is
   // visible; read in an effect, not during render, so this client-only
   // module state is never read while this component is server-rendered.
-  const [backMode, setBackMode] = useState<"replay-history" | "fallback">(
-    "fallback",
-  );
+  const [backMode, setBackMode] = useState<CartBackMode>("fallback");
   useEffect(() => {
     setBackMode(resolveCartBackMode(hasNavigatedInApp()));
   }, []);
