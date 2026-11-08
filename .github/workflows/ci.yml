@@ -185,7 +185,12 @@ jobs:
         run: |
           set -euo pipefail
           cd "$RUNNER_TEMP"
-          curl -fsSL --proto '=https' --tlsv1.2 https://github.com/rhysd/actionlint/releases/download/v1.7.7/actionlint_1.7.7_linux_amd64.tar.gz -o actionlint.tar.gz
+          # github.com/*/releases/download assets have been observed to
+          # intermittently 504 from their CDN; retry-curl.sh bounds that
+          # retry to transient network failures only (timeouts, 429, 5xx)
+          # and still fails immediately on anything else, including a
+          # checksum mismatch below, which it never touches.
+          "$GITHUB_WORKSPACE/scripts/ci/retry-curl.sh" https://github.com/rhysd/actionlint/releases/download/v1.7.7/actionlint_1.7.7_linux_amd64.tar.gz actionlint.tar.gz
           echo '023070a287cd8cccd71515fedc843f1985bf96c436b7effaecce67290e7e0757  actionlint.tar.gz' | sha256sum -c -
           tar -xzf actionlint.tar.gz actionlint
           cd "$GITHUB_WORKSPACE"
@@ -198,6 +203,12 @@ jobs:
     permissions:
       contents: read
     steps:
+      - uses: actions/checkout@v4
+      - name: Use the runner's preinstalled gh CLI
+        run: |
+          set -euo pipefail
+          command -v gh
+          gh --version
       # Official signed fixture; never executes artifact contents, accesses VPS,
       # requests OIDC, or inherits production secrets. Safe for fork PR CI too.
       - name: Verify valid, tampered and unsigned artifacts with live Sigstore trust
@@ -208,13 +219,20 @@ jobs:
           check_dir=$(mktemp -d "$RUNNER_TEMP/rad-signatures.XXXXXXXX")
           echo "path=$check_dir" >> "$GITHUB_OUTPUT"
           cd "$check_dir"
-          curl -fsSL --proto '=https' --tlsv1.2 https://github.com/cli/cli/releases/download/v2.83.2/gh_2.83.2_linux_amd64.tar.gz -o gh.tar.gz
-          echo 'ca6e7641214fbd0e21429cec4b64a7ba626fd946d8f9d6d191467545b092015e  gh.tar.gz' | sha256sum -c -
-          tar -xzf gh.tar.gz gh_2.83.2_linux_amd64/bin/gh
-          cli="$check_dir/gh_2.83.2_linux_amd64/bin/gh"
-          fixture=https://raw.githubusercontent.com/cli/cli/560ea94fc7d63ab1f56ca47713599be5e8966fd3/pkg/cmd/attestation/test/data
-          curl -fsSL --proto '=https' --tlsv1.2 "$fixture/github_provenance_demo-0.0.12-py3-none-any.whl" -o signed.whl
-          curl -fsSL --proto '=https' --tlsv1.2 "$fixture/github_provenance_demo-0.0.12-py3-none-any-bundle.jsonl" -o signed.jsonl
+          # GitHub-hosted ubuntu-latest runners ship the gh CLI preinstalled
+          # (see actions/runner-images), so this no longer downloads its own
+          # copy from github.com/cli/cli/releases - that CDN path intermittently
+          # 504'd, and the version actually on the runner is an OS-managed,
+          # auto-updated dependency either way, not a fixed one this job
+          # controls.
+          cli="$(command -v gh)"
+          # signed.{whl,jsonl} are GitHub's own official Sigstore-signed test
+          # fixtures, vendored byte-for-byte in the repo (see the README next
+          # to them) instead of re-fetched from raw.githubusercontent.com on
+          # every run - this was the other observed source of transient CI
+          # failures. The checksum check below is unchanged either way.
+          cp "$GITHUB_WORKSPACE/.github/fixtures/release-signature-verification/signed.whl" signed.whl
+          cp "$GITHUB_WORKSPACE/.github/fixtures/release-signature-verification/signed.jsonl" signed.jsonl
           echo 'ae57936def59bc4c75edd3a837d89bcefc6d3a5e31d55a6fa7a71624f92c3c3b  signed.whl' | sha256sum -c -
           echo '4f8c096e38a0eee242574ab100d16701928605409225e59784a3636f742bb27e  signed.jsonl' | sha256sum -c -
           policy=(--repo actions/attest-demo
