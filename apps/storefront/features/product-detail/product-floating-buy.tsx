@@ -35,6 +35,7 @@ export function ProductFloatingBuy({
   forceBusy = false,
   visible = true,
   addPending = false,
+  addBusyRef,
   onAddPendingChange,
 }: {
   product: Product;
@@ -46,6 +47,7 @@ export function ProductFloatingBuy({
   visible?: boolean;
   /** Shared while either PDP AddToBag is posting to the cart API. */
   addPending?: boolean;
+  addBusyRef?: { current: boolean };
   onAddPendingChange?: (pending: boolean) => void;
 }) {
   const { locale, t, href } = useLocale();
@@ -135,6 +137,7 @@ export function ProductFloatingBuy({
             icon={<ShoppingBag aria-hidden="true" />}
             busyLabel={c.addingBag}
             pending={addPending}
+            sharedBusyRef={addBusyRef}
             onBusyChange={onAddPendingChange}
             hideSheet
           />

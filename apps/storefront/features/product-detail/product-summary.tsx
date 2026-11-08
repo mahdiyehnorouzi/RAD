@@ -35,6 +35,7 @@ export function ProductSummary({
   buyRef,
   onSheetVisibleChange,
   addPending,
+  addBusyRef,
   onAddPendingChange,
 }: {
   className: string;
@@ -51,6 +52,7 @@ export function ProductSummary({
   onSheetVisibleChange?: (visible: boolean) => void;
   /** Shared PDP add-to-bag pending (inline + floating). */
   addPending?: boolean;
+  addBusyRef?: { current: boolean };
   onAddPendingChange?: (pending: boolean) => void;
 }) {
   const { locale, t, number, href } = useLocale();
@@ -166,6 +168,7 @@ export function ProductSummary({
             icon={<ShoppingBag aria-hidden="true" />}
             busyLabel={c.addingBag}
             pending={addPending}
+            sharedBusyRef={addBusyRef}
             onBusyChange={onAddPendingChange}
             onSheetVisibleChange={onSheetVisibleChange}
           />

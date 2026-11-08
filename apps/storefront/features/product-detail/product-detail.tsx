@@ -1,5 +1,5 @@
 "use client";
-import { Suspense, useCallback, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import type { Artwork, FaqContent, Product } from "@rad/types";
 import type { RadPassport } from "@/components/passport/type";
 import { useLocale } from "@/components/i18n";
@@ -80,6 +80,7 @@ export function ProductDetail({
   const [sheetOpen, setSheetOpen] = useState(false);
   /** Shared while either PDP AddToBag (inline or floating) is posting to the cart API. */
   const [addPending, setAddPending] = useState(false);
+  const addBusyRef = useRef(false);
 
   const live = useLiveProduct(product.slug);
   const resolved = overlayLiveProduct(product, live.product);
@@ -150,6 +151,7 @@ export function ProductDetail({
           buyRef={buyRef}
           onSheetVisibleChange={setSheetOpen}
           addPending={addPending}
+          addBusyRef={addBusyRef}
           onAddPendingChange={setAddPending}
         />
         <div className={styles.rest}>
@@ -215,6 +217,7 @@ export function ProductDetail({
         forceBusy={devBusy}
         visible={!inlineBuyInView && !sheetOpen}
         addPending={addPending}
+        addBusyRef={addBusyRef}
         onAddPendingChange={setAddPending}
       />
     </article>
