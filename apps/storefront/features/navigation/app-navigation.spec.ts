@@ -22,7 +22,10 @@ test("the tracker's first render never counts as a navigation (direct hit, refre
   // AppNavigationTracker seeds `previous` with the pathname already
   // rendered on mount, so the first effect run always compares a pathname
   // against itself.
-  assert.equal(shouldMarkNavigation("/products/radio-01", "/products/radio-01"), false);
+  assert.equal(
+    shouldMarkNavigation("/products/radio-01", "/products/radio-01"),
+    false,
+  );
 });
 
 test("a pathname change after mount is an in-app navigation (an in-site link)", () => {
