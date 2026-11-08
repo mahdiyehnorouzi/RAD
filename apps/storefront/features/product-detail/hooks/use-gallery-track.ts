@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { KeyboardEvent } from "react";
+import { pickVisibleSlide } from "./pick-visible-slide";
 
 /**
  * One scroll-snapped track drives the gallery, so touch swipe, arrows,
@@ -8,7 +9,15 @@ import type { KeyboardEvent } from "react";
  */
 export function useGalleryTrack(count: number) {
   const trackRef = useRef<HTMLDivElement>(null);
+  const slideRefs = useRef<(HTMLElement | null)[]>([]);
   const [active, setActive] = useState(0);
+
+  const registerSlide = useCallback(
+    (index: number) => (el: HTMLElement | null) => {
+      slideRefs.current[index] = el;
+    },
+    [],
+  );
 
   const goTo = useCallback(
     (index: number, options?: { animate?: boolean }) => {
@@ -25,7 +34,7 @@ export function useGalleryTrack(count: number) {
       // track sits hidden behind it the whole time it's open, so animating
       // it was pure wasted compositor/scroll work on every click — worse,
       // a rapid run of clicks queued overlapping smooth-scrolls that each
-      // fired their own `onScroll`-driven re-render, which is what the
+      // fired their own scroll-driven re-render, which is what the
       // reported freeze during fast Next/Previous actually was. An instant
       // `behavior: "auto"` jump keeps this track correctly positioned for
       // the moment the lightbox closes, without the animation or the
@@ -39,17 +48,37 @@ export function useGalleryTrack(count: number) {
     [count],
   );
 
-  // Computed synchronously, directly from the fired scroll event — no
-  // requestAnimationFrame indirection (that deferred the index update to
-  // the *next* frame on top of whatever frame the scroll event itself
-  // landed on, adding a perceptible beat of lag during a swipe for no
-  // correctness benefit, since `track.scrollLeft` is already current the
-  // instant the event fires).
-  const onScroll = useCallback(() => {
+  // A touch swipe's own momentum/deceleration phase is driven entirely by
+  // the OS compositor, not JS - and on iOS Safari specifically, the track's
+  // `scroll` event is throttled heavily (sometimes to a single event) during
+  // that phase, so a swipe used to visibly finish - the image already
+  // settled on the next slide - well before a scroll-event-driven counter
+  // caught up, if it fired again at all before the gesture ended. An
+  // IntersectionObserver watching each slide isn't tied to the `scroll`
+  // event's firing cadence at all: the browser reports visibility changes
+  // as they actually happen, so this reflects the settled slide reliably
+  // regardless of how many (or how few) `scroll` events the swipe produced.
+  // Button/thumbnail/keyboard navigation doesn't depend on this at all -
+  // `goTo` already sets `active` synchronously and instantly for those.
+  useEffect(() => {
     const track = trackRef.current;
-    if (!track?.clientWidth) return;
-    setActive(Math.round(Math.abs(track.scrollLeft) / track.clientWidth));
-  }, []);
+    if (!track) return undefined;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const next = pickVisibleSlide(
+          entries.map((entry) => ({
+            index: Number((entry.target as HTMLElement).dataset.slideIndex),
+            isIntersecting: entry.isIntersecting,
+            intersectionRatio: entry.intersectionRatio,
+          })),
+        );
+        if (next !== null) setActive(next);
+      },
+      { root: track, threshold: [0.5, 0.75, 1] },
+    );
+    slideRefs.current.forEach((el) => el && observer.observe(el));
+    return () => observer.disconnect();
+  }, [count]);
 
   const onKeyDown = useCallback(
     (event: KeyboardEvent<HTMLElement>) => {
@@ -68,5 +97,5 @@ export function useGalleryTrack(count: number) {
     if (active > count - 1) goTo(count - 1);
   }, [active, count, goTo]);
 
-  return { trackRef, active, goTo, onScroll, onKeyDown };
+  return { trackRef, active, goTo, registerSlide, onKeyDown };
 }

@@ -47,7 +47,7 @@ export function ProductGallery({
     ...(photographed ? [{ kind: "plate" } as const] : []),
   ];
   const count = slides.length;
-  const { trackRef, active, goTo, onScroll, onKeyDown } =
+  const { trackRef, active, goTo, registerSlide, onKeyDown } =
     useGalleryTrack(count);
   useEffect(() => {
     trackRef.current
@@ -175,7 +175,6 @@ export function ProductGallery({
         <div
           ref={trackRef}
           className={styles.stageTrack}
-          onScroll={onScroll}
           onKeyDown={onKeyDown}
           tabIndex={count > 1 ? 0 : -1}
         >
@@ -183,6 +182,8 @@ export function ProductGallery({
             slide.kind === "photo" && media[slide.index]?.kind === "video" ? (
               <div
                 key={`video-${slide.index}`}
+                ref={registerSlide(index)}
+                data-slide-index={index}
                 className={`${styles.slide} ${styles.photo}`}
                 aria-label={`ویدیو ${format(index + 1)}`}
                 inert={index !== active}
@@ -192,6 +193,8 @@ export function ProductGallery({
             ) : (
               <button
                 key={slide.kind === "photo" ? slide.index : "plate"}
+                ref={registerSlide(index)}
+                data-slide-index={index}
                 type="button"
                 className={`${styles.slide} ${styles[slide.kind]}`}
                 aria-roledescription={locale === "fa" ? "نما" : "slide"}
