@@ -11,8 +11,8 @@ const REQUEST_TIMEOUT_MS = 10_000;
  * Sends a single plain-text SMS via Melipayamak's Console "send/simple"
  * REST API (`POST https://console.melipayamak.com/api/send/simple/{TOKEN}`,
  * JSON body `{ from, to, text }`) — a completely different Melipayamak
- * product/account scheme from `MelipayamakService`'s legacy `SendOtp`
- * method (used by `OtpService` for SMS OTP sign-in, see that class). This
+ * product/account scheme from `MelipayamakService`'s shared-number OTP
+ * template (`BaseServiceNumber`, used by `OtpService`, see that class). This
  * one is token-based and sends arbitrary text, not a fixed OTP template.
  *
  * Deliberately NOT wired into order-status notifications yet: the
@@ -104,13 +104,12 @@ export class MelipayamakConsoleService {
       );
     }
 
-    // ASSUMED success shape: `{ "recId": <number> }`, by analogy with
-    // Melipayamak's other REST products (the SendOtp API's numeric
-    // ReturnValue). This has not been confirmed against this endpoint's
-    // own documentation or a live account — see this feature's task
-    // notes. Any other body shape is treated as a failure rather than
-    // guessed at, since a 2xx HTTP status alone is not proof the message
-    // was accepted. Revisit once the real response shape is confirmed.
+    // ASSUMED success shape: `{ "recId": <number> }`. This has not been
+    // confirmed against this endpoint's own documentation or a live
+    // account. OTP delivery uses BaseServiceNumber (`RetStatus` /
+    // `StrRetStatus`) and is not a template for this response. Any other
+    // body shape is a failure, since a 2xx status alone is not proof the
+    // message was accepted.
     let body: unknown;
     try {
       body = await response.json();
