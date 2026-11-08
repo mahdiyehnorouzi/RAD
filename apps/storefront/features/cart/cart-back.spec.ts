@@ -1,13 +1,11 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { shouldReplayHistory } from "./cart-back";
+import { resolveCartBackMode } from "./cart-back";
 
-test("a direct cart hit (single history entry) falls back to a fixed destination", () => {
-  assert.equal(shouldReplayHistory(1), false);
-  assert.equal(shouldReplayHistory(0), false);
+test("cart reached via an in-app navigation replays history", () => {
+  assert.equal(resolveCartBackMode(true), "replay-history");
 });
 
-test("in-app navigation into the cart replays history instead", () => {
-  assert.equal(shouldReplayHistory(2), true);
-  assert.equal(shouldReplayHistory(5), true);
+test("a direct cart hit, a refresh, or an external link falls back", () => {
+  assert.equal(resolveCartBackMode(false), "fallback");
 });

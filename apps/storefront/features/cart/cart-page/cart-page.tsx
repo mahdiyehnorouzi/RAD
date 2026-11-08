@@ -20,8 +20,9 @@ import {
   isReserved,
 } from "@/lib/catalog/product-status";
 import { cartCopy } from "../const";
-import { shouldReplayHistory } from "../cart-back";
+import { resolveCartBackMode } from "../cart-back";
 import { CartEmpty } from "../cart-empty";
+import { hasNavigatedInApp } from "@/features/navigation/app-navigation";
 import { CartHold } from "./cart-hold";
 import { CartLine, priceChange, type CartLineIssue } from "./cart-line";
 import { CartReleased } from "./cart-released";
@@ -32,17 +33,19 @@ export function CartPage() {
   const c = cartCopy[locale];
   const router = useRouter();
   // Cart can be reached by following a link within the site (checkout
-  // retreat, header icon, an order page) or by a direct hit (refresh, a
-  // bookmark, a shared URL) — `history.length` only grows on same-tab
-  // in-app navigation, so it tells the two apart without reading
-  // `document.referrer` (unreliable: stripped by many referrer policies,
-  // and still same-origin after an external redirect). Decided once on
-  // mount so it doesn't flip under a predictable Back control while the
-  // page is visible.
-  const [canGoBack, setCanGoBack] = useState(false);
+  // retreat, header icon, an order page) or by a direct hit, a refresh, or
+  // an external link — see app-navigation.ts for why `hasNavigatedInApp()`
+  // is the reliable way to tell those apart. Decided once on mount so it
+  // doesn't flip under a predictable Back control while the page is
+  // visible; read in an effect, not during render, so this client-only
+  // module state is never read while this component is server-rendered.
+  const [backMode, setBackMode] = useState<"replay-history" | "fallback">(
+    "fallback",
+  );
   useEffect(() => {
-    setCanGoBack(shouldReplayHistory(window.history.length));
+    setBackMode(resolveCartBackMode(hasNavigatedInApp()));
   }, []);
+  const canGoBack = backMode === "replay-history";
   const {
     slugs,
     holds,
