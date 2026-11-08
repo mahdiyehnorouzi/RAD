@@ -185,7 +185,12 @@ jobs:
         run: |
           set -euo pipefail
           cd "$RUNNER_TEMP"
-          curl -fsSL --proto '=https' --tlsv1.2 https://github.com/rhysd/actionlint/releases/download/v1.7.7/actionlint_1.7.7_linux_amd64.tar.gz -o actionlint.tar.gz
+          # github.com/*/releases/download assets have been observed to
+          # intermittently 504 from their CDN; retry-curl.sh bounds that
+          # retry to transient network failures only (timeouts, 429, 5xx)
+          # and still fails immediately on anything else, including a
+          # checksum mismatch below, which it never touches.
+          "$GITHUB_WORKSPACE/scripts/ci/retry-curl.sh" https://github.com/rhysd/actionlint/releases/download/v1.7.7/actionlint_1.7.7_linux_amd64.tar.gz actionlint.tar.gz
           echo '023070a287cd8cccd71515fedc843f1985bf96c436b7effaecce67290e7e0757  actionlint.tar.gz' | sha256sum -c -
           tar -xzf actionlint.tar.gz actionlint
           cd "$GITHUB_WORKSPACE"
