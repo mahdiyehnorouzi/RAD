@@ -127,14 +127,23 @@
   padding: 0;
   border: 0;
   border-radius: 50%;
-  background: color-mix(in srgb, #fff 10%, transparent);
+  /* A light, low-opacity fill (the previous `color-mix(in srgb, #fff 10%,
+     transparent)`) all but disappeared over bright/white product photos,
+     since both the scrim and the light icon color would wash out together.
+     A dark scrim plus blur stays legible over both bright and dark images
+     regardless of what's directly behind it — same pattern already used for
+     photo-backed badges, see product-card.css's `.rad-badge[data-tone="sold"]`. */
+  background: color-mix(in srgb, #0a0a0a 55%, transparent);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  box-shadow: 0 1px 4px color-mix(in srgb, #000 35%, transparent);
   color: inherit;
   cursor: pointer;
   transform: translateY(-50%);
 }
 
 .nav:hover:not(:disabled) {
-  background: color-mix(in srgb, #fff 18%, transparent);
+  background: color-mix(in srgb, #0a0a0a 70%, transparent);
 }
 
 .nav:disabled {
