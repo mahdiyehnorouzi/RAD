@@ -43,6 +43,20 @@
   width: 20px;
 }
 
+/* PDP keeps a floating buy bar mounted at the bottom at all times (see
+   ProductFloatingBuy) — clear it so the toast never covers or blocks the
+   purchase CTA that triggered it. Mirrors the bar's own geometry
+   (min-height 3.75rem / 2.9rem compact, bottom offset var(--page)). */
+[data-pdp-floating-cta="true"] .toast {
+  bottom: calc(var(--page) + 4.75rem + env(safe-area-inset-bottom, 0px));
+}
+
+@media (--desktop) {
+  [data-pdp-floating-cta="true"] .toast {
+    bottom: 6rem;
+  }
+}
+
 .notification-center {
   position: relative;
 }

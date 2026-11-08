@@ -143,7 +143,6 @@ export function ProductFloatingBuy({
           />
         )}
       </div>
-      <span className={styles.divider} aria-hidden="true" />
       <div className={styles.price}>{productPrice(product, locale)}</div>
       {isBusy ? <span className="sr-only">{c.addingBag}</span> : null}
     </div>

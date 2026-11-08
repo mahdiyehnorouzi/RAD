@@ -80,6 +80,7 @@ export const fa = {
   heroCustomOrder: "سفارش اختصاصی",
   designMine: "طراحی قطعه‌ی من",
   startDesign: "شروع طراحی",
+  back: "بازگشت",
   viewWorks: "دیدن آثار",
   allWorks: "همه‌ی آثار",
   processTitle: "سفارش اختصاصی",

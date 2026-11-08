@@ -81,6 +81,7 @@ export const en = {
   heroCustomOrder: "Custom order",
   designMine: "Design my piece",
   startDesign: "Start designing",
+  back: "Back",
   viewWorks: "View works",
   allWorks: "All works",
   processTitle: "Custom order",

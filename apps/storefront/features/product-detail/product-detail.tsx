@@ -130,6 +130,16 @@ export function ProductDetail({
     return () => document.documentElement.removeAttribute("data-pdp-bare");
   }, []);
 
+  // The floating buy bar is always mounted on PDP (see ProductFloatingBuy),
+  // so any global toast (CommerceProvider) must clear it — otherwise a
+  // "added to bag" toast would land on top of the very CTA that triggered
+  // it and block further taps.
+  useEffect(() => {
+    document.documentElement.setAttribute("data-pdp-floating-cta", "true");
+    return () =>
+      document.documentElement.removeAttribute("data-pdp-floating-cta");
+  }, []);
+
   return (
     <article className={styles.pdp}>
       {isDev ? (
