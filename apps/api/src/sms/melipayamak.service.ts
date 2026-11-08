@@ -26,8 +26,10 @@ const REQUEST_TIMEOUT_MS = 10_000;
  * `password`. A 110 is a failed send; this client does not switch to an
  * API key on its own.
  *
- * Success is only `RetStatus === 1` and `StrRetStatus === "OK"`. `Value`
- * is the receipt id. It is never the OTP.
+ * Success is a 2xx response, `RetStatus === 1`, and `StrRetStatus` equal
+ * to "OK" after trimming, compared case-insensitively. The provider PDF
+ * example uses "Ok" while the prose says "OK". `Value` is the receipt id
+ * and is never the OTP.
  */
 function configuredSetting(value: string | undefined) {
   const trimmed = value?.trim();
@@ -77,7 +79,22 @@ function readProviderStatus(payload: unknown): ProviderStatus | undefined {
 }
 
 function accepted(status: ProviderStatus) {
-  return status.retStatus === 1 && status.strRetStatus === "OK";
+  return status.retStatus === 1 && status.strRetStatus?.toLowerCase() === "ok";
+}
+
+/**
+ * Short status tokens only. Anything else is withheld so a body that
+ * echoed the OTP, phone number, or credentials cannot reach the log.
+ */
+function diagnosticStrRetStatus(
+  value: string | undefined,
+  otp: string,
+  phone: string,
+) {
+  if (!value) return "missing";
+  if (!/^[A-Za-z0-9_-]{1,32}$/.test(value)) return "unrecognized";
+  if (value.includes(otp) || value.includes(phone)) return "withheld";
+  return value;
 }
 
 /** Receipt ids are safe to record. The OTP and the phone number are not. */
@@ -223,7 +240,7 @@ export class MelipayamakService {
         `POST BaseServiceNumber bodyId=${bodyId}`,
         `HTTP ${response.status}`,
         `RetStatus ${status?.retStatus ?? "missing"}`,
-        `StrRetStatus ${status?.strRetStatus === "OK" ? "OK" : "not-OK"}`,
+        `StrRetStatus ${diagnosticStrRetStatus(status?.strRetStatus, code, to)}`,
         `receipt ${receipt ?? "withheld"}`,
         "",
       ].join("\n"),
@@ -241,7 +258,7 @@ export class MelipayamakService {
           ? String(status.retStatus)
           : "unrecognized";
       this.logger.warn(
-        `Melipayamak BaseServiceNumber was not accepted (HTTP ${response.status}, RetStatus ${retStatus})`,
+        `Melipayamak BaseServiceNumber was not accepted (HTTP ${response.status}, RetStatus ${retStatus}, StrRetStatus ${diagnosticStrRetStatus(status?.strRetStatus, code, to)})`,
       );
       throw new InternalServerErrorException(
         "ارسال پیامک ناموفق بود. دوباره تلاش کنید.",
