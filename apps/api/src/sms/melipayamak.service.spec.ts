@@ -161,26 +161,54 @@ describe("MelipayamakService: BaseServiceNumber response", () => {
     await new MelipayamakService(configured()).sendOtp("09121234567", "654321");
   });
 
-  test("a 2xx provider rejection is not a successful send", async () => {
+  test("RetStatus 1 and StrRetStatus Ok is the same success", async () => {
     stubFetch(async () =>
       jsonResponse({
-        Value: "0",
-        RetStatus: 35,
-        StrRetStatus: "BlackList",
+        Value: "246813579",
+        RetStatus: 1,
+        StrRetStatus: " Ok ",
       }),
     );
-    await assert.rejects(
-      () =>
-        new MelipayamakService(configured()).sendOtp("09121234567", "654321"),
-      (error: unknown) => {
-        assert.ok(error instanceof InternalServerErrorException);
-        const message = JSON.stringify(error.getResponse());
-        assert.equal(message.includes("rad-pass"), false);
-        assert.equal(message.includes("654321"), false);
-        assert.equal(message.includes("09121234567"), false);
-        return true;
-      },
-    );
+    await new MelipayamakService(configured()).sendOtp("09121234567", "654321");
+  });
+
+  test("a 2xx provider rejection is not a successful send", async () => {
+    const lines: string[] = [];
+    const originalWarn = Logger.prototype.warn;
+    Logger.prototype.warn = function (this: Logger, ...args: unknown[]) {
+      lines.push(args.map((arg) => String(arg)).join(" "));
+      return originalWarn.apply(this, args as never);
+    };
+    try {
+      stubFetch(async () =>
+        jsonResponse({
+          Value: "0",
+          RetStatus: 35,
+          StrRetStatus: "BlackList",
+        }),
+      );
+      await assert.rejects(
+        () =>
+          new MelipayamakService(configured()).sendOtp("09121234567", "654321"),
+        (error: unknown) => {
+          assert.ok(error instanceof InternalServerErrorException);
+          const message = JSON.stringify(error.getResponse());
+          assert.equal(message.includes("rad-pass"), false);
+          assert.equal(message.includes("654321"), false);
+          assert.equal(message.includes("09121234567"), false);
+          return true;
+        },
+      );
+    } finally {
+      Logger.prototype.warn = originalWarn;
+    }
+    const blob = lines.join("\n");
+    assert.match(blob, /HTTP 200/);
+    assert.match(blob, /RetStatus 35/);
+    assert.match(blob, /StrRetStatus BlackList/);
+    assert.equal(blob.includes("rad-pass"), false);
+    assert.equal(blob.includes("654321"), false);
+    assert.equal(blob.includes("09121234567"), false);
   });
 
   test("provider error 110 fails the send and records the API-key ambiguity", async () => {
@@ -216,21 +244,6 @@ describe("MelipayamakService: BaseServiceNumber response", () => {
     assert.equal(blob.includes("09121234567"), false);
   });
 
-  test("StrRetStatus must be exactly OK", async () => {
-    stubFetch(async () =>
-      jsonResponse({
-        Value: "246813579",
-        RetStatus: 1,
-        StrRetStatus: "Ok",
-      }),
-    );
-    await assert.rejects(
-      () =>
-        new MelipayamakService(configured()).sendOtp("09121234567", "654321"),
-      InternalServerErrorException,
-    );
-  });
-
   test("a malformed body is not a successful send", async () => {
     for (const body of ["not-json", "", "[]", '{"Value":"246813579"}']) {
       stubFetch(async () => new Response(body, { status: 200 }));
@@ -254,6 +267,30 @@ describe("MelipayamakService: BaseServiceNumber response", () => {
         new MelipayamakService(configured()).sendOtp("09121234567", "654321"),
       InternalServerErrorException,
     );
+  });
+
+  test("a 10s abort is reported as TimeoutError and is not a successful send", async () => {
+    const lines: string[] = [];
+    const originalError = Logger.prototype.error;
+    Logger.prototype.error = function (this: Logger, ...args: unknown[]) {
+      lines.push(args.map((arg) => String(arg)).join(" "));
+      return originalError.apply(this, args as never);
+    };
+    try {
+      stubFetch(async () => {
+        throw new DOMException("The operation was aborted.", "TimeoutError");
+      });
+      await assert.rejects(
+        () =>
+          new MelipayamakService(configured()).sendOtp("09121234567", "654321"),
+        InternalServerErrorException,
+      );
+    } finally {
+      Logger.prototype.error = originalError;
+    }
+    assert.match(lines.join("\n"), /request failed: TimeoutError/);
+    assert.equal(lines.join("\n").includes("654321"), false);
+    assert.equal(lines.join("\n").includes("09121234567"), false);
   });
 
   test("a network failure is surfaced, not swallowed", async () => {
