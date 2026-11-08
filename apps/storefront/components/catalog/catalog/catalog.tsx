@@ -138,6 +138,7 @@ export function AddToBag({
   compact = false,
   busyLabel,
   pending: sharedPending,
+  sharedBusyRef,
   onBusyChange,
   onSheetVisibleChange,
   hideSheet = false,
@@ -154,6 +155,8 @@ export function AddToBag({
    * inline + floating) stay disabled while either one's request is in flight.
    */
   pending?: boolean;
+  /** Synchronous guard shared by alternate CTAs for the same add operation. */
+  sharedBusyRef?: { current: boolean };
   /** Lets a caller (e.g. a bar that renders its own busy/added chrome) mirror the in-flight state. */
   onBusyChange?: (busy: boolean) => void;
   /** Mirrors whether the built-in `BagAddedSheet` is currently showing, so a
@@ -191,8 +194,15 @@ export function AddToBag({
         type="button"
         className={`${compact ? "plp-bag-button" : "button"} add${added ? " add--in-bag" : ""}`}
         onClick={async () => {
-          if (busyRef.current || added || showingPending) return;
+          if (
+            busyRef.current ||
+            sharedBusyRef?.current ||
+            added ||
+            showingPending
+          )
+            return;
           busyRef.current = true;
+          if (sharedBusyRef) sharedBusyRef.current = true;
           try {
             setLocalPending(true);
             onBusyChange?.(true);
@@ -229,6 +239,7 @@ export function AddToBag({
             );
           } finally {
             busyRef.current = false;
+            if (sharedBusyRef) sharedBusyRef.current = false;
             setLocalPending(false);
             onBusyChange?.(false);
           }
