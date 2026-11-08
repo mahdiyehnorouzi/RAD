@@ -9,7 +9,12 @@ import { ConfigService } from "@nestjs/config";
 
 const BASE_SERVICE_NUMBER_URL =
   "https://rest.payamak-panel.com/api/SendSMS/BaseServiceNumber";
-const REQUEST_TIMEOUT_MS = 10_000;
+/**
+ * A reachability check from the VPS got an HTTP response in about 14s, so
+ * 10s aborted real sends. 20s covers that without a retry: a second POST
+ * could deliver a second OTP.
+ */
+const REQUEST_TIMEOUT_MS = 20_000;
 
 /**
  * Shared-number template send (`BaseServiceNumber`). A regular sender line

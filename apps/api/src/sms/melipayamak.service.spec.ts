@@ -269,7 +269,35 @@ describe("MelipayamakService: BaseServiceNumber response", () => {
     );
   });
 
-  test("a 10s abort is reported as TimeoutError and is not a successful send", async () => {
+  test("the provider request aborts after 20 seconds and is not retried", async () => {
+    const originalTimeout = AbortSignal.timeout;
+    const calls: number[] = [];
+    let fetches = 0;
+    AbortSignal.timeout = ((ms: number) => {
+      calls.push(ms);
+      return originalTimeout.call(AbortSignal, ms);
+    }) as typeof AbortSignal.timeout;
+    stubFetch(async () => {
+      fetches += 1;
+      return jsonResponse({
+        Value: "246813579",
+        RetStatus: 1,
+        StrRetStatus: "OK",
+      });
+    });
+    try {
+      await new MelipayamakService(configured()).sendOtp(
+        "09121234567",
+        "654321",
+      );
+    } finally {
+      AbortSignal.timeout = originalTimeout;
+    }
+    assert.deepEqual(calls, [20_000]);
+    assert.equal(fetches, 1);
+  });
+
+  test("an aborted request still uses the generic Persian SMS error", async () => {
     const lines: string[] = [];
     const originalError = Logger.prototype.error;
     Logger.prototype.error = function (this: Logger, ...args: unknown[]) {
@@ -283,14 +311,25 @@ describe("MelipayamakService: BaseServiceNumber response", () => {
       await assert.rejects(
         () =>
           new MelipayamakService(configured()).sendOtp("09121234567", "654321"),
-        InternalServerErrorException,
+        (error: unknown) => {
+          assert.ok(error instanceof InternalServerErrorException);
+          const response = error.getResponse();
+          const message =
+            typeof response === "string"
+              ? response
+              : (response as { message?: string }).message;
+          assert.equal(message, "ارسال پیامک ناموفق بود. دوباره تلاش کنید.");
+          return true;
+        },
       );
     } finally {
       Logger.prototype.error = originalError;
     }
-    assert.match(lines.join("\n"), /request failed: TimeoutError/);
-    assert.equal(lines.join("\n").includes("654321"), false);
-    assert.equal(lines.join("\n").includes("09121234567"), false);
+    const blob = lines.join("\n");
+    assert.match(blob, /request failed: TimeoutError/);
+    assert.equal(blob.includes("654321"), false);
+    assert.equal(blob.includes("09121234567"), false);
+    assert.equal(blob.includes("rad-pass"), false);
   });
 
   test("a network failure is surfaced, not swallowed", async () => {
