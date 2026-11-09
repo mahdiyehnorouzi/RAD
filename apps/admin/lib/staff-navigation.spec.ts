@@ -782,7 +782,7 @@ test("an order handoff from messages is kept only for that navigation", () => {
   assert.equal(done.pending, null);
   assert.equal(consumeFocus(done), "ord-9");
   assert.equal(done.focus, null);
-  select(done, "products");
+  select(done, "damage");
   select(done, "orders");
   assert.equal(done.section, "orders");
   assert.equal(done.focus, null);
@@ -790,8 +790,8 @@ test("an order handoff from messages is kept only for that navigation", () => {
 
   const replaced = boot("/messages", "overview");
   openOrderFromMessages(replaced, "ord-9");
-  select(replaced, "products");
-  assert.equal(replaced.pending?.section, "products");
+  select(replaced, "damage");
+  assert.equal(replaced.pending?.section, "damage");
   assert.equal(replaced.pending?.focusOrderId, undefined);
   commit(replaced);
   assert.equal(replaced.focus, null);
