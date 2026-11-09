@@ -22,7 +22,7 @@ test("customer help answers do not claim free or insured shipping", () => {
   const shipping = defaultHelpQuestions.find((item) => item.id === "shipping");
   assert.equal(shipping?.answer.fa, APPROVED_FA);
   assert.equal(shipping?.answer.en, APPROVED_EN);
-  assert.equal(shipping?.more.section, "method");
+  assert.equal(shipping?.more?.section, "method");
   const delivery = faqSection.items.find((item) => item.id === "delivery");
   assert.equal(delivery?.answer.fa, APPROVED_FA);
   assert.equal(delivery?.answer.en, APPROVED_EN);

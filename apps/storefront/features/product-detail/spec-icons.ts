@@ -13,9 +13,6 @@ export const SPEC_ATTRIBUTE_ICON = {
   glaze: "Droplets",
 } as const;
 
-export type SpecAttributeIconName =
-  (typeof SPEC_ATTRIBUTE_ICON)[keyof typeof SPEC_ATTRIBUTE_ICON];
-
 /** Distinct fallbacks for an attribute key this map does not know yet. */
 export const SPEC_ATTRIBUTE_ICON_FALLBACKS = [
   "ScrollText",
