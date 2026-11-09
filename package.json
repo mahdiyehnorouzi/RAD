@@ -39,6 +39,7 @@
     "images:optimize": "node scripts/optimize-images.mjs",
     "knip": "knip --workspace apps/storefront --include-entry-exports && knip --workspace apps/admin --include files,dependencies && knip --workspace apps/api --include files,dependencies && knip --workspace packages/i18n --include-entry-exports && knip --workspace packages/types --include files,dependencies && knip --workspace packages/artworks --include files,dependencies && node scripts/check-shared-package-consumers.mjs",
     "test:package-consumers": "node --test scripts/check-shared-package-consumers.spec.mjs",
+    "test:release-gate": "node --test scripts/production/release-gate.spec.mjs",
     "knip:report": "knip --no-exit-code --no-progress --reporter compact --include files,dependencies,unlisted,binaries,exports,types --include-entry-exports --workspace apps/admin --workspace apps/api --workspace packages/ui --workspace packages/types --workspace packages/artworks --workspace packages/state",
     "app:install": "npm install --prefix apps/Rad-App",
     "app:pods": "npm run pods --prefix apps/Rad-App",

@@ -1,4 +1,6 @@
-# Only reusable/explicit manual invocations; deploy.yml remains the automatic entry.
+# Only reusable/explicit manual invocations; deploy.yml is the manual,
+# human-triggered release entry point (see deploy.yml and RAD-129 note
+# below) - nothing here or in deploy.yml runs on a push to `main`.
 #
 # Release transport: see the matching comment in deploy-api-vps.yml -
 # GitHub-hosted `ubuntu-latest` over the RAD tailnet (OIDC, no self-hosted
@@ -8,10 +10,27 @@
 # payload here, not a tarball - no code or build output is streamed to the
 # VPS for the frontend path, only the signed manifest naming the exact GHCR
 # digests to pull.
+#
+# RAD-129: this workflow releases exactly `inputs.commit_sha`, never
+# `github.sha` - the two are no longer guaranteed equal, since the caller
+# (deploy.yml) is a manual, human-triggered release of a specific,
+# already-merged commit, not a push-triggered deploy of whatever is
+# currently at the tip of `main`. Every checkout, image tag, and remote
+# command below is keyed off `inputs.commit_sha` for that reason.
+# `confirm` is a `workflow_call` input too now (previously only
+# `workflow_dispatch` had a confirmation input, named `operation`), so the
+# "must opt in to actually release" gate behaves identically whether this
+# runs standalone (emergency `workflow_dispatch`) or via deploy.yml.
 name: Frontend VPS release
 on:
   workflow_call:
     inputs:
+      commit_sha:
+        required: true
+        type: string
+      confirm:
+        required: true
+        type: string
       deploy_storefront:
         required: true
         type: boolean
@@ -20,11 +39,13 @@ on:
         type: boolean
   workflow_dispatch:
     inputs:
-      operation:
-        description: "Build only, or build and release this main commit"
-        type: choice
-        options: [build, deploy]
-        default: build
+      commit_sha:
+        description: "Full SHA to release; must already be on main and have a passing CI passed check"
+        required: true
+      confirm:
+        description: "Type deploy to release the selected commit"
+        required: true
+        default: build-check-only
       deploy_storefront:
         type: boolean
         default: true
@@ -35,26 +56,43 @@ permissions:
   contents: read
 jobs:
   checks:
-    if: github.repository == 'mahdiyehnorouzi/RAD' && github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    if: github.repository == 'mahdiyehnorouzi/RAD'
     uses: ./.github/workflows/ci.yml
   build-images:
     needs: checks
-    if: github.repository == 'mahdiyehnorouzi/RAD' && github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && (inputs.deploy_storefront || inputs.deploy_admin)
+    if: github.repository == 'mahdiyehnorouzi/RAD' && (inputs.deploy_storefront || inputs.deploy_admin)
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
       id-token: write
       attestations: write
+      # verify-commit reads the requested commit's check runs
+      # (gh api repos/.../commits/<sha>/check-runs) to confirm "CI passed"
+      # actually succeeded for that exact SHA, and - since a "Merge pull
+      # request" commit on main never has check runs of its own, only the
+      # PR's head commit does - may also look up the merged PR for that
+      # commit (gh api repos/.../commits/<sha>/pulls) to find that head
+      # commit to check instead.
+      checks: read
+      pull-requests: read
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
-          ref: ${{ github.sha }}
+          ref: ${{ inputs.commit_sha }}
+          fetch-depth: 0
           persist-credentials: false
-      - name: Refuse a stale main run
+      - name: Refuse a commit that is not on main, or has no passing CI passed check
         env:
           GH_TOKEN: ${{ github.token }}
-        run: test "$(gh api repos/mahdiyehnorouzi/RAD/git/ref/heads/main --jq .object.sha)" = "$GITHUB_SHA"
+          COMMIT_SHA: ${{ inputs.commit_sha }}
+        run: |
+          set -euo pipefail
+          git fetch origin main --quiet
+          node scripts/production/release-gate.mjs verify-commit \
+            --repo mahdiyehnorouzi/RAD \
+            --commit-sha "$COMMIT_SHA" \
+            --required-check "CI passed"
       - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f
       - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9
         with:
@@ -69,7 +107,7 @@ jobs:
           file: apps/storefront/Dockerfile
           platforms: linux/amd64
           push: true
-          tags: ghcr.io/mahdiyehnorouzi/rad-storefront:${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          tags: ghcr.io/mahdiyehnorouzi/rad-storefront:${{ inputs.commit_sha }}-${{ github.run_id }}-${{ github.run_attempt }}
           build-args: |
             NEXT_PUBLIC_SITE_URL=${{ vars.NEXT_PUBLIC_SITE_URL || 'https://www.rad-object.com' }}
             NEXT_PUBLIC_GA_MEASUREMENT_ID=${{ vars.NEXT_PUBLIC_GA_MEASUREMENT_ID }}
@@ -84,12 +122,13 @@ jobs:
           file: apps/admin/Dockerfile
           platforms: linux/amd64
           push: true
-          tags: ghcr.io/mahdiyehnorouzi/rad-admin:${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          tags: ghcr.io/mahdiyehnorouzi/rad-admin:${{ inputs.commit_sha }}-${{ github.run_id }}-${{ github.run_attempt }}
           cache-from: type=gha,scope=admin-vps
           cache-to: type=gha,mode=max,scope=admin-vps
       - name: Sign the selected services and exact registry digests
         env:
           RELEASE_KIND: frontend
+          GITHUB_SHA: ${{ inputs.commit_sha }}
           STOREFRONT_DIGEST: ${{ steps.storefront.outputs.digest }}
           ADMIN_DIGEST: ${{ steps.admin.outputs.digest }}
         run: python3 scripts/production/make-manifest.py
@@ -102,7 +141,7 @@ jobs:
           BUNDLE: ${{ steps.attest.outputs.bundle-path }}
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: frontend-release-${{ github.sha }}-${{ github.run_attempt }}
+          name: frontend-release-${{ inputs.commit_sha }}-${{ github.run_attempt }}
           path: |
             release.json
             release.sigstore.json
@@ -111,7 +150,7 @@ jobs:
 
   release:
     needs: build-images
-    if: github.repository == 'mahdiyehnorouzi/RAD' && github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && (inputs.deploy_storefront || inputs.deploy_admin) && (github.event_name != 'workflow_dispatch' || inputs.operation == 'deploy')
+    if: github.repository == 'mahdiyehnorouzi/RAD' && (inputs.deploy_storefront || inputs.deploy_admin) && inputs.confirm == 'deploy'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     environment: production-frontend-vps
@@ -126,13 +165,13 @@ jobs:
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
-          ref: ${{ github.sha }}
+          ref: ${{ inputs.commit_sha }}
           persist-credentials: false
 
       - name: Download signed artifact (this exact run/attempt only)
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
-          name: frontend-release-${{ github.sha }}-${{ github.run_attempt }}
+          name: frontend-release-${{ inputs.commit_sha }}-${{ github.run_attempt }}
           path: stage
 
       - name: Connect to RAD tailnet using GitHub OIDC
@@ -158,12 +197,14 @@ jobs:
       # API path (see deploy-api-vps.yml) - only the payload differs: no tarball,
       # just the signed manifest naming the exact GHCR image digests to release.
       - name: Ship manifest and trigger release over the tailnet
+        env:
+          COMMIT_SHA: ${{ inputs.commit_sha }}
         run: |
           set -euo pipefail
           bash scripts/production/rad-deploy-ship.sh \
             --host "rad-deploy@${RAD_VPS_TAILSCALE_IP}" \
             --stage stage \
-            --remote-command "deploy kind=frontend commit=${GITHUB_SHA} run_id=${GITHUB_RUN_ID} run_attempt=${GITHUB_RUN_ATTEMPT}" \
+            --remote-command "deploy kind=frontend commit=${COMMIT_SHA} run_id=${GITHUB_RUN_ID} run_attempt=${GITHUB_RUN_ATTEMPT}" \
             -- release.json release.sigstore.json
 
       - name: Remove runner SSH credentials
@@ -176,9 +217,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - env:
-          TRUSTED: ${{ github.repository == 'mahdiyehnorouzi/RAD' && github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') }}
+          TRUSTED: ${{ github.repository == 'mahdiyehnorouzi/RAD' }}
           SELECTED: ${{ inputs.deploy_storefront || inputs.deploy_admin }}
-          REQUESTED: ${{ github.event_name != 'workflow_dispatch' || inputs.operation == 'deploy' }}
+          REQUESTED: ${{ inputs.confirm == 'deploy' }}
           CHECKS: ${{ needs.checks.result }}
           BUILD: ${{ needs.build-images.result }}
           RELEASE: ${{ needs.release.result }}

@@ -1,45 +1,108 @@
-# The single automatic entry point for "merge to main -> production
-# deploys itself". Nothing else in this repo auto-deploys: deploy-api-vps.yml
-# and deploy-frontend-vps.yml only release when called from here (or, for
-# a human-triggered emergency redeploy, via their own workflow_dispatch —
-# see docs/cicd-pipeline.md).
+# RAD-129: the single entry point for a Production release, and the ONLY
+# place that releases to Production - deploy-api-vps.yml and
+# deploy-frontend-vps.yml only release when called from here (or, for a
+# human-triggered emergency redeploy, via their own workflow_dispatch - see
+# docs/cicd-pipeline.md).
 #
-# Flow: wait for CI (ci.yml, the same required check PRs already run) to
-# pass on this exact push, work out which of api/storefront/admin the push
-# actually touched (dependency-aware: a shared package used by several
-# apps affects all of them, not just the one whose path a naive filter
-# would match), then release API first (if affected) and only once that
-# finishes successfully, the frontend (if affected) — never the two racing
-# each other, and never an older commit's run clobbering a newer one
-# (the concurrency group + each sub-workflow's own group serialize this
-# per target).
+# Merging a PR into `main` does NOT deploy anything by itself. A push to
+# `main` has no trigger here or anywhere else in this repo (there is no
+# `on: push` left in this file). Releasing to Production is always a
+# separate, explicit, human action: pick an exact commit SHA (normally one
+# already on `main`), come to this workflow, and type `deploy` into
+# `confirm`. Leaving `confirm` at its default (`build-check-only`) still
+# runs `preflight` (the commit's presence on `main`, its passing "CI
+# passed" check) and `detect` (which services it would affect), but never
+# enters deploy-api-vps.yml's / deploy-frontend-vps.yml's own build/release
+# jobs - those two workflows already require `confirm: deploy` before
+# building or shipping anything, on this path exactly as on their own
+# direct `workflow_dispatch`. This is the safe dry-run path for validating
+# a SHA before actually releasing it.
 #
-# This workflow deploys. It does not decide whether the code is good
-# enough to deploy — ci.yml, re-run as part of it (and separately, already
-# required on the PR itself), is what blocks a broken push from reaching
-# any of this.
+# Flow: verify the requested commit (preflight - on `main`, CI passed for
+# that exact SHA), work out which of api/storefront/admin it actually
+# touched relative to its parent commit (dependency-aware: a shared package
+# used by several apps affects all of them, not just the one whose path a
+# naive filter would match), then release API first (if affected) and only
+# once that finishes successfully, the frontend (if affected) - never the
+# two racing each other, and never an older run clobbering a newer one (the
+# concurrency group + each sub-workflow's own group serialize this per
+# target).
+#
+# This workflow deploys. It does not decide whether the code is good enough
+# to deploy on its own - the "CI passed" check (recorded against the
+# requested commit when its PR ran ci.yml, and re-verified here by
+# `preflight`, not re-run blind against whatever ref this workflow happens
+# to be dispatched from) is what blocks a broken commit from reaching any
+# of this. Required migration approvals, the release broker's own
+# verification, health checks, smoke tests and automatic rollback are
+# unchanged - see deploy-api-vps.yml / deploy-frontend-vps.yml /
+# docs/automated-migrations.md.
 
-name: Deploy (automatic, on push to main)
+name: Production release (manual)
 
 permissions:
   contents: read
 
 on:
-  push:
-    branches: [main]
+  workflow_dispatch:
+    inputs:
+      commit_sha:
+        description: "Full 40-character SHA to release; must already be on main with a passing CI passed check"
+        required: true
+      confirm:
+        description: "Type deploy to actually release; anything else runs every check as a dry run only"
+        required: true
+        default: build-check-only
 
 concurrency:
   group: rad-deploy-main
   cancel-in-progress: false
 
 jobs:
-  checks:
-    if: github.repository == 'mahdiyehnorouzi/RAD' && github.ref == 'refs/heads/main'
-    uses: ./.github/workflows/ci.yml
+  preflight:
+    name: Verify the requested commit
+    if: github.repository == 'mahdiyehnorouzi/RAD'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      # verify-commit reads the requested commit's check runs
+      # (gh api repos/.../commits/<sha>/check-runs) to confirm "CI passed"
+      # actually succeeded for that exact SHA, and - since a "Merge pull
+      # request" commit on main never has check runs of its own, only the
+      # PR's head commit does - may also look up the merged PR for that
+      # commit (gh api repos/.../commits/<sha>/pulls) to find that head
+      # commit to check instead.
+      checks: read
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Requested commit must be on main with a passing CI passed check
+        env:
+          GH_TOKEN: ${{ github.token }}
+          COMMIT_SHA: ${{ inputs.commit_sha }}
+        run: |
+          set -euo pipefail
+          git fetch origin main --quiet
+          node scripts/production/release-gate.mjs verify-commit \
+            --repo mahdiyehnorouzi/RAD \
+            --commit-sha "$COMMIT_SHA" \
+            --required-check "CI passed"
+
+      - name: Report mode
+        run: |
+          if [[ "${{ inputs.confirm }}" == "deploy" ]]; then
+            echo "::notice::Releasing ${{ inputs.commit_sha }} to Production."
+          else
+            echo "::notice::Dry run only (confirm=${{ inputs.confirm }}) - verifying ${{ inputs.commit_sha }}, nothing will be released."
+          fi
 
   detect:
     name: Detect affected services
-    needs: checks
+    needs: preflight
     runs-on: ubuntu-latest
     outputs:
       api: ${{ steps.filter.outputs.api }}
@@ -49,86 +112,21 @@ jobs:
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
+          ref: ${{ inputs.commit_sha }}
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Compute changed files since the previous main commit
-        id: diff
-        run: |
-          set -euo pipefail
-          before="${{ github.event.before }}"
-          # A force-push, a brand-new branch history, or a before-sha this
-          # checkout doesn't have (rewritten history) can't be diffed
-          # safely — fall back to "everything changed" rather than risk
-          # silently skipping a real deploy. A normal fast-forward merge
-          # commit (the overwhelmingly common case) always has a valid,
-          # present `before`.
-          if [[ -z "$before" || "$before" == "0000000000000000000000000000000000000000" ]] \
-             || ! git cat-file -e "${before}^{commit}" 2>/dev/null; then
-            echo "::warning::Could not safely diff against the previous commit (before=${before:-<empty>}) — treating every path as changed."
-            git ls-files > /tmp/changed-files.txt
-          else
-            git diff --name-only "${before}" "${{ github.sha }}" > /tmp/changed-files.txt
-          fi
-          echo "Changed files:"
-          cat /tmp/changed-files.txt
+      - name: Compute changed files since the commit's parent
+        run: git diff --name-only "${{ inputs.commit_sha }}~1" "${{ inputs.commit_sha }}" > /tmp/changed-files.txt
 
-      # Dependency map (see apps/*/package.json "dependencies" for the
-      # ground truth this mirrors):
-      #   apps/api/**         -> api
-      #   apps/storefront/**  -> storefront
-      #   apps/admin/**       -> admin
-      #   packages/artworks/**-> api, storefront      (both depend on @rad/artworks)
-      #   packages/types/**   -> storefront, admin    (both depend on @rad/types)
-      #   packages/ui/**      -> storefront, admin    (both depend on @rad/ui)
-      #   packages/i18n/**    -> storefront           (only storefront depends on @rad/i18n)
-      #   packages/state/**   -> storefront, admin    (not yet declared as a dependency by
-      #                                                 either app's package.json — conservatively
-      #                                                 treated as affecting both per "if impact
-      #                                                 cannot safely be determined, deploy all
-      #                                                 potentially affected services")
-      #   root package.json / package-lock.json / tsconfig*.json / this
-      #   workflow file / Dockerfiles / docker-compose.frontend-vps.yml
-      #                        -> all three (shared build/deploy infra)
-      #   anything else (docs/**, *.md, .github/workflows/ci.yml only, etc.)
-      #                        -> none
+      # See scripts/production/release-gate.mjs (release-gate.spec.mjs has
+      # the committed test coverage for this mapping) for the dependency map
+      # this mirrors - also documented in docs/cicd-pipeline.md.
       - name: Map changed files to affected services
         id: filter
         run: |
           set -euo pipefail
-          api=false
-          storefront=false
-          admin=false
-
-          matches() { grep -qE "$1" /tmp/changed-files.txt; }
-
-          matches '^apps/api/'                    && api=true
-          matches '^apps/storefront/'              && storefront=true
-          matches '^apps/admin/'                   && admin=true
-          matches '^packages/artworks/'             && { api=true; storefront=true; }
-          matches '^packages/types/'                && { storefront=true; admin=true; }
-          matches '^packages/ui/'                   && { storefront=true; admin=true; }
-          matches '^packages/i18n/'                 && storefront=true
-          matches '^packages/state/'                && { storefront=true; admin=true; }
-
-          # Shared root-level config/infra that any app's build could
-          # depend on — conservative on purpose.
-          if matches '^(package\.json|package-lock\.json|tsconfig.*\.json|apps/api/Dockerfile|apps/api/Dockerfile\..*|apps/storefront/Dockerfile|apps/admin/Dockerfile|docker-compose\.frontend-vps\.yml|scripts/production/.*|scripts/deploy-api-systemd-artifact\.sh|scripts/lib/deploy-api-remote-artifact\.sh|scripts/deploy-api-systemd\.sh|scripts/lib/deploy-api-remote\.sh|\.github/workflows/deploy\.yml|\.github/workflows/deploy-api-vps\.yml|\.github/workflows/deploy-frontend-vps\.yml)$'; then
-            api=true; storefront=true; admin=true
-          fi
-
-          any=false
-          [[ "$api" == "true" || "$storefront" == "true" || "$admin" == "true" ]] && any=true
-
-          echo "api=${api}" >> "$GITHUB_OUTPUT"
-          echo "storefront=${storefront}" >> "$GITHUB_OUTPUT"
-          echo "admin=${admin}" >> "$GITHUB_OUTPUT"
-          echo "any=${any}" >> "$GITHUB_OUTPUT"
-          echo "Affected: api=${api} storefront=${storefront} admin=${admin} (any=${any})"
-
-      - name: No deployable service affected
-        if: steps.filter.outputs.any == 'false'
-        run: echo "This push only touched docs/unrelated files — nothing to deploy."
+          node scripts/production/release-gate.mjs affected-services --changed-files /tmp/changed-files.txt | tee -a "$GITHUB_OUTPUT"
 
   # API first. Frontend consumes the API's response shape; releasing it
   # first and verifying it (deploy-api-vps.yml's own health check + public
@@ -140,18 +138,13 @@ jobs:
     if: needs.detect.outputs.api == 'true'
     uses: ./.github/workflows/deploy-api-vps.yml
     with:
-      commit_sha: ${{ github.sha }}
+      commit_sha: ${{ inputs.commit_sha }}
+      confirm: ${{ inputs.confirm }}
     # Without this, a reusable workflow call receives NONE of the caller's
     # repository or Environment secrets - deploy-api-vps.yml's own
     # `secrets.TS_OAUTH_CLIENT_ID` / `secrets.TS_AUDIENCE` /
     # `secrets.RAD_DEPLOY_SSH_PRIVATE_KEY` / `secrets.RAD_VPS_SSH_HOST_KEY`
-    # would all read as empty strings when invoked from here (they only
-    # worked in manual testing because that was a direct workflow_dispatch
-    # of deploy-api-vps.yml itself, never through this workflow_call
-    # boundary). Confirmed by a real automatic run failing at the Tailscale
-    # step with "Please provide either an auth key, OAuth secret and tags,
-    # or federated identity client ID and audience with tags." - exactly
-    # what tailscale/github-action@v4 reports when given empty values.
+    # would all read as empty strings when invoked from here.
     secrets: inherit
     permissions:
       contents: read
@@ -163,20 +156,20 @@ jobs:
     name: Deploy Storefront/Admin
     needs: [detect, deploy-api]
     # Runs when storefront and/or admin is affected, and only after the API
-    # deploy has either succeeded or wasn't needed at all — never after a
+    # deploy has either succeeded or wasn't needed at all - never after a
     # failed API deploy (an unhealthy/rolled-back API is not something to
     # build a frontend release on top of; investigate the API failure
-    # first, then re-push or manually re-dispatch once it's fixed).
+    # first, then re-dispatch this workflow once it's fixed).
     if: |
       always() && !cancelled() && needs.detect.result == 'success' &&
       (needs.detect.outputs.storefront == 'true' || needs.detect.outputs.admin == 'true') &&
       (needs.detect.outputs.api != 'true' || needs.deploy-api.result == 'success')
     uses: ./.github/workflows/deploy-frontend-vps.yml
     with:
+      commit_sha: ${{ inputs.commit_sha }}
+      confirm: ${{ inputs.confirm }}
       deploy_storefront: ${{ needs.detect.outputs.storefront == 'true' }}
       deploy_admin: ${{ needs.detect.outputs.admin == 'true' }}
-    # Same reason as deploy-api's secrets: inherit above - a reusable
-    # workflow call otherwise receives none of this caller's secrets.
     secrets: inherit
     permissions:
       contents: read
@@ -186,20 +179,20 @@ jobs:
       actions: read
 
   summary:
-    name: Deployment summary
+    name: Release summary
     needs: [detect, deploy-api, deploy-frontend]
     if: always()
     runs-on: ubuntu-latest
     steps:
       - name: Report
         run: |
-          echo "## Deploy summary for ${{ github.sha }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "## Release summary for ${{ inputs.commit_sha }} (confirm=${{ inputs.confirm }})" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
           echo "| Service | Affected | Result |" >> "$GITHUB_STEP_SUMMARY"
           echo "|---|---|---|" >> "$GITHUB_STEP_SUMMARY"
           echo "| API | ${{ needs.detect.outputs.api }} | ${{ needs.deploy-api.result || 'skipped' }} |" >> "$GITHUB_STEP_SUMMARY"
           echo "| Storefront/Admin | ${{ needs.detect.outputs.storefront }}/${{ needs.detect.outputs.admin }} | ${{ needs.deploy-frontend.result || 'skipped' }} |" >> "$GITHUB_STEP_SUMMARY"
           if [[ "${{ needs.deploy-api.result }}" == "failure" || "${{ needs.deploy-frontend.result }}" == "failure" ]]; then
-            echo "::error::One or more deployments failed. Check the linked job logs above — each release job reports whether its own automatic rollback succeeded."
+            echo "::error::One or more deployments failed. Check the linked job logs above - each release job reports whether its own automatic rollback succeeded."
             exit 1
           fi
