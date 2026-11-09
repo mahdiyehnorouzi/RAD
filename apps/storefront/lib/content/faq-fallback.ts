@@ -10,7 +10,7 @@ export const faqFallbackFa: FaqContent = {
       icon: "shield-check",
       question: "اگر اثر در ارسال آسیب ببیند؟",
       answer:
-        "تمام آثار بیمه‌اند. آسیب را تا ۲۴ ساعت با عکس اعلام کنید؛ رَد مسئول پیگیری و جبران است.",
+        "اگر اثر در ارسال آسیب ببیند، تا ۲۴ ساعت با عکس اعلام کنید؛ رَد مسئول پیگیری و جبران است.",
     },
     {
       id: "packaging",
@@ -45,7 +45,7 @@ export const faqFallbackEn: FaqContent = {
       icon: "shield-check",
       question: "What if it is damaged?",
       answer:
-        "Every work is insured. Report damage with photos within 24 hours; RAD manages the resolution.",
+        "If a work is damaged in transit, report it with photos within 24 hours; RAD manages the resolution.",
     },
     {
       id: "packaging",

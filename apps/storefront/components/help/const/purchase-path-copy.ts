@@ -2,9 +2,9 @@ import type { PolicySlug, StoreOrderStatus } from "@rad/types";
 import type { LocaleCopy } from "@/types/locale";
 
 /**
- * Copy for the rules shown along the purchase path. Numbers quoted here
- * (24 and 48 hours, delivery days) come from the current policy texts;
- * publish a new policy version before changing them.
+ * Copy for the rules shown along the purchase path. Hours quoted here
+ * come from the current policy texts; publish a new policy version
+ * before changing them.
  */
 export const purchasePathCopy = {
   fa: {
@@ -13,9 +13,8 @@ export const purchasePathCopy = {
       "پس از آماده‌شدن اثر، سفارش‌های تهران با پست یا پیک و سفارش‌های شهرهای دیگر با پست ارسال می‌شوند.",
     fullShipping: "متن کامل ارسال",
     fullReturns: "متن کامل مرجوعی و آسیب",
-    cartArrival: "زمان تقریبی رسیدن، از تأیید پرداخت",
     cartFinal:
-      "مبلغ نهایی همین است؛ هزینه‌ی ارسال یا بسته‌بندی جداگانه‌ای اضافه نمی‌شود.",
+      "پس از آماده‌شدن اثر، سفارش‌های تهران با پست یا پیک و سفارش‌های شهرهای دیگر با پست ارسال می‌شوند.",
     cartRules: "شرایط ارسال و بازگشت",
     digestTitle: "پیش از پرداخت بدان",
     agreeTerms: "شرایط خرید",
@@ -42,9 +41,8 @@ export const purchasePathCopy = {
       "After the work is ready, Tehran orders are sent by post or courier; orders to other cities are sent by post.",
     fullShipping: "Full shipping text",
     fullReturns: "Full returns and damage text",
-    cartArrival: "Estimated arrival, from payment confirmation",
     cartFinal:
-      "This is the final amount; no separate shipping or packing fee is added.",
+      "After the work is ready, Tehran orders are sent by post or courier; orders to other cities are sent by post.",
     cartRules: "Shipping and returns terms",
     digestTitle: "Before you pay",
     agreeTerms: "terms of sale",
@@ -101,11 +99,11 @@ export const ORDER_STATUS_GUIDE: Record<StoreOrderStatus, StatusGuide> = {
   confirmed: {
     title: { fa: "پرداخت تأیید شد", en: "Payment confirmed" },
     body: {
-      fa: "اثر برای بسته‌بندی آماده می‌شود. تا تهران ۲ تا ۴ و تا شهرهای دیگر ۴ تا ۸ روز کاری در راه است.",
-      en: "The work is being readied for packing. It takes 2–4 working days to Tehran and 4–8 to other cities.",
+      fa: "پس از آماده‌شدن اثر، سفارش‌های تهران با پست یا پیک و سفارش‌های شهرهای دیگر با پست ارسال می‌شوند.",
+      en: "After the work is ready, Tehran orders are sent by post or courier; orders to other cities are sent by post.",
     },
     slug: "shipping",
-    section: "time",
+    section: "method",
   },
   packing: {
     title: { fa: "در حال بسته‌بندی", en: "Being packed" },

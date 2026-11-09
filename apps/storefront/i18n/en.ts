@@ -156,7 +156,8 @@ export const en = {
   holdExpired: "Your hold ended and the work went back to the shop.",
   paymentDueIn:
     "You have {time} to transfer and upload your receipt. After that the order expires and the work goes back to the shop.",
-  shipping: "Free insured shipping in Iran • dispatch in 2–4 business days",
+  shipping:
+    "After the work is ready, Tehran orders are sent by post or courier; orders to other cities are sent by post.",
   moreWorks: "More works",
   emptyBag: "Your bag is empty.",
   emptyBagBody:

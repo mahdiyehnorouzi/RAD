@@ -12,8 +12,8 @@ export const faqSection = {
         en: "What if it is damaged?",
       },
       answer: {
-        fa: "تمام آثار بیمه‌اند. آسیب را تا ۲۴ ساعت با عکس اعلام کنید؛ رَد مسئول پیگیری و جبران است.",
-        en: "Every work is insured. Report damage with photos within 24 hours; RAD manages the resolution.",
+        fa: "اگر اثر در ارسال آسیب ببیند، تا ۲۴ ساعت با عکس اعلام کنید؛ رَد مسئول پیگیری و جبران است.",
+        en: "If a work is damaged in transit, report it with photos within 24 hours; RAD manages the resolution.",
       },
     },
     {

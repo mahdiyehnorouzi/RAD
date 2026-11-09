@@ -1,6 +1,18 @@
 import { ApiPropertyOptional, ApiProperty } from "@nestjs/swagger";
-import { Allow, IsBoolean, IsIn, IsObject, IsOptional, IsString, MinLength } from "class-validator";
-import type { LocaleCopy, MakingBrief, MakingCommission } from "./commission.types";
+import {
+  Allow,
+  IsBoolean,
+  IsIn,
+  IsObject,
+  IsOptional,
+  IsString,
+  MinLength,
+} from "class-validator";
+import type {
+  LocaleCopy,
+  MakingBrief,
+  MakingCommission,
+} from "./commission.types";
 
 const localeCopyExample = {
   fa: "متن فارسی",
@@ -36,7 +48,11 @@ export class CreateCommissionDto {
 
   @ApiPropertyOptional({
     description: "Version of each custom-order rule the customer accepted",
-    example: { custom: "2026-09-27", terms: "2026-09-27", privacy: "2026-09-27" },
+    example: {
+      custom: "2026-11-09",
+      terms: "2026-11-09",
+      privacy: "2026-09-27",
+    },
   })
   @IsOptional()
   @IsObject()
