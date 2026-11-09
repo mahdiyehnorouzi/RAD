@@ -1,49 +1,22 @@
-# RAD-129: the single entry point for a Production release, and the ONLY
-# place that releases to Production - deploy-api-vps.yml and
-# deploy-frontend-vps.yml only release when called from here (or, for a
-# human-triggered emergency redeploy, via their own workflow_dispatch - see
-# docs/cicd-pipeline.md).
+# Production release entry point: merging to main deploys the changed services automatically.
+# deploy-api-vps.yml and deploy-frontend-vps.yml are called here after a push to main;
+# each also retains workflow_dispatch for an explicit single-service recovery/re-release.
+# The push path deploys the exact pushed commit after verifying the merged PR's passing CI,
+# detects affected services, then deploys API first and the frontend only after API succeeds.
+# Manual dispatch remains available for a selected main commit; its default is build-check-only,
+# and typing deploy explicitly starts a release.
 #
-# Merging a PR into `main` does NOT deploy anything by itself. A push to
-# `main` has no trigger here or anywhere else in this repo (there is no
-# `on: push` left in this file). Releasing to Production is always a
-# separate, explicit, human action: pick an exact commit SHA (normally one
-# already on `main`), come to this workflow, and type `deploy` into
-# `confirm`. Leaving `confirm` at its default (`build-check-only`) still
-# runs `preflight` (the commit's presence on `main`, its passing "CI
-# passed" check) and `detect` (which services it would affect), but never
-# enters deploy-api-vps.yml's / deploy-frontend-vps.yml's own build/release
-# jobs - those two workflows already require `confirm: deploy` before
-# building or shipping anything, on this path exactly as on their own
-# direct `workflow_dispatch`. This is the safe dry-run path for validating
-# a SHA before actually releasing it.
-#
-# Flow: verify the requested commit (preflight - on `main`, CI passed for
-# that exact SHA), work out which of api/storefront/admin it actually
-# touched relative to its parent commit (dependency-aware: a shared package
-# used by several apps affects all of them, not just the one whose path a
-# naive filter would match), then release API first (if affected) and only
-# once that finishes successfully, the frontend (if affected) - never the
-# two racing each other, and never an older run clobbering a newer one (the
-# concurrency group + each sub-workflow's own group serialize this per
-# target).
-#
-# This workflow deploys. It does not decide whether the code is good enough
-# to deploy on its own - the "CI passed" check (recorded against the
-# requested commit when its PR ran ci.yml, and re-verified here by
-# `preflight`, not re-run blind against whatever ref this workflow happens
-# to be dispatched from) is what blocks a broken commit from reaching any
-# of this. Required migration approvals, the release broker's own
-# verification, health checks, smoke tests and automatic rollback are
-# unchanged - see deploy-api-vps.yml / deploy-frontend-vps.yml /
-# docs/automated-migrations.md.
+# Existing release broker verification, migration approvals, signing/attestation, health checks,
+# smoke tests, serialization, and automatic rollback remain in force.
 
-name: Production release (manual)
+name: Production release (automatic on main; manual dispatch)
 
 permissions:
   contents: read
 
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
     inputs:
       commit_sha:
@@ -83,7 +56,7 @@ jobs:
       - name: Requested commit must be on main with a passing CI passed check
         env:
           GH_TOKEN: ${{ github.token }}
-          COMMIT_SHA: ${{ inputs.commit_sha }}
+          COMMIT_SHA: ${{ github.event.inputs.commit_sha || github.sha }}
         run: |
           set -euo pipefail
           git fetch origin main --quiet
@@ -93,16 +66,28 @@ jobs:
             --required-check "CI passed"
 
       - name: Report mode
+        env:
+          COMMIT_SHA: ${{ github.event.inputs.commit_sha || github.sha }}
+          CONFIRM_MODE: ${{ github.event.inputs.confirm || (github.event_name == 'push' && 'deploy') || 'build-check-only' }}
         run: |
-          if [[ "${{ inputs.confirm }}" == "deploy" ]]; then
-            echo "::notice::Releasing ${{ inputs.commit_sha }} to Production."
+          if [[ "$CONFIRM_MODE" == "deploy" ]]; then
+            echo "::notice::Releasing $COMMIT_SHA to Production."
           else
-            echo "::notice::Dry run only (confirm=${{ inputs.confirm }}) - verifying ${{ inputs.commit_sha }}, nothing will be released."
+            echo "::notice::Dry run only (confirm=$CONFIRM_MODE) - verifying $COMMIT_SHA, nothing will be released."
           fi
+
+  checks:
+    name: CI on the pushed main commit
+    if: github.repository == 'mahdiyehnorouzi/RAD' && github.event_name == 'push'
+    uses: ./.github/workflows/ci.yml
 
   detect:
     name: Detect affected services
-    needs: preflight
+    needs: [preflight, checks]
+    if: |
+      always() &&
+      needs.preflight.result == 'success' &&
+      (github.event_name != 'push' || needs.checks.result == 'success')
     runs-on: ubuntu-latest
     outputs:
       api: ${{ steps.filter.outputs.api }}
@@ -112,12 +97,29 @@ jobs:
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
-          ref: ${{ inputs.commit_sha }}
+          ref: ${{ github.event.inputs.commit_sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Compute changed files since the commit's parent
-        run: git diff --name-only "${{ inputs.commit_sha }}~1" "${{ inputs.commit_sha }}" > /tmp/changed-files.txt
+      - name: Compute changed files for this push or selected commit
+        env:
+          COMMIT_SHA: ${{ github.event.inputs.commit_sha || github.sha }}
+          EVENT_NAME: ${{ github.event_name }}
+          EVENT_BEFORE: ${{ github.event.before }}
+        run: |
+          set -euo pipefail
+          if [[ "$EVENT_NAME" == "push" ]]; then
+            before="$EVENT_BEFORE"
+            if [[ -z "$before" || "$before" == "0000000000000000000000000000000000000000" ]] \
+               || ! git cat-file -e "${before}^{commit}" 2>/dev/null; then
+              echo "::warning::Could not safely diff against the previous main commit (before=${before:-<empty>}) - treating every path as changed."
+              git ls-files > /tmp/changed-files.txt
+            else
+              git diff --name-only "$before" "$COMMIT_SHA" > /tmp/changed-files.txt
+            fi
+          else
+            git diff --name-only "${COMMIT_SHA}~1" "$COMMIT_SHA" > /tmp/changed-files.txt
+          fi
 
       # See scripts/production/release-gate.mjs (release-gate.spec.mjs has
       # the committed test coverage for this mapping) for the dependency map
@@ -138,8 +140,8 @@ jobs:
     if: needs.detect.outputs.api == 'true'
     uses: ./.github/workflows/deploy-api-vps.yml
     with:
-      commit_sha: ${{ inputs.commit_sha }}
-      confirm: ${{ inputs.confirm }}
+      commit_sha: ${{ github.event.inputs.commit_sha || github.sha }}
+      confirm: ${{ github.event.inputs.confirm || (github.event_name == 'push' && 'deploy') || 'build-check-only' }}
     # Without this, a reusable workflow call receives NONE of the caller's
     # repository or Environment secrets - deploy-api-vps.yml's own
     # `secrets.TS_OAUTH_CLIENT_ID` / `secrets.TS_AUDIENCE` /
@@ -166,8 +168,8 @@ jobs:
       (needs.detect.outputs.api != 'true' || needs.deploy-api.result == 'success')
     uses: ./.github/workflows/deploy-frontend-vps.yml
     with:
-      commit_sha: ${{ inputs.commit_sha }}
-      confirm: ${{ inputs.confirm }}
+      commit_sha: ${{ github.event.inputs.commit_sha || github.sha }}
+      confirm: ${{ github.event.inputs.confirm || (github.event_name == 'push' && 'deploy') || 'build-check-only' }}
       deploy_storefront: ${{ needs.detect.outputs.storefront == 'true' }}
       deploy_admin: ${{ needs.detect.outputs.admin == 'true' }}
     secrets: inherit
@@ -186,7 +188,7 @@ jobs:
     steps:
       - name: Report
         run: |
-          echo "## Release summary for ${{ inputs.commit_sha }} (confirm=${{ inputs.confirm }})" >> "$GITHUB_STEP_SUMMARY"
+          echo "## Release summary for ${{ github.event.inputs.commit_sha || github.sha }} (confirm=${{ github.event.inputs.confirm || (github.event_name == 'push' && 'deploy') || 'build-check-only' }})" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
           echo "| Service | Affected | Result |" >> "$GITHUB_STEP_SUMMARY"
           echo "|---|---|---|" >> "$GITHUB_STEP_SUMMARY"

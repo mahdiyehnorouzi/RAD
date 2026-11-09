@@ -18,19 +18,13 @@
 # docs/automated-migrations.md for the one-time operator approval this
 # requires and what it does and doesn't automate.
 #
-# RAD-129: this workflow releases exactly `inputs.commit_sha`, never
-# `github.sha` - the two are no longer guaranteed equal, since the caller
-# (deploy.yml) is a manual, human-triggered release of a specific,
-# already-merged commit, not a push-triggered deploy of whatever is
-# currently at the tip of `main`. Every checkout, tag, and remote command
-# below is keyed off `inputs.commit_sha` for that reason. `confirm` is now
-# a `workflow_call` input too (previously only `workflow_dispatch` had it),
-# so the "must type deploy to actually release" gate behaves identically
-# whether this runs standalone (emergency `workflow_dispatch`) or via
-# deploy.yml - no reliance on `github.event_name`, which is *inherited*
-# from the top-level caller inside a `workflow_call` and does not reliably
-# distinguish "called by deploy.yml" from "dispatched directly" (see
-# docs/cicd-pipeline.md's "Correctness fixes from review").
+# RAD-129: this workflow releases exactly `inputs.commit_sha`. The top-level
+# deploy.yml supplies the pushed `github.sha` for automatic main releases,
+# or the explicitly selected SHA for manual dispatches. `confirm` is a
+# `workflow_call` input: deploy.yml sets it to `deploy` for a main push,
+# while manual dispatch requires the operator to type `deploy`.
+# No reliance on `github.event_name` inside this reusable workflow, because
+# that value is inherited from the top-level caller.
 name: API VPS release
 on:
   workflow_call:
