@@ -33,8 +33,8 @@ export const defaultHelpQuestions: HelpQuestionView[] = [
       en: "What if the work is damaged on the way?",
     },
     answer: {
-      fa: "همه‌ی آثار بیمه‌شده ارسال می‌شن. تا ۲۴ ساعت بعد از تحویل، از صفحه‌ی سفارش با یه عکس از جعبه و یه عکس از آسیب گزارش بده. اگه تأیید بشه، اثر مرمت می‌شه یا کل مبلغش برمی‌گرده.",
-      en: "Every work ships insured. Within 24 hours of delivery, report it from your order page with a photo of the box and one of the damage. If confirmed, the work is repaired or fully refunded.",
+      fa: "تا ۲۴ ساعت بعد از تحویل، از صفحه‌ی سفارش با یه عکس از جعبه و یه عکس از آسیب گزارش بده. اگه تأیید بشه، اثر مرمت می‌شه یا کل مبلغش برمی‌گرده.",
+      en: "Within 24 hours of delivery, report it from your order page with a photo of the box and one of the damage. If confirmed, the work is repaired or fully refunded.",
     },
     more: { slug: "returns", section: "damage" },
   },
@@ -77,14 +77,14 @@ export const defaultHelpQuestions: HelpQuestionView[] = [
   {
     id: "shipping",
     question: {
-      fa: "ارسال چقدر هزینه داره و کی می‌رسه؟",
-      en: "What does shipping cost and when will it arrive?",
+      fa: "ارسال چگونه است؟",
+      en: "How is it sent?",
     },
     answer: {
-      fa: "ارسال به سراسر ایران رایگان و بیمه‌شده‌ست. از تأیید پرداخت، تهران ۲ تا ۴ و شهرهای دیگه ۴ تا ۸ روز کاری.",
-      en: "Shipping anywhere in Iran is free and insured. From payment confirmation: Tehran 2–4 working days, other cities 4–8.",
+      fa: "پس از آماده‌شدن اثر، سفارش‌های تهران با پست یا پیک و سفارش‌های شهرهای دیگر با پست ارسال می‌شوند.",
+      en: "After the work is ready, Tehran orders are sent by post or courier; orders to other cities are sent by post.",
     },
-    more: { slug: "shipping", section: "time" },
+    more: { slug: "shipping", section: "method" },
   },
   {
     id: "card-data",

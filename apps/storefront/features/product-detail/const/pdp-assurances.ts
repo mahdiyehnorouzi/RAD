@@ -9,8 +9,11 @@ export const PDP_ASSURANCES: {
 }[] = [
   {
     icon: Truck,
-    title: { fa: "ارسال رایگان", en: "Free shipping" },
-    detail: { fa: "بیمه‌شده در ایران", en: "Insured in Iran" },
+    title: { fa: "پس از آماده‌شدن", en: "Once it is ready" },
+    detail: {
+      fa: "تهران پست یا پیک؛ شهرهای دیگر پست",
+      en: "Tehran by post or courier; other cities by post",
+    },
   },
   {
     icon: Fingerprint,

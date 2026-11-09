@@ -14,11 +14,11 @@ export const POLICY_SLUGS = [
 ] as const;
 
 export const CURRENT_POLICY_VERSIONS = {
-  buying: "2026-09-27",
-  custom: "2026-09-27",
-  shipping: "2026-09-27",
-  returns: "2026-09-27",
-  terms: "2026-09-27",
+  buying: "2026-11-09",
+  custom: "2026-11-09",
+  shipping: "2026-11-09",
+  returns: "2026-11-09",
+  terms: "2026-11-09",
   privacy: "2026-09-27",
 } as const;
 

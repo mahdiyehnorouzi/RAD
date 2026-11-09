@@ -86,12 +86,11 @@
 }
 
 .sectionLede {
-  overflow: hidden;
   color: var(--muted);
   font-size: 0.76rem;
   line-height: 1.6;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .sectionMark {

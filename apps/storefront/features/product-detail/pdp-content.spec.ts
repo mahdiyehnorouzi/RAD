@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { test } from "node:test";
 import { PDP_ASSURANCES } from "./const/pdp-assurances";
+import { purchasePathCopy } from "../../components/help/const/purchase-path-copy";
+import { specAttributeIconName } from "./spec-icons";
 import { pdpCopy } from "./const/pdp-copy";
 import {
   ARTWORK_SPEC_FACT_KEYS,
@@ -36,10 +38,18 @@ test("assurances stay short and use the published shipping and return facts", ()
   ]).join("\n");
   assert.equal(text.includes("امن"), false);
   assert.equal(/safe shipping/i.test(text), false);
-  assert.equal(text.includes("بیمه‌شده در ایران"), true);
-  assert.equal(text.includes("Insured in Iran"), true);
+  assert.equal(text.includes("رایگان"), false);
+  assert.equal(/free/i.test(text), false);
+  assert.equal(text.includes("تهران پست یا پیک"), true);
+  assert.equal(text.includes("other cities by post"), true);
   assert.equal(text.includes("۴۸ ساعت"), true);
   assert.equal(text.includes("فقط یک نسخه"), true);
+  const method = purchasePathCopy.fa.disclosureTeaser;
+  assert.equal(method.includes("رایگان"), false);
+  assert.equal(method.includes("پست یا پیک"), true);
+  assert.equal(method.includes("شهرهای دیگر با پست"), true);
+  assert.equal(purchasePathCopy.en.disclosureTeaser.includes("Free"), false);
+  assert.match(purchasePathCopy.en.disclosureTeaser, /post or courier/);
 });
 
 test("specifications list materials and size, not the making process", () => {
@@ -95,9 +105,41 @@ test("artwork details omit description prose and the making section is gone", ()
   assert.equal(questions.includes("<details"), false);
   assert.equal(shipping.includes("<details"), false);
   assert.equal(cards.includes("pdpQrLink"), false);
+  assert.equal(cards.includes("/qr"), false);
+  assert.equal(cards.includes("QrCode"), false);
   assert.match(specs, /grid-template-areas:\s*"label value"/);
   assert.match(handmade, /width:\s*100%/);
+  assert.match(handmade, /text-align:\s*center/);
+  assert.match(handmade, /align-items:\s*center/);
   assert.equal(handmade.includes("fit-content"), false);
+  assert.equal(shipping.includes('id: "cost"'), false);
+  const layout = readFileSync(
+    new URL("./product-detail.module.css", import.meta.url),
+    "utf8",
+  );
+  assert.match(layout, /\.foldList\s*\{[^}]*gap:\s*2\.25rem/);
+  const passport = readFileSync(
+    new URL("./product-record-cards.module.css", import.meta.url),
+    "utf8",
+  );
+  assert.match(passport, /\.recordGo\s*\{[^}]*inset-inline-end:/);
+});
+
+test("artwork detail facts do not share one generic icon", () => {
+  const color = specAttributeIconName("color");
+  const maker = specAttributeIconName("maker");
+  const made = specAttributeIconName("construction-time");
+  const archive = specAttributeIconName("unic-id");
+  assert.equal(new Set([color, maker, made, archive]).size, 4);
+  assert.equal(
+    [color, maker, made, archive].includes("SlidersHorizontal"),
+    false,
+  );
+  const specs = readFileSync(
+    new URL("./product-specs.tsx", import.meta.url),
+    "utf8",
+  );
+  assert.equal(specs.includes("SlidersHorizontal"), false);
 });
 
 test("related-works clearance uses the floating-bar footprint, not an extra band", () => {
