@@ -1,5 +1,7 @@
 "use client";
 import { useCallback, useRef, type MouseEvent } from "react";
+import { nextOverlayStack } from "./overlay-history";
+import { readOverlayStack, writeOverlayStack } from "./overlay-stack-storage";
 import { registerProductSource } from "./source-registry";
 import { useProductTransitionStore } from "./product-transition-store";
 
@@ -13,6 +15,14 @@ import { useProductTransitionStore } from "./product-transition-store";
 export function useOpenProductTransition(slug: string, href: string) {
   const artRef = useRef<HTMLElement | null>(null);
   const open = useProductTransitionStore((state) => state.open);
+  // Whether a related-work click is "chained" (appends to the sessionStorage
+  // stack) is read from this in-memory store, not `window.history.state` -
+  // Next's own router manages that state too and has been observed to
+  // overwrite custom fields on it between renders, which previously made a
+  // click shortly after the first open mistakenly look like a fresh one.
+  const alreadyOpen = useProductTransitionStore(
+    (state) => state.phase === "open",
+  );
 
   const onClick = useCallback(
     (event: MouseEvent<HTMLAnchorElement>) => {
@@ -24,14 +34,20 @@ export function useOpenProductTransition(slug: string, href: string) {
         return;
       }
       // A second card tapped while the overlay is already open (e.g. a
-      // related work inside it) still opens through the overlay — just
-      // without stacking a second `radOverlay` history entry, so one
-      // browser-back press still lands on the real origin page. Bailing
-      // out to a plain <Link> navigation here used to skip the morph
-      // animation entirely and then restore the *original* page's scroll
-      // position onto the new product page once the pathname-watcher in
-      // product-overlay.tsx closed the stale overlay.
-      const alreadyOverlaid = Boolean(window.history.state?.radOverlay);
+      // related work inside it) still opens through the overlay, and now
+      // appends to a stack of opened products (kept in sessionStorage, see
+      // overlay-stack-storage.ts) instead of replacing the history entry
+      // underneath it — replacing used to silently delete the intermediate
+      // product from history, so Back from it skipped straight past it to
+      // whatever was open before the overlay started. The stack lives in
+      // sessionStorage rather than `window.history.state` because Next's
+      // own router also manages that state for its own purposes and can
+      // overwrite custom fields on it.
+      const stack = nextOverlayStack(
+        readOverlayStack(),
+        { slug, href },
+        alreadyOpen,
+      );
       const img = artRef.current?.querySelector("img");
       if (!img) return;
       const rect = img.getBoundingClientRect();
@@ -51,13 +67,10 @@ export function useOpenProductTransition(slug: string, href: string) {
         },
         imageSrc,
       });
-      if (alreadyOverlaid) {
-        window.history.replaceState({ radOverlay: true }, "", href);
-      } else {
-        window.history.pushState({ radOverlay: true }, "", href);
-      }
+      writeOverlayStack(stack);
+      window.history.pushState({ radOverlay: true }, "", href);
     },
-    [href, open, slug],
+    [alreadyOpen, href, open, slug],
   );
 
   const ref = useCallback(

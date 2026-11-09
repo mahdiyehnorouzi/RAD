@@ -25,6 +25,8 @@ import {
 import { Footer } from "@/components/layout/chrome/footer";
 import type { PdpData } from "@/lib/catalog/resolve-pdp-data";
 import { ProductDetail } from "../product-detail";
+import { popOverlayStack } from "./overlay-history";
+import { readOverlayStack, writeOverlayStack } from "./overlay-stack-storage";
 import { getProductSourceRect } from "./source-registry";
 import { useProductTransitionStore } from "./product-transition-store";
 import { fetchPdpOverlayData } from "./fetch-pdp-overlay-data";
@@ -76,8 +78,16 @@ function lerpRect(from: Rect, to: Rect, progress: number): Rect {
  *    dragging, with no relation to the image's rect math.
  */
 export function ProductOverlay() {
-  const { phase, slug, href, sourceRect, imageSrc, returnScrollY, close } =
-    useProductTransitionStore();
+  const {
+    phase,
+    slug,
+    href,
+    sourceRect,
+    imageSrc,
+    returnScrollY,
+    retarget,
+    close,
+  } = useProductTransitionStore();
   const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
   const [data, setData] = useState<PdpData | null>(null);
@@ -323,7 +333,21 @@ export function ProductOverlay() {
       const targetRect = slug ? getProductSourceRect(slug) : null;
       const finish = () => {
         close();
-        if (window.history.state?.radOverlay) window.history.back();
+        // Closing via the X button/backdrop/swipe (never reached via
+        // popstate — the browser hasn't moved) may need to remove more
+        // than one history entry at once: a chain of related-work opens
+        // each pushed its own `radOverlay` entry (see
+        // use-open-product-transition.ts), so a single `back()` here
+        // would only undo the last hop and leave the URL bar pointed at a
+        // phantom intermediate product with no overlay left to show it.
+        // How many to remove - and whether we're even still sitting on one
+        // (the popstate handler below already clears this same stack once
+        // Back has surfaced the real underlying page) - is read entirely
+        // from the sessionStorage stack, not `window.history.state`: see
+        // overlay-history.ts for why that state can't be trusted here.
+        const depth = readOverlayStack().length;
+        writeOverlayStack([]);
+        if (depth > 0) window.history.go(-depth);
       };
       if (!targetRect || reducedMotion) {
         finish();
@@ -372,14 +396,27 @@ export function ProductOverlay() {
     [close, imageControls, reducedMotion, slug, y],
   );
 
-  // Browser back closes the overlay with the reverse transition instead of
-  // leaving a dangling history entry pointed at a URL with no page behind it.
+  // Browser back/forward while the overlay is open either reveals another
+  // overlay-tracked product from the sessionStorage stack (a related-work
+  // hop made earlier in this session - retarget to it in place, no close
+  // animation) or, once the stack empties, surfaces the real underlying
+  // page: close the overlay with the reverse transition instead of leaving
+  // a dangling history entry pointed at a URL with no page behind it.
   useEffect(() => {
     if (!mounted) return undefined;
-    const onPopState = () => performClose(false);
+    const onPopState = () => {
+      const result = popOverlayStack(readOverlayStack());
+      if (result.kind === "retarget") {
+        writeOverlayStack(result.stack);
+        retarget(result.entry);
+        return;
+      }
+      writeOverlayStack([]);
+      performClose(false);
+    };
     window.addEventListener("popstate", onPopState);
     return () => window.removeEventListener("popstate", onPopState);
-  }, [mounted, performClose]);
+  }, [mounted, performClose, retarget]);
 
   // Drag-to-dismiss must move the hero continuously with the finger, not
   // just the card sheet (which already shrinks via cardScale/cardRadius).
