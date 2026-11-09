@@ -226,8 +226,7 @@ async function mountDialog(overrides: Partial<DialogProps> = {}) {
     host,
     root,
     restoreFetch: () => {
-      (globalThis as unknown as { fetch: typeof fetch }).fetch =
-        originalFetch;
+      (globalThis as unknown as { fetch: typeof fetch }).fetch = originalFetch;
     },
   };
 }
@@ -255,10 +254,7 @@ test("the price field parses Persian digits into a number", async () => {
   const { host, restoreFetch } = await mountDialog();
   const priceField = field(host, "قیمت اثر (تومان)");
   await fill(priceField, "۱۲۳۴۵۶");
-  assert.equal(
-    priceField.value,
-    new Intl.NumberFormat("fa-IR").format(123456),
-  );
+  assert.equal(priceField.value, new Intl.NumberFormat("fa-IR").format(123456));
   restoreFetch();
 });
 
