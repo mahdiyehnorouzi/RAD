@@ -184,8 +184,7 @@ export function CartPage() {
         </Link>
       )}
       <h1 className={styles.title}>
-        {locale === "fa" ? "کیسه خرید" : "Shopping bag"} ({number(count)}
-        )
+        {locale === "fa" ? "کیسه خرید" : "Shopping bag"} ({number(count)})
       </h1>
       <div className={styles.body}>
         <div className={styles.mainCol}>
