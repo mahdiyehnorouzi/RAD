@@ -33,6 +33,20 @@ html[dir="rtl"] .checkout-flow {
 
 /* ——— Steps ——— */
 
+.checkout-steps {
+  position: sticky;
+  top: var(--header-height);
+  z-index: 10;
+  /*
+   * Matches the checkout page's own body background (purchase-design.css:3,
+   * :73, :112 — #faf7ef, not the generic --paper token, which is a few
+   * shades off) so the sticky bar shows no seam against the page behind it
+   * while scrolling.
+   */
+  background: #faf7ef;
+  padding-top: clamp(0.75rem, 2vw, 1.25rem);
+}
+
 .checkout-steps ol {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));

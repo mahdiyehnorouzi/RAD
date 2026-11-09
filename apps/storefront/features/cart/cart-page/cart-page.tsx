@@ -46,6 +46,7 @@ export function CartPage() {
   const canGoBack = backMode === "replay-history";
   const {
     slugs,
+    count,
     holds,
     prices,
     holdEndsAt,
@@ -183,8 +184,7 @@ export function CartPage() {
         </Link>
       )}
       <h1 className={styles.title}>
-        {locale === "fa" ? "کیسه خرید" : "Shopping bag"} ({number(slugs.length)}
-        )
+        {locale === "fa" ? "کیسه خرید" : "Shopping bag"} ({number(count)})
       </h1>
       <div className={styles.body}>
         <div className={styles.mainCol}>

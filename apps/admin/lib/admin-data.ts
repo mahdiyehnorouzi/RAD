@@ -179,6 +179,8 @@ export interface AdminOrder {
   phone?: string;
   city?: string;
   address?: string;
+  /** Optional "Message to RAD" note the buyer left at checkout. */
+  message?: string;
   productName: string;
   products: Array<{ slug: string; name: string; radNumber?: number }>;
   amount: number;

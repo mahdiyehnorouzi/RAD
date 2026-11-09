@@ -20,6 +20,8 @@ export const checkoutCopy = {
     postalLabel: "کد پستی",
     postalError: "کد پستی را با ۱۰ رقم بنویسید، یا خالی بگذارید.",
     optional: "اختیاری",
+    messageLabel: "پیام به رَد",
+    messagePlaceholder: "نکته‌ای برای تیم رَد دارید؟ اینجا بنویسید.",
     savedTitle: "نشانی‌های ذخیره‌شده",
     savedLede:
       "یکی را برای این سفارش انتخاب کنید. اگر چیزی را عوض کنید، فقط همین سفارش عوض می‌شود.",
@@ -192,6 +194,8 @@ export const checkoutCopy = {
     postalLabel: "Postal code",
     postalError: "Enter a 10-digit postal code, or leave it empty.",
     optional: "optional",
+    messageLabel: "Message to RAD",
+    messagePlaceholder: "Anything our team should know? Write it here.",
     savedTitle: "Saved addresses",
     savedLede:
       "Choose one for this order. Changes here stay on this order and do not update your address book.",
