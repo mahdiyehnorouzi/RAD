@@ -1,10 +1,10 @@
 .bag-added-sheet {
-  /* Content-driven: no fixed height, just a ceiling around 40% of the
-     mobile viewport (dvh accounts for the dynamic Safari toolbar) so short
-     content stays compact and only genuinely long content scrolls. */
+  /* Content-driven: no fixed height. The cap stays near the full viewport
+     so the continue action stays visible on a phone. */
+  position: relative;
   width: min(100%, 460px);
   max-width: 100%;
-  max-height: min(40dvh, 420px);
+  max-height: min(92dvh, 640px);
   margin: auto auto 0;
   padding: 10px 24px calc(22px + env(safe-area-inset-bottom, 0px));
   border: 0;
@@ -45,12 +45,16 @@
     transition: none !important;
   }
 }
+.bag-added-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  min-height: 44px;
+  margin: 0 0 8px;
+}
 .bag-added-close {
-  position: absolute;
-  top: 12px;
-  inset-inline-end: 12px;
-  width: 32px;
-  height: 32px;
+  position: static;
+  width: 44px;
+  height: 44px;
   border: 0;
   background: none;
   display: grid;
@@ -67,7 +71,6 @@
 }
 .bag-added-photo {
   position: relative;
-  order: 2;
   width: 88px;
   height: 88px;
   overflow: hidden;
@@ -117,14 +120,21 @@
 }
 .bag-added-continue {
   display: block;
+  width: 100%;
+  max-width: 100%;
   margin: 18px auto 0;
+  padding: 8px 4px;
   border: 0;
   background: none;
   font: inherit;
   color: #315241;
+  text-align: center;
   text-decoration: underline;
   text-underline-offset: 6px;
   font-size: 13px;
+  line-height: 1.6;
+  white-space: normal;
+  overflow-wrap: anywhere;
   cursor: pointer;
 }
 @media (min-width: 700px) {

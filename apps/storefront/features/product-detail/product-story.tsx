@@ -1,5 +1,6 @@
 "use client";
 import type { Artwork, Product } from "@rad/types";
+import { ScrollText } from "lucide-react";
 import { useLocale } from "@/components/i18n";
 import type { WorkTexture } from "@/lib/catalog/material-texture";
 import { productCopy } from "@/lib/catalog/products";
@@ -7,19 +8,16 @@ import { formatRadDigits, ProductMedia } from "@/components/product/listing";
 import { pdpCopy } from "./const";
 import { MaterialTexture } from "./material-texture";
 import { PdpSection } from "./pdp-section";
-import { WorkStroke } from "./work-stroke";
 import styles from "./product-story.module.css";
 
 export function ProductStory({
   product,
   artwork,
   textures,
-  index,
 }: {
   product: Product;
   artwork?: Artwork;
   textures: WorkTexture[];
-  index: number;
 }) {
   const { locale, number } = useLocale();
   const c = pdpCopy[locale];
@@ -34,7 +32,7 @@ export function ProductStory({
       id="pdp-story-title"
       title={c.aboutTitle}
       lede={c.aboutLede}
-      mark={<WorkStroke textures={textures} index={index} />}
+      mark={<ScrollText aria-hidden="true" />}
       className={styles.story}
       bodyClassName={styles.storyBody}
     >

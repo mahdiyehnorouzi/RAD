@@ -18,11 +18,14 @@ import { categoryLabel } from "@/lib/catalog/artwork";
 import type { WorkTexture } from "@/lib/catalog/material-texture";
 import { productCopy } from "@/lib/catalog/products";
 import { formatArtworkNumber } from "@/components/product/listing";
-import { ARTWORK_SPEC_FACT_KEYS, editionIdentity } from "./pdp-content";
+import {
+  ARTWORK_SPEC_FACT_KEYS,
+  editionIdentity,
+  isArtworkDescriptionCopy,
+} from "./pdp-content";
 import { CATEGORY_ICONS, pdpCopy } from "./const";
 import { MaterialTexture } from "./material-texture";
 import { PdpSection } from "./pdp-section";
-import { WorkStroke } from "./work-stroke";
 import styles from "./product-specs.module.css";
 
 type SpecRow = {
@@ -58,6 +61,9 @@ function specRows(
   recordNumber: string | null,
 ): SpecRow[] {
   const c = pdpCopy[locale];
+  const copy = productCopy(product, locale);
+  const described = (value: string | null | undefined) =>
+    isArtworkDescriptionCopy(value, copy.subtitle, copy.story);
   const maker = product.vendor
     ? locale === "fa"
       ? product.vendor.displayName
@@ -65,6 +71,8 @@ function specRows(
     : c.studio;
   const Category = CATEGORY_ICONS[product.category];
   const body = artwork?.materials.body[locale];
+  const materialProse = body && !described(body) ? body : undefined;
+  const namedSpots = textures.filter((texture) => texture.spot).length >= 2;
   const artworkFact = (
     key: (typeof ARTWORK_SPEC_FACT_KEYS)[number],
   ): SpecRow => {
@@ -72,12 +80,13 @@ function specRows(
       return {
         key,
         label: c.specMaterial,
-        value: body ? (
-          <>
-            {body}
-            <NamedMaterials textures={textures} />
-          </>
-        ) : undefined,
+        value:
+          materialProse || namedSpots ? (
+            <>
+              {materialProse}
+              <NamedMaterials textures={textures} />
+            </>
+          ) : undefined,
         icon: textures[0] ? (
           <MaterialTexture texture={textures[0]} shape="swatch" />
         ) : (
@@ -86,10 +95,11 @@ function specRows(
       };
     }
     if (key === "surface") {
+      const surface = artwork?.materials.surface?.[locale];
       return {
         key,
         label: c.specSurface,
-        value: artwork?.materials.surface?.[locale],
+        value: surface && !described(surface) ? surface : undefined,
         icon: <Paintbrush />,
       };
     }
@@ -102,8 +112,9 @@ function specRows(
   };
   const recorded: SpecRow[] = artwork
     ? ARTWORK_SPEC_FACT_KEYS.map(artworkFact)
-    : productCopy(product, locale)
-        .details.slice(0, -1)
+    : copy.details
+        .slice(0, -1)
+        .filter((line) => !described(line))
         .map((line, index) => ({
           key: `detail-${index}`,
           label: c.specDetail,
@@ -114,16 +125,16 @@ function specRows(
   // Admin-defined specs (رنگ، جنس، ابعاد، …) for this product's category,
   // already formatted for display by the API; hidden when empty so
   // products saved before this feature existed render unchanged.
-  const dynamicAttributes: SpecRow[] = (product.attributes ?? []).map(
-    (attribute) => ({
+  const dynamicAttributes: SpecRow[] = (product.attributes ?? [])
+    .filter((attribute) => !described(attribute.value))
+    .map((attribute) => ({
       key: `attribute-${attribute.key}`,
       label: attribute.label,
       value: attribute.value,
       icon: <SlidersHorizontal />,
-    }),
-  );
+    }));
 
-  const edition = editionIdentity(recordNumber, c.oneOfOne);
+  const edition = editionIdentity(recordNumber);
   return [
     {
       key: "category",
@@ -153,10 +164,7 @@ function specRows(
       key: "edition",
       label: c.specEdition,
       value: edition ? (
-        <span className={styles.specEdition}>
-          <span>{edition[0]}</span>
-          <span>{edition[1]}</span>
-        </span>
+        <span className={styles.specEdition}>{edition}</span>
       ) : undefined,
       icon: <SquareStack />,
     },
@@ -168,13 +176,11 @@ export function ProductSpecs({
   artwork,
   passport,
   textures,
-  index,
 }: {
   product: Product;
   artwork?: Artwork;
   passport?: RadPassport;
   textures: WorkTexture[];
-  index: number;
 }) {
   const { locale, number } = useLocale();
   const c = pdpCopy[locale];
@@ -193,17 +199,19 @@ export function ProductSpecs({
       id="pdp-specs-title"
       title={c.specsTitle}
       lede={c.specsLede}
-      mark={<WorkStroke textures={textures} index={index} />}
+      mark={<Layers aria-hidden="true" />}
       openByDefault
       className={styles.specs}
     >
       <dl>
         {rows.map((row) => (
           <div key={row.key}>
-            <span className={styles.specIcon} aria-hidden="true">
-              {row.icon}
-            </span>
-            <dt>{row.label}</dt>
+            <dt>
+              <span className={styles.specIcon} aria-hidden="true">
+                {row.icon}
+              </span>
+              <span>{row.label}</span>
+            </dt>
             <dd>{row.value}</dd>
           </div>
         ))}

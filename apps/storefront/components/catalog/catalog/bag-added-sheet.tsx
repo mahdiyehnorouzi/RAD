@@ -139,13 +139,15 @@ export function BagAddedSheet({
       >
         <div className="bag-added-handle" />
       </div>
-      <button
-        className="bag-added-close"
-        onClick={requestClose}
-        aria-label={locale === "fa" ? "بستن" : "Close"}
-      >
-        <X />
-      </button>
+      <div className="bag-added-toolbar">
+        <button
+          className="bag-added-close"
+          onClick={requestClose}
+          aria-label={locale === "fa" ? "بستن" : "Close"}
+        >
+          <X />
+        </button>
+      </div>
       <div className="bag-added-product">
         <span className="bag-added-photo">
           <ProductMedia
