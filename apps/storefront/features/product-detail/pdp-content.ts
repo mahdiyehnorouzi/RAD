@@ -9,8 +9,6 @@ export const SOLD_STATUS_FA = "این رد صاحبش را پیدا کرده";
  */
 export const ARTWORK_SPEC_FACT_KEYS = ["material", "surface", "size"] as const;
 
-export type ArtworkSpecFactKey = (typeof ARTWORK_SPEC_FACT_KEYS)[number];
-
 /** Title line keeps the archive number. The 1/1 mark stays on the edition fact, not here. */
 export function titleIdentityLine(recordNumber: string | null): string | null {
   return recordNumber;
