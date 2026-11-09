@@ -152,25 +152,6 @@
   opacity: 1;
 }
 
-.buyNote {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.45rem;
-  margin: 0.8rem 0 0;
-  color: var(--muted);
-  font-size: 0.82rem;
-  line-height: 1.7;
-  text-align: center;
-}
-
-.buyNote svg {
-  width: 16px;
-  height: 16px;
-  flex: none;
-  stroke-width: 1.6;
-}
-
 .assurances {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

@@ -6,7 +6,9 @@ import { test } from "node:test";
 import {
   initialDashboardSection,
   isHelpPath,
+  isMessagesPath,
   isReviewsPath,
+  isShapePath,
   planHistoryNavigation,
   planSectionSelect,
   sectionDataTarget,
@@ -14,9 +16,12 @@ import {
   settleStudioPath,
   staffGate,
   startHelpLink,
+  startMessagesLink,
   startReviewsLink,
   startSectionSelect,
+  startShapeLink,
   studioHistoryHref,
+  withOrderFocus,
   type PendingNavigation,
   type StudioAuth,
   type StudioView,
@@ -44,7 +49,7 @@ test("direct /reviews loads reviews and does not let a stale hash replace it", (
   );
 });
 
-test("the studio shell owns the one workspace hook for /, /reviews, and /help", () => {
+test("the studio shell owns the one workspace hook for /, /reviews, /help, and /messages", () => {
   const root = join(dirname(fileURLToPath(import.meta.url)), "..");
   const read = (relative: string) => readFileSync(join(root, relative), "utf8");
   const calls = (source: string) =>
@@ -53,13 +58,25 @@ test("the studio shell owns the one workspace hook for /, /reviews, and /help", 
   assert.equal(calls(read("components/admin-dashboard.tsx")), 0);
   assert.equal(calls(read("features/reviews/reviews-page.tsx")), 0);
   assert.equal(calls(read("features/help/help-page.tsx")), 0);
-  assert.match(read("components/admin-shell.tsx"), /"\/reviews" : "\/help"/);
+  assert.equal(calls(read("features/messages/messages-page.tsx")), 0);
+  assert.match(read("components/admin-shell.tsx"), /studioNavHref\(id\)/);
+  assert.match(read("components/admin-shell.tsx"), /href="\/messages"/);
   assert.match(read("app/(studio)/reviews/page.tsx"), /ReviewsPage/);
   assert.match(read("app/(studio)/help/page.tsx"), /HelpPage/);
+  assert.match(read("app/(studio)/messages/page.tsx"), /MessagesPage/);
   assert.doesNotMatch(read("components/admin-dashboard.tsx"), /AdminReviews/);
   assert.doesNotMatch(
     read("components/admin-dashboard.tsx"),
     /AdminHelpQuestions/,
+  );
+  assert.doesNotMatch(read("components/admin-dashboard.tsx"), /AdminMessages/);
+  assert.doesNotMatch(
+    read("features/messages/messages-page.tsx"),
+    /loadSection\(/,
+  );
+  assert.match(
+    read("features/messages/messages-page.tsx"),
+    /workspace\.can\("order\.write"\)/,
   );
 });
 
@@ -93,7 +110,10 @@ test("explicit section choices replace memory, and history back restores it", ()
   assert.deepEqual(chooseOrders.view, { pathname: "/", section: "orders" });
   assert.equal(chooseOrders.load, "orders");
   const chooseMessages = planSectionSelect(ordersToReviews.view, "messages");
-  assert.deepEqual(chooseMessages.view, { pathname: "/", section: "messages" });
+  assert.deepEqual(chooseMessages.view, {
+    pathname: "/messages",
+    section: "orders",
+  });
   assert.equal(chooseMessages.load, "messages");
 
   assert.equal(planSectionSelect(overview, "overview").load, null);
@@ -153,11 +173,18 @@ test("the shell gates session restore and logs out through the one workspace", (
   assert.match(shell, /startSectionSelect\(/);
   assert.match(shell, /startReviewsLink\(visible, pendingNav\.current\)/);
   assert.match(shell, /startHelpLink\(visible, pendingNav\.current\)/);
+  assert.match(shell, /startMessagesLink\(visible, pendingNav\.current\)/);
   assert.match(
     shell,
     /if \(action\.replace\) router\.replace\(action\.replace\)/,
   );
   assert.match(shell, /settleStudioPath\(/);
+  assert.match(shell, /withOrderFocus\(action\.pending, orderId\)/);
+  assert.match(shell, /setHandedOrderId\(null\)/);
+  assert.match(
+    readFileSync(join(root, "components/admin-dashboard.tsx"), "utf8"),
+    /handedOrderId/,
+  );
   assert.match(shell, /addEventListener\("popstate"/);
   assert.equal(shell.match(/useAdminWorkspace\(/g)?.length ?? 0, 1);
 });
@@ -178,6 +205,8 @@ type RaceShell = {
   loaded: StudioView["section"][];
   /** Every fetch request, including a repeat of a section already loaded. */
   loads: StudioView["section"][];
+  /** Order id delivered when the navigation that carried it commits. */
+  focus: string | null;
 };
 
 function remember(shell: RaceShell, load: StudioView["section"] | null) {
@@ -212,6 +241,7 @@ function settle(shell: RaceShell) {
   shell.pending = settled.pending;
   shell.section = settled.section;
   shell.sectionNow = settled.section;
+  shell.focus = settled.focusOrderId;
   remember(shell, settled.load);
 }
 
@@ -229,6 +259,7 @@ function boot(pathname: string, section: StudioView["section"]): RaceShell {
     inFlight: null,
     loaded: [],
     loads: [],
+    focus: null,
   };
   settle(shell);
   shell.auth = "authenticated";
@@ -271,6 +302,26 @@ function openHelp(shell: RaceShell) {
   shell.inFlight = action.replace ?? "/help";
 }
 
+function openMessages(shell: RaceShell) {
+  const action = startMessagesLink(
+    { pathname: shell.renderedPath, section: shell.sectionNow },
+    shell.pending,
+  );
+  shell.pending = action.pending;
+  shell.skip = action.skip;
+  shell.inFlight = action.replace ?? "/messages";
+}
+
+function openShape(shell: RaceShell) {
+  const action = startShapeLink(
+    { pathname: shell.renderedPath, section: shell.sectionNow },
+    shell.pending,
+  );
+  shell.pending = action.pending;
+  shell.skip = action.skip;
+  shell.inFlight = action.replace ?? "/shape";
+}
+
 function commit(shell: RaceShell) {
   if (!shell.inFlight || shell.inFlight === shell.pathname) {
     shell.inFlight = null;
@@ -309,6 +360,18 @@ function visible(shell: RaceShell) {
   return sectionDataTarget(shell.pathname, shell.section);
 }
 
+function openOrderFromMessages(shell: RaceShell, orderId: string) {
+  select(shell, "orders");
+  shell.pending = withOrderFocus(shell.pending, orderId);
+}
+
+function consumeFocus(shell: RaceShell) {
+  if (visible(shell) !== "orders") return null;
+  const id = shell.focus;
+  shell.focus = null;
+  return id;
+}
+
 test("navigation races still load the section that remains on screen", () => {
   const rapid = boot("/", "overview");
   openReviews(rapid);
@@ -325,8 +388,8 @@ test("navigation races still load the section that remains on screen", () => {
   select(burst, "orders");
   select(burst, "messages");
   commit(burst);
-  assert.equal(burst.pathname, "/");
-  assert.equal(burst.section, "messages");
+  assert.equal(burst.pathname, "/messages");
+  assert.equal(burst.section, "orders");
   assert.equal(visible(burst), "messages");
   assert.ok(burst.loaded.includes("messages"));
 
@@ -578,14 +641,14 @@ test("pending help and reviews navigation cannot overwrite a newer choice", () =
   const fromReviews = boot("/reviews", "overview");
   openHelp(fromReviews);
   select(fromReviews, "messages");
-  assert.equal(fromReviews.pending?.pathname, "/");
-  assert.equal(fromReviews.pending?.section, "messages");
+  assert.equal(fromReviews.pending?.pathname, "/messages");
+  assert.equal(fromReviews.pending?.section, "overview");
   arrive(fromReviews, "/help");
-  assert.equal(fromReviews.pending?.pathname, "/");
+  assert.equal(fromReviews.pending?.pathname, "/messages");
   assert.equal(count(fromReviews, "help"), 0);
   commit(fromReviews);
-  assert.equal(fromReviews.pathname, "/");
-  assert.equal(fromReviews.section, "messages");
+  assert.equal(fromReviews.pathname, "/messages");
+  assert.equal(fromReviews.section, "overview");
   assert.equal(visible(fromReviews), "messages");
 
   const backSame = boot("/reviews", "orders");
@@ -631,6 +694,293 @@ test("pending help and reviews navigation cannot overwrite a newer choice", () =
   assert.equal(refresh.section, "overview");
   assert.equal(count(refresh, "reviews"), 1);
   assert.equal(count(refresh, "help"), 1);
+});
+
+test("messages is a route, and one entry does not fetch it twice", () => {
+  assert.equal(isMessagesPath("/messages"), true);
+  assert.equal(isMessagesPath("/messages/"), true);
+  assert.equal(isMessagesPath("/"), false);
+  assert.equal(isMessagesPath("/help"), false);
+  assert.equal(sectionDataTarget("/messages", "orders"), "messages");
+  assert.equal(sectionDataTarget("/messages", "commissions"), "messages");
+  assert.equal(initialDashboardSection("#messages"), "overview");
+  assert.equal(initialDashboardSection("#commissions/c1"), "commissions");
+  assert.equal(studioHistoryHref("/messages", "#commissions/c1"), "/messages");
+  assert.equal(studioHistoryHref("/", "#commissions/c1"), "/#commissions/c1");
+
+  const direct = boot("/messages", "overview");
+  assert.deepEqual(
+    direct.loads.filter((section) => section === "messages"),
+    ["messages"],
+  );
+  assert.equal(direct.section, "overview");
+  assert.equal(visible(direct), "messages");
+  openMessages(direct);
+  commit(direct);
+  assert.equal(count(direct, "messages"), 1);
+
+  const fromOrders = boot("/", "orders");
+  openMessages(fromOrders);
+  commit(fromOrders);
+  assert.equal(fromOrders.pathname, "/messages");
+  assert.equal(fromOrders.section, "orders");
+  assert.equal(count(fromOrders, "messages"), 1);
+  pop(fromOrders, "/");
+  assert.equal(fromOrders.pathname, "/");
+  assert.equal(fromOrders.section, "orders");
+  assert.equal(visible(fromOrders), "orders");
+  pop(fromOrders, "/messages");
+  assert.equal(visible(fromOrders), "messages");
+  assert.equal(fromOrders.section, "orders");
+
+  const rapid = boot("/", "orders");
+  openMessages(rapid);
+  openHelp(rapid);
+  openMessages(rapid);
+  commit(rapid);
+  assert.equal(rapid.pathname, "/messages");
+  assert.equal(rapid.section, "orders");
+  assert.equal(rapid.pending, null);
+  assert.equal(count(rapid, "messages"), 1);
+  assert.equal(count(rapid, "help"), 0);
+
+  const cancelHelp = boot("/messages", "orders");
+  openHelp(cancelHelp);
+  openMessages(cancelHelp);
+  assert.equal(cancelHelp.pending, null);
+  assert.equal(cancelHelp.inFlight, "/messages");
+  arrive(cancelHelp, "/help");
+  assert.equal(cancelHelp.pending, null);
+  assert.ok(cancelHelp.loads.includes("help"));
+  commit(cancelHelp);
+  assert.equal(cancelHelp.pathname, "/messages");
+  assert.equal(visible(cancelHelp), "messages");
+  assert.equal(cancelHelp.section, "orders");
+  assert.equal(cancelHelp.pending, null);
+
+  const logout = boot("/reviews", "orders");
+  openMessages(logout);
+  setAuth(logout, "unauthenticated");
+  assert.equal(logout.pending, null);
+  assert.equal(logout.skip, null);
+  commit(logout);
+  assert.equal(logout.loads.length, 0);
+  setAuth(logout, "authenticated");
+  assert.equal(logout.pathname, "/messages");
+  assert.equal(visible(logout), "messages");
+  assert.equal(count(logout, "messages"), 1);
+});
+
+test("an order handoff from messages is kept only for that navigation", () => {
+  const done = boot("/messages", "overview");
+  openOrderFromMessages(done, "ord-9");
+  assert.equal(done.pending?.focusOrderId, "ord-9");
+  assert.equal(done.focus, null);
+  commit(done);
+  assert.equal(done.pathname, "/");
+  assert.equal(done.section, "orders");
+  assert.equal(done.pending, null);
+  assert.equal(consumeFocus(done), "ord-9");
+  assert.equal(done.focus, null);
+  select(done, "products");
+  select(done, "orders");
+  assert.equal(done.section, "orders");
+  assert.equal(done.focus, null);
+  assert.equal(consumeFocus(done), null);
+
+  const replaced = boot("/messages", "overview");
+  openOrderFromMessages(replaced, "ord-9");
+  select(replaced, "products");
+  assert.equal(replaced.pending?.section, "products");
+  assert.equal(replaced.pending?.focusOrderId, undefined);
+  commit(replaced);
+  assert.equal(replaced.focus, null);
+  select(replaced, "orders");
+  assert.equal(replaced.focus, null);
+  assert.equal(consumeFocus(replaced), null);
+
+  const backed = boot("/messages", "overview");
+  openOrderFromMessages(backed, "ord-9");
+  pop(backed, "/messages");
+  assert.equal(backed.pending, null);
+  assert.equal(backed.focus, null);
+  select(backed, "orders");
+  commit(backed);
+  assert.equal(backed.pathname, "/");
+  assert.equal(backed.section, "orders");
+  assert.equal(backed.focus, null);
+  assert.equal(consumeFocus(backed), null);
+
+  const signedOut = boot("/messages", "overview");
+  openOrderFromMessages(signedOut, "ord-9");
+  setAuth(signedOut, "unauthenticated");
+  assert.equal(signedOut.pending, null);
+  assert.equal(signedOut.focus, null);
+  commit(signedOut);
+  setAuth(signedOut, "authenticated");
+  select(signedOut, "orders");
+  commit(signedOut);
+  assert.equal(signedOut.focus, null);
+  assert.equal(consumeFocus(signedOut), null);
+
+  const reset = boot("/messages", "overview");
+  openOrderFromMessages(reset, "ord-9");
+  setAuth(reset, "error");
+  assert.equal(reset.pending, null);
+  assert.equal(reset.focus, null);
+});
+
+test("shape is a route, and direct entry or refresh loads it once without a duplicate request", () => {
+  assert.equal(isShapePath("/shape"), true);
+  assert.equal(isShapePath("/shape/"), true);
+  assert.equal(isShapePath("/"), false);
+  assert.equal(isShapePath("/help"), false);
+  assert.equal(sectionDataTarget("/shape", "orders"), "shape");
+  assert.equal(sectionDataTarget("/shape", "commissions"), "shape");
+  assert.equal(initialDashboardSection("#shape"), "overview");
+  assert.equal(studioHistoryHref("/shape", "#commissions/c1"), "/shape");
+  assert.equal(studioHistoryHref("/", "#commissions/c1"), "/#commissions/c1");
+
+  // Direct entry: one request, no duplicate.
+  const direct = boot("/shape", "overview");
+  assert.deepEqual(
+    direct.loads.filter((section) => section === "shape"),
+    ["shape"],
+  );
+  assert.equal(direct.section, "overview");
+  assert.equal(visible(direct), "shape");
+});
+
+test("shape keeps the dashboard section across back/forward and other independent routes", () => {
+  const fromOrders = boot("/", "orders");
+  openShape(fromOrders);
+  commit(fromOrders);
+  assert.equal(fromOrders.pathname, "/shape");
+  assert.equal(fromOrders.section, "orders");
+  assert.equal(count(fromOrders, "shape"), 1);
+  pop(fromOrders, "/");
+  assert.equal(fromOrders.pathname, "/");
+  assert.equal(fromOrders.section, "orders");
+  assert.equal(visible(fromOrders), "orders");
+  pop(fromOrders, "/shape");
+  assert.equal(visible(fromOrders), "shape");
+  assert.equal(fromOrders.section, "orders");
+
+  // Back/Forward between Shape and another independent route (Help).
+  const shapeHelp = boot("/shape", "messages");
+  openHelp(shapeHelp);
+  commit(shapeHelp);
+  assert.equal(shapeHelp.pathname, "/help");
+  pop(shapeHelp, "/shape");
+  assert.equal(visible(shapeHelp), "shape");
+  assert.equal(shapeHelp.section, "messages");
+  pop(shapeHelp, "/help");
+  assert.equal(visible(shapeHelp), "help");
+});
+
+test("rapid Shape<->Help clicks settle on the last choice and fetch it only once", () => {
+  const shapeThenHelp = boot("/", "orders");
+  openShape(shapeThenHelp);
+  openHelp(shapeThenHelp);
+  openShape(shapeThenHelp);
+  commit(shapeThenHelp);
+  assert.equal(shapeThenHelp.pathname, "/shape");
+  assert.equal(shapeThenHelp.section, "orders");
+  assert.equal(shapeThenHelp.pending, null);
+  assert.equal(count(shapeThenHelp, "shape"), 1);
+  assert.equal(count(shapeThenHelp, "help"), 0);
+
+  const helpThenShape = boot("/", "messages");
+  openHelp(helpThenShape);
+  openShape(helpThenShape);
+  openHelp(helpThenShape);
+  commit(helpThenShape);
+  assert.equal(helpThenShape.pathname, "/help");
+  assert.equal(helpThenShape.section, "messages");
+  assert.equal(helpThenShape.pending, null);
+  assert.equal(count(helpThenShape, "help"), 1);
+  assert.equal(count(helpThenShape, "shape"), 0);
+
+  // The rendered URL is already Help, but Shape has not committed yet.
+  // A second click back to Help must cancel the pending Shape choice so an
+  // older Shape arrival cannot land and get stuck.
+  const cancelShape = boot("/help", "orders");
+  openShape(cancelShape);
+  openHelp(cancelShape);
+  assert.equal(cancelShape.pending, null);
+  assert.equal(cancelShape.inFlight, "/help");
+  arrive(cancelShape, "/shape");
+  assert.equal(cancelShape.pending, null);
+  assert.ok(cancelShape.loads.includes("shape"));
+  commit(cancelShape);
+  assert.equal(cancelShape.pathname, "/help");
+  assert.equal(visible(cancelShape), "help");
+  assert.equal(cancelShape.section, "orders");
+  assert.equal(cancelShape.pending, null);
+});
+
+test("a dashboard selection or Back/Forward supersedes a pending Shape navigation", () => {
+  // An explicit dashboard choice (Orders) made while Shape is still
+  // in flight must win, and the superseded Shape arrival must not reopen it.
+  const supersededByDashboard = boot("/", "overview");
+  openShape(supersededByDashboard);
+  select(supersededByDashboard, "orders");
+  // The dashboard choice targets the URL already on screen ("/"), so it
+  // wins immediately rather than waiting behind the pending Shape link.
+  assert.equal(supersededByDashboard.pending, null);
+  assert.equal(supersededByDashboard.pathname, "/");
+  assert.equal(supersededByDashboard.section, "orders");
+  // If the superseded Shape navigation still arrives, it must not reopen.
+  arrive(supersededByDashboard, "/shape");
+  commit(supersededByDashboard);
+  // The visible section is never left unloaded by the superseded choice.
+  assert.ok(supersededByDashboard.loaded.includes("orders"));
+
+  // Back/Forward cancels an uncommitted Shape choice outright.
+  const supersededByPop = boot("/", "overview");
+  openShape(supersededByPop);
+  pop(supersededByPop, "/");
+  assert.equal(supersededByPop.pending, null);
+  assert.equal(visible(supersededByPop), "overview");
+  assert.ok(supersededByPop.loaded.includes("overview"));
+});
+
+test("logout or a failed session restore during a pending Shape navigation clears it cleanly", () => {
+  const logout = boot("/reviews", "orders");
+  openShape(logout);
+  setAuth(logout, "unauthenticated");
+  assert.equal(logout.pending, null);
+  assert.equal(logout.skip, null);
+  commit(logout);
+  assert.equal(logout.loads.length, 0);
+  setAuth(logout, "authenticated");
+  assert.equal(logout.pathname, "/shape");
+  assert.equal(visible(logout), "shape");
+  assert.equal(count(logout, "shape"), 1);
+
+  const failedRestore = boot("/", "overview");
+  openShape(failedRestore);
+  setAuth(failedRestore, "error");
+  assert.equal(failedRestore.pending, null);
+  assert.equal(failedRestore.skip, null);
+});
+
+test("navigating through Shape cannot resurrect a canceled order focus from Messages", () => {
+  const shell = boot("/messages", "overview");
+  openOrderFromMessages(shell, "ord-9");
+  // Before that handoff commits, the admin instead follows Shape.
+  openShape(shell);
+  assert.equal(shell.pending?.focusOrderId, undefined);
+  commit(shell);
+  assert.equal(shell.pathname, "/shape");
+  assert.equal(shell.focus, null);
+  // Landing on Orders afterward must not reveal a focus the superseded
+  // Messages handoff tried to carry.
+  select(shell, "orders");
+  commit(shell);
+  assert.equal(shell.section, "orders");
+  assert.equal(shell.focus, null);
+  assert.equal(consumeFocus(shell), null);
 });
 
 test("session restore stays on the loading gate, and a failed restore is not the login screen", () => {

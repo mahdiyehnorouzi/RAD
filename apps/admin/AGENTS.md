@@ -14,8 +14,8 @@ Hand-maintained content below the Next.js block. Never edit between the `BEGIN` 
 
 ## What exists now
 
-- The staff UI is one client shell, `components/admin-shell.tsx`, mounted by `app/(studio)/layout.tsx`. `useAdminWorkspace()` runs once there. `/` still renders `components/admin-dashboard.tsx`. Customer reviews are the route `app/(studio)/reviews/page.tsx` (`/reviews`) and live in `features/reviews/`. Help questions are the route `app/(studio)/help/page.tsx` (`/help`) and live in `features/help/`. The other sections are still React state on `/`: overview, products, orders, messages, damage, commissions, shape, attributes, users, members, and account.
-- Routes that exist today are `/`, `/reviews`, `/help`, `/reset-password`, `/api/health`, and the API proxy `/backend/[...path]`. Do not add another section route in a help change.
+- The staff UI is one client shell, `components/admin-shell.tsx`, mounted by `app/(studio)/layout.tsx`. `useAdminWorkspace()` runs once there. `/` still renders `components/admin-dashboard.tsx`. Customer reviews are the route `app/(studio)/reviews/page.tsx` (`/reviews`) and live in `features/reviews/`. Help questions are the route `app/(studio)/help/page.tsx` (`/help`) and live in `features/help/`. Messages are the route `app/(studio)/messages/page.tsx` (`/messages`) and live in `features/messages/`. The shape questionnaire is the route `app/(studio)/shape/page.tsx` (`/shape`) and lives in `features/shape/`. The other sections are still React state on `/`: overview, products, orders, damage, commissions, attributes, users, members, and account.
+- Routes that exist today are `/`, `/reviews`, `/help`, `/messages`, `/shape`, `/reset-password`, `/api/health`, and the API proxy `/backend/[...path]`. Do not add another section route in an unrelated change.
 - The October audit's domain list (orders, inventory, damage, reviews) is incomplete, and there is no `inventory` section id. Read `AdminSection` before choosing the next migration.
 - Sibling components (commissions, damage, messages, and others) and `hooks/use-admin-workspace.ts` stay mounted by the shell. Leave them in place until a route PR moves that one section.
 - The only in-shell deep link is the `#commissions/<id>` hash read in `admin-dashboard.tsx`. Every other section still opens on overview. Preserve that hash, or replace it with a redirect the PR demonstrates.
@@ -25,7 +25,7 @@ Hand-maintained content below the Next.js block. Never edit between the `BEGIN` 
 
 ## Approved target, one section at a time
 
-ADR-002 and ADR-003 are accepted. Reviews (`/reviews`) and help questions (`/help`) are the sections migrated so far. Do not rewrite the dashboard in one PR, and do not create empty feature folders or speculative routes.
+ADR-002 and ADR-003 are accepted. Reviews (`/reviews`), help questions (`/help`), messages (`/messages`), and the shape questionnaire (`/shape`) are the sections migrated so far. Do not rewrite the dashboard in one PR, and do not create empty feature folders or speculative routes.
 
 - Target shape: one App Router route per major section, with that section's components, hooks, and feature-local UI state under `features/<section>/`. Shared chrome (navigation, auth gate) stays in a shared layout. Adapt the storefront feature pattern; do not copy its i18n layer.
 - Order of work: read the section's current behavior and the specs under `apps/admin/lib/`, add characterization for what those specs do not cover, then add that one route and move only that section. `admin-dashboard.tsx` itself has no characterization spec. The architecture note's "no admin tests" sentence is historical.

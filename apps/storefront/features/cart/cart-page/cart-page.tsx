@@ -1,6 +1,7 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, Store } from "lucide-react";
 import type { Product } from "@rad/types";
 import { useCart } from "../cart-provider";
@@ -19,7 +20,9 @@ import {
   isReserved,
 } from "@/lib/catalog/product-status";
 import { cartCopy } from "../const";
+import { resolveCartBackMode, type CartBackMode } from "../cart-back";
 import { CartEmpty } from "../cart-empty";
+import { hasNavigatedInApp } from "@/features/navigation/app-navigation";
 import { CartHold } from "./cart-hold";
 import { CartLine, priceChange, type CartLineIssue } from "./cart-line";
 import { CartReleased } from "./cart-released";
@@ -28,6 +31,19 @@ import styles from "./cart-page.module.css";
 export function CartPage() {
   const { locale, t, number, href } = useLocale();
   const c = cartCopy[locale];
+  const router = useRouter();
+  // Cart can be reached by following a link within the site (checkout
+  // retreat, header icon, an order page) or by a direct hit, a refresh, or
+  // an external link — see app-navigation.ts for why `hasNavigatedInApp()`
+  // is the reliable way to tell those apart. Decided once on mount so it
+  // doesn't flip under a predictable Back control while the page is
+  // visible; read in an effect, not during render, so this client-only
+  // module state is never read while this component is server-rendered.
+  const [backMode, setBackMode] = useState<CartBackMode>("fallback");
+  useEffect(() => {
+    setBackMode(resolveCartBackMode(hasNavigatedInApp()));
+  }, []);
+  const canGoBack = backMode === "replay-history";
   const {
     slugs,
     holds,
@@ -146,10 +162,26 @@ export function CartPage() {
     );
 
   const ArrowIcon = locale === "fa" ? ArrowLeft : ArrowRight;
+  const BackArrowIcon = locale === "fa" ? ArrowRight : ArrowLeft;
   const many = slugs.length > 1;
   return (
     <section className={`${styles.page} section purchase-bag`}>
       <CheckoutSteps current={0} />
+      {canGoBack ? (
+        <button
+          type="button"
+          className={styles.back}
+          onClick={() => router.back()}
+        >
+          <BackArrowIcon aria-hidden="true" />
+          {t("back")}
+        </button>
+      ) : (
+        <Link className={styles.back} href={href("/products")}>
+          <BackArrowIcon aria-hidden="true" />
+          {t("back")}
+        </Link>
+      )}
       <h1 className={styles.title}>
         {locale === "fa" ? "کیسه خرید" : "Shopping bag"} ({number(slugs.length)}
         )

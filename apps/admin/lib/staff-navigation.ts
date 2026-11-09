@@ -8,17 +8,41 @@ export function isHelpPath(pathname: string) {
   return pathname === "/help" || pathname.startsWith("/help/");
 }
 
+export function isMessagesPath(pathname: string) {
+  return pathname === "/messages" || pathname.startsWith("/messages/");
+}
+
+export function isShapePath(pathname: string) {
+  return pathname === "/shape" || pathname.startsWith("/shape/");
+}
+
+type StudioRoute = "reviews" | "help" | "messages" | "shape";
+
+const studioPath: Record<StudioRoute, string> = {
+  reviews: "/reviews",
+  help: "/help",
+  messages: "/messages",
+  shape: "/shape",
+};
+
 /** Independent studio routes. Every other section still lives on `/`. */
-function studioRoute(pathname: string): "reviews" | "help" | null {
+function studioRoute(pathname: string): StudioRoute | null {
   if (isReviewsPath(pathname)) return "reviews";
   if (isHelpPath(pathname)) return "help";
+  if (isMessagesPath(pathname)) return "messages";
+  if (isShapePath(pathname)) return "shape";
   return null;
 }
 
+/** Sidebar href for a section that has left `/`. Null for dashboard sections. */
+export function studioNavHref(section: StudioRoute) {
+  return studioPath[section];
+}
+
 /**
- * Data to load for the URL the user is actually on. `/reviews` and `/help`
- * stay those sections even when the in-memory dashboard section is
- * something else. Every other section still lives on `/`.
+ * Data to load for the URL the user is actually on. `/reviews`, `/help`,
+ * and `/messages` stay those sections even when the in-memory dashboard
+ * section is something else. Every other section still lives on `/`.
  */
 export function sectionDataTarget(
   pathname: string,
@@ -48,8 +72,8 @@ export type NavigationPlan = {
 };
 
 /**
- * Explicit nav choice. Reviews and Help keep the previous dashboard
- * section in memory. Overview, Orders, Messages, and every other `/`
+ * Explicit nav choice. Reviews, Help, Messages, and Shape keep the previous
+ * dashboard section in memory. Overview, Orders, and every other `/`
  * section replace that memory. Choosing the section already on screen
  * does not fetch.
  */
@@ -57,8 +81,13 @@ export function planSectionSelect(
   current: StudioView,
   next: AdminSection,
 ): NavigationPlan {
-  if (next === "reviews" || next === "help") {
-    const pathname = next === "reviews" ? "/reviews" : "/help";
+  if (
+    next === "reviews" ||
+    next === "help" ||
+    next === "messages" ||
+    next === "shape"
+  ) {
+    const pathname = studioPath[next];
     if (normalizeStudioPath(current.pathname) === pathname) {
       return { view: current, load: null };
     }
@@ -74,8 +103,8 @@ export function planSectionSelect(
 
 /**
  * Browser Back/Forward or a `<Link>`. The in-memory section is kept, so
- * Back from Reviews or Help returns to whatever `/` was showing. A pop
- * that does not change the path does not fetch.
+ * Back from Reviews, Help, Messages, or Shape returns to whatever `/` was
+ * showing. A pop that does not change the path does not fetch.
  */
 export function planHistoryNavigation(
   current: StudioView,
@@ -95,15 +124,14 @@ export function planHistoryNavigation(
 
 export function normalizeStudioPath(pathname: string) {
   const route = studioRoute(pathname);
-  if (route === "reviews") return "/reviews";
-  if (route === "help") return "/help";
+  if (route) return studioPath[route];
   return pathname;
 }
 
-/** Keep a commissions hash when replacing `/`. A reviews or help URL never carries it. */
+/** Keep a commissions hash when replacing `/`. A studio route never carries it. */
 export function studioHistoryHref(pathname: string, hash: string) {
   const path = normalizeStudioPath(pathname);
-  if (path === "/reviews" || path === "/help" || hash === "") return path;
+  if (path !== "/" || hash === "") return path;
   return `/${hash.startsWith("#") ? hash : `#${hash}`}`;
 }
 
@@ -111,7 +139,27 @@ export type PendingNavigation = {
   pathname: string;
   section: AdminSection;
   load: AdminSection | null;
+  /** Set only on the navigation from Messages to Orders. Not copied onto a later choice. */
+  focusOrderId?: string;
 };
+
+/**
+ * The order to reveal when this exact navigation commits on `/`.
+ * A missing pending, or a pending choice that is not Orders, carries no id.
+ */
+export function withOrderFocus(
+  pending: PendingNavigation | null,
+  orderId: string,
+): PendingNavigation | null {
+  if (
+    !pending ||
+    normalizeStudioPath(pending.pathname) !== "/" ||
+    pending.section !== "orders"
+  ) {
+    return pending;
+  }
+  return { ...pending, focusOrderId: orderId };
+}
 
 export type SectionSelectAction = {
   pending: PendingNavigation | null;
@@ -184,19 +232,19 @@ export type StudioLinkAction = {
 };
 
 /**
- * Reviews and Help are links. Plan from the uncommitted choice when one
- * exists, so a second click does not treat the stale rendered URL as
- * current. The pathname effect performs the one fetch. `skip` stays null.
+ * Reviews, Help, Messages, and Shape are links. Plan from the uncommitted choice
+ * when one exists, so a second click does not treat the stale rendered URL
+ * as current. The pathname effect performs the one fetch. `skip` stays null.
  */
 function startStudioLink(
   visible: StudioView,
-  route: "reviews" | "help",
+  route: StudioRoute,
   pending: PendingNavigation | null,
 ): StudioLinkAction {
   const current = pending
     ? { pathname: pending.pathname, section: pending.section }
     : visible;
-  const pathname = route === "reviews" ? "/reviews" : "/help";
+  const pathname = studioPath[route];
   const visiblePath = normalizeStudioPath(visible.pathname);
   const inFlightElsewhere =
     pending !== null && normalizeStudioPath(pending.pathname) !== pathname;
@@ -228,6 +276,20 @@ export function startHelpLink(
   return startStudioLink(visible, "help", pending);
 }
 
+export function startMessagesLink(
+  visible: StudioView,
+  pending: PendingNavigation | null = null,
+) {
+  return startStudioLink(visible, "messages", pending);
+}
+
+export function startShapeLink(
+  visible: StudioView,
+  pending: PendingNavigation | null = null,
+) {
+  return startStudioLink(visible, "shape", pending);
+}
+
 export type StudioAuth =
   "initializing" | "authenticated" | "unauthenticated" | "error";
 
@@ -237,6 +299,8 @@ export type PathSettle = {
   pending: PendingNavigation | null;
   section: AdminSection;
   load: AdminSection | null;
+  /** Present only when the navigation that carried this id commits. */
+  focusOrderId: string | null;
 };
 
 export function sectionForCommittedPath(
@@ -273,6 +337,7 @@ export function settleStudioPath(input: {
       pending: null,
       section: input.section,
       load: null,
+      focusOrderId: null,
     };
   }
   const pending = input.pending;
@@ -287,6 +352,7 @@ export function settleStudioPath(input: {
       pending,
       section: input.section,
       load: null,
+      focusOrderId: null,
     };
   }
   const section = sectionForCommittedPath(
@@ -306,6 +372,8 @@ export function settleStudioPath(input: {
     pending: null,
     section,
     load: load && input.skip !== load ? load : null,
+    focusOrderId:
+      pathMatchesPending && pending?.focusOrderId ? pending.focusOrderId : null,
   };
 }
 

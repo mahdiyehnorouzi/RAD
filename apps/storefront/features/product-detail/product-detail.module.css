@@ -7,11 +7,12 @@
   --pdp-stage-max: max(30rem, calc(100svh - var(--header-height) - 9rem));
   display: grid;
   gap: var(--pdp-band);
-  /* The trailing +6rem clears the floating purchase bar (its own height,
-     bottom offset, and safe-area inset) so the last accordion card is
-     never hidden behind it even scrolled all the way down. */
+  /* Trailing space is the floating bar's own footprint: bottom offset
+     var(--page) plus the 4.75rem clearance already used for the PDP toast.
+     An extra 3–5rem on top of a flat 6rem left a band of empty paper
+     between related works and the footer on small screens. */
   padding: clamp(0.75rem, 2vw, 1.75rem) var(--page)
-    calc(clamp(3rem, 6vw, 5rem) + 6rem + env(safe-area-inset-bottom, 0px));
+    calc(var(--page) + 4.75rem + env(safe-area-inset-bottom, 0px));
   background: var(--paper);
 }
 

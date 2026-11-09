@@ -19,6 +19,7 @@ import { CatalogIndexProvider } from "@/components/catalog";
 import { getCatalogIndex } from "@/lib/catalog/get-catalog-works";
 import { HomeBanner } from "@/features/home/home-banner";
 import { ProductOverlayGate } from "@/features/product-detail/transition/product-overlay-gate";
+import { AppNavigationTracker } from "@/features/navigation/app-navigation-tracker";
 import {
   DEFAULT_LOCALE,
   LOCALES,
@@ -167,6 +168,7 @@ export default async function RootLayout({
                   <GoogleAnalytics measurementId={gaMeasurementId} />
                 ) : null}
                 <RouteScrollReset />
+                <AppNavigationTracker />
                 {/* Rendered first (own in-flow banner when the catalog
                     fell back to demo data) so its `position: sticky` sits
                     at the true top of the page, ahead of everything else,

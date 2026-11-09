@@ -8,7 +8,9 @@
 
 .care li {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 3.5rem;
+  /* "icon" is the start column, so in RTL the icon sits to the right of the text. */
+  grid-template-columns: 3.5rem minmax(0, 1fr);
+  grid-template-areas: "icon text";
   align-items: center;
   gap: 1rem;
   padding: 0.85rem 0;
@@ -20,6 +22,7 @@
 }
 
 .care li > span {
+  grid-area: text;
   display: grid;
   gap: 0.15rem;
   color: var(--muted);
@@ -34,12 +37,13 @@
 }
 
 .care li > svg {
+  grid-area: icon;
   justify-self: center;
   width: 1.9rem;
   height: 1.9rem;
-  padding-inline-start: 1rem;
+  padding-inline-end: 1rem;
   box-sizing: content-box;
-  border-inline-start: 1px solid var(--line);
+  border-inline-end: 1px solid var(--line);
   color: var(--pdp-oxide);
   stroke-width: 1.2;
 }

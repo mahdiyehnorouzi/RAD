@@ -10,6 +10,7 @@ import { ChevronLeft, ChevronRight, Share2, X } from "lucide-react";
 import type { Product } from "@rad/types";
 import { useLocale } from "@/components/i18n";
 import { ProductMedia } from "@/components/product/listing";
+import { classifySwipe } from "./classify-swipe";
 import { pdpCopy } from "./const";
 import styles from "./pdp-lightbox.module.css";
 
@@ -62,6 +63,10 @@ export function PdpLightbox({
     pointers: Map<number, { x: number; y: number }>;
   } | null>(null);
   const pan = useRef<{ x: number; y: number } | null>(null);
+  // Start point of a potential slide-swipe drag — only armed for a single
+  // pointer at normal zoom (see onPointerDown); at scale > 1 the same drag
+  // pans the zoomed image instead (existing `pan` logic above).
+  const swipe = useRef<{ x: number; y: number } | null>(null);
 
   const resetZoom = useCallback(
     () => setTransform({ scale: 1, x: 0, y: 0 }),
@@ -143,6 +148,10 @@ export function PdpLightbox({
   };
 
   const onPointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
+    // Nav chevrons and thumbnails handle their own clicks; letting a press
+    // that starts on one of them also arm pinch/pan/swipe tracking risks a
+    // long press-drag there being misread as a gesture on the image.
+    if ((event.target as HTMLElement).closest("button")) return;
     const node = pinch.current ?? {
       startDistance: 0,
       startScale: transform.scale,
@@ -153,11 +162,14 @@ export function PdpLightbox({
       const [a, b] = [...node.pointers.values()];
       node.startDistance = Math.hypot(a.x - b.x, a.y - b.y);
       node.startScale = transform.scale;
+      swipe.current = null;
     } else if (node.pointers.size === 1 && transform.scale > 1) {
       pan.current = {
         x: event.clientX - transform.x,
         y: event.clientY - transform.y,
       };
+    } else if (node.pointers.size === 1) {
+      swipe.current = { x: event.clientX, y: event.clientY };
     }
     pinch.current = node;
   };
@@ -192,6 +204,16 @@ export function PdpLightbox({
       pan.current = null;
       if (transform.scale <= 1.02) resetZoom();
     }
+    const start = swipe.current;
+    swipe.current = null;
+    if (!start || transform.scale > 1) return;
+    const direction = classifySwipe(
+      event.clientX - start.x,
+      event.clientY - start.y,
+      locale === "fa",
+    );
+    if (direction === "next") onGoTo(active + 1, { animate: false });
+    else if (direction === "previous") onGoTo(active - 1, { animate: false });
   };
 
   const onDoubleClick = () => {

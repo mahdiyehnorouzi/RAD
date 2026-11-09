@@ -14,7 +14,8 @@ import {
   hashVerificationCode,
 } from "./reset-token.util";
 
-const OTP_TTL_MS = 2 * 60 * 1000;
+/** Sign-in codes stay valid for exactly 3 minutes. `verifyCode` rejects `expiresAt <= now`. */
+const OTP_TTL_MS = 3 * 60 * 1000;
 const RESEND_COOLDOWN_MS = 60 * 1000;
 const MAX_VERIFY_ATTEMPTS = 5;
 

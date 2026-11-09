@@ -5,8 +5,8 @@
    It floats with a visible margin from every viewport edge — never
    full-bleed — and keeps identical geometry across every purchase state.
    One explicit grid, not flex-basis percentages or offset nudges: in RTL
-   source order the CTA column (first/inline-start) reads right, divider
-   center, price (last/inline-end) reads left — "[ CTA ] [ divider ] [ price ]". */
+   source order the CTA column (first/inline-start) reads right, price
+   (last/inline-end) reads left — "[ CTA ] [ price ]". */
 .bar {
   position: fixed;
   z-index: 40;
@@ -21,7 +21,8 @@
   margin-inline: var(--page);
   bottom: calc(var(--page) + env(safe-area-inset-bottom, 0px));
   display: grid;
-  grid-template-columns: minmax(0, 1.7fr) auto minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr);
+  column-gap: 0.75rem;
   align-items: center;
   min-height: 3.75rem;
   padding-block: 0.5rem;
@@ -64,17 +65,6 @@
   align-items: center;
   align-self: stretch;
   min-width: 0;
-}
-
-.divider {
-  justify-self: center;
-  width: 1px;
-  height: 1.6rem;
-  background: color-mix(in srgb, var(--ink) 12%, transparent);
-}
-
-.bar.compact .divider {
-  height: 1.25rem;
 }
 
 .price {
@@ -127,6 +117,15 @@
   font-weight: var(--font-weight-medium, 500);
   line-height: 1;
   text-decoration: none;
+}
+
+/* In-cart state reads as a distinct, already-done affordance rather than a
+   repeat of the solid "add" pill: an outlined treatment in the same ink
+   family, not a new brand color. */
+.goToBagPill {
+  background: var(--paper);
+  color: var(--clay);
+  border: 1.5px solid var(--clay);
 }
 
 .bar.compact .action :global(.button.add),
