@@ -87,7 +87,6 @@ export function ProductRecordCards({
           </span>
         )}
         <span className={styles.recordText}>
-          <strong>{t("pdpQrLink")}</strong>
           <span className={styles.recordBody}>{c.qrCardBody}</span>
         </span>
         {product.radNumber ? (

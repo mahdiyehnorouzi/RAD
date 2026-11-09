@@ -3,8 +3,7 @@ import Link from "next/link";
 import {
   ArrowLeft,
   ArrowRight,
-  CircleMinus,
-  CirclePlus,
+  MessageCircle,
   PackageCheck,
   Palette,
   ShieldCheck,
@@ -14,6 +13,7 @@ import type { FaqContent, FaqIcon } from "@rad/types";
 // Imported from its own sub-path, not the `@/components/help` barrel —
 // that barrel also reaches help-hub/policy-page, which the PDP has no
 // use for.
+import { purchasePathCopy } from "@/components/help/const";
 import { ShippingReturnsDisclosure } from "@/components/help/purchase-path";
 import { useLocale } from "@/components/i18n";
 import type { WorkTexture } from "@/lib/catalog/material-texture";
@@ -42,52 +42,74 @@ export function ProductQuestions({
 }) {
   const { locale, href } = useLocale();
   const c = pdpCopy[locale];
+  const path = purchasePathCopy[locale];
   const Arrow = locale === "fa" ? ArrowLeft : ArrowRight;
+  const packaging = faq?.items.find((item) => item.id === "packaging");
+  const questions = (faq?.items ?? []).filter(
+    (item) => item.id !== "packaging",
+  );
+  const ask = (
+    <Link className={styles.ask} href={href("/contact")}>
+      <span className={styles.askText}>
+        <strong>{c.ask}</strong>
+        <span>{c.askLede}</span>
+      </span>
+      <WorkStroke
+        textures={textures}
+        index={index + 1}
+        className={styles.askStroke}
+      />
+      <Arrow className={styles.askArrow} aria-hidden="true" />
+    </Link>
+  );
 
   return (
-    <PdpSection
-      id="pdp-questions-title"
-      title={c.questionsTitle}
-      lede={c.questionsLede}
-      mark={<WorkStroke textures={textures} index={index} />}
-    >
+    <>
       {showShipping ? (
-        <ShippingReturnsDisclosure className={styles.shipping} />
+        <PdpSection
+          id="pdp-shipping-title"
+          title={path.disclosureTitle}
+          lede={path.disclosureTeaser}
+          mark={<Truck aria-hidden="true" />}
+        >
+          <ShippingReturnsDisclosure />
+        </PdpSection>
       ) : null}
-      <div>
-        {faq?.items.map((item) => {
-          const Icon = FAQ_ICONS[item.icon];
-          return (
-            <details key={item.id} className={styles.fold}>
-              <summary>
-                <CirclePlus
-                  className={`${styles.foldToggle} ${styles.plus}`}
-                  aria-hidden="true"
-                />
-                <CircleMinus
-                  className={`${styles.foldToggle} ${styles.minus}`}
-                  aria-hidden="true"
-                />
-                <span className={styles.foldTitle}>{item.question}</span>
-                <Icon className={styles.foldIcon} aria-hidden="true" />
-              </summary>
-              <p>{item.answer}</p>
-            </details>
-          );
-        })}
-      </div>
-      <Link className={styles.ask} href={href("/contact")}>
-        <span className={styles.askText}>
-          <strong>{c.ask}</strong>
-          <span>{c.askLede}</span>
-        </span>
-        <WorkStroke
-          textures={textures}
-          index={index + 1}
-          className={styles.askStroke}
-        />
-        <Arrow className={styles.askArrow} aria-hidden="true" />
-      </Link>
-    </PdpSection>
+      {packaging ? (
+        <PdpSection
+          id="pdp-packaging-title"
+          title={packaging.question}
+          mark={<PackageCheck aria-hidden="true" />}
+        >
+          <p className={styles.answer}>{packaging.answer}</p>
+        </PdpSection>
+      ) : null}
+      {questions.length ? (
+        <PdpSection
+          id="pdp-questions-title"
+          title={faq?.title ?? c.questionsTitle}
+          lede={c.questionsLede}
+          mark={<MessageCircle aria-hidden="true" />}
+        >
+          <ul className={styles.questions}>
+            {questions.map((item) => {
+              const Icon = FAQ_ICONS[item.icon];
+              return (
+                <li key={item.id}>
+                  <Icon aria-hidden="true" />
+                  <div>
+                    <strong>{item.question}</strong>
+                    <p>{item.answer}</p>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+          {ask}
+        </PdpSection>
+      ) : (
+        ask
+      )}
+    </>
   );
 }
