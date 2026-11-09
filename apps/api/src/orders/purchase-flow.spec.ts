@@ -5,9 +5,11 @@ import {
   ConflictException,
   NotFoundException,
 } from "@nestjs/common";
+import { validate } from "class-validator";
 import { CartItem, Product } from "../database/entities";
 import { CART_HOLD_MS } from "../inventory/const/product-status";
 import { ORDER_PAYMENT_WINDOW_MS } from "./const";
+import { CheckoutDto } from "./dto/checkout.dto";
 import {
   startPurchaseHarness,
   type PurchaseHarness,
@@ -794,5 +796,73 @@ describe("E2E purchase (card-to-card)", () => {
         BadRequestException,
       );
     });
+  });
+});
+
+describe("Order message (RAD-060)", () => {
+  test("a message is trimmed, persisted, and visible only to admin order review", async () => {
+    const buyer = rad.buyer("message-trim");
+    await rad.cart.add(buyer, await rad.product(3_000_000));
+    const order = await rad.orders.checkout(buyer, {
+      name: "خریدار تست",
+      phone: "09121234567",
+      city: "تهران",
+      address: "خیابان ولیعصر",
+      message: "  لطفاً با روکش اضافه بسته‌بندی شود.  ",
+      acceptedPolicies: rad.acceptedPolicies,
+    });
+
+    // Never echoed back to the buyer's own order view.
+    assert.ok(!("message" in order));
+
+    const admin = await rad.adminOrder(order.id);
+    assert.equal(admin.message, "لطفاً با روکش اضافه بسته‌بندی شود.");
+  });
+
+  test("an empty, whitespace-only, or omitted message is stored as null, not an empty string", async () => {
+    const buyer = rad.buyer("message-empty");
+    await rad.cart.add(buyer, await rad.product(3_000_000));
+    const whitespaceOnly = await rad.orders.checkout(buyer, {
+      name: "خریدار تست",
+      phone: "09121234567",
+      city: "تهران",
+      address: "خیابان ولیعصر",
+      message: "   ",
+      acceptedPolicies: rad.acceptedPolicies,
+    });
+    assert.equal((await rad.adminOrder(whitespaceOnly.id)).message, undefined);
+
+    const buyerTwo = rad.buyer("message-omitted");
+    await rad.cart.add(buyerTwo, await rad.product(3_000_000));
+    const omitted = await rad.orders.checkout(buyerTwo, {
+      name: "خریدار تست",
+      phone: "09121234567",
+      city: "تهران",
+      address: "خیابان ولیعصر",
+      acceptedPolicies: rad.acceptedPolicies,
+    });
+    assert.equal((await rad.adminOrder(omitted.id)).message, undefined);
+  });
+
+  test("a message over 500 characters is rejected by DTO validation before reaching the service", async () => {
+    const dto = new CheckoutDto();
+    dto.message = "a".repeat(501);
+    const errors = await validate(dto);
+    const messageErrors = errors.filter(
+      (error) => error.property === "message",
+    );
+    assert.ok(
+      messageErrors.length > 0,
+      "class-validator must reject a message longer than 500 characters",
+    );
+
+    const withinBound = new CheckoutDto();
+    withinBound.message = "a".repeat(500);
+    const boundErrors = await validate(withinBound);
+    assert.equal(
+      boundErrors.filter((error) => error.property === "message").length,
+      0,
+      "exactly 500 characters must be accepted",
+    );
   });
 });
