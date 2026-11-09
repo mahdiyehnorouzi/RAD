@@ -24,6 +24,16 @@ interface ProductTransitionState {
     rect: SourceRect;
     imageSrc: string;
   }) => void;
+  /**
+   * Swaps the overlay to a different product already tracked by the
+   * current history entry (see `popStateAction` in overlay-history.ts) —
+   * a Back/Forward hop between two related-work PDPs, not a fresh open.
+   * Deliberately leaves `sourceRect`/`imageSrc` untouched: there is no
+   * clicked card to morph from for a history navigation, so the content
+   * swap (driven by the slug change alone) stays a plain cross-fade
+   * instead of replaying the open morph with stale rect data.
+   */
+  retarget: (args: { slug: string; href: string }) => void;
   close: () => void;
 }
 
@@ -52,6 +62,7 @@ export const useProductTransitionStore = create<ProductTransitionState>(
         imageSrc,
         returnScrollY: window.scrollY,
       }),
+    retarget: ({ slug, href }) => set({ phase: "open", slug, href }),
     close: () => set({ phase: "closed" }),
   }),
 );
