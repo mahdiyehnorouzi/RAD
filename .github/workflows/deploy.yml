@@ -13,6 +13,8 @@ name: Production release (automatic on main; manual dispatch)
 
 permissions:
   contents: read
+  checks: read
+  pull-requests: read
 
 on:
   push:
@@ -150,6 +152,8 @@ jobs:
     secrets: inherit
     permissions:
       contents: read
+      checks: read
+      pull-requests: read
       id-token: write
       attestations: write
       actions: read
@@ -175,6 +179,8 @@ jobs:
     secrets: inherit
     permissions:
       contents: read
+      checks: read
+      pull-requests: read
       packages: write
       id-token: write
       attestations: write
