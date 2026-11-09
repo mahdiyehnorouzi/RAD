@@ -42,7 +42,11 @@ export function PdpSection({
     >
       <summary>
         <span className={styles.sectionIndex} aria-hidden="true" />
-        {mark ? <span className={styles.sectionMark}>{mark}</span> : null}
+        {mark ? (
+          <span className={styles.sectionMark} aria-hidden="true">
+            {mark}
+          </span>
+        ) : null}
         <span className={styles.sectionHead}>
           <h2 id={id}>{title}</h2>
           {lede ? <span className={styles.sectionLede}>{lede}</span> : null}

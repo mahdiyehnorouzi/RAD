@@ -221,7 +221,6 @@ export function ProductGallery({
                 {slide.kind === "plate" && recordNumber ? (
                   <span className={styles.plateMark} aria-hidden="true">
                     <b dir="ltr">{recordNumber}</b>
-                    <i dir="ltr">{c.oneOfOne}</i>
                   </span>
                 ) : null}
               </button>

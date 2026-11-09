@@ -109,7 +109,9 @@ export function ProductSummary({
           </p>
         ) : null}
         <h1>{copy.name}</h1>
-        <p className={styles.lede}>{copy.subtitle}</p>
+        {copy.subtitle.trim() ? (
+          <p className={styles.lede}>{copy.subtitle}</p>
+        ) : null}
         <p className={styles.maker}>
           {c.byLine} <b>{maker}</b>
         </p>
@@ -203,7 +205,6 @@ export function ProductSummary({
         artwork={artwork}
         passport={passport}
         textures={textures}
-        index={0}
       />
     </div>
   );
