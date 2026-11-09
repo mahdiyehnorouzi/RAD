@@ -103,6 +103,7 @@ function orderHaystack(order: AdminOrder) {
       order.phone ?? "",
       order.city ?? "",
       order.address ?? "",
+      order.message ?? "",
       order.productName,
       order.trackingCode ?? "",
       order.paymentTrackingNumber ?? "",

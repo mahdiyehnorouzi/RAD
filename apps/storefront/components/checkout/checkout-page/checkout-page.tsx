@@ -211,7 +211,7 @@ export function CheckoutPage() {
       writeDraft(draft);
       writeControls(form, next);
     }
-    for (const name of ["address", "postalCode"] as const) {
+    for (const name of ["address", "postalCode", "message"] as const) {
       const value = draft[name];
       if (!value) continue;
       const field = form.elements.namedItem(name);
@@ -320,6 +320,7 @@ export function CheckoutPage() {
       cityId,
       address: String(data.get("address") ?? ""),
       postalCode: String(data.get("postalCode") ?? ""),
+      message: String(data.get("message") ?? ""),
       addressChoice: choice || undefined,
       savedAddressId: choice === "saved" ? savedAddressId : "",
       ...patch,
@@ -361,13 +362,15 @@ export function CheckoutPage() {
     return next;
   };
 
-  const clearFieldError = (name: FieldName) =>
+  const clearFieldError = (name: FieldName) => {
+    setError("");
     setErrors((current) => {
       if (!current[name]) return current;
       const next = { ...current };
       delete next[name];
       return next;
     });
+  };
 
   const setFieldError = (name: FieldName, message?: string) =>
     setErrors((current) => {
@@ -419,6 +422,7 @@ export function CheckoutPage() {
           c.postalLabel,
           locale,
         ),
+        message: field("message") || undefined,
         acceptedPolicies: currentPolicyVersions(ORDER_POLICY_SLUGS),
       });
       setLeaving(true);
@@ -707,6 +711,27 @@ export function CheckoutPage() {
                   "postalCode",
                   postal.ok ? undefined : c.postalError,
                 );
+              }}
+            />
+          </CheckoutField>
+          <CheckoutField
+            id="checkout-message"
+            label={c.messageLabel}
+            optional={c.optional}
+            wide
+          >
+            <textarea
+              id="checkout-message"
+              name="message"
+              className="resize-none"
+              rows={2}
+              maxLength={500}
+              disabled={busy}
+              placeholder={c.messagePlaceholder}
+              onInput={(event) => {
+                setError("");
+                const form = event.currentTarget.form;
+                if (form) storeDraft(form);
               }}
             />
           </CheckoutField>

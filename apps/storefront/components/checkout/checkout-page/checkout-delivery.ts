@@ -24,6 +24,8 @@ export type CheckoutDraft = Partial<DeliveryFields> & {
   city?: string;
   addressChoice?: string;
   savedAddressId?: string;
+  /** Optional "Message to RAD" note, not part of the delivery address. */
+  message?: string;
 };
 
 const DRAFT_KEYS = [

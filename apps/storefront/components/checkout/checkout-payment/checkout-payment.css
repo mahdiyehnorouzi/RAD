@@ -462,6 +462,18 @@ html[dir="rtl"] .checkout-flow .payment-card-number {
   text-align: center;
 }
 
+/*
+ * Separates the "cancel this order" disclosure from the primary pay/
+ * receipt action above it — otherwise both sit in the same flat
+ * `.checkout-flow-action` stack with identical spacing, so cancelling
+ * reads with the same weight as the step's main next action.
+ */
+.checkout-flow-action > .payment-cancel {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
 .checkout-flow .payment-cancel p {
   margin: 0;
   color: var(--ink);

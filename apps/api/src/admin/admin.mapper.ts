@@ -90,6 +90,7 @@ export function toAdminOrder(
     phone: order.phone || undefined,
     city: order.city || undefined,
     address: order.address || undefined,
+    message: order.message || undefined,
     productName: order.items
       .map((item) => item.product?.name ?? item.productSlug)
       .join("، "),
