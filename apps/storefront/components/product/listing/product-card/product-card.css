@@ -685,39 +685,11 @@
 
 /* ——— Suggest: a way forward under empty and error states ——— */
 
-.rad-card--suggest .rad-card-body {
-  grid-template-columns: minmax(0, 1fr) auto auto;
-  grid-template-areas: "info qr go";
-}
-
-.rad-card-go {
-  display: grid;
-  grid-area: go;
-  width: 2.5rem;
-  height: 2.5rem;
-  place-items: center;
-  border: 1px solid color-mix(in srgb, var(--ink) 12%, transparent);
-  border-radius: 50%;
-  background: color-mix(in srgb, var(--sand) 26%, var(--rc-label));
-  color: var(--ink);
-  transition:
-    background-color 300ms ease,
-    color 300ms ease,
-    border-color 300ms ease;
-}
-
-.rad-card-go svg {
-  width: 1rem;
-  height: 1rem;
-  stroke-width: 1.7;
-  transition: transform 450ms var(--rc-ease);
-}
-
 @container rad-card (max-width: 14rem) {
   .rad-card--compact .rad-card-body,
   .rad-card--suggest .rad-card-body {
-    grid-template-columns: minmax(0, 1fr) auto;
-    grid-template-areas: "info go";
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "info";
     padding-inline: 0.8rem;
   }
 
@@ -742,11 +714,6 @@
     min-height: 1.75rem;
     padding-inline: 0.65rem;
     font-size: 0.72rem;
-  }
-
-  .rad-card-go {
-    width: 2.2rem;
-    height: 2.2rem;
   }
 }
 
@@ -954,7 +921,6 @@
 /* ——— Interaction ——— */
 
 .rad-card-name a:focus-visible,
-.rad-card-go:focus-visible,
 .rad-card-thumb-more:focus-visible {
   outline: 2px solid var(--rc-oxide);
   outline-offset: 3px;
@@ -979,20 +945,6 @@
 
   .rad-card:hover .rad-card-mark svg path {
     animation: rad-mark-draw 900ms var(--rc-ease);
-  }
-
-  .rad-card-go:hover {
-    border-color: var(--moss);
-    background: var(--moss);
-    color: #f5f1e8;
-  }
-
-  .rad-card-go:hover svg {
-    transform: translateX(-4px);
-  }
-
-  html[dir="ltr"] .rad-card-go:hover svg {
-    transform: translateX(4px);
   }
 
   .rad-card-thumb:hover {
