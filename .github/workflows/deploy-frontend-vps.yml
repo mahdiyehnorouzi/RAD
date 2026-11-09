@@ -1,6 +1,6 @@
-# Only reusable/explicit manual invocations; deploy.yml is the manual,
-# human-triggered release entry point (see deploy.yml and RAD-129 note
-# below) - nothing here or in deploy.yml runs on a push to `main`.
+# Reusable release invoked by deploy.yml for main pushes and explicit manual
+# dispatches. This workflow also retains workflow_dispatch for single-service
+# recovery/re-release.
 #
 # Release transport: see the matching comment in deploy-api-vps.yml -
 # GitHub-hosted `ubuntu-latest` over the RAD tailnet (OIDC, no self-hosted
@@ -11,16 +11,11 @@
 # VPS for the frontend path, only the signed manifest naming the exact GHCR
 # digests to pull.
 #
-# RAD-129: this workflow releases exactly `inputs.commit_sha`, never
-# `github.sha` - the two are no longer guaranteed equal, since the caller
-# (deploy.yml) is a manual, human-triggered release of a specific,
-# already-merged commit, not a push-triggered deploy of whatever is
-# currently at the tip of `main`. Every checkout, image tag, and remote
-# command below is keyed off `inputs.commit_sha` for that reason.
-# `confirm` is a `workflow_call` input too now (previously only
-# `workflow_dispatch` had a confirmation input, named `operation`), so the
-# "must opt in to actually release" gate behaves identically whether this
-# runs standalone (emergency `workflow_dispatch`) or via deploy.yml.
+# RAD-129: this workflow releases exactly `inputs.commit_sha`. The top-level
+# deploy.yml supplies the pushed `github.sha` for automatic main releases,
+# or the explicitly selected SHA for manual dispatches. `confirm` is a
+# `workflow_call` input: deploy.yml sets it to `deploy` for a main push,
+# while manual dispatch requires the operator to type `deploy`.
 name: Frontend VPS release
 on:
   workflow_call:
