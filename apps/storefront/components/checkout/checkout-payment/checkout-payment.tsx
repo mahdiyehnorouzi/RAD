@@ -76,6 +76,7 @@ export function CheckoutPayment({ id }: { id: string }) {
   }, [id]);
   const showReceipt = (value: boolean) => {
     setReceiptStep(value);
+    setError("");
     const url = new URL(window.location.href);
     if (value) url.searchParams.set("step", "receipt");
     else url.searchParams.delete("step");
