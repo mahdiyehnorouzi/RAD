@@ -729,6 +729,7 @@ export function CheckoutPage() {
               disabled={busy}
               placeholder={c.messagePlaceholder}
               onInput={(event) => {
+                setError("");
                 const form = event.currentTarget.form;
                 if (form) storeDraft(form);
               }}
