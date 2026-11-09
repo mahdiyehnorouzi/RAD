@@ -1,4 +1,4 @@
-export type VisibleSlideEntry = {
+type VisibleSlideEntry = {
   index: number;
   isIntersecting: boolean;
   intersectionRatio: number;
