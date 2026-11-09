@@ -18,6 +18,7 @@ import { categoryLabel } from "@/lib/catalog/artwork";
 import type { WorkTexture } from "@/lib/catalog/material-texture";
 import { productCopy } from "@/lib/catalog/products";
 import { formatArtworkNumber } from "@/components/product/listing";
+import { ARTWORK_SPEC_FACT_KEYS, editionIdentity } from "./pdp-content";
 import { CATEGORY_ICONS, pdpCopy } from "./const";
 import { MaterialTexture } from "./material-texture";
 import { PdpSection } from "./pdp-section";
@@ -64,42 +65,43 @@ function specRows(
     : c.studio;
   const Category = CATEGORY_ICONS[product.category];
   const body = artwork?.materials.body[locale];
+  const artworkFact = (
+    key: (typeof ARTWORK_SPEC_FACT_KEYS)[number],
+  ): SpecRow => {
+    if (key === "material") {
+      return {
+        key,
+        label: c.specMaterial,
+        value: body ? (
+          <>
+            {body}
+            <NamedMaterials textures={textures} />
+          </>
+        ) : undefined,
+        icon: textures[0] ? (
+          <MaterialTexture texture={textures[0]} shape="swatch" />
+        ) : (
+          <Layers />
+        ),
+      };
+    }
+    if (key === "surface") {
+      return {
+        key,
+        label: c.specSurface,
+        value: artwork?.materials.surface?.[locale],
+        icon: <Paintbrush />,
+      };
+    }
+    return {
+      key,
+      label: c.specSize,
+      value: artwork?.dimensions?.[locale],
+      icon: <Ruler />,
+    };
+  };
   const recorded: SpecRow[] = artwork
-    ? [
-        {
-          key: "material",
-          label: c.specMaterial,
-          value: body ? (
-            <>
-              {body}
-              <NamedMaterials textures={textures} />
-            </>
-          ) : undefined,
-          icon: textures[0] ? (
-            <MaterialTexture texture={textures[0]} shape="swatch" />
-          ) : (
-            <Layers />
-          ),
-        },
-        {
-          key: "surface",
-          label: c.specSurface,
-          value: artwork.materials.surface?.[locale],
-          icon: <Paintbrush />,
-        },
-        {
-          key: "process",
-          label: c.specProcess,
-          value: artwork.materials.process?.[locale],
-          icon: <Hand />,
-        },
-        {
-          key: "size",
-          label: c.specSize,
-          value: artwork.dimensions?.[locale],
-          icon: <Ruler />,
-        },
-      ]
+    ? ARTWORK_SPEC_FACT_KEYS.map(artworkFact)
     : productCopy(product, locale)
         .details.slice(0, -1)
         .map((line, index) => ({
@@ -121,6 +123,7 @@ function specRows(
     }),
   );
 
+  const edition = editionIdentity(recordNumber, c.oneOfOne);
   return [
     {
       key: "category",
@@ -149,10 +152,10 @@ function specRows(
     {
       key: "edition",
       label: c.specEdition,
-      value: recordNumber ? (
+      value: edition ? (
         <span className={styles.specEdition}>
-          <span>{recordNumber}</span>
-          <span>{c.oneOfOne}</span>
+          <span>{edition[0]}</span>
+          <span>{edition[1]}</span>
         </span>
       ) : undefined,
       icon: <SquareStack />,
