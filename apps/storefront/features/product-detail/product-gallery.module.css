@@ -255,18 +255,6 @@
   font-weight: var(--font-weight-medium);
 }
 
-.plateMark i {
-  display: grid;
-  width: 2.6rem;
-  height: 2.6rem;
-  place-items: center;
-  border: 1px solid currentColor;
-  border-radius: 50%;
-  font-size: 0.7rem;
-  font-style: normal;
-  letter-spacing: 0;
-}
-
 .stage :global(.favorite-button):global(.compact) {
   position: static;
   width: 44px;

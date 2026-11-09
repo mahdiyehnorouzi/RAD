@@ -2,10 +2,8 @@
 import { Sprout } from "lucide-react";
 import type { Locale } from "@rad/types";
 import { useLocale } from "@/components/i18n";
-import type { WorkTexture } from "@/lib/catalog/material-texture";
 import { CARE_CUES, CARE_FALLBACK, pdpCopy } from "./const";
 import { PdpSection } from "./pdp-section";
-import { WorkStroke } from "./work-stroke";
 import styles from "./product-care.module.css";
 
 /** Each sentence of the work's care text becomes one titled step. */
@@ -28,14 +26,10 @@ function careSteps(text: string, locale: Locale) {
 export function ProductCare({
   text,
   glazed,
-  textures,
-  index,
 }: {
   text?: string;
   /** Glazed works close with a note on the variation a hand-laid glaze leaves. */
   glazed: boolean;
-  textures: WorkTexture[];
-  index: number;
 }) {
   const { locale } = useLocale();
   const c = pdpCopy[locale];
@@ -47,7 +41,7 @@ export function ProductCare({
       id="pdp-care-title"
       title={c.careTitle}
       lede={c.careLede}
-      mark={<WorkStroke textures={textures} index={index} />}
+      mark={<Sprout aria-hidden="true" />}
       className={styles.care}
     >
       <ul>

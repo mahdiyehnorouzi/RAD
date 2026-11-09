@@ -1,5 +1,6 @@
 "use client";
 import type { CSSProperties } from "react";
+import { Scan } from "lucide-react";
 import type { Artwork, Product, WorkMark } from "@rad/types";
 import { useLocale } from "@/components/i18n";
 import {
@@ -8,9 +9,7 @@ import {
 } from "@/lib/catalog/category-defaults";
 import { catalogPhotoSrc, hasStudioPhotos } from "@/lib/catalog/photo-works";
 import { pdpCopy } from "./const";
-import type { WorkTexture } from "@/lib/catalog/material-texture";
 import { PdpSection } from "./pdp-section";
-import { WorkStroke } from "./work-stroke";
 import styles from "./product-anatomy.module.css";
 
 /** Marks drawn on one of the work's photos, else the passport's marks on its first. */
@@ -32,13 +31,9 @@ function anatomyOf(product: Product, artwork?: Artwork) {
 export function ProductAnatomy({
   product,
   artwork,
-  textures,
-  index,
 }: {
   product: Product;
   artwork?: Artwork;
-  textures: WorkTexture[];
-  index: number;
 }) {
   const { locale, number } = useLocale();
   const c = pdpCopy[locale];
@@ -52,7 +47,7 @@ export function ProductAnatomy({
       id="pdp-anatomy-title"
       title={c.anatomyTitle}
       lede={c.anatomyLede}
-      mark={<WorkStroke textures={textures} index={index} />}
+      mark={<Scan aria-hidden="true" />}
     >
       <div className={styles.anatomyBody}>
         <div
