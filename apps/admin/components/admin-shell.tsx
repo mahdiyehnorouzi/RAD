@@ -37,12 +37,14 @@ import {
   initialDashboardSection,
   isHelpPath,
   isMessagesPath,
+  isProductsPath,
   isReviewsPath,
   isShapePath,
   settleStudioPath,
   staffGate,
   startHelpLink,
   startMessagesLink,
+  startProductsLink,
   startReviewsLink,
   startSectionSelect,
   startShapeLink,
@@ -110,8 +112,13 @@ export function AdminShell({ children }: { children: ReactNode }) {
   const helpActive = isHelpPath(pathname);
   const messagesActive = isMessagesPath(pathname);
   const shapeActive = isShapePath(pathname);
+  const productsActive = isProductsPath(pathname);
   const routeActive =
-    reviewsActive || helpActive || messagesActive || shapeActive;
+    reviewsActive ||
+    helpActive ||
+    messagesActive ||
+    shapeActive ||
+    productsActive;
   // skip: go() already fetched for a path change. pending: latest choice
   // whose URL has not committed. seen: last pathname this effect applied.
   const skipPathLoad = useRef<AdminSection | null>(null);
@@ -159,7 +166,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
   };
 
   const followStudioLink = (
-    route: "reviews" | "help" | "messages" | "shape",
+    route: "reviews" | "help" | "messages" | "shape" | "products",
   ) => {
     setMobileNav(false);
     const visible = { pathname, section: sectionRef.current };
@@ -170,7 +177,9 @@ export function AdminShell({ children }: { children: ReactNode }) {
           ? startHelpLink(visible, pendingNav.current)
           : route === "messages"
             ? startMessagesLink(visible, pendingNav.current)
-            : startShapeLink(visible, pendingNav.current);
+            : route === "shape"
+              ? startShapeLink(visible, pendingNav.current)
+              : startProductsLink(visible, pendingNav.current);
     pendingNav.current = action.pending;
     skipPathLoad.current = action.skip;
     if (action.replace) router.replace(action.replace);
@@ -273,7 +282,9 @@ export function AdminShell({ children }: { children: ReactNode }) {
         ? "پیام‌ها"
         : shapeActive
           ? "پرسشنامه‌ی شکل"
-          : navItems.find((item) => item.id === section)?.label;
+          : productsActive
+            ? "آثار و محصولات"
+            : navItems.find((item) => item.id === section)?.label;
 
   return (
     <AdminChromeContext.Provider
@@ -328,9 +339,13 @@ export function AdminShell({ children }: { children: ReactNode }) {
                         ? shapeActive
                           ? "active"
                           : ""
-                        : !routeActive && section === id
-                          ? "active"
-                          : "";
+                        : id === "products"
+                          ? productsActive
+                            ? "active"
+                            : ""
+                          : !routeActive && section === id
+                            ? "active"
+                            : "";
               const body = (
                 <>
                   <Icon />
@@ -360,7 +375,8 @@ export function AdminShell({ children }: { children: ReactNode }) {
                 id === "reviews" ||
                 id === "help" ||
                 id === "messages" ||
-                id === "shape"
+                id === "shape" ||
+                id === "products"
               ) {
                 return (
                   <Link
