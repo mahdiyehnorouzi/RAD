@@ -7,13 +7,13 @@
   margin: 0;
 }
 
-/* Each fact leads with its sign: the work's own swatch, its print, a line icon. */
+/* Icon sits with the title on the start side; the value is the opposite column. */
 .specs dl > div {
   display: grid;
-  grid-template-columns: 2.25rem minmax(0, 1fr) auto;
-  grid-template-areas: "icon value label";
-  align-items: center;
-  gap: 0.9rem;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-areas: "label value";
+  align-items: start;
+  gap: 0.75rem 1rem;
   min-height: 3.6rem;
   padding: 0.6rem 0;
   border-bottom: 1px solid var(--line);
@@ -25,7 +25,7 @@
 
 .specIcon {
   display: grid;
-  grid-area: icon;
+  flex: none;
   place-items: center;
   width: 2.25rem;
   height: 2.25rem;
@@ -46,30 +46,43 @@
 }
 
 .specs dt {
+  display: flex;
   grid-area: label;
+  align-items: center;
+  gap: 0.7rem;
+  min-width: 0;
+  max-width: 100%;
   color: var(--muted);
   font-size: 0.8rem;
-  text-align: end;
+  line-height: 1.5;
+  text-align: start;
+}
+
+.specs dt > span:last-child {
+  min-width: 0;
 }
 
 .specs dd {
   grid-area: value;
+  min-width: 0;
   margin: 0;
   font-size: 0.92rem;
   font-weight: var(--font-weight-medium);
   line-height: 1.7;
+  text-align: end;
+  overflow-wrap: anywhere;
 }
 
 .specEdition {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem 1rem;
-}
-
-.specEdition span {
   letter-spacing: var(--tracking-index);
   direction: ltr;
   unicode-bidi: isolate;
+}
+
+@media (--phone) {
+  .specs dl > div {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
 }
 
 .specMaterials {

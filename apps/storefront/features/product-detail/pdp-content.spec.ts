@@ -7,7 +7,7 @@ import {
   ARTWORK_SPEC_FACT_KEYS,
   SOLD_STATUS_FA,
   editionIdentity,
-  makingProcessText,
+  isArtworkDescriptionCopy,
   titleIdentityLine,
 } from "./pdp-content";
 
@@ -18,14 +18,13 @@ test("the sold state uses the approved sentence and not the long note", () => {
   assert.equal(JSON.stringify(pdpCopy).includes("نسخه‌ی دیگه‌ای"), false);
 });
 
-test("the title keeps the archive number and the edition keeps 1/1", () => {
+test("the title and the archive number keep the identifier and leave 1/1 off", () => {
   assert.equal(titleIdentityLine("RĀD / ۰۸۲"), "RĀD / ۰۸۲");
   assert.equal(titleIdentityLine(null), null);
-  assert.deepEqual(editionIdentity("RĀD / ۰۸۲", pdpCopy.fa.oneOfOne), [
-    "RĀD / ۰۸۲",
-    "۱ / ۱",
-  ]);
-  assert.equal(editionIdentity(null, pdpCopy.fa.oneOfOne), null);
+  assert.equal(editionIdentity("RĀD / ۰۸۲"), "RĀD / ۰۸۲");
+  assert.equal(editionIdentity("  "), null);
+  assert.equal(editionIdentity(null), null);
+  assert.equal(editionIdentity("RĀD / ۰۸۲")?.includes("۱"), false);
 });
 
 test("assurances stay short and use the published shipping and return facts", () => {
@@ -51,12 +50,54 @@ test("specifications list materials and size, not the making process", () => {
   );
 });
 
-test("making keeps a work's process text when specifications no longer show it", () => {
-  const process = { fa: "  ساخت دستی  ", en: "Hand built" };
-  assert.equal(makingProcessText(process, "fa"), "ساخت دستی");
-  assert.equal(makingProcessText(process, "en"), "Hand built");
-  assert.equal(makingProcessText({ fa: "  ", en: "" }, "fa"), undefined);
-  assert.equal(makingProcessText(undefined, "fa"), undefined);
+test("artwork details omit description prose and the making section is gone", () => {
+  const description = "ارغوان | یه ظرف با سلیقه‌ی خودش!";
+  const story = `${description}\n\nارغوان از اون ظرف‌هاست.`;
+  assert.equal(isArtworkDescriptionCopy(description, description, story), true);
+  assert.equal(
+    isArtworkDescriptionCopy(`${description} و ادامه`, description, story),
+    true,
+  );
+  assert.equal(isArtworkDescriptionCopy(story, description, story), true);
+  assert.equal(
+    isArtworkDescriptionCopy("سرامیک لعاب‌دار", description, story),
+    false,
+  );
+  const detail = readFileSync(
+    new URL("./product-detail.tsx", import.meta.url),
+    "utf8",
+  );
+  const questions = readFileSync(
+    new URL("./product-questions.tsx", import.meta.url),
+    "utf8",
+  );
+  const shipping = readFileSync(
+    new URL(
+      "../../components/help/purchase-path/shipping-returns-disclosure.tsx",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  const cards = readFileSync(
+    new URL("./product-record-cards.tsx", import.meta.url),
+    "utf8",
+  );
+  const specs = readFileSync(
+    new URL("./product-specs.module.css", import.meta.url),
+    "utf8",
+  );
+  const handmade = readFileSync(
+    new URL("./product-handmade-note.module.css", import.meta.url),
+    "utf8",
+  );
+  assert.equal(detail.includes("ProductMaking"), false);
+  assert.equal(detail.includes("makingTitle"), false);
+  assert.equal(questions.includes("<details"), false);
+  assert.equal(shipping.includes("<details"), false);
+  assert.equal(cards.includes("pdpQrLink"), false);
+  assert.match(specs, /grid-template-areas:\s*"label value"/);
+  assert.match(handmade, /width:\s*100%/);
+  assert.equal(handmade.includes("fit-content"), false);
 });
 
 test("related-works clearance uses the floating-bar footprint, not an extra band", () => {

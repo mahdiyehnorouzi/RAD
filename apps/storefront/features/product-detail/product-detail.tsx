@@ -16,7 +16,6 @@ import { ProductAnatomy } from "./product-anatomy";
 import { ProductCare } from "./product-care";
 import { ProductGallery } from "./product-gallery";
 import { ProductFloatingBuy } from "./product-floating-buy";
-import { ProductMaking } from "./product-making";
 import { ProductQuestions } from "./product-questions";
 import { ProductStory } from "./product-story";
 import { ProductSummary } from "./product-summary";
@@ -169,26 +168,11 @@ export function ProductDetail({
             product={resolved}
             artwork={artwork}
             textures={textures}
-            index={1}
           />
-          <ProductAnatomy
-            product={resolved}
-            artwork={artwork}
-            textures={textures}
-            index={2}
-          />
-          <ProductMaking
-            product={resolved}
-            artwork={artwork}
-            passport={passport}
-            textures={textures}
-            index={3}
-          />
+          <ProductAnatomy product={resolved} artwork={artwork} />
           <ProductCare
             text={(artwork?.care ?? passport?.care)?.[locale]}
             glazed={isGlazed(artwork)}
-            textures={textures}
-            index={4}
           />
           <div className={styles.foldList}>
             <ProductQuestions
@@ -197,7 +181,7 @@ export function ProductDetail({
                 state.button !== "sold" && state.button !== "withdrawn"
               }
               textures={textures}
-              index={5}
+              index={1}
             />
           </div>
           <MaterialTexture
