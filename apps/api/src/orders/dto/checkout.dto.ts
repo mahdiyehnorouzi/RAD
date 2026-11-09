@@ -1,5 +1,10 @@
 import { ApiPropertyOptional } from "@nestjs/swagger";
-import { IsObject, IsOptional, IsString } from "class-validator";
+import {
+  IsObject,
+  IsOptional,
+  IsString,
+  MaxLength,
+} from "class-validator";
 
 export class CheckoutDto {
   @ApiPropertyOptional({ example: "Mahdiyeh Norozi" })
@@ -21,6 +26,15 @@ export class CheckoutDto {
   @IsOptional()
   @IsString()
   address?: string;
+
+  @ApiPropertyOptional({
+    description: "Optional note for RAD staff, shown only in admin order review.",
+    example: "لطفاً با روکش اضافه بسته‌بندی شود.",
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  message?: string;
 
   @ApiPropertyOptional({
     description:

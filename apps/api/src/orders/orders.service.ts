@@ -112,6 +112,7 @@ export class OrdersService implements OnModuleInit {
       city?: string;
       phone?: string;
       address?: string;
+      message?: string;
       acceptedPolicies?: Record<string, string>;
     },
   ) {
@@ -190,6 +191,7 @@ export class OrdersService implements OnModuleInit {
         city,
         phone,
         address: input.address?.trim() ?? "",
+        message: input.message?.trim() || null,
         policyVersions,
         policiesAcceptedAt: new Date(),
       });

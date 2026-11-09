@@ -48,6 +48,10 @@ export class Order {
   @Column("text", { default: "" })
   address!: string;
 
+  /** Optional "Message to RAD" note the buyer leaves at checkout. */
+  @Column("text", { nullable: true })
+  message!: string | null;
+
   @Column("text", { nullable: true })
   trackingCode!: string | null;
 

@@ -551,6 +551,12 @@ function OrderDetail({
               <dt>نشانی</dt>
               <dd>{order.address || "ثبت نشده"}</dd>
             </div>
+            {order.message ? (
+              <div>
+                <dt>پیام مشتری</dt>
+                <dd>{order.message}</dd>
+              </div>
+            ) : null}
           </dl>
         </section>
       </div>
