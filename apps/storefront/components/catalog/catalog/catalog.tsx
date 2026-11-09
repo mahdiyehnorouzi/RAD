@@ -272,8 +272,14 @@ export function AddToBag({
           >
             <path d="M58 -2c-6 10 8 16 2 26s-22 10-26 20 6 12 2 16" />
           </svg>
-          <ShoppingBag aria-hidden="true" />
+          {/* `.add-to-bag-next-arrow` is pinned via `position: absolute;
+              inset-inline-end` (see catalog.css) — its own position in the
+              flex flow doesn't matter. The bag icon and label below DO
+              share the normal flex flow, so their DOM order is what decides
+              which one reads physically left of the other in RTL: the icon
+              last places it at the label's inline-end (left, in fa). */}
           <span>{t("goToBag")}</span>
+          <ShoppingBag aria-hidden="true" />
           <Forward className="add-to-bag-next-arrow" aria-hidden="true" />
         </Link>
       ) : null}
