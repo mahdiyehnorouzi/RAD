@@ -1,9 +1,10 @@
+import { SOLD_STATUS_FA } from "../pdp-content";
+
 export const pdpCopy = {
   fa: {
     byLine: "اثری از",
     studio: "استودیوی رَد",
     available: "آماده‌ی خرید",
-    soldNote: "این رَد فروخته شده و نسخه‌ی دیگه‌ای ازش ساخته نمی‌شه.",
     qrCardBody: "شناسنامه‌ی دیجیتال این اثر رو ببین یا با کسی به اشتراک بذار.",
     passportCardBody: "داستان و مسیر ساخت این رَد توی گذرنامه‌ش ثبت شده.",
     passportAction: "دیدن گذرنامه",
@@ -20,7 +21,6 @@ export const pdpCopy = {
     specCategory: "دسته‌بندی",
     specMaterial: "ماده",
     specSurface: "سطح",
-    specProcess: "ساخت",
     specSize: "ابعاد",
     specMaker: "سازنده",
     specMade: "زمان ساخت",
@@ -55,14 +55,13 @@ export const pdpCopy = {
     linkCopied: "لینک اثر کپی شد",
     closeViewer: "بستن نمای تمام‌صفحه",
     secondaryViews: "نماهای جزئیات",
-    soldFoundNote: "این رد صاحبش را پیدا کرده.",
+    soldFoundNote: SOLD_STATUS_FA,
     reservedAvailableNote: "در صورت آزاد شدن، دوباره قابل خرید است.",
   },
   en: {
     byLine: "A work by",
     studio: "RAD Studio",
     available: "Available",
-    soldNote: "This work has been sold and will not be made again.",
     qrCardBody: "Open its digital record or share it.",
     passportCardBody:
       "The story, making and record of this work, in its passport.",
@@ -80,7 +79,6 @@ export const pdpCopy = {
     specCategory: "Category",
     specMaterial: "Material",
     specSurface: "Surface",
-    specProcess: "Making",
     specSize: "Dimensions",
     specMaker: "Maker",
     specMade: "Made",

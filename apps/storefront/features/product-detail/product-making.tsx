@@ -8,6 +8,7 @@ import type { WorkTexture } from "@/lib/catalog/material-texture";
 import { passportYear } from "@/lib/passport";
 import { formatArtworkNumber } from "@/components/product/listing";
 import { MAKING_PATHS, pdpCopy } from "./const";
+import { makingProcessText } from "./pdp-content";
 import { PdpSection } from "./pdp-section";
 import { WorkStroke } from "./work-stroke";
 import styles from "./product-making.module.css";
@@ -39,7 +40,9 @@ export function ProductMaking({
   const steps = (MAKING_PATHS[product.category] ?? []).filter(
     (step) => !step.when || step.when.test(recorded),
   );
-  if (!steps.length || !recordNumber || !product.radNumber) return null;
+  const process = makingProcessText(artwork?.materials.process, locale);
+  const showPath = Boolean(steps.length && recordNumber && product.radNumber);
+  if (!showPath && !process) return null;
   const year = passport ? passportYear(passport, locale) : undefined;
 
   return (
@@ -49,26 +52,29 @@ export function ProductMaking({
       lede={c.makingLede}
       mark={<WorkStroke textures={textures} index={index} />}
     >
-      <ol
-        className={styles.makingPath}
-        style={{ "--steps": steps.length + 1 } as CSSProperties}
-      >
-        {steps.map((step) => (
-          <li key={step.id}>
-            <i className={styles.makingNode} aria-hidden="true" />
-            <span>{step.label[locale]}</span>
+      {process ? <p className={styles.process}>{process}</p> : null}
+      {showPath && product.radNumber && recordNumber ? (
+        <ol
+          className={styles.makingPath}
+          style={{ "--steps": steps.length + 1 } as CSSProperties}
+        >
+          {steps.map((step) => (
+            <li key={step.id}>
+              <i className={styles.makingNode} aria-hidden="true" />
+              <span>{step.label[locale]}</span>
+            </li>
+          ))}
+          <li className={styles.work}>
+            <RadFingerprint
+              radNumber={product.radNumber}
+              className={styles.makingPrint}
+              animate
+            />
+            <span dir="ltr">{recordNumber}</span>
+            {year ? <small>{year}</small> : null}
           </li>
-        ))}
-        <li className={styles.work}>
-          <RadFingerprint
-            radNumber={product.radNumber}
-            className={styles.makingPrint}
-            animate
-          />
-          <span dir="ltr">{recordNumber}</span>
-          {year ? <small>{year}</small> : null}
-        </li>
-      </ol>
+        </ol>
+      ) : null}
     </PdpSection>
   );
 }

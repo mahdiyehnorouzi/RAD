@@ -1,3 +1,14 @@
+.process {
+  margin: 0 0 1rem;
+  color: var(--ink);
+  font-size: var(--text-body);
+  line-height: var(--leading-body);
+}
+
+.process:last-child {
+  margin-bottom: 0;
+}
+
 /* The path every work of this medium takes. */
 .makingPath {
   position: relative;

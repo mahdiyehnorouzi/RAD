@@ -1,7 +1,7 @@
 "use client";
 import { useId, type Ref } from "react";
 import Link from "next/link";
-import { Info, ShoppingBag } from "lucide-react";
+import { ShoppingBag } from "lucide-react";
 import type { Artwork, Product } from "@rad/types";
 import { useLocale } from "@/components/i18n";
 import { RadFingerprint } from "@/components/identity";
@@ -15,6 +15,7 @@ import {
   formatRadDigits,
 } from "@/components/product/listing";
 import { PDP_ASSURANCES, pdpCopy } from "./const";
+import { titleIdentityLine } from "./pdp-content";
 import type { LiveProduct } from "./hooks";
 import { ProductHandmadeNote } from "./product-handmade-note";
 import { ProductLiveNotice } from "./product-live-notice";
@@ -59,7 +60,9 @@ export function ProductSummary({
   const c = pdpCopy[locale];
   const noteId = useId();
   const copy = productCopy(product, locale);
-  const recordNumber = formatArtworkNumber(product, number, locale);
+  const recordNumber = titleIdentityLine(
+    formatArtworkNumber(product, number, locale),
+  );
   const code = product.radNumber
     ? formatRadDigits(product.radNumber, number, locale)
     : undefined;
@@ -103,8 +106,6 @@ export function ProductSummary({
               />
             ) : null}
             <span>{recordNumber}</span>
-            <span aria-hidden="true">·</span>
-            <span>{c.oneOfOne}</span>
           </p>
         ) : null}
         <h1>{copy.name}</h1>
@@ -126,7 +127,9 @@ export function ProductSummary({
       </div>
 
       {state.button === "sold" ? (
-        <p className={styles.contextNote}>{c.soldFoundNote}</p>
+        <p id={noteId} className={styles.contextNote}>
+          {c.soldFoundNote}
+        </p>
       ) : state.button === "reserved" ? (
         <p className={styles.contextNote}>{c.reservedAvailableNote}</p>
       ) : null}
@@ -173,12 +176,6 @@ export function ProductSummary({
             onSheetVisibleChange={onSheetVisibleChange}
           />
         )}
-        {state.button === "sold" ? (
-          <p id={noteId} className={styles.buyNote}>
-            <Info aria-hidden="true" />
-            {c.soldNote}
-          </p>
-        ) : null}
       </div>
 
       {state.withdrawn ? null : (
