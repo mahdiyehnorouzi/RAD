@@ -31,7 +31,6 @@ export function ProductSummary({
   state,
   live,
   passport,
-  qrSvg,
   textures,
   buyRef,
   onSheetVisibleChange,
@@ -45,7 +44,6 @@ export function ProductSummary({
   state: PurchaseState;
   live: LiveProduct;
   passport?: RadPassport;
-  qrSvg?: string;
   textures: WorkTexture[];
   /** Observed by the page to know when the inline CTA leaves the viewport. */
   buyRef?: Ref<HTMLDivElement>;
@@ -198,7 +196,7 @@ export function ProductSummary({
         change={change}
       />
 
-      <ProductRecordCards product={product} passport={passport} qrSvg={qrSvg} />
+      <ProductRecordCards product={product} passport={passport} />
 
       <ProductSpecs
         product={product}

@@ -111,6 +111,14 @@
   margin-top: 1.5rem;
 }
 
+/* Shipping, packaging, and questions are siblings. `.rest`'s gap separates
+   this group from the sections above it, not the cards inside it. */
+.foldList {
+  display: grid;
+  gap: 2.25rem;
+  min-width: 0;
+}
+
 /* The specs card lives in `.summary`, which has no trailing-gap mechanism
    of its own (unlike `.rest`, which has an explicit `gap`) — so it was the
    one card with no guaranteed separation from whatever follows it below
@@ -140,8 +148,11 @@
       "rest";
     gap: 1rem;
   }
-  .rest {
+  .rest,
+  .foldList {
     gap: 0.875rem;
+  }
+  .rest {
     margin-top: 0;
   }
   /* The cards and their strokes carry the work's surface here. */

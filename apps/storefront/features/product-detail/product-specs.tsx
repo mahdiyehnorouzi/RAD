@@ -1,14 +1,20 @@
 "use client";
 import type { ReactNode } from "react";
 import {
+  Blend,
   Clock3,
+  Droplets,
   Hand,
+  Hash,
   Layers,
+  MoveVertical,
   Paintbrush,
+  Palette,
   Ruler,
   ScrollText,
-  SlidersHorizontal,
   SquareStack,
+  Weight,
+  type LucideIcon,
 } from "lucide-react";
 import type { Artwork, Locale, Product } from "@rad/types";
 import { RadFingerprint } from "@/components/identity";
@@ -23,6 +29,10 @@ import {
   editionIdentity,
   isArtworkDescriptionCopy,
 } from "./pdp-content";
+import {
+  SPEC_ATTRIBUTE_ICON_FALLBACKS,
+  specAttributeIconName,
+} from "./spec-icons";
 import { CATEGORY_ICONS, pdpCopy } from "./const";
 import { MaterialTexture } from "./material-texture";
 import { PdpSection } from "./pdp-section";
@@ -34,6 +44,24 @@ type SpecRow = {
   value?: ReactNode;
   icon: ReactNode;
 };
+
+const ATTRIBUTE_ICON: Record<string, LucideIcon> = {
+  Palette,
+  Hand,
+  Clock3,
+  Hash,
+  MoveVertical,
+  Weight,
+  Droplets,
+  ScrollText,
+  Blend,
+  SquareStack,
+};
+
+function attributeIcon(name: string) {
+  const Icon = ATTRIBUTE_ICON[name] ?? ScrollText;
+  return <Icon />;
+}
 
 /** Authored spots name the materials seen up close, beneath the body line. */
 function NamedMaterials({ textures }: { textures: WorkTexture[] }) {
@@ -90,7 +118,7 @@ function specRows(
         icon: textures[0] ? (
           <MaterialTexture texture={textures[0]} shape="swatch" />
         ) : (
-          <Layers />
+          <Blend />
         ),
       };
     }
@@ -119,20 +147,37 @@ function specRows(
           key: `detail-${index}`,
           label: c.specDetail,
           value: line,
-          icon: <ScrollText />,
+          icon: attributeIcon(
+            SPEC_ATTRIBUTE_ICON_FALLBACKS[
+              index % SPEC_ATTRIBUTE_ICON_FALLBACKS.length
+            ],
+          ),
         }));
 
   // Admin-defined specs (رنگ، جنس، ابعاد، …) for this product's category,
   // already formatted for display by the API; hidden when empty so
   // products saved before this feature existed render unchanged.
+  const usedAttributeIcons = new Set<string>([
+    "Blend",
+    "Paintbrush",
+    "Ruler",
+    "ScrollText",
+    "Hand",
+    "Clock3",
+    "SquareStack",
+  ]);
   const dynamicAttributes: SpecRow[] = (product.attributes ?? [])
     .filter((attribute) => !described(attribute.value))
-    .map((attribute) => ({
-      key: `attribute-${attribute.key}`,
-      label: attribute.label,
-      value: attribute.value,
-      icon: <SlidersHorizontal />,
-    }));
+    .map((attribute) => {
+      const name = specAttributeIconName(attribute.key, usedAttributeIcons);
+      usedAttributeIcons.add(name);
+      return {
+        key: `attribute-${attribute.key}`,
+        label: attribute.label,
+        value: attribute.value,
+        icon: attributeIcon(name),
+      };
+    });
 
   const edition = editionIdentity(recordNumber);
   return [

@@ -35,7 +35,7 @@
   pointer-events: none;
 }
 
-.record.passportCard > :not(.passportPrint, .recordMedia) {
+.record.passportCard > :not(.passportPrint, .recordMedia, .recordGo) {
   position: relative;
 }
 
@@ -56,14 +56,6 @@
 .passport:hover .stamp,
 .passport:focus-within .stamp {
   transform: rotate(-3deg) scale(1.03);
-}
-
-.recordQrPrint {
-  width: 1.9rem;
-  height: 1.9rem;
-  margin-inline-start: 0.25rem;
-  color: var(--ink);
-  opacity: 0.5;
 }
 
 .record {
@@ -101,7 +93,7 @@
   flex-direction: column;
   align-items: flex-start;
   gap: 0.4rem;
-  padding: 1.2rem 1.3rem;
+  padding: 1.2rem 1.3rem 4.4rem;
   padding-inline-end: calc(36% + 1.3rem);
 }
 
@@ -109,12 +101,20 @@
   font-size: 1.15rem;
 }
 
-.recordGo {
+.record.passportCard > .recordGo {
+  position: absolute;
+  z-index: 1;
+  /* Inline end is the left edge of the card in Persian, the right edge in English. */
+  inset-inline-end: 0.85rem;
+  inset-block-end: 0.85rem;
   display: inline-flex;
   align-items: center;
   gap: 0.65rem;
-  margin-top: auto;
-  padding-top: 0.5rem;
+  max-width: calc(100% - 1.7rem);
+  padding-block: 0.15rem;
+  padding-inline: 0.15rem 0.7rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--paper) 92%, transparent);
   font-size: 0.86rem;
   font-weight: var(--font-weight-medium);
 }
@@ -153,43 +153,10 @@
   background: color-mix(in srgb, var(--sand) 50%, var(--canvas));
 }
 
-.record.qr {
-  max-width: 100%;
-  align-items: center;
-  gap: 1rem;
-  padding: 0.85rem 1.1rem;
-}
-
-.recordQr {
-  display: block;
-  width: 4rem;
-  height: 4rem;
-  flex: none;
-  padding-inline-end: 1rem;
-  border-inline-end: 1px solid var(--line);
-  box-sizing: content-box;
-}
-
-.recordQr svg {
-  display: block;
-  width: 100%;
-  height: 100%;
-  stroke-width: 1.2;
-}
-
-.recordText {
-  display: grid;
-  gap: 0.15rem;
-}
-
-.record.qr strong {
-  font-size: 0.95rem;
-}
-
 @media (--phone) {
   .record.passportCard {
     min-height: 9.5rem;
-    padding: 1rem;
+    padding: 1rem 1rem 4.2rem;
     padding-inline-end: calc(36% + 1rem);
   }
   .record.passportCard strong {

@@ -22,9 +22,9 @@ export const faqFallbackFa: FaqContent = {
     {
       id: "delivery",
       icon: "truck",
-      question: "زمان و محدوده ارسال؟",
+      question: "ارسال چگونه است؟",
       answer:
-        "تهران ۲ تا ۴ روز کاری و شهرستان ۴ تا ۸ روز کاری؛ ارسال بیمه‌شده رایگان است.",
+        "پس از آماده‌شدن اثر، سفارش‌های تهران با پست یا پیک و سفارش‌های شهرهای دیگر با پست ارسال می‌شوند.",
     },
     {
       id: "returns",
@@ -57,9 +57,9 @@ export const faqFallbackEn: FaqContent = {
     {
       id: "delivery",
       icon: "truck",
-      question: "When will it arrive?",
+      question: "How is it sent?",
       answer:
-        "Tehran: 2–4 working days. Other cities: 4–8. Insured delivery is complimentary.",
+        "After the work is ready, Tehran orders are sent by post or courier; orders to other cities are sent by post.",
     },
     {
       id: "returns",

@@ -9,7 +9,8 @@ import type { LocaleCopy } from "@/types/locale";
 export const purchasePathCopy = {
   fa: {
     disclosureTitle: "ارسال و بازگشت",
-    disclosureTeaser: "ارسال رایگان و بیمه‌شده · ۴۸ ساعت برای درخواست بازگشت",
+    disclosureTeaser:
+      "پس از آماده‌شدن اثر، سفارش‌های تهران با پست یا پیک و سفارش‌های شهرهای دیگر با پست ارسال می‌شوند.",
     fullShipping: "متن کامل ارسال",
     fullReturns: "متن کامل مرجوعی و آسیب",
     cartArrival: "زمان تقریبی رسیدن، از تأیید پرداخت",
@@ -37,7 +38,8 @@ export const purchasePathCopy = {
   },
   en: {
     disclosureTitle: "Shipping and returns",
-    disclosureTeaser: "Free insured shipping · 48 hours to ask for a return",
+    disclosureTeaser:
+      "After the work is ready, Tehran orders are sent by post or courier; orders to other cities are sent by post.",
     fullShipping: "Full shipping text",
     fullReturns: "Full returns and damage text",
     cartArrival: "Estimated arrival, from payment confirmation",

@@ -18,10 +18,20 @@ test("the close control sits in its own row, not over the product photo", () => 
   assert.match(css, /\.bag-added-toolbar\s*\{[^}]*min-height:\s*44px/);
 });
 
-test("the continue label can wrap and the sheet is tall enough to show it", () => {
+test("the continue label can wrap and the sheet keeps a top and bottom inset", () => {
   assert.match(css, /\.bag-added-continue\s*\{[^}]*white-space:\s*normal/);
   assert.match(css, /\.bag-added-continue\s*\{[^}]*overflow-wrap:\s*anywhere/);
-  assert.match(css, /max-height:\s*min\(92dvh,\s*640px\)/);
+  assert.match(css, /env\(safe-area-inset-top, 0px\)/);
   assert.equal(/max-height:[^;]*40dvh/.test(css), false);
+  assert.equal(/max-height:[^;]*92dvh/.test(css), false);
   assert.match(css, /env\(safe-area-inset-bottom, 0px\)/);
+});
+
+test("the photo sits on the left and the primary action follows the site button", () => {
+  assert.match(css, /\.bag-added-product\s*\{[^}]*direction:\s*ltr/);
+  assert.match(css, /\.bag-added-primary\s*\{[^}]*background:\s*var\(--moss\)/);
+  assert.match(css, /\.bag-added-primary\s*\{[^}]*border-radius:\s*2px/);
+  assert.match(source, /className="button bag-added-primary"/);
+  assert.match(source, /locale === "fa" \? ArrowLeft : ArrowRight/);
+  assert.equal(css.includes("#173d31"), false);
 });

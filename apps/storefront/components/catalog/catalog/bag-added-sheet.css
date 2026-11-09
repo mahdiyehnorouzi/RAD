@@ -1,10 +1,12 @@
 .bag-added-sheet {
-  /* Content-driven: no fixed height. The cap stays near the full viewport
-     so the continue action stays visible on a phone. */
+  /* Content-driven: no fixed height. The cap leaves a top inset, including
+     the device safe area, so the sheet never sits against the viewport top. */
   position: relative;
   width: min(100%, 460px);
   max-width: 100%;
-  max-height: min(92dvh, 640px);
+  max-height: calc(
+    100dvh - max(4.5rem, env(safe-area-inset-top, 0px) + 1.5rem)
+  );
   margin: auto auto 0;
   padding: 10px 24px calc(22px + env(safe-area-inset-bottom, 0px));
   border: 0;
@@ -65,9 +67,21 @@
   width: 18px;
 }
 .bag-added-product {
+  /* Physical left-to-right row so the photo stays on the left of the screen
+     in both locales. The copy restores the page direction. */
   display: flex;
+  direction: ltr;
   align-items: center;
   gap: 20px;
+}
+.bag-added-copy {
+  flex: 1;
+  min-width: 0;
+  direction: rtl;
+  text-align: start;
+}
+[data-locale="en"] .bag-added-copy {
+  direction: ltr;
 }
 .bag-added-photo {
   position: relative;
@@ -81,9 +95,6 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-}
-.bag-added-product > div {
-  flex: 1;
 }
 .bag-added-product h2 {
   font-size: 18px;
@@ -108,15 +119,23 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 15px;
-  min-height: 50px;
-  background: #173d31;
-  color: white;
-  border-radius: 28px;
+  gap: 0.6rem;
+  width: 100%;
+  min-height: 52px;
+  padding: 0.65rem 1.75rem;
+  border: 0;
+  border-radius: 2px;
+  background: var(--moss);
+  color: var(--paper);
+  font-size: var(--text-button);
+  font-weight: 500;
   text-decoration: none;
 }
 .bag-added-primary svg {
   width: 18px;
+  height: 18px;
+  flex: none;
+  stroke-width: 1.8;
 }
 .bag-added-continue {
   display: block;
