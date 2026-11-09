@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { ArrowLeft, ArrowRight } from "lucide-react";
 import type { Product } from "@rad/types";
 import { useLocale } from "@/components/i18n";
 import { useProductStatus } from "@/hooks/use-product-status";
@@ -57,7 +56,6 @@ export function ProductCard({
       : product.vendor.displayNameEn
     : c.maker;
   const unavailable = Boolean(status) && !purchasable && !inBag;
-  const Arrow = locale === "fa" ? ArrowLeft : ArrowRight;
 
   const badge: { tone: ProductBadgeTone; label: string } | null = inBag
     ? { tone: "bag", label: c.inBag }
@@ -164,17 +162,6 @@ export function ProductCard({
       <div className="rad-card-body">
         {info}
         {qr()}
-        {variant === "suggest" ? (
-          <Link
-            href={productHref}
-            prefetch={false}
-            className="rad-card-go"
-            tabIndex={-1}
-            aria-hidden="true"
-          >
-            <Arrow aria-hidden="true" />
-          </Link>
-        ) : null}
       </div>
     </article>
   );
