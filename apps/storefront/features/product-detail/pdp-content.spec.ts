@@ -122,7 +122,20 @@ test("artwork details omit description prose and the making section is gone", ()
     new URL("./product-record-cards.module.css", import.meta.url),
     "utf8",
   );
-  assert.match(passport, /\.recordGo\s*\{[^}]*inset-inline-end:/);
+  assert.match(
+    passport,
+    /\.record\.passportCard > \.recordGo\s*\{[^}]*position:\s*relative/,
+  );
+  assert.equal(
+    /\.record\.passportCard > \.recordGo\s*\{[^}]*inset-inline-end:/.test(
+      passport,
+    ),
+    false,
+  );
+  assert.match(
+    passport,
+    /\[data-locale="fa"\] \.recordMedia\s*\{[^}]*inset-inline-start:\s*0/,
+  );
 });
 
 test("artwork detail facts do not share one generic icon", () => {

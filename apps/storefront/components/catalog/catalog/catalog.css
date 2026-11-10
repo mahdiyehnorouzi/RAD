@@ -2,6 +2,13 @@
   width: 100%;
 }
 
+/* PDP-only: pill-rounded in every state (default/hover/focus/disabled/
+   loading/in-bag), unlike the shared `.button`'s 2px site-wide radius —
+   scoped to `.add-to-bag` so it never reaches other `.button.add` uses. */
+.add-to-bag .button.add {
+  border-radius: 999px;
+}
+
 button.add--in-bag:disabled,
 .add-to-bag .button.add--in-bag:disabled {
   opacity: 1;
@@ -37,7 +44,7 @@ button.add--in-bag:disabled,
   min-height: 3.4rem;
   padding-inline: 3rem;
   overflow: hidden;
-  border-radius: 4px;
+  border-radius: 999px;
   background: var(--bag-ground);
   color: var(--paper);
   font-size: 1rem;
