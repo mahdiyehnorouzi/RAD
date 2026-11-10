@@ -19,6 +19,7 @@ import {
   Tag,
   X,
 } from "lucide-react";
+import { Button } from "@rad/ui";
 import {
   commissionStageLabels,
   commissionStageOrder,
@@ -286,9 +287,7 @@ export function AdminCommissions({
             دریافت سفارش‌های اختصاصی ناموفق بود. اتصال اینترنت را بررسی و دوباره
             تلاش کنید.
           </p>
-          <button className="primary-action" type="button" onClick={onRetry}>
-            تلاش دوباره
-          </button>
+          <Button onClick={onRetry}>تلاش دوباره</Button>
         </div>
       ) : loading ? (
         <p className="admin-loading">در حال بارگذاری سفارش‌های اختصاصی…</p>
@@ -856,13 +855,14 @@ function CommissionMessages({
             </button>
           </p>
         )}
-        <button
-          className="secondary-action"
+        <Button
+          variant="secondary"
           type="submit"
-          disabled={!canWrite || !message.trim() || sending}
+          disabled={!canWrite || !message.trim()}
+          loading={sending}
         >
-          {sending ? "در حال ارسال…" : "ارسال پیام"}
-        </button>
+          ارسال پیام
+        </Button>
       </form>
     </div>
   );
@@ -1064,13 +1064,9 @@ function CommissionDecisionForm({
           {error}
         </p>
       )}
-      <button
-        className="primary-action"
-        type="submit"
-        disabled={!canWrite || submitting}
-      >
-        {submitting ? "در حال ثبت…" : "ثبت تصمیم و اطلاع به مشتری"}
-      </button>
+      <Button type="submit" disabled={!canWrite} loading={submitting}>
+        ثبت تصمیم و اطلاع به مشتری
+      </Button>
     </form>
   );
 }

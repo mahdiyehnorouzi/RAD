@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { ChevronRight, Package, Search } from "lucide-react";
+import { Button } from "@rad/ui";
 import {
   orderStatusLabels,
   orderStatusOptions,
@@ -204,9 +205,7 @@ export function AdminOrders({
           <p>
             دریافت سفارش‌ها ناموفق بود. اتصال را بررسی کنید و دوباره تلاش کنید.
           </p>
-          <button className="primary-action" type="button" onClick={onRetry}>
-            تلاش دوباره
-          </button>
+          <Button onClick={onRetry}>تلاش دوباره</Button>
         </div>
       ) : loading || !list ? (
         <p className="admin-loading" role="status">
@@ -643,20 +642,20 @@ function OrderDetail({
           <p>تحویل در {dateTime(order.deliveredAt)} ثبت شده است.</p>
         ) : null}
         {canWrite && showTracking && trackingDirty ? (
-          <button
-            className="secondary-action"
-            type="button"
+          <Button
+            variant="secondary"
             disabled={
-              pending !== null ||
+              (pending !== null && pending !== "tracking") ||
               tracking.trim().length === 0 ||
               Boolean(trackingIssue)
             }
+            loading={pending === "tracking"}
             onClick={() =>
               void run({ ...order, trackingCode: tracking.trim() }, "tracking")
             }
           >
-            {pending === "tracking" ? "در حال ثبت…" : "ثبت کد رهگیری"}
-          </button>
+            ثبت کد رهگیری
+          </Button>
         ) : null}
       </section>
 
@@ -676,11 +675,14 @@ function OrderDetail({
               const blockedByTracking =
                 status === "shipped" && Boolean(trackingIssue);
               return (
-                <button
+                <Button
                   key={status}
-                  type="button"
-                  className={destructive ? "danger-action" : "primary-action"}
-                  disabled={pending !== null || blockedByTracking}
+                  variant={destructive ? "danger" : "primary"}
+                  disabled={
+                    (pending !== null && pending !== status) ||
+                    blockedByTracking
+                  }
+                  loading={pending === status}
                   onClick={() => {
                     const next = {
                       ...order,
@@ -697,10 +699,8 @@ function OrderDetail({
                     void run(next, status);
                   }}
                 >
-                  {pending === status
-                    ? "در حال ثبت…"
-                    : (actionLabels[status] ?? orderStatusLabels[status])}
-                </button>
+                  {actionLabels[status] ?? orderStatusLabels[status]}
+                </Button>
               );
             })}
           </div>

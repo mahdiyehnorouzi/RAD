@@ -425,10 +425,10 @@ export function ProductDialog({
               </button>
             ))}
             {product && onDelete && (
-              <Button variant="danger" size="sm" onClick={onDelete}>
+              <button className="danger" type="button" onClick={onDelete}>
                 <Trash2 />
                 <span>حذف محصول</span>
-              </Button>
+              </button>
             )}
           </nav>
         </aside>

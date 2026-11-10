@@ -2,6 +2,7 @@
 import { effectiveProductStatus } from "@rad/types";
 
 import { useEffect, useState } from "react";
+import { Button } from "@rad/ui";
 import {
   Archive,
   ChevronLeft,
@@ -659,14 +660,9 @@ function AccountSettings({
           انجام می‌شود.
         </p>
         <div className="dialog-actions account-actions">
-          <button
-            className="primary-action"
-            type="submit"
-            disabled={saving}
-            aria-busy={saving || undefined}
-          >
-            {saving ? "در حال ذخیره…" : "ذخیره رمز عبور"}
-          </button>
+          <Button type="submit" loading={saving}>
+            ذخیره رمز عبور
+          </Button>
         </div>
       </form>
     </section>
