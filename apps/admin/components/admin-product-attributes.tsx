@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Plus } from "lucide-react";
+import { Button } from "@rad/ui";
 import {
   attributeCategoryLabel,
   type ProductAttribute,
@@ -58,15 +59,10 @@ export function AdminProductAttributes({
             فروشگاه دیده می‌شوند.
           </p>
         </div>
-        <button
-          className="primary-action"
-          type="button"
-          onClick={() => setEditing("new")}
-          disabled={!canWrite}
-        >
+        <Button onClick={() => setEditing("new")} disabled={!canWrite}>
           <Plus />
           ویژگی تازه
-        </button>
+        </Button>
       </div>
 
       {attributes.length ? (

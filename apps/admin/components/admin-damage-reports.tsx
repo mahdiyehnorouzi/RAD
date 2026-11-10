@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { Button } from "@rad/ui";
 import type { AdminDamageReport, AdminOrder } from "../lib/admin-data";
 import {
   AdminDamageReportItem,
@@ -96,9 +97,7 @@ export function AdminDamageReports({
             دریافت گزارش‌های آسیب ناموفق بود. اتصال اینترنت را بررسی و دوباره
             تلاش کنید.
           </p>
-          <button className="primary-action" type="button" onClick={onRetry}>
-            تلاش دوباره
-          </button>
+          <Button onClick={onRetry}>تلاش دوباره</Button>
         </div>
       ) : loading ? (
         <p className="admin-loading">در حال بارگذاری گزارش‌های آسیب…</p>
