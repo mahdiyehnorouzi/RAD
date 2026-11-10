@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { ArrowLeft, Eye, EyeOff } from "lucide-react";
+import { Button } from "@rad/ui";
 import {
   loadRememberedEmail,
   loadRememberMe,
@@ -112,9 +113,7 @@ export function AdminLogin({
                   required
                 />
               </Field>
-              <button className="primary-action" type="submit">
-                ارسال کد بازیابی
-              </button>
+              <Button type="submit">ارسال کد بازیابی</Button>
               <button
                 className="text-link-button"
                 type="button"
@@ -213,10 +212,10 @@ export function AdminLogin({
               </span>
             </label>
             <div className="login-actions">
-              <button className="primary-action" type="submit">
+              <Button type="submit">
                 ورود
                 <ArrowLeft />
-              </button>
+              </Button>
               <button
                 className="text-link-button"
                 type="button"

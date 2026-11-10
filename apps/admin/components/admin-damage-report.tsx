@@ -2,6 +2,7 @@
 
 import { useId, useState } from "react";
 import { AlertTriangle, Eye, Phone } from "lucide-react";
+import { Button } from "@rad/ui";
 import {
   damageResolutionLabels,
   damageStatusLabels,
@@ -121,24 +122,23 @@ export function AdminDamageReportItem({
           </span>
         ) : null}
         {canWrite && report.status === "submitted" ? (
-          <button
-            type="button"
-            className="secondary-action contact-message-toggle"
+          <Button
+            variant="secondary"
+            className="contact-message-toggle"
             onClick={() => send({ status: "reviewing" })}
             disabled={busy}
           >
             <Eye aria-hidden="true" /> شروع بررسی
-          </button>
+          </Button>
         ) : null}
         {canWrite && open && !deciding ? (
-          <button
-            type="button"
-            className="primary-action damage-claim-decide"
+          <Button
+            className="damage-claim-decide"
             onClick={() => setDeciding(true)}
             disabled={busy}
           >
             تصمیم
-          </button>
+          </Button>
         ) : null}
       </footer>
 
@@ -184,12 +184,21 @@ export function AdminDamageReportItem({
             onChange={(event) => setNote(event.target.value)}
           />
           <div className="order-payment-actions">
-            <button type="submit" className="primary-action" disabled={busy || (noteRequired && !note.trim())}>
+            <Button
+              type="submit"
+              disabled={noteRequired && !note.trim()}
+              loading={busy}
+            >
               ثبت تصمیم
-            </button>
-            <button type="button" className="secondary-action" onClick={() => setDeciding(false)} disabled={busy}>
+            </Button>
+            <Button
+              variant="secondary"
+              type="button"
+              onClick={() => setDeciding(false)}
+              disabled={busy}
+            >
               انصراف
-            </button>
+            </Button>
           </div>
         </form>
       ) : null}

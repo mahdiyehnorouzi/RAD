@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { Button } from "@rad/ui";
 import { api } from "../lib/api";
 
 export function ResetPasswordPage({ email: initialEmail }: { email: string }) {
@@ -24,7 +25,7 @@ export function ResetPasswordPage({ email: initialEmail }: { email: string }) {
         {done ? (
           <div className="login-success">
             <p>رمز عبور با موفقیت تغییر کرد.</p>
-            <button className="primary-action" type="button" onClick={() => router.push("/")}>ورود به پنل</button>
+            <Button type="button" onClick={() => router.push("/")}>ورود به پنل</Button>
           </div>
         ) : (
           <form
@@ -118,7 +119,7 @@ export function ResetPasswordPage({ email: initialEmail }: { email: string }) {
                 required
               />
             </label>
-            <button className="primary-action" type="submit">ذخیره رمز عبور</button>
+            <Button type="submit">ذخیره رمز عبور</Button>
             <Link className="text-link" href="/">بازگشت به ورود</Link>
           </form>
         )}
