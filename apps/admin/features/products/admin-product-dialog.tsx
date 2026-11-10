@@ -676,49 +676,55 @@ export function ProductDialog({
                       )}
                       <div className="product-media-actions">
                         {!isVideoStorage(image.storage) && (
-                          <button
-                            type="button"
+                          <Button
+                            variant="secondary"
+                            size="sm"
                             className={isCover ? "cover-selected" : ""}
                             disabled={saving || isCover || !coverReady}
                             onClick={() => setCover(index)}
                           >
                             {isCover ? "کاور فعلی" : "انتخاب به‌عنوان کاور"}
-                          </button>
+                          </Button>
                         )}
                         {upload?.error && (
-                          <button
-                            type="button"
+                          <Button
+                            variant="secondary"
+                            size="sm"
                             onClick={() =>
                               void uploadFile(upload.file, image.src!)
                             }
                           >
                             تلاش دوباره
-                          </button>
+                          </Button>
                         )}
-                        <button
-                          type="button"
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          className="content-danger"
                           disabled={saving}
                           onClick={() => removeMedia(index)}
                           aria-label={`حذف فایل ${number.format(index + 1)}`}
                         >
                           حذف
-                        </button>
-                        <button
-                          type="button"
+                        </Button>
+                        <Button
+                          variant="secondary"
+                          size="sm"
                           disabled={saving || index === 0}
                           onClick={() => moveMedia(index, -1)}
                           aria-label={`جابه‌جایی فایل ${number.format(index + 1)} به قبل`}
                         >
                           قبل
-                        </button>
-                        <button
-                          type="button"
+                        </Button>
+                        <Button
+                          variant="secondary"
+                          size="sm"
                           disabled={saving || index === draft.images.length - 1}
                           onClick={() => moveMedia(index, 1)}
                           aria-label={`جابه‌جایی فایل ${number.format(index + 1)} به بعد`}
                         >
                           بعد
-                        </button>
+                        </Button>
                       </div>
                     </div>
                   );

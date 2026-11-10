@@ -344,24 +344,26 @@ export function AdminOrders({
                 </ul>
                 {result.pages > 1 ? (
                   <nav className="orders-pager" aria-label="صفحه‌های سفارش">
-                    <button
-                      type="button"
+                    <Button
+                      variant="secondary"
+                      size="sm"
                       disabled={result.page <= 1}
                       onClick={() => setPage(result.page - 1)}
                     >
                       قبلی
-                    </button>
+                    </Button>
                     <span>
                       {number.format(result.page)} از{" "}
                       {number.format(result.pages)}
                     </span>
-                    <button
-                      type="button"
+                    <Button
+                      variant="secondary"
+                      size="sm"
                       disabled={result.page >= result.pages}
                       onClick={() => setPage(result.page + 1)}
                     >
                       بعدی
-                    </button>
+                    </Button>
                   </nav>
                 ) : null}
               </div>

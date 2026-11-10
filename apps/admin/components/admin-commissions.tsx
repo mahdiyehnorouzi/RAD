@@ -850,9 +850,9 @@ function CommissionMessages({
         {error && (
           <p className="commission-message-error" role="alert">
             {error}
-            <button type="button" onClick={send}>
+            <Button variant="secondary" size="sm" onClick={send}>
               تلاش دوباره
-            </button>
+            </Button>
           </p>
         )}
         <Button
