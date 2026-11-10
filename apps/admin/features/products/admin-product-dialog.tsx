@@ -13,6 +13,7 @@ import {
   Tag,
   Trash2,
 } from "lucide-react";
+import { Button } from "@rad/ui";
 import { api } from "../../lib/api";
 import {
   isVideoStorage,
@@ -424,10 +425,10 @@ export function ProductDialog({
               </button>
             ))}
             {product && onDelete && (
-              <button className="danger" type="button" onClick={onDelete}>
+              <Button variant="danger" size="sm" onClick={onDelete}>
                 <Trash2 />
                 <span>حذف محصول</span>
-              </button>
+              </Button>
             )}
           </nav>
         </aside>
@@ -435,18 +436,14 @@ export function ProductDialog({
         <div className="editor-main">
           <div className="editor-main-head">
             <h2 id="editor-title">{product ? "ویرایش اثر" : "اثر تازه"}</h2>
-            <button
-              className="primary-action"
+            <Button
               type="submit"
-              disabled={saving || unresolvedUploads}
+              disabled={unresolvedUploads}
+              loading={saving}
             >
               <PackageCheck />
-              {saving
-                ? "در حال ذخیره…"
-                : uploadingCount > 0
-                  ? "در حال بارگذاری…"
-                  : "ذخیره تغییرات"}
-            </button>
+              {uploadingCount > 0 ? "در حال بارگذاری…" : "ذخیره تغییرات"}
+            </Button>
           </div>
 
           <section id="section-basics" className="editor-section-card">

@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { Plus } from "lucide-react";
+import { Button } from "@rad/ui";
 import {
   policyTitleLabels,
   type HelpQuestion,
@@ -82,15 +83,13 @@ export function AdminHelpQuestions({
             دیده می‌شوند. تغییرها حداکثر یک دقیقه بعد در فروشگاه دیده می‌شوند.
           </p>
         </div>
-        <button
-          className="primary-action"
-          type="button"
+        <Button
           onClick={() => setEditing("new")}
           disabled={!canWrite || loading || loadError}
         >
           <Plus />
           سؤال تازه
-        </button>
+        </Button>
       </div>
 
       {moveError ? (

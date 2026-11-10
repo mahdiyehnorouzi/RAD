@@ -9,6 +9,7 @@ import {
   Search,
   X,
 } from "lucide-react";
+import { Button } from "@rad/ui";
 import {
   productStatusLabel,
   productStatusLabels,
@@ -106,15 +107,10 @@ export function Products({
           <h2>آثار و محصولات</h2>
           <p>تمام آثار ثبت‌شده در استودیو؛ هر اثر فقط یک‌بار ساخته شده است.</p>
         </div>
-        <button
-          className="primary-action"
-          type="button"
-          onClick={onCreate}
-          disabled={!canWrite}
-        >
+        <Button onClick={onCreate} disabled={!canWrite}>
           <Plus />
           افزودن اثر
-        </button>
+        </Button>
       </div>
       <div className="toolbar">
         <div className="search-field">

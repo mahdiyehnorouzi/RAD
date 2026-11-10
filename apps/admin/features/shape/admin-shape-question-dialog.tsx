@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { Button } from "@rad/ui";
 import { createSingleFlight } from "../../lib/admin-mutation";
 import { SHAPE_TRAITS } from "@rad/types";
 import {
@@ -300,12 +301,12 @@ export function AdminShapeQuestionDialog({
           </small>
         )}
         <div className="dialog-actions">
-          <button className="secondary-action" type="button" onClick={onClose}>
+          <Button variant="secondary" type="button" onClick={onClose}>
             انصراف
-          </button>
-          <button className="primary-action" type="submit" disabled={saving}>
-            {saving ? "در حال ذخیره…" : "ذخیره"}
-          </button>
+          </Button>
+          <Button type="submit" loading={saving}>
+            ذخیره
+          </Button>
         </div>
       </form>
     </DialogShell>
