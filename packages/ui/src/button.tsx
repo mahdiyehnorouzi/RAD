@@ -1,3 +1,4 @@
+import * as React from "react";
 import type { ButtonHTMLAttributes } from "react";
 import "./button.css";
 
