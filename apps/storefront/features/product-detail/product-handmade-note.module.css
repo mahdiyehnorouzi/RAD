@@ -1,5 +1,14 @@
 /* A margin note in the maker's sketchbook, not a notice. */
 .note {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 100%;
+  margin-top: 1.75rem;
+}
+
+.noteBody {
   position: relative;
   display: flex;
   flex-direction: column;
@@ -8,7 +17,6 @@
   width: 100%;
   max-width: 100%;
   min-height: 8.5rem;
-  margin-top: 1.75rem;
   padding: 1.6rem 1.6rem 1.4rem;
   isolation: isolate;
   text-align: center;
@@ -29,9 +37,10 @@
 }
 
 .noteHand {
+  z-index: 1;
   width: 28px;
   height: 28px;
-  margin-bottom: 0.35rem;
+  margin-bottom: -0.3rem;
   color: var(--pdp-oxide);
   stroke-width: 1.2;
   transform: rotate(-14deg);
@@ -67,7 +76,7 @@
 }
 
 @media (--phone) {
-  .note {
+  .noteBody {
     min-height: 7.5rem;
     padding-inline: 1.2rem;
   }
