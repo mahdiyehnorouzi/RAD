@@ -489,7 +489,11 @@ export function ProductDialog({
                 />
               </Field>
             </div>
-            <Field label="توضیحات اثر" error={errors.description}>
+            <Field
+              label="توضیحات اثر (استوری فارسی)"
+              hint="همین متن در بخش «استوری» صفحهٔ اثر در فروشگاه نمایش داده می‌شود."
+              error={errors.description}
+            >
               <textarea
                 rows={5}
                 value={draft.description}
@@ -505,6 +509,19 @@ export function ProductDialog({
                 placeholder="خالی بماند تا از ابتدای توضیحات ساخته شود"
                 onChange={(event) =>
                   setDraft({ ...draft, subtitle: event.target.value })
+                }
+              />
+            </Field>
+            <Field
+              label="استوری انگلیسی (اختیاری)"
+              hint="خالی بماند تا همان توضیحات فارسی برای نسخهٔ انگلیسی فروشگاه استفاده شود."
+            >
+              <textarea
+                dir="ltr"
+                rows={5}
+                value={draft.storyEn ?? ""}
+                onChange={(event) =>
+                  setDraft({ ...draft, storyEn: event.target.value })
                 }
               />
             </Field>

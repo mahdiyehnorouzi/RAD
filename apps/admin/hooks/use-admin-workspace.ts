@@ -666,6 +666,7 @@ export function useAdminWorkspace() {
           name: product.name,
           description: product.description,
           subtitle: product.subtitle,
+          storyEn: product.storyEn,
           category: product.category,
           price: product.price,
           status: product.status,
