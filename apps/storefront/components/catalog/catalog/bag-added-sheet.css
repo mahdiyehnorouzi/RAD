@@ -58,6 +58,7 @@
   width: 44px;
   height: 44px;
   border: 0;
+  border-radius: 50%;
   background: none;
   display: grid;
   place-items: center;
@@ -65,6 +66,14 @@
 }
 .bag-added-close svg {
   width: 18px;
+}
+/* The shared `button:focus-visible` underline (globals.css) reads as a
+   stray bottom border on this round icon-only hit target — swap it for an
+   outline ring here instead of dropping the focus indicator. */
+.bag-added-close:focus-visible {
+  box-shadow: none !important;
+  outline: 2px solid var(--focus) !important;
+  outline-offset: 2px;
 }
 .bag-added-product {
   /* Physical left-to-right row so the photo stays on the left of the screen
@@ -124,7 +133,7 @@
   min-height: 52px;
   padding: 0.65rem 1.75rem;
   border: 0;
-  border-radius: 2px;
+  border-radius: 999px;
   background: var(--moss);
   color: var(--paper);
   font-size: var(--text-button);
