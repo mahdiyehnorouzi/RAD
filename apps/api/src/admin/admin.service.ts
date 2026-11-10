@@ -334,10 +334,16 @@ export class AdminService {
     // column untouched) unless admin explicitly set a value.
     const subtitle =
       input.subtitle?.trim() || input.description.trim().slice(0, 48);
+    // Same create-time-only-default pattern as `subtitle` above: a new
+    // product with no English story falls back to the Persian description,
+    // but an update never re-derives this from a new description — see the
+    // `storyEn` passed to `updateProduct` below, which stays undefined
+    // (leaving `en.story` untouched) unless admin explicitly set a value.
+    const storyEn = input.storyEn?.trim() || input.description.trim();
     const en = {
       name: input.name,
       subtitle,
-      story: input.description,
+      story: storyEn,
       details: ["One of one"],
     };
 
@@ -352,6 +358,7 @@ export class AdminService {
           story: input.description.trim(),
           // undefined (admin didn't set one) leaves the column untouched.
           subtitle: input.subtitle?.trim() || undefined,
+          storyEn: input.storyEn?.trim() || undefined,
           vendorId,
         })
       : await this.createProductWithRadNumber({
@@ -715,6 +722,10 @@ export class AdminService {
       story: string;
       /** Only written when admin explicitly set one; otherwise left as-is. */
       subtitle?: string;
+      /** English story text; only written when admin explicitly set one —
+       * otherwise `en.story` keeps whatever it already held (previously it
+       * was frozen at create time and never updatable at all). */
+      storyEn?: string;
       vendorId: string | null;
     },
   ) {
@@ -740,6 +751,17 @@ export class AdminService {
         category: data.category,
         status: data.status,
         story: data.story,
+        // `en` is a single jsonb blob holding name/subtitle/story/details
+        // together; only `story` is admin-editable today, so merge onto
+        // the current value rather than overwrite the whole column.
+        ...(data.storyEn !== undefined
+          ? {
+              en: {
+                ...(current.en as Record<string, unknown>),
+                story: data.storyEn,
+              },
+            }
+          : {}),
         vendorId: data.vendorId,
       },
     );

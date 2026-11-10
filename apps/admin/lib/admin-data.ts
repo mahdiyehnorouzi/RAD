@@ -157,6 +157,9 @@ export interface AdminProduct {
   /** Short lede shown under the title on the PDP; falls back to the first
    * 48 characters of `description` when left blank. */
   subtitle?: string;
+  /** English translation of the story (`description`) shown on the English
+   * storefront. Falls back to `description` when left blank. */
+  storyEn?: string;
   category: string;
   price: number;
   status: AdminProductStatus;

@@ -959,6 +959,10 @@ td select,
 .field-error {
   color: #9b4034;
 }
+.field-hint {
+  color: #6b6358;
+  margin-top: -2px;
+}
 .attribute-switch {
   display: flex;
   align-items: center;
