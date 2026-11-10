@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { Button } from "@rad/ui";
 import type { AdminContactMessage, AdminOrder } from "../../lib/admin-data";
 import { AdminAsyncRegion } from "../../components/admin-async-region";
 import { AdminContactMessageItem } from "../../components/admin-contact-message";
@@ -99,9 +100,10 @@ export function AdminMessages({
 
       <div className="message-filters" role="group" aria-label="فیلتر پیام‌ها">
         {filters.map(({ id, label }) => (
-          <button
+          <Button
             key={id}
-            type="button"
+            variant="ghost"
+            size="sm"
             className={filter === id ? "active" : ""}
             aria-pressed={filter === id}
             onClick={() => setFilter(id)}
@@ -110,7 +112,7 @@ export function AdminMessages({
             <span>
               {loading || loadError ? "…" : number.format(counts[id])}
             </span>
-          </button>
+          </Button>
         ))}
       </div>
 

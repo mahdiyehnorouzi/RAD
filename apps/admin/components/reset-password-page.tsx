@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { Button } from "@rad/ui";
 import { api } from "../lib/api";
 
 export function ResetPasswordPage({ email: initialEmail }: { email: string }) {
@@ -17,14 +18,21 @@ export function ResetPasswordPage({ email: initialEmail }: { email: string }) {
   return (
     <div className="admin-login">
       <section className="paper-panel">
-        <div className="brand-mark login-brand"><img src="/rad-logo.png" alt="رَد" width={72} height={72} /></div>
+        <div className="brand-mark login-brand">
+          <img src="/rad-logo.png" alt="رَد" width={72} height={72} />
+        </div>
         <span className="eyebrow">دفتر کوره</span>
         <h1>رمز عبور جدید</h1>
-        <p>کد ۶ رقمی که به ایمیل شما ارسال شده را وارد کنید و رمز عبور جدید انتخاب کنید.</p>
+        <p>
+          کد ۶ رقمی که به ایمیل شما ارسال شده را وارد کنید و رمز عبور جدید
+          انتخاب کنید.
+        </p>
         {done ? (
           <div className="login-success">
             <p>رمز عبور با موفقیت تغییر کرد.</p>
-            <button className="primary-action" type="button" onClick={() => router.push("/")}>ورود به پنل</button>
+            <Button type="button" onClick={() => router.push("/")}>
+              ورود به پنل
+            </Button>
           </div>
         ) : (
           <form
@@ -64,7 +72,11 @@ export function ResetPasswordPage({ email: initialEmail }: { email: string }) {
               }
             }}
           >
-            {error && <small className="field-error" role="alert">{error}</small>}
+            {error && (
+              <small className="field-error" role="alert">
+                {error}
+              </small>
+            )}
             <label className="field">
               <span>ایمیل</span>
               <input
@@ -88,7 +100,9 @@ export function ResetPasswordPage({ email: initialEmail }: { email: string }) {
                 pattern="\d{6}"
                 maxLength={6}
                 value={code}
-                onChange={(event) => setCode(event.target.value.replace(/\D/g, "").slice(0, 6))}
+                onChange={(event) =>
+                  setCode(event.target.value.replace(/\D/g, "").slice(0, 6))
+                }
                 required
               />
             </label>
@@ -118,8 +132,10 @@ export function ResetPasswordPage({ email: initialEmail }: { email: string }) {
                 required
               />
             </label>
-            <button className="primary-action" type="submit">ذخیره رمز عبور</button>
-            <Link className="text-link" href="/">بازگشت به ورود</Link>
+            <Button type="submit">ذخیره رمز عبور</Button>
+            <Link className="text-link" href="/">
+              بازگشت به ورود
+            </Link>
           </form>
         )}
       </section>

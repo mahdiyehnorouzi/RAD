@@ -52,7 +52,7 @@ test("the staff password form has visibility, busy, success, and a stacked phone
   assert.match(layout, /dir="rtl"/);
   assert.match(source, /className="password-toggle"/);
   assert.match(source, /aria-pressed=\{shown\}/);
-  assert.match(source, /aria-busy=\{saving \|\| undefined\}/);
+  assert.match(source, /loading=\{saving\}/);
   assert.match(source, /role="status"/);
   assert.match(source, /role="alert"/);
   assert.match(source, /name="current-password"/);

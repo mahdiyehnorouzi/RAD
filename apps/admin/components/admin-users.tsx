@@ -2,6 +2,7 @@
 
 import { useMemo, useRef, useState } from "react";
 import { Search, X } from "lucide-react";
+import { Button } from "@rad/ui";
 import type { AdminUser } from "../lib/admin-data";
 import { AdminAsyncRegion } from "./admin-async-region";
 import { EmptyState, StatusBadge } from "./admin-list-chrome";
@@ -56,8 +57,10 @@ export function UsersPanel({
             aria-label="جست‌وجوی مشتریان"
           />
           {query ? (
-            <button
-              type="button"
+            <Button
+              variant="ghost"
+              shape="icon"
+              size="sm"
               onClick={() => {
                 setQuery("");
                 inputRef.current?.focus();
@@ -65,7 +68,7 @@ export function UsersPanel({
               aria-label="پاک کردن جست‌وجو"
             >
               <X />
-            </button>
+            </Button>
           ) : null}
         </div>
       </div>

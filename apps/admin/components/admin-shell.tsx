@@ -11,6 +11,7 @@ import {
 } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { Button } from "@rad/ui";
 import {
   Archive,
   Bell,
@@ -245,15 +246,14 @@ export function AdminShell({ children }: { children: ReactNode }) {
               اتصال به پایگاه داده برقرار نشد. اتصال اینترنت را بررسی و دوباره
               تلاش کنید.
             </p>
-            <button
-              className="primary-action"
-              type="button"
+            <Button
+              variant="primary"
               onClick={() => {
                 void workspace.retryAuth();
               }}
             >
               تلاش دوباره
-            </button>
+            </Button>
           </div>
         </main>
       </div>
@@ -303,14 +303,15 @@ export function AdminShell({ children }: { children: ReactNode }) {
           className={`admin-sidebar ${mobileNav ? "is-open" : ""}`}
           aria-label="ناوبری مدیریت"
         >
-          <button
+          <Button
+            variant="ghost"
+            shape="icon"
             className="nav-close"
-            type="button"
             onClick={() => setMobileNav(false)}
             aria-label="بستن منو"
           >
             <X />
-          </button>
+          </Button>
           <div className="brand-lockup">
             <span className="brand-mark">
               <img src="/rad-logo.png" alt="رَد" width={52} height={52} />
@@ -390,14 +391,15 @@ export function AdminShell({ children }: { children: ReactNode }) {
                 );
               }
               return (
-                <button
+                <Button
                   key={id}
-                  type="button"
+                  variant="ghost"
+                  fullWidth
                   className={className}
                   onClick={() => go(id)}
                 >
                   {body}
-                </button>
+                </Button>
               );
             })}
           </nav>
@@ -409,22 +411,23 @@ export function AdminShell({ children }: { children: ReactNode }) {
               <strong>{workspace.user?.name}</strong>
               <small>{roleLabels[workspace.currentRole]}</small>
             </div>
-            <button
-              type="button"
+            <Button
+              variant="ghost"
+              shape="icon"
               aria-label="خروج از حساب"
               onClick={() => {
                 void workspace.logout();
               }}
             >
               <LogOut />
-            </button>
+            </Button>
           </div>
         </aside>
 
         {mobileNav && (
-          <button
+          <Button
+            variant="ghost"
             className="nav-scrim"
-            type="button"
             onClick={() => setMobileNav(false)}
             aria-label="بستن منو"
           />
@@ -432,14 +435,15 @@ export function AdminShell({ children }: { children: ReactNode }) {
 
         <main className="admin-main">
           <header className="admin-topbar">
-            <button
+            <Button
+              variant="ghost"
+              shape="icon"
               className="menu-button"
-              type="button"
               onClick={() => setMobileNav(true)}
               aria-label="باز کردن منو"
             >
               <Menu />
-            </button>
+            </Button>
             <div>
               <span className="context-label">رَد / عملیات استودیو</span>
               <h1>{title}</h1>

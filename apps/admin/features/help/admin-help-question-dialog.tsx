@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { Button } from "@rad/ui";
 import { createSingleFlight } from "../../lib/admin-mutation";
 import { POLICY_SLUGS, type PolicySlug } from "@rad/types";
 import {
@@ -157,12 +158,12 @@ export function AdminHelpQuestionDialog({
           </p>
         ) : null}
         <div className="dialog-actions">
-          <button className="secondary-action" type="button" onClick={onClose}>
+          <Button variant="secondary" type="button" onClick={onClose}>
             انصراف
-          </button>
-          <button className="primary-action" type="submit" disabled={saving}>
-            {saving ? "در حال ذخیره…" : "ذخیره"}
-          </button>
+          </Button>
+          <Button type="submit" loading={saving}>
+            ذخیره
+          </Button>
         </div>
       </form>
     </DialogShell>
