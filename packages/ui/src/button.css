@@ -41,6 +41,26 @@
   font-size: 0.85rem;
 }
 
+.rad-button-full {
+  width: 100%;
+  justify-content: flex-start;
+}
+
+/* Icon-only shape: square tap target, no inline padding from size rules */
+.rad-button-icon.rad-button-md,
+.rad-button-icon.rad-button-sm {
+  min-height: 0;
+  padding: 0;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+}
+
+.rad-button-icon.rad-button-sm {
+  width: 32px;
+  height: 32px;
+}
+
 /* Variants */
 .rad-button-primary {
   background: var(--mineral, #4a3b2f);
@@ -64,6 +84,21 @@
   background: transparent;
   border-color: transparent;
   color: var(--mineral, #4a3b2f);
+}
+
+.rad-button-link {
+  background: transparent;
+  border-color: transparent;
+  color: var(--mineral, #4a3b2f);
+  text-decoration: underline;
+  padding-inline: 0;
+  min-height: auto;
+  font-weight: 400;
+}
+
+.rad-button[aria-pressed="true"] {
+  background: rgba(74, 59, 47, 0.12);
+  border-color: var(--mineral, #4a3b2f);
 }
 
 .rad-button-loading {

@@ -78,16 +78,17 @@ export function AdminDamageReports({
         aria-label="فیلتر گزارش‌های آسیب"
       >
         {filters.map(({ id, label }) => (
-          <button
+          <Button
             key={id}
-            type="button"
+            variant="ghost"
+            size="sm"
             className={filter === id ? "active" : ""}
             aria-pressed={filter === id}
             onClick={() => setFilter(id)}
           >
             {label}
             <span>{number.format(counts[id])}</span>
-          </button>
+          </Button>
         ))}
       </div>
 

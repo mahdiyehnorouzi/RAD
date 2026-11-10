@@ -381,10 +381,10 @@ export function ProductDialog({
         aria-labelledby="editor-title"
       >
         <aside className="editor-aside">
-          <button className="editor-back" type="button" onClick={onClose}>
+          <Button variant="ghost" className="editor-back" onClick={onClose}>
             <ChevronRight />
             بازگشت به لیست
-          </button>
+          </Button>
           <div className="editor-cover">
             {previewCover?.src ? (
               <img
@@ -413,22 +413,23 @@ export function ProductDialog({
           </div>
           <nav className="editor-section-nav">
             {sections.map((item) => (
-              <button
+              <Button
                 key={item.id}
-                type="button"
+                variant="ghost"
+                fullWidth
                 className={activeSection === item.id ? "active" : ""}
                 onClick={() => goToSection(item.id)}
               >
                 {item.icon}
                 <span>{item.label}</span>
                 <ChevronLeft />
-              </button>
+              </Button>
             ))}
             {product && onDelete && (
-              <button className="danger" type="button" onClick={onDelete}>
+              <Button variant="ghost" fullWidth className="danger" onClick={onDelete}>
                 <Trash2 />
                 <span>حذف محصول</span>
-              </button>
+              </Button>
             )}
           </nav>
         </aside>

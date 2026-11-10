@@ -398,13 +398,13 @@ function Overview({
             <span className="eyebrow">تازه‌ترین تغییرات</span>
             <h3>آخرین آثار</h3>
           </div>
-          <button
+          <Button
+            variant="link"
             className="text-action"
-            type="button"
             onClick={() => onNavigate("products")}
           >
             دیدن همه
-          </button>
+          </Button>
         </div>
         <div className="recent-products">
           {recentProducts.map((product) => (
@@ -448,18 +448,19 @@ function Overview({
               <span className="eyebrow">سفارش اختصاصی</span>
               <h3>صندوق بازبینی</h3>
             </div>
-            <button
+            <Button
+              variant="link"
               className="text-action"
-              type="button"
               onClick={() => onNavigate("commissions")}
             >
               دیدن همه
-            </button>
+            </Button>
           </div>
           {workspace.commissions.slice(0, 3).map((item) => (
-            <button
+            <Button
+              variant="ghost"
+              fullWidth
               className="compact-row"
-              type="button"
               key={item.id}
               onClick={() => onNavigate("commissions")}
             >
@@ -482,7 +483,7 @@ function Overview({
                       : "green"
                 }
               />
-            </button>
+            </Button>
           ))}
           {!workspace.commissions.length && (
             <p>هنوز طرح اختصاصی‌ای نرسیده است.</p>
@@ -493,13 +494,13 @@ function Overview({
           <ShieldCheck />
           <h3>نقش‌ها روشن، مسئولیت‌ها دقیق.</h3>
           <p>مالک، مدیر، ویرایشگر و مشاهده‌گر هرکدام سطح دسترسی مشخص دارند.</p>
-          <button
+          <Button
+            variant="ghost"
             className="light-action"
-            type="button"
             onClick={() => onNavigate("members")}
           >
             مدیریت افراد
-          </button>
+          </Button>
         </article>
       </section>
     </div>
@@ -516,11 +517,11 @@ function ShortcutTile({
   onClick: () => void;
 }) {
   return (
-    <button className="shortcut-tile" type="button" onClick={onClick}>
+    <Button variant="ghost" fullWidth className="shortcut-tile" onClick={onClick}>
       <span className="stat-icon">{icon}</span>
       <span>{label}</span>
       <ChevronLeft />
-    </button>
+    </Button>
   );
 }
 
@@ -699,15 +700,17 @@ function SecretInput({
         minLength={8}
         required
       />
-      <button
-        type="button"
+      <Button
+        variant="ghost"
+        shape="icon"
+        size="sm"
         className="password-toggle"
         aria-pressed={shown}
         aria-label={shown ? "پنهان کردن رمز عبور" : "نمایش رمز عبور"}
         onClick={onToggle}
       >
         {shown ? <EyeOff /> : <Eye />}
-      </button>
+      </Button>
     </div>
   );
 }

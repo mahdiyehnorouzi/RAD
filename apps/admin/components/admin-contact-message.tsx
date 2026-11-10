@@ -153,14 +153,15 @@ export function AdminContactMessageItem({
         </a>
 
         {message.orderId && onOpenOrder ? (
-          <button
-            type="button"
+          <Button
+            variant="ghost"
+            size="sm"
             className="contact-message-order"
             onClick={() => onOpenOrder(message.orderId!)}
           >
             سفارش <bdi dir="ltr">#{message.orderId}</bdi>
             {order ? ` · ${orderStatusLabels[order.status]}` : ""}
-          </button>
+          </Button>
         ) : null}
 
         {message.orderId && !message.fromOrderOwner ? (

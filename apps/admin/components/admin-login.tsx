@@ -114,9 +114,9 @@ export function AdminLogin({
                 />
               </Field>
               <Button type="submit">ارسال کد بازیابی</Button>
-              <button
+              <Button
+                variant="link"
                 className="text-link-button"
-                type="button"
                 onClick={() => {
                   setMode("login");
                   setError("");
@@ -124,7 +124,7 @@ export function AdminLogin({
                 }}
               >
                 بازگشت به ورود
-              </button>
+              </Button>
             </form>
           </section>
         </div>
@@ -187,8 +187,10 @@ export function AdminLogin({
                   minLength={8}
                   required
                 />
-                <button
-                  type="button"
+                <Button
+                  variant="ghost"
+                  shape="icon"
+                  size="sm"
                   className="password-toggle"
                   onClick={() => setShowPassword((value) => !value)}
                   aria-label={
@@ -197,7 +199,7 @@ export function AdminLogin({
                   aria-pressed={showPassword}
                 >
                   {showPassword ? <EyeOff /> : <Eye />}
-                </button>
+                </Button>
               </div>
             </Field>
             <label className="remember-field">
@@ -216,16 +218,16 @@ export function AdminLogin({
                 ورود
                 <ArrowLeft />
               </Button>
-              <button
+              <Button
+                variant="link"
                 className="text-link-button"
-                type="button"
                 onClick={() => {
                   setMode("forgot");
                   setError("");
                 }}
               >
                 رمز عبور را فراموش کرده‌اید؟
-              </button>
+              </Button>
             </div>
           </form>
         </section>

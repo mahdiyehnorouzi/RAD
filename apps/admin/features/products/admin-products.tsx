@@ -126,8 +126,10 @@ export function Products({
             aria-label="جست‌وجوی محصولات"
           />
           {query && (
-            <button
-              type="button"
+            <Button
+              variant="ghost"
+              shape="icon"
+              size="sm"
               onClick={() => {
                 setQuery("");
                 inputRef.current?.focus();
@@ -136,7 +138,7 @@ export function Products({
               aria-label="پاک کردن جست‌وجو"
             >
               <X />
-            </button>
+            </Button>
           )}
         </div>
       </div>
@@ -296,28 +298,36 @@ export function Products({
           </div>
           {totalPages > 1 && (
             <nav className="pagination" aria-label="صفحه‌بندی محصولات">
-              <button
-                type="button"
+              <Button
+                variant="ghost"
+                shape="icon"
+                size="sm"
                 onClick={() => setPage((value) => Math.max(1, value - 1))}
                 disabled={currentPage === 1}
                 aria-label="صفحه قبل"
               >
                 <ChevronRight />
-              </button>
+              </Button>
               {Array.from({ length: totalPages }, (_, index) => index + 1).map(
                 (pageNumber) => (
-                  <button
+                  <Button
                     key={pageNumber}
-                    type="button"
+                    variant="ghost"
+                    shape="icon"
+                    size="sm"
                     className={pageNumber === currentPage ? "active" : ""}
+                    aria-pressed={pageNumber === currentPage}
+                    aria-label={`صفحه ${number.format(pageNumber)}`}
                     onClick={() => setPage(pageNumber)}
                   >
                     {number.format(pageNumber)}
-                  </button>
+                  </Button>
                 ),
               )}
-              <button
-                type="button"
+              <Button
+                variant="ghost"
+                shape="icon"
+                size="sm"
                 onClick={() =>
                   setPage((value) => Math.min(totalPages, value + 1))
                 }
@@ -325,7 +335,7 @@ export function Products({
                 aria-label="صفحه بعد"
               >
                 <ChevronLeft />
-              </button>
+              </Button>
             </nav>
           )}
         </>

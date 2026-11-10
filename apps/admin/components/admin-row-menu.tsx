@@ -3,6 +3,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { MoreVertical, Pencil, Trash2 } from "lucide-react";
+import { Button } from "@rad/ui";
 
 const GAP = 6;
 const EDGE = 8;
@@ -118,17 +119,18 @@ export function AdminRowMenu({
 
   return (
     <div className="row-menu-anchor">
-      <button
+      <Button
         ref={triggerRef}
+        variant="ghost"
+        shape="icon"
         className="row-menu-trigger"
-        type="button"
         onClick={onToggle}
         aria-haspopup="menu"
         aria-expanded={open}
         aria-label="عملیات"
       >
         <MoreVertical />
-      </button>
+      </Button>
       {open &&
         createPortal(
           <div
@@ -141,17 +143,19 @@ export function AdminRowMenu({
                 : { top: 0, left: 0, visibility: "hidden" }
             }
           >
-            <button
-              type="button"
+            <Button
+              variant="ghost"
+              fullWidth
               role="menuitem"
               onClick={onEdit}
               disabled={!canWrite}
             >
               <Pencil />
               ویرایش
-            </button>
-            <button
-              type="button"
+            </Button>
+            <Button
+              variant="ghost"
+              fullWidth
               role="menuitem"
               className="danger"
               onClick={onDelete}
@@ -159,7 +163,7 @@ export function AdminRowMenu({
             >
               <Trash2 />
               حذف
-            </button>
+            </Button>
           </div>,
           document.body,
         )}

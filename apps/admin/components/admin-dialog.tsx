@@ -151,9 +151,9 @@ export function DialogShell({
             <h2 id="dialog-title">{title}</h2>
             <p id="dialog-description">{description}</p>
           </div>
-          <button type="button" onClick={onClose} aria-label="بستن">
+          <Button variant="ghost" shape="icon" onClick={onClose} aria-label="بستن">
             <X />
-          </button>
+          </Button>
         </header>
         {children}
       </section>

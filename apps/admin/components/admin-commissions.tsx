@@ -249,8 +249,10 @@ export function AdminCommissions({
             aria-label="جست‌وجوی سفارش اختصاصی"
           />
           {query && (
-            <button
-              type="button"
+            <Button
+              variant="ghost"
+              shape="icon"
+              size="sm"
               onClick={() => {
                 setQuery("");
                 inputRef.current?.focus();
@@ -258,27 +260,31 @@ export function AdminCommissions({
               aria-label="پاک کردن جست‌وجو"
             >
               <X />
-            </button>
+            </Button>
           )}
         </div>
       </div>
       <div className="commission-filters">
-        <button
-          type="button"
+        <Button
+          variant="ghost"
+          size="sm"
           className={stageFilter === "all" ? "active" : ""}
+          aria-pressed={stageFilter === "all"}
           onClick={() => setStageFilter("all")}
         >
           همه
-        </button>
+        </Button>
         {stagesWithData.map((stage) => (
-          <button
+          <Button
             key={stage}
-            type="button"
+            variant="ghost"
+            size="sm"
             className={stageFilter === stage ? "active" : ""}
+            aria-pressed={stageFilter === stage}
             onClick={() => setStageFilter(stage)}
           >
             {commissionStageLabels[stage]}
-          </button>
+          </Button>
         ))}
       </div>
       {loadError ? (
@@ -299,9 +305,10 @@ export function AdminCommissions({
                 const meter = commissionMeter(item);
                 const payload = readPayload(item.payload);
                 return (
-                  <button
+                  <Button
                     key={item.id}
-                    type="button"
+                    variant="ghost"
+                    fullWidth
                     className={`commission-card${item.id === selectedId ? " active" : ""}`}
                     onClick={() => selectCommission(item.id)}
                   >
@@ -332,7 +339,7 @@ export function AdminCommissions({
                       nextLabel={meter.nextLabel}
                       compact
                     />
-                  </button>
+                  </Button>
                 );
               })
             ) : (
@@ -423,15 +430,15 @@ function CommissionDetail({
 
   return (
     <div className="commission-detail">
-      <button
+      <Button
+        variant="ghost"
         className="commission-detail-close"
-        type="button"
         onClick={onClose}
         aria-label="بازگشت به فهرست"
       >
         <ChevronRight />
         بازگشت به فهرست
-      </button>
+      </Button>
       <header>
         <span className="eyebrow">{commission.id}</span>
         <h3>{commission.customerName}</h3>
@@ -454,16 +461,17 @@ function CommissionDetail({
         aria-label="بخش‌های سفارش اختصاصی"
       >
         {tabs.map((item) => (
-          <button
+          <Button
             key={item.id}
-            type="button"
+            variant="ghost"
+            size="sm"
             role="tab"
             aria-selected={tab === item.id}
             className={tab === item.id ? "active" : ""}
             onClick={() => setTab(item.id)}
           >
             {item.label}
-          </button>
+          </Button>
         ))}
       </div>
 
@@ -536,14 +544,14 @@ function CommissionDetail({
         (images.length ? (
           <div className="commission-files">
             {images.map((src, index) => (
-              <button
+              <Button
                 key={`${src}-${index}`}
-                type="button"
+                variant="ghost"
                 className="commission-file"
                 onClick={() => setLightboxIndex(index)}
               >
                 <img src={src} alt="" />
-              </button>
+              </Button>
             ))}
           </div>
         ) : (
@@ -747,9 +755,9 @@ function CommissionLightbox({
           >
             <Download />
           </a>
-          <button type="button" onClick={onClose} aria-label="بستن پیش‌نمایش">
+          <Button variant="ghost" shape="icon" onClick={onClose} aria-label="بستن پیش‌نمایش">
             <X />
-          </button>
+          </Button>
         </div>
       </div>
       <div
@@ -759,25 +767,27 @@ function CommissionLightbox({
         }}
       >
         {hasPrev && (
-          <button
-            type="button"
+          <Button
+            variant="ghost"
+            shape="icon"
             className="commission-lightbox-nav prev"
             onClick={() => onIndexChange(index - 1)}
             aria-label="فایل قبلی"
           >
             <ChevronRight />
-          </button>
+          </Button>
         )}
         <img src={images[index]} alt="" />
         {hasNext && (
-          <button
-            type="button"
+          <Button
+            variant="ghost"
+            shape="icon"
             className="commission-lightbox-nav next"
             onClick={() => onIndexChange(index + 1)}
             aria-label="فایل بعدی"
           >
             <ChevronLeft />
-          </button>
+          </Button>
         )}
       </div>
     </div>

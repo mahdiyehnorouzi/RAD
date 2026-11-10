@@ -78,15 +78,15 @@ export function AdminDamageReportItem({
           { src: report.damagePhoto, label: "خود آسیب" },
         ].map((photo) => (
           <figure key={photo.label}>
-            <button
-              type="button"
+            <Button
+              variant="ghost"
               className={enlarged === photo.src ? "is-enlarged" : ""}
               onClick={() => setEnlarged((current) => (current === photo.src ? null : photo.src))}
               aria-pressed={enlarged === photo.src}
               aria-label={`بزرگ‌نمایی عکس ${photo.label}`}
             >
               <img src={photo.src} alt={photo.label} />
-            </button>
+            </Button>
             <figcaption>{photo.label}</figcaption>
           </figure>
         ))}
@@ -110,10 +110,10 @@ export function AdminDamageReportItem({
           </a>
         ) : null}
         {onOpenOrder ? (
-          <button type="button" className="contact-message-order" onClick={() => onOpenOrder(report.orderId)}>
+          <Button variant="ghost" size="sm" className="contact-message-order" onClick={() => onOpenOrder(report.orderId)}>
             سفارش <bdi dir="ltr">#{report.orderId}</bdi>
             {order ? ` · ${order.productName}` : ""}
-          </button>
+          </Button>
         ) : null}
         {report.late ? (
           <span className="contact-message-flag">

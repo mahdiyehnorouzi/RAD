@@ -224,16 +224,17 @@ export function AdminOrders({
             aria-label="فیلتر وضعیت سفارش"
           >
             {orderQueueFilters.map((item) => (
-              <button
+              <Button
                 key={item.id}
-                type="button"
+                variant="ghost"
+                size="sm"
                 className={filter === item.id ? "is-active" : ""}
                 aria-pressed={filter === item.id}
                 onClick={() => chooseFilter(item.id)}
               >
                 {item.label}
                 <span>{number.format(result.counts[item.id])}</span>
-              </button>
+              </Button>
             ))}
           </div>
 
@@ -307,9 +308,10 @@ export function AdminOrders({
                       order.paymentStatus === "verify_conflict";
                     return (
                       <li key={order.id}>
-                        <button
+                        <Button
                           id={`order-${order.id}`}
-                          type="button"
+                          variant="ghost"
+                          fullWidth
                           className={`orders-row${selected ? " is-active" : ""}${review ? " is-review" : ""}`}
                           aria-current={selected ? "true" : undefined}
                           onClick={() => setSelectedId(order.id)}
@@ -337,7 +339,7 @@ export function AdminOrders({
                             <b>{money(order.amount)}</b>
                             <small dir="ltr">{order.id}</small>
                           </span>
-                        </button>
+                        </Button>
                       </li>
                     );
                   })}
@@ -472,14 +474,14 @@ function OrderDetail({
       aria-labelledby={`order-title-${order.id}`}
     >
       {mobile ? (
-        <button
+        <Button
+          variant="link"
           className="orders-back text-action"
-          type="button"
           onClick={onBack}
         >
           <ChevronRight aria-hidden="true" />
           بازگشت به فهرست
-        </button>
+        </Button>
       ) : null}
       <header className="orders-detail-head">
         <div>

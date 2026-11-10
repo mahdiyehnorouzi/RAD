@@ -95,9 +95,10 @@ export function AdminReviews({
 
       <div className="message-filters" role="group" aria-label="فیلتر نظرها">
         {filters.map(({ id, label }) => (
-          <button
+          <Button
             key={id}
-            type="button"
+            variant="ghost"
+            size="sm"
             className={filter === id ? "active" : ""}
             aria-pressed={filter === id}
             onClick={() => setFilter(id)}
@@ -106,7 +107,7 @@ export function AdminReviews({
             <span>
               {loading || loadError ? "…" : number.format(counts[id])}
             </span>
-          </button>
+          </Button>
         ))}
       </div>
 
