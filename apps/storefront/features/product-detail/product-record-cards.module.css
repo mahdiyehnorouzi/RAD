@@ -93,7 +93,7 @@
   flex-direction: column;
   align-items: flex-start;
   gap: 0.4rem;
-  padding: 1.2rem 1.3rem 4.4rem;
+  padding: 1.2rem 1.3rem;
   padding-inline-end: calc(36% + 1.3rem);
 }
 
@@ -102,15 +102,13 @@
 }
 
 .record.passportCard > .recordGo {
-  position: absolute;
+  position: relative;
   z-index: 1;
-  /* Inline end is the left edge of the card in Persian, the right edge in English. */
-  inset-inline-end: 0.85rem;
-  inset-block-end: 0.85rem;
+  margin-top: 0.3rem;
   display: inline-flex;
   align-items: center;
   gap: 0.65rem;
-  max-width: calc(100% - 1.7rem);
+  max-width: 100%;
   padding-block: 0.15rem;
   padding-inline: 0.15rem 0.7rem;
   border-radius: 999px;
@@ -153,11 +151,40 @@
   background: color-mix(in srgb, var(--sand) 50%, var(--canvas));
 }
 
+/*
+ * The image always sits on the physical right of the card: inline-end
+ * puts it there in LTR, but in RTL inline-end is the physical left, so
+ * flip the image and everything keyed to its side for fa.
+ */
+[data-locale="fa"] .passportPrint {
+  inset-inline-start: auto;
+  inset-inline-end: -2.5rem;
+}
+
+[data-locale="fa"] .record.passportCard {
+  padding-inline-end: 1.3rem;
+  padding-inline-start: calc(36% + 1.3rem);
+}
+
+[data-locale="fa"] .stamp {
+  inset-inline-end: auto;
+  inset-inline-start: calc(36% - 3.25rem);
+}
+
+[data-locale="fa"] .recordMedia {
+  inset-inline-end: auto;
+  inset-inline-start: 0;
+}
+
 @media (--phone) {
   .record.passportCard {
     min-height: 9.5rem;
     padding: 1rem 1rem 4.2rem;
     padding-inline-end: calc(36% + 1rem);
+  }
+  [data-locale="fa"] .record.passportCard {
+    padding-inline-end: 1rem;
+    padding-inline-start: calc(36% + 1rem);
   }
   .record.passportCard strong {
     font-size: 1.05rem;
@@ -170,5 +197,9 @@
     width: 5rem;
     height: 5rem;
     inset-inline-end: calc(36% - 2.5rem);
+  }
+  [data-locale="fa"] .stamp {
+    inset-inline-end: auto;
+    inset-inline-start: calc(36% - 2.5rem);
   }
 }
