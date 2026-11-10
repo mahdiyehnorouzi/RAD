@@ -517,7 +517,12 @@ function ShortcutTile({
   onClick: () => void;
 }) {
   return (
-    <Button variant="ghost" fullWidth className="shortcut-tile" onClick={onClick}>
+    <Button
+      variant="ghost"
+      fullWidth
+      className="shortcut-tile"
+      onClick={onClick}
+    >
       <span className="stat-icon">{icon}</span>
       <span>{label}</span>
       <ChevronLeft />

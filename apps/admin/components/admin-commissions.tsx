@@ -755,7 +755,12 @@ function CommissionLightbox({
           >
             <Download />
           </a>
-          <Button variant="ghost" shape="icon" onClick={onClose} aria-label="بستن پیش‌نمایش">
+          <Button
+            variant="ghost"
+            shape="icon"
+            onClick={onClose}
+            aria-label="بستن پیش‌نمایش"
+          >
             <X />
           </Button>
         </div>

@@ -19,7 +19,10 @@ export type DamageReview = {
 type Decision = "repair" | "refund" | "declined";
 
 const dateTime = (value: number) =>
-  new Intl.DateTimeFormat("fa-IR", { dateStyle: "medium", timeStyle: "short" }).format(value);
+  new Intl.DateTimeFormat("fa-IR", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(value);
 
 /** One transit-damage claim: the two photos, the customer's note, and the decision. */
 export function AdminDamageReportItem({
@@ -55,7 +58,11 @@ export function AdminDamageReportItem({
     send(
       decision === "declined"
         ? { status: "declined", note: note.trim() }
-        : { status: "approved", resolution: decision, note: note.trim() || undefined },
+        : {
+            status: "approved",
+            resolution: decision,
+            note: note.trim() || undefined,
+          },
     );
 
   return (
@@ -66,10 +73,14 @@ export function AdminDamageReportItem({
           <small>
             {damageStatusLabels[report.status]}
             {report.signedIn ? " · حساب کاربری" : " · مهمان"}
-            {report.deliveredAt ? ` · تحویل ${dateTime(report.deliveredAt)}` : " · زمان تحویل ثبت نشده"}
+            {report.deliveredAt
+              ? ` · تحویل ${dateTime(report.deliveredAt)}`
+              : " · زمان تحویل ثبت نشده"}
           </small>
         </div>
-        <time dateTime={new Date(report.createdAt).toISOString()}>{dateTime(report.createdAt)}</time>
+        <time dateTime={new Date(report.createdAt).toISOString()}>
+          {dateTime(report.createdAt)}
+        </time>
       </header>
 
       <div className="damage-claim-photos">
@@ -81,7 +92,11 @@ export function AdminDamageReportItem({
             <Button
               variant="ghost"
               className={enlarged === photo.src ? "is-enlarged" : ""}
-              onClick={() => setEnlarged((current) => (current === photo.src ? null : photo.src))}
+              onClick={() =>
+                setEnlarged((current) =>
+                  current === photo.src ? null : photo.src,
+                )
+              }
               aria-pressed={enlarged === photo.src}
               aria-label={`بزرگ‌نمایی عکس ${photo.label}`}
             >
@@ -96,21 +111,34 @@ export function AdminDamageReportItem({
 
       {report.resolution || report.note ? (
         <div className="damage-claim-decision">
-          {report.resolution ? <strong>جبران: {damageResolutionLabels[report.resolution]}</strong> : null}
+          {report.resolution ? (
+            <strong>جبران: {damageResolutionLabels[report.resolution]}</strong>
+          ) : null}
           {report.note ? <p>پاسخ به مشتری: {report.note}</p> : null}
-          {report.reviewedAt ? <small>تصمیم در {dateTime(report.reviewedAt)}</small> : null}
+          {report.reviewedAt ? (
+            <small>تصمیم در {dateTime(report.reviewedAt)}</small>
+          ) : null}
         </div>
       ) : null}
 
       <footer>
         {report.phone ? (
-          <a className="contact-message-reply" href={`tel:${report.phone}`} dir="ltr">
+          <a
+            className="contact-message-reply"
+            href={`tel:${report.phone}`}
+            dir="ltr"
+          >
             <Phone aria-hidden="true" />
             {report.phone}
           </a>
         ) : null}
         {onOpenOrder ? (
-          <Button variant="ghost" size="sm" className="contact-message-order" onClick={() => onOpenOrder(report.orderId)}>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="contact-message-order"
+            onClick={() => onOpenOrder(report.orderId)}
+          >
             سفارش <bdi dir="ltr">#{report.orderId}</bdi>
             {order ? ` · ${order.productName}` : ""}
           </Button>
@@ -173,7 +201,9 @@ export function AdminDamageReportItem({
             ))}
           </fieldset>
           <label htmlFor={`${id}-note`}>
-            {noteRequired ? "دلیل، برای مشتری (لازم)" : "توضیح برای مشتری (اختیاری)"}
+            {noteRequired
+              ? "دلیل، برای مشتری (لازم)"
+              : "توضیح برای مشتری (اختیاری)"}
           </label>
           <textarea
             id={`${id}-note`}

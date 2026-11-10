@@ -42,7 +42,12 @@ export function AdminRowActions({
       >
         <ArrowDown aria-hidden="true" />
       </Button>
-      <Button variant="secondary" size="sm" onClick={onEdit} disabled={disabled}>
+      <Button
+        variant="secondary"
+        size="sm"
+        onClick={onEdit}
+        disabled={disabled}
+      >
         <Pencil aria-hidden="true" /> ویرایش
       </Button>
       <Button

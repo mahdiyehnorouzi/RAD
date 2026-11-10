@@ -2,7 +2,8 @@ import * as React from "react";
 import type { ButtonHTMLAttributes } from "react";
 import "./button.css";
 
-export type ButtonVariant = "primary" | "secondary" | "danger" | "ghost" | "link";
+export type ButtonVariant =
+  "primary" | "secondary" | "danger" | "ghost" | "link";
 export type ButtonSize = "sm" | "md";
 export type ButtonShape = "default" | "icon";
 
@@ -29,8 +30,13 @@ export function Button({
   type = "button",
   ...props
 }: ButtonProps) {
-  if (process.env.NODE_ENV !== "production" && shape === "icon" && !props["aria-label"] && !props["aria-labelledby"]) {
-    console.warn("Button: shape=\"icon\" requires an aria-label.");
+  if (
+    process.env.NODE_ENV !== "production" &&
+    shape === "icon" &&
+    !props["aria-label"] &&
+    !props["aria-labelledby"]
+  ) {
+    console.warn('Button: shape="icon" requires an aria-label.');
   }
 
   const classes = [

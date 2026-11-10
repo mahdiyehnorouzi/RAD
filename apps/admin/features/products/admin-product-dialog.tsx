@@ -426,7 +426,12 @@ export function ProductDialog({
               </Button>
             ))}
             {product && onDelete && (
-              <Button variant="ghost" fullWidth className="danger" onClick={onDelete}>
+              <Button
+                variant="ghost"
+                fullWidth
+                className="danger"
+                onClick={onDelete}
+              >
                 <Trash2 />
                 <span>حذف محصول</span>
               </Button>
@@ -437,11 +442,7 @@ export function ProductDialog({
         <div className="editor-main">
           <div className="editor-main-head">
             <h2 id="editor-title">{product ? "ویرایش اثر" : "اثر تازه"}</h2>
-            <Button
-              type="submit"
-              disabled={unresolvedUploads}
-              loading={saving}
-            >
+            <Button type="submit" disabled={unresolvedUploads} loading={saving}>
               <PackageCheck />
               {uploadingCount > 0 ? "در حال بارگذاری…" : "ذخیره تغییرات"}
             </Button>

@@ -64,10 +64,7 @@ export function Members({
           <h2>افراد و دسترسی</h2>
           <p>دسترسی هر فرد را بر اساس مسئولیت واقعی او تنظیم کنید.</p>
         </div>
-        <Button
-          onClick={onInvite}
-          disabled={!canWrite || loading || loadError}
-        >
+        <Button onClick={onInvite} disabled={!canWrite || loading || loadError}>
           <Plus />
           دعوت فرد جدید
         </Button>
