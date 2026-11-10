@@ -11,6 +11,7 @@ import {
 } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { Button } from "@rad/ui";
 import {
   Archive,
   Bell,
@@ -245,15 +246,14 @@ export function AdminShell({ children }: { children: ReactNode }) {
               اتصال به پایگاه داده برقرار نشد. اتصال اینترنت را بررسی و دوباره
               تلاش کنید.
             </p>
-            <button
-              className="primary-action"
-              type="button"
+            <Button
+              variant="primary"
               onClick={() => {
                 void workspace.retryAuth();
               }}
             >
               تلاش دوباره
-            </button>
+            </Button>
           </div>
         </main>
       </div>

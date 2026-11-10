@@ -601,6 +601,7 @@ textarea:focus-visible {
   min-height: 44px;
   padding: 0 17px;
   border: 1px solid var(--mineral);
+  border-radius: var(--radius-md);
   display: inline-flex;
   align-items: center;
   justify-content: center;
