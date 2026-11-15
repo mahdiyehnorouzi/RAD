@@ -1,15 +1,132 @@
 import type { PolicyDocument } from "../type";
 
+const SENT_FA =
+  "پس از آماده‌شدن اثر، سفارش‌های تهران با پست یا پیک و سفارش‌های شهرهای دیگر با پست ارسال می‌شوند.";
+const SENT_EN =
+  "After the work is ready, Tehran orders are sent by post or courier; orders to other cities are sent by post.";
+
 export const SHIPPING_POLICY: PolicyDocument = {
   slug: "shipping",
   kind: "guide",
   icon: "truck",
   title: { fa: "ارسال و تحویل", en: "Shipping and delivery" },
   summary: {
-    fa: "زمان، هزینه و بسته‌بندی ارسال.",
-    en: "Delivery times, cost and packaging.",
+    fa: "روش ارسال و بسته‌بندی.",
+    en: "How it is sent, and packaging.",
   },
   versions: [
+    {
+      id: "2026-11-09",
+      change: {
+        fa: "ادعای ارسال رایگان، بیمه و بازه‌ی رسیدن برداشته شد.",
+        en: "Removes the free, insured and delivery-window claims.",
+      },
+      points: [
+        {
+          id: "tehran",
+          icon: "pin",
+          label: { fa: "تهران", en: "Tehran" },
+          value: { fa: "پست یا پیک", en: "Post or courier" },
+        },
+        {
+          id: "cities",
+          icon: "map",
+          label: { fa: "شهرهای دیگر", en: "Other cities" },
+          value: { fa: "پست", en: "Post" },
+        },
+        {
+          id: "tracking",
+          icon: "route",
+          label: { fa: "پیگیری", en: "Tracking" },
+          value: {
+            fa: "کد رهگیری در صفحه‌ی سفارش",
+            en: "Tracking code on your order page",
+          },
+        },
+      ],
+      sections: [
+        {
+          id: "method",
+          title: { fa: "روش ارسال", en: "How it is sent" },
+          blocks: [{ kind: "p", text: { fa: SENT_FA, en: SENT_EN } }],
+        },
+        {
+          id: "packaging",
+          title: { fa: "بسته‌بندی", en: "Packaging" },
+          blocks: [
+            {
+              kind: "p",
+              text: {
+                fa: "هر اثر در جعبه‌ی دولایه، با محافظ متناسب با فرمش و شناسنامه‌ی امضاشده ارسال می‌شود.",
+                en: "Every work travels in a double box, with protection shaped to its form and a signed certificate.",
+              },
+            },
+          ],
+        },
+        {
+          id: "tracking",
+          title: { fa: "پیگیری مرسوله", en: "Tracking" },
+          blocks: [
+            {
+              kind: "p",
+              text: {
+                fa: "وقتی اثر به پست تحویل داده شد، کد رهگیری در صفحه‌ی سفارش قرار می‌گیرد.",
+                en: "Once the work is handed to the carrier, its tracking code appears on your order page.",
+              },
+            },
+          ],
+        },
+        {
+          id: "receiving",
+          title: { fa: "هنگام تحویل", en: "When it arrives" },
+          blocks: [
+            {
+              kind: "steps",
+              items: [
+                {
+                  fa: "اگر جعبه ظاهراً آسیب دیده، پیش از باز کردن از آن عکس بگیر.",
+                  en: "If the box looks damaged, photograph it before opening.",
+                },
+                {
+                  fa: "بسته را با دقت باز کن و اثر را بررسی کن.",
+                  en: "Open the box carefully and check the work.",
+                },
+                {
+                  fa: "اگر آسیبی دیدی، تا ۲۴ ساعت بعد از تحویل از صفحه‌ی سفارش گزارش آسیب بفرست.",
+                  en: "If you find damage, send a damage report from your order page within 24 hours of delivery.",
+                },
+              ],
+            },
+          ],
+        },
+        {
+          id: "address",
+          title: { fa: "نشانی و شماره‌ی تماس", en: "Address and phone" },
+          blocks: [
+            {
+              kind: "p",
+              text: {
+                fa: "نشانی، کد پستی و شماره‌ی تماس را دقیق بنویس. اگر بعد از ثبت سفارش نشانی عوض شد، پیش از ارسال به ما پیام بده تا اصلاحش کنیم.",
+                en: "Enter your address, postcode and phone accurately. If your address changes after ordering, message us before it ships so we can correct it.",
+              },
+            },
+          ],
+        },
+        {
+          id: "abroad",
+          title: { fa: "ارسال به خارج از ایران", en: "Outside Iran" },
+          blocks: [
+            {
+              kind: "p",
+              text: {
+                fa: "برای ارسال به خارج از ایران، پیش از خرید با ما هماهنگ کن.",
+                en: "To ship outside Iran, talk to us before buying.",
+              },
+            },
+          ],
+        },
+      ],
+    },
     {
       id: "2026-09-27",
       change: { fa: "نخستین نسخه‌ی منتشرشده.", en: "First published version." },

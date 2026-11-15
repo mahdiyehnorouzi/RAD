@@ -1,11 +1,22 @@
 export const checkoutCopy = {
   fa: {
     stepsLabel: "مراحل خرید",
-    steps: ["کیسه خرید", "اطلاعات ارسال", "بررسی و پرداخت", "نتیجه"],
+    steps: [
+      { short: "کیسه", label: "کیسه خرید" },
+      { short: "اطلاعات", label: "اطلاعات شما" },
+      { short: "ارسال", label: "اطلاعات ارسال" },
+      { short: "پرداخت", label: "بررسی و پرداخت" },
+      { short: "نتیجه", label: "نتیجه" },
+    ],
     stepDone: "انجام شد",
     stepCurrent: "مرحله‌ی فعلی",
 
-    detailsTitle: "اطلاعات دریافت اثر",
+    contactTitle: "اطلاعات شما",
+    contactLede: "نام و شماره موبایل گیرنده را برای همین سفارش بنویسید.",
+    contactContinue: "ادامه به اطلاعات ارسال",
+    back: "بازگشت",
+
+    detailsTitle: "اطلاعات ارسال",
     detailsLede: "لطفاً اطلاعات خود را برای ارسال اثر وارد کنید.",
     nameLabel: "نام و نام خانوادگی",
     phoneLabel: "شماره تماس",
@@ -174,11 +185,22 @@ export const checkoutCopy = {
   },
   en: {
     stepsLabel: "Checkout steps",
-    steps: ["Bag", "Delivery", "Review & payment", "Result"],
+    steps: [
+      { short: "Bag", label: "Shopping bag" },
+      { short: "Details", label: "Your details" },
+      { short: "Delivery", label: "Delivery" },
+      { short: "Payment", label: "Review and payment" },
+      { short: "Result", label: "Result" },
+    ],
     stepDone: "done",
     stepCurrent: "current step",
 
-    detailsTitle: "Delivery details",
+    contactTitle: "Your details",
+    contactLede: "The recipient’s name and mobile number for this order.",
+    contactContinue: "Continue to delivery",
+    back: "Back",
+
+    detailsTitle: "Delivery",
     detailsLede:
       "Enter the address. Once the order is placed, you pay by card transfer and send the receipt right here.",
     nameLabel: "Full name",

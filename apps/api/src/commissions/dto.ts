@@ -36,7 +36,7 @@ export class CreateCommissionDto {
 
   @ApiPropertyOptional({
     description: "Version of each custom-order rule the customer accepted",
-    example: { custom: "2026-09-27", terms: "2026-09-27", privacy: "2026-09-27" },
+    example: { custom: "2026-11-09", terms: "2026-11-09", privacy: "2026-09-27" },
   })
   @IsOptional()
   @IsObject()

@@ -36,10 +36,10 @@ export class CheckoutDto {
     description:
       "Version of each purchase rule the buyer read and accepted; must match the current versions",
     example: {
-      buying: "2026-09-27",
-      shipping: "2026-09-27",
-      returns: "2026-09-27",
-      terms: "2026-09-27",
+      buying: "2026-11-09",
+      shipping: "2026-11-09",
+      returns: "2026-11-09",
+      terms: "2026-11-09",
       privacy: "2026-09-27",
     },
   })

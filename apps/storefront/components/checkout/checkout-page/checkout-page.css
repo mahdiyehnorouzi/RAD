@@ -2,9 +2,19 @@
 
 .checkout-details {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  grid-auto-flow: row dense;
-  gap: 1.15rem 1.1rem;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1rem;
+}
+
+.checkout-location-row {
+  display: grid;
+  gap: 1rem;
+}
+
+@media (--desktop) {
+  .checkout-location-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 .checkout-details .checkout-field.is-wide {

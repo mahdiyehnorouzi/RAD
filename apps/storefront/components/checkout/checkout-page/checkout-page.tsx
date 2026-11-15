@@ -4,7 +4,12 @@ import "../flow/purchase-design.css";
 
 import { FormEvent, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ArrowRight } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  Truck,
+  UserRound,
+} from "lucide-react";
 import {
   CART_HOLD_MINUTES,
   ORDER_PAYMENT_WINDOW_MINUTES,
@@ -57,6 +62,7 @@ import { SavedAddressPicker } from "./saved-address-picker";
 import { useCheckoutAddresses } from "./use-checkout-addresses";
 import { checkoutCopy, fillCopy } from "../const";
 import { CheckoutMeter, CheckoutSteps, CheckoutSummary } from "../flow";
+import type { CheckoutStepId } from "../flow/checkout-steps";
 import { CheckoutField } from "./checkout-field";
 import { LocationFields } from "./location-fields";
 
@@ -169,7 +175,12 @@ export function CheckoutPage() {
   const [leaving, setLeaving] = useState(false);
   const [accepted, setAccepted] = useState(false);
   const [agreeMissing, setAgreeMissing] = useState(false);
+  const [panel, setPanel] = useState<"contact" | "delivery">("contact");
+  const panelRef = useRef(panel);
+  panelRef.current = panel;
   const formRef = useRef<HTMLFormElement>(null);
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  const panelReady = useRef(false);
   const phoneRef = useRef<HTMLInputElement>(null);
   const phoneCaret = useRef<number | null>(null);
   const agreeRef = useRef<HTMLInputElement>(null);
@@ -189,6 +200,16 @@ export function CheckoutPage() {
     errorRef.current?.focus();
   }, [error]);
 
+  useEffect(() => {
+    if (!formVisible) return;
+    if (!panelReady.current) {
+      panelReady.current = true;
+      return;
+    }
+    headingRef.current?.focus();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [panel, formVisible]);
+
   // The bag is not ready on the first render, so the form is not mounted
   // yet. Restore only once it is actually in the document — including a
   // later visit via browser back — without waiting on a one-shot mount effect.
@@ -197,6 +218,7 @@ export function CheckoutPage() {
     const form = formRef.current;
     if (!form) return;
     let draft = readDraft();
+    const savedPanel = draft.panel;
     const preset =
       addressStatus === "ready"
         ? defaultAddressToApply(draft, savedAddresses)
@@ -207,6 +229,7 @@ export function CheckoutPage() {
         ...next,
         addressChoice: "saved",
         savedAddressId: preset.id,
+        panel: savedPanel,
       };
       writeDraft(draft);
       writeControls(form, next);
@@ -240,6 +263,7 @@ export function CheckoutPage() {
     });
     const choice = addressChoiceOf(draft);
     // Session storage is read after mount so the server render stays empty.
+    setPanel(savedPanel === "delivery" ? "delivery" : "contact");
     setProvinceId(location.provinceId);
     setCityId(location.cityId);
     setPhone(nextPhone);
@@ -277,6 +301,8 @@ export function CheckoutPage() {
       ...next,
       addressChoice: choice || undefined,
       savedAddressId: choice === "saved" ? (draft.savedAddressId ?? "") : "",
+      panel: panelRef.current,
+      message: readDraft().message,
     });
     setFields(next);
     setAddressChoice(choice);
@@ -323,6 +349,7 @@ export function CheckoutPage() {
       message: String(data.get("message") ?? ""),
       addressChoice: choice || undefined,
       savedAddressId: choice === "saved" ? savedAddressId : "",
+      panel: panelRef.current,
       ...patch,
     });
     const stored = readDraft();
@@ -342,6 +369,34 @@ export function CheckoutPage() {
   };
 
   const phoneCopy = { empty: c.phoneEmpty, invalid: c.phoneError };
+
+  const openPanel = (next: "contact" | "delivery") => {
+    setPanel(next);
+    persistDraft({ panel: next });
+  };
+
+  const continueContact = () => {
+    const form = formRef.current;
+    if (!form) return;
+    setPhoneTouched(true);
+    const name = String(new FormData(form).get("name") ?? "").trim();
+    const phoneError = iranMobileMessage(phone, true, phoneCopy);
+    setFieldError("name", name.length < 2 ? c.nameError : undefined);
+    setFieldError("phone", phoneError);
+    if (name.length < 2) {
+      form.querySelector<HTMLElement>('[name="name"]')?.focus();
+      return;
+    }
+    if (phoneError) {
+      phoneRef.current?.focus();
+      return;
+    }
+    openPanel("delivery");
+  };
+
+  const selectStep = (step: CheckoutStepId) => {
+    if (step === "contact" || step === "delivery") openPanel(step);
+  };
 
   const validate = (data: FormData): FieldErrors => {
     const value = (key: "name" | "address") =>
@@ -393,9 +448,16 @@ export function CheckoutPage() {
     setErrors(nextErrors);
     const firstInvalid = FIELD_ORDER.find((name) => nextErrors[name]);
     if (firstInvalid) {
-      formRef.current
-        ?.querySelector<HTMLElement>(`[name="${firstInvalid}"]`)
-        ?.focus();
+      const nextPanel =
+        firstInvalid === "name" || firstInvalid === "phone"
+          ? "contact"
+          : "delivery";
+      if (nextPanel !== panel) openPanel(nextPanel);
+      window.setTimeout(() => {
+        formRef.current
+          ?.querySelector<HTMLElement>(`[name="${firstInvalid}"]`)
+          ?.focus();
+      }, 0);
       return;
     }
     if (!accepted) {
@@ -466,7 +528,7 @@ export function CheckoutPage() {
   if (leaving) {
     return (
       <section className="checkout-flow section" aria-busy="true">
-        <CheckoutSteps current={2} />
+        <CheckoutSteps current="payment" />
         <p className="checkout-flow-leaving" role="status">
           {c.leaving}
         </p>
@@ -477,7 +539,7 @@ export function CheckoutPage() {
   if (!ready) {
     return (
       <section className="checkout-flow section" aria-busy="true">
-        <CheckoutSteps current={1} />
+        <CheckoutSteps current="contact" />
         <CardListSkeleton count={2} />
       </section>
     );
@@ -490,7 +552,7 @@ export function CheckoutPage() {
   if (!items.length) {
     return (
       <section className="checkout-flow section">
-        <CheckoutSteps current={1} />
+        <CheckoutSteps current="contact" />
         <div className="checkout-alert" role="alert">
           <p>{c.holdGone}</p>
           <ButtonLink href="/cart" outline>
@@ -527,12 +589,19 @@ export function CheckoutPage() {
     disabled: busy,
   });
 
+  const StageIcon = panel === "contact" ? UserRound : Truck;
+
   return (
-    <section className="checkout-flow section">
-      <CheckoutSteps current={1} />
+    <section className="checkout-flow section" data-panel={panel}>
+      <CheckoutSteps current={panel} onSelect={selectStep} />
       <header className="checkout-flow-head">
-        <h1>{c.detailsTitle}</h1>
-        <p>{c.detailsLede}</p>
+        <h1 ref={headingRef} tabIndex={-1}>
+          <StageIcon aria-hidden="true" />
+          {panel === "contact" ? c.contactTitle : c.detailsTitle}
+        </h1>
+        <p>
+          {panel === "contact" ? c.contactLede : c.detailsLede}
+        </p>
       </header>
 
       <div className="checkout-flow-body">
@@ -543,205 +612,215 @@ export function CheckoutPage() {
           onSubmit={submit}
           noValidate
         >
-          {signedIn ? (
-            <SavedAddressPicker
-              status={addressStatus === "idle" ? "loading" : addressStatus}
-              addresses={savedAddresses}
-              choice={addressChoice}
-              savedAddressId={savedAddressId}
-              diverged={deliveryDiverged}
-              missing={savedMissing}
-              disabled={busy}
-              copy={c}
-              onSelect={selectSaved}
-              onManual={selectManual}
-              onRetry={retryAddresses}
-            />
-          ) : null}
-          <CheckoutField
-            id="checkout-name"
-            label={c.nameLabel}
-            error={errors.name}
-          >
-            <input
-              {...fieldProps("name")}
-              type="text"
-              defaultValue={user?.name ?? ""}
-              autoComplete="name"
-            />
-          </CheckoutField>
-          <CheckoutField
-            id="checkout-phone"
-            label={c.phoneLabel}
-            error={errors.phone}
-          >
-            <input
-              ref={phoneRef}
+          <div className="checkout-panel" hidden={panel !== "contact"}>
+            <CheckoutField
+              id="checkout-name"
+              label={c.nameLabel}
+              error={errors.name}
+            >
+              <input
+                {...fieldProps("name")}
+                type="text"
+                defaultValue={user?.name ?? ""}
+                autoComplete="name"
+              />
+            </CheckoutField>
+            <CheckoutField
               id="checkout-phone"
-              name="phone"
-              className="checkout-ltr-field"
-              type="tel"
-              inputMode="numeric"
-              autoComplete="tel"
-              dir="ltr"
-              placeholder={c.phonePlaceholder}
-              value={phone}
-              disabled={busy}
-              aria-invalid={errors.phone ? true : undefined}
-              aria-describedby={
-                errors.phone ? "checkout-phone-error" : undefined
-              }
-              onChange={(event) => {
-                const cursor =
-                  event.currentTarget.selectionStart ??
-                  event.currentTarget.value.length;
-                const edit = applyIranMobileEdit(
-                  phone,
-                  event.currentTarget.value,
-                  cursor,
-                );
-                phoneCaret.current = edit.cursor;
-                if (edit.value === phone) {
-                  event.currentTarget.value = edit.value;
-                  event.currentTarget.setSelectionRange(
-                    edit.cursor,
-                    edit.cursor,
-                  );
-                  phoneCaret.current = null;
+              label={c.phoneLabel}
+              error={errors.phone}
+            >
+              <input
+                ref={phoneRef}
+                id="checkout-phone"
+                name="phone"
+                className="checkout-ltr-field"
+                type="tel"
+                inputMode="numeric"
+                autoComplete="tel"
+                dir="ltr"
+                placeholder={c.phonePlaceholder}
+                value={phone}
+                disabled={busy}
+                aria-invalid={errors.phone ? true : undefined}
+                aria-describedby={
+                  errors.phone ? "checkout-phone-error" : undefined
                 }
-                setPhone(edit.value);
-                if (phoneTouched) {
+                onChange={(event) => {
+                  const cursor =
+                    event.currentTarget.selectionStart ??
+                    event.currentTarget.value.length;
+                  const edit = applyIranMobileEdit(
+                    phone,
+                    event.currentTarget.value,
+                    cursor,
+                  );
+                  phoneCaret.current = edit.cursor;
+                  if (edit.value === phone) {
+                    event.currentTarget.value = edit.value;
+                    event.currentTarget.setSelectionRange(
+                      edit.cursor,
+                      edit.cursor,
+                    );
+                    phoneCaret.current = null;
+                  }
+                  setPhone(edit.value);
+                  if (phoneTouched) {
+                    setFieldError(
+                      "phone",
+                      iranMobileMessage(edit.value, true, phoneCopy),
+                    );
+                  } else {
+                    clearFieldError("phone");
+                  }
+                  persistDraft({ phone: edit.value });
+                }}
+                onBlur={() => {
+                  setPhoneTouched(true);
+                  const canonical = canonicalIranMobile(phone);
+                  const next = canonical
+                    ? formatIranMobileDraft(canonical)
+                    : phone;
+                  if (canonical) setPhone(next);
                   setFieldError(
                     "phone",
-                    iranMobileMessage(edit.value, true, phoneCopy),
+                    iranMobileMessage(next, true, phoneCopy),
                   );
-                } else {
-                  clearFieldError("phone");
-                }
-                persistDraft({ phone: edit.value });
-              }}
-              onBlur={() => {
-                setPhoneTouched(true);
-                const canonical = canonicalIranMobile(phone);
-                const next = canonical
-                  ? formatIranMobileDraft(canonical)
-                  : phone;
-                if (canonical) setPhone(next);
-                setFieldError(
-                  "phone",
-                  iranMobileMessage(next, true, phoneCopy),
-                );
-                persistDraft({ phone: next });
-              }}
-            />
-          </CheckoutField>
-          <LocationFields
-            provinceId={provinceId}
-            cityId={cityId}
-            provinceLabel={c.provinceLabel}
-            cityLabel={c.cityLabel}
-            provincePlaceholder={c.provincePlaceholder}
-            cityPlaceholder={c.cityPlaceholder}
-            cityWaiting={c.cityWaiting}
-            provinceError={errors.province}
-            cityError={errors.city}
-            disabled={busy}
-            onProvince={(next) => {
-              const city = cityAfterProvinceChange(provinceId, next, cityId);
-              setProvinceId(next);
-              setCityId(city);
-              setFieldError("province", next ? undefined : c.provinceError);
-              if (city !== cityId) clearFieldError("city");
-              persistDraft({ provinceId: next, cityId: city });
-            }}
-            onCity={(next) => {
-              setCityId(next);
-              setFieldError("city", next ? undefined : c.cityError);
-              persistDraft({ cityId: next });
-            }}
-            onProvinceBlur={(value) => {
-              setFieldError("province", value ? undefined : c.provinceError);
-            }}
-            onCityBlur={(value) => {
-              if (!provinceId) return;
-              setFieldError("city", value ? undefined : c.cityError);
-            }}
-          />
-          <CheckoutField
-            id="checkout-address"
-            label={c.addressLabel}
-            error={errors.address}
-            wide
-          >
-            <textarea
-              {...fieldProps("address")}
-              className="resize-none"
-              rows={3}
-              autoComplete="street-address"
-              placeholder={c.addressPlaceholder}
-            />
-          </CheckoutField>
-          <CheckoutField
-            id="checkout-postal"
-            label={c.postalLabel}
-            optional={c.optional}
-            error={errors.postalCode}
-          >
-            <input
+                  persistDraft({ phone: next });
+                }}
+              />
+            </CheckoutField>
+          </div>
+          <div className="checkout-panel" hidden={panel !== "delivery"}>
+            {signedIn ? (
+              <SavedAddressPicker
+                status={addressStatus === "idle" ? "loading" : addressStatus}
+                addresses={savedAddresses}
+                choice={addressChoice}
+                savedAddressId={savedAddressId}
+                diverged={deliveryDiverged}
+                missing={savedMissing}
+                disabled={busy}
+                copy={c}
+                onSelect={selectSaved}
+                onManual={selectManual}
+                onRetry={retryAddresses}
+              />
+            ) : null}
+            <div className="checkout-location-row">
+              <LocationFields
+                provinceId={provinceId}
+                cityId={cityId}
+                provinceLabel={c.provinceLabel}
+                cityLabel={c.cityLabel}
+                provincePlaceholder={c.provincePlaceholder}
+                cityPlaceholder={c.cityPlaceholder}
+                cityWaiting={c.cityWaiting}
+                provinceError={errors.province}
+                cityError={errors.city}
+                disabled={busy}
+                onProvince={(next) => {
+                  const city = cityAfterProvinceChange(
+                    provinceId,
+                    next,
+                    cityId,
+                  );
+                  setProvinceId(next);
+                  setCityId(city);
+                  setFieldError("province", next ? undefined : c.provinceError);
+                  if (city !== cityId) clearFieldError("city");
+                  persistDraft({ provinceId: next, cityId: city });
+                }}
+                onCity={(next) => {
+                  setCityId(next);
+                  setFieldError("city", next ? undefined : c.cityError);
+                  persistDraft({ cityId: next });
+                }}
+                onProvinceBlur={(value) => {
+                  setFieldError(
+                    "province",
+                    value ? undefined : c.provinceError,
+                  );
+                }}
+                onCityBlur={(value) => {
+                  if (!provinceId) return;
+                  setFieldError("city", value ? undefined : c.cityError);
+                }}
+              />
+            </div>
+            <CheckoutField
+              id="checkout-address"
+              label={c.addressLabel}
+              error={errors.address}
+              wide
+            >
+              <textarea
+                {...fieldProps("address")}
+                className="resize-none"
+                rows={3}
+                autoComplete="street-address"
+                placeholder={c.addressPlaceholder}
+              />
+            </CheckoutField>
+            <CheckoutField
               id="checkout-postal"
-              name="postalCode"
-              className="checkout-ltr-field"
-              type="text"
-              inputMode="numeric"
-              autoComplete="postal-code"
-              dir="ltr"
-              disabled={busy}
-              aria-invalid={errors.postalCode ? true : undefined}
-              aria-describedby={
-                errors.postalCode ? "checkout-postal-error" : undefined
-              }
-              onInput={(event) => {
-                clearFieldError("postalCode");
-                const form = event.currentTarget.form;
-                if (form) storeDraft(form);
-              }}
-              onBlur={(event) => {
-                const postal = validPostalOrEmpty(event.currentTarget.value);
-                setFieldError(
-                  "postalCode",
-                  postal.ok ? undefined : c.postalError,
-                );
-              }}
-            />
-          </CheckoutField>
-          <CheckoutField
-            id="checkout-message"
-            label={c.messageLabel}
-            optional={c.optional}
-            wide
-          >
-            <textarea
+              label={c.postalLabel}
+              optional={c.optional}
+              error={errors.postalCode}
+            >
+              <input
+                id="checkout-postal"
+                name="postalCode"
+                className="checkout-ltr-field"
+                type="text"
+                inputMode="numeric"
+                autoComplete="postal-code"
+                dir="ltr"
+                disabled={busy}
+                aria-invalid={errors.postalCode ? true : undefined}
+                aria-describedby={
+                  errors.postalCode ? "checkout-postal-error" : undefined
+                }
+                onInput={(event) => {
+                  clearFieldError("postalCode");
+                  const form = event.currentTarget.form;
+                  if (form) storeDraft(form);
+                }}
+                onBlur={(event) => {
+                  const postal = validPostalOrEmpty(event.currentTarget.value);
+                  setFieldError(
+                    "postalCode",
+                    postal.ok ? undefined : c.postalError,
+                  );
+                }}
+              />
+            </CheckoutField>
+            <CheckoutField
               id="checkout-message"
-              name="message"
-              className="resize-none"
-              rows={2}
-              maxLength={500}
-              disabled={busy}
-              placeholder={c.messagePlaceholder}
-              onInput={(event) => {
-                setError("");
-                const form = event.currentTarget.form;
-                if (form) storeDraft(form);
-              }}
-            />
-          </CheckoutField>
+              label={c.messageLabel}
+              optional={c.optional}
+              wide
+            >
+              <textarea
+                id="checkout-message"
+                name="message"
+                className="resize-none"
+                rows={2}
+                maxLength={500}
+                disabled={busy}
+                placeholder={c.messagePlaceholder}
+                onInput={(event) => {
+                  setError("");
+                  const form = event.currentTarget.form;
+                  if (form) storeDraft(form);
+                }}
+              />
+            </CheckoutField>
+          </div>
         </form>
 
         <aside className="checkout-flow-aside">
           <CheckoutSummary items={items} total={total} />
-        </aside>
-
-        <div className="checkout-flow-action">
           {lost ? (
             <div className="checkout-alert" role="alert">
               <p>{c.holdGone}</p>
@@ -761,16 +840,20 @@ export function CheckoutPage() {
               })}
             </CheckoutMeter>
           ) : null}
+        </aside>
 
-          <CheckoutAgreement
-            ref={agreeRef}
-            checked={accepted}
-            invalid={agreeMissing}
-            onChange={(checked) => {
-              setAccepted(checked);
-              if (checked) setAgreeMissing(false);
-            }}
-          />
+        <div className="checkout-flow-action">
+          {panel === "delivery" ? (
+            <CheckoutAgreement
+              ref={agreeRef}
+              checked={accepted}
+              invalid={agreeMissing}
+              onChange={(checked) => {
+                setAccepted(checked);
+                if (checked) setAgreeMissing(false);
+              }}
+            />
+          ) : null}
 
           {error ? (
             <p
@@ -787,16 +870,38 @@ export function CheckoutPage() {
             </p>
           ) : null}
 
-          <button
-            type="submit"
-            form={FORM_ID}
-            className="checkout-submit"
-            disabled={busy || lost}
-            aria-busy={busy || undefined}
-          >
-            <span>{submitting ? c.submitting : c.submit}</span>
-            <ArrowIcon aria-hidden="true" />
-          </button>
+          {panel === "contact" ? (
+            <button
+              type="button"
+              className="checkout-submit"
+              disabled={busy || lost}
+              onClick={continueContact}
+            >
+              <span>{c.contactContinue}</span>
+              <ArrowIcon aria-hidden="true" />
+            </button>
+          ) : null}
+          {panel === "delivery" ? (
+            <>
+              <button
+                type="submit"
+                form={FORM_ID}
+                className="checkout-submit"
+                disabled={busy || lost}
+                aria-busy={busy || undefined}
+              >
+                <span>{submitting ? c.submitting : c.submit}</span>
+                <ArrowIcon aria-hidden="true" />
+              </button>
+              <button
+                type="button"
+                className="checkout-back"
+                onClick={() => openPanel("contact")}
+              >
+                {c.back}
+              </button>
+            </>
+          ) : null}
         </div>
 
         <div className="checkout-flow-help">

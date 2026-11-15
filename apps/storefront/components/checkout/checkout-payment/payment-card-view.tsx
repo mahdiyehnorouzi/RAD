@@ -92,10 +92,10 @@ export function PaymentCardView({
         <div className={styles.titles}>
           <h2 id={titleId}>{labels.title}</h2>
           <p className={styles.subtitle}>{labels.subtitle}</p>
+          <p className={styles.mark} lang="fa">
+            رَد
+          </p>
         </div>
-        <p className={styles.mark} lang="fa">
-          رَد
-        </p>
 
         <div className={styles.numberBlock}>
           <span className={styles.kicker}>{labels.cardLabel}</span>
