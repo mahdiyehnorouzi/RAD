@@ -4,12 +4,7 @@ import "../flow/purchase-design.css";
 
 import { FormEvent, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import {
-  ArrowLeft,
-  ArrowRight,
-  Truck,
-  UserRound,
-} from "lucide-react";
+import { ArrowLeft, ArrowRight, Truck, UserRound } from "lucide-react";
 import {
   CART_HOLD_MINUTES,
   ORDER_PAYMENT_WINDOW_MINUTES,
@@ -599,9 +594,7 @@ export function CheckoutPage() {
           <StageIcon aria-hidden="true" />
           {panel === "contact" ? c.contactTitle : c.detailsTitle}
         </h1>
-        <p>
-          {panel === "contact" ? c.contactLede : c.detailsLede}
-        </p>
+        <p>{panel === "contact" ? c.contactLede : c.detailsLede}</p>
       </header>
 
       <div className="checkout-flow-body">
