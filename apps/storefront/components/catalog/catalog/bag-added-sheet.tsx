@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useRef, useState, type PointerEvent } from "react";
 import Link from "next/link";
-import { ArrowLeft, CheckCircle2, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, CheckCircle2, X } from "lucide-react";
 import type { Product } from "@rad/types";
 import { useLocale } from "@/components/i18n";
 import { ProductMedia } from "@/components/product/listing";
@@ -25,6 +25,7 @@ export function BagAddedSheet({
   onClose: () => void;
 }) {
   const { locale, href } = useLocale();
+  const Forward = locale === "fa" ? ArrowLeft : ArrowRight;
   const dialog = useRef<HTMLDialogElement>(null);
   // Two-phase mount so the entry transitions *from* an off-screen/transparent
   // starting style instead of the dialog just appearing — the native
@@ -156,7 +157,7 @@ export function BagAddedSheet({
             sizes="88px"
           />
         </span>
-        <div>
+        <div className="bag-added-copy">
           <h2 id="bag-added-title">{productCopy(product, locale).name}</h2>
           <b>{productPrice(product, locale)}</b>
         </div>
@@ -166,12 +167,12 @@ export function BagAddedSheet({
         {locale === "fa" ? "به کیسه خرید اضافه شد." : "Added to your bag."}
       </p>
       <Link
-        className="bag-added-primary"
+        className="button bag-added-primary"
         href={href("/cart")}
         onClick={requestClose}
       >
-        {locale === "fa" ? "رفتن به کیسه" : "Go to bag"}
-        <ArrowLeft />
+        <span>{locale === "fa" ? "رفتن به کیسه" : "Go to bag"}</span>
+        <Forward aria-hidden="true" />
       </Link>
       <button className="bag-added-continue" onClick={requestClose}>
         {locale === "fa" ? "ادامه دیدن آثار" : "Continue browsing"}

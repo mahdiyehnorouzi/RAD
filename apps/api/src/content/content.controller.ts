@@ -1,5 +1,10 @@
 import { Controller, Get, Query } from "@nestjs/common";
-import { ApiOkResponse, ApiOperation, ApiQuery, ApiTags } from "@nestjs/swagger";
+import {
+  ApiOkResponse,
+  ApiOperation,
+  ApiQuery,
+  ApiTags,
+} from "@nestjs/swagger";
 import { ContentService } from "./content.service";
 
 @ApiTags("content")
@@ -9,7 +14,12 @@ export class ContentController {
 
   @Get("faq")
   @ApiOperation({ summary: "Product page shipping FAQ" })
-  @ApiQuery({ name: "locale", required: false, enum: ["fa", "en"], example: "fa" })
+  @ApiQuery({
+    name: "locale",
+    required: false,
+    enum: ["fa", "en"],
+    example: "fa",
+  })
   @ApiOkResponse({
     description: "Localized FAQ section for product detail pages",
     schema: {
@@ -22,7 +32,7 @@ export class ContentController {
             icon: "shield-check",
             question: "اگر اثر در ارسال آسیب ببیند؟",
             answer:
-              "تمام آثار بیمه‌اند. آسیب را تا ۲۴ ساعت با عکس اعلام کنید؛ رَد مسئول پیگیری و جبران است.",
+              "اگر اثر در ارسال آسیب ببیند، تا ۲۴ ساعت با عکس اعلام کنید؛ رَد مسئول پیگیری و جبران است.",
           },
         ],
       },

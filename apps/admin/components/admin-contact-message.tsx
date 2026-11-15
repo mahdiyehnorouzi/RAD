@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { createSingleFlight } from "../lib/admin-mutation";
 import { AlertTriangle, Check, Mail, Phone, RotateCcw } from "lucide-react";
+import { Button } from "@rad/ui";
 import {
   contactSourceLabels,
   contactTopicLabels,
@@ -128,14 +129,14 @@ export function AdminContactMessageItem({
             placeholder="پاسخ به مشتری…"
             rows={2}
           />
-          <button
-            type="button"
-            className="secondary-action"
+          <Button
+            variant="secondary"
             onClick={sendReply}
-            disabled={sending || !draft.trim()}
+            disabled={!draft.trim()}
+            loading={sending}
           >
-            {sending ? "در حال ارسال…" : "ارسال پاسخ"}
-          </button>
+            ارسال پاسخ
+          </Button>
         </div>
       )}
 
@@ -152,14 +153,15 @@ export function AdminContactMessageItem({
         </a>
 
         {message.orderId && onOpenOrder ? (
-          <button
-            type="button"
+          <Button
+            variant="ghost"
+            size="sm"
             className="contact-message-order"
             onClick={() => onOpenOrder(message.orderId!)}
           >
             سفارش <bdi dir="ltr">#{message.orderId}</bdi>
             {order ? ` · ${orderStatusLabels[order.status]}` : ""}
-          </button>
+          </Button>
         ) : null}
 
         {message.orderId && !message.fromOrderOwner ? (
@@ -177,9 +179,9 @@ export function AdminContactMessageItem({
         ) : null}
 
         {canWrite ? (
-          <button
-            type="button"
-            className="secondary-action contact-message-toggle"
+          <Button
+            variant="secondary"
+            className="contact-message-toggle"
             onClick={toggle}
             disabled={busy}
           >
@@ -192,7 +194,7 @@ export function AdminContactMessageItem({
                 <Check aria-hidden="true" /> رسیدگی شد
               </>
             )}
-          </button>
+          </Button>
         ) : null}
       </footer>
       {actionError ? (

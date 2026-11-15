@@ -75,8 +75,8 @@ const ORDER_PATH: OrderPathStep[] = [
     id: "result",
     title: { fa: "نتیجه و ارسال", en: "Result and shipping" },
     short: {
-      fa: "ارسال بیمه‌شده به سراسر ایران",
-      en: "Insured shipping across Iran",
+      fa: "تهران پست یا پیک؛ شهرهای دیگر پست",
+      en: "Tehran by post or courier; other cities by post",
     },
   },
 ];

@@ -19,8 +19,6 @@ export function ShippingReturnsDisclosure({
     <div className={className}>
       <PolicyFacts
         facts={[
-          { slug: "shipping", id: "tehran" },
-          { slug: "shipping", id: "cities" },
           { slug: "returns", id: "window" },
           { slug: "returns", id: "damage" },
           { slug: "returns", id: "compensation" },

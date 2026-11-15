@@ -1,6 +1,7 @@
 "use client";
 
 import { ArrowDown, ArrowUp, Pencil, Trash2 } from "lucide-react";
+import { Button } from "@rad/ui";
 
 /** Move, edit and delete controls for one item of an ordered content list. */
 export function AdminRowActions({
@@ -23,35 +24,41 @@ export function AdminRowActions({
 }) {
   return (
     <footer className="content-row-actions">
-      <button
-        type="button"
-        className="secondary-action"
+      <Button
+        variant="secondary"
+        size="sm"
         onClick={() => onMove(index, index - 1)}
         disabled={disabled || index === 0}
         aria-label={`بالا بردن ${label}`}
       >
         <ArrowUp aria-hidden="true" />
-      </button>
-      <button
-        type="button"
-        className="secondary-action"
+      </Button>
+      <Button
+        variant="secondary"
+        size="sm"
         onClick={() => onMove(index, index + 1)}
         disabled={disabled || index === total - 1}
         aria-label={`پایین بردن ${label}`}
       >
         <ArrowDown aria-hidden="true" />
-      </button>
-      <button type="button" className="secondary-action" onClick={onEdit} disabled={disabled}>
+      </Button>
+      <Button
+        variant="secondary"
+        size="sm"
+        onClick={onEdit}
+        disabled={disabled}
+      >
         <Pencil aria-hidden="true" /> ویرایش
-      </button>
-      <button
-        type="button"
-        className="secondary-action content-danger"
+      </Button>
+      <Button
+        variant="secondary"
+        size="sm"
+        className="content-danger"
         onClick={onDelete}
         disabled={disabled}
       >
         <Trash2 aria-hidden="true" /> حذف
-      </button>
+      </Button>
     </footer>
   );
 }

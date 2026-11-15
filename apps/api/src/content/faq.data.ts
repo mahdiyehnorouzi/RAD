@@ -7,10 +7,13 @@ export const faqSection = {
     {
       id: "damage",
       icon: "shield-check",
-      question: { fa: "اگر اثر در ارسال آسیب ببیند؟", en: "What if it is damaged?" },
+      question: {
+        fa: "اگر اثر در ارسال آسیب ببیند؟",
+        en: "What if it is damaged?",
+      },
       answer: {
-        fa: "تمام آثار بیمه‌اند. آسیب را تا ۲۴ ساعت با عکس اعلام کنید؛ رَد مسئول پیگیری و جبران است.",
-        en: "Every work is insured. Report damage with photos within 24 hours; RAD manages the resolution.",
+        fa: "اگر اثر در ارسال آسیب ببیند، تا ۲۴ ساعت با عکس اعلام کنید؛ رَد مسئول پیگیری و جبران است.",
+        en: "If a work is damaged in transit, report it with photos within 24 hours; RAD manages the resolution.",
       },
     },
     {
@@ -25,16 +28,19 @@ export const faqSection = {
     {
       id: "delivery",
       icon: "truck",
-      question: { fa: "زمان و محدوده ارسال؟", en: "When will it arrive?" },
+      question: { fa: "ارسال چگونه است؟", en: "How is it sent?" },
       answer: {
-        fa: "تهران ۲ تا ۴ روز کاری و شهرستان ۴ تا ۸ روز کاری؛ ارسال بیمه‌شده رایگان است.",
-        en: "Tehran: 2–4 working days. Other cities: 4–8. Insured delivery is complimentary.",
+        fa: "پس از آماده‌شدن اثر، سفارش‌های تهران با پست یا پیک و سفارش‌های شهرهای دیگر با پست ارسال می‌شوند.",
+        en: "After the work is ready, Tehran orders are sent by post or courier; orders to other cities are sent by post.",
       },
     },
     {
       id: "returns",
       icon: "palette",
-      question: { fa: "رنگ، متریال و مرجوعی", en: "Colour, material, and returns" },
+      question: {
+        fa: "رنگ، متریال و مرجوعی",
+        en: "Colour, material, and returns",
+      },
       answer: {
         fa: "نور نمایشگر می‌تواند رنگ و بافت را کمی تغییر دهد. آثار آماده تا ۴۸ ساعت امکان درخواست بازگشت دارند؛ سفارش شخصی مرجوع نمی‌شود، مگر آسیب‌دیده برسد یا با پیشنهاد تأییدشده فرق اساسی داشته باشد.",
         en: "Screens may shift colour and texture slightly. Ready works can be returned within 48 hours; custom works cannot, unless damaged or substantially different from the approved proposal.",

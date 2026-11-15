@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { Plus } from "lucide-react";
+import { Button } from "@rad/ui";
 import {
   shapeTraitLabels,
   type ShapeQuestion,
@@ -83,15 +84,13 @@ export function AdminShapeQuestions({
             نزدیک‌تر پیشنهاد می‌شود.
           </p>
         </div>
-        <button
-          className="primary-action"
-          type="button"
+        <Button
           onClick={() => setEditing("new")}
           disabled={!canWrite || loading || loadError}
         >
           <Plus />
           سؤال تازه
-        </button>
+        </Button>
       </div>
 
       {moveError ? (

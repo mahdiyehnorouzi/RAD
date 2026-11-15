@@ -4,7 +4,7 @@ import type { LocaleCopy } from "@/types/locale";
 export const damageReportCopy = {
   fa: {
     title: "اثر آسیب‌دیده رسید؟",
-    lede: "همه‌ی آثار بیمه‌شده ارسال می‌شوند. با دو عکس و چند خط توضیح گزارش بده تا بررسی‌اش کنیم.",
+    lede: "اگر اثر آسیب‌دیده رسید، با دو عکس و چند خط توضیح گزارش بده تا بررسی‌اش کنیم.",
     deadline: "تا {date} فرصت گزارش داری.",
     deadlinePassed:
       "مهلت ۲۴ ساعته تمام شده، ولی باز هم گزارش بده؛ آن را می‌خوانیم و جداگانه تصمیم می‌گیریم.",
@@ -37,7 +37,7 @@ export const damageReportCopy = {
   },
   en: {
     title: "Did the work arrive damaged?",
-    lede: "Every work ships insured. Report it with two photos and a few lines, and we'll review it.",
+    lede: "If a work arrives damaged, report it with two photos and a few lines, and we'll review it.",
     deadline: "You have until {date} to report it.",
     deadlinePassed:
       "The 24-hour window has passed, but report it anyway; we'll read it and decide case by case.",

@@ -109,16 +109,8 @@ export default async function PDP({
   if (!data) notFound();
   if ("moved" in data) redirect(data.moved);
 
-  const {
-    product,
-    artwork,
-    priceToman,
-    passport,
-    passportPath,
-    qrSvg,
-    related,
-    faq,
-  } = data;
+  const { product, artwork, priceToman, passport, passportPath, related, faq } =
+    data;
 
   const productSchema = productJsonLd(product, {
     availability: PRODUCT_SEO[productSeoState(product)].availability,
@@ -152,7 +144,6 @@ export default async function PDP({
         passport={passport}
         related={related}
         initialFaq={faq}
-        qrSvg={qrSvg}
       />
     </>
   );

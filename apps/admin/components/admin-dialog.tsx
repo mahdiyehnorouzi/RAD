@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { X } from "lucide-react";
+import { Button } from "@rad/ui";
 import { createSingleFlight } from "../lib/admin-mutation";
 
 // Ref-counted so a second overlay opening on top of a first — or one
@@ -104,17 +105,12 @@ export function ConfirmDialog({
         </p>
       ) : null}
       <div className="dialog-actions">
-        <button className="secondary-action" type="button" onClick={onCancel}>
+        <Button variant="secondary" onClick={onCancel}>
           انصراف
-        </button>
-        <button
-          className="danger-action"
-          type="button"
-          onClick={confirm}
-          disabled={pending}
-        >
-          {pending ? "در حال انجام…" : confirmLabel}
-        </button>
+        </Button>
+        <Button variant="danger" onClick={confirm} loading={pending}>
+          {confirmLabel}
+        </Button>
       </div>
     </DialogShell>
   );
@@ -155,9 +151,14 @@ export function DialogShell({
             <h2 id="dialog-title">{title}</h2>
             <p id="dialog-description">{description}</p>
           </div>
-          <button type="button" onClick={onClose} aria-label="بستن">
+          <Button
+            variant="ghost"
+            shape="icon"
+            onClick={onClose}
+            aria-label="بستن"
+          >
             <X />
-          </button>
+          </Button>
         </header>
         {children}
       </section>

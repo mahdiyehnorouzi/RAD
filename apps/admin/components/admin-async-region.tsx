@@ -1,5 +1,7 @@
 "use client";
 
+import { Button } from "@rad/ui";
+
 const skeletonCount = { list: 3, table: 5, rows: 3 } as const;
 
 /**
@@ -37,17 +39,15 @@ export function AdminAsyncRegion({
       {!loadError && refreshError ? (
         <div className="admin-refresh-error" role="alert">
           <p>به‌روزرسانی ناموفق بود. اطلاعات قبلی هنوز نمایش داده می‌شود.</p>
-          <button className="secondary-action" type="button" onClick={onRetry}>
+          <Button variant="secondary" onClick={onRetry}>
             تلاش دوباره
-          </button>
+          </Button>
         </div>
       ) : null}
       {loadError ? (
         <div className="admin-section-error" role="alert">
           <p>{errorMessage}</p>
-          <button className="primary-action" type="button" onClick={onRetry}>
-            تلاش دوباره
-          </button>
+          <Button onClick={onRetry}>تلاش دوباره</Button>
         </div>
       ) : loading ? (
         <div

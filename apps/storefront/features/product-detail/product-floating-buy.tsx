@@ -114,9 +114,9 @@ export function ProductFloatingBuy({
             href={href("/cart")}
             tabIndex={visible ? undefined : -1}
           >
-            <Forward className={styles.goToBagArrow} aria-hidden="true" />
-            {t("goToBag")}
             <ShoppingBag aria-hidden="true" />
+            {t("goToBag")}
+            <Forward className={styles.goToBagArrow} aria-hidden="true" />
           </Link>
         ) : forceBusy || addPending ? (
           <div className="add-to-bag">

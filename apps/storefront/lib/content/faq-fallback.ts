@@ -10,7 +10,7 @@ export const faqFallbackFa: FaqContent = {
       icon: "shield-check",
       question: "اگر اثر در ارسال آسیب ببیند؟",
       answer:
-        "تمام آثار بیمه‌اند. آسیب را تا ۲۴ ساعت با عکس اعلام کنید؛ رَد مسئول پیگیری و جبران است.",
+        "اگر اثر در ارسال آسیب ببیند، تا ۲۴ ساعت با عکس اعلام کنید؛ رَد مسئول پیگیری و جبران است.",
     },
     {
       id: "packaging",
@@ -22,9 +22,9 @@ export const faqFallbackFa: FaqContent = {
     {
       id: "delivery",
       icon: "truck",
-      question: "زمان و محدوده ارسال؟",
+      question: "ارسال چگونه است؟",
       answer:
-        "تهران ۲ تا ۴ روز کاری و شهرستان ۴ تا ۸ روز کاری؛ ارسال بیمه‌شده رایگان است.",
+        "پس از آماده‌شدن اثر، سفارش‌های تهران با پست یا پیک و سفارش‌های شهرهای دیگر با پست ارسال می‌شوند.",
     },
     {
       id: "returns",
@@ -45,7 +45,7 @@ export const faqFallbackEn: FaqContent = {
       icon: "shield-check",
       question: "What if it is damaged?",
       answer:
-        "Every work is insured. Report damage with photos within 24 hours; RAD manages the resolution.",
+        "If a work is damaged in transit, report it with photos within 24 hours; RAD manages the resolution.",
     },
     {
       id: "packaging",
@@ -57,9 +57,9 @@ export const faqFallbackEn: FaqContent = {
     {
       id: "delivery",
       icon: "truck",
-      question: "When will it arrive?",
+      question: "How is it sent?",
       answer:
-        "Tehran: 2–4 working days. Other cities: 4–8. Insured delivery is complimentary.",
+        "After the work is ready, Tehran orders are sent by post or courier; orders to other cities are sent by post.",
     },
     {
       id: "returns",

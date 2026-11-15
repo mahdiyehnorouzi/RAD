@@ -37,7 +37,6 @@ export function ProductDetail({
   passport,
   related,
   initialFaq = null,
-  qrSvg,
 }: {
   product: Product;
   artwork?: Artwork;
@@ -45,7 +44,6 @@ export function ProductDetail({
   /** Other works to suggest, already chosen and ordered by the server. */
   related: Product[];
   initialFaq?: FaqContent | null;
-  qrSvg?: string;
 }) {
   const { locale } = useLocale();
   const [faq, setFaq] = useState<FaqContent | null>(initialFaq);
@@ -155,7 +153,6 @@ export function ProductDetail({
           state={state}
           live={live}
           passport={passport}
-          qrSvg={qrSvg}
           textures={textures}
           buyRef={buyRef}
           onSheetVisibleChange={setSheetOpen}

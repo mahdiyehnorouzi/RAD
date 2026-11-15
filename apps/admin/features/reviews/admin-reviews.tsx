@@ -2,6 +2,7 @@
 
 import { useMemo, useRef, useState } from "react";
 import { Eye, EyeOff, Trash2 } from "lucide-react";
+import { Button } from "@rad/ui";
 import type { AdminReview } from "../../lib/admin-data";
 import { createSingleFlight } from "../../lib/admin-mutation";
 import { storefrontUrl } from "../../lib/storefront-url";
@@ -94,9 +95,10 @@ export function AdminReviews({
 
       <div className="message-filters" role="group" aria-label="فیلتر نظرها">
         {filters.map(({ id, label }) => (
-          <button
+          <Button
             key={id}
-            type="button"
+            variant="ghost"
+            size="sm"
             className={filter === id ? "active" : ""}
             aria-pressed={filter === id}
             onClick={() => setFilter(id)}
@@ -105,7 +107,7 @@ export function AdminReviews({
             <span>
               {loading || loadError ? "…" : number.format(counts[id])}
             </span>
-          </button>
+          </Button>
         ))}
       </div>
 
@@ -172,9 +174,9 @@ export function AdminReviews({
 
                 {canWrite ? (
                   <footer>
-                    <button
-                      type="button"
-                      className="secondary-action contact-message-toggle"
+                    <Button
+                      variant="secondary"
+                      className="contact-message-toggle"
                       onClick={() => void toggle(review)}
                       disabled={busy === review.id}
                     >
@@ -187,15 +189,15 @@ export function AdminReviews({
                           <EyeOff aria-hidden="true" /> پنهان کردن
                         </>
                       )}
-                    </button>
-                    <button
-                      type="button"
-                      className="secondary-action content-danger"
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      className="content-danger"
                       onClick={() => setDeleteTarget(review)}
                       disabled={busy === review.id}
                     >
                       <Trash2 aria-hidden="true" /> حذف
-                    </button>
+                    </Button>
                   </footer>
                 ) : null}
               </article>

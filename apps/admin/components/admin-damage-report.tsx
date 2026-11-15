@@ -2,6 +2,7 @@
 
 import { useId, useState } from "react";
 import { AlertTriangle, Eye, Phone } from "lucide-react";
+import { Button } from "@rad/ui";
 import {
   damageResolutionLabels,
   damageStatusLabels,
@@ -18,7 +19,10 @@ export type DamageReview = {
 type Decision = "repair" | "refund" | "declined";
 
 const dateTime = (value: number) =>
-  new Intl.DateTimeFormat("fa-IR", { dateStyle: "medium", timeStyle: "short" }).format(value);
+  new Intl.DateTimeFormat("fa-IR", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(value);
 
 /** One transit-damage claim: the two photos, the customer's note, and the decision. */
 export function AdminDamageReportItem({
@@ -54,7 +58,11 @@ export function AdminDamageReportItem({
     send(
       decision === "declined"
         ? { status: "declined", note: note.trim() }
-        : { status: "approved", resolution: decision, note: note.trim() || undefined },
+        : {
+            status: "approved",
+            resolution: decision,
+            note: note.trim() || undefined,
+          },
     );
 
   return (
@@ -65,10 +73,14 @@ export function AdminDamageReportItem({
           <small>
             {damageStatusLabels[report.status]}
             {report.signedIn ? " · حساب کاربری" : " · مهمان"}
-            {report.deliveredAt ? ` · تحویل ${dateTime(report.deliveredAt)}` : " · زمان تحویل ثبت نشده"}
+            {report.deliveredAt
+              ? ` · تحویل ${dateTime(report.deliveredAt)}`
+              : " · زمان تحویل ثبت نشده"}
           </small>
         </div>
-        <time dateTime={new Date(report.createdAt).toISOString()}>{dateTime(report.createdAt)}</time>
+        <time dateTime={new Date(report.createdAt).toISOString()}>
+          {dateTime(report.createdAt)}
+        </time>
       </header>
 
       <div className="damage-claim-photos">
@@ -77,15 +89,19 @@ export function AdminDamageReportItem({
           { src: report.damagePhoto, label: "خود آسیب" },
         ].map((photo) => (
           <figure key={photo.label}>
-            <button
-              type="button"
+            <Button
+              variant="ghost"
               className={enlarged === photo.src ? "is-enlarged" : ""}
-              onClick={() => setEnlarged((current) => (current === photo.src ? null : photo.src))}
+              onClick={() =>
+                setEnlarged((current) =>
+                  current === photo.src ? null : photo.src,
+                )
+              }
               aria-pressed={enlarged === photo.src}
               aria-label={`بزرگ‌نمایی عکس ${photo.label}`}
             >
               <img src={photo.src} alt={photo.label} />
-            </button>
+            </Button>
             <figcaption>{photo.label}</figcaption>
           </figure>
         ))}
@@ -95,24 +111,37 @@ export function AdminDamageReportItem({
 
       {report.resolution || report.note ? (
         <div className="damage-claim-decision">
-          {report.resolution ? <strong>جبران: {damageResolutionLabels[report.resolution]}</strong> : null}
+          {report.resolution ? (
+            <strong>جبران: {damageResolutionLabels[report.resolution]}</strong>
+          ) : null}
           {report.note ? <p>پاسخ به مشتری: {report.note}</p> : null}
-          {report.reviewedAt ? <small>تصمیم در {dateTime(report.reviewedAt)}</small> : null}
+          {report.reviewedAt ? (
+            <small>تصمیم در {dateTime(report.reviewedAt)}</small>
+          ) : null}
         </div>
       ) : null}
 
       <footer>
         {report.phone ? (
-          <a className="contact-message-reply" href={`tel:${report.phone}`} dir="ltr">
+          <a
+            className="contact-message-reply"
+            href={`tel:${report.phone}`}
+            dir="ltr"
+          >
             <Phone aria-hidden="true" />
             {report.phone}
           </a>
         ) : null}
         {onOpenOrder ? (
-          <button type="button" className="contact-message-order" onClick={() => onOpenOrder(report.orderId)}>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="contact-message-order"
+            onClick={() => onOpenOrder(report.orderId)}
+          >
             سفارش <bdi dir="ltr">#{report.orderId}</bdi>
             {order ? ` · ${order.productName}` : ""}
-          </button>
+          </Button>
         ) : null}
         {report.late ? (
           <span className="contact-message-flag">
@@ -121,24 +150,23 @@ export function AdminDamageReportItem({
           </span>
         ) : null}
         {canWrite && report.status === "submitted" ? (
-          <button
-            type="button"
-            className="secondary-action contact-message-toggle"
+          <Button
+            variant="secondary"
+            className="contact-message-toggle"
             onClick={() => send({ status: "reviewing" })}
             disabled={busy}
           >
             <Eye aria-hidden="true" /> شروع بررسی
-          </button>
+          </Button>
         ) : null}
         {canWrite && open && !deciding ? (
-          <button
-            type="button"
-            className="primary-action damage-claim-decide"
+          <Button
+            className="damage-claim-decide"
             onClick={() => setDeciding(true)}
             disabled={busy}
           >
             تصمیم
-          </button>
+          </Button>
         ) : null}
       </footer>
 
@@ -173,7 +201,9 @@ export function AdminDamageReportItem({
             ))}
           </fieldset>
           <label htmlFor={`${id}-note`}>
-            {noteRequired ? "دلیل، برای مشتری (لازم)" : "توضیح برای مشتری (اختیاری)"}
+            {noteRequired
+              ? "دلیل، برای مشتری (لازم)"
+              : "توضیح برای مشتری (اختیاری)"}
           </label>
           <textarea
             id={`${id}-note`}
@@ -184,12 +214,21 @@ export function AdminDamageReportItem({
             onChange={(event) => setNote(event.target.value)}
           />
           <div className="order-payment-actions">
-            <button type="submit" className="primary-action" disabled={busy || (noteRequired && !note.trim())}>
+            <Button
+              type="submit"
+              disabled={noteRequired && !note.trim()}
+              loading={busy}
+            >
               ثبت تصمیم
-            </button>
-            <button type="button" className="secondary-action" onClick={() => setDeciding(false)} disabled={busy}>
+            </Button>
+            <Button
+              variant="secondary"
+              type="button"
+              onClick={() => setDeciding(false)}
+              disabled={busy}
+            >
               انصراف
-            </button>
+            </Button>
           </div>
         </form>
       ) : null}

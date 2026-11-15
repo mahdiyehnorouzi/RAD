@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { ArrowLeft, ArrowRight, QrCode } from "lucide-react";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 import type { Product } from "@rad/types";
 import { useLocale } from "@/components/i18n";
 import { ObjectStamp, RadFingerprint } from "@/components/identity";
@@ -13,12 +13,9 @@ import styles from "./product-record-cards.module.css";
 export function ProductRecordCards({
   product,
   passport,
-  qrSvg,
 }: {
   product: Product;
   passport?: RadPassport;
-  /** Server-rendered code for this work's short link; the icon stands in without it. */
-  qrSvg?: string;
 }) {
   const { locale, t, href, number } = useLocale();
   const c = pdpCopy[locale];
@@ -71,32 +68,6 @@ export function ProductRecordCards({
           />
         </div>
       ) : null}
-      <Link
-        className={`${styles.record} ${styles.qr}`}
-        href={href(`/products/${product.slug}/qr`)}
-      >
-        {qrSvg ? (
-          <span
-            className={styles.recordQr}
-            aria-hidden="true"
-            dangerouslySetInnerHTML={{ __html: qrSvg }}
-          />
-        ) : (
-          <span className={styles.recordQr} aria-hidden="true">
-            <QrCode />
-          </span>
-        )}
-        <span className={styles.recordText}>
-          <span className={styles.recordBody}>{c.qrCardBody}</span>
-        </span>
-        {product.radNumber ? (
-          <RadFingerprint
-            radNumber={product.radNumber}
-            className={styles.recordQrPrint}
-            animate
-          />
-        ) : null}
-      </Link>
     </div>
   );
 }

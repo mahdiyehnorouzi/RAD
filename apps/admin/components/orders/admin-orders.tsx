@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { ChevronRight, Package, Search } from "lucide-react";
+import { Button } from "@rad/ui";
 import {
   orderStatusLabels,
   orderStatusOptions,
@@ -204,9 +205,7 @@ export function AdminOrders({
           <p>
             دریافت سفارش‌ها ناموفق بود. اتصال را بررسی کنید و دوباره تلاش کنید.
           </p>
-          <button className="primary-action" type="button" onClick={onRetry}>
-            تلاش دوباره
-          </button>
+          <Button onClick={onRetry}>تلاش دوباره</Button>
         </div>
       ) : loading || !list ? (
         <p className="admin-loading" role="status">
@@ -225,16 +224,17 @@ export function AdminOrders({
             aria-label="فیلتر وضعیت سفارش"
           >
             {orderQueueFilters.map((item) => (
-              <button
+              <Button
                 key={item.id}
-                type="button"
+                variant="ghost"
+                size="sm"
                 className={filter === item.id ? "is-active" : ""}
                 aria-pressed={filter === item.id}
                 onClick={() => chooseFilter(item.id)}
               >
                 {item.label}
                 <span>{number.format(result.counts[item.id])}</span>
-              </button>
+              </Button>
             ))}
           </div>
 
@@ -308,9 +308,10 @@ export function AdminOrders({
                       order.paymentStatus === "verify_conflict";
                     return (
                       <li key={order.id}>
-                        <button
+                        <Button
                           id={`order-${order.id}`}
-                          type="button"
+                          variant="ghost"
+                          fullWidth
                           className={`orders-row${selected ? " is-active" : ""}${review ? " is-review" : ""}`}
                           aria-current={selected ? "true" : undefined}
                           onClick={() => setSelectedId(order.id)}
@@ -338,31 +339,33 @@ export function AdminOrders({
                             <b>{money(order.amount)}</b>
                             <small dir="ltr">{order.id}</small>
                           </span>
-                        </button>
+                        </Button>
                       </li>
                     );
                   })}
                 </ul>
                 {result.pages > 1 ? (
                   <nav className="orders-pager" aria-label="صفحه‌های سفارش">
-                    <button
-                      type="button"
+                    <Button
+                      variant="secondary"
+                      size="sm"
                       disabled={result.page <= 1}
                       onClick={() => setPage(result.page - 1)}
                     >
                       قبلی
-                    </button>
+                    </Button>
                     <span>
                       {number.format(result.page)} از{" "}
                       {number.format(result.pages)}
                     </span>
-                    <button
-                      type="button"
+                    <Button
+                      variant="secondary"
+                      size="sm"
                       disabled={result.page >= result.pages}
                       onClick={() => setPage(result.page + 1)}
                     >
                       بعدی
-                    </button>
+                    </Button>
                   </nav>
                 ) : null}
               </div>
@@ -471,14 +474,14 @@ function OrderDetail({
       aria-labelledby={`order-title-${order.id}`}
     >
       {mobile ? (
-        <button
+        <Button
+          variant="link"
           className="orders-back text-action"
-          type="button"
           onClick={onBack}
         >
           <ChevronRight aria-hidden="true" />
           بازگشت به فهرست
-        </button>
+        </Button>
       ) : null}
       <header className="orders-detail-head">
         <div>
@@ -643,20 +646,20 @@ function OrderDetail({
           <p>تحویل در {dateTime(order.deliveredAt)} ثبت شده است.</p>
         ) : null}
         {canWrite && showTracking && trackingDirty ? (
-          <button
-            className="secondary-action"
-            type="button"
+          <Button
+            variant="secondary"
             disabled={
-              pending !== null ||
+              (pending !== null && pending !== "tracking") ||
               tracking.trim().length === 0 ||
               Boolean(trackingIssue)
             }
+            loading={pending === "tracking"}
             onClick={() =>
               void run({ ...order, trackingCode: tracking.trim() }, "tracking")
             }
           >
-            {pending === "tracking" ? "در حال ثبت…" : "ثبت کد رهگیری"}
-          </button>
+            ثبت کد رهگیری
+          </Button>
         ) : null}
       </section>
 
@@ -676,11 +679,14 @@ function OrderDetail({
               const blockedByTracking =
                 status === "shipped" && Boolean(trackingIssue);
               return (
-                <button
+                <Button
                   key={status}
-                  type="button"
-                  className={destructive ? "danger-action" : "primary-action"}
-                  disabled={pending !== null || blockedByTracking}
+                  variant={destructive ? "danger" : "primary"}
+                  disabled={
+                    (pending !== null && pending !== status) ||
+                    blockedByTracking
+                  }
+                  loading={pending === status}
                   onClick={() => {
                     const next = {
                       ...order,
@@ -697,10 +703,8 @@ function OrderDetail({
                     void run(next, status);
                   }}
                 >
-                  {pending === status
-                    ? "در حال ثبت…"
-                    : (actionLabels[status] ?? orderStatusLabels[status])}
-                </button>
+                  {actionLabels[status] ?? orderStatusLabels[status]}
+                </Button>
               );
             })}
           </div>

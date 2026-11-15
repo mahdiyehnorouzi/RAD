@@ -557,7 +557,6 @@ export function ProductOverlay() {
                     passport={data.passport}
                     related={data.related}
                     initialFaq={data.faq}
-                    qrSvg={data.qrSvg}
                   />
                   <Footer />
                 </>

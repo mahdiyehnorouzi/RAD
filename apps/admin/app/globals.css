@@ -595,40 +595,6 @@ textarea:focus-visible {
   font-size: 0.875rem;
   line-height: var(--leading-body);
 }
-.primary-action,
-.secondary-action,
-.danger-action {
-  min-height: 44px;
-  padding: 0 17px;
-  border: 1px solid var(--mineral);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  font-weight: 500;
-  cursor: pointer;
-}
-.primary-action {
-  background: var(--mineral);
-  color: white;
-}
-.secondary-action {
-  background: transparent;
-}
-.danger-action {
-  background: #8e3e31;
-  border-color: #8e3e31;
-  color: white;
-}
-.primary-action svg {
-  width: 18px;
-}
-.primary-action:disabled,
-.secondary-action:disabled,
-.danger-action:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-}
 .toolbar {
   padding: 18px 0;
 }
@@ -1715,12 +1681,12 @@ td select,
   .view-heading h2 {
     font-size: 1.45rem;
   }
-  .view-heading .primary-action {
+  .view-heading .rad-button {
     min-width: 44px;
     font-size: 0;
     padding: 0 11px;
   }
-  .view-heading .primary-action svg {
+  .view-heading .rad-button svg {
     margin: 0;
   }
   .data-view {
@@ -2461,7 +2427,7 @@ td select,
 .remember-field input {
   accent-color: var(--mineral);
 }
-.login-actions .primary-action {
+.login-actions .rad-button {
   width: 100%;
 }
 .connecting-screen {
@@ -3004,7 +2970,7 @@ table.products-table {
   font-size: 24px;
   font-weight: 500;
 }
-.editor-main-head .primary-action svg {
+.editor-main-head .rad-button svg {
   width: 16px;
 }
 .editor-main-head + .editor-section-card {
@@ -3692,7 +3658,7 @@ table.products-table {
   .editor-main-head h2 {
     font-size: 1.25rem;
   }
-  .editor-main-head .primary-action {
+  .editor-main-head .rad-button {
     flex: 1;
     justify-content: center;
   }

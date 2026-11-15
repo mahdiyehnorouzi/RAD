@@ -2,6 +2,7 @@
 
 import { useId, useState } from "react";
 import { Check, X } from "lucide-react";
+import { Button } from "@rad/ui";
 import { paymentRejectionReasons, type AdminOrder } from "../lib/admin-data";
 
 const number = new Intl.NumberFormat("fa-IR");
@@ -173,20 +174,16 @@ export function AdminOrderPayment({
 
       {reviewable && mode === "idle" ? (
         <div className="order-payment-actions">
-          <button
-            className="primary-action"
-            type="button"
-            onClick={() => setMode("approve")}
-          >
+          <Button type="button" onClick={() => setMode("approve")}>
             <Check aria-hidden="true" /> تأیید پرداخت
-          </button>
-          <button
-            className="danger-action"
+          </Button>
+          <Button
+            variant="danger"
             type="button"
             onClick={() => setMode("reject")}
           >
             <X aria-hidden="true" /> رد پرداخت
-          </button>
+          </Button>
         </div>
       ) : null}
 
@@ -203,22 +200,21 @@ export function AdminOrderPayment({
             می‌شود.
           </p>
           <div className="order-payment-actions">
-            <button
-              className="primary-action"
+            <Button
               type="button"
-              disabled={busy}
+              loading={busy}
               onClick={() => run(() => onApprove(order.id))}
             >
-              {busy ? "در حال ثبت…" : "بله، پرداخت تأیید شود"}
-            </button>
-            <button
-              className="secondary-action"
+              بله، پرداخت تأیید شود
+            </Button>
+            <Button
+              variant="secondary"
               type="button"
               disabled={busy}
               onClick={() => setMode("idle")}
             >
               انصراف
-            </button>
+            </Button>
           </div>
         </div>
       ) : null}
@@ -272,21 +268,22 @@ export function AdminOrderPayment({
             است.
           </p>
           <div className="order-payment-actions">
-            <button
-              className="danger-action"
+            <Button
+              variant="danger"
               type="submit"
-              disabled={busy || reason.length < 3}
+              disabled={reason.length < 3}
+              loading={busy}
             >
-              {busy ? "در حال ثبت…" : "ثبت رد پرداخت"}
-            </button>
-            <button
-              className="secondary-action"
+              ثبت رد پرداخت
+            </Button>
+            <Button
+              variant="secondary"
               type="button"
               disabled={busy}
               onClick={() => setMode("idle")}
             >
               انصراف
-            </button>
+            </Button>
           </div>
         </form>
       ) : null}

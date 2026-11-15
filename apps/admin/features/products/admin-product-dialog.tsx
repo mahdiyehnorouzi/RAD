@@ -13,6 +13,7 @@ import {
   Tag,
   Trash2,
 } from "lucide-react";
+import { Button } from "@rad/ui";
 import { api } from "../../lib/api";
 import {
   isVideoStorage,
@@ -380,10 +381,10 @@ export function ProductDialog({
         aria-labelledby="editor-title"
       >
         <aside className="editor-aside">
-          <button className="editor-back" type="button" onClick={onClose}>
+          <Button variant="ghost" className="editor-back" onClick={onClose}>
             <ChevronRight />
             بازگشت به لیست
-          </button>
+          </Button>
           <div className="editor-cover">
             {previewCover?.src ? (
               <img
@@ -412,22 +413,28 @@ export function ProductDialog({
           </div>
           <nav className="editor-section-nav">
             {sections.map((item) => (
-              <button
+              <Button
                 key={item.id}
-                type="button"
+                variant="ghost"
+                fullWidth
                 className={activeSection === item.id ? "active" : ""}
                 onClick={() => goToSection(item.id)}
               >
                 {item.icon}
                 <span>{item.label}</span>
                 <ChevronLeft />
-              </button>
+              </Button>
             ))}
             {product && onDelete && (
-              <button className="danger" type="button" onClick={onDelete}>
+              <Button
+                variant="ghost"
+                fullWidth
+                className="danger"
+                onClick={onDelete}
+              >
                 <Trash2 />
                 <span>حذف محصول</span>
-              </button>
+              </Button>
             )}
           </nav>
         </aside>
@@ -435,18 +442,10 @@ export function ProductDialog({
         <div className="editor-main">
           <div className="editor-main-head">
             <h2 id="editor-title">{product ? "ویرایش اثر" : "اثر تازه"}</h2>
-            <button
-              className="primary-action"
-              type="submit"
-              disabled={saving || unresolvedUploads}
-            >
+            <Button type="submit" disabled={unresolvedUploads} loading={saving}>
               <PackageCheck />
-              {saving
-                ? "در حال ذخیره…"
-                : uploadingCount > 0
-                  ? "در حال بارگذاری…"
-                  : "ذخیره تغییرات"}
-            </button>
+              {uploadingCount > 0 ? "در حال بارگذاری…" : "ذخیره تغییرات"}
+            </Button>
           </div>
 
           <section id="section-basics" className="editor-section-card">
@@ -679,49 +678,55 @@ export function ProductDialog({
                       )}
                       <div className="product-media-actions">
                         {!isVideoStorage(image.storage) && (
-                          <button
-                            type="button"
+                          <Button
+                            variant="secondary"
+                            size="sm"
                             className={isCover ? "cover-selected" : ""}
                             disabled={saving || isCover || !coverReady}
                             onClick={() => setCover(index)}
                           >
                             {isCover ? "کاور فعلی" : "انتخاب به‌عنوان کاور"}
-                          </button>
+                          </Button>
                         )}
                         {upload?.error && (
-                          <button
-                            type="button"
+                          <Button
+                            variant="secondary"
+                            size="sm"
                             onClick={() =>
                               void uploadFile(upload.file, image.src!)
                             }
                           >
                             تلاش دوباره
-                          </button>
+                          </Button>
                         )}
-                        <button
-                          type="button"
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          className="content-danger"
                           disabled={saving}
                           onClick={() => removeMedia(index)}
                           aria-label={`حذف فایل ${number.format(index + 1)}`}
                         >
                           حذف
-                        </button>
-                        <button
-                          type="button"
+                        </Button>
+                        <Button
+                          variant="secondary"
+                          size="sm"
                           disabled={saving || index === 0}
                           onClick={() => moveMedia(index, -1)}
                           aria-label={`جابه‌جایی فایل ${number.format(index + 1)} به قبل`}
                         >
                           قبل
-                        </button>
-                        <button
-                          type="button"
+                        </Button>
+                        <Button
+                          variant="secondary"
+                          size="sm"
                           disabled={saving || index === draft.images.length - 1}
                           onClick={() => moveMedia(index, 1)}
                           aria-label={`جابه‌جایی فایل ${number.format(index + 1)} به بعد`}
                         >
                           بعد
-                        </button>
+                        </Button>
                       </div>
                     </div>
                   );

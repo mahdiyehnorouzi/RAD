@@ -91,8 +91,8 @@ export const HELP_JOURNEY: JourneyStep[] = [
     id: "bag",
     title: { fa: "سبد", en: "Your bag" },
     fact: {
-      fa: "۱۵ دقیقه برای تو کنار گذاشته می‌شود؛ ارسال رایگان است.",
-      en: "Held for you for 15 minutes; shipping is free.",
+      fa: "۱۵ دقیقه برای تو کنار گذاشته می‌شود.",
+      en: "Held for you for 15 minutes.",
     },
     slug: "buying",
     section: "bag",

@@ -1,6 +1,5 @@
 import { cache } from "react";
-import QRCode from "qrcode";
-import { formatRadCode, type Artwork, type Product } from "@rad/types";
+import type { Artwork, Product } from "@rad/types";
 import type { RadPassport } from "@/components/passport/type";
 import { fetchFaq } from "@/lib/api";
 import { productFromArtwork } from "@/lib/artworks";
@@ -8,8 +7,6 @@ import { resolveArtwork } from "@/lib/artworks/server";
 import { getCatalog } from "@/lib/catalog/get-catalog-works";
 import { relatedWorks } from "@/lib/catalog/related";
 import { passportFromArtwork } from "@/lib/passport";
-import { absoluteUrl } from "@/lib/seo";
-import { recover } from "@/lib/log";
 
 export type ResolvedWork =
   | { kind: "moved"; to: string }
@@ -60,7 +57,6 @@ export type PdpData = {
   priceToman: number;
   passport?: RadPassport;
   passportPath?: string;
-  qrSvg?: string;
   related: Product[];
   faq: Awaited<ReturnType<typeof fetchFaq>>;
 };
@@ -79,21 +75,7 @@ export async function resolvePdpData(
   if (work.kind === "moved") return { moved: work.to };
 
   const { product, artwork, priceToman, passport, passportPath } = work;
-  const qrTarget = absoluteUrl(
-    product.radNumber
-      ? `/r/${formatRadCode(product.radNumber)}`
-      : `/products/${product.slug}`,
-  );
-  const [faq, qrSvg, catalog] = await Promise.all([
-    fetchFaq("fa"),
-    QRCode.toString(qrTarget, {
-      type: "svg",
-      margin: 0,
-      errorCorrectionLevel: "M",
-      color: { dark: "#1a1714", light: "#00000000" },
-    }).catch(recover("product qr svg", undefined)),
-    getCatalog(),
-  ]);
+  const [faq, catalog] = await Promise.all([fetchFaq("fa"), getCatalog()]);
 
   return {
     product,
@@ -101,7 +83,6 @@ export async function resolvePdpData(
     priceToman,
     passport,
     passportPath,
-    qrSvg,
     related: relatedWorks(product, catalog.products),
     faq,
   };

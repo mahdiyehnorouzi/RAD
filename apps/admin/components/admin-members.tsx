@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { Plus, ShieldCheck } from "lucide-react";
+import { Button } from "@rad/ui";
 import {
   roleLabels,
   type AdminMember,
@@ -63,15 +64,10 @@ export function Members({
           <h2>افراد و دسترسی</h2>
           <p>دسترسی هر فرد را بر اساس مسئولیت واقعی او تنظیم کنید.</p>
         </div>
-        <button
-          className="primary-action"
-          type="button"
-          onClick={onInvite}
-          disabled={!canWrite || loading || loadError}
-        >
+        <Button onClick={onInvite} disabled={!canWrite || loading || loadError}>
           <Plus />
           دعوت فرد جدید
-        </button>
+        </Button>
       </div>
       {rowError ? (
         <p className="admin-inline-error" role="alert">
@@ -231,12 +227,12 @@ export function InviteDialog({
           </select>
         </Field>
         <div className="dialog-actions">
-          <button className="secondary-action" type="button" onClick={onClose}>
+          <Button variant="secondary" type="button" onClick={onClose}>
             انصراف
-          </button>
-          <button className="primary-action" type="submit" disabled={saving}>
-            {saving ? "در حال ثبت…" : "افزودن دعوت"}
-          </button>
+          </Button>
+          <Button type="submit" loading={saving}>
+            افزودن دعوت
+          </Button>
         </div>
       </form>
     </DialogShell>

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
+import { Button } from "@rad/ui";
 import {
   ATTRIBUTE_CATEGORY_OPTIONS,
   PRODUCT_ATTRIBUTE_INPUT_TYPES,
@@ -266,9 +267,10 @@ export function AdminProductAttributeDialog({
                       )
                     }
                   />
-                  <button
-                    type="button"
-                    className="secondary-action content-danger"
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="content-danger"
                     onClick={() =>
                       setOptions((options) =>
                         options.filter((_, i) => i !== index),
@@ -277,18 +279,18 @@ export function AdminProductAttributeDialog({
                     aria-label="حذف گزینه"
                   >
                     <Trash2 />
-                  </button>
+                  </Button>
                 </div>
               ))}
-              <button
-                type="button"
-                className="secondary-action"
+              <Button
+                variant="secondary"
+                size="sm"
                 onClick={() =>
                   setOptions((options) => [...options, blankOption()])
                 }
               >
                 <Plus /> افزودن گزینه
-              </button>
+              </Button>
             </div>
           </Field>
         )}
@@ -299,12 +301,12 @@ export function AdminProductAttributeDialog({
           </small>
         )}
         <div className="dialog-actions">
-          <button className="secondary-action" type="button" onClick={onClose}>
+          <Button variant="secondary" type="button" onClick={onClose}>
             انصراف
-          </button>
-          <button className="primary-action" type="submit" disabled={saving}>
+          </Button>
+          <Button type="submit" loading={saving}>
             ذخیره
-          </button>
+          </Button>
         </div>
       </form>
     </DialogShell>
