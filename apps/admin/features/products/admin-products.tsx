@@ -270,7 +270,12 @@ export function Products({
                       tone={statusTone(product)}
                     />
                     <strong>{money(product.price)}</strong>
-                    <small>ویرایش {date(product.updatedAt)}</small>
+                    <small>
+                      {product.radNumber
+                        ? `RAD-${String(product.radNumber).padStart(3, "0")} · `
+                        : ""}
+                      ویرایش {date(product.updatedAt)}
+                    </small>
                   </div>
                 </div>
                 {isMobile ? (

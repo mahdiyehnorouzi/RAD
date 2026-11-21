@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { Button } from "@rad/ui";
 import { api } from "../../lib/api";
+import { formatRadCode } from "@rad/types";
 import {
   isVideoStorage,
   productStatusLabel,
@@ -106,6 +107,25 @@ export function ProductDialog({
     ProductAttribute[]
   >([]);
   const [attributesLoading, setAttributesLoading] = useState(true);
+  const [reservedNumbers, setReservedNumbers] = useState<
+    Array<{ id: string; radNumber: number; label: string }>
+  >([]);
+  useEffect(() => {
+    if (product) return;
+    let active = true;
+    api<Array<{ id: string; radNumber: number; label: string }>>(
+      "/admin/identities?status=reserved&assignment=unassigned",
+    )
+      .then((rows) => {
+        if (active) setReservedNumbers(Array.isArray(rows) ? rows : []);
+      })
+      .catch(() => {
+        if (active) setReservedNumbers([]);
+      });
+    return () => {
+      active = false;
+    };
+  }, [product]);
   useEffect(() => {
     let active = true;
     setAttributesLoading(true);
@@ -478,6 +498,38 @@ export function ProductDialog({
                   }
                   aria-invalid={Boolean(errors.slug)}
                 />
+              </Field>
+              <Field label={draft.radNumber ? "شماره رَد" : "شماره رزروشده"}>
+                {product ? (
+                  <input
+                    dir="ltr"
+                    readOnly
+                    value={
+                      draft.radNumber
+                        ? `RAD-${formatRadCode(draft.radNumber)}`
+                        : "بعد از ذخیره ثبت می‌شود"
+                    }
+                  />
+                ) : (
+                  <select
+                    value={draft.reservedRadNumber ?? ""}
+                    onChange={(event) =>
+                      setDraft({
+                        ...draft,
+                        reservedRadNumber: event.target.value
+                          ? Number(event.target.value)
+                          : undefined,
+                      })
+                    }
+                  >
+                    <option value="">شماره تازه، بعد از ذخیره</option>
+                    {reservedNumbers.map((identity) => (
+                      <option key={identity.id} value={identity.radNumber}>
+                        {identity.label}
+                      </option>
+                    ))}
+                  </select>
+                )}
               </Field>
               <Field label="هنرمند" error={errors.artist}>
                 <input

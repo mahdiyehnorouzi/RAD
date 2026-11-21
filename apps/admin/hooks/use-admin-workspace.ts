@@ -82,6 +82,7 @@ const resourceKeys: ResourceKey[] = [
 const sectionResources: Record<AdminSection, ResourceKey[]> = {
   overview: ["products", "orders", "commissions"],
   products: ["products"],
+  tags: ["products"],
   orders: ["orders", "products", "messages", "damageReports"],
   messages: ["messages", "orders"],
   damage: ["damageReports", "orders"],
@@ -661,6 +662,7 @@ export function useAdminWorkspace() {
         );
       },
       async saveProduct(product: AdminProduct) {
+        const exists = products.some((item) => item.id === product.id);
         const payload = {
           slug: product.slug,
           name: product.name,
@@ -679,8 +681,10 @@ export function useAdminWorkspace() {
               : { storage: image.storage, src: image.src },
           ),
           attributeValues: product.attributeValues ?? {},
+          ...(exists || product.reservedRadNumber == null
+            ? {}
+            : { radNumber: product.reservedRadNumber }),
         };
-        const exists = products.some((item) => item.id === product.id);
         const saved = exists
           ? await api<AdminProduct>(`/admin/products/${product.id}`, {
               method: "PATCH",
@@ -696,6 +700,7 @@ export function useAdminWorkspace() {
           }
           return [saved, ...items];
         });
+        return saved;
       },
       async deleteProduct(id: string) {
         await api(`/admin/products/${id}`, { method: "DELETE" });

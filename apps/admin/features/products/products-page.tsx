@@ -39,11 +39,13 @@ export function ProductsPage() {
           }
           onSave={async (product) => {
             try {
-              await workspace.saveProduct(product);
+              const saved = await workspace.saveProduct(product);
               setProductEditor(null);
               announce(
                 productEditor === "new"
-                  ? "محصول جدید در پایگاه داده ذخیره شد."
+                  ? saved.radNumber
+                    ? `محصول ذخیره شد. شماره RAD-${String(saved.radNumber).padStart(3, "0")} ثبت شد.`
+                    : "محصول جدید در پایگاه داده ذخیره شد."
                   : "تغییرات محصول ذخیره شد.",
               );
             } catch (error) {

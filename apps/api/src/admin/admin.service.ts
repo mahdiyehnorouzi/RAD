@@ -12,14 +12,7 @@ import {
 import { InjectRepository } from "@nestjs/typeorm";
 import { randomBytes } from "node:crypto";
 import { hash } from "bcryptjs";
-import {
-  DataSource,
-  In,
-  IsNull,
-  Not,
-  QueryFailedError,
-  Repository,
-} from "typeorm";
+import { DataSource, In, IsNull, Not, Repository } from "typeorm";
 import { generateVerificationCode } from "../auth/reset-token.util";
 import { MailService } from "../mail/mail.service";
 import {
@@ -58,7 +51,10 @@ import {
 } from "../database/entities";
 import type { ProductImageStorage } from "../database/entities/product-image.entity";
 import { productIncludeWithSrc } from "../catalog/product.mapper";
-import { nextRadNumber } from "../catalog/rad-number";
+import {
+  insertProductWithIdentity,
+  retireIdentitiesForProduct,
+} from "../identities/identity.allocator";
 import { CatalogRevalidationService } from "../catalog/catalog-revalidation.service";
 import { InventoryService } from "../inventory/inventory.service";
 import type { ProductStatus } from "../inventory/type";
@@ -341,6 +337,18 @@ export class AdminService {
       details: ["One of one"],
     };
 
+    if (existingId && input.radNumber != null) {
+      const current = await this.products.findOne({
+        where: { id: existingId },
+      });
+      if (current?.radNumber != null && current.radNumber !== input.radNumber) {
+        throw new ConflictException({
+          message: "شماره رَد بعد از ثبت قابل تغییر نیست.",
+          code: "rad_number_immutable",
+        });
+      }
+    }
+
     const product = existingId
       ? await this.updateProduct(existingId, {
           slug,
@@ -354,24 +362,27 @@ export class AdminService {
           subtitle: input.subtitle?.trim() || undefined,
           vendorId,
         })
-      : await this.createProductWithRadNumber({
-          slug,
-          name: input.name.trim(),
-          subtitle,
-          tomanPrice: input.price,
-          usdPrice,
-          color: "#8a4938",
-          accent: "#ead9bd",
-          shape: "tall",
-          category,
-          status: input.status,
-          story: input.description.trim(),
-          details,
-          en,
-          vendorId,
-          year: new Date().getFullYear(),
-          sortOrder: await this.nextSortOrder(),
-        });
+      : await this.createProductWithRadNumber(
+          {
+            slug,
+            name: input.name.trim(),
+            subtitle,
+            tomanPrice: input.price,
+            usdPrice,
+            color: "#8a4938",
+            accent: "#ead9bd",
+            shape: "tall",
+            category,
+            status: input.status,
+            story: input.description.trim(),
+            details,
+            en,
+            vendorId,
+            year: new Date().getFullYear(),
+            sortOrder: await this.nextSortOrder(),
+          },
+          input.radNumber,
+        );
 
     await this.replaceImages(
       product.id,
@@ -396,35 +407,19 @@ export class AdminService {
   }
 
   /**
-   * `nextRadNumber()` reads `MAX(radNumber)` outside any lock, so two
-   * concurrent "create product" saves can read the same max and both
-   * attempt the next number. The DB's unique constraint rejects the loser
-   * rather than letting it duplicate the number, but without this retry
-   * that surfaces as a confusing failed save instead of just getting the
-   * next available number transparently.
+   * New works take a number from the identity registry: a pre-reserved tag
+   * when one was chosen, otherwise the next number after the high-water mark.
+   * The same lock covers batch reservation, so the two paths cannot collide.
    */
-  private async createProductWithRadNumber(
+  private createProductWithRadNumber(
     product: Omit<Parameters<Repository<Product>["create"]>[0], "radNumber">,
-    attempt = 1,
+    requestedRadNumber?: number,
   ): Promise<Product> {
-    try {
-      return await this.products.save(
-        this.products.create({
-          ...product,
-          radNumber: await nextRadNumber(this.products),
-        }),
-      );
-    } catch (error) {
-      const isRadNumberConflict =
-        error instanceof QueryFailedError &&
-        String((error.driverError as { detail?: string })?.detail).includes(
-          "radNumber",
-        );
-      if (isRadNumberConflict && attempt < 3) {
-        return this.createProductWithRadNumber(product, attempt + 1);
-      }
-      throw error;
-    }
+    return insertProductWithIdentity(
+      this.dataSource,
+      product,
+      requestedRadNumber,
+    );
   }
 
   async deleteProduct(id: string) {
@@ -437,6 +432,7 @@ export class AdminService {
       throw new ConflictException("این اثر در سفارش ثبت شده و قابل حذف نیست.");
     }
     await this.dataSource.transaction(async (manager) => {
+      await retireIdentitiesForProduct(manager, id);
       await manager
         .getRepository(CartItem)
         .delete({ productSlug: product.slug });

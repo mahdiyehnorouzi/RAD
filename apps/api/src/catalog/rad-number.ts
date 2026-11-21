@@ -5,7 +5,11 @@ export function formatArtworkNumber(radNumber: number) {
   return `RAD-${String(radNumber).padStart(3, "0")}`;
 }
 
-/** Next free archive number; numbers are never reused or derived from list order. */
+/**
+ * Highest stored product number plus one. New allocation goes through
+ * `identities/identity.allocator.ts`, which also counts reserved tags.
+ * This helper remains for readers that only need the product-table maximum.
+ */
 export async function nextRadNumber(
   products: Repository<Product> | EntityManager,
 ) {

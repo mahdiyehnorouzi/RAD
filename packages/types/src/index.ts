@@ -1,4 +1,5 @@
 export * from "./artwork";
+export * from "./rad-identity";
 export * from "./contact";
 export * from "./customer-address";
 export * from "./content";
