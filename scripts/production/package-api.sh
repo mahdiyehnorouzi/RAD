@@ -6,6 +6,7 @@ for required in \
   apps/api/dist/main.js apps/api/src apps/api/seed/ensure-staff.ts \
   apps/api/package.json apps/api/scripts/start-production.mjs \
   apps/api/tsconfig.json apps/api/tsconfig.build.json tsconfig.json \
+  packages/types/dist/index.js \
   VERSION; do
   if [[ ! -e "$required" ]]; then
     echo "::error::${required} missing before packaging — build or prune step above did not produce what was expected."
