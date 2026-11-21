@@ -63,6 +63,8 @@ export async function POST(request: Request) {
   // Client Cache and every nested route (PLP, PDP, about, help). Invalidate
   // only the locale index pages (`app/[locale]/page.tsx`).
   revalidatePath("/[locale]", "page");
+  // QR destinations are dynamic, and this drops any cached copy after a publish.
+  revalidatePath("/r/[code]", "page");
   return Response.json(
     { ok: true },
     { headers: { "cache-control": "no-store" } },

@@ -23,6 +23,14 @@ export class SaveProductDto {
   @IsString()
   id?: string;
 
+  /** Pre-reserved RAD number. Ignored on update; the stored number stays. */
+  @ApiPropertyOptional({ example: 84 })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  radNumber?: number;
+
   @ApiProperty({ example: "moon-vase" })
   @IsString()
   @MinLength(1)

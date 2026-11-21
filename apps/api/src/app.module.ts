@@ -31,6 +31,7 @@ import { ArtistApplicationsModule } from "./artist-applications/artist-applicati
 import { MailModule } from "./mail/mail.module";
 import { SmsModule } from "./sms/sms.module";
 import { HealthController } from "./health/health.controller";
+import { IdentitiesModule } from "./identities/identities.module";
 
 @Module({
   imports: [
@@ -78,6 +79,7 @@ import { HealthController } from "./health/health.controller";
     DesignModule,
     CommissionsModule,
     AdminModule,
+    IdentitiesModule,
     ContentModule,
     HelpModule,
     ShapeModule,

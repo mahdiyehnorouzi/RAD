@@ -39,6 +39,7 @@ export type AdminRole = "owner" | "manager" | "editor" | "viewer";
 export type AdminSection =
   | "overview"
   | "products"
+  | "tags"
   | "orders"
   | "messages"
   | "damage"
@@ -167,6 +168,10 @@ export interface AdminProduct {
   /** A customer holds the work (cart, unpaid order, or receipt awaiting review). */
   held?: boolean;
   artist: string;
+  /** Permanent RAD number once the registry has assigned one. */
+  radNumber?: number;
+  /** Chosen reserved number sent only when creating a product. */
+  reservedRadNumber?: number;
   images: AdminProductImage[];
   updatedAt: number;
   /** This product's saved attribute values, keyed by attribute id. */

@@ -33,6 +33,7 @@ export function toAdminProduct(
   return {
     id: product.id,
     slug: product.slug,
+    radNumber: product.radNumber ?? undefined,
     name: product.name,
     description: product.story,
     subtitle: product.subtitle,

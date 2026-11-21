@@ -24,6 +24,7 @@ import {
   Menu,
   MessageSquareQuote,
   PackageX,
+  QrCode,
   ScrollText,
   Shapes,
   ShoppingBag,
@@ -39,6 +40,7 @@ import {
   isHelpPath,
   isMessagesPath,
   isProductsPath,
+  isTagsPath,
   isReviewsPath,
   isShapePath,
   settleStudioPath,
@@ -46,6 +48,7 @@ import {
   startHelpLink,
   startMessagesLink,
   startProductsLink,
+  startTagsLink,
   startReviewsLink,
   startSectionSelect,
   startShapeLink,
@@ -59,6 +62,7 @@ import { AdminLogin } from "./admin-login";
 const navItems: { id: AdminSection; label: string; icon: typeof Archive }[] = [
   { id: "overview", label: "مرور استودیو", icon: LayoutDashboard },
   { id: "products", label: "آثار و محصولات", icon: Archive },
+  { id: "tags", label: "تگ‌ها و QR", icon: QrCode },
   { id: "orders", label: "سفارش‌های فروشگاه", icon: ShoppingBag },
   { id: "messages", label: "پیام‌ها", icon: Inbox },
   { id: "damage", label: "گزارش‌های آسیب", icon: PackageX },
@@ -114,12 +118,14 @@ export function AdminShell({ children }: { children: ReactNode }) {
   const messagesActive = isMessagesPath(pathname);
   const shapeActive = isShapePath(pathname);
   const productsActive = isProductsPath(pathname);
+  const tagsActive = isTagsPath(pathname);
   const routeActive =
     reviewsActive ||
     helpActive ||
     messagesActive ||
     shapeActive ||
-    productsActive;
+    productsActive ||
+    tagsActive;
   // skip: go() already fetched for a path change. pending: latest choice
   // whose URL has not committed. seen: last pathname this effect applied.
   const skipPathLoad = useRef<AdminSection | null>(null);
@@ -167,7 +173,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
   };
 
   const followStudioLink = (
-    route: "reviews" | "help" | "messages" | "shape" | "products",
+    route: "reviews" | "help" | "messages" | "shape" | "products" | "tags",
   ) => {
     setMobileNav(false);
     const visible = { pathname, section: sectionRef.current };
@@ -180,7 +186,9 @@ export function AdminShell({ children }: { children: ReactNode }) {
             ? startMessagesLink(visible, pendingNav.current)
             : route === "shape"
               ? startShapeLink(visible, pendingNav.current)
-              : startProductsLink(visible, pendingNav.current);
+              : route === "products"
+                ? startProductsLink(visible, pendingNav.current)
+                : startTagsLink(visible, pendingNav.current);
     pendingNav.current = action.pending;
     skipPathLoad.current = action.skip;
     if (action.replace) router.replace(action.replace);
@@ -284,7 +292,9 @@ export function AdminShell({ children }: { children: ReactNode }) {
           ? "پرسشنامه‌ی شکل"
           : productsActive
             ? "آثار و محصولات"
-            : navItems.find((item) => item.id === section)?.label;
+            : tagsActive
+              ? "تگ‌ها و QR"
+              : navItems.find((item) => item.id === section)?.label;
 
   return (
     <AdminChromeContext.Provider
@@ -344,9 +354,13 @@ export function AdminShell({ children }: { children: ReactNode }) {
                           ? productsActive
                             ? "active"
                             : ""
-                          : !routeActive && section === id
-                            ? "active"
-                            : "";
+                          : id === "tags"
+                            ? tagsActive
+                              ? "active"
+                              : ""
+                            : !routeActive && section === id
+                              ? "active"
+                              : "";
               const body = (
                 <>
                   <Icon />
@@ -377,7 +391,8 @@ export function AdminShell({ children }: { children: ReactNode }) {
                 id === "help" ||
                 id === "messages" ||
                 id === "shape" ||
-                id === "products"
+                id === "products" ||
+                id === "tags"
               ) {
                 return (
                   <Link
