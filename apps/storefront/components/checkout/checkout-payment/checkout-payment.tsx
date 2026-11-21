@@ -97,7 +97,7 @@ export function CheckoutPayment({ id }: { id: string }) {
   if (!ready && !order) {
     return (
       <section className="checkout-flow section" aria-busy="true">
-        <CheckoutSteps current={2} />
+        <CheckoutSteps current="payment" />
         <CardListSkeleton count={2} />
       </section>
     );
@@ -120,7 +120,7 @@ export function CheckoutPayment({ id }: { id: string }) {
   if (verifying) {
     return (
       <section className="checkout-flow section">
-        <CheckoutSteps current={3} />
+        <CheckoutSteps current="result" />
         <div
           className="payment-result is-pending"
           role="status"
@@ -137,7 +137,7 @@ export function CheckoutPayment({ id }: { id: string }) {
   if (verifyFailed) {
     return (
       <section className="checkout-flow section">
-        <CheckoutSteps current={3} />
+        <CheckoutSteps current="result" />
         <div className="payment-result is-pending" role="alert">
           <h1>{c.verifyErrorTitle}</h1>
           <p>{c.verifyErrorBody}</p>
@@ -171,7 +171,7 @@ export function CheckoutPayment({ id }: { id: string }) {
   if (order.status !== "pending_payment") {
     return (
       <section className="checkout-flow section">
-        <CheckoutSteps current={3} />
+        <CheckoutSteps current="result" />
         <div className="checkout-flow-body is-result">
           <div className="checkout-flow-main">
             <PaymentResult order={order} amount={tomanLabel} />
@@ -251,7 +251,7 @@ export function CheckoutPayment({ id }: { id: string }) {
 
   return (
     <section className="checkout-flow section">
-      <CheckoutSteps current={2} />
+      <CheckoutSteps current="payment" />
       <header className="checkout-flow-head">
         <h1 ref={headingRef} tabIndex={-1}>
           {receiptStep
@@ -381,22 +381,6 @@ export function CheckoutPayment({ id }: { id: string }) {
               </p>
             ))}
 
-          {remaining !== null ? (
-            <CheckoutMeter
-              title={
-                expired
-                  ? c.deadlineExpired
-                  : gatewayOrder
-                    ? c.deadlineLabelGateway
-                    : c.deadlineLabel
-              }
-              time={
-                expired ? undefined : formatCountdown(remaining, locale, number)
-              }
-              fraction={remaining / (ORDER_PAYMENT_WINDOW_MINUTES * 60_000)}
-            />
-          ) : null}
-
           {redirectUrl || expired || gatewayOrder ? null : (
             <div hidden={!receiptStep}>
               <PaymentReceipt
@@ -414,6 +398,21 @@ export function CheckoutPayment({ id }: { id: string }) {
             total={summaryTotal}
             amountDigits={String(tomanDue)}
           />
+          {remaining !== null ? (
+            <CheckoutMeter
+              title={
+                expired
+                  ? c.deadlineExpired
+                  : gatewayOrder
+                    ? c.deadlineLabelGateway
+                    : c.deadlineLabel
+              }
+              time={
+                expired ? undefined : formatCountdown(remaining, locale, number)
+              }
+              fraction={remaining / (ORDER_PAYMENT_WINDOW_MINUTES * 60_000)}
+            />
+          ) : null}
         </aside>
 
         <div className="checkout-flow-action">

@@ -12,6 +12,7 @@ export const cartCopy = {
     holdTitleMany: "فعلاً این رَدها رو برای تو کنار گذاشتیم.",
     holdBody:
       "اگه تا {time} سفارشت رو کامل نکنی، دوباره برای بقیه قابل خرید می‌شه.",
+    items: "جمع آثار",
     shipping: "هزینه ارسال پس از بررسی مشخص می‌شود",
     checkout: "ادامه‌ی خرید",
     browse: "ادامه‌ی دیدن آثار",
@@ -29,6 +30,7 @@ export const cartCopy = {
     holdTitleOne: "This work is reserved for you.",
     holdTitleMany: "These works are reserved for you.",
     holdBody: "If payment isn't completed, it returns to the shop in {time}.",
+    items: "Works",
     shipping: "Shipping cost confirmed after review",
     checkout: "Continue to checkout",
     browse: "Keep browsing",

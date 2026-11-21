@@ -1,39 +1,44 @@
 .hold {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
-  gap: 0.75rem;
-  padding: 0.95rem 1.05rem;
-  border: 1px solid color-mix(in srgb, var(--moss) 16%, transparent);
-  border-radius: 12px;
-  background: var(--moss-wash);
+  gap: 0.15rem 0.4rem;
+  align-items: start;
+  padding: 0.4rem 0.7rem;
+  border: 1px solid color-mix(in srgb, #284839 12%, transparent);
+  border-radius: 10px;
+  background: #e9ecdd;
+  color: #284839;
 }
 
 .icon {
-  width: 1.2rem;
-  height: 1.2rem;
-  margin-top: 0.3rem;
-  color: var(--moss);
+  width: 0.875rem;
+  height: 0.875rem;
+  margin-top: 0.08rem;
+  color: #284839;
   stroke-width: 1.6;
 }
 
 .hold b {
   display: block;
-  color: var(--ink);
-  font-size: 0.94rem;
-  font-weight: 500;
-  line-height: 1.7;
+  color: #284839;
+  font-size: 0.75rem;
+  font-weight: 400;
+  line-height: 1.35;
 }
 
 .hold p {
-  margin: 0.15rem 0 0;
-  color: color-mix(in srgb, var(--ink) 68%, transparent);
+  margin: 0.05rem 0 0;
+  color: color-mix(in srgb, #284839 82%, transparent);
+  font-size: 0.72rem;
+  font-weight: 400;
+  line-height: 1.4;
 }
 
 .time {
-  display: inline-block;
-  margin-inline: 0.2rem;
-  color: var(--ink);
-  font-weight: 600;
+  display: inline;
+  margin-inline: 0.15rem;
+  color: #284839;
+  font-size: inherit;
+  font-weight: 500;
   font-variant-numeric: tabular-nums;
-  border-bottom: 1px solid color-mix(in srgb, var(--ink) 40%, transparent);
 }

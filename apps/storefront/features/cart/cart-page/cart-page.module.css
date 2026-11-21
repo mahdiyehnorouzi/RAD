@@ -35,28 +35,44 @@
 }
 
 .total {
+  display: grid;
+  gap: 0.4rem;
+  padding: 0.15rem 0.1rem 0.55rem;
+}
+
+.total > div {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   justify-content: space-between;
-  gap: 1rem;
-  padding: 0.85rem 1rem;
-  border-block: 1px solid var(--line);
+  gap: 0.75rem;
 }
 
 .total span {
-  display: block;
-  font-weight: 500;
-}
-
-.total small {
   color: var(--muted, #6f726b);
-  font-size: 0.8rem;
+  font-size: 0.82rem;
+  font-weight: 500;
+  line-height: 1.5;
 }
 
 .total b {
-  font-size: 1.08rem;
+  font-size: 0.95rem;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
+}
+
+.finalRow {
+  margin-top: 0.15rem;
+  padding-top: 0.45rem;
+  border-top: 1px solid var(--line);
+}
+
+.finalRow span {
+  color: var(--ink);
+  font-size: 0.92rem;
+}
+
+.finalRow b {
+  font-size: 1.05rem;
 }
 
 .actions {
@@ -159,22 +175,26 @@
 @media (--phone) {
   .page:global(.section) {
     padding-block: 1.5rem 2rem !important;
-    padding-inline: 1rem !important;
+    padding-inline: var(--checkout-gutter, 1.125rem) !important;
   }
 }
 
 /* ——— Desktop: a genuine two-column bag, not a centered mobile card ——— */
 
 .page:global(.purchase-bag) {
-  width: min(100%, 74rem);
+  width: min(100%, 68rem);
   margin-inline: auto;
-  padding-inline: clamp(0rem, 2vw, 1.5rem);
+  padding-inline: var(--checkout-gutter, 1.125rem);
 }
 
 .title {
-  font-size: clamp(1.5rem, 2.6vw, 2rem);
-  font-weight: 400;
-  margin: 0 0 clamp(1.5rem, 3vw, 2.25rem);
+  font-size: clamp(1.35rem, 2.4vw, 1.85rem);
+  font-weight: 700;
+  color: var(--moss);
+  margin: 0 0 clamp(1.25rem, 3vw, 2rem);
+  scroll-margin-top: calc(
+    var(--header-height) + var(--checkout-steps-size, 5.6rem) + 0.75rem
+  );
 }
 
 .back {
@@ -202,7 +222,7 @@
 
 :global(.purchase-bag) .body {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(18rem, 22.5rem);
+  grid-template-columns: minmax(0, 1fr) minmax(16.5rem, 20rem);
   column-gap: clamp(2rem, 5vw, 4rem);
   align-items: start;
   width: 100%;
@@ -218,7 +238,9 @@
 
 .asideCol {
   position: sticky;
-  top: calc(var(--header-height) + 1.5rem);
+  top: calc(
+    var(--header-height) + var(--checkout-steps-size, 5.6rem) + 0.75rem
+  );
   display: grid;
   gap: 0.85rem;
   min-width: 0;
@@ -238,15 +260,56 @@
   border-radius: 10px !important;
 }
 
+@media (--desktop) {
+  .page:global(.purchase-bag) {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(16.5rem, 20rem);
+    column-gap: clamp(2rem, 5vw, 4rem);
+    align-items: start;
+  }
+
+  .page:global(.purchase-bag) > :global(.checkout-steps) {
+    grid-column: 1 / -1;
+  }
+
+  .back,
+  .title,
+  .mainCol {
+    grid-column: 1;
+    width: 100%;
+    min-width: 0;
+    margin-inline: 0;
+  }
+
+  .page:global(.purchase-bag) .body {
+    display: contents;
+  }
+
+  .mainCol {
+    position: relative;
+    z-index: 1;
+  }
+
+  .asideCol {
+    grid-column: 2;
+    grid-row: 4;
+    z-index: 1;
+  }
+}
+
 /* ——— Tablet and phone: the compact single-column card from the mobile design ——— */
 
 @media (--tablet) {
   .page:global(.purchase-bag) {
-    width: min(100%, 460px);
-    min-height: calc(100svh - 100px);
+    display: block;
+    width: min(100%, 28.75rem);
     margin: auto;
-    padding: 24px;
+    padding: 18px var(--checkout-gutter, 1.125rem) 10.5rem;
     background: #faf7ef;
+  }
+
+  .body {
+    display: flex;
   }
   .title {
     font-size: 23px;
@@ -255,7 +318,9 @@
   :global(.purchase-bag) .body {
     display: flex;
     flex-direction: column;
-    min-height: 65svh;
+    align-items: stretch;
+    gap: 0.85rem;
+    width: 100%;
   }
   .mainCol,
   .asideCol {
@@ -268,19 +333,25 @@
     box-shadow: none;
     background: none;
   }
-  :global(.purchase-bag) .total {
-    margin-top: auto;
+  :global(.purchase-bag) .lines {
+    order: 1;
+  }
+  .holdSlot {
     order: 2;
+  }
+  :global(.purchase-bag) .total {
+    margin-top: 0;
+    order: 3;
     border: 0;
   }
   :global(.purchase-bag) .total small {
     display: none;
   }
   :global(.purchase-bag) .actions {
-    order: 3;
+    order: 4;
   }
   :global(.purchase-bag) .clear {
-    order: 4;
+    order: 5;
     align-self: center;
   }
   :global(.purchase-bag) .actions :global(.button) {
