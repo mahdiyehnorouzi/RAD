@@ -4,12 +4,12 @@ import {
   type PublicRadIdentity,
 } from "@rad/types";
 
-export type IdentityLookup =
+type IdentityLookup =
   | { kind: "unreachable" }
   | { kind: "missing" }
   | { kind: "found"; identity: PublicRadIdentity };
 
-export type IdentityPlan =
+type IdentityPlan =
   | { status: 307; location: string }
   | { status: 404 }
   | { status: 503 }
