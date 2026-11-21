@@ -2,10 +2,11 @@
   "name": "@rad/types",
   "version": "1.5.1",
   "private": true,
+  "type": "module",
   "main": "./dist/index.js",
   "types": "./src/index.ts",
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
+    "build": "tsc -p tsconfig.build.json && node ./scripts/mark-dist-commonjs.mjs",
     "test": "tsx --test src/*.spec.ts"
   },
   "exports": {

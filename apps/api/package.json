@@ -27,7 +27,7 @@
     "test:addresses": "tsx --test src/addresses/*.spec.ts",
     "test:cart": "tsx --test src/cart/cart.service.spec.ts",
     "test:cart-controller": "tsx --test src/cart/cart.controller.spec.ts",
-    "test:media": "tsx --test src/storage/*.spec.ts src/database/safe-target.spec.ts src/admin/sign-auth.spec.ts src/admin/replace-images.spec.ts src/admin/orphan-upload.spec.ts src/admin/admin-mapper-media.spec.ts src/admin/admin-mapper-status.spec.ts src/admin/rad-number-race.spec.ts src/common/image-data.spec.ts",
+    "test:media": "npm run build --workspace @rad/types --prefix ../.. && tsx --test src/storage/*.spec.ts src/database/safe-target.spec.ts src/admin/sign-auth.spec.ts src/admin/replace-images.spec.ts src/admin/orphan-upload.spec.ts src/admin/admin-mapper-media.spec.ts src/admin/admin-mapper-status.spec.ts src/admin/rad-number-race.spec.ts src/common/image-data.spec.ts",
     "test:pricing": "tsx --test src/pricing/*.spec.ts",
     "test:collaboration": "tsx --test src/artist-applications/*.spec.ts",
     "test:commissions": "tsx --test src/commissions/*.spec.ts",
