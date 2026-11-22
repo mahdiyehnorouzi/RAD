@@ -237,9 +237,21 @@ class ShipTests(unittest.TestCase):
             """
             import os, sys, time, pathlib
             mode = os.environ["STUB_MODE"]
+            counter_path = pathlib.Path(os.environ["STUB_COUNTER"])
+            attempt = int(counter_path.read_text()) if counter_path.exists() else 0
+            counter_path.write_text(str(attempt + 1))
             if mode == "stall":
                 pathlib.Path(os.environ["STUB_PIDFILE"]).write_text(str(os.getpid()))
                 time.sleep(30)
+            elif mode == "stall_then_ok":
+                if attempt == 0:
+                    pathlib.Path(os.environ["STUB_PIDFILE"]).write_text(str(os.getpid()))
+                    time.sleep(30)
+                else:
+                    data = sys.stdin.buffer.read()
+                    pathlib.Path(os.environ["STUB_BODY"]).write_bytes(data)
+                    sys.stdout.write("fake broker: release verified healthy\\n")
+                    raise SystemExit(0)
             elif mode == "partial":
                 sys.stdin.buffer.read(8)
                 raise SystemExit(0)
@@ -257,6 +269,7 @@ class ShipTests(unittest.TestCase):
         os.environ["STUB_MODE"] = mode
         os.environ["STUB_PIDFILE"] = str(self.root / "pid")
         os.environ["STUB_BODY"] = str(self.root / "body")
+        os.environ["STUB_COUNTER"] = str(self.root / "counter")
         return transport.ship(
             str(self.stage),
             files or ["release.json", "release.sigstore.json", "api-release.tar.gz"],
@@ -268,6 +281,11 @@ class ShipTests(unittest.TestCase):
             idle_seconds=kwargs.get("idle_seconds", 2),
             deadline_seconds=kwargs.get("deadline_seconds", 5),
             max_bytes=kwargs.get("max_bytes", transport.DEFAULT_MAX_BYTES),
+            # Existing tests below don't exercise retries - this keeps
+            # them at exactly one attempt, matching their original
+            # timing/behavior. Retry-specific tests pass these explicitly.
+            max_attempts=kwargs.get("max_attempts", 1),
+            retry_backoff_seconds=kwargs.get("retry_backoff_seconds", 0.01),
         )
 
     def test_stall_kills_the_remote_and_does_not_report_completion(self):
@@ -281,6 +299,62 @@ class ShipTests(unittest.TestCase):
         pid = int((self.root / "pid").read_text())
         with self.assertRaises(ProcessLookupError):
             os.kill(pid, 0)
+
+    def test_a_stall_is_retried_and_a_clean_second_attempt_succeeds(self):
+        code = self.ship(
+            "stall_then_ok",
+            payload=b"x" * (512 * 1024),
+            idle_seconds=0.4,
+            deadline_seconds=5,
+            max_attempts=2,
+        )
+        self.assertEqual(code, 0)
+        text = self.stderr.text()
+        self.assertIn("reason=stalled", text)
+        self.assertIn("stage=retry attempt=1 reason=stalled", text)
+        self.assertIn("stage=transfer_local_complete", text)
+        self.assertEqual(int((self.root / "counter").read_text()), 2)
+
+    def test_a_stall_that_persists_through_every_attempt_still_fails_closed(self):
+        code = self.ship(
+            "stall",
+            payload=b"x" * (512 * 1024),
+            idle_seconds=0.4,
+            deadline_seconds=5,
+            max_attempts=2,
+        )
+        self.assertEqual(code, 1)
+        text = self.stderr.text()
+        self.assertEqual(text.count("stage=transfer_failed"), 2)
+        self.assertIn("stage=retry attempt=1 reason=stalled", text)
+        self.assertNotIn("stage=transfer_local_complete", text)
+        self.assertEqual(int((self.root / "counter").read_text()), 2)
+
+    def test_a_deadline_failure_is_not_retried(self):
+        # The transfer trickles under max_bytes but never finishes before
+        # the (tiny, test-only) deadline - reason=deadline, not "stalled",
+        # so this must fail after exactly one attempt even with
+        # max_attempts=2.
+        code = self.ship(
+            "stall",
+            payload=b"x" * (512 * 1024),
+            idle_seconds=5,
+            deadline_seconds=0.4,
+            max_attempts=2,
+        )
+        self.assertEqual(code, 1)
+        text = self.stderr.text()
+        self.assertIn("reason=deadline", text)
+        self.assertNotIn("stage=retry", text)
+        self.assertEqual(int((self.root / "counter").read_text()), 1)
+
+    def test_a_remote_close_is_not_retried(self):
+        code = self.ship("partial", payload=b"y" * (512 * 1024), max_attempts=2)
+        self.assertEqual(code, 1)
+        text = self.stderr.text()
+        self.assertIn("reason=remote_closed", text)
+        self.assertNotIn("stage=retry", text)
+        self.assertEqual(int((self.root / "counter").read_text()), 1)
 
     def test_remote_close_before_eof_is_a_transfer_failure(self):
         # Larger than a default pipe buffer so the writer cannot finish
