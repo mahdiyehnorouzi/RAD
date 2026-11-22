@@ -35,7 +35,9 @@ for (const { file, artifactPrefix } of WORKFLOWS) {
     const nameLines = [...text.matchAll(/^\s*name:\s*(.+release-.+)$/gm)].map(
       (match) => match[1].trim(),
     );
-    const artifactNameLines = nameLines.filter((line) => line.startsWith(artifactPrefix));
+    const artifactNameLines = nameLines.filter((line) =>
+      line.startsWith(artifactPrefix),
+    );
     // build job upload + every download job(s) for this release kind.
     assert.ok(
       artifactNameLines.length >= 2,
