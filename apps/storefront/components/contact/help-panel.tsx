@@ -4,6 +4,7 @@ import "./help-panel.css";
 import { useEffect, useId, useRef, useState } from "react";
 import { Check, Copy, Info, MessageSquareText, Send, X } from "lucide-react";
 import { useLocale } from "@/components/i18n";
+import { Button } from "@/components/ui/button-link";
 import { InstagramIcon, MessageForm } from "./channels";
 import { MessageThread } from "./message-thread";
 import { RAD_INSTAGRAM, helpPanelCopy } from "./const";
@@ -81,14 +82,16 @@ export function HelpPanel({
       {context === "order" ? (
         <span className="help-panel-eyebrow">{c.orderEyebrow}</span>
       ) : null}
-      <h2 id={`${id}-title`}>{title}</h2>
+      <h2 className="help-panel-title" id={`${id}-title`}>
+        {title}
+      </h2>
       <p className="help-panel-body">
         {context === "checkout" ? c.checkoutBody : c.orderBody}
       </p>
 
       <div className="help-panel-actions">
         <a
-          className="help-action is-primary"
+          className="button help-action"
           href={RAD_INSTAGRAM.directUrl}
           target="_blank"
           rel="noopener noreferrer"
@@ -101,17 +104,17 @@ export function HelpPanel({
           )}
           <span>{c.direct}</span>
         </a>
-        <button type="button" className="help-action" onClick={copyText}>
+        <Button type="button" className="help-action" onClick={copyText}>
           {copy === "copied" ? (
             <Check size={18} strokeWidth={1.7} aria-hidden="true" />
           ) : (
             <Copy size={18} strokeWidth={1.6} aria-hidden="true" />
           )}
           <span>{copy === "copied" ? c.copied : c.copy}</span>
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
-          className="help-action is-quiet"
+          className="help-action"
           aria-expanded={writing}
           aria-controls={`${id}-form`}
           onClick={toggleForm}
@@ -122,7 +125,7 @@ export function HelpPanel({
             <MessageSquareText size={17} strokeWidth={1.6} aria-hidden="true" />
           )}
           <span>{writing ? c.closeWrite : c.write}</span>
-        </button>
+        </Button>
       </div>
 
       <span className="help-panel-live" aria-live="polite">

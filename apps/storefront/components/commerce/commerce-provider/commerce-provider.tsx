@@ -46,9 +46,9 @@ type CommerceContextValue = {
   /** Texts a sign-in code; the API enforces cooldown and rate limits. */
   requestOtp: (phone: string) => Promise<{ expiresInSeconds: number }>;
   /** `/auth/otp/signin`: the API signs in by verified phone only. */
-  signInWithOtp: (input: { phone: string; code: string }) => Promise<void>;
+  signInWithOtp: (input: { phone: string; code: string }) => Promise<AuthUser>;
   logout: () => Promise<void>;
-  updateProfile: (input: { name: string; phone: string }) => Promise<AuthUser>;
+  updateProfile: (input: { name: string; phone?: string }) => Promise<AuthUser>;
   favorites: string[];
   toggleFavorite: (slug: string) => Promise<void>;
   isFavorite: (slug: string) => boolean;
@@ -256,11 +256,12 @@ export function CommerceProvider({ children }: { children: React.ReactNode }) {
           },
         ),
       signInWithOtp: async (input) => {
-        await api<{ user: AuthUser }>("/auth/otp/signin", {
+        const result = await api<{ user: AuthUser }>("/auth/otp/signin", {
           method: "POST",
           body: JSON.stringify(input),
         });
         await syncSession();
+        return result.user;
       },
       logout: async () => {
         await api("/auth/logout", { method: "POST" });

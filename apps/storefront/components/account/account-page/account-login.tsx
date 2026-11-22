@@ -1,36 +1,23 @@
 "use client";
 
-import {
-  FormEvent,
-  Suspense,
-  SVGProps,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { FormEvent, Suspense, SVGProps, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCommerce } from "@/components/commerce";
 import { useLocale } from "@/components/i18n";
+import { Button } from "@/components/ui/button-link";
+import { PhoneOtpCodeStep } from "../phone-otp-code-step";
 import { requestPasswordReset, resetAccountPassword } from "@/lib/api";
 import type { MessageKey } from "@/i18n/fa";
 import {
   applyIranMobileEdit,
   canonicalIranMobile,
-  formatIranMobileDraft,
 } from "@/lib/phone/iran-mobile";
-import {
-  OTP_RESEND_COOLDOWN_SECONDS,
-  authErrorCode,
-  authErrorMessage,
-  normalizeOtpCode,
-  otpCodeAlreadySent,
-  otpCodeDraft,
-} from "../auth-login";
+import { authErrorCode, authErrorMessage } from "../auth-login";
+import { usePhoneOtp } from "../use-phone-otp";
 import "./account-page.css";
 
 type AuthMethod = "otp" | "password";
 type PasswordMode = "signin" | "signup" | "forgot" | "reset";
-type OtpStep = "phone" | "code";
 
 function safeReturnTo(value?: string | null) {
   if (!value || !value.startsWith("/") || value.startsWith("//"))
@@ -81,8 +68,8 @@ export function AccountLogin({ returnTo }: { returnTo?: string }) {
 }
 
 function AccountLoginForm({ returnTo }: { returnTo?: string }) {
-  const { login, register, requestOtp, signInWithOtp } = useCommerce();
-  const { locale, t, href, number } = useLocale();
+  const { login, register } = useCommerce();
+  const { locale, t, href } = useLocale();
   const router = useRouter();
   const search = useSearchParams();
   const nextPath = safeReturnTo(returnTo ?? search.get("returnTo"));
@@ -95,40 +82,31 @@ function AccountLoginForm({ returnTo }: { returnTo?: string }) {
   const [passwordMode, setPasswordMode] = useState<PasswordMode>(
     signupLink ? "signup" : "signin",
   );
-  const [otpStep, setOtpStep] = useState<OtpStep>("phone");
-  const [phone, setPhone] = useState("");
-  const [sentPhone, setSentPhone] = useState("");
-  const [code, setCode] = useState("");
-  const [cooldown, setCooldown] = useState(0);
-
-  const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState(() => {
+  const googleError = (() => {
     const authError = search.get("authError");
     return authError
       ? t(GOOGLE_AUTH_ERROR_CODE[authError] ?? "googleAuthFailed")
       : "";
+  })();
+  const otp = usePhoneOtp({
+    initialError: signupLink ? "" : googleError,
+    onVerified: () => {
+      router.replace(href(nextPath));
+    },
   });
+
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState(signupLink ? googleError : "");
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
   const nameRef = useRef<HTMLInputElement>(null);
   const emailRef = useRef<HTMLInputElement>(null);
   const phoneRef = useRef<HTMLInputElement>(null);
-  const codeRef = useRef<HTMLInputElement>(null);
   const isSignup = passwordMode === "signup";
   const pageTitle = locale === "fa" ? "حساب کاربری | رَد" : "Account | RAD";
-
-  useEffect(() => {
-    if (cooldown <= 0) return undefined;
-    const timer = window.setTimeout(() => {
-      setCooldown((value) => Math.max(0, value - 1));
-    }, 1000);
-    return () => window.clearTimeout(timer);
-  }, [cooldown]);
-
-  useEffect(() => {
-    if (method === "otp" && otpStep === "code") codeRef.current?.focus();
-  }, [method, otpStep]);
+  const shownError = method === "otp" ? otp.error : error;
+  const shownNotice = method === "otp" ? otp.notice : notice;
 
   const goNext = () => {
     router.replace(href(nextPath));
@@ -137,6 +115,7 @@ function AccountLoginForm({ returnTo }: { returnTo?: string }) {
   const clearMessages = () => {
     setError("");
     setNotice("");
+    otp.clearMessages();
   };
 
   const switchMethod = (next: AuthMethod) => {
@@ -149,72 +128,19 @@ function AccountLoginForm({ returnTo }: { returnTo?: string }) {
     clearMessages();
   };
 
-  const toCodeStep = (normalized: string) => {
-    setSentPhone(normalized);
-    setCode("");
-    setOtpStep("code");
-    setCooldown(OTP_RESEND_COOLDOWN_SECONDS);
-  };
-
-  const sendOtp = async (rawPhone: string) => {
-    const normalized = canonicalIranMobile(rawPhone);
-    if (!normalized) {
-      setNotice("");
-      setError(t("phoneInvalid"));
-      phoneRef.current?.focus();
-      return;
-    }
-    try {
-      clearMessages();
-      setBusy(true);
-      await requestOtp(normalized);
-      toCodeStep(normalized);
-      if (otpStep === "code") setNotice(t("otpResent"));
-    } catch (err) {
-      if (otpCodeAlreadySent(err)) {
-        // A code for this phone is already on its way; let it be entered.
-        if (otpStep === "phone") toCodeStep(normalized);
-        else setCooldown(OTP_RESEND_COOLDOWN_SECONDS);
-      }
-      setError(authErrorMessage(err, "otpRequest", t));
-    } finally {
-      setBusy(false);
-    }
-  };
-
   const handleOtpSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (busy) return;
-    if (otpStep === "phone") {
-      await sendOtp(phone);
+    if (otp.busy) return;
+    if (otp.step === "phone") {
+      if (!canonicalIranMobile(otp.phone)) phoneRef.current?.focus();
+      await otp.send();
       return;
     }
-    const normalizedCode = normalizeOtpCode(code);
-    if (!normalizedCode) {
-      setNotice("");
-      setError(t("otpCodeInvalidFormat"));
-      codeRef.current?.focus();
-      return;
-    }
-    try {
-      clearMessages();
-      setBusy(true);
-      await signInWithOtp({ phone: sentPhone, code: normalizedCode });
-      goNext();
-    } catch (err) {
-      setError(authErrorMessage(err, "otpSignIn", t));
-      setCode("");
-      codeRef.current?.focus();
-    } finally {
-      setBusy(false);
-    }
+    await otp.verify(otp.code);
   };
 
   const changePhone = () => {
-    setOtpStep("phone");
-    setSentPhone("");
-    setCode("");
-    clearMessages();
+    otp.changePhone();
     window.requestAnimationFrame(() => phoneRef.current?.focus());
   };
 
@@ -324,7 +250,6 @@ function AccountLoginForm({ returnTo }: { returnTo?: string }) {
 
   const showMethodTabs =
     method === "otp" || passwordMode === "signin" || passwordMode === "signup";
-  const [sentBefore, sentAfter = ""] = t("otpCodeSentTo").split("{phone}");
 
   return (
     <>
@@ -349,7 +274,7 @@ function AccountLoginForm({ returnTo }: { returnTo?: string }) {
                 role="tab"
                 aria-selected={method === "otp"}
                 className={method === "otp" ? "active" : ""}
-                disabled={busy}
+                disabled={busy || otp.busy}
                 onClick={() => switchMethod("otp")}
               >
                 {t("otpTab")}
@@ -359,7 +284,7 @@ function AccountLoginForm({ returnTo }: { returnTo?: string }) {
                 role="tab"
                 aria-selected={method === "password"}
                 className={method === "password" ? "active" : ""}
-                disabled={busy}
+                disabled={busy || otp.busy}
                 onClick={() => switchMethod("password")}
               >
                 {t("passwordTab")}
@@ -367,14 +292,14 @@ function AccountLoginForm({ returnTo }: { returnTo?: string }) {
             </div>
           ) : null}
 
-          {error ? (
+          {shownError ? (
             <p className="form-error" role="alert">
-              {error}
+              {shownError}
             </p>
           ) : null}
-          {notice ? (
+          {shownNotice ? (
             <p className="form-notice" role="status">
-              {notice}
+              {shownNotice}
             </p>
           ) : null}
 
@@ -399,7 +324,7 @@ function AccountLoginForm({ returnTo }: { returnTo?: string }) {
 
           {method === "otp" ? (
             <form className="auth-stack" onSubmit={handleOtpSubmit} noValidate>
-              {otpStep === "phone" ? (
+              {otp.step === "phone" ? (
                 <>
                   <label htmlFor="login-phone">{t("loginPhoneLabel")}</label>
                   <input
@@ -411,15 +336,15 @@ function AccountLoginForm({ returnTo }: { returnTo?: string }) {
                     autoComplete="tel"
                     dir="ltr"
                     placeholder={t("phonePlaceholder")}
-                    value={phone}
+                    value={otp.phone}
                     onChange={(event) => {
                       const input = event.currentTarget;
                       const next = applyIranMobileEdit(
-                        phone,
+                        otp.phone,
                         input.value,
                         input.selectionStart ?? input.value.length,
                       );
-                      setPhone(next.value);
+                      otp.setPhone(next.value);
                       window.requestAnimationFrame(() => {
                         if (document.activeElement === input) {
                           input.setSelectionRange(next.cursor, next.cursor);
@@ -430,67 +355,29 @@ function AccountLoginForm({ returnTo }: { returnTo?: string }) {
                     required
                   />
                   <small id="login-phone-hint">{t("otpHint")}</small>
-                  <button
-                    className="button"
+                  <Button
                     type="submit"
-                    disabled={busy}
-                    aria-busy={busy}
+                    disabled={otp.busy}
+                    aria-busy={otp.busy || undefined}
                   >
-                    {busy ? t("submitting") : t("sendOtpCode")}
-                  </button>
+                    {otp.busy ? t("submitting") : t("sendOtpCode")}
+                  </Button>
                 </>
               ) : (
-                <>
-                  <p className="auth-otp-sent">
-                    {sentBefore}
-                    <bdi dir="ltr">{formatIranMobileDraft(sentPhone)}</bdi>
-                    {sentAfter}
-                  </p>
-                  <label htmlFor="login-code">{t("otpCodeLabel")}</label>
-                  <input
-                    ref={codeRef}
-                    id="login-code"
-                    name="code"
-                    type="text"
-                    inputMode="numeric"
-                    autoComplete="one-time-code"
-                    dir="ltr"
-                    maxLength={6}
-                    value={code}
-                    onChange={(event) =>
-                      setCode(otpCodeDraft(event.currentTarget.value))
-                    }
-                    required
-                  />
-                  <button
-                    className="button"
-                    type="submit"
-                    disabled={busy}
-                    aria-busy={busy}
-                  >
-                    {busy ? t("submitting") : t("verifyOtpCode")}
-                  </button>
-                  <div className="auth-otp-actions">
-                    <button
-                      className="auth-switch"
-                      type="button"
-                      disabled={busy}
-                      onClick={changePhone}
-                    >
-                      {t("changePhoneNumber")}
-                    </button>
-                    <button
-                      className="auth-switch"
-                      type="button"
-                      disabled={busy || cooldown > 0}
-                      onClick={() => void sendOtp(sentPhone)}
-                    >
-                      {cooldown > 0
-                        ? t("resendOtpIn", { seconds: number(cooldown) })
-                        : t("resendOtpCode")}
-                    </button>
-                  </div>
-                </>
+                <PhoneOtpCodeStep
+                  id="login-code"
+                  sentPhone={otp.sentPhone}
+                  code={otp.code}
+                  busy={otp.busy}
+                  invalid={Boolean(otp.error)}
+                  cooldown={otp.cooldown}
+                  submit
+                  onChange={otp.setCode}
+                  onComplete={(next) => void otp.verify(next)}
+                  onVerify={() => void otp.verify(otp.code)}
+                  onChangePhone={changePhone}
+                  onResend={() => void otp.send(otp.sentPhone)}
+                />
               )}
 
               <div className="auth-no-account">
@@ -601,7 +488,11 @@ function AccountLoginForm({ returnTo }: { returnTo?: string }) {
                   )}
                 </>
               )}
-              <button className="button" type="submit" disabled={busy}>
+              <Button
+                type="submit"
+                disabled={busy}
+                aria-busy={busy || undefined}
+              >
                 {busy
                   ? t("submitting")
                   : t(
@@ -613,7 +504,7 @@ function AccountLoginForm({ returnTo }: { returnTo?: string }) {
                             ? "signup"
                             : "login",
                     )}
-              </button>
+              </Button>
               {passwordMode === "signin" || passwordMode === "signup" ? null : (
                 <button
                   className="auth-switch"

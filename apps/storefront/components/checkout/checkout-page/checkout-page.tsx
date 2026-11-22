@@ -8,6 +8,7 @@ import { ArrowLeft, ArrowRight, Truck, UserRound } from "lucide-react";
 import {
   CART_HOLD_MINUTES,
   ORDER_PAYMENT_WINDOW_MINUTES,
+  EXPRESS_POST_FEE_TOMAN,
   ORDER_POLICY_SLUGS,
   currentPolicyVersions,
   type Product,
@@ -58,8 +59,14 @@ import { useCheckoutAddresses } from "./use-checkout-addresses";
 import { checkoutCopy, fillCopy } from "../const";
 import { CheckoutMeter, CheckoutSteps, CheckoutSummary } from "../flow";
 import type { CheckoutStepId } from "../flow/checkout-steps";
+import { CheckoutAccountOffer } from "./checkout-account-offer";
 import { CheckoutField } from "./checkout-field";
 import { LocationFields } from "./location-fields";
+import {
+  expressPostFeeToman,
+  normalizeShippingMethod,
+} from "./checkout-shipping";
+import { ShippingOptions } from "./shipping-options";
 
 type FieldName =
   "name" | "phone" | "province" | "city" | "address" | "postalCode";
@@ -171,6 +178,9 @@ export function CheckoutPage() {
   const [accepted, setAccepted] = useState(false);
   const [agreeMissing, setAgreeMissing] = useState(false);
   const [panel, setPanel] = useState<"contact" | "delivery">("contact");
+  const [shippingMethod, setShippingMethod] = useState<
+    "express" | "courier" | ""
+  >("");
   const panelRef = useRef(panel);
   panelRef.current = panel;
   const formRef = useRef<HTMLFormElement>(null);
@@ -185,7 +195,11 @@ export function CheckoutPage() {
     .map((slug) => getProduct(slug))
     .filter((item): item is Product => Boolean(item));
   const formVisible = !leaving && ready && slugs.length > 0 && items.length > 0;
-  const total = formatTotal(cartTotal(items), locale);
+  const itemsAmount = cartTotal(items);
+  const shippingFee = shippingMethod === "express" ? expressPostFeeToman() : 0;
+  const itemsTotal = formatTotal(itemsAmount, locale);
+  const shippingFeeLabel = formatTotal(EXPRESS_POST_FEE_TOMAN, locale);
+  const total = formatTotal(itemsAmount + shippingFee, locale);
   const lost = slugs.some((slug) => !holds[slug] || !getProduct(slug));
   const remaining = useCountdown(holdEndsAt);
   const ArrowIcon = locale === "fa" ? ArrowLeft : ArrowRight;
@@ -264,6 +278,12 @@ export function CheckoutPage() {
     setPhone(nextPhone);
     setAddressChoice(choice);
     setSavedAddressId(savedAddressIdOf(draft));
+    const nextShipping = normalizeShippingMethod(
+      location.provinceId,
+      location.cityId,
+      draft.shippingMethod,
+    );
+    setShippingMethod(nextShipping);
     setFields({
       name: readControl(form, "name"),
       phone: nextPhone,
@@ -334,11 +354,19 @@ export function CheckoutPage() {
   const storeDraft = (form: HTMLFormElement, patch?: Partial<Draft>) => {
     const data = new FormData(form);
     const choice = addressChoiceOf({ addressChoice, ...patch });
+    const nextProvince = patch?.provinceId ?? provinceId;
+    const nextCity = patch?.cityId ?? cityId;
+    const nextShipping = normalizeShippingMethod(
+      nextProvince,
+      nextCity,
+      patch && "shippingMethod" in patch
+        ? patch.shippingMethod
+        : shippingMethod,
+    );
+    setShippingMethod(nextShipping);
     writeDraft({
       name: String(data.get("name") ?? ""),
       phone,
-      provinceId,
-      cityId,
       address: String(data.get("address") ?? ""),
       postalCode: String(data.get("postalCode") ?? ""),
       message: String(data.get("message") ?? ""),
@@ -346,6 +374,9 @@ export function CheckoutPage() {
       savedAddressId: choice === "saved" ? savedAddressId : "",
       panel: panelRef.current,
       ...patch,
+      provinceId: nextProvince,
+      cityId: nextCity,
+      shippingMethod: nextShipping,
     });
     const stored = readDraft();
     setFields({
@@ -481,6 +512,7 @@ export function CheckoutPage() {
         ),
         message: field("message") || undefined,
         acceptedPolicies: currentPolicyVersions(ORDER_POLICY_SLUGS),
+        shippingMethod: shippingMethod || undefined,
       });
       setLeaving(true);
       clearDraft();
@@ -683,6 +715,12 @@ export function CheckoutPage() {
                 }}
               />
             </CheckoutField>
+            <CheckoutAccountOffer
+              name={fields.name}
+              phone={phone}
+              disabled={busy}
+              copy={c}
+            />
           </div>
           <div className="checkout-panel" hidden={panel !== "delivery"}>
             {signedIn ? (
@@ -741,6 +779,18 @@ export function CheckoutPage() {
                 }}
               />
             </div>
+            <ShippingOptions
+              provinceId={provinceId}
+              cityId={cityId}
+              method={shippingMethod}
+              feeLabel={shippingFeeLabel}
+              disabled={busy}
+              copy={c}
+              onChange={(next) => {
+                setShippingMethod(next);
+                persistDraft({ shippingMethod: next });
+              }}
+            />
             <CheckoutField
               id="checkout-address"
               label={c.addressLabel}
@@ -813,7 +863,13 @@ export function CheckoutPage() {
         </form>
 
         <aside className="checkout-flow-aside">
-          <CheckoutSummary items={items} total={total} />
+          <CheckoutSummary
+            items={items}
+            itemsTotal={itemsTotal}
+            total={total}
+            shippingMethod={shippingMethod}
+            shippingFee={shippingFeeLabel}
+          />
           {lost ? (
             <div className="checkout-alert" role="alert">
               <p>{c.holdGone}</p>

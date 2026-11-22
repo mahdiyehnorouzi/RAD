@@ -17,7 +17,6 @@ import { LocaleProvider } from "@/components/i18n";
 import { CommerceProvider } from "@/components/commerce";
 import { CatalogIndexProvider } from "@/components/catalog";
 import { getCatalogIndex } from "@/lib/catalog/get-catalog-works";
-import { HomeBanner } from "@/features/home/home-banner";
 import { ProductOverlayGate } from "@/features/product-detail/transition/product-overlay-gate";
 import { AppNavigationTracker } from "@/features/navigation/app-navigation-tracker";
 import {
@@ -176,7 +175,6 @@ export default async function RootLayout({
                 {process.env.NODE_ENV === "development" ? (
                   <DevDataBadge />
                 ) : null}
-                <HomeBanner />
                 <Header />
                 {/* <PwaRegistrar /> */}
                 <RouteTrail />

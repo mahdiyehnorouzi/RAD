@@ -295,11 +295,24 @@ export function normalizeStoreOrderStatus(status: string): StoreOrderStatus {
   return legacyStoreOrderStatus[status] ?? "confirmed";
 }
 
+/** Flat Express Post charge for one order, in tomans. Not derived from weight. */
+export const EXPRESS_POST_FEE_TOMAN = 150_000;
+
+export type CheckoutShippingMethod = "express" | "courier";
+
 export interface Order {
   id: string;
   slugs: string[];
   total: number;
   usdTotal?: number;
+  /**
+   * Server-calculated shipping. `fee` is toman. Courier is `0` until dispatch.
+   * Absent on orders placed before shipping was stored.
+   */
+  shipping?: {
+    method: CheckoutShippingMethod;
+    fee: number;
+  };
   createdAt: number;
   status: StoreOrderStatus;
   delivery: { name: string; city: string; phone?: string; address?: string };

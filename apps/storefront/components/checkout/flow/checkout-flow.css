@@ -404,13 +404,14 @@ a.checkout-step-hit {
 
 .checkout-field {
   display: grid;
-  gap: 0.28rem;
+  gap: var(--field-gap);
   min-width: 0;
 }
 
 .checkout-field label {
+  margin: 0;
   color: var(--ink);
-  font-size: 0.8rem;
+  font-size: var(--text-caption);
   font-weight: var(--font-weight-medium, 500);
 }
 
@@ -600,17 +601,25 @@ html[dir="rtl"] .checkout-flow input.checkout-ltr-field::placeholder {
 
 .checkout-summary-rows dd {
   margin: 0;
+  min-width: 0;
   font-variant-numeric: tabular-nums;
+  text-align: end;
+  overflow-wrap: anywhere;
 }
 
 .checkout-summary-rows .checkout-summary-total {
   margin-top: 0.35rem;
   margin-inline: 0;
-  padding: 0.75rem 0;
+  padding: 0.85rem 1rem;
   border: 0;
-  border-radius: 10px;
+  border-radius: var(--sheet-radius);
   background: #e7eee4;
-  font-size: 1.02rem;
+  font-size: var(--text-price);
+}
+
+.checkout-summary-total dt,
+.checkout-summary-total dd {
+  min-width: 0;
 }
 
 .checkout-summary-total dt {
@@ -686,7 +695,7 @@ html[dir="rtl"] .checkout-flow input.checkout-ltr-field::placeholder {
     "icon text time"
     "bar bar bar";
   gap: 0.35rem 0.75rem;
-  align-items: start;
+  align-items: center;
   padding: 0.95rem 1.05rem 1rem;
   border: 1px solid color-mix(in srgb, var(--oxide) 22%, transparent);
   border-radius: 12px;
@@ -697,7 +706,7 @@ html[dir="rtl"] .checkout-flow input.checkout-ltr-field::placeholder {
   grid-area: icon;
   width: 1.15rem;
   height: 1.15rem;
-  margin-top: 0.3rem;
+  margin-top: 0;
   color: var(--oxide);
   stroke-width: 1.6;
 }
@@ -909,33 +918,9 @@ div.checkout-alert p {
   line-height: 1.55;
 }
 
-.checkout-flow .help-panel .help-panel-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-}
-
-.checkout-flow .help-panel .help-action {
-  width: auto;
-  min-height: 2.1rem;
-  font-size: 0.78rem;
-}
-
-.checkout-flow .help-panel .help-action.is-primary {
-  border: 1px solid color-mix(in srgb, var(--moss) 40%, transparent);
-  background: transparent;
-  color: var(--moss);
-}
-
 .checkout-flow .help-panel-body {
   font-size: 0.82rem;
   line-height: 1.55;
-}
-
-.checkout-flow .help-action {
-  min-height: 2.25rem;
-  padding: 0.3rem 0.75rem;
-  font-size: 0.82rem;
 }
 
 /* ——— Small screens ——— */

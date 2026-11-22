@@ -28,6 +28,12 @@ export function toOrder(order: OrderRow, redirectUrl?: string) {
       phone: order.phone,
       address: order.address,
     },
+    shipping: order.shippingMethod
+      ? {
+          method: order.shippingMethod,
+          fee: order.shippingFee ?? 0,
+        }
+      : undefined,
     trackingCode: order.trackingCode || undefined,
     estimatedDeliveryAt: order.estimatedDeliveryAt?.getTime() ?? undefined,
     deliveredAt: order.deliveredAt?.getTime() ?? undefined,

@@ -10,13 +10,21 @@ import { checkoutCopy } from "../const";
 export function CheckoutSummary({
   items,
   total,
+  itemsTotal,
   amountDigits,
+  shippingMethod = "",
+  shippingFee,
 }: {
   items: Product[];
-  /** Already formatted for the current locale. */
+  /** Payable amount, already formatted. Includes Express Post when selected. */
   total: string;
+  /** Works only. Defaults to `total` when shipping adds nothing. */
+  itemsTotal?: string;
   /** Digits to place on the clipboard. Shown only on the payment step. */
   amountDigits?: string;
+  shippingMethod?: "express" | "courier" | "";
+  /** Formatted Express Post fee, e.g. «۱۵۰٬۰۰۰ تومان». */
+  shippingFee?: string;
 }) {
   const { locale, number } = useLocale();
   const c = checkoutCopy[locale];
@@ -67,11 +75,17 @@ export function CheckoutSummary({
       <dl className="checkout-summary-rows">
         <div>
           <dt>{c.subtotal}</dt>
-          <dd>{total}</dd>
+          <dd>{itemsTotal ?? total}</dd>
         </div>
         <div>
           <dt>{c.shipping}</dt>
-          <dd>{c.shippingUnset}</dd>
+          <dd>
+            {shippingMethod === "express" && shippingFee
+              ? shippingFee
+              : shippingMethod === "courier"
+                ? c.shippingCourierSummary
+                : c.shippingUnset}
+          </dd>
         </div>
         <div className="checkout-summary-total">
           <dt>{c.total}</dt>

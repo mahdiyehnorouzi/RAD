@@ -18,14 +18,13 @@ import { useCountdown } from "@/hooks/use-countdown";
 import { readableErrorMessage } from "@/lib/api";
 import { formatCountdown } from "@/lib/catalog/product-status";
 import { formatTotal } from "@/lib/money";
-import { checkoutCopy } from "../const";
+import { checkoutCopy, fillCopy } from "../const";
 import { CheckoutMeter, CheckoutSteps, CheckoutSummary } from "../flow";
 import { payLaterOffer } from "./deferred-payment";
 import { useCheckoutOrder } from "./hooks";
 import { PaymentCard } from "./payment-card";
 import { PaymentReceipt } from "./payment-receipt";
 import { PaymentResult } from "./payment-result";
-
 const RECEIPT_FORM_ID = "checkout-receipt";
 
 export function CheckoutPayment({ id }: { id: string }) {
@@ -36,6 +35,7 @@ export function CheckoutPayment({ id }: { id: string }) {
   const { locale, number, href } = useLocale();
   const c = checkoutCopy[locale];
   const remaining = useCountdown(order?.payment?.dueAt);
+
   const [busy, setBusy] = useState<"receipt" | "cancel" | "retry" | null>(null);
   const [error, setError] = useState("");
   const [asking, setAsking] = useState(false);
@@ -162,10 +162,13 @@ export function CheckoutPayment({ id }: { id: string }) {
     .map((slug) => getProduct(slug))
     .filter((item): item is Product => Boolean(item));
   const tomanDue = order.payment?.amount ?? order.total;
-  const tomanLabel =
-    locale === "fa"
-      ? formatTotal(tomanDue, "fa")
-      : `${new Intl.NumberFormat("en-US").format(tomanDue)} toman`;
+  const shippingMethod = order.shipping?.method ?? "";
+  const shippingFee =
+    shippingMethod === "express" ? (order.shipping?.fee ?? 0) : 0;
+  const itemsAmount = Math.max(0, tomanDue - shippingFee);
+  const tomanLabel = formatTotal(tomanDue, locale);
+  const itemsTotal = formatTotal(itemsAmount, locale);
+  const shippingFeeLabel = formatTotal(shippingFee, locale);
   const summaryTotal = tomanLabel;
 
   if (order.status !== "pending_payment") {
@@ -179,8 +182,11 @@ export function CheckoutPayment({ id }: { id: string }) {
           <aside className="checkout-flow-aside">
             <CheckoutSummary
               items={items}
+              itemsTotal={itemsTotal}
               total={summaryTotal}
               amountDigits={String(tomanDue)}
+              shippingMethod={shippingMethod}
+              shippingFee={shippingFeeLabel}
             />
           </aside>
         </div>
@@ -299,6 +305,15 @@ export function CheckoutPayment({ id }: { id: string }) {
                     .filter(Boolean)
                     .join("، ")}
                 </span>
+                <span>
+                  {shippingMethod === "express"
+                    ? fillCopy(c.shippingExpressDetail, {
+                        fee: shippingFeeLabel,
+                      })
+                    : shippingMethod === "courier"
+                      ? c.shippingCourierSummary
+                      : c.shippingUnset}
+                </span>
               </address>
             </section>
           ) : null}
@@ -395,8 +410,11 @@ export function CheckoutPayment({ id }: { id: string }) {
         <aside className="checkout-flow-aside">
           <CheckoutSummary
             items={items}
+            itemsTotal={itemsTotal}
             total={summaryTotal}
             amountDigits={String(tomanDue)}
+            shippingMethod={shippingMethod}
+            shippingFee={shippingFeeLabel}
           />
           {remaining !== null ? (
             <CheckoutMeter

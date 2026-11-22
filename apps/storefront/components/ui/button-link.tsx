@@ -1,5 +1,6 @@
 "use client";
 
+import type { ButtonHTMLAttributes, ReactNode } from "react";
 import Link from "next/link";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { useLocale } from "@/components/i18n";
@@ -38,18 +39,19 @@ export function Button({
   light = false,
   outline = false,
   disabled = false,
+  className = "",
+  ...props
 }: {
-  children: React.ReactNode;
-  type?: "button" | "submit";
-  onClick?: () => void;
+  children: ReactNode;
   light?: boolean;
   outline?: boolean;
-  disabled?: boolean;
-}) {
+  className?: string;
+} & Omit<ButtonHTMLAttributes<HTMLButtonElement>, "className">) {
   return (
     <button
+      {...props}
       type={type}
-      className={`button ${light ? "light" : ""} ${outline ? "outline" : ""}`}
+      className={`button${light ? " light" : ""}${outline ? " outline" : ""}${className ? ` ${className}` : ""}`}
       onClick={onClick}
       disabled={disabled}
     >

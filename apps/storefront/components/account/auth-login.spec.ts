@@ -9,9 +9,13 @@ import type { MessageKey } from "@/i18n/fa";
 import {
   OTP_RESEND_COOLDOWN_SECONDS,
   authErrorMessage,
+  applyOtpBackspace,
+  applyOtpInput,
+  emptyOtpCells,
   normalizeOtpCode,
   otpCodeAlreadySent,
   otpCodeDraft,
+  otpCodeFromCells,
 } from "./auth-login";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -118,6 +122,22 @@ test("the six-digit code accepts Persian and Arabic digits", () => {
   assert.equal(otpCodeDraft("۱۲a۳-۴۵۶۷"), "123456");
 });
 
+test("a full code fills all six cells from paste, autofill, or Persian digits", () => {
+  const typed = applyOtpInput(emptyOtpCells(), 0, "۱");
+  assert.deepEqual(otpCodeFromCells(typed.cells), "1");
+  assert.equal(typed.complete, false);
+  const pasted = applyOtpInput(emptyOtpCells(), 3, "۱۲۳۴۵۶");
+  assert.deepEqual(pasted.cells, ["1", "2", "3", "4", "5", "6"]);
+  assert.equal(pasted.complete, true);
+  const arabic = applyOtpInput(emptyOtpCells(), 0, "١٢٣٤٥٦");
+  assert.equal(otpCodeFromCells(arabic.cells), "123456");
+  const cleared = applyOtpBackspace(["1", "2", "3", "4", "5", "6"], 5);
+  assert.equal(otpCodeFromCells(cleared.cells), "12345");
+  const previous = applyOtpBackspace(["1", "2", "3", "4", "5", ""], 5);
+  assert.equal(previous.focus, 4);
+  assert.equal(otpCodeFromCells(previous.cells), "1234");
+});
+
 test("the phone sent to the API is the canonical 09 form the API accepts", () => {
   // The API's `normalizeIranianMobile` accepts only `09` and nine digits
   // (after stripping +98/0098), so the client must never send anything else.
@@ -140,6 +160,35 @@ test("the resend cooldown matches the API's resend cooldown", () => {
   const match = otpService.match(/RESEND_COOLDOWN_MS = (\d+) \* 1000/);
   assert.ok(match, "RESEND_COOLDOWN_MS not found in otp.service.ts");
   assert.equal(Number(match[1]), OTP_RESEND_COOLDOWN_SECONDS);
+});
+
+test("checkout phone signup uses the account OTP hook, not a second flow", () => {
+  const hook = readFileSync(join(here, "use-phone-otp.ts"), "utf8");
+  const step = readFileSync(join(here, "phone-otp-code-step.tsx"), "utf8");
+  const login = readFileSync(
+    join(here, "account-page/account-login.tsx"),
+    "utf8",
+  );
+  const checkout = readFileSync(
+    join(here, "../checkout/checkout-page/checkout-account-offer.tsx"),
+    "utf8",
+  );
+  assert.match(hook, /requestOtp\(/);
+  assert.match(hook, /signInWithOtp\(/);
+  assert.match(hook, /otpCodeAlreadySent/);
+  assert.match(hook, /OTP_RESEND_COOLDOWN_SECONDS/);
+  assert.match(step, /OtpCodeInput/);
+  assert.match(step, /autocomplete="one-time-code"|OtpCodeInput/);
+  assert.match(login, /usePhoneOtp\(/);
+  assert.match(login, /PhoneOtpCodeStep/);
+  assert.match(checkout, /usePhoneOtp\(\{/);
+  assert.match(checkout, /PhoneOtpCodeStep/);
+  assert.doesNotMatch(login, /requestOtp\(/);
+  assert.doesNotMatch(login, /signInWithOtp\(/);
+  assert.doesNotMatch(checkout, /requestOtp\(/);
+  assert.doesNotMatch(checkout, /signInWithOtp\(/);
+  assert.match(checkout, /NEW_OTP_ACCOUNT_NAME/);
+  assert.match(checkout, /updateProfile\(\{ name: trimmed \}\)/);
 });
 
 test("the login form signs in through /auth/otp/signin, unaffected by Google sign-in", () => {

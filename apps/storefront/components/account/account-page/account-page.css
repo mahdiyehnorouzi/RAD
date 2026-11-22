@@ -246,9 +246,43 @@
   cursor: pointer;
 }
 
-.auth-stack > .button {
+.auth-stack > .button,
+.auth-stack .phone-otp-code > .button {
   width: 100%;
   margin-top: 1rem;
+}
+
+.otp-cells {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: var(--field-gap);
+  direction: ltr;
+}
+
+.auth-form .otp-cells input,
+.checkout-account .otp-cells input {
+  width: 100%;
+  min-width: 0;
+  min-height: 3rem;
+  padding: 0.35rem 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font);
+  font-size: max(16px, 1rem);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+  text-align: center;
+}
+
+.otp-cells input:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.otp-cells input:disabled {
+  opacity: 0.45;
 }
 
 .auth-stack > small {

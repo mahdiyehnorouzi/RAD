@@ -1,4 +1,4 @@
-import type { PolicyVersions } from "@rad/types";
+import type { CheckoutShippingMethod, PolicyVersions } from "@rad/types";
 
 export type PlaceOrderInput = {
   name?: string;
@@ -9,6 +9,8 @@ export type PlaceOrderInput = {
   message?: string;
   /** The rule versions the buyer ticked at checkout; the API rejects stale ones. */
   acceptedPolicies?: PolicyVersions;
+  /** Method only. The API quotes the fee; a client amount is ignored. */
+  shippingMethod?: CheckoutShippingMethod;
 };
 
 export type PaymentReceiptInput = {

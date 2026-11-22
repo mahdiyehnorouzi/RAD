@@ -22,7 +22,7 @@ export function CheckoutField({
     <div
       className={`checkout-field${wide ? " is-wide" : ""}${error ? " is-invalid" : ""}`}
     >
-      <label htmlFor={id}>
+      <label id={`${id}-label`} htmlFor={id}>
         {label}
         {optional ? <small> ({optional})</small> : null}
       </label>
