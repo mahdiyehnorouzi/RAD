@@ -28,6 +28,11 @@ export type CheckoutDraft = Partial<DeliveryFields> & {
   message?: string;
   /** Which details screen the buyer was on. Omitted drafts open on contact. */
   panel?: "contact" | "delivery";
+  /**
+   * Courier only. Express Post is not stored: this tree has no weight or
+   * postage rate to quote. See checkout-shipping.ts.
+   */
+  shippingMethod?: "express" | "courier" | "";
 };
 
 const DRAFT_KEYS = [

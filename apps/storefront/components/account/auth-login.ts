@@ -10,7 +10,14 @@ import type { MessageKey } from "@/i18n/fa";
 export const OTP_RESEND_COOLDOWN_SECONDS = 60;
 
 /** The API sends six-digit codes (`generateVerificationCode`). */
-const OTP_CODE_LENGTH = 6;
+export const OTP_CODE_LENGTH = 6;
+
+/**
+ * Display name `AuthService.signInWithPhone` stores on a brand-new OTP
+ * account. Checkout may replace it with the name the customer just typed;
+ * any other name belongs to an existing account and is left alone.
+ */
+export const NEW_OTP_ACCOUNT_NAME = "مشتری رَد";
 
 type AuthStage = "password" | "otpRequest" | "otpSignIn";
 
@@ -80,4 +87,75 @@ export function normalizeOtpCode(raw: string) {
 /** What the code input shows while typing: Latin digits, at most six. */
 export function otpCodeDraft(raw: string) {
   return toLatinDigits(raw).replace(/\D/g, "").slice(0, OTP_CODE_LENGTH);
+}
+
+export function emptyOtpCells() {
+  return Array.from({ length: OTP_CODE_LENGTH }, () => "");
+}
+
+/** Latin digits already stored in the six cells, joined. */
+export function otpCodeFromCells(cells: readonly string[]) {
+  return cells.join("").slice(0, OTP_CODE_LENGTH);
+}
+
+/**
+ * Typing, pasting, or a platform autofill that drops the whole code into
+ * one cell. A full code always fills from the first cell. A shorter paste
+ * fills forward from the cell that received it.
+ */
+export function applyOtpInput(
+  cells: readonly string[],
+  index: number,
+  raw: string,
+) {
+  const digits = otpCodeDraft(raw);
+  const next = emptyOtpCells();
+  for (let i = 0; i < OTP_CODE_LENGTH; i += 1) next[i] = cells[i] ?? "";
+
+  if (digits.length >= OTP_CODE_LENGTH) {
+    for (let i = 0; i < OTP_CODE_LENGTH; i += 1) next[i] = digits[i] ?? "";
+    return {
+      cells: next,
+      focus: OTP_CODE_LENGTH - 1,
+      complete: true,
+    };
+  }
+
+  if (digits.length === 0) {
+    next[index] = "";
+    return { cells: next, focus: index, complete: false };
+  }
+
+  if (digits.length === 1) {
+    next[index] = digits;
+    const code = otpCodeFromCells(next);
+    return {
+      cells: next,
+      focus: Math.min(index + 1, OTP_CODE_LENGTH - 1),
+      complete: code.length === OTP_CODE_LENGTH,
+    };
+  }
+
+  for (let i = 0; i < digits.length && index + i < OTP_CODE_LENGTH; i += 1) {
+    next[index + i] = digits[i] ?? "";
+  }
+  const filled = Math.min(index + digits.length, OTP_CODE_LENGTH);
+  return {
+    cells: next,
+    focus: Math.min(filled, OTP_CODE_LENGTH - 1),
+    complete: otpCodeFromCells(next).length === OTP_CODE_LENGTH,
+  };
+}
+
+/** Backspace clears the current cell, or the previous cell when this one is empty. */
+export function applyOtpBackspace(cells: readonly string[], index: number) {
+  const next = emptyOtpCells();
+  for (let i = 0; i < OTP_CODE_LENGTH; i += 1) next[i] = cells[i] ?? "";
+  if (next[index]) {
+    next[index] = "";
+    return { cells: next, focus: index };
+  }
+  const focus = Math.max(0, index - 1);
+  next[focus] = "";
+  return { cells: next, focus };
 }

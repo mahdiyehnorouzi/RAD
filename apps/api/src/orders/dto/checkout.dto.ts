@@ -1,5 +1,11 @@
 import { ApiPropertyOptional } from "@nestjs/swagger";
-import { IsObject, IsOptional, IsString, MaxLength } from "class-validator";
+import {
+  IsIn,
+  IsObject,
+  IsOptional,
+  IsString,
+  MaxLength,
+} from "class-validator";
 
 export class CheckoutDto {
   @ApiPropertyOptional({ example: "Mahdiyeh Norozi" })
@@ -46,4 +52,13 @@ export class CheckoutDto {
   @IsOptional()
   @IsObject()
   acceptedPolicies?: Record<string, string>;
+
+  /**
+   * Method only. The fee is quoted by the server from this value and the
+   * city; a client-supplied amount is not a field on this DTO.
+   */
+  @ApiPropertyOptional({ enum: ["express", "courier"] })
+  @IsOptional()
+  @IsIn(["express", "courier"])
+  shippingMethod?: "express" | "courier";
 }

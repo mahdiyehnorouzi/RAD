@@ -229,10 +229,6 @@ export function CartPage() {
           {!blocked ? (
             <div className={styles.total}>
               <div>
-                <span>{c.items}</span>
-                <b>{formatTotal(total, locale)}</b>
-              </div>
-              <div>
                 <span>{c.shipping}</span>
               </div>
               <div className={styles.finalRow}>

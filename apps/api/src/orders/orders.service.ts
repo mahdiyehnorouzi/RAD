@@ -38,6 +38,7 @@ import {
   receiptImageLimit,
 } from "../common/image-data";
 import { ORDER_POLICY_SLUGS } from "../policies/const";
+import { quoteCheckoutShipping } from "./checkout-shipping";
 import { acceptedPolicyVersions } from "../policies/policy-acceptance";
 import { ORDER_PAYMENT_WINDOW_MS } from "./const";
 import { toOrder } from "./order.mapper";
@@ -114,6 +115,7 @@ export class OrdersService implements OnModuleInit {
       address?: string;
       message?: string;
       acceptedPolicies?: Record<string, string>;
+      shippingMethod?: "express" | "courier";
     },
   ) {
     const policyVersions = acceptedPolicyVersions(
@@ -134,6 +136,17 @@ export class OrdersService implements OnModuleInit {
       });
     }
 
+    const city = input.city?.trim() || "تهران";
+    const quoted = quoteCheckoutShipping(input.shippingMethod, city);
+    if (!quoted.ok) {
+      throw new BadRequestException({
+        message:
+          quoted.code === "courier_tehran_only"
+            ? "پیک فقط برای شهر تهران است."
+            : "روش ارسال معتبر نیست.",
+        code: quoted.code,
+      });
+    }
     const phone = normalizePhone(input.phone);
     if (!phone) {
       throw new BadRequestException(
@@ -141,7 +154,6 @@ export class OrdersService implements OnModuleInit {
       );
     }
     const name = input.name?.trim() || actor.user?.name || "کاربر رَد";
-    const city = input.city?.trim() || "تهران";
     const slugs = cart.map((item) => item.productSlug);
     const provider = paymentProvider();
 
@@ -168,10 +180,11 @@ export class OrdersService implements OnModuleInit {
         });
       }
 
-      const total = products.reduce(
+      const itemsTotal = products.reduce(
         (sum, product) => sum + (product.tomanPrice ?? 0),
         0,
       );
+      const total = itemsTotal + quoted.feeToman;
       const usdTotal = products.reduce(
         (sum, product) => sum + (product.usdPrice ?? 0),
         0,
@@ -192,6 +205,8 @@ export class OrdersService implements OnModuleInit {
         phone,
         address: input.address?.trim() ?? "",
         message: input.message?.trim() || null,
+        shippingMethod: quoted.method,
+        shippingFee: quoted.feeToman,
         policyVersions,
         policiesAcceptedAt: new Date(),
       });

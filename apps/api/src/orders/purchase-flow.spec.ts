@@ -8,6 +8,7 @@ import {
 import { validate } from "class-validator";
 import { CartItem, Product } from "../database/entities";
 import { CART_HOLD_MS } from "../inventory/const/product-status";
+import { EXPRESS_POST_FEE_TOMAN } from "@rad/types";
 import { ORDER_PAYMENT_WINDOW_MS } from "./const";
 import { CheckoutDto } from "./dto/checkout.dto";
 import {
@@ -863,6 +864,67 @@ describe("Order message (RAD-060)", () => {
       boundErrors.filter((error) => error.property === "message").length,
       0,
       "exactly 500 characters must be accepted",
+    );
+  });
+
+  test("Express Post adds a server-quoted 150,000 toman fee and ignores a client amount", async () => {
+    const buyer = rad.buyer("express-post");
+    const price = 3_000_000;
+    await rad.cart.add(buyer, await rad.product(price));
+    const order = await rad.orders.checkout(buyer, {
+      name: "خریدار پست",
+      phone: "09121234567",
+      city: "اصفهان، اصفهان",
+      address: "خیابان چهارباغ",
+      shippingMethod: "express",
+      acceptedPolicies: rad.acceptedPolicies,
+      // A client amount must not change the server quote.
+      shippingFee: 150,
+    } as Parameters<PurchaseHarness["orders"]["checkout"]>[1]);
+    assert.equal(EXPRESS_POST_FEE_TOMAN, 150_000);
+    assert.equal(order.shipping?.method, "express");
+    assert.equal(order.shipping?.fee, 150_000);
+    assert.equal(order.total, price + 150_000);
+    assert.equal(order.payment?.amount, price + 150_000);
+    const stored = await rad.adminOrder(order.id);
+    assert.equal(stored.amount, price + 150_000);
+  });
+
+  test("courier is stored with no fee in Tehran and refused elsewhere", async () => {
+    const buyer = rad.buyer("courier-tehran");
+    const price = 2_000_000;
+    await rad.cart.add(buyer, await rad.product(price));
+    const order = await rad.orders.checkout(buyer, {
+      name: "خریدار پیک",
+      phone: "09121234567",
+      city: "تهران، تهران",
+      address: "خیابان ولیعصر",
+      shippingMethod: "courier",
+      acceptedPolicies: rad.acceptedPolicies,
+    });
+    assert.equal(order.shipping?.method, "courier");
+    assert.equal(order.shipping?.fee, 0);
+    assert.equal(order.total, price);
+    assert.equal(order.payment?.amount, price);
+
+    const outside = rad.buyer("courier-karaj");
+    await rad.cart.add(outside, await rad.product(price));
+    await assert.rejects(
+      () =>
+        rad.orders.checkout(outside, {
+          name: "خریدار کرج",
+          phone: "09121234567",
+          city: "البرز، کرج",
+          address: "خیابان کرج",
+          shippingMethod: "courier",
+          acceptedPolicies: rad.acceptedPolicies,
+        }),
+      (error: unknown) => {
+        assert.ok(error instanceof BadRequestException);
+        const body = error.getResponse() as { code?: string };
+        assert.equal(body.code, "courier_tehran_only");
+        return true;
+      },
     );
   });
 });

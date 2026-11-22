@@ -52,6 +52,14 @@ export class Order {
   @Column("text", { nullable: true })
   message!: string | null;
 
+  /** `express` or `courier`. Null on orders placed before a method was stored. */
+  @Column("text", { nullable: true })
+  shippingMethod!: "express" | "courier" | null;
+
+  /** Toman. Express Post is the flat fee; courier stays 0 until dispatch. */
+  @Column("int", { default: 0 })
+  shippingFee!: number;
+
   @Column("text", { nullable: true })
   trackingCode!: string | null;
 

@@ -11,6 +11,8 @@ export type OrderRow = {
   trackingCode?: string | null;
   estimatedDeliveryAt?: Date | null;
   deliveredAt?: Date | null;
+  shippingMethod?: "express" | "courier" | null;
+  shippingFee?: number | null;
   policyVersions?: Record<string, string> | null;
   policiesAcceptedAt?: Date | null;
   paymentDueAt?: Date | null;
