@@ -5,7 +5,7 @@ import { locationSelection } from "@/lib/geo/iran-locations";
  * Courier is the Tehran city method. Other cities in Tehran province,
  * and every other province, stay on post.
  */
-export const TEHRAN_CITY_LABEL = "تهران";
+const TEHRAN_CITY_LABEL = "تهران";
 
 export type CheckoutShippingMethod = "express" | "courier";
 
