@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
@@ -103,6 +104,72 @@ for (const { file } of WORKFLOWS) {
       uploadBlock,
       /if-no-files-found:\s*error/,
       "a build job that produced no artifact files must fail the upload step, not silently continue to a release/migrate job that will then fail to find the artifact",
+    );
+  });
+}
+
+// Regression coverage for run #45023030859: ship() now retries one
+// "stalled" transport failure (rad_deploy_transport.py's
+// DEFAULT_MAX_ATTEMPTS), so a job that ships the artifact must leave
+// enough timeout-minutes headroom for the worst case of every attempt
+// actually using its full DEFAULT_DEADLINE_SECONDS, plus the backoff
+// between them, or the GitHub job timeout could kill a transfer that the
+// transport layer itself would have retried successfully.
+const {
+  DEFAULT_DEADLINE_SECONDS,
+  DEFAULT_MAX_ATTEMPTS,
+  DEFAULT_RETRY_BACKOFF_SECONDS,
+} = JSON.parse(
+  execFileSync(
+    "python3",
+    [
+      "-c",
+      "import json; import rad_deploy_transport as t; print(json.dumps({'DEFAULT_DEADLINE_SECONDS': t.DEFAULT_DEADLINE_SECONDS, 'DEFAULT_MAX_ATTEMPTS': t.DEFAULT_MAX_ATTEMPTS, 'DEFAULT_RETRY_BACKOFF_SECONDS': t.DEFAULT_RETRY_BACKOFF_SECONDS}))",
+    ],
+    {
+      cwd: fileURLToPath(new URL("../production/", import.meta.url)),
+      encoding: "utf8",
+    },
+  ),
+);
+const worstCaseTransportSeconds =
+  DEFAULT_DEADLINE_SECONDS * DEFAULT_MAX_ATTEMPTS +
+  DEFAULT_RETRY_BACKOFF_SECONDS * (DEFAULT_MAX_ATTEMPTS - 1);
+
+const JOBS_THAT_SHIP_THE_ARTIFACT = [
+  { file: ".github/workflows/deploy-api-vps.yml", job: "migrate" },
+  { file: ".github/workflows/deploy-api-vps.yml", job: "release" },
+  { file: ".github/workflows/deploy-frontend-vps.yml", job: "release" },
+];
+
+for (const { file, job } of JOBS_THAT_SHIP_THE_ARTIFACT) {
+  test(`${file} ${job} job: timeout-minutes covers every retried ship() attempt`, () => {
+    const text = read(file);
+    const jobStart = text.indexOf(`\n  ${job}:\n`);
+    assert.notEqual(
+      jobStart,
+      -1,
+      `could not find a top-level "${job}:" job in ${file}`,
+    );
+    // Next top-level job (two-space indent) ends this job's block.
+    const nextJobMatch = text.slice(jobStart + 1).match(/\n {2}\S.*:\n/);
+    const jobBlock = text.slice(
+      jobStart,
+      nextJobMatch
+        ? jobStart + 1 + nextJobMatch.index + nextJobMatch[0].length
+        : undefined,
+    );
+    const timeoutMatch = jobBlock.match(/timeout-minutes:\s*(\d+)/);
+    assert.ok(
+      timeoutMatch,
+      `no timeout-minutes found in ${job} job of ${file}`,
+    );
+    const timeoutSeconds = Number(timeoutMatch[1]) * 60;
+    assert.ok(
+      timeoutSeconds > worstCaseTransportSeconds,
+      `${job} job in ${file} has timeout-minutes=${timeoutMatch[1]} (${timeoutSeconds}s), which must exceed the worst-case ` +
+        `transport time of ${worstCaseTransportSeconds}s (DEFAULT_DEADLINE_SECONDS=${DEFAULT_DEADLINE_SECONDS} * ` +
+        `DEFAULT_MAX_ATTEMPTS=${DEFAULT_MAX_ATTEMPTS} + backoff), with room left over for everything else the job does`,
     );
   });
 }

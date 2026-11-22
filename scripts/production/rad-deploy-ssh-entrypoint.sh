@@ -64,9 +64,12 @@ TRANSPORT="${RAD_DEPLOY_TRANSPORT:-/usr/local/libexec/rad_deploy_transport.py}"
 MAX_TRANSPORT_BYTES="${RAD_DEPLOY_MAX_TRANSPORT_BYTES:-2200000000}"
 # These bound the upload only. They do not bound the broker's migrate/release
 # work, which starts only after transfer_complete and validation_complete.
-IDLE_SECONDS="${RAD_DEPLOY_TRANSFER_IDLE_SECONDS:-45}"
-# Matches rad_deploy_transport.py's DEFAULT_DEADLINE_SECONDS - see that
-# module's docstring for why this was raised from 600.
+# Both match rad_deploy_transport.py's DEFAULT_IDLE_SECONDS/
+# DEFAULT_DEADLINE_SECONDS - see that module's constants for why these
+# were raised from 45/600. The ship side alone retries a "stalled"
+# failure (recv has nothing to retry: a failed receive just deletes its
+# partial file and this script exits non-zero, same as before).
+IDLE_SECONDS="${RAD_DEPLOY_TRANSFER_IDLE_SECONDS:-90}"
 DEADLINE_SECONDS="${RAD_DEPLOY_TRANSFER_DEADLINE_SECONDS:-1200}"
 
 fail() {

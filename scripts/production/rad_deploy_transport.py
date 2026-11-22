@@ -16,7 +16,10 @@ This module is the deadline for that byte stream:
   line cannot fill the channel window and stall the upload. If the upload
   stalls or the remote closes early, it terminates both child processes.
   The broker is not this module's concern: the remote entrypoint invokes it
-  only after a completed, validated receive.
+  only after a completed, validated receive. A single transient stall
+  (never a sustained-slow-link deadline, a size violation, or anything the
+  remote itself rejected) gets one retry from a fresh, empty start - see
+  ``RETRYABLE_REASONS``.
 
 Logs are fixed stage lines on stderr. They include byte counts and the
 reason the transfer stopped. They do not include file contents, environment
@@ -32,7 +35,16 @@ import sys
 import time
 
 DEFAULT_MAX_BYTES = 2200000000
-DEFAULT_IDLE_SECONDS = 45
+# Run #45023030859 (after the run_id/deadline fix in #204) sent 36012032
+# bytes at healthy throughput - most 1 MiB progress steps logged 1-3s apart
+# - then went completely silent for just over 45s and failed
+# reason=stalled. That is a single transient gap on an otherwise-healthy
+# tailnet path, not a sustained slow link (which is what
+# DEFAULT_DEADLINE_SECONDS below already covers). Raised from 45 to 90s so
+# one short latency spike (a DERP relay reselect, a brief path flap) does
+# not fail an upload that was otherwise progressing well; a link that is
+# truly dead for 90s still fails closed exactly as before.
+DEFAULT_IDLE_SECONDS = 90
 # Run #45004239836 failed this deadline at bytes_sent=50069504 (~48 MiB) -
 # well under DEFAULT_MAX_BYTES - meaning the tailnet path sustained well
 # below 600s/48MiB (~83 KiB/s) that attempt, with no single idle gap over
@@ -44,6 +56,20 @@ DEFAULT_IDLE_SECONDS = 45
 # twice this one's size before hitting the deadline again. It does not
 # remove the idle timeout (a true stall still fails at 45s) or the size cap.
 DEFAULT_DEADLINE_SECONDS = 1200
+# A "stalled" failure (see RETRYABLE_REASONS below) gets exactly one retry.
+# Not retried: "deadline" (the attempt already used its whole time budget),
+# "too_large"/"bad_request"/"empty" (not transient), "remote_closed" (the
+# remote end itself ended the session, not a timeout). Each retried
+# attempt starts a brand-new tar/ssh pair from byte zero - there is no
+# resume - because the receiver's trust boundary only ever validates and
+# extracts a complete tar after a fully finished receive (see
+# rad_deploy_entrypoint.py), and partial/incomplete-transfer cleanup on
+# both ends must stay unconditional; keeping cross-attempt byte-range
+# state to resume from would mean trusting a partial, unvalidated upload
+# across a cleanup boundary, which is exactly what that cleanup exists to
+# prevent.
+DEFAULT_MAX_ATTEMPTS = 2
+DEFAULT_RETRY_BACKOFF_SECONDS = 5
 PROGRESS_EVERY_BYTES = 1024 * 1024
 READ_CHUNK = 1024 * 1024
 
@@ -274,27 +300,27 @@ def validate_ship_request(host, remote_command, files):
         raise TransportError("bad_request", "refusing unexpected archive members", 0)
 
 
-def ship(
+def _ship_once(
     stage,
     files,
     host,
     remote_command,
-    max_bytes=DEFAULT_MAX_BYTES,
-    idle_seconds=DEFAULT_IDLE_SECONDS,
-    deadline_seconds=DEFAULT_DEADLINE_SECONDS,
-    ssh_bin="ssh",
-    include_ssh_options=True,
-    extra_ssh_args=(),
+    max_bytes,
+    idle_seconds,
+    deadline_seconds,
+    ssh_bin,
+    include_ssh_options,
+    extra_ssh_args,
 ):
-    """Stream a stage directory to ssh. Return the remote exit code.
+    """One attempt: stream ``stage`` to ssh once. Returns ``(exit_code, reason)``.
 
-    On a transfer failure, kill ``tar`` and ``ssh`` and return 1. A later
-    non-zero ssh status (broker rejection after a complete upload) is
-    returned unchanged so the workflow still fails closed.
+    ``reason`` is the ``TransportError.reason`` when the attempt failed
+    before a complete upload (``None`` otherwise, including when the
+    upload completed but the remote/broker itself rejected it - that is
+    reported only through ``exit_code``, never retried).
     """
     import threading
 
-    validate_ship_request(host, remote_command, files)
     log_stage("rad-deploy-send", "ssh_start", host=host)
     ssh_argv = [ssh_bin]
     if include_ssh_options:
@@ -352,7 +378,7 @@ def ship(
         _terminate(ssh)
         for pump in pumps:
             pump.join(timeout=2)
-        return 1
+        return 1, error.reason
     finally:
         try:
             tar.stdout.close()
@@ -365,8 +391,80 @@ def ship(
     log_stage("rad-deploy-send", "ssh_finished", exit=ssh_code, tar_exit=tar_code)
     if tar_code != 0:
         log_stage("rad-deploy-send", "tar_failed", exit=tar_code)
-        return tar_code or 1
-    return ssh_code
+        return tar_code or 1, None
+    return ssh_code, None
+
+
+# Retrying any attempt that reaches the broker (a non-zero ssh_code after
+# transfer_local_complete) would risk a second migrate/release request for
+# work the broker may already be mid-way through - _ship_once never
+# retries that case, and this wrapper only ever sees it as a plain
+# (code, None) to return unchanged. Only "stalled" is retried: a transient
+# idle gap on an otherwise-healthy link (the pattern behind
+# run #45023030859 - 36MB transferred at good throughput, then one >45s
+# silent gap). "deadline" (the transfer used its whole time budget and is
+# unlikely to do better immediately), "too_large"/"bad_request"/"empty"
+# (not transient), and "remote_closed" (the remote end itself ended the
+# session) are not retried - retrying those would not help and would just
+# spend more of the job's time budget. Every retried attempt starts from
+# zero bytes: the VPS always deletes its partial file and staging
+# directory on a failed transfer (rad-deploy-ssh-entrypoint.sh's cleanup
+# trap, rad_deploy_transport.py's receive_upload), and the broker is never
+# invoked until a complete, validated receive, so a retried attempt cannot
+# leave stale state behind or trigger a duplicate release/migration.
+RETRYABLE_REASONS = ("stalled",)
+
+
+def ship(
+    stage,
+    files,
+    host,
+    remote_command,
+    max_bytes=DEFAULT_MAX_BYTES,
+    idle_seconds=DEFAULT_IDLE_SECONDS,
+    deadline_seconds=DEFAULT_DEADLINE_SECONDS,
+    ssh_bin="ssh",
+    include_ssh_options=True,
+    extra_ssh_args=(),
+    max_attempts=DEFAULT_MAX_ATTEMPTS,
+    retry_backoff_seconds=DEFAULT_RETRY_BACKOFF_SECONDS,
+    sleep=time.sleep,
+):
+    """Stream a stage directory to ssh, retrying a transient stall.
+
+    Returns the remote exit code (or 1 on a transport failure that
+    exhausted every attempt). See ``RETRYABLE_REASONS`` for exactly which
+    transport failures are retried, and ``_ship_once`` for the single-
+    attempt mechanics (unchanged: idle/deadline/size bounds, killing both
+    children on failure, never reporting a short or stalled stream as
+    complete).
+    """
+    validate_ship_request(host, remote_command, files)
+    attempt = 1
+    while True:
+        code, reason = _ship_once(
+            stage,
+            files,
+            host,
+            remote_command,
+            max_bytes,
+            idle_seconds,
+            deadline_seconds,
+            ssh_bin,
+            include_ssh_options,
+            extra_ssh_args,
+        )
+        if code == 0 or reason not in RETRYABLE_REASONS or attempt >= max_attempts:
+            return code
+        log_stage(
+            "rad-deploy-send",
+            "retry",
+            attempt=attempt,
+            reason=reason,
+            backoff_seconds=retry_backoff_seconds,
+        )
+        sleep(retry_backoff_seconds)
+        attempt += 1
 
 
 def _positive_int(value):
@@ -394,6 +492,10 @@ def main(argv=None):
     send.add_argument("--idle-seconds", type=_positive_int, default=DEFAULT_IDLE_SECONDS)
     send.add_argument("--deadline-seconds", type=_positive_int, default=DEFAULT_DEADLINE_SECONDS)
     send.add_argument("--ssh-bin", default="ssh")
+    send.add_argument("--max-attempts", type=_positive_int, default=DEFAULT_MAX_ATTEMPTS)
+    send.add_argument(
+        "--retry-backoff-seconds", type=_positive_int, default=DEFAULT_RETRY_BACKOFF_SECONDS
+    )
     send.add_argument("files", nargs="+")
 
     args = parser.parse_args(argv)
@@ -409,6 +511,8 @@ def main(argv=None):
             idle_seconds=args.idle_seconds,
             deadline_seconds=args.deadline_seconds,
             ssh_bin=args.ssh_bin,
+            max_attempts=args.max_attempts,
+            retry_backoff_seconds=args.retry_backoff_seconds,
         )
     except TransportError as error:
         log_stage("rad-deploy-send", "transfer_failed", bytes_sent=error.bytes_copied, reason=error.reason)

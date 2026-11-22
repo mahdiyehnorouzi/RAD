@@ -157,9 +157,10 @@ jobs:
     if: github.repository == 'mahdiyehnorouzi/RAD' && (inputs.deploy_storefront || inputs.deploy_admin) && inputs.confirm == 'deploy'
     runs-on: ubuntu-latest
     # See the matching comment in deploy-api-vps.yml: keeps headroom beyond
-    # the transport's own (now 20min) deadline, even though this job's
-    # payload is just the small signed manifest, not a tarball.
-    timeout-minutes: 25
+    # the transport's own worst case with its one retry (~40min), even
+    # though this job's payload is just the small signed manifest, not a
+    # tarball.
+    timeout-minutes: 50
     environment: production-frontend-vps
     permissions:
       contents: read
