@@ -33,7 +33,17 @@ import time
 
 DEFAULT_MAX_BYTES = 2200000000
 DEFAULT_IDLE_SECONDS = 45
-DEFAULT_DEADLINE_SECONDS = 600
+# Run #45004239836 failed this deadline at bytes_sent=50069504 (~48 MiB) -
+# well under DEFAULT_MAX_BYTES - meaning the tailnet path sustained well
+# below 600s/48MiB (~83 KiB/s) that attempt, with no single idle gap over
+# DEFAULT_IDLE_SECONDS (the failure reason was "deadline", not "stalled").
+# A fixed 600s window gives a merely-slow-but-still-moving transfer no
+# margin over a degraded link. Raising it to 1200s keeps the intent (fail
+# closed on a transfer that is taking unreasonably long) while giving a
+# transfer at that same degraded throughput room for an artifact roughly
+# twice this one's size before hitting the deadline again. It does not
+# remove the idle timeout (a true stall still fails at 45s) or the size cap.
+DEFAULT_DEADLINE_SECONDS = 1200
 PROGRESS_EVERY_BYTES = 1024 * 1024
 READ_CHUNK = 1024 * 1024
 

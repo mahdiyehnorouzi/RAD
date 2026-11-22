@@ -104,15 +104,24 @@ jobs:
       - run: cp "$BUNDLE" release.sigstore.json
         env:
           BUNDLE: ${{ steps.attest.outputs.bundle-path }}
+      # Keyed by run_id, not run_attempt: run_id is stable across every
+      # attempt of this workflow run, so a rerun of only the later failed
+      # jobs (which does not rerun this job when it already succeeded)
+      # still finds this artifact under the same name. commit_sha is still
+      # in the name, so this can never resolve to a different commit's
+      # build. `overwrite: true` lets a rerun that DOES re-execute this job
+      # (e.g. this job itself failed) replace its own prior attempt's
+      # artifact instead of erroring on a duplicate name.
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: api-release-${{ inputs.commit_sha }}-${{ github.run_attempt }}
+          name: api-release-${{ inputs.commit_sha }}-${{ github.run_id }}
           path: |
             api-release.tar.gz
             release.json
             release.sigstore.json
           if-no-files-found: error
           retention-days: 7
+          overwrite: true
 
   # Applies any migrations this exact artifact ships before the API that
   # depends on them is ever started - see docs/automated-migrations.md.
@@ -128,7 +137,11 @@ jobs:
     needs: build-artifact
     if: github.repository == 'mahdiyehnorouzi/RAD' && inputs.confirm == 'deploy'
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    # Transport can now take up to 20min (rad_deploy_transport.py's
+    # DEFAULT_DEADLINE_SECONDS) before even reaching the broker's own
+    # migration check/work, so this keeps the same ~10min of headroom
+    # beyond the transfer that the previous 30min/600s pairing had.
+    timeout-minutes: 40
     environment: production-api-vps
     permissions:
       contents: read
@@ -147,10 +160,16 @@ jobs:
           ref: ${{ inputs.commit_sha }}
           persist-credentials: false
 
-      - name: Download signed artifact (this exact run/attempt only)
+      # Keyed by run_id (not run_attempt) to match the upload above - this
+      # finds the artifact built in whichever attempt of THIS run actually
+      # built it, including an earlier attempt than the one currently
+      # running. download-artifact only ever resolves names within the
+      # current workflow run, so this still cannot pull from a different
+      # run or commit.
+      - name: Download signed artifact (this exact run, any attempt)
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
-          name: api-release-${{ inputs.commit_sha }}-${{ github.run_attempt }}
+          name: api-release-${{ inputs.commit_sha }}-${{ github.run_id }}
           path: stage
 
       - name: Connect to RAD tailnet using GitHub OIDC
@@ -207,7 +226,9 @@ jobs:
     needs: [build-artifact, migrate]
     if: github.repository == 'mahdiyehnorouzi/RAD' && inputs.confirm == 'deploy' && needs.migrate.result == 'success'
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    # See the matching comment on the migrate job above: keeps headroom
+    # beyond the transport's own (now 20min) deadline.
+    timeout-minutes: 25
     environment: production-api-vps
     permissions:
       contents: read
@@ -223,10 +244,16 @@ jobs:
           ref: ${{ inputs.commit_sha }}
           persist-credentials: false
 
-      - name: Download signed artifact (this exact run/attempt only)
+      # Keyed by run_id (not run_attempt) to match the upload above - this
+      # finds the artifact built in whichever attempt of THIS run actually
+      # built it, including an earlier attempt than the one currently
+      # running. download-artifact only ever resolves names within the
+      # current workflow run, so this still cannot pull from a different
+      # run or commit.
+      - name: Download signed artifact (this exact run, any attempt)
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
-          name: api-release-${{ inputs.commit_sha }}-${{ github.run_attempt }}
+          name: api-release-${{ inputs.commit_sha }}-${{ github.run_id }}
           path: stage
 
       - name: Connect to RAD tailnet using GitHub OIDC
