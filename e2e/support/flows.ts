@@ -70,6 +70,7 @@ export async function addTestProductToCartAndStartCheckout(
 export async function fillCheckoutFormAndSubmit(page: Page): Promise<string> {
   await page.locator('input[name="name"]').fill("Test Buyer");
   await page.locator('input[name="phone"]').fill("09121234567");
+  await page.getByRole("button", { name: "Continue to delivery" }).click();
   const province = page.locator('select[name="province"]');
   await province.selectOption({ index: 1 });
   const city = page.locator('select[name="city"]');
@@ -77,9 +78,11 @@ export async function fillCheckoutFormAndSubmit(page: Page): Promise<string> {
   // The address field is a <textarea>, not an <input> — `input[name=...]`
   // silently never matches it.
   await page.locator('[name="address"]').fill("Test street, no. 1");
+  await page.locator('input[name="shippingMethod"][value="express"]').check();
   await page.getByRole("checkbox", { name: /terms of sale/i }).check();
   await page.getByRole("button", { name: "Continue to payment" }).click();
   await waitForUrl(page, /\/checkout\/[^/?]+(\?.*)?$/);
+  await page.getByRole("button", { name: "Pay and complete order" }).waitFor();
   const match = page.url().match(/\/checkout\/([^/?]+)/);
   if (!match) throw new Error(`Could not read order id from URL ${page.url()}`);
   return decodeURIComponent(match[1]);

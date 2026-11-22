@@ -77,6 +77,7 @@ export const checkoutCopy = {
     shipping: "هزینه‌ی ارسال",
     shippingUnset: "پس از بررسی مشخص می‌شود",
     shippingLegend: "روش ارسال",
+    shippingRequired: "برای ادامه، روش ارسال رو انتخاب کن.",
     shippingExpress: "پست پیشتاز",
     shippingExpressDetail: "هزینه ثابت این سفارش: {fee}.",
     shippingCourier: "پیک",
@@ -86,7 +87,6 @@ export const checkoutCopy = {
       "پیک تهران؛ قیمت هنگام آماده‌شدن سفارش مشخص می‌شود و به مبلغ فعلی اضافه نمی‌شود.",
     shippingCourierOutside:
       "پیک فقط برای شهر تهران است. این نشانی خارج از تهران است، پس پیک در دسترس نیست.",
-    shippingClear: "بدون روش ارسال",
     accountConsent: "با همین اطلاعات یک حساب می‌سازم",
     accountExplain:
       "این کار اختیاری است. اگر انتخابش نکنی، خرید مهمان سر جایش می‌ماند و سفارشت ثبت می‌شود.",
@@ -143,7 +143,6 @@ export const checkoutCopy = {
     securePayTitle: "پرداخت امن",
     securePayLede: "برای تکمیل خرید، به صفحه امن پرداخت منتقل می‌شی.",
     deliveryRecapTitle: "اطلاعات گیرنده",
-    deliveryRecapEdit: "ویرایش",
     reviewTitle: "بررسی و پرداخت",
     gatewayHint: "بعد از پرداخت، به سایت رَد برمی‌گردی.",
     gatewayGo: "پرداخت و تکمیل خرید",
@@ -293,6 +292,7 @@ export const checkoutCopy = {
     shipping: "Delivery",
     shippingUnset: "Confirmed after review",
     shippingLegend: "Shipping method",
+    shippingRequired: "Choose a shipping method to continue.",
     shippingExpress: "Express Post",
     shippingExpressDetail: "Flat fee for this order: {fee}.",
     shippingCourier: "Courier",
@@ -302,7 +302,6 @@ export const checkoutCopy = {
       "Tehran courier; the price is confirmed when the order is ready to ship and is not added to this amount.",
     shippingCourierOutside:
       "Courier is only for Tehran. This address is outside Tehran, so it is not available.",
-    shippingClear: "Clear the shipping method",
     accountConsent: "Create an account with these details",
     accountExplain:
       "This is optional. Leave it unchecked and you can still place this order as a guest.",
@@ -360,7 +359,6 @@ export const checkoutCopy = {
     securePayLede:
       "You'll be taken to a secure payment page to finish your order.",
     deliveryRecapTitle: "Delivery details",
-    deliveryRecapEdit: "Edit",
     reviewTitle: "Review & payment",
     gatewayHint: "You'll return to RAD once payment is done.",
     gatewayGo: "Pay and complete order",
