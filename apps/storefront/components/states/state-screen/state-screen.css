@@ -114,6 +114,7 @@
 }
 
 .state-screen-actions .button {
+  border-radius: 999px;
   min-height: 50px;
   padding-inline: 1.5rem;
   gap: 0.6rem;
@@ -123,7 +124,7 @@
   min-height: 50px !important;
   padding: 0 1.4rem !important;
   border: 1px solid color-mix(in srgb, var(--moss) 45%, var(--line)) !important;
-  border-radius: 2px !important;
+  border-radius: 999px !important;
   background: transparent !important;
   color: var(--ink);
   transition:
