@@ -263,7 +263,6 @@ export class OrdersService implements OnModuleInit {
       );
     }
 
-    await this.notices.create(actor, "order", slugs[0]);
     const saved = await this.orders.findOneOrFail({
       where: { id: order.id },
       relations: orderRelations,

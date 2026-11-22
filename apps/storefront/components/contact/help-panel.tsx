@@ -104,7 +104,11 @@ export function HelpPanel({
           )}
           <span>{c.direct}</span>
         </a>
-        <Button type="button" className="help-action" onClick={copyText}>
+        <Button
+          type="button"
+          className="help-action help-action-copy"
+          onClick={copyText}
+        >
           {copy === "copied" ? (
             <Check size={18} strokeWidth={1.7} aria-hidden="true" />
           ) : (
@@ -114,7 +118,7 @@ export function HelpPanel({
         </Button>
         <Button
           type="button"
-          className="help-action"
+          className="help-action help-action-write"
           aria-expanded={writing}
           aria-controls={`${id}-form`}
           onClick={toggleForm}

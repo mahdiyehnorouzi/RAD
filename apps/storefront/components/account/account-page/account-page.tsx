@@ -10,15 +10,15 @@ import { Collection } from "../collection";
 import { RecentActivity } from "./recent-activity";
 import "./account-page.css";
 
-export function AccountPage() {
+export function AccountPage({ embedded = false }: { embedded?: boolean }) {
   const { user } = useCommerce();
   const { locale, t } = useLocale();
   const pageTitle = locale === "fa" ? "حساب کاربری | رَد" : "Account | RAD";
 
-  if (!user) return <AccountLogin />;
+  if (!user) return embedded ? null : <AccountLogin />;
 
-  return (
-    <AccountShell>
+  const hub = (
+    <>
       <title>{pageTitle}</title>
       <section className="account-hub section">
         <header className="account-hub-greeting">
@@ -43,6 +43,9 @@ export function AccountPage() {
           <RecentActivity />
         </div>
       </section>
-    </AccountShell>
+    </>
   );
+
+  if (embedded) return hub;
+  return <AccountShell>{hub}</AccountShell>;
 }
