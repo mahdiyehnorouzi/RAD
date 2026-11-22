@@ -88,6 +88,54 @@ html[dir="rtl"] .making-brief {
   aspect-ratio: 4 / 5;
   object-fit: cover;
   border-radius: 8px;
+  background: var(--sand);
+}
+
+.making-brief-images img[data-loading] {
+  opacity: 0.45;
+}
+
+.making-brief-images a,
+.making-voice a {
+  color: var(--moss);
+  font-size: 0.82rem;
+}
+
+.making-swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem 0.85rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.making-swatches li {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.making-swatches i {
+  width: 1.15rem;
+  height: 1.15rem;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+}
+
+.making-voice {
+  display: grid;
+  justify-items: start;
+  gap: 0.45rem;
+}
+
+.making-voice audio {
+  width: min(100%, 24rem);
+}
+
+.making-file-error {
+  margin: 0;
+  color: var(--clay);
 }
 
 .making-changes,

@@ -408,6 +408,37 @@ export interface Notice {
   read: boolean;
   createdAt: number;
 }
+
+/**
+ * Notices a customer should see: messages and decisions from the maker
+ * or the studio. Favorite, cart, welcome, and self-checkout pings are
+ * ordinary actions and stay out of this list.
+ */
+export const ARTIST_NOTICE_KINDS = [
+  "order_confirmed",
+  "order_rejected",
+  "commission_approved",
+  "commission_declined",
+  "commission_change",
+  "commission_message",
+  "commission_quote",
+  "commission_pre_kiln",
+  "commission_firing",
+  "commission_balance",
+  "commission_shipped",
+] as const satisfies readonly NoticeKind[];
+
+export function isArtistNotice(
+  kind: string,
+): kind is (typeof ARTIST_NOTICE_KINDS)[number] {
+  return (ARTIST_NOTICE_KINDS as readonly string[]).includes(kind);
+}
+
+/** A second unread copy of the same studio event is noise. Each artist message stays. */
+export function shouldSkipDuplicateNotice(kind: string, unreadMatch: boolean) {
+  if (!unreadMatch || kind === "commission_message") return false;
+  return isArtistNotice(kind);
+}
 /** Everything the storefront shell needs about the visitor, in one request. */
 export interface SessionState {
   user: AuthUser | null;

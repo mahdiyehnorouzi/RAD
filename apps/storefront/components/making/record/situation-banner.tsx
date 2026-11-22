@@ -6,7 +6,11 @@ import { copy, situationFor } from "@/lib/making";
 import { useLocale } from "@/components/i18n";
 import { StageMeter } from "./stage-meter";
 
-export function SituationBanner({ commission }: { commission: MakingCommission }) {
+export function SituationBanner({
+  commission,
+}: {
+  commission: MakingCommission;
+}) {
   const { locale, t } = useLocale();
   const situation = situationFor(commission);
   return (
@@ -16,7 +20,9 @@ export function SituationBanner({ commission }: { commission: MakingCommission }
       <p>{copy(situation.body, locale)}</p>
       <dl>
         <div>
-          <dt>{locale === "fa" ? "چه کسی الان عمل می‌کند؟" : "Who acts now?"}</dt>
+          <dt>
+            {locale === "fa" ? "قدم بعدی با کیست؟" : "Who takes the next step?"}
+          </dt>
           <dd>{copy(situation.actorLabel, locale)}</dd>
         </div>
         <div>

@@ -1,6 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
+import { IsNull, Repository } from "typeorm";
+import { isArtistNotice, shouldSkipDuplicateNotice } from "@rad/types";
 import { Notice } from "../database/entities";
 import { IdentityService } from "../common/identity.service";
 import type { Actor } from "../common/identity";
@@ -15,14 +16,21 @@ export class NoticesService {
   ) {}
 
   async list(actor: Actor) {
+    return this.snapshot(this.identity.key(actor));
+  }
+
+  private async snapshot(ownerKey: string) {
     const notices = await this.notices.find({
-      where: { ownerKey: this.identity.key(actor) },
+      where: { ownerKey },
       order: { createdAt: "DESC" },
-      take: 20,
+      take: 50,
     });
+    const visible = notices
+      .filter((notice) => isArtistNotice(notice.kind))
+      .slice(0, 20);
     return {
-      notices: notices.map((notice) => this.toNotice(notice)),
-      unread: notices.filter((notice) => !notice.read).length,
+      notices: visible.map((notice) => this.toNotice(notice)),
+      unread: visible.filter((notice) => !notice.read).length,
     };
   }
 
@@ -42,11 +50,35 @@ export class NoticesService {
     };
   }
 
-  async create(actor: Actor, kind: StoredNoticeKind, productSlug?: string) {
-    return this.createForOwner(this.identity.key(actor), kind, productSlug);
+  /**
+   * Public create is a no-op. Favorite, cart, and checkout notices are the
+   * customer's own actions. Studio events go through `createForOwner`.
+   */
+  async create(actor: Actor, kind?: StoredNoticeKind, productSlug?: string) {
+    void kind;
+    void productSlug;
+    return this.list(actor);
   }
 
-  async createForOwner(ownerKey: string, kind: StoredNoticeKind, productSlug?: string) {
+  async createForOwner(
+    ownerKey: string,
+    kind: StoredNoticeKind,
+    productSlug?: string,
+  ) {
+    if (!isArtistNotice(kind)) return this.snapshot(ownerKey);
+    if (kind !== "commission_message") {
+      const existing = await this.notices.findOne({
+        where: {
+          ownerKey,
+          kind,
+          read: false,
+          productSlug: productSlug ? productSlug : IsNull(),
+        },
+      });
+      if (shouldSkipDuplicateNotice(kind, Boolean(existing))) {
+        return this.snapshot(ownerKey);
+      }
+    }
     await this.notices.save(
       this.notices.create({
         ownerKey,
@@ -54,15 +86,7 @@ export class NoticesService {
         productSlug: productSlug ?? null,
       }),
     );
-    const notices = await this.notices.find({
-      where: { ownerKey },
-      order: { createdAt: "DESC" },
-      take: 20,
-    });
-    return {
-      notices: notices.map((notice) => this.toNotice(notice)),
-      unread: notices.filter((notice) => !notice.read).length,
-    };
+    return this.snapshot(ownerKey);
   }
 
   async markAllRead(actor: Actor) {
