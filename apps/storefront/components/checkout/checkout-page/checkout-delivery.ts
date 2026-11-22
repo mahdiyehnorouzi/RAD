@@ -26,6 +26,10 @@ export type CheckoutDraft = Partial<DeliveryFields> & {
   savedAddressId?: string;
   /** Optional "Message to RAD" note, not part of the delivery address. */
   message?: string;
+  alternateRecipient?: boolean;
+  recipientName?: string;
+  recipientPhone?: string;
+  giftMessage?: string;
   /** Which details screen the buyer was on. Omitted drafts open on contact. */
   panel?: "contact" | "delivery";
   /**

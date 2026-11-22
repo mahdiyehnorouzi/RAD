@@ -47,10 +47,12 @@ export function PaymentResult({
 
   return (
     <section className={`payment-result${closed ? " is-closed" : ""}`}>
-      {!closed ? <OrderSprig /> : null}
-      <span className="payment-result-seal" aria-hidden="true">
-        {closed ? <CircleSlash /> : reviewing ? <Clock /> : <Check />}
-      </span>
+      <div className="payment-result-emblems" aria-hidden="true">
+        <span className="payment-result-seal">
+          {closed ? <CircleSlash /> : reviewing ? <Clock /> : <Check />}
+        </span>
+        {!closed ? <OrderSprig /> : null}
+      </div>
       <h1 ref={headingRef} tabIndex={-1}>
         {title}
       </h1>

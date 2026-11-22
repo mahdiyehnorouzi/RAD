@@ -800,6 +800,55 @@ describe("E2E purchase (card-to-card)", () => {
   });
 });
 
+describe("Gift delivery", () => {
+  test("keeps buyer contact separate and gives fulfillment the recipient and card text", async () => {
+    const buyer = rad.buyer("gift-delivery");
+    await rad.cart.add(buyer, await rad.product(3_000_000));
+    const order = await rad.orders.checkout(buyer, {
+      name: "Buyer",
+      phone: "09121234567",
+      city: "تهران",
+      address: "خیابان ولیعصر، پلاک ۱۲",
+      recipientName: " Gift recipient ",
+      recipientPhone: "۰۹۱۲ ۳۴۵ ۶۷۸۹",
+      giftMessage: "  تولدت مبارک!  ",
+      message: "Keep upright",
+      acceptedPolicies: rad.acceptedPolicies,
+    });
+    assert.equal(order.delivery.name, "Gift recipient");
+    assert.equal(order.delivery.phone, "09123456789");
+    assert.ok(!("giftMessage" in order));
+    const admin = await rad.adminOrder(order.id);
+    assert.equal(admin.customer, "Buyer");
+    assert.equal(admin.phone, "09121234567");
+    assert.equal(admin.recipientName, "Gift recipient");
+    assert.equal(admin.recipientPhone, "09123456789");
+    assert.equal(admin.giftMessage, "تولدت مبارک!");
+    assert.equal(admin.message, "Keep upright");
+  });
+
+  test("rejects incomplete recipient info before consuming the bag", async () => {
+    const buyer = rad.buyer("gift-invalid");
+    await rad.cart.add(buyer, await rad.product(3_000_000));
+    const input = {
+      phone: "09121234567",
+      city: "تهران",
+      address: "خیابان ولیعصر، پلاک ۱۲",
+      recipientName: "Gift recipient",
+      acceptedPolicies: rad.acceptedPolicies,
+    };
+    await assert.rejects(
+      rad.orders.checkout(buyer, input),
+      BadRequestException,
+    );
+    const order = await rad.orders.checkout(buyer, {
+      ...input,
+      recipientPhone: "09123456789",
+    });
+    assert.equal(order.delivery.phone, "09123456789");
+  });
+});
+
 describe("Order message (RAD-060)", () => {
   test("a message is trimmed, persisted, and visible only to admin order review", async () => {
     const buyer = rad.buyer("message-trim");

@@ -533,11 +533,17 @@ html[dir="rtl"] .checkout-flow .payment-card-number {
   overflow: clip;
 }
 
-.payment-result > .order-sprig {
-  position: absolute;
-  inset-inline-end: 0.65rem;
-  top: 0.65rem;
-  width: clamp(4.5rem, 16vw, 6rem);
+.payment-result-emblems {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  width: 100%;
+}
+
+.payment-result-emblems > .order-sprig {
+  position: static;
+  width: clamp(2.75rem, 10vw, 3.5rem);
   opacity: 0.85;
   display: block;
   height: auto;
@@ -545,12 +551,12 @@ html[dir="rtl"] .checkout-flow .payment-card-number {
   pointer-events: none;
 }
 
-.payment-result > .order-sprig .order-sprig-wash {
+.payment-result-emblems > .order-sprig .order-sprig-wash {
   fill: #ecdfca;
   opacity: 0.75;
 }
 
-.payment-result > .order-sprig .order-sprig-line path {
+.payment-result-emblems > .order-sprig .order-sprig-line path {
   fill: none;
   stroke: #9a5a45;
   stroke-width: 1.2;
@@ -559,12 +565,12 @@ html[dir="rtl"] .checkout-flow .payment-card-number {
   vector-effect: non-scaling-stroke;
 }
 
-html[dir="ltr"] .payment-result > .order-sprig {
+html[dir="ltr"] .payment-result-emblems > .order-sprig {
   transform: scaleX(-1);
 }
 
 @media (--phone) {
-  .payment-result > .order-sprig {
+  .payment-result-emblems > .order-sprig {
     width: 3.5rem;
     opacity: 0.7;
   }

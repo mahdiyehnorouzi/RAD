@@ -32,6 +32,11 @@ export const checkoutCopy = {
     postalError: "کد پستی را با ۱۰ رقم بنویسید، یا خالی بگذارید.",
     optional: "اختیاری",
     messageLabel: "پیام به رَد",
+    alternateRecipient: "می‌خوای به آدرس دیگه‌ای بفرستی؟",
+    recipientName: "نام گیرنده",
+    recipientPhone: "شماره موبایل گیرنده",
+    giftMessage: "متن کارت هدیه",
+    giftMessageHint: "هرچی اینجا بنویسی، روی کارت کنار هدیه می‌ذاریم.",
     messagePlaceholder: "نکته‌ای برای تیم رَد دارید؟ اینجا بنویسید.",
     savedTitle: "نشانی‌های ذخیره‌شده",
     savedLede:
@@ -247,6 +252,11 @@ export const checkoutCopy = {
     postalError: "Enter a 10-digit postal code, or leave it empty.",
     optional: "optional",
     messageLabel: "Message to RAD",
+    alternateRecipient: "Sending to someone at another address?",
+    recipientName: "Recipient name",
+    recipientPhone: "Recipient mobile number",
+    giftMessage: "Gift card message",
+    giftMessageHint: "We’ll put your message on a card with the gift.",
     messagePlaceholder: "Anything our team should know? Write it here.",
     savedTitle: "Saved addresses",
     savedLede:
