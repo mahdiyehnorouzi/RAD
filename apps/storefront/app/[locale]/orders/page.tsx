@@ -1,4 +1,5 @@
-import { OrdersPage } from "@/components/orders";
+import { ProfileExperience } from "@/components/account/profile-experience";
+
 export default function Page() {
-  return <OrdersPage />;
+  return <ProfileExperience initial="orders" />;
 }

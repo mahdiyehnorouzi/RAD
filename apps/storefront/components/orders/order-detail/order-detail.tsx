@@ -9,22 +9,17 @@ import { useLocale } from "@/components/i18n";
 import { useCatalog } from "@/components/catalog";
 import { AccountShell } from "../../account/account-shell";
 import { CardListSkeleton } from "@/components/ui/skeleton";
-import { HelpPanel } from "@/components/contact";
-// Imported from its own sub-path, not the `@/components/help` barrel —
-// that barrel also reaches help-hub/policy-page, which this client
-// component (order detail) has no use for.
 import {
   OrderPolicies,
   OrderStatusGuide,
 } from "@/components/help/purchase-path";
 import { NoAccessState, NotFoundState } from "@/components/states";
 import {
-  PAYMENT_HELP_STATUSES,
   STORE_ORDER_PROGRESS,
   STORE_ORDER_STATUS_KEY,
   isTerminalStoreStatus,
 } from "../const";
-import { OrderAddress } from "./order-address";
+import { showOrderPolicies } from "../order-policies";
 import { OrderNextAction } from "./order-next-action";
 import { OrderSprig } from "./order-sprig";
 import { OrderSummary } from "./order-summary";
@@ -147,7 +142,6 @@ export function OrderDetail({ id }: { id: string }) {
               progressHref={terminal ? "#order-next" : "#order-progress"}
               formatDate={(value) => formatDate(value, locale)}
             />
-            <OrderAddress order={order} helpHref="#order-help" />
           </div>
 
           <div className="track-main">
@@ -189,21 +183,9 @@ export function OrderDetail({ id }: { id: string }) {
               onCancel={() => run(() => cancelOrder(order.id))}
             />
             <DamageReportPanel order={order} />
-            {order.policyAcceptance ? (
+            {showOrderPolicies(order) && order.policyAcceptance ? (
               <OrderPolicies acceptance={order.policyAcceptance} />
             ) : null}
-            <div id="order-help" className="track-decorated is-top">
-              <HelpPanel
-                context="order"
-                orderId={order.id}
-                tone={
-                  PAYMENT_HELP_STATUSES.includes(order.status)
-                    ? "payment"
-                    : "general"
-                }
-              />
-              <OrderSprig />
-            </div>
           </div>
         </div>
       </section>

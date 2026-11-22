@@ -452,7 +452,7 @@ html[lang="en"] .account-banner-line {
   list-style: none;
 }
 
-.account-menu a {
+.account-menu :is(a, button) {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto auto;
   align-items: center;
@@ -463,12 +463,16 @@ html[lang="en"] .account-banner-line {
   border-radius: var(--account-radius);
   background: var(--account-paper);
   box-shadow: var(--account-shadow);
+  width: 100%;
   color: inherit;
+  font: inherit;
+  text-align: start;
   text-decoration: none;
+  cursor: pointer;
   transition: border-color 0.2s ease;
 }
 
-.account-menu a:hover {
+.account-menu :is(a, button):hover {
   border-color: color-mix(
     in srgb,
     var(--account-green) 35%,
@@ -476,7 +480,7 @@ html[lang="en"] .account-banner-line {
   );
 }
 
-.account-menu a:focus-visible {
+.account-menu :is(a, button):focus-visible {
   outline: 2px solid var(--account-oxide);
   outline-offset: 2px;
 }

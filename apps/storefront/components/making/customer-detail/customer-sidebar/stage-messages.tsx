@@ -21,15 +21,7 @@ export function StageMessages({
       ? commission.internalNotes
       : [...commission.messages, ...(revealInternal ? commission.internalNotes : [])]
   ).sort((a, b) => a.createdAt - b.createdAt);
-  if (!items.length) {
-    return (
-      <p className="making-empty">
-        {locale === "fa"
-          ? "هنوز پیامی به این مسیر وصل نشده است."
-          : "No messages are attached to this biography yet."}
-      </p>
-    );
-  }
+  if (!items.length) return null;
   return (
     <ol className="making-messages">
       {items.map((item) => (

@@ -14,7 +14,7 @@ import { AddressForm } from "./address-form";
 import { AddressList } from "./address-list";
 import styles from "./address-book.module.css";
 
-export function AddressBookPage() {
+export function AddressBookPage({ embedded = false }: { embedded?: boolean }) {
   const { t } = useLocale();
   const book = useAddressBook();
   const { state } = book;
@@ -34,8 +34,7 @@ export function AddressBookPage() {
     return () => window.removeEventListener("beforeunload", onBeforeUnload);
   }, [state]);
 
-  return (
-    <AccountShell requireAuth>
+  const page = (
       <section
         className={`${styles.page} section`}
         aria-busy={state.phase === "loading" || undefined}
@@ -140,6 +139,7 @@ export function AddressBookPage() {
           />
         ) : null}
       </section>
-    </AccountShell>
   );
+  if (embedded) return page;
+  return <AccountShell requireAuth>{page}</AccountShell>;
 }

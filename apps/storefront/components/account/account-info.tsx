@@ -9,6 +9,7 @@ import {
   applyIranMobileEdit,
   formatIranMobileDraft,
 } from "@/lib/phone/iran-mobile";
+import { AddressBookPage } from "@/features/address-book";
 import { PasswordForm } from "./password-form";
 import { AccountShell } from "./account-shell";
 import { AccountHeading } from "./account-heading";
@@ -29,7 +30,7 @@ const PROFILE_CODES: Record<
   phone_taken: "accountPhoneTaken",
 };
 
-export function AccountInfoPage() {
+export function AccountInfoPage({ embedded = false }: { embedded?: boolean }) {
   const { user, logout, updateProfile } = useCommerce();
   const { t } = useLocale();
   const [state, dispatch] = useReducer(reduceProfileForm, user, (current) =>
@@ -93,9 +94,7 @@ export function AccountInfoPage() {
     }
   };
 
-  return (
-    <AccountShell requireAuth>
-      {user ? (
+  const page = user ? (
         <section className="account-info section">
           <AccountHeading
             icon={UserRound}
@@ -235,6 +234,7 @@ export function AccountInfoPage() {
               </button>
             </div>
           </form>
+          <AddressBookPage embedded />
           <PasswordForm />
           <button
             type="button"
@@ -245,7 +245,8 @@ export function AccountInfoPage() {
             {t("logout")}
           </button>
         </section>
-      ) : null}
-    </AccountShell>
-  );
+      ) : null;
+
+  if (embedded || !page) return page;
+  return <AccountShell requireAuth>{page}</AccountShell>;
 }

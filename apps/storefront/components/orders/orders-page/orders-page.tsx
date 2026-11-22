@@ -13,15 +13,15 @@ import { useCatalog } from "@/components/catalog";
 import { AccountShell } from "../../account/account-shell";
 import { AccountHeading } from "../../account/account-heading";
 import { StateScreen } from "@/components/states";
-import { STORE_ORDER_STATUS_KEY, radArtworkNumber } from "../const";
+import { ORDER_STATUS_TONE, STORE_ORDER_STATUS_KEY, radArtworkNumber } from "../const";
+import { orderCardNext } from "../order-card-next";
 
-export function OrdersPage() {
+export function OrdersPage({ embedded = false }: { embedded?: boolean }) {
   const { orders, ready } = useOrders();
-  const { locale, t, href, number } = useLocale();
+  const { locale, t, href } = useLocale();
   const { products, getProduct } = useCatalog();
 
-  return (
-    <AccountShell requireAuth>
+  const page = (
       <section className="orders-page section">
         <AccountHeading
           icon={Truck}
@@ -40,7 +40,16 @@ export function OrdersPage() {
                       <span>{t("orderId")}</span>
                       <b dir="ltr">{order.id}</b>
                     </div>
-                    <span className="order-status">
+                    <time dateTime={new Date(order.createdAt).toISOString()}>
+                      {new Intl.DateTimeFormat(
+                        locale === "fa" ? "fa-IR" : "en-US",
+                        { dateStyle: "medium" },
+                      ).format(order.createdAt)}
+                    </time>
+                    <span
+                      className="order-status"
+                      data-tone={ORDER_STATUS_TONE[order.status]}
+                    >
                       {t(STORE_ORDER_STATUS_KEY[order.status])}
                     </span>
                   </header>
@@ -70,21 +79,9 @@ export function OrdersPage() {
                       </div>
                     </div>
                   ) : null}
-                  <dl>
-                    <div>
-                      <dt>{t("orderDate")}</dt>
-                      <dd>
-                        {new Intl.DateTimeFormat(
-                          locale === "fa" ? "fa-IR" : "en-US",
-                          { dateStyle: "medium" },
-                        ).format(order.createdAt)}
-                      </dd>
-                    </div>
-                    <div>
-                      <dt>{t("orderItems")}</dt>
-                      <dd>{number(order.slugs.length)}</dd>
-                    </div>
-                  </dl>
+                  <p className="order-next-line">
+                    {orderCardNext(order.status, locale)}
+                  </p>
                   <strong>{formatTotal(order.total, locale)}</strong>
                   <ButtonLink href={`/orders/${order.id}`}>
                     {t("trackOrder")}
@@ -106,6 +103,8 @@ export function OrdersPage() {
           />
         )}
       </section>
-    </AccountShell>
   );
+
+  if (embedded) return page;
+  return <AccountShell requireAuth>{page}</AccountShell>;
 }

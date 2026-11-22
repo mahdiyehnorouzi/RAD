@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Bell, CheckCheck } from "lucide-react";
-import type { Notice } from "@rad/types";
+import { isArtistNotice, type Notice } from "@rad/types";
 import { productCopy } from "@/lib/catalog/products";
 import { useCatalog } from "@/components/catalog";
 import { useCommerce } from "@/components/commerce";
@@ -21,8 +21,9 @@ function noticeHref(notice: Notice) {
   return null;
 }
 
-export function NotificationsPage() {
+export function NotificationsPage({ embedded = false }: { embedded?: boolean }) {
   const { notices, unread, markAllRead, ready } = useCommerce();
+  const artistNotices = notices.filter((notice) => isArtistNotice(notice.kind));
   const { locale, t, href } = useLocale();
   const { getProduct } = useCatalog();
 
@@ -51,8 +52,7 @@ export function NotificationsPage() {
     minute: "2-digit",
   });
 
-  return (
-    <AccountShell requireAuth>
+  const page = (
       <section className="notifications-page section">
         <AccountHeading
           icon={Bell}
@@ -69,9 +69,9 @@ export function NotificationsPage() {
         />
         {!ready ? (
           <CardListSkeleton count={4} />
-        ) : notices.length ? (
+        ) : artistNotices.length ? (
           <ul className="account-list notifications-list">
-            {notices.map((notice) => {
+            {artistNotices.map((notice) => {
               const target = noticeHref(notice);
               const Icon = NOTICE_ICON[notice.kind] ?? Bell;
               const body = (
@@ -98,6 +98,7 @@ export function NotificationsPage() {
           </div>
         )}
       </section>
-    </AccountShell>
   );
+  if (embedded) return page;
+  return <AccountShell requireAuth>{page}</AccountShell>;
 }

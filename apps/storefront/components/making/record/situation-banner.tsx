@@ -16,7 +16,7 @@ export function SituationBanner({ commission }: { commission: MakingCommission }
       <p>{copy(situation.body, locale)}</p>
       <dl>
         <div>
-          <dt>{locale === "fa" ? "چه کسی الان عمل می‌کند؟" : "Who acts now?"}</dt>
+          <dt>{locale === "fa" ? "قدم بعدی با کیست؟" : "Who takes the next step?"}</dt>
           <dd>{copy(situation.actorLabel, locale)}</dd>
         </div>
         <div>

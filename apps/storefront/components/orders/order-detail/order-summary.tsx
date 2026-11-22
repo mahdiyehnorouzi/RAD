@@ -9,6 +9,7 @@ import {
   CircleX,
   Clock3,
   MapPin,
+  Phone,
   PackageSearch,
   Tag,
   Truck,
@@ -85,6 +86,16 @@ export function OrderSummary({
       value: formatShippingAddress(order.delivery) || "—",
       soft: true,
     },
+    ...(order.delivery.phone
+      ? [
+          {
+            icon: Phone,
+            label: t("phoneLabel"),
+            value: order.delivery.phone,
+            ltr: true,
+          },
+        ]
+      : []),
     ...(order.trackingCode
       ? [
           {

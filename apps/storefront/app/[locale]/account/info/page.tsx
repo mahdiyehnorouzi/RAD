@@ -1,5 +1,5 @@
-import { AccountInfoPage } from "@/components/account";
+import { ProfileExperience } from "@/components/account/profile-experience";
 
 export default function Page() {
-  return <AccountInfoPage />;
+  return <ProfileExperience initial="info" />;
 }

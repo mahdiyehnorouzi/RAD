@@ -101,9 +101,12 @@ export function CustomerMakingDetail({ id }: { id: string }) {
           <QuoteCard commission={commission} />
           {demo ? null : <CustomerDepositAction commission={commission} />}
           {showSnapshot ? <QuoteCard commission={commission} snapshot /> : null}
-          {showProgress ? (
+          {showProgress &&
+          commission.updates.some(
+            (item) => item.image || item.note.fa || item.note.en,
+          ) ? (
             <>
-              <h2>{locale === "fa" ? "عکس‌های پیشرفت" : "Progress photographs"}</h2>
+              <h2>{locale === "fa" ? "عکس‌های مسیر ساخت" : "Photographs from the making"}</h2>
               <ProgressPhotographs commission={commission} />
             </>
           ) : null}

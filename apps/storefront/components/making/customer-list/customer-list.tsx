@@ -12,21 +12,19 @@ import { AccountHeading } from "../../account/account-heading";
 import { CommissionCard } from "./commission-card";
 import { CardListSkeleton } from "@/components/ui/skeleton";
 
-export function CustomerMakingList() {
+export function CustomerMakingList({ embedded = false }: { embedded?: boolean }) {
   const { commissions, ready } = useMaking();
   const { t } = useLocale();
   const mine = commissions.filter((item) => !isDemoCommission(item.id));
-  if (!ready) {
-    return (
-      <AccountShell requireAuth>
+  const loading = (
         <section className="making-page section">
           <CardListSkeleton count={4} className="making-grid" />
         </section>
-      </AccountShell>
-    );
+  );
+  if (!ready) {
+    return embedded ? loading : <AccountShell requireAuth>{loading}</AccountShell>;
   }
-  return (
-    <AccountShell requireAuth>
+  const page = (
     <section className="making-page section">
       <AccountHeading icon={PenLine} title={t("customOrdersTitle")} body={t("customOrdersBody")} />
       <aside className="making-note">
@@ -58,6 +56,7 @@ export function CustomerMakingList() {
         </div>
       </section>
     </section>
-    </AccountShell>
   );
+  if (embedded) return page;
+  return <AccountShell requireAuth>{page}</AccountShell>;
 }

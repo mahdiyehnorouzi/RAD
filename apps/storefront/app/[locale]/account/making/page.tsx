@@ -1,5 +1,5 @@
-import { CustomerMakingList } from "@/components/making";
+import { ProfileExperience } from "@/components/account/profile-experience";
 
 export default function AccountMakingPage() {
-  return <CustomerMakingList />;
+  return <ProfileExperience initial="making" />;
 }

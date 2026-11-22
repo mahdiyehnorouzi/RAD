@@ -12,13 +12,14 @@ import {
   useState,
   type CSSProperties,
 } from "react";
-import type {
-  AuthUser,
-  Notice,
-  NoticeKind,
-  Order,
-  Review,
-  SessionState,
+import {
+  isArtistNotice,
+  type AuthUser,
+  type Notice,
+  type NoticeKind,
+  type Order,
+  type Review,
+  type SessionState,
 } from "@rad/types";
 import type { PaymentReceiptInput, PlaceOrderInput } from "@/types/api";
 import { api } from "@/lib/api";
@@ -135,8 +136,11 @@ export function CommerceProvider({ children }: { children: React.ReactNode }) {
   // malformed/partial API response (seen locally with the dev proxy's
   // ERR_CONTENT_DECODING_FAILED) must not leave `notices` as `undefined`,
   // which crashes every render that calls `.filter` on it below.
+  const visibleNotices = (items: Notice[] | undefined) =>
+    (items ?? []).filter((notice) => isArtistNotice(notice.kind));
+
   const applyNotices = (payload: { notices?: Notice[]; unread?: number }) => {
-    setNotices(payload.notices ?? []);
+    setNotices(visibleNotices(payload.notices));
   };
 
   const applySession = useCallback((session: SessionState) => {
@@ -148,7 +152,7 @@ export function CommerceProvider({ children }: { children: React.ReactNode }) {
     const favorites = session.favorites ?? [];
     setFavorites(favorites);
     cacheFavorites(favorites);
-    setNotices(session.notices ?? []);
+    setNotices(visibleNotices(session.notices));
   }, []);
 
   // Runs before paint so a refresh or locale switch (a full page reload,
@@ -202,7 +206,7 @@ export function CommerceProvider({ children }: { children: React.ReactNode }) {
     const refreshNotices = () => {
       if (document.visibilityState !== "visible") return;
       api<{ notices?: Notice[] }>("/notices")
-        .then((payload) => setNotices(payload.notices ?? []))
+        .then((payload) => setNotices(visibleNotices(payload.notices)))
         .catch((error) => logRecovered("notices", error));
     };
     const timer = window.setInterval(refreshNotices, NOTICE_POLL_MS);
@@ -220,13 +224,9 @@ export function CommerceProvider({ children }: { children: React.ReactNode }) {
   }, [toast]);
 
   const addNotice = async (kind: NoticeKind, productSlug?: string) => {
-    const payload = await api<{ notices: Notice[] }>("/notices", {
-      method: "POST",
-      body: JSON.stringify({ kind, productSlug }),
-    });
-    applyNotices(payload);
-    if (kind === "cart")
+    if (kind === "cart") {
       setToast({ id: Date.now(), kind: "cartAdded", productSlug });
+    }
   };
 
   const value = useMemo<CommerceContextValue>(
@@ -285,7 +285,6 @@ export function CommerceProvider({ children }: { children: React.ReactNode }) {
         setFavorites(payload.slugs);
         cacheFavorites(payload.slugs);
         if (payload.added) {
-          await addNotice("favorite", slug);
           setToast({
             id: Date.now(),
             kind: "favoriteAdded",

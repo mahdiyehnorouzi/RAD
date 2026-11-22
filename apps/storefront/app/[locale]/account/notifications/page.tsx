@@ -1,5 +1,5 @@
-import { NotificationsPage } from "@/components/account";
+import { ProfileExperience } from "@/components/account/profile-experience";
 
 export default function Page() {
-  return <NotificationsPage />;
+  return <ProfileExperience initial="notifications" />;
 }
