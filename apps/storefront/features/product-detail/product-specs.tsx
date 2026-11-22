@@ -16,7 +16,12 @@ import {
   Weight,
   type LucideIcon,
 } from "lucide-react";
-import type { Artwork, Locale, Product } from "@rad/types";
+import {
+  isRedundantArtworkNumberSpec,
+  type Artwork,
+  type Locale,
+  type Product,
+} from "@rad/types";
 import { RadFingerprint } from "@/components/identity";
 import { useLocale } from "@/components/i18n";
 import type { RadPassport } from "@/components/passport/type";
@@ -167,7 +172,10 @@ function specRows(
     "SquareStack",
   ]);
   const dynamicAttributes: SpecRow[] = (product.attributes ?? [])
-    .filter((attribute) => !described(attribute.value))
+    .filter(
+      (attribute) =>
+        !described(attribute.value) && !isRedundantArtworkNumberSpec(attribute),
+    )
     .map((attribute) => {
       const name = specAttributeIconName(attribute.key, usedAttributeIcons);
       usedAttributeIcons.add(name);

@@ -6,7 +6,11 @@ import type {
   RadIdentitySummary,
   RadIdentityView,
 } from "@rad/types";
-import { Injectable } from "@nestjs/common";
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { DataSource, In, Repository } from "typeorm";
 import {
@@ -22,7 +26,11 @@ import {
   reserveIdentityBatch,
   retireIdentitiesForProduct,
 } from "./identity.allocator";
-import { qrGeometry } from "./identity-print";
+import {
+  qrGeometry,
+  type LegacyArtworkGap,
+  type QrArtworkFile,
+} from "./identity-print";
 
 const STORY_PUBLISHED = new Set(["ready", "available", "sold", "archived"]);
 
@@ -205,6 +213,88 @@ export class IdentitiesService {
           ),
         };
       }),
+    };
+  }
+
+  /**
+   * QR rows for products that already have a permanent number.
+   * Reserved batch numbers are not included and nothing is allocated.
+   */
+  async legacyArtworkPlan(): Promise<{
+    rows: QrArtworkFile[];
+    inconsistencies: LegacyArtworkGap[];
+    identityCount: number;
+    reserved: number;
+  }> {
+    const products = await this.products
+      .createQueryBuilder("product")
+      .where(`product."radNumber" IS NOT NULL`)
+      .orderBy(`product."radNumber"`, "ASC")
+      .getMany();
+    const identities = await this.identities.find();
+    const byProduct = new Map<string, RadIdentity[]>();
+    for (const identity of identities) {
+      if (!identity.productId || identity.status !== "assigned") continue;
+      const list = byProduct.get(identity.productId) ?? [];
+      list.push(identity);
+      byProduct.set(identity.productId, list);
+    }
+    const rows: QrArtworkFile[] = [];
+    const inconsistencies: LegacyArtworkGap[] = [];
+    for (const product of products) {
+      if (product.radNumber == null) continue;
+      const linked = byProduct.get(product.id) ?? [];
+      const match = linked.find((row) => row.radNumber === product.radNumber);
+      if (!match) {
+        inconsistencies.push({
+          productId: product.id,
+          radNumber: product.radNumber,
+          issue: linked.length ? "identity_mismatch" : "missing_identity",
+        });
+        if (linked.length) continue;
+      }
+      rows.push({
+        radNumber: product.radNumber,
+        label: radIdentityLabel(product.radNumber),
+        url: radPermanentUrl(product.radNumber),
+        status: "assigned",
+        productId: product.id,
+        productName: product.name,
+        batchId: match?.batchId ?? null,
+        storyPublished: STORY_PUBLISHED.has(product.status),
+      });
+    }
+    return {
+      rows,
+      inconsistencies,
+      identityCount: identities.length,
+      reserved: identities.filter((row) => row.status === "reserved").length,
+    };
+  }
+
+  async productQr(productId: string) {
+    const product = await this.products.findOne({ where: { id: productId } });
+    if (!product) throw new NotFoundException("محصول پیدا نشد.");
+    if (product.radNumber == null) {
+      throw new NotFoundException({
+        message: "این اثر شماره رَد ندارد و شماره‌ای برایش ساخته نمی‌شود.",
+        code: "rad_number_absent",
+      });
+    }
+    const linked = await this.identities.find({
+      where: { productId, status: "assigned" },
+    });
+    if (linked.some((row) => row.radNumber !== product.radNumber)) {
+      throw new ConflictException({
+        message: "شماره اثر با شناسه دائمی یکی نیست.",
+        code: "identity_mismatch",
+      });
+    }
+    const url = radPermanentUrl(product.radNumber);
+    return {
+      url,
+      label: radIdentityLabel(product.radNumber),
+      radNumber: product.radNumber,
     };
   }
 

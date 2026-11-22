@@ -310,6 +310,61 @@ test("a missing identity is distinct from a known reserved one", async () => {
   assert.equal(await identities.resolvePublic("nope"), null);
 });
 
+test("legacy QR export keeps original numbers and does not touch reserved identities", async () => {
+  const products = dataSource.getRepository(Product);
+  const gap = await products.save(
+    products.create({ ...productFields("gap-fourteen"), radNumber: 14 }),
+  );
+  const identitiesRepo = dataSource.getRepository(RadIdentity);
+  const before = await identitiesRepo.find();
+  const reservedBefore = before
+    .filter((row) => row.status === "reserved")
+    .map((row) => row.radNumber)
+    .sort((a, b) => a - b);
+  const legacy = await products.findOneByOrFail({ radNumber: 60 });
+  assert.equal(legacy.radNumber, 60);
+  const print = new IdentityPrintService(dataSource, identities);
+  const file = await print.exportLegacyArtworks();
+  const JSZip = (await import("jszip")).default;
+  const zip = await JSZip.loadAsync(file.buffer);
+  const mapping = await zip.file("artworks.csv")!.async("string");
+  assert.match(
+    mapping,
+    new RegExp(`${legacy.id},.*,60,https://www\\.rad-object\\.com/r/060`),
+  );
+  assert.match(
+    mapping,
+    new RegExp(`${gap.id},.*,14,https://www\\.rad-object\\.com/r/014`),
+  );
+  for (const number of reservedBefore) {
+    assert.equal(mapping.includes(`,${number},https://`), false);
+  }
+  const svg = await zip.file("SVG/RAD-060.svg")!.async("string");
+  assert.equal(
+    (await import("./identity-print")).decodeSvgQr(svg),
+    "https://www.rad-object.com/r/060",
+  );
+  const after = await identitiesRepo.find();
+  assert.equal(after.length, before.length);
+  assert.deepEqual(
+    after
+      .filter((row) => row.status === "reserved")
+      .map((row) => row.radNumber)
+      .sort((a, b) => a - b),
+    reservedBefore,
+  );
+  assert.equal(await identitiesRepo.findOneBy({ radNumber: 14 }), null);
+  await assert.rejects(() =>
+    dataSource.query(`UPDATE "Product" SET "radNumber" = 61 WHERE id = $1`, [
+      legacy.id,
+    ]),
+  );
+  assert.equal(
+    (await products.findOneByOrFail({ id: legacy.id })).radNumber,
+    60,
+  );
+});
+
 test("marking a batch printed requires the public URL and does not run when it fails", async () => {
   const batch = await reserveIdentityBatch(dataSource, {
     quantity: 1,

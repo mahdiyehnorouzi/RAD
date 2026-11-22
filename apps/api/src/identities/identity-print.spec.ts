@@ -32,6 +32,42 @@ test("a generated QR decodes to the canonical short URL", async () => {
   assert.match(url, /^https:\/\/www\.rad-object\.com\/r\/084$/);
 });
 
+test("a legacy artwork archive lists the product without a batch id", async () => {
+  const legacy: QrArtworkFile[] = [
+    {
+      radNumber: 60,
+      label: "RAD-060",
+      url: radPermanentUrl(60),
+      status: "assigned",
+      productId: "product-60",
+      productName: "بافته قدیمی",
+      batchId: null,
+      storyPublished: true,
+    },
+  ];
+  const archive = await buildIdentityArchive(legacy, {
+    artworkCsv: true,
+    inconsistencies: [
+      { productId: "gap", radNumber: 14, issue: "missing_identity" },
+    ],
+  });
+  assert.equal(archive.verification.ok, true);
+  const JSZip = (await import("jszip")).default;
+  const zip = await JSZip.loadAsync(archive.buffer);
+  const svg = await zip.file("SVG/RAD-060.svg")!.async("string");
+  const png = await zip.file("PNG/RAD-060.png")!.async("nodebuffer");
+  assert.equal(decodeSvgQr(svg), "https://www.rad-object.com/r/060");
+  assert.equal(decodePngQr(png), "https://www.rad-object.com/r/060");
+  const mapping = await zip.file("artworks.csv")!.async("string");
+  assert.match(
+    mapping,
+    /productId,artworkName,radNumber,permanentUrl\nproduct-60,بافته قدیمی,60,https:\/\/www\.rad-object\.com\/r\/060/,
+  );
+  assert.equal(mapping.includes("batchId"), false);
+  const gaps = await zip.file("inconsistencies.csv")!.async("string");
+  assert.match(gaps, /gap,14,missing_identity/);
+});
+
 test("a batch archive matches the reserved identities", async () => {
   const archive = await buildIdentityArchive(rows);
   assert.equal(archive.verification.ok, true);

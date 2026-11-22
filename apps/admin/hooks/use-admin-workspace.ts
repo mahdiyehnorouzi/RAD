@@ -554,8 +554,14 @@ export function useAdminWorkspace() {
             : [...items, saved],
         );
       },
-      async deleteProductAttribute(id: string) {
-        await api(`/admin/product-attributes/${id}`, { method: "DELETE" });
+      async deleteProductAttribute(
+        id: string,
+        options?: { purgeValues?: boolean },
+      ) {
+        const purge = options?.purgeValues ? "?purgeValues=true" : "";
+        await api(`/admin/product-attributes/${id}${purge}`, {
+          method: "DELETE",
+        });
         setProductAttributes((items) => items.filter((item) => item.id !== id));
       },
       async reorderProductAttributes(ids: string[]) {

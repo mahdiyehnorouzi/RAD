@@ -9,6 +9,7 @@ import {
   Patch,
   Post,
   Put,
+  Query,
   Req,
   UseGuards,
 } from "@nestjs/common";
@@ -356,10 +357,13 @@ export class AdminController {
   @Delete("product-attributes/:id")
   deleteProductAttribute(
     @Param("id") id: string,
+    @Query("purgeValues") purgeValues: string | undefined,
     @Req() request: AuthedRequest,
   ) {
     this.admin.assert(request.adminRole, "product.delete");
-    return this.productAttributes.remove(id);
+    return this.productAttributes.remove(id, {
+      purgeValues: purgeValues === "true",
+    });
   }
 
   @Get("commissions")
