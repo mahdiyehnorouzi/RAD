@@ -31,6 +31,7 @@ import {
   type LegacyArtworkGap,
   type QrArtworkFile,
 } from "./identity-print";
+import { classifyLegacyArtwork } from "./legacy-artwork";
 
 const STORY_PUBLISHED = new Set(["ready", "available", "sold", "archived"]);
 
@@ -232,37 +233,22 @@ export class IdentitiesService {
       .orderBy(`product."radNumber"`, "ASC")
       .getMany();
     const identities = await this.identities.find();
-    const byProduct = new Map<string, RadIdentity[]>();
-    for (const identity of identities) {
-      if (!identity.productId || identity.status !== "assigned") continue;
-      const list = byProduct.get(identity.productId) ?? [];
-      list.push(identity);
-      byProduct.set(identity.productId, list);
-    }
     const rows: QrArtworkFile[] = [];
     const inconsistencies: LegacyArtworkGap[] = [];
     for (const product of products) {
       if (product.radNumber == null) continue;
-      const linked = byProduct.get(product.id) ?? [];
-      const match = linked.find((row) => row.radNumber === product.radNumber);
-      if (!match) {
-        inconsistencies.push({
-          productId: product.id,
+      const decision = classifyLegacyArtwork({
+        product: {
+          id: product.id,
+          name: product.name,
+          status: product.status,
           radNumber: product.radNumber,
-          issue: linked.length ? "identity_mismatch" : "missing_identity",
-        });
-        if (linked.length) continue;
-      }
-      rows.push({
-        radNumber: product.radNumber,
-        label: radIdentityLabel(product.radNumber),
-        url: radPermanentUrl(product.radNumber),
-        status: "assigned",
-        productId: product.id,
-        productName: product.name,
-        batchId: match?.batchId ?? null,
-        storyPublished: STORY_PUBLISHED.has(product.status),
+        },
+        identities,
+        resolvedProductId: await this.resolvedArtworkId(product.radNumber),
       });
+      if (decision.gap) inconsistencies.push(decision.gap);
+      if (decision.row) rows.push(decision.row);
     }
     return {
       rows,
@@ -281,21 +267,56 @@ export class IdentitiesService {
         code: "rad_number_absent",
       });
     }
-    const linked = await this.identities.find({
-      where: { productId, status: "assigned" },
+    const decision = classifyLegacyArtwork({
+      product: {
+        id: product.id,
+        name: product.name,
+        status: product.status,
+        radNumber: product.radNumber,
+      },
+      identities: await this.identities.find(),
+      resolvedProductId: await this.resolvedArtworkId(product.radNumber),
     });
-    if (linked.some((row) => row.radNumber !== product.radNumber)) {
+    if (!decision.row) {
+      const mismatch = decision.gap?.issue === "identity_mismatch";
       throw new ConflictException({
-        message: "شماره اثر با شناسه دائمی یکی نیست.",
-        code: "identity_mismatch",
+        message: mismatch
+          ? "شماره اثر با شناسه دائمی یکی نیست. QR ساخته نمی‌شود."
+          : "آدرس دائمی این شماره به همین اثر نمی‌رسد. QR ساخته نمی‌شود.",
+        code: decision.gap?.issue ?? "url_not_this_artwork",
+        inconsistencies: decision.gap ? [decision.gap] : [],
       });
     }
-    const url = radPermanentUrl(product.radNumber);
     return {
-      url,
-      label: radIdentityLabel(product.radNumber),
-      radNumber: product.radNumber,
+      url: decision.row.url,
+      label: decision.row.label,
+      radNumber: decision.row.radNumber,
     };
+  }
+
+  /**
+   * Product behind the public `/r/NNN` route. A reserved or retired number
+   * does not resolve to an artwork, even if a product still stores that number.
+   */
+  private async resolvedArtworkId(radNumber: number): Promise<string | null> {
+    const resolved = await this.resolvePublic(formatRadCode(radNumber));
+    if (
+      !resolved ||
+      resolved.status !== "assigned" ||
+      resolved.radNumber !== radNumber
+    ) {
+      return null;
+    }
+    const holder = await this.identities.findOne({ where: { radNumber } });
+    if (holder) {
+      if (holder.status !== "assigned" || !holder.productId) return null;
+      const product = await this.products.findOne({
+        where: { id: holder.productId, radNumber },
+      });
+      return product?.id ?? null;
+    }
+    const product = await this.products.findOne({ where: { radNumber } });
+    return product?.id ?? null;
   }
 
   async listBatches(): Promise<RadIdentityBatchView[]> {

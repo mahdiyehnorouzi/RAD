@@ -48,6 +48,19 @@ export class IdentityPrintService {
 
   async exportLegacyArtworks() {
     const plan = await this.identities.legacyArtworkPlan();
+    const mismatches = plan.inconsistencies.filter(
+      (gap) => gap.issue === "identity_mismatch",
+    );
+    if (mismatches.length) {
+      const listed = mismatches
+        .map((gap) => `${gap.productId} (${gap.radNumber})`)
+        .join("، ");
+      throw new ConflictException({
+        message: `خروجی QR متوقف شد. شماره این آثار با شناسه دائمی یکی نیست: ${listed}.`,
+        code: "identity_mismatch",
+        inconsistencies: mismatches,
+      });
+    }
     if (!plan.rows.length) {
       throw new NotFoundException("اثر شماره‌داری برای خروجی QR نیست.");
     }

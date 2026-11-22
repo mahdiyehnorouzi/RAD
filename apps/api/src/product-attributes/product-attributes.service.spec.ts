@@ -225,7 +225,10 @@ describe("ProductAttributesService", () => {
       categories: ["ceramics"],
       options: [],
     });
-    assert.deepEqual(await service.remove(other.id), { ok: true, purgedValues: 0 });
+    assert.deepEqual(await service.remove(other.id), {
+      ok: true,
+      purgedValues: 0,
+    });
   });
 
   test("a redundant artwork-number spec can be purged without changing the RAD number", async () => {

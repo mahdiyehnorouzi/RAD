@@ -10,6 +10,7 @@ import {
   verifyPublicIdentityUrls,
   type QrArtworkFile,
 } from "./identity-print";
+import { classifyLegacyArtwork } from "./legacy-artwork";
 
 const rows: QrArtworkFile[] = [84, 85].map((radNumber) => ({
   radNumber,
@@ -48,7 +49,12 @@ test("a legacy artwork archive lists the product without a batch id", async () =
   const archive = await buildIdentityArchive(legacy, {
     artworkCsv: true,
     inconsistencies: [
-      { productId: "gap", radNumber: 14, issue: "missing_identity" },
+      {
+        productId: "gap",
+        radNumber: 14,
+        issue: "missing_identity",
+        detail: "آدرس دائمی به همین اثر می‌رسد و شناسه تازه‌ای ساخته نشد",
+      },
     ],
   });
   assert.equal(archive.verification.ok, true);
@@ -81,6 +87,61 @@ test("a batch archive matches the reserved identities", async () => {
   const manifest = await zip.file("manifest.csv")!.async("string");
   assert.match(manifest, /84,RAD-084,https:\/\/www\.rad-object\.com\/r\/084/);
   assert.equal(manifest.trim().split("\n").length, 3);
+});
+
+test("a mismatched or reserved number is not a printable legacy QR", () => {
+  const product = {
+    id: "woven",
+    name: "بافته",
+    status: "available",
+    radNumber: 60,
+  };
+  const mismatch = classifyLegacyArtwork({
+    product,
+    identities: [
+      {
+        radNumber: 80,
+        status: "assigned",
+        productId: "woven",
+        batchId: null,
+      },
+    ],
+    resolvedProductId: "woven",
+  });
+  assert.equal(mismatch.row, null);
+  assert.equal(mismatch.gap?.issue, "identity_mismatch");
+
+  const reserved = classifyLegacyArtwork({
+    product: { ...product, id: "collision", radNumber: 61 },
+    identities: [
+      {
+        radNumber: 61,
+        status: "reserved",
+        productId: null,
+        batchId: "batch-new",
+      },
+    ],
+    resolvedProductId: null,
+  });
+  assert.equal(reserved.row, null);
+  assert.equal(reserved.gap?.issue, "url_not_this_artwork");
+
+  const missing = classifyLegacyArtwork({
+    product: { ...product, id: "gap", radNumber: 14 },
+    identities: [],
+    resolvedProductId: "gap",
+  });
+  assert.equal(missing.row?.url, "https://www.rad-object.com/r/014");
+  assert.equal(missing.row?.productId, "gap");
+  assert.equal(missing.gap?.issue, "missing_identity");
+
+  const wrongDestination = classifyLegacyArtwork({
+    product: { ...product, id: "gap", radNumber: 14 },
+    identities: [],
+    resolvedProductId: "someone-else",
+  });
+  assert.equal(wrongDestination.row, null);
+  assert.equal(wrongDestination.gap?.issue, "url_not_this_artwork");
 });
 
 test("public URL verification fails closed when a destination is wrong", async () => {

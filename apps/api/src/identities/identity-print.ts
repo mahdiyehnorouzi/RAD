@@ -121,7 +121,8 @@ export interface ArchiveVerification {
 export interface LegacyArtworkGap {
   productId: string;
   radNumber: number | null;
-  issue: string;
+  issue: "identity_mismatch" | "missing_identity" | "url_not_this_artwork";
+  detail: string;
 }
 
 export async function buildIdentityArchive(
@@ -221,11 +222,12 @@ export async function buildIdentityArchive(
     zip.file(
       "inconsistencies.csv",
       csv([
-        ["productId", "radNumber", "issue"],
+        ["productId", "radNumber", "issue", "detail"],
         ...extras.inconsistencies.map((gap) => [
           gap.productId,
           gap.radNumber,
           gap.issue,
+          gap.detail,
         ]),
       ]),
     );

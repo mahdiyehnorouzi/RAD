@@ -112,22 +112,43 @@ export function ProductDialog({
     Array<{ id: string; radNumber: number; label: string }>
   >([]);
   const [qrSvg, setQrSvg] = useState("");
+  const [qrNote, setQrNote] = useState("");
   useEffect(() => {
     if (!product?.id || !product.radNumber) {
       setQrSvg("");
+      setQrNote("");
       return;
     }
     let active = true;
     fetch(`${API_BASE}/admin/identities/products/${product.id}/qr.svg`, {
       credentials: "include",
     })
-      .then(async (response) => (response.ok ? response.text() : ""))
-      .then((svg) => {
+      .then(async (response) => {
+        if (!response.ok) {
+          const data = (await response.json().catch(() => ({}))) as {
+            message?: string;
+          };
+          return {
+            svg: "",
+            note: data.message || "QR این اثر قابل دانلود نیست.",
+          };
+        }
+        const svg = await response.text();
         const start = svg.indexOf("<svg");
-        if (active) setQrSvg(start >= 0 ? svg.slice(start) : "");
+        return {
+          svg: start >= 0 ? svg.slice(start) : "",
+          note: start >= 0 ? "" : "QR این اثر قابل دانلود نیست.",
+        };
+      })
+      .then((result) => {
+        if (!active) return;
+        setQrSvg(result.svg);
+        setQrNote(result.note);
       })
       .catch(() => {
-        if (active) setQrSvg("");
+        if (!active) return;
+        setQrSvg("");
+        setQrNote("QR این اثر قابل دانلود نیست.");
       });
     return () => {
       active = false;
@@ -585,22 +606,26 @@ export function ProductDialog({
                           }}
                         />
                       ) : (
-                        <span>QR آماده نیست.</span>
+                        <span>{qrNote || "QR آماده نیست."}</span>
                       )}
-                      <Button
-                        type="button"
-                        onClick={() => void downloadProductQr("svg")}
-                      >
-                        <QrCode />
-                        دانلود SVG
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        onClick={() => void downloadProductQr("png")}
-                      >
-                        دانلود PNG
-                      </Button>
+                      {qrSvg ? (
+                        <>
+                          <Button
+                            type="button"
+                            onClick={() => void downloadProductQr("svg")}
+                          >
+                            <QrCode />
+                            دانلود SVG
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            onClick={() => void downloadProductQr("png")}
+                          >
+                            دانلود PNG
+                          </Button>
+                        </>
+                      ) : null}
                     </>
                   ) : (
                     <span>

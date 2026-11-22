@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { mkdtempSync, rmSync } from "node:fs";
+import { ConflictException } from "@nestjs/common";
 import { createServer, type Server } from "node:http";
 import { createServer as createNetServer } from "node:net";
 import { tmpdir } from "node:os";
@@ -363,6 +364,122 @@ test("legacy QR export keeps original numbers and does not touch reserved identi
     (await products.findOneByOrFail({ id: legacy.id })).radNumber,
     60,
   );
+});
+
+function reservedSnapshot(rows: RadIdentity[]) {
+  return rows
+    .filter((row) => row.status === "reserved")
+    .map((row) => ({
+      id: row.id,
+      radNumber: row.radNumber,
+      status: row.status,
+      productId: row.productId,
+      batchId: row.batchId,
+      printedAt: row.printedAt?.toISOString() ?? null,
+    }))
+    .sort((a, b) => a.radNumber - b.radNumber);
+}
+
+test("a reserved number is not printed for another artwork and a missing identity is checked first", async () => {
+  const products = dataSource.getRepository(Product);
+  const identitiesRepo = dataSource.getRepository(RadIdentity);
+  const before = await identitiesRepo.find();
+  const reservedBefore = reservedSnapshot(before);
+  const open = await products.save(
+    products.create({ ...productFields("open-fifteen"), radNumber: 15 }),
+  );
+  const collision = await products.save(
+    products.create({ ...productFields("collision-sixty-one"), radNumber: 61 }),
+  );
+  const print = new IdentityPrintService(dataSource, identities);
+  const file = await print.exportLegacyArtworks();
+  const JSZip = (await import("jszip")).default;
+  const zip = await JSZip.loadAsync(file.buffer);
+  const mapping = await zip.file("artworks.csv")!.async("string");
+  const gaps = await zip.file("inconsistencies.csv")!.async("string");
+  assert.match(
+    mapping,
+    new RegExp(`${open.id},.*,15,https://www\\.rad-object\\.com/r/015`),
+  );
+  assert.equal(mapping.includes("/r/061"), false);
+  assert.equal(zip.file("SVG/RAD-061.svg"), null);
+  assert.match(gaps, new RegExp(`${collision.id},61,url_not_this_artwork`));
+  assert.match(gaps, /missing_identity/);
+  const single = await identities.productQr(open.id);
+  assert.equal(single.url, "https://www.rad-object.com/r/015");
+  await assert.rejects(
+    () => identities.productQr(collision.id),
+    (error: unknown) => {
+      assert.ok(error instanceof ConflictException);
+      assert.equal(
+        (error.getResponse() as { code?: string }).code,
+        "url_not_this_artwork",
+      );
+      return true;
+    },
+  );
+  const after = await identitiesRepo.find();
+  assert.equal(after.length, before.length);
+  assert.deepEqual(reservedSnapshot(after), reservedBefore);
+  assert.equal(await identitiesRepo.findOneBy({ radNumber: 15 }), null);
+  const reserved = await identitiesRepo.findOneByOrFail({ radNumber: 61 });
+  assert.equal(reserved.status, "reserved");
+  assert.equal(reserved.productId, null);
+});
+
+test("an identity mismatch blocks the legacy QR export and leaves reserved numbers unchanged", async () => {
+  const products = dataSource.getRepository(Product);
+  const identitiesRepo = dataSource.getRepository(RadIdentity);
+  const before = await identitiesRepo.find();
+  const reservedBefore = reservedSnapshot(before);
+  const mismatched = await products.save(
+    products.create({
+      ...productFields("mismatch-four-hundred"),
+      radNumber: 400,
+    }),
+  );
+  await identitiesRepo.save(
+    identitiesRepo.create({
+      radNumber: 401,
+      status: "assigned",
+      productId: mismatched.id,
+      batchId: null,
+      reservedAt: new Date(),
+      assignedAt: new Date(),
+    }),
+  );
+  const print = new IdentityPrintService(dataSource, identities);
+  await assert.rejects(
+    () => print.exportLegacyArtworks(),
+    (error: unknown) => {
+      assert.ok(error instanceof ConflictException);
+      const body = error.getResponse() as {
+        code?: string;
+        inconsistencies?: Array<{ productId: string; issue: string }>;
+      };
+      assert.equal(body.code, "identity_mismatch");
+      assert.equal(
+        body.inconsistencies?.some((row) => row.productId === mismatched.id),
+        true,
+      );
+      return true;
+    },
+  );
+  await assert.rejects(
+    () => identities.productQr(mismatched.id),
+    ConflictException,
+  );
+  const after = await identitiesRepo.find();
+  assert.equal(after.length, before.length + 1);
+  assert.deepEqual(reservedSnapshot(after), reservedBefore);
+  const identity = await identitiesRepo.findOneByOrFail({ radNumber: 401 });
+  assert.equal(identity.productId, mismatched.id);
+  assert.equal(identity.status, "assigned");
+  assert.equal(
+    (await products.findOneByOrFail({ id: mismatched.id })).radNumber,
+    400,
+  );
+  assert.equal(await identitiesRepo.findOneBy({ radNumber: 400 }), null);
 });
 
 test("marking a batch printed requires the public URL and does not run when it fails", async () => {
