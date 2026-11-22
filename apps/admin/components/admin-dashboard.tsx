@@ -284,9 +284,9 @@ export function AdminDashboard() {
               return false;
             }
           }}
-          onDelete={async (id) => {
+          onDelete={async (id, options) => {
             try {
-              await workspace.deleteProductAttribute(id);
+              await workspace.deleteProductAttribute(id, options);
               announce("ویژگی حذف شد.");
               return true;
             } catch (error) {

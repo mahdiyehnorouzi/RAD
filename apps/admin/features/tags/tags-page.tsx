@@ -125,11 +125,10 @@ export function TagsPage() {
     }
   }
 
-  async function downloadBatch(id: string) {
-    const response = await fetch(
-      `${API_BASE}/admin/identities/batches/${id}/export`,
-      { credentials: "include" },
-    );
+  async function downloadZip(path: string, filename: string) {
+    const response = await fetch(`${API_BASE}${path}`, {
+      credentials: "include",
+    });
     if (!response.ok) {
       const data = (await response.json().catch(() => ({}))) as {
         message?: string;
@@ -141,9 +140,20 @@ export function TagsPage() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = "rad-tags.zip";
+    link.download = filename;
     link.click();
     URL.revokeObjectURL(url);
+  }
+
+  async function downloadLegacy() {
+    await downloadZip(
+      "/admin/identities/legacy-artworks/export",
+      "rad-legacy-artworks.zip",
+    );
+  }
+
+  async function downloadBatch(id: string) {
+    await downloadZip(`/admin/identities/batches/${id}/export`, "rad-tags.zip");
   }
 
   async function markPrinted(id: string) {
@@ -319,6 +329,20 @@ export function TagsPage() {
           <p>شماره‌ای با این فیلتر نیست.</p>
         ) : null}
       </div>
+
+      {canWrite ? (
+        <div className="paper-panel">
+          <h2>QR آثار موجود</h2>
+          <p>
+            SVG، PNG و فهرست اثرها برای شماره‌هایی که همین حالا روی آثار هستند.
+            این خروجی به دسته چاپ وصل نیست و شماره رزروشده تازه‌ای مصرف نمی‌کند.
+            اگر شماره اثر با شناسه دائمی یکی نباشد، فایل ساخته نمی‌شود.
+          </p>
+          <Button type="button" onClick={() => void downloadLegacy()}>
+            دانلود QR آثار موجود
+          </Button>
+        </div>
+      ) : null}
 
       {batchId && canWrite ? (
         <div className="paper-panel">

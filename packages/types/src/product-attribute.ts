@@ -4,6 +4,31 @@
  * filled in per product. Mirrored by `PRODUCT_ATTRIBUTE_INPUT_TYPES` in the
  * API (CommonJS cannot import this package).
  */
+const REDUNDANT_ARTWORK_NUMBER_KEYS = new Set([
+  "unic-id",
+  "artwork-number",
+  "artwork_number",
+  "artworknumber",
+]);
+
+/**
+ * A product spec that repeats the permanent RAD number. It is not
+ * `Product.radNumber` and must not be shown or required beside it.
+ */
+export function isRedundantArtworkNumberSpec(attribute: {
+  key: string;
+  label: string;
+}) {
+  const key = attribute.key.trim().toLowerCase();
+  const label = attribute.label.trim().replace(/\s+/g, " ");
+  return (
+    REDUNDANT_ARTWORK_NUMBER_KEYS.has(key) ||
+    label === "شماره اثر" ||
+    label === "شماره اثر رد" ||
+    label === "شماره اثر رَد"
+  );
+}
+
 export const PRODUCT_ATTRIBUTE_INPUT_TYPES = [
   "text",
   "number",

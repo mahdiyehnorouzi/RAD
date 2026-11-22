@@ -1,6 +1,6 @@
 import "server-only";
 import { artistById, artworkRecords, type ArtworkRecord } from "@rad/artworks";
-import type { Artwork } from "@rad/types";
+import { isRedundantArtworkNumberSpec, type Artwork } from "@rad/types";
 
 function fromRecord({
   artistId,
@@ -12,6 +12,9 @@ function fromRecord({
     id: record.slug,
     artist: artistById(artistId),
     currency: "IRT",
+    attributes: record.attributes?.filter(
+      (attribute) => !isRedundantArtworkNumberSpec(attribute),
+    ),
   };
 }
 

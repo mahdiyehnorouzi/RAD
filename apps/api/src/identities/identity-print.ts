@@ -118,7 +118,20 @@ export interface ArchiveVerification {
   failures: string[];
 }
 
-export async function buildIdentityArchive(rows: QrArtworkFile[]) {
+export interface LegacyArtworkGap {
+  productId: string;
+  radNumber: number | null;
+  issue: "identity_mismatch" | "missing_identity" | "url_not_this_artwork";
+  detail: string;
+}
+
+export async function buildIdentityArchive(
+  rows: QrArtworkFile[],
+  extras?: {
+    artworkCsv?: boolean;
+    inconsistencies?: LegacyArtworkGap[];
+  },
+) {
   const zip = new JSZip();
   const svgFolder = zip.folder("SVG");
   const pngFolder = zip.folder("PNG");
@@ -191,6 +204,34 @@ export async function buildIdentityArchive(rows: QrArtworkFile[]) {
   }
   zip.file("manifest.csv", csv(manifest));
   zip.file("verification-report.csv", csv(report));
+  if (extras?.artworkCsv) {
+    zip.file(
+      "artworks.csv",
+      csv([
+        ["productId", "artworkName", "radNumber", "permanentUrl"],
+        ...rows.map((row) => [
+          row.productId,
+          row.productName,
+          row.radNumber,
+          radPermanentUrl(row.radNumber, CANONICAL_RAD_ORIGIN),
+        ]),
+      ]),
+    );
+  }
+  if (extras?.inconsistencies) {
+    zip.file(
+      "inconsistencies.csv",
+      csv([
+        ["productId", "radNumber", "issue", "detail"],
+        ...extras.inconsistencies.map((gap) => [
+          gap.productId,
+          gap.radNumber,
+          gap.issue,
+          gap.detail,
+        ]),
+      ]),
+    );
+  }
   const buffer = await zip.generateAsync({ type: "nodebuffer" });
   const verification = await verifyIdentityArchive(buffer, rows);
   verification.failures.push(...failures);

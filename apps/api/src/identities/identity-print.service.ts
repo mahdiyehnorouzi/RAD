@@ -12,6 +12,8 @@ import {
 } from "../database/entities";
 import {
   buildIdentityArchive,
+  qrPng,
+  qrSvg,
   verifyPublicIdentityUrls,
 } from "./identity-print";
 import { IdentitiesService } from "./identities.service";
@@ -42,6 +44,65 @@ export class IdentityPrintService {
     }
     const filename = `RAD-${loaded.batch.startNumber}-${loaded.batch.endNumber}.zip`;
     return { buffer: archive.buffer, filename };
+  }
+
+  async exportLegacyArtworks() {
+    const plan = await this.identities.legacyArtworkPlan();
+    const mismatches = plan.inconsistencies.filter(
+      (gap) => gap.issue === "identity_mismatch",
+    );
+    if (mismatches.length) {
+      const listed = mismatches
+        .map((gap) => `${gap.productId} (${gap.radNumber})`)
+        .join("، ");
+      throw new ConflictException({
+        message: `خروجی QR متوقف شد. شماره این آثار با شناسه دائمی یکی نیست: ${listed}.`,
+        code: "identity_mismatch",
+        inconsistencies: mismatches,
+      });
+    }
+    if (!plan.rows.length) {
+      throw new NotFoundException("اثر شماره‌داری برای خروجی QR نیست.");
+    }
+    const archive = await buildIdentityArchive(plan.rows, {
+      artworkCsv: true,
+      inconsistencies: plan.inconsistencies,
+    });
+    if (!archive.verification.ok) {
+      throw new ConflictException({
+        message: "فایل QR آثار موجود تأیید نشد.",
+        code: "qr_verification_failed",
+        failures: archive.verification.failures,
+      });
+    }
+    const after = await this.identities.legacyArtworkPlan();
+    if (
+      after.identityCount !== plan.identityCount ||
+      after.reserved !== plan.reserved
+    ) {
+      throw new ConflictException({
+        message: "خروجی QR نباید شماره تازه‌ای بسازد.",
+        code: "identity_allocation_detected",
+      });
+    }
+    return { buffer: archive.buffer, filename: "rad-legacy-artworks.zip" };
+  }
+
+  async productQrFile(productId: string, kind: "svg" | "png") {
+    const identity = await this.identities.productQr(productId);
+    if (kind === "svg") {
+      const { svg } = qrSvg(identity.url);
+      return {
+        buffer: Buffer.from(svg),
+        type: "image/svg+xml",
+        filename: `${identity.label}.svg`,
+      };
+    }
+    return {
+      buffer: await qrPng(identity.url),
+      type: "image/png",
+      filename: `${identity.label}.png`,
+    };
   }
 
   async markPrinted(batchId: string) {
