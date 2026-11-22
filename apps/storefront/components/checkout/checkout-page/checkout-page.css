@@ -93,20 +93,6 @@
   line-height: var(--leading-body);
 }
 
-.checkout-shipping-clear {
-  justify-self: start;
-  margin: 0;
-  padding: 0;
-  border: 0;
-  background: none;
-  color: var(--moss);
-  font: inherit;
-  font-size: max(16px, 1rem);
-  text-decoration: underline;
-  text-underline-offset: 0.2em;
-  cursor: pointer;
-}
-
 .checkout-account {
   display: grid;
   gap: var(--field-gap);
@@ -266,7 +252,7 @@
   gap: var(--field-gap);
 }
 
-.checkout-flow .checkout-account .otp-cells input {
+.checkout-flow .checkout-account .otp-cell {
   padding-inline: 0;
   text-align: center;
   border-radius: var(--field-radius, 10px);
@@ -296,4 +282,8 @@
   translate: 0 -50%;
   color: var(--muted);
   pointer-events: none;
+}
+
+.checkout-account .checkout-otp .button.checkout-account-action {
+  margin-block-start: 0.65rem;
 }
