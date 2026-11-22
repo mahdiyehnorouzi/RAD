@@ -61,6 +61,34 @@ export class AdminIdentitiesController {
       }));
   }
 
+  @Get("legacy-artworks/export")
+  async exportLegacy(@Req() request: AuthedRequest) {
+    assertIdentityWrite(request.adminRole);
+    const file = await this.print.exportLegacyArtworks();
+    return new StreamableFile(file.buffer, {
+      type: "application/zip",
+      disposition: `attachment; filename="${file.filename}"`,
+    });
+  }
+
+  @Get("products/:productId/qr.svg")
+  async productSvg(@Param("productId") productId: string) {
+    const file = await this.print.productQrFile(productId, "svg");
+    return new StreamableFile(file.buffer, {
+      type: file.type,
+      disposition: `attachment; filename="${file.filename}"`,
+    });
+  }
+
+  @Get("products/:productId/qr.png")
+  async productPng(@Param("productId") productId: string) {
+    const file = await this.print.productQrFile(productId, "png");
+    return new StreamableFile(file.buffer, {
+      type: file.type,
+      disposition: `attachment; filename="${file.filename}"`,
+    });
+  }
+
   @Get("batches/:batchId/export")
   async exportBatch(
     @Param("batchId") batchId: string,

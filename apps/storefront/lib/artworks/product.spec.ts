@@ -4,6 +4,10 @@ import type { Artwork } from "@rad/types";
 import { commerceProducts, shopProducts } from "./product";
 
 const work = {
+  attributes: [
+    { key: "color", label: "رنگ", value: "سبز" },
+    { key: "unic-id", label: "شماره اثر", value: "۱۹" },
+  ],
   slug: "persisted-work",
   title: { fa: "ظرف", en: "Vessel" },
   description: { fa: "", en: "" },
@@ -35,6 +39,10 @@ test("reserved persisted product remains resolvable by cart when discovery exclu
     assert.equal(product.reservedUntil, record.reservedUntil);
     assert.equal(product.status, record.status);
     assert.equal(product.images?.length, images.length);
+    assert.deepEqual(
+      product.attributes?.map((attribute) => attribute.key),
+      ["color"],
+    );
   }
 });
 

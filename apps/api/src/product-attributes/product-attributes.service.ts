@@ -4,6 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
+import { isRedundantArtworkNumberSpec } from "@rad/types";
 import { InjectRepository } from "@nestjs/typeorm";
 import { EntityManager, In, Repository } from "typeorm";
 import {
@@ -70,7 +71,9 @@ export class ProductAttributesService {
       .setParameter("storeCategory", storeCategory)
       .orderBy("attribute.sortOrder", "ASC")
       .getMany();
-    return rows.map(toProductAttributeView);
+    return rows
+      .map(toProductAttributeView)
+      .filter((attribute) => !isRedundantArtworkNumberSpec(attribute));
   }
 
   private async assertUniqueKey(key: string, excludeId?: string) {
@@ -189,16 +192,23 @@ export class ProductAttributesService {
     return (last?.sortOrder ?? -1) + 1;
   }
 
-  async remove(id: string) {
+  async remove(id: string, options?: { purgeValues?: boolean }) {
     const attribute = await this.attributes.findOne({ where: { id } });
     if (!attribute) throw new NotFoundException("ویژگی پیدا نشد.");
     const inUse = await this.values.count({ where: { attributeId: id } });
-    if (inUse > 0)
+    const purge =
+      options?.purgeValues === true && isRedundantArtworkNumberSpec(attribute);
+    if (inUse > 0 && !purge)
       throw new ConflictException(
         "این ویژگی برای محصولاتی ثبت شده و قابل حذف نیست؛ آن را غیرفعال کنید.",
       );
-    await this.attributes.delete({ id });
-    return { ok: true };
+    await this.values.manager.transaction(async (manager) => {
+      if (purge) {
+        await manager.delete(ProductAttributeValue, { attributeId: id });
+      }
+      await manager.delete(ProductAttribute, { id });
+    });
+    return { ok: true, purgedValues: purge ? inUse : 0 };
   }
 
   async reorder(ids: string[]) {
@@ -241,6 +251,7 @@ export class ProductAttributesService {
       (attribute) =>
         attribute.active &&
         attribute.required &&
+        !isRedundantArtworkNumberSpec(attribute) &&
         attribute.categoryLinks.some((link) => link.category === storeCategory),
     );
     for (const attribute of requiredForCategory) {
@@ -347,6 +358,7 @@ export class ProductAttributesService {
           if (
             !attribute ||
             !attribute.active ||
+            isRedundantArtworkNumberSpec(attribute) ||
             !attribute.categoryLinks.some((link) => link.category === category)
           )
             return null;

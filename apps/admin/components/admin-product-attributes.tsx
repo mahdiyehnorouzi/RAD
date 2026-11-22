@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Plus } from "lucide-react";
 import { Button } from "@rad/ui";
+import { isRedundantArtworkNumberSpec } from "@rad/types";
 import {
   attributeCategoryLabel,
   type ProductAttribute,
@@ -33,7 +34,10 @@ export function AdminProductAttributes({
   attributes: ProductAttribute[];
   canWrite: boolean;
   onSave: (input: ProductAttributeInput, id?: string) => Promise<boolean>;
-  onDelete: (id: string) => Promise<boolean>;
+  onDelete: (
+    id: string,
+    options?: { purgeValues?: boolean },
+  ) => Promise<boolean>;
   onReorder: (ids: string[]) => Promise<void>;
 }) {
   const [editing, setEditing] = useState<ProductAttribute | "new" | null>(null);
@@ -127,11 +131,20 @@ export function AdminProductAttributes({
       {deleteTarget && (
         <ConfirmDialog
           title="حذف این ویژگی؟"
-          description={`«${deleteTarget.label}» از فهرست ویژگی‌ها برداشته می‌شود. اگر این ویژگی برای محصولی ثبت شده باشد، حذف ممکن نیست و باید غیرفعال شود.`}
+          description={
+            isRedundantArtworkNumberSpec(deleteTarget)
+              ? `«${deleteTarget.label}» از مشخصات برداشته می‌شود. مقدارهای ذخیره‌شده همین ویژگی هم پاک می‌شوند. شماره رَد دائمی اثر عوض نمی‌شود.`
+              : `«${deleteTarget.label}» از فهرست ویژگی‌ها برداشته می‌شود. اگر این ویژگی برای محصولی ثبت شده باشد، حذف ممکن نیست و باید غیرفعال شود.`
+          }
           confirmLabel="حذف ویژگی"
           onCancel={() => setDeleteTarget(null)}
           onConfirm={async () => {
-            if (await onDelete(deleteTarget.id)) setDeleteTarget(null);
+            if (
+              await onDelete(deleteTarget.id, {
+                purgeValues: isRedundantArtworkNumberSpec(deleteTarget),
+              })
+            )
+              setDeleteTarget(null);
           }}
         />
       )}
