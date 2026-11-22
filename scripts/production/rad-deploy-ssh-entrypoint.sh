@@ -65,7 +65,9 @@ MAX_TRANSPORT_BYTES="${RAD_DEPLOY_MAX_TRANSPORT_BYTES:-2200000000}"
 # These bound the upload only. They do not bound the broker's migrate/release
 # work, which starts only after transfer_complete and validation_complete.
 IDLE_SECONDS="${RAD_DEPLOY_TRANSFER_IDLE_SECONDS:-45}"
-DEADLINE_SECONDS="${RAD_DEPLOY_TRANSFER_DEADLINE_SECONDS:-600}"
+# Matches rad_deploy_transport.py's DEFAULT_DEADLINE_SECONDS - see that
+# module's docstring for why this was raised from 600.
+DEADLINE_SECONDS="${RAD_DEPLOY_TRANSFER_DEADLINE_SECONDS:-1200}"
 
 fail() {
   echo "rad-deploy-ssh-entrypoint: $1" >&2

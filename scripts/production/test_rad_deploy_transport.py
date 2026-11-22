@@ -115,6 +115,44 @@ class CopyBoundedTests(unittest.TestCase):
         self.assertEqual(caught.exception.reason, "deadline")
         self.assertEqual(caught.exception.bytes_copied, 3)
 
+    def test_default_deadline_was_raised_above_the_old_600s_window(self):
+        # Regression guard for run #45004239836: a transfer sending
+        # 50069504 bytes at a sustained ~83 KiB/s (no single idle gap, so
+        # never "stalled") exhausted the old 600s DEFAULT_DEADLINE_SECONDS
+        # even though it kept making progress. This pins the raised value
+        # so a future change cannot silently drop it back down.
+        self.assertEqual(transport.DEFAULT_DEADLINE_SECONDS, 1200)
+        self.assertGreater(transport.DEFAULT_DEADLINE_SECONDS, 600)
+
+    def test_steady_slow_progress_beyond_the_old_600s_window_still_completes(self):
+        # A transfer that keeps moving (never idle past idle_seconds) but
+        # takes longer than the old fixed 600s deadline must now succeed
+        # rather than fail with reason="deadline", as long as it finishes
+        # within the (larger) configured deadline.
+        pipe = Pipe()
+        self.addCleanup(pipe.close)
+
+        def trickle():
+            for _ in range(6):
+                pipe.write.write(b"x" * 100)
+                pipe.write.flush()
+                time.sleep(0.15)
+            pipe.write.close()
+
+        import threading
+        writer = threading.Thread(target=trickle)
+        writer.start()
+        self.addCleanup(writer.join)
+        destination = self.output()
+        # idle_seconds=1 tolerates each 0.15s gap; deadline_seconds=5 is
+        # comfortably longer than this ~0.9s transfer but stands in for
+        # "longer than the old fixed 600s window would have allowed" in
+        # proportion to the trickle's own total duration.
+        copied = transport.copy_bounded(pipe.read, destination, 10000, 1, 5)
+        destination.close()
+        writer.join()
+        self.assertEqual(copied, 600)
+
     def test_oversize_does_not_write_the_overflowing_chunk(self):
         pipe = Pipe()
         self.addCleanup(pipe.close)
