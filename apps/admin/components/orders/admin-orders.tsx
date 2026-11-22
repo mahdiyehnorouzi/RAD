@@ -546,6 +546,32 @@ function OrderDetail({
         <section aria-labelledby={`address-${order.id}`}>
           <h4 id={`address-${order.id}`}>نشانی تحویل</h4>
           <dl>
+            {order.recipientName && order.recipientPhone ? (
+              <>
+                <div>
+                  <dt>نام گیرنده</dt>
+                  <dd>{order.recipientName}</dd>
+                </div>
+                <div>
+                  <dt>شماره موبایل گیرنده</dt>
+                  <dd dir="ltr">
+                    <a href={`tel:${order.recipientPhone}`}>
+                      {order.recipientPhone}
+                    </a>
+                  </dd>
+                </div>
+              </>
+            ) : null}
+            {order.giftMessage ? (
+              <div>
+                <dt>متن کارت هدیه</dt>
+                <dd
+                  style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}
+                >
+                  {order.giftMessage}
+                </dd>
+              </div>
+            ) : null}
             <div>
               <dt>شهر</dt>
               <dd>{order.city || "ثبت نشده"}</dd>

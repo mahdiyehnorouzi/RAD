@@ -38,6 +38,24 @@ export class CheckoutDto {
   @MaxLength(500)
   message?: string;
 
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
+  recipientName?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  @MaxLength(32)
+  recipientPhone?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  @MaxLength(240)
+  giftMessage?: string;
+
   @ApiPropertyOptional({
     description:
       "Version of each purchase rule the buyer read and accepted; must match the current versions",

@@ -8,6 +8,8 @@ export type OrderRow = {
   city: string;
   phone: string;
   address: string;
+  recipientName?: string | null;
+  recipientPhone?: string | null;
   trackingCode?: string | null;
   estimatedDeliveryAt?: Date | null;
   deliveredAt?: Date | null;
