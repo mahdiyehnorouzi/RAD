@@ -44,7 +44,9 @@ export function PhoneOtpCodeStep({
   const [sentBefore, sentAfter = ""] = t("otpCodeSentTo").split("{phone}");
 
   return (
-    <div className={className ? `phone-otp-code ${className}` : "phone-otp-code"}>
+    <div
+      className={className ? `phone-otp-code ${className}` : "phone-otp-code"}
+    >
       <p className="auth-otp-sent">
         {sentBefore}
         <bdi dir="ltr">{formatIranMobileDraft(sentPhone)}</bdi>
