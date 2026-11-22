@@ -21,7 +21,11 @@ function noticeHref(notice: Notice) {
   return null;
 }
 
-export function NotificationsPage({ embedded = false }: { embedded?: boolean }) {
+export function NotificationsPage({
+  embedded = false,
+}: {
+  embedded?: boolean;
+}) {
   const { notices, unread, markAllRead, ready } = useCommerce();
   const artistNotices = notices.filter((notice) => isArtistNotice(notice.kind));
   const { locale, t, href } = useLocale();
@@ -35,15 +39,21 @@ export function NotificationsPage({ embedded = false }: { embedded?: boolean }) 
     if (notice.kind === "order") return t("noticeOrder");
     if (notice.kind === "order_confirmed") return t("noticeOrderConfirmed");
     if (notice.kind === "order_rejected") return t("noticeOrderRejected");
-    if (notice.kind === "commission_approved") return t("noticeCommissionApproved");
-    if (notice.kind === "commission_declined") return t("noticeCommissionDeclined");
+    if (notice.kind === "commission_approved")
+      return t("noticeCommissionApproved");
+    if (notice.kind === "commission_declined")
+      return t("noticeCommissionDeclined");
     if (notice.kind === "commission_change") return t("noticeCommissionChange");
-    if (notice.kind === "commission_message") return t("noticeCommissionMessage");
+    if (notice.kind === "commission_message")
+      return t("noticeCommissionMessage");
     if (notice.kind === "commission_quote") return t("noticeCommissionQuote");
-    if (notice.kind === "commission_pre_kiln") return t("noticeCommissionPreKiln");
+    if (notice.kind === "commission_pre_kiln")
+      return t("noticeCommissionPreKiln");
     if (notice.kind === "commission_firing") return t("noticeCommissionFiring");
-    if (notice.kind === "commission_balance") return t("noticeCommissionBalance");
-    if (notice.kind === "commission_shipped") return t("noticeCommissionShipped");
+    if (notice.kind === "commission_balance")
+      return t("noticeCommissionBalance");
+    if (notice.kind === "commission_shipped")
+      return t("noticeCommissionShipped");
     return t("noticeWelcome");
   };
 
@@ -53,51 +63,62 @@ export function NotificationsPage({ embedded = false }: { embedded?: boolean }) 
   });
 
   const page = (
-      <section className="notifications-page section">
-        <AccountHeading
-          icon={Bell}
-          title={t("notifications")}
-          body={t("notificationsBody")}
-          action={
-            unread > 0 ? (
-              <button className="account-button account-button--quiet" type="button" onClick={markAllRead}>
-                <CheckCheck aria-hidden="true" strokeWidth={1.6} />
-                {t("markAllRead")}
-              </button>
-            ) : null
-          }
-        />
-        {!ready ? (
-          <CardListSkeleton count={4} />
-        ) : artistNotices.length ? (
-          <ul className="account-list notifications-list">
-            {artistNotices.map((notice) => {
-              const target = noticeHref(notice);
-              const Icon = NOTICE_ICON[notice.kind] ?? Bell;
-              const body = (
-                <>
-                  <span className="account-badge" aria-hidden="true">
-                    <Icon strokeWidth={1.6} />
-                  </span>
-                  <span className="notice-text">{noticeText(notice)}</span>
-                  <time dateTime={new Date(notice.createdAt).toISOString()}>
-                    {time.format(notice.createdAt)}
-                  </time>
-                </>
-              );
-              return (
-                <li key={notice.id} className={notice.read ? undefined : "unread"}>
-                  {target ? <Link href={href(target)}>{body}</Link> : <div>{body}</div>}
-                </li>
-              );
-            })}
-          </ul>
-        ) : (
-          <div className="account-empty">
-            <p>{t("noNotifications")}</p>
-          </div>
-        )}
-      </section>
+    <section className="notifications-page section">
+      <AccountHeading
+        icon={Bell}
+        title={t("notifications")}
+        body={t("notificationsBody")}
+        action={
+          unread > 0 ? (
+            <button
+              className="account-button account-button--quiet"
+              type="button"
+              onClick={markAllRead}
+            >
+              <CheckCheck aria-hidden="true" strokeWidth={1.6} />
+              {t("markAllRead")}
+            </button>
+          ) : null
+        }
+      />
+      {!ready ? (
+        <CardListSkeleton count={4} />
+      ) : artistNotices.length ? (
+        <ul className="account-list notifications-list">
+          {artistNotices.map((notice) => {
+            const target = noticeHref(notice);
+            const Icon = NOTICE_ICON[notice.kind] ?? Bell;
+            const body = (
+              <>
+                <span className="account-badge" aria-hidden="true">
+                  <Icon strokeWidth={1.6} />
+                </span>
+                <span className="notice-text">{noticeText(notice)}</span>
+                <time dateTime={new Date(notice.createdAt).toISOString()}>
+                  {time.format(notice.createdAt)}
+                </time>
+              </>
+            );
+            return (
+              <li
+                key={notice.id}
+                className={notice.read ? undefined : "unread"}
+              >
+                {target ? (
+                  <Link href={href(target)}>{body}</Link>
+                ) : (
+                  <div>{body}</div>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      ) : (
+        <div className="account-empty">
+          <p>{t("noNotifications")}</p>
+        </div>
+      )}
+    </section>
   );
   if (embedded) return page;
   return <AccountShell requireAuth>{page}</AccountShell>;

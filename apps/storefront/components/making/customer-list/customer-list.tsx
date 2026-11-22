@@ -12,29 +12,50 @@ import { AccountHeading } from "../../account/account-heading";
 import { CommissionCard } from "./commission-card";
 import { CardListSkeleton } from "@/components/ui/skeleton";
 
-export function CustomerMakingList({ embedded = false }: { embedded?: boolean }) {
+export function CustomerMakingList({
+  embedded = false,
+}: {
+  embedded?: boolean;
+}) {
   const { commissions, ready } = useMaking();
   const { t } = useLocale();
   const mine = commissions.filter((item) => !isDemoCommission(item.id));
   const loading = (
-        <section className="making-page section">
-          <CardListSkeleton count={4} className="making-grid" />
-        </section>
+    <section className="making-page section">
+      <CardListSkeleton count={4} className="making-grid" />
+    </section>
   );
   if (!ready) {
-    return embedded ? loading : <AccountShell requireAuth>{loading}</AccountShell>;
+    return embedded ? (
+      loading
+    ) : (
+      <AccountShell requireAuth>{loading}</AccountShell>
+    );
   }
   const page = (
     <section className="making-page section">
-      <AccountHeading icon={PenLine} title={t("customOrdersTitle")} body={t("customOrdersBody")} />
+      <AccountHeading
+        icon={PenLine}
+        title={t("customOrdersTitle")}
+        body={t("customOrdersBody")}
+      />
       <aside className="making-note">
         <p>{t("makingCustomNote")}</p>
-        <Image src="/contact/contact-sprig.webp" alt="" width={108} height={116} />
+        <Image
+          src="/contact/contact-sprig.webp"
+          alt=""
+          width={108}
+          height={116}
+        />
       </aside>
       {mine.length ? (
         <div className="making-grid">
           {mine.map((item) => (
-            <CommissionCard key={item.id} commission={item} hrefBase="/making" />
+            <CommissionCard
+              key={item.id}
+              commission={item}
+              hrefBase="/making"
+            />
           ))}
         </div>
       ) : (
@@ -51,7 +72,11 @@ export function CustomerMakingList({ embedded = false }: { embedded?: boolean })
         </header>
         <div className="making-grid">
           {seedCommissions.map((item) => (
-            <CommissionCard key={item.id} commission={item} hrefBase="/making" />
+            <CommissionCard
+              key={item.id}
+              commission={item}
+              hrefBase="/making"
+            />
           ))}
         </div>
       </section>

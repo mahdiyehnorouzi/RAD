@@ -21,7 +21,8 @@ function isProfileSection(value: unknown): value is ProfileSection {
 export function profileSectionFromPath(pathname: string): ProfileSection {
   const path = pathname.replace(/\/$/, "") || "/";
   if (path === "/orders" || path.startsWith("/orders/")) return "orders";
-  if (path === "/account/making" || path.startsWith("/making/")) return "making";
+  if (path === "/account/making" || path.startsWith("/making/"))
+    return "making";
   if (path === "/favorites") return "favorites";
   if (path === "/account/notifications") return "notifications";
   if (path === "/account/addresses") return "addresses";

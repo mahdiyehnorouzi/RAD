@@ -1,7 +1,7 @@
 "use client";
 
 import "./customer-sidebar.css";
-import type {MakingCommission} from "@/components/making/type";
+import type { MakingCommission } from "@/components/making/type";
 import { copy, STAGE_LABEL } from "@/lib/making";
 import { formatWhen } from "@/lib/making";
 import { useLocale } from "@/components/i18n";
@@ -19,7 +19,10 @@ export function StageMessages({
   const items = (
     internalOnly
       ? commission.internalNotes
-      : [...commission.messages, ...(revealInternal ? commission.internalNotes : [])]
+      : [
+          ...commission.messages,
+          ...(revealInternal ? commission.internalNotes : []),
+        ]
   ).sort((a, b) => a.createdAt - b.createdAt);
   if (!items.length) return null;
   return (

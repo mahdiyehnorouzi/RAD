@@ -255,7 +255,8 @@ export const en = {
   navHintFavorites: "Works you have saved",
   navHintNotifications: "Messages from the maker",
   navHintAccount: "Your personal details",
-  notificationsBody: "Messages the maker sends about your order or custom piece.",
+  notificationsBody:
+    "Messages the maker sends about your order or custom piece.",
   unreadCount: "{count} unread",
   recentActivity: "Recent activity",
   noRecentActivity: "You have no recent activity yet.",

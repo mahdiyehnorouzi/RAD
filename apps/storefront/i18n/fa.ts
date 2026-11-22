@@ -251,7 +251,8 @@ export const fa = {
   navHintFavorites: "آثار دلخواه شما",
   navHintNotifications: "پیام‌های سازنده",
   navHintAccount: "مدیریت اطلاعات شخصی",
-  notificationsBody: "پیام‌هایی که سازنده درباره سفارش یا ساخت اختصاصی برای شما می‌فرستد.",
+  notificationsBody:
+    "پیام‌هایی که سازنده درباره سفارش یا ساخت اختصاصی برای شما می‌فرستد.",
   unreadCount: "{count} خوانده‌نشده",
   recentActivity: "فعالیت اخیر",
   noRecentActivity: "هنوز فعالیت اخیری ندارید.",

@@ -47,10 +47,7 @@ export function AccountShell({
     return children;
   }
   return (
-    <div
-      className="account-shell"
-      data-hub={hub ? "" : undefined}
-    >
+    <div className="account-shell" data-hub={hub ? "" : undefined}>
       <AccountNav />
       <div className="account-shell-main">{children}</div>
     </div>

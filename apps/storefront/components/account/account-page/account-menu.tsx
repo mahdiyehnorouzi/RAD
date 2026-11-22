@@ -24,19 +24,26 @@ export function AccountMenu() {
           const section = profileSectionFromPath(item.href);
           const inner = (
             <>
-                <span className="account-badge" aria-hidden="true">
-                  <Icon strokeWidth={1.6} />
+              <span className="account-badge" aria-hidden="true">
+                <Icon strokeWidth={1.6} />
+              </span>
+              <span className="account-menu-text">
+                <b>{t(item.label)}</b>
+                <small>{t(item.hint)}</small>
+              </span>
+              {count > 0 ? (
+                <span
+                  className="account-menu-count"
+                  aria-label={t("unreadCount", { count: number(count) })}
+                >
+                  {number(count)}
                 </span>
-                <span className="account-menu-text">
-                  <b>{t(item.label)}</b>
-                  <small>{t(item.hint)}</small>
-                </span>
-                {count > 0 ? (
-                  <span className="account-menu-count" aria-label={t("unreadCount", { count: number(count) })}>
-                    {number(count)}
-                  </span>
-                ) : null}
-                <Chevron className="account-menu-chevron" aria-hidden="true" strokeWidth={1.6} />
+              ) : null}
+              <Chevron
+                className="account-menu-chevron"
+                aria-hidden="true"
+                strokeWidth={1.6}
+              />
             </>
           );
           return (

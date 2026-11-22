@@ -28,7 +28,8 @@ test("surprise permission is Persian for yes, no, and an explicit empty answer",
   assert.equal(faithful.state, "noted");
   assert.equal(material.state, "noted");
   if (faithful.state === "noted") assert.match(faithful.text, /طرح/);
-  if (material.state === "noted") assert.doesNotMatch(material.text, /material/);
+  if (material.state === "noted")
+    assert.doesNotMatch(material.text, /material/);
   assert.equal(permissionView("hand", "fa").state, "noted");
 });
 
@@ -40,6 +41,9 @@ test("request files only render from safe sources", () => {
     safeAttachmentSrc("data:image/png;base64,aaaa"),
     "data:image/png;base64,aaaa",
   );
-  assert.equal(safeAttachmentSrc("/making/private/a.webp"), "/making/private/a.webp");
+  assert.equal(
+    safeAttachmentSrc("/making/private/a.webp"),
+    "/making/private/a.webp",
+  );
   assert.equal(safeAttachmentSrc(""), null);
 });

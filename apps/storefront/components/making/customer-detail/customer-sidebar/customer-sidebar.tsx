@@ -1,6 +1,6 @@
 "use client";
 
-import type {MakingCommission} from "@/components/making/type";
+import type { MakingCommission } from "@/components/making/type";
 import { useMaking } from "@/hooks/use-making-workspace";
 import { useLocale } from "@/components/i18n";
 import { MessageComposer } from "./message-composer";
@@ -17,8 +17,12 @@ export function CustomerMakingSidebar({
 }) {
   const { addMessage } = useMaking();
   const { locale } = useLocale();
-  const showMessages = commission.stage !== "complete" && commission.stage !== "shipping";
-  const canCompose = !readOnly && commission.stage !== "complete" && commission.stage !== "declined";
+  const showMessages =
+    commission.stage !== "complete" && commission.stage !== "shipping";
+  const canCompose =
+    !readOnly &&
+    commission.stage !== "complete" &&
+    commission.stage !== "declined";
   const hasMessages = commission.messages.length > 0;
 
   return (
@@ -37,7 +41,9 @@ export function CustomerMakingSidebar({
           ) : null}
           {canCompose ? (
             <MessageComposer
-              onSend={(body) => addMessage(commission.id, { author: "customer", body })}
+              onSend={(body) =>
+                addMessage(commission.id, { author: "customer", body })
+              }
             />
           ) : null}
         </section>

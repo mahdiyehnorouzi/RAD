@@ -1,9 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import {
-  profileSectionFromPath,
-  sectionAfterPop,
-} from "./profile-section";
+import { profileSectionFromPath, sectionAfterPop } from "./profile-section";
 
 test("profile paths open the matching section, and everything else is the collection", () => {
   assert.equal(profileSectionFromPath("/account"), "collection");
@@ -12,7 +9,10 @@ test("profile paths open the matching section, and everything else is the collec
   assert.equal(profileSectionFromPath("/account/making"), "making");
   assert.equal(profileSectionFromPath("/making/RAD-M-1"), "making");
   assert.equal(profileSectionFromPath("/favorites"), "favorites");
-  assert.equal(profileSectionFromPath("/account/notifications"), "notifications");
+  assert.equal(
+    profileSectionFromPath("/account/notifications"),
+    "notifications",
+  );
   assert.equal(profileSectionFromPath("/account/addresses"), "addresses");
   assert.equal(profileSectionFromPath("/account/info"), "info");
 });

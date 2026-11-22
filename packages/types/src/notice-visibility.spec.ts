@@ -1,9 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import {
-  isArtistNotice,
-  shouldSkipDuplicateNotice,
-} from "./index.ts";
+import { isArtistNotice, shouldSkipDuplicateNotice } from "./index.ts";
 
 test("artist notices are maker and studio messages, not the customer's own actions", () => {
   assert.equal(isArtistNotice("commission_message"), true);
