@@ -1,4 +1,4 @@
-import { ProfileExperience } from "@/components/account/profile-experience";
+import { ProfileExperience } from "@/components/account";
 
 export default function Page() {
   return <ProfileExperience initial="orders" />;

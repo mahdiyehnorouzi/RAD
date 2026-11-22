@@ -1,4 +1,4 @@
-export const PROFILE_SECTIONS = [
+const PROFILE_SECTIONS = [
   "collection",
   "orders",
   "making",
@@ -10,7 +10,7 @@ export const PROFILE_SECTIONS = [
 
 export type ProfileSection = (typeof PROFILE_SECTIONS)[number];
 
-export function isProfileSection(value: unknown): value is ProfileSection {
+function isProfileSection(value: unknown): value is ProfileSection {
   return (
     typeof value === "string" &&
     (PROFILE_SECTIONS as readonly string[]).includes(value)

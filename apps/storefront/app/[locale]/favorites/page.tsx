@@ -2,7 +2,7 @@
 
 import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import { ProfileExperience } from "@/components/account/profile-experience";
+import { ProfileExperience } from "@/components/account";
 import { FavoritesPage } from "@/components/favorites";
 
 function FavoritesRoute() {

@@ -50,8 +50,17 @@ export class NoticesService {
     };
   }
 
-  /** Customers do not create notices. Studio events use `createForOwner`. */
-  async create(actor: Actor) {
+  /**
+   * Public create is a no-op. Favorite, cart, and checkout notices are the
+   * customer's own actions. Studio events go through `createForOwner`.
+   */
+  async create(
+    actor: Actor,
+    kind?: StoredNoticeKind,
+    productSlug?: string,
+  ) {
+    void kind;
+    void productSlug;
     return this.list(actor);
   }
 

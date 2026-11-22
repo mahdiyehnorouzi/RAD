@@ -2,7 +2,7 @@ import { DESIGNER_COLORS } from "@/features/studio/custom-designer/const/spark";
 
 const HEX = /^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i;
 
-export type ColorSwatch = {
+type ColorSwatch = {
   key: string;
   label: string;
   /** Absent when the stored value is not a known glaze or a hex colour. */
@@ -38,7 +38,7 @@ export function colorSwatches(
   return swatches;
 }
 
-export type PermissionView =
+type PermissionView =
   | { state: "missing" }
   | { state: "unknown"; text: string }
   | { state: "allowed"; text: string }
