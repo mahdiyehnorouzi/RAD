@@ -22,6 +22,7 @@ import {
 import { MailService } from "../mail/mail.service";
 import { InventoryService } from "../inventory/inventory.service";
 import { toAuthUser, type Actor, type AuthUser } from "../common/identity";
+import { isUniqueViolation } from "./profile.service";
 
 const SESSION_MAX_AGE_MS = 1000 * 60 * 60 * 24 * 7;
 const REMEMBER_MAX_AGE_MS = 1000 * 60 * 60 * 24 * 30;
@@ -145,6 +146,7 @@ export class AuthService {
           code: "account_inactive",
         });
       }
+      await this.backfillContactPhone(existing, phone);
       return this.openSession(toAuthUser(existing), actor);
     }
 
@@ -166,7 +168,33 @@ export class AuthService {
     await this.notices.save(
       this.notices.create({ ownerKey: `user:${created.id}`, kind: "welcome" }),
     );
+    await this.backfillContactPhone(created, phone);
     return this.openSession(toAuthUser(created), actor);
+  }
+
+  /**
+   * Defaults the self-reported contact `User.phone` to the number just
+   * proven via OTP, the first time it is still unset — so the profile
+   * page shows a number instead of staying blank forever on an
+   * OTP-only account (see `ProfileService`/`account-info.tsx`). This
+   * writes the row `signInWithPhone` already found-or-created by
+   * `verifiedPhone`, never looks anything up *by* `phone` — it does not
+   * touch the lookup/auto-link policy documented on `signInWithPhone`.
+   * Never overwrites an existing contact value (`user.phone` already
+   * set, however it got there, is left alone). `phone` keeps its own
+   * unique index, so a collision with some other account's unrelated,
+   * never-verified `phone` value is swallowed rather than failing the
+   * sign-in — this account simply keeps a blank contact field, same as
+   * before this method existed.
+   */
+  private async backfillContactPhone(user: User, phone: string) {
+    if (user.phone) return;
+    try {
+      await this.users.update({ id: user.id }, { phone });
+      user.phone = phone;
+    } catch (error) {
+      if (!isUniqueViolation(error)) throw error;
+    }
   }
 
   async me(actor: Actor) {

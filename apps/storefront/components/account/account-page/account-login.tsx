@@ -357,6 +357,7 @@ function AccountLoginForm({ returnTo }: { returnTo?: string }) {
                   <small id="login-phone-hint">{t("otpHint")}</small>
                   <Button
                     type="submit"
+                    className="auth-otp-action"
                     disabled={otp.busy}
                     aria-busy={otp.busy || undefined}
                   >
@@ -366,6 +367,7 @@ function AccountLoginForm({ returnTo }: { returnTo?: string }) {
               ) : (
                 <PhoneOtpCodeStep
                   id="login-code"
+                  actionClassName="auth-otp-action"
                   sentPhone={otp.sentPhone}
                   code={otp.code}
                   busy={otp.busy}
