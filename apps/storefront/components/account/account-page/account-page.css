@@ -252,6 +252,15 @@
   margin-top: 1rem;
 }
 
+/* Matches the rounded mobile OTP action button already established in
+   checkout-page.css's .checkout-account-action (same phone-OTP control). */
+@media (--phone) {
+  .auth-stack > .button.auth-otp-action,
+  .auth-stack .phone-otp-code > .button.auth-otp-action {
+    border-radius: 30px;
+  }
+}
+
 .auth-stack > small {
   color: #71665b;
 }

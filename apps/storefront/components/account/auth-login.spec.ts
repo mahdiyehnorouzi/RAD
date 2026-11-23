@@ -210,6 +210,25 @@ test("the login form signs in through /auth/otp/signin, unaffected by Google sig
  * `GOOGLE_CALLBACK_URL` note). A link built from a bare "/auth/google"
  * (no "/backend" prefix) would silently break this.
  */
+/**
+ * "ارسال کد تأیید" and "تأیید و ورود" must use the same rounded mobile
+ * styling already established for the identical OTP action button in
+ * checkout (`.checkout-account .button.checkout-account-action`), not the
+ * sitewide square `.button` class every other page keeps.
+ */
+test("the OTP send-code and confirm buttons opt into the rounded auth styling", () => {
+  const login = readFileSync(
+    join(here, "account-page/account-login.tsx"),
+    "utf8",
+  );
+  const css = readFileSync(join(here, "account-page/account-page.css"), "utf8");
+  assert.match(login, /<Button\s+type="submit"\s+className="auth-otp-action"/);
+  assert.match(login, /actionClassName="auth-otp-action"/);
+  assert.match(css, /\.button\.auth-otp-action/);
+  const authOtpActionBlock = css.slice(css.indexOf("auth-otp-action"));
+  assert.match(authOtpActionBlock, /border-radius:\s*30px/);
+});
+
 test("the Google sign-in link is same-origin, through the /backend proxy", () => {
   const login = readFileSync(
     join(here, "account-page/account-login.tsx"),
