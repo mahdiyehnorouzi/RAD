@@ -139,7 +139,21 @@ jobs:
   deploy-api:
     name: Deploy API
     needs: detect
-    if: needs.detect.outputs.api == 'true'
+    # Must be `always() && needs.detect.result == 'success' && ...`, not the
+    # bare `needs.detect.outputs.api == 'true'` this used to be: without an
+    # explicit status-check function, GitHub implicitly ANDs the condition
+    # with success(), and bare success() is evaluated over detect's own
+    # transitive ancestors - including `checks`, which is NOT in this job's
+    # `needs` but IS one of detect's. On workflow_dispatch, `checks` is
+    # intentionally skipped (see its `if`), so that implicit success() was
+    # false even though `detect` itself had already succeeded, and this job
+    # silently skipped on every manual dispatch (see the run linked from the
+    # PR that added this comment). `always()` disables the implicit wrap, so
+    # only the explicit conditions below are evaluated.
+    if: |
+      always() &&
+      needs.detect.result == 'success' &&
+      needs.detect.outputs.api == 'true'
     uses: ./.github/workflows/deploy-api-vps.yml
     with:
       commit_sha: ${{ github.event.inputs.commit_sha || github.sha }}
@@ -193,14 +207,35 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Report
+        env:
+          API_AFFECTED: ${{ needs.detect.outputs.api }}
+          API_RESULT: ${{ needs.deploy-api.result }}
+          FRONTEND_AFFECTED: ${{ needs.detect.outputs.storefront == 'true' || needs.detect.outputs.admin == 'true' }}
+          FRONTEND_RESULT: ${{ needs.deploy-frontend.result }}
         run: |
           echo "## Release summary for ${{ github.event.inputs.commit_sha || github.sha }} (confirm=${{ github.event.inputs.confirm || (github.event_name == 'push' && 'deploy') || 'build-check-only' }})" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
           echo "| Service | Affected | Result |" >> "$GITHUB_STEP_SUMMARY"
           echo "|---|---|---|" >> "$GITHUB_STEP_SUMMARY"
-          echo "| API | ${{ needs.detect.outputs.api }} | ${{ needs.deploy-api.result || 'skipped' }} |" >> "$GITHUB_STEP_SUMMARY"
-          echo "| Storefront/Admin | ${{ needs.detect.outputs.storefront }}/${{ needs.detect.outputs.admin }} | ${{ needs.deploy-frontend.result || 'skipped' }} |" >> "$GITHUB_STEP_SUMMARY"
-          if [[ "${{ needs.deploy-api.result }}" == "failure" || "${{ needs.deploy-frontend.result }}" == "failure" ]]; then
+          echo "| API | ${{ needs.detect.outputs.api }} | ${API_RESULT:-skipped} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Storefront/Admin | ${{ needs.detect.outputs.storefront }}/${{ needs.detect.outputs.admin }} | ${FRONTEND_RESULT:-skipped} |" >> "$GITHUB_STEP_SUMMARY"
+
+          if [[ "$API_RESULT" == "failure" || "$FRONTEND_RESULT" == "failure" ]]; then
             echo "::error::One or more deployments failed. Check the linked job logs above - each release job reports whether its own automatic rollback succeeded."
+            exit 1
+          fi
+
+          # A service detect marked as affected must have had its deploy job
+          # actually run - "skipped" here never means "nothing to deploy", it
+          # means a job-condition bug (like the one that made this check
+          # necessary: deploy-api silently skipping on every manual dispatch
+          # despite detect reporting api=true) kept a real release from
+          # going out while the workflow still reported overall success.
+          if [[ "$API_AFFECTED" == "true" && "$API_RESULT" == "skipped" ]]; then
+            echo "::error::API was affected by this release but the Deploy API job was skipped instead of running. This is a workflow condition bug, not an intentional no-op - nothing was deployed."
+            exit 1
+          fi
+          if [[ "$FRONTEND_AFFECTED" == "true" && "$FRONTEND_RESULT" == "skipped" ]]; then
+            echo "::error::Storefront/Admin was affected by this release but the Deploy Storefront/Admin job was skipped instead of running. This is a workflow condition bug, not an intentional no-op - nothing was deployed."
             exit 1
           fi
