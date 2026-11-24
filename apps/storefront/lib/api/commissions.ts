@@ -4,7 +4,7 @@ import type { LocaleCopy } from "@/types/locale";
 import { api } from "./client";
 
 /** A message append, always via the lock-protected endpoint - never the whole-payload save. */
-export type CommissionMessageInput = { body: LocaleCopy; internal?: boolean };
+type CommissionMessageInput = { body: LocaleCopy; internal?: boolean };
 
 /** Sketch plus the studio's four reference photos, each pre-compressed under the slim limit. */
 export const COMMISSION_UPLOAD_IMAGES = 5;
