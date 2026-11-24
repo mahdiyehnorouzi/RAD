@@ -78,19 +78,21 @@ export class CommissionsService {
 
   async saveMine(actor: Actor, id: string, payload: MakingCommission) {
     this.requireSignedIn(actor);
-    const row = await this.requireOwned(actor, id);
-    // Customer saves may update the editable brief only. Never trust a client
-    // to write workflow state, payments, audit entries, or internal notes.
-    const current = this.toCommission(row.payload);
-    const next = {
+    await this.requireOwned(actor, id);
+    // Customer saves may update the editable brief only. Never trust a
+    // client to write workflow state, payments, audit entries, or internal
+    // notes - and derive `next` from the freshly row-locked `current`
+    // (inside mutateCommission's transaction), never from a snapshot read
+    // before the lock, so a concurrent message append can't be lost under
+    // this save. See commissions-conversation-sync.spec.ts.
+    const { next } = await this.mutateCommission(id, (current) => ({
       ...current,
       title: payload.title,
       customerName: payload.customerName,
       brief: payload.brief,
-      id: row.id,
+      id,
       updatedAt: Date.now(),
-    };
-    await this.commissions.update({ id }, { payload: next });
+    }));
     return this.toCustomer(next);
   }
 
@@ -162,16 +164,22 @@ export class CommissionsService {
    * The storefront workshop UI's own message box, for a maker/artist who
    * reaches commissions through `apps/storefront` rather than the admin
    * dashboard. Reuses `addArtistMessage`'s lock-protected append so both
-   * surfaces write through the same safe path.
+   * surfaces write through the same safe path. `addArtistMessage` returns
+   * the Admin DTO (`toAdmin`'s shape, with the full commission nested
+   * under `.payload`) for the admin dashboard's own contract - the
+   * storefront's commissions controller returns a plain `MakingCommission`
+   * everywhere else (see `saveWorkshop` below), so this extracts `.payload`
+   * to match that contract instead of leaking the Admin DTO shape.
    */
   async addWorkshopMessage(
     actor: Actor,
     id: string,
     body: LocaleCopy,
     internal?: boolean,
-  ) {
+  ): Promise<MakingCommission> {
     this.requireMaker(actor);
-    return this.addArtistMessage(id, body, internal);
+    const admin = await this.addArtistMessage(id, body, internal);
+    return admin.payload;
   }
 
   async saveAdmin(id: string, payload: MakingCommission) {
