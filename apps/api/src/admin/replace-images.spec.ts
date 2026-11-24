@@ -190,6 +190,7 @@ describe("AdminService.saveProduct — seaweedfs images (Phase 2)", () => {
     // it is persisted exactly as the client sends it (after namespace
     // validation), forever.
     const objectKey = `rad/pending/abc111DEF`;
+    recordIssuedUpload(objectKey, null, "image");
     const saved = await admin.saveProduct(
       baseInput(slug, [{ storage: "seaweedfs", objectKey }]) as never,
     );
@@ -211,6 +212,7 @@ describe("AdminService.saveProduct — seaweedfs images (Phase 2)", () => {
       ]) as never,
     );
     const objectKey = `rad/products/${created.id}/xyz222ABC`;
+    recordIssuedUpload(objectKey, created.id, "image");
     const saved = await admin.saveProduct(
       baseInput(slug, [{ storage: "seaweedfs", objectKey }]) as never,
       created.id,
@@ -284,6 +286,7 @@ describe("AdminService.saveProduct — seaweedfs images (Phase 2)", () => {
       ]) as never,
     );
     const objectKey = `rad/products/${created.id}/dup444`;
+    recordIssuedUpload(objectKey, created.id, "image");
     const input = baseInput(slug, [{ storage: "seaweedfs", objectKey }]);
     await admin.saveProduct(input as never, created.id);
     deleteCalls.length = 0;
@@ -310,6 +313,8 @@ describe("AdminService.saveProduct — seaweedfs images (Phase 2)", () => {
     );
     const keyA = `rad/products/${created.id}/keep555`;
     const keyB = `rad/products/${created.id}/drop666`;
+    recordIssuedUpload(keyA, created.id, "image");
+    recordIssuedUpload(keyB, created.id, "image");
     await admin.saveProduct(
       baseInput(slug, [
         { storage: "seaweedfs", objectKey: keyA },
@@ -339,6 +344,7 @@ describe("AdminService.saveProduct — seaweedfs images (Phase 2)", () => {
       ]) as never,
     );
     const key = `rad/products/${created.id}/stable777`;
+    recordIssuedUpload(key, created.id, "image");
     await admin.saveProduct(
       baseInput(slug, [{ storage: "seaweedfs", objectKey: key }]) as never,
       created.id,
@@ -368,6 +374,7 @@ describe("AdminService.saveProduct — seaweedfs images (Phase 2)", () => {
       ]) as never,
     );
     const objectKey = `rad/products/${created.id}/mixed888`;
+    recordIssuedUpload(objectKey, created.id, "image");
     const base64 = `data:image/png;base64,${Buffer.from("x").toString("base64")}`;
     const saved = await admin.saveProduct(
       baseInput(slug, [
@@ -421,6 +428,7 @@ describe("AdminService.saveProduct — seaweedfs images (Phase 2)", () => {
       ]) as never,
     );
     const keyA = `rad/products/${created.id}/flaky999`;
+    recordIssuedUpload(keyA, created.id, "image");
     await admin.saveProduct(
       baseInput(slug, [{ storage: "seaweedfs", objectKey: keyA }]) as never,
       created.id,

@@ -104,8 +104,7 @@ export function attributeCategoryLabel(value: string) {
  * while a new upload is in flight) — it is never sent back as the source
  * of truth, `objectKey` is. New uploads use the S3-compatible media store.
  */
-export type AdminRemoteMediaStorage =
-  "seaweedfs" | "seaweedfs_video";
+export type AdminRemoteMediaStorage = "seaweedfs" | "seaweedfs_video";
 
 export type AdminProductImage =
   | { storage: "legacy_base64"; src: string; objectKey?: null }
