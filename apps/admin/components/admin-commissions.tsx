@@ -353,6 +353,7 @@ export function AdminCommissions({
           </div>
           {selected ? (
             <CommissionDetail
+              key={selected.id}
               commission={selected}
               canWrite={canWrite}
               onDecide={onDecide}
@@ -405,12 +406,6 @@ function CommissionDetail({
   onMessage: Parameters<typeof AdminCommissions>[0]["onMessage"];
   onClose: () => void;
 }) {
-  // Below the mobile breakpoint, `.commission-detail` becomes a position:
-  // fixed full-screen overlay (see the `.commission-view.has-detail` rule
-  // in globals.css) — only lock background scroll then; on desktop this
-  // is just an inline panel beside the list and must not block the page.
-  const isMobile = useIsMobileViewport();
-  useBodyScrollLock(isMobile);
   const open =
     commission.stage === "design_submitted" ||
     (commission.stage === "feasibility" && commission.nextActor === "artist");
@@ -841,10 +836,15 @@ function CommissionMessages({
 
   return (
     <div className="commission-messages-pane">
-      <ol className="commission-thread">
+      <ol className="contact-message-thread commission-thread" dir="rtl">
         {commission.messages.length ? (
           commission.messages.map((item) => (
-            <li key={item.id} className={item.author}>
+            <li
+              key={item.id}
+              className={
+                item.author === "artist" ? "from-admin" : "from-customer"
+              }
+            >
               <b>
                 {item.author === "artist" ? "کارگاه" : commission.customerName}
               </b>

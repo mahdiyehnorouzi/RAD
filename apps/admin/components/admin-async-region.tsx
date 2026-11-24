@@ -31,11 +31,9 @@ export function AdminAsyncRegion({
 }) {
   return (
     <>
-      {!loadError && refreshing ? (
-        <p className="admin-refresh" role="status">
-          در حال به‌روزرسانی…
-        </p>
-      ) : null}
+      <span className="admin-refresh-status" role="status">
+        {!loadError && refreshing ? "در حال به‌روزرسانی…" : ""}
+      </span>
       {!loadError && refreshError ? (
         <div className="admin-refresh-error" role="alert">
           <p>به‌روزرسانی ناموفق بود. اطلاعات قبلی هنوز نمایش داده می‌شود.</p>

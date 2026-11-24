@@ -36,8 +36,14 @@ export function StageMessages({
                   ? "یادداشت داخلی"
                   : "Internal note"
                 : item.author === "artist"
-                  ? commission.artistName
-                  : commission.customerName}
+                  ? locale === "fa"
+                    ? "کارگاه"
+                    : "Workshop"
+                  : item.author === "system"
+                    ? locale === "fa"
+                      ? "سامانه"
+                      : "System"
+                    : commission.customerName}
             </b>
             <span>{copy(STAGE_LABEL[item.stageId], locale)}</span>
             <time>{formatWhen(item.createdAt, locale)}</time>

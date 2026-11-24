@@ -296,8 +296,12 @@ export function useAdminWorkspace() {
   useEffect(() => {
     if (authStatus !== "authenticated") return;
     const timer = window.setInterval(() => {
-      if (gateRef.current.status("messages").loaded) {
-        void runResource("messages", "refresh");
+      if (document.visibilityState !== "visible") return;
+      for (const key of ["messages", "orders", "commissions"] as const) {
+        void runResource(
+          key,
+          gateRef.current.status(key).loaded ? "refresh" : "initial",
+        );
       }
     }, 20_000);
     return () => window.clearInterval(timer);
@@ -389,6 +393,8 @@ export function useAdminWorkspace() {
   useEffect(() => {
     if (authStatus !== "authenticated") return;
     void fetchResource("messages");
+    void fetchResource("orders");
+    void fetchResource("commissions");
     void fetchResource("damageReports");
   }, [authStatus, fetchResource]);
 

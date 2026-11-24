@@ -255,9 +255,14 @@ export function AdminDashboard() {
               throw error;
             }
           }}
-          onMessage={async (id, body, internal) => {
+          onMessage={async (id, body, internal, operationId) => {
             try {
-              await workspace.messageCommission(id, body, internal);
+              await workspace.messageCommission(
+                id,
+                body,
+                internal,
+                operationId,
+              );
               announce("پیام برای مشتری ارسال شد.");
             } catch (error) {
               announce((error as Error).message);

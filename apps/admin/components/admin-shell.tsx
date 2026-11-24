@@ -113,6 +113,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
   );
   const [mobileNav, setMobileNav] = useState(false);
   const [toast, setToast] = useState("");
+  const [noticesOpen, setNoticesOpen] = useState(false);
   const reviewsActive = isReviewsPath(pathname);
   const helpActive = isHelpPath(pathname);
   const messagesActive = isMessagesPath(pathname);
@@ -170,6 +171,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
   const openOrder = (orderId: string) => {
     const action = go("orders");
     pendingNav.current = withOrderFocus(action.pending, orderId);
+    if (!action.pending) setHandedOrderId(orderId);
   };
 
   const followStudioLink = (
@@ -279,6 +281,24 @@ export function AdminShell({ children }: { children: ReactNode }) {
   const openMessages = workspace.messages.filter(
     (message) => !message.parentId && message.status === "new",
   ).length;
+  const pendingOrders = workspace.orders.filter(
+    (order) =>
+      order.status === "pending_payment" ||
+      order.status === "pending_verification" ||
+      order.status === "confirmed",
+  );
+  const pendingCommissions = workspace.commissions.filter((commission) => {
+    const last = commission.messages
+      .filter((message) => !message.internal)
+      .at(-1);
+    return (
+      commission.stage === "design_submitted" ||
+      commission.stage === "feasibility" ||
+      last?.author === "customer"
+    );
+  });
+  const notificationCount =
+    openMessages + pendingOrders.length + pendingCommissions.length;
   const openDamage = workspace.damageReports.filter(
     (report) => report.status === "submitted" || report.status === "reviewing",
   ).length;
@@ -374,6 +394,16 @@ export function AdminShell({ children }: { children: ReactNode }) {
                         {number.format(openMessages)}
                       </em>
                     ) : null}
+                    {id === "orders" && pendingOrders.length ? (
+                      <em className="nav-count">
+                        {number.format(pendingOrders.length)}
+                      </em>
+                    ) : null}
+                    {id === "commissions" && pendingCommissions.length ? (
+                      <em className="nav-count">
+                        {number.format(pendingCommissions.length)}
+                      </em>
+                    ) : null}
                     {id === "damage" && openDamage ? (
                       <em
                         className="nav-count"
@@ -463,21 +493,60 @@ export function AdminShell({ children }: { children: ReactNode }) {
               <span className="context-label">رَد / عملیات استودیو</span>
               <h1>{title}</h1>
             </div>
-            <Link
-              href="/messages"
-              className="topbar-bell"
-              onClick={() => followStudioLink("messages")}
-              aria-label={
-                openMessages
-                  ? `${number.format(openMessages)} پیام رسیدگی‌نشده`
-                  : "پیام‌ها"
-              }
-            >
-              <Bell />
-              {openMessages > 0 && (
-                <em className="nav-count">{number.format(openMessages)}</em>
+            <div className="admin-notice-menu">
+              <button
+                type="button"
+                className="topbar-bell"
+                aria-label="اعلان‌های استودیو"
+                aria-expanded={noticesOpen}
+                onClick={() => setNoticesOpen((open) => !open)}
+              >
+                <Bell />
+                {notificationCount > 0 && (
+                  <em className="nav-count">
+                    {number.format(notificationCount)}
+                  </em>
+                )}
+              </button>
+              {noticesOpen && (
+                <section className="admin-notice-panel" aria-label="اعلان‌ها">
+                  <strong>نیازمند رسیدگی</strong>
+                  {openMessages > 0 && (
+                    <Button
+                      variant="ghost"
+                      onClick={() => {
+                        setNoticesOpen(false);
+                        go("messages");
+                      }}
+                    >
+                      {number.format(openMessages)} گفت‌وگوی رسیدگی‌نشده
+                    </Button>
+                  )}
+                  {pendingOrders.map((order) => (
+                    <Button
+                      key={order.id}
+                      variant="ghost"
+                      onClick={() => {
+                        setNoticesOpen(false);
+                        openOrder(order.id);
+                      }}
+                    >
+                      سفارش فروشگاه · {order.id}
+                    </Button>
+                  ))}
+                  {pendingCommissions.map((commission) => (
+                    <a
+                      key={commission.id}
+                      href={`/#commissions/${encodeURIComponent(commission.id)}`}
+                      onClick={() => setNoticesOpen(false)}
+                    >
+                      سفارش اختصاصی · {commission.id}
+                    </a>
+                  ))}
+                  {!notificationCount && <p>موردی برای رسیدگی نیست.</p>}
+                </section>
               )}
-            </Link>
+            </div>
             <div className="topbar-status">
               <span className="live-dot" />
               پایگاه داده Postgres

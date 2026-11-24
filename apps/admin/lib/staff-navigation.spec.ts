@@ -60,7 +60,10 @@ test("the studio shell owns the one workspace hook for /, /reviews, /help, and /
   assert.equal(calls(read("features/help/help-page.tsx")), 0);
   assert.equal(calls(read("features/messages/messages-page.tsx")), 0);
   assert.match(read("components/admin-shell.tsx"), /studioNavHref\(id\)/);
-  assert.match(read("components/admin-shell.tsx"), /href="\/messages"/);
+  const shell = read("components/admin-shell.tsx");
+  assert.match(shell, /aria-expanded=\{noticesOpen\}/);
+  assert.match(shell, /className="admin-notice-panel"/);
+  assert.match(shell, /go\("messages"\)/);
   assert.match(read("app/(studio)/reviews/page.tsx"), /ReviewsPage/);
   assert.match(read("app/(studio)/help/page.tsx"), /HelpPage/);
   assert.match(read("app/(studio)/messages/page.tsx"), /MessagesPage/);
