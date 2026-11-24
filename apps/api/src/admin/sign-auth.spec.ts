@@ -4,7 +4,7 @@ import { ConfigService } from "@nestjs/config";
 import { BadRequestException, ForbiddenException } from "@nestjs/common";
 import { AdminService } from "./admin.service";
 import { canAdmin } from "./permissions";
-import { CloudinaryStorageService } from "../storage/cloudinary-storage.service";
+import { SeaweedfsStorageService } from "../storage/seaweedfs-storage.service";
 
 /**
  * Pure, no-DB coverage for the sign-upload endpoint's auth/validation
@@ -12,7 +12,7 @@ import { CloudinaryStorageService } from "../storage/cloudinary-storage.service"
  * - `product.write` permission gating (same `assert` every other admin
  *   write endpoint uses, enforced ahead of `AdminController`'s AdminGuard).
  * - mime allowlist rejection, which runs before anything
- *   Cloudinary/DB-related, so it needs no real Cloudinary credentials or
+ *   SeaweedFS/DB-related, so it needs no real SeaweedFS credentials or
  *   embedded-postgres.
  *
  * `AdminService` is instantiated with `null` repositories: none of the
@@ -36,8 +36,8 @@ function adminServiceForUnitTests() {
     null as never,
     null as never,
     null as never,
-    new CloudinaryStorageService(new ConfigService({})),
-    () => new CloudinaryStorageService(new ConfigService({})),
+    new SeaweedfsStorageService(new ConfigService({})),
+    () => new SeaweedfsStorageService(new ConfigService({})),
     null as never,
     null as never,
   );
@@ -73,7 +73,7 @@ describe("admin sign-upload endpoint authorization", () => {
 });
 
 describe("admin sign-upload endpoint mime validation", () => {
-  test("rejects a disallowed mime type before ever touching Cloudinary", async () => {
+  test("rejects a disallowed mime type before ever touching SeaweedFS", async () => {
     const admin = adminServiceForUnitTests();
     await assert.rejects(
       () => admin.signProductImageUpload("moon-vase", "application/pdf"),

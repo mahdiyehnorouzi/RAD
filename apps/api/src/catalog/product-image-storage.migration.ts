@@ -29,18 +29,15 @@ export async function migrateProductImageStorage(
   await dataSource.query(
     `ALTER TABLE "ProductImage" ADD COLUMN IF NOT EXISTS "objectKey" text`,
   );
-  // Added for the Cloudinary direct-upload path (Phase 2): optional cached
-  // convenience only, never the source of truth for a delivery URL (see
-  // `product-image.entity.ts`). Safe to add unconditionally — nothing
-  // backfills it, same as `objectKey` before Phase 2 existed.
+  // Kept as a legacy database field for compatibility. Current media code
+  // does not read or write it.
   await dataSource.query(
     `ALTER TABLE "ProductImage" ADD COLUMN IF NOT EXISTS "secureUrl" text`,
   );
 
-  // Nothing existing ever wrote `cloudinary` (same situation `r2` was in
-  // before this migration's logic was last touched): no row needs
-  // backfilling into it, so the CASE below intentionally has no branch
-  // for it. Backfill is keyed on the real prefixes in use across the frontend
+  // The CASE below only backfills the legacy `src` formats; remote storage
+  // rows are written by the signed-upload flow. Backfill is keyed on the
+  // real prefixes in use across the frontend
   // (`photo-works.ts`, `category-defaults.ts`): `/catalog/photos/...` and
   // `/catalog/defaults/...`, both covered by the `/catalog/` prefix check.
   //

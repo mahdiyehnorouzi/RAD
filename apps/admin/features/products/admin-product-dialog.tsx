@@ -379,8 +379,8 @@ export function ProductDialog({
           ...item.images,
           {
             storage: file.type.startsWith("video/")
-              ? "cloudinary_video"
-              : "cloudinary",
+              ? "seaweedfs_video"
+              : "seaweedfs",
             objectKey: "",
             src,
           },

@@ -97,17 +97,15 @@ export function attributeCategoryLabel(value: string) {
 /**
  * One product image, in the shape the API's save endpoint expects:
  * `legacy_base64`/`static`/`external` round-trip an existing `src`
- * unchanged; `cloudinary`/`seaweedfs` carry only the storage provider's
+ * unchanged; `seaweedfs`/`seaweedfs_video` carry only the storage provider's
  * object key (as `objectKey`) the signed upload wrote to — never raw
  * bytes. `src` on one of those entries is a display-only URL the API
  * derived for the editor's `<img>`/`<video>` preview (or a local blob URL
  * while a new upload is in flight) — it is never sent back as the source
- * of truth, `objectKey` is. Which provider is active server-side is
- * decided by `MEDIA_STORAGE_PROVIDER` (see `apps/api/src/storage`) — the
- * admin UI just has to handle whichever kind a successful upload returns.
+ * of truth, `objectKey` is. New uploads use the S3-compatible media store.
  */
 export type AdminRemoteMediaStorage =
-  "cloudinary" | "cloudinary_video" | "seaweedfs" | "seaweedfs_video";
+  "seaweedfs" | "seaweedfs_video";
 
 export type AdminProductImage =
   | { storage: "legacy_base64"; src: string; objectKey?: null }
@@ -119,8 +117,6 @@ export type AdminProductImage =
     };
 
 const REMOTE_MEDIA_STORAGES: readonly AdminRemoteMediaStorage[] = [
-  "cloudinary",
-  "cloudinary_video",
   "seaweedfs",
   "seaweedfs_video",
 ];
@@ -134,7 +130,7 @@ export function isRemoteMediaStorage(
 
 /** True for the video variant of either provider's storage kind. */
 export function isVideoStorage(storage: AdminProductImage["storage"]) {
-  return storage === "cloudinary_video" || storage === "seaweedfs_video";
+  return storage === "seaweedfs_video";
 }
 export type AdminOrderStatus = StoreOrderStatus;
 

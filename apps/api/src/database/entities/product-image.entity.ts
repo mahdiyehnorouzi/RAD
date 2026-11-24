@@ -11,21 +11,9 @@ import { Product } from "./product.entity";
 
 /**
  * Which of the historically-overloaded `src` formats a row holds.
- * `cloudinary` is the Phase 2 direct-upload path (admin dashboard images
- * uploaded straight to Cloudinary via a signed upload — see
- * `AdminService.replaceImages` / `cloudinary-storage.service.ts`).
- * `seaweedfs` is the equivalent path for the self-hosted SeaweedFS S3
- * adapter (`seaweedfs-storage.service.ts`), used only when
- * `MEDIA_STORAGE_PROVIDER=seaweedfs` (see `storage.module.ts`).
  */
 export type ProductImageStorage =
-  | "static"
-  | "legacy_base64"
-  | "external"
-  | "cloudinary"
-  | "cloudinary_video"
-  | "seaweedfs"
-  | "seaweedfs_video";
+  "static" | "legacy_base64" | "external" | "seaweedfs" | "seaweedfs_video";
 
 /**
  * Storage kinds that legitimately persist `src: null` and resolve their
@@ -34,11 +22,9 @@ export type ProductImageStorage =
  * through, or rows of that kind are silently dropped from the public API
  * before they ever reach the mapper — this happened in production for
  * `seaweedfs`/`seaweedfs_video` rows, which were missing from that join's
- * whitelist while only `cloudinary`/`cloudinary_video` were listed.
+ * whitelist for source-less remote-media rows.
  */
 export const SRC_LESS_IMAGE_STORAGE_KINDS: ProductImageStorage[] = [
-  "cloudinary",
-  "cloudinary_video",
   "seaweedfs",
   "seaweedfs_video",
 ];
@@ -84,26 +70,11 @@ export class ProductImage {
   @Column("text", { nullable: true })
   storage!: ProductImageStorage | null;
 
-  /**
-   * For `storage: "cloudinary"` rows: the Cloudinary `public_id` — the
-   * durable source of truth for the asset, not a stored URL. The delivery
-   * URL is derived from this plus `CLOUDINARY_CLOUD_NAME` config at read
-   * time (`product.mapper.ts#imageSrc`), never persisted as the only
-   * record of where the image lives. Unused for other storage kinds.
-   */
+  /** Object key used by the S3-compatible media storage. */
   @Column("text", { nullable: true })
   objectKey!: string | null;
 
-  /**
-   * Optional, cached convenience only: Cloudinary's `secure_url` as
-   * returned by the signed upload, for a quick non-derived display value
-   * (e.g. debugging, or an admin tool that wants the exact asset URL
-   * Cloudinary minted). `objectKey` (the public_id) + Cloudinary config
-   * remain the actual source of truth for every delivery URL this API
-   * returns — this column is never read by `imageSrc`, and nothing
-   * requires it to stay in sync with Cloudinary if the asset is later
-   * transformed/moved there directly.
-   */
+  /** Legacy optional media field retained for existing database compatibility. */
   @Column("text", { nullable: true })
   secureUrl!: string | null;
 

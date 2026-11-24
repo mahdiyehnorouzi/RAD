@@ -5,8 +5,6 @@ export const PRODUCT_IMAGE_STORAGES = [
   "legacy_base64",
   "static",
   "external",
-  "cloudinary",
-  "cloudinary_video",
   "seaweedfs",
   "seaweedfs_video",
 ] as const;
@@ -16,18 +14,14 @@ export type ProductImageInputStorage = (typeof PRODUCT_IMAGE_STORAGES)[number];
 /**
  * Discriminated input for one product image on save:
  *  - legacy_base64 / static / external → `src` carries the (existing) value.
- *  - cloudinary → `objectKey` carries the Cloudinary `public_id` the signed
- *    upload wrote to; `src` must be absent — bytes are never persisted for
- *    cloudinary rows, and the delivery URL is derived from the public_id +
- *    Cloudinary config at read time, never stored as the source of truth
- *    (see `product.mapper.ts#imageSrc`).
+ *  - seaweedfs/seaweedfs_video → `objectKey` carries the signed S3 object key;
+ *    uploaded bytes are never persisted in the database.
  *
  * class-validator doesn't have a clean way to express a discriminated union
  * on one class, so this DTO validates the common shape only; the real
  * per-branch checks (which field is required/forbidden, and — for
- * `cloudinary` — that `objectKey` matches a public_id this API could have
- * actually signed for) run in `AdminService.replaceImages`, matching this
- * codebase's existing style of doing the real business validation at the
+ * `seaweedfs` — that `objectKey` matches a key this API signed for) run in
+ * `AdminService.replaceImages`, matching this codebase's existing style of doing the real business validation at the
  * service layer (see `normalizeTrackingNumber` / `assertImageData`).
  */
 export class AdminProductImageInputDto {
@@ -46,8 +40,7 @@ export class AdminProductImageInputDto {
 
   @ApiProperty({
     required: false,
-    description:
-      "Required for storage: cloudinary — the asset's Cloudinary public_id",
+    description: "Required for remote media: the S3 object key",
   })
   @IsOptional()
   @IsString()
@@ -59,7 +52,6 @@ export type AdminProductImageInput =
   | { storage: "legacy_base64"; src: string }
   | { storage: "static" | "external"; src: string }
   | {
-      storage:
-        "cloudinary" | "cloudinary_video" | "seaweedfs" | "seaweedfs_video";
+      storage: "seaweedfs" | "seaweedfs_video";
       objectKey: string;
     };

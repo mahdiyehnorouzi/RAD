@@ -27,7 +27,7 @@ Per request, every infrastructure claim below is tagged:
 | An authenticated S3 upload/download test against that SeaweedFS succeeded at some point, prior to a subsequent storage reconfiguration | (2) — the *current* post-reconfiguration state of that path is (4) |
 | PostgreSQL stays on Liara (`rad-db`, `olympus.liara.cloud:31444`) and must not move | (3) + user instruction — treated as a hard constraint regardless of current verification |
 | The NestJS API is already reachable from both frontend domains via `/backend/health` in production | (3) — likely still true but not re-checked this session; (4) for *current* status |
-| API was running under PM2 in dev/watch mode with known hardening gaps (short JWT secret, schema drift, missing Cloudinary env) as of 2026-10-18 | (3) — explicitly **not** assumed current per your correction; treated as "may or may not still be true" |
+| API was running under PM2 in dev/watch mode with known hardening gaps (short JWT secret, schema drift, missing media storage configuration) as of 2026-10-18 | (3) — explicitly **not** assumed current per your correction; treated as "may or may not still be true" |
 | VPS has ~2GB RAM / 4GB swap / 18GB disk / ~5GB free, as stated in the original task brief | (4) — brief itself says "these may have changed, recheck" |
 | Current actual free RAM/disk/CPU, current `docker stats` for the SeaweedFS containers, current PM2 process mode for the API, current Nginx config contents for the frontend domains, current DNS records | (4) — all require direct VPS access this session does not have |
 
