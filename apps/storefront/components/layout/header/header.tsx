@@ -153,7 +153,7 @@ export function Header() {
             aria-label={t("notifications")}
           >
             <Bell aria-hidden="true" />
-            {unread > 0 && <i>{number(unread)}</i>}
+            {unread > 0 && <i>{unread > 99 ? "99+" : number(unread)}</i>}
           </Link>
         )}
         <Link

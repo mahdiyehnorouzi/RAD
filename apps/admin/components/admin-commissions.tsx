@@ -161,7 +161,7 @@ export function AdminCommissions({
     "all",
   );
   const inputRef = useRef<HTMLInputElement>(null);
-  const isMobile = useIsMobileViewport();
+  const isMobile = useIsMobileViewport(1100);
 
   useEffect(() => {
     const onPopState = () => setRequestedId(readHashCommissionId());
