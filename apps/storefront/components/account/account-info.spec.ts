@@ -24,3 +24,11 @@ test("the profile form stays inside the viewport in RTL and on a phone", () => {
   );
   assert.doesNotMatch(css, /max-width:\s*\d+px/);
 });
+
+test("saved addresses only appear in the dedicated profile section", () => {
+  const root = dirname(fileURLToPath(import.meta.url));
+  const info = readFileSync(join(root, "account-info.tsx"), "utf8");
+  const profile = readFileSync(join(root, "profile-experience.tsx"), "utf8");
+  assert.doesNotMatch(info, /AddressBookPage/);
+  assert.match(profile, /<AddressBookPage embedded \/>/);
+});
