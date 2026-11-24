@@ -817,6 +817,16 @@ export function useAdminWorkspace() {
         bumpWrite("members");
         setMembers((items) => [saved, ...items]);
       },
+      async resendInvite(id: string) {
+        const saved = await api<AdminMember>(
+          `/admin/members/${encodeURIComponent(id)}/resend-invite`,
+          { method: "POST" },
+        );
+        bumpWrite("members");
+        setMembers((items) =>
+          items.map((item) => (item.id === saved.id ? saved : item)),
+        );
+      },
       async updateMember(member: AdminMember) {
         const saved = await api<AdminMember>(`/admin/members/${member.id}`, {
           method: "PATCH",

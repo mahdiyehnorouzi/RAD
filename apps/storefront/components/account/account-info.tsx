@@ -9,7 +9,6 @@ import {
   applyIranMobileEdit,
   formatIranMobileDraft,
 } from "@/lib/phone/iran-mobile";
-import { AddressBookPage } from "@/features/address-book";
 import { PasswordForm } from "./password-form";
 import { AccountShell } from "./account-shell";
 import { AccountHeading } from "./account-heading";
@@ -232,7 +231,6 @@ export function AccountInfoPage({ embedded = false }: { embedded?: boolean }) {
           </button>
         </div>
       </form>
-      <AddressBookPage embedded />
       <PasswordForm />
       <button
         type="button"

@@ -2,6 +2,7 @@ import { VerifyProductMediaDto } from "./dto/verify-product-media.dto";
 import { mediaLimits as configuredMediaLimits } from "../storage/media-policy";
 import {
   Body,
+  BadRequestException,
   Controller,
   Delete,
   Get,
@@ -13,6 +14,7 @@ import {
   Req,
   UseGuards,
 } from "@nestjs/common";
+import { NoticesService } from "../notices/notices.service";
 import { AdminGuard } from "../common/guards/admin.guard";
 import { AdminService } from "./admin.service";
 import {
@@ -62,7 +64,28 @@ export class AdminController {
     private readonly shape: ShapeService,
     private readonly help: HelpService,
     private readonly productAttributes: ProductAttributesService,
+    private readonly notices: NoticesService,
   ) {}
+
+  @Get("notice-reads")
+  listNoticeReads(@Req() request: AuthedRequest) {
+    return this.notices.staffReadKeys(request.userId!);
+  }
+
+  @Post("notice-reads")
+  markNoticeRead(
+    @Body() body: { key?: unknown },
+    @Req() request: AuthedRequest,
+  ) {
+    if (
+      typeof body.key !== "string" ||
+      body.key.length > 300 ||
+      !/^(message|order|commission):[^:]+:[^:]+$/.test(body.key)
+    ) {
+      throw new BadRequestException("شناسه اعلان نامعتبر است.");
+    }
+    return this.notices.markStaffRead(request.userId!, body.key);
+  }
 
   @Get("products")
   listProducts() {

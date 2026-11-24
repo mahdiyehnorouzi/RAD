@@ -38,7 +38,11 @@ export function planIdentityRequest(input: {
   if (identity.radNumber !== radNumber || identity.code !== canonical) {
     return { status: 404 };
   }
-  if (identity.storyPublished && identity.passportPath) {
+  if (
+    identity.status === "assigned" &&
+    identity.storyPublished &&
+    identity.passportPath === `/passport/${canonical}`
+  ) {
     return {
       status: 307,
       location: `${identity.passportPath}${input.search}`,

@@ -1,6 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { IsNull, Repository } from "typeorm";
+import { createHash } from "node:crypto";
 import { isArtistNotice, shouldSkipDuplicateNotice } from "@rad/types";
 import { Notice } from "../database/entities";
 import { IdentityService } from "../common/identity.service";
@@ -100,6 +101,26 @@ export class NoticesService {
       { read: true },
     );
     return this.list(actor);
+  }
+
+  async staffReadKeys(userId: string) {
+    const rows = await this.notices.find({
+      where: { ownerKey: `staff:${userId}`, kind: "staff_read" },
+      select: { productSlug: true },
+    });
+    return rows.flatMap((row) => (row.productSlug ? [row.productSlug] : []));
+  }
+
+  async markStaffRead(userId: string, key: string) {
+    const ownerKey = `staff:${userId}`;
+    const id = createHash("sha256")
+      .update(JSON.stringify([ownerKey, key]))
+      .digest("hex");
+    await this.notices.upsert(
+      { id, ownerKey, kind: "staff_read", productSlug: key, read: true },
+      ["id"],
+    );
+    return { key };
   }
 
   async markRead(actor: Actor, id: string) {
