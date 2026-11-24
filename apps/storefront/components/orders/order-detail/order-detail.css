@@ -1107,3 +1107,7 @@ html[dir="rtl"] .track-facts dd[dir="ltr"] {
 .track-amount-copy {
   font-family: inherit;
 }
+
+.order-detail {
+  scroll-margin-top: calc(var(--header-height) + 12px);
+}

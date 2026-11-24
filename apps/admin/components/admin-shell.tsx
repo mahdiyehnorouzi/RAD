@@ -113,6 +113,8 @@ export function AdminShell({ children }: { children: ReactNode }) {
   );
   const [mobileNav, setMobileNav] = useState(false);
   const [toast, setToast] = useState("");
+  const toastTimer = useRef<number | undefined>(undefined);
+  useEffect(() => () => window.clearTimeout(toastTimer.current), []);
   const [noticesOpen, setNoticesOpen] = useState(false);
   const reviewsActive = isReviewsPath(pathname);
   const helpActive = isHelpPath(pathname);
@@ -139,7 +141,8 @@ export function AdminShell({ children }: { children: ReactNode }) {
 
   const announce = (message: string) => {
     setToast(message);
-    window.setTimeout(() => setToast(""), 2800);
+    window.clearTimeout(toastTimer.current);
+    toastTimer.current = window.setTimeout(() => setToast(""), 2800);
   };
 
   const go = (next: AdminSection) => {
@@ -240,9 +243,30 @@ export function AdminShell({ children }: { children: ReactNode }) {
   );
   if (gate === "loading") {
     return (
-      <div className="admin-shell">
+      <div className="admin-shell" aria-busy="true">
+        <aside className="admin-sidebar" aria-hidden="true">
+          <div className="brand-lockup">
+            <span className="brand-mark">
+              <img src="/rad-logo.png" alt="" width={52} height={52} />
+            </span>
+            <strong>دفتر کوره</strong>
+          </div>
+          <div className="admin-nav admin-nav-placeholder">
+            {navItems.map(({ id, label, icon: Icon }) => (
+              <div key={id}>
+                <Icon />
+                <span>{label}</span>
+              </div>
+            ))}
+          </div>
+        </aside>
         <main className="admin-main">
-          <p className="admin-loading">در حال بارگذاری…</p>
+          <header className="admin-topbar">
+            <h1>{navItems.find((item) => item.id === section)?.label}</h1>
+          </header>
+          <p className="admin-loading" role="status">
+            در حال بارگذاری…
+          </p>
         </main>
       </div>
     );

@@ -1,7 +1,7 @@
 "use client";
 import "./order-detail.css";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Order } from "@rad/types";
 import { fetchOrder, errorMessage } from "@/lib/api";
 import { useCommerce } from "@/components/commerce";
@@ -53,6 +53,15 @@ export function OrderDetail({ id }: { id: string }) {
   const [ready, setReady] = useState(false);
 
   const order = orders.find((item) => item.id === id) ?? fetched;
+  const detailRef = useRef<HTMLElement>(null);
+  const positionedId = useRef<string | null>(null);
+
+  useEffect(() => {
+    const detail = detailRef.current;
+    if (!detail || !order || positionedId.current === id) return;
+    positionedId.current = id;
+    detail.scrollIntoView({ block: "start", behavior: "instant" });
+  }, [id, order]);
 
   useEffect(() => {
     if (orders.some((item) => item.id === id)) {
@@ -124,7 +133,7 @@ export function OrderDetail({ id }: { id: string }) {
 
   return (
     <AccountShell>
-      <section className="order-detail section">
+      <section ref={detailRef} className="order-detail section">
         <header className="track-heading">
           <OrderSprig />
           <span className="track-eyebrow">{t("ordersEyebrow")}</span>

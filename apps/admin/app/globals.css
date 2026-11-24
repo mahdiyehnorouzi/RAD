@@ -3841,3 +3841,28 @@ table.products-table {
   min-width: 0;
   overflow-wrap: anywhere;
 }
+
+.admin-nav-placeholder > div {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  padding: 13px 14px;
+  color: #c5ccc8;
+}
+
+.admin-nav > :is(a, button) > span {
+  min-width: 0;
+  overflow-wrap: normal;
+}
+
+.contact-message-thread li > b {
+  min-width: 0;
+  word-break: normal;
+  overflow-wrap: break-word;
+  white-space: normal;
+}
+
+.commission-tabs button {
+  border-radius: 0;
+}
