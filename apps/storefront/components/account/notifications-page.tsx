@@ -28,8 +28,14 @@ export function NotificationsPage({
 }: {
   embedded?: boolean;
 }) {
-  const { notices, unread, markAllRead, markNoticeRead, refreshNotices, ready } =
-    useCommerce();
+  const {
+    notices,
+    unread,
+    markAllRead,
+    markNoticeRead,
+    refreshNotices,
+    ready,
+  } = useCommerce();
   useEffect(() => {
     void refreshNotices();
   }, [refreshNotices]);
