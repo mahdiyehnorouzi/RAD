@@ -33,7 +33,6 @@ export {
   saveCommission,
   saveWorkshopCommission,
   slimCommissionBrief,
-  type CommissionMessageInput,
 } from "./commissions";
 export {
   sendContactMessage,
