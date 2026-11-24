@@ -209,7 +209,7 @@ async function mountDialog(overrides: Partial<DialogProps> = {}) {
     onClose: () => {},
     onSave: async () => {},
     onUploadImage: async () => ({
-      storage: "cloudinary",
+      storage: "seaweedfs",
       objectKey: "obj-1",
     }),
     onFetchAttributes: async () => attributes,

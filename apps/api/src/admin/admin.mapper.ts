@@ -53,19 +53,14 @@ export function toAdminProduct(
     artist: product.vendor?.displayName ?? "استودیو رَد",
     // Round-trippable shape: the admin UI re-sends this array, unchanged,
     // for any image it didn't touch — `storage`/`objectKey` must survive
-    // the trip for `cloudinary` rows (which have no `src` to fall back
-    // on), while `src` here is a ready-to-render URL/base64 string for the
-    // editor's `<img>` preview, not necessarily the DB column value
-    // (cloudinary derives it).
+    // the trip for S3-backed rows (which have no `src` to fall back on), while `src`
+    // here is a ready-to-render URL/base64 string for the editor preview.
     images: product.images
       .sort((a, b) => a.sortOrder - b.sortOrder)
       .map((image) => ({
         storage: image.storage ?? "legacy_base64",
         src:
-          image.storage === "cloudinary" ||
-          image.storage === "cloudinary_video" ||
-          image.storage === "seaweedfs" ||
-          image.storage === "seaweedfs_video"
+          image.storage === "seaweedfs" || image.storage === "seaweedfs_video"
             ? (imageSrc(image, false) ?? null)
             : image.src,
         objectKey: image.objectKey ?? null,

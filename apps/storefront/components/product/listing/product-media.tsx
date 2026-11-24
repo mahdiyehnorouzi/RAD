@@ -33,51 +33,9 @@ function ownPhotoSrc(
 }
 
 /**
- * The API mirrors every Cloudinary delivery URL from `f_auto,q_auto/<public_id>`
- * (see `apps/api/src/catalog/product.mapper.ts#cloudinaryDeliveryUrl`) —
- * recognizing that exact shape here lets this component insert a
- * per-request width on top of it.
- */
-const CLOUDINARY_URL_PATTERN =
-  /^https:\/\/res\.cloudinary\.com\/[^/]+\/image\/upload\//;
-
-function isCloudinaryUrl(src: string) {
-  return CLOUDINARY_URL_PATTERN.test(src);
-}
-
-/**
- * Decision (storefront performance pass, R2→Cloudinary swap): a
- * Cloudinary-hosted product photo should NOT also be re-optimized by
- * Cloudflare's Workers-level image optimizer (`vinext`'s `imagesOptimizer`,
- * configured in `vite.config.ts`/`wrangler.jsonc`) — that would be a
- * second, redundant resize/transcode pass over an asset Cloudinary can
- * already serve at the exact size/format needed via URL params, with no
- * real benefit (Cloudinary's own `f_auto,q_auto` already handles
- * format/quality negotiation).
- *
- * A `next/image` component with a custom `loader` bypasses the built-in
- * optimizer entirely for that one `<Image>` — Next calls the loader
- * directly instead of routing through the optimization endpoint — so no
- * change to `vite.config.ts`/`wrangler.jsonc` or `remotePatterns` is
- * needed; this is scoped per-image, only for `src` values that are
- * actually Cloudinary URLs. The loader still receives `width` from
- * `next/image`'s normal responsive-size negotiation (driven by the
- * `sizes` prop each call site already passes — PLP/PDP/cart/checkout —
- * from the earlier performance pass), so Cloudinary ends up doing exactly
- * the per-context responsive sizing that pass established, just via its
- * own `w_<width>` URL param instead of Cloudflare's resizer.
- */
-function cloudinaryLoader({ src, width }: ImageLoaderProps) {
-  return src.replace(
-    /\/image\/upload\/(?:f_auto,q_auto\/)?/,
-    `/image/upload/c_limit,w_${width}/`,
-  );
-}
-
-/**
  * `SEAWEEDFS_PUBLIC_URL`'s host, mirrored into the client bundle by
  * `next.config.mjs` (`env.NEXT_PUBLIC_SEAWEEDFS_HOST`), which also adds it to
- * `images.remotePatterns` when set. Unlike Cloudinary, SeaweedFS has no
+ * `images.remotePatterns` when set. Unlike SeaweedFS, SeaweedFS has no
  * transform API of its own — but once its host is allowlisted, Next's own
  * built-in optimizer can still fetch-and-resize it server-side, so a known
  * SeaweedFS URL no longer needs a custom loader at all (`undefined` below
@@ -94,17 +52,15 @@ function isKnownSeaweedfsUrl(src: string) {
 }
 
 /**
- * Any other absolute (http/https) `src` not covered above — an
- * unrecognized self-hosted/arbitrary-domain URL that can't be allowlisted in
- * `next.config.mjs`'s `images.remotePatterns` the way a fixed known host
- * like Cloudinary's (or a configured SeaweedFS host) could be.
+ * Any absolute URL from an unrecognized host that is not allowlisted in
+ * `next.config.mjs`'s `images.remotePatterns`.
  *
  * A custom `loader` bypasses next/image's built-in optimizer (and the
  * domain allowlist check that comes with it) for the one `<Image>` it's
- * passed to, same as `cloudinaryLoader` already does — this just returns
+ * passed to, same as `seaweedfsLoader` already does — this just returns
  * the URL unchanged since there's no transform API to ask for a smaller
  * size from, and the host isn't allowlisted for Next's own optimizer to
- * fetch it either. This is the same reason `isCloudinaryUrl` exists: scope
+ * fetch it either. This lets the UI scope the bypass to remote URLs: scope
  * the bypass to actual remote URLs, never to the on-site
  * `/catalog/images/:id` proxy route or a relative `static`/`external` path.
  */
@@ -199,11 +155,9 @@ export function ProductMedia({
         priority={priority}
         fetchPriority={fetchPriority}
         loader={
-          isCloudinaryUrl(src)
-            ? cloudinaryLoader
-            : isAbsoluteHttpUrl(src) && !isKnownSeaweedfsUrl(src)
-              ? identityLoader
-              : undefined
+          isAbsoluteHttpUrl(src) && !isKnownSeaweedfsUrl(src)
+            ? identityLoader
+            : undefined
         }
         onError={() => setFailedSrc(src)}
       />

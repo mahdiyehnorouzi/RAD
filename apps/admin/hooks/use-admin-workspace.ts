@@ -596,8 +596,7 @@ export function useAdminWorkspace() {
        * save — never trusted blindly from the client.
        *
        * Which provider is active (`signed.provider`) is decided entirely
-       * server-side by `MEDIA_STORAGE_PROVIDER` (see
-       * `apps/api/src/storage`) — `buildUploadRequest`/
+       * server-side by the S3-compatible media storage module — `buildUploadRequest`/
        * `resolveUploadedObjectKey` (`../lib/media-upload`) do the
        * provider-specific part (request shape, response parsing); this
        * function only owns the XHR plumbing (progress/abort/error), which

@@ -144,16 +144,14 @@ tooling:
    done) — migrates `/opt/rad/apps/api` to the releases+symlink layout.
    Independent of the database migration; order between this and step 2
    doesn't matter, but both must be done before step 4.
-4. **Populate `/etc/rad/api.env`** with `MEDIA_STORAGE_PROVIDER=seaweedfs`
-   and the real `SEAWEEDFS_*` values (endpoint, bucket `rad-public`,
+4. **Populate `/etc/rad/api.env`** with the real `SEAWEEDFS_*` values (endpoint, bucket `rad-public`,
    access/secret keys, public URL/upload URL — see the previous report's
    exact values).
 5. **API deploy** (`scripts/deploy-api-systemd.sh` / `deploy-api-vps.yml`,
    pinned to the reviewed commit SHA) — only now does code that reads the
    new columns/SeaweedFS config actually run, against a database and env
    that are both already ready for it.
-6. **Admin deploy** — already compatible with both Cloudinary and
-   SeaweedFS signed-upload flows with no env changes needed (verified in
+6. **Admin deploy** — already uses the S3-compatible signed-upload flow with no env changes needed (verified in
    an earlier pass of this work); redeploy only to pick up any other
    pending changes on `main`.
 7. **Storefront deploy** — same: already renders absolute SeaweedFS

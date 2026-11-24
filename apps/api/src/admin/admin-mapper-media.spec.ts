@@ -7,24 +7,19 @@ import type { Product, ProductImage, Vendor } from "../database/entities";
  * Pure, no-DB coverage for `toAdminProduct`'s image `src` derivation —
  * regression for the SeaweedFS admin preview bug (seaweedfs/seaweedfs_video
  * rows were returned with their persisted `null` `src` instead of a derived
- * display URL, unlike cloudinary/cloudinary_video).
+ * display URL.
  */
 describe("toAdminProduct — image src derivation", () => {
   const previousSeaweedfsUrl = process.env.SEAWEEDFS_PUBLIC_URL;
-  const previousCloudName = process.env.CLOUDINARY_CLOUD_NAME;
 
   beforeEach(() => {
     process.env.SEAWEEDFS_PUBLIC_URL = "https://media.example.com/rad-media";
-    process.env.CLOUDINARY_CLOUD_NAME = "rad-cloud";
   });
 
   afterEach(() => {
     if (previousSeaweedfsUrl === undefined)
       delete process.env.SEAWEEDFS_PUBLIC_URL;
     else process.env.SEAWEEDFS_PUBLIC_URL = previousSeaweedfsUrl;
-    if (previousCloudName === undefined)
-      delete process.env.CLOUDINARY_CLOUD_NAME;
-    else process.env.CLOUDINARY_CLOUD_NAME = previousCloudName;
   });
 
   function image(overrides: Partial<ProductImage>): ProductImage {
@@ -88,18 +83,6 @@ describe("toAdminProduct — image src derivation", () => {
       "https://media.example.com/rad-media/rad/products/prod_1/clip456",
     );
     assert.equal(result.images[0].storage, "seaweedfs_video");
-    assert.equal(result.images[0].objectKey, objectKey);
-  });
-
-  test("regression: cloudinary image still derives its src from objectKey", () => {
-    const objectKey = "rad/products/prod_1/xyz789";
-    const result = toAdminProduct(
-      product([image({ storage: "cloudinary", objectKey, src: null })]),
-    );
-    assert.equal(
-      result.images[0].src,
-      "https://res.cloudinary.com/rad-cloud/image/upload/rad/products/prod_1/xyz789",
-    );
     assert.equal(result.images[0].objectKey, objectKey);
   });
 
