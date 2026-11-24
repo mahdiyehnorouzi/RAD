@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type {LocaleCopy} from "@/types/locale";
+import type { LocaleCopy } from "@/types/locale";
 import { asCopy } from "@/lib/making";
 import { useLocale } from "@/components/i18n";
 import "./customer-sidebar.css";

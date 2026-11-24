@@ -86,9 +86,12 @@ before(async () => {
   } as never);
   await dataSource.initialize();
 
-  const notices = { createForOwner: async () => {} } as unknown as NoticesService;
+  const notices = {
+    createForOwner: async () => {},
+  } as unknown as NoticesService;
   identityStub = {
-    key: (actor: Actor) => (actor.user ? `user:${actor.user.id}` : `guest:${actor.guestId}`),
+    key: (actor: Actor) =>
+      actor.user ? `user:${actor.user.id}` : `guest:${actor.guestId}`,
     fromRequest: async () => {
       throw new Error("not used in this spec");
     },
@@ -168,11 +171,7 @@ test("saveMine never persists a client-sent message (existing, intended behavior
     ],
   };
 
-  await commissions.saveMine(
-    actorFor(ownerUserId),
-    id,
-    withClientMessage,
-  );
+  await commissions.saveMine(actorFor(ownerUserId), id, withClientMessage);
 
   const after1 = await readRow(id);
   assert.equal(
@@ -386,7 +385,10 @@ test("addWorkshopMessage returns a plain MakingCommission, not the Admin DTO sha
 
   // Matches saveWorkshop's own established contract exactly.
   const fromSaveWorkshop = await commissions.saveWorkshop(maker, id, result);
-  assert.deepEqual(Object.keys(result).sort(), Object.keys(fromSaveWorkshop).sort());
+  assert.deepEqual(
+    Object.keys(result).sort(),
+    Object.keys(fromSaveWorkshop).sort(),
+  );
 });
 
 test("a non-maker cannot send a message through the workshop endpoint", async () => {

@@ -98,8 +98,5 @@ test("a full-list poll response adds a commission that was not loaded locally ye
     commission({ id: "b", updatedAt: 50 }),
   ];
   const merged = mergeFreshCommissions(current, poll);
-  assert.deepEqual(
-    merged.map((item) => item.id).sort(),
-    ["a", "b"],
-  );
+  assert.deepEqual(merged.map((item) => item.id).sort(), ["a", "b"]);
 });

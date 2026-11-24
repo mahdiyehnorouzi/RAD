@@ -9,7 +9,11 @@ import {
 function touch(
   commission: MakingCommission,
   patch: Partial<MakingCommission>,
-  event: { actor: "customer" | "artist" | "system"; stageId: MakingCommission["stage"]; action: LocaleCopy },
+  event: {
+    actor: "customer" | "artist" | "system";
+    stageId: MakingCommission["stage"];
+    action: LocaleCopy;
+  },
 ): MakingCommission {
   return {
     ...commission,
@@ -32,12 +36,17 @@ function withMessage(
     createdAt: Date.now(),
   };
   if (message.internal) {
-    return { ...commission, internalNotes: [...commission.internalNotes, entry] };
+    return {
+      ...commission,
+      internalNotes: [...commission.internalNotes, entry],
+    };
   }
   return { ...commission, messages: [...commission.messages, entry] };
 }
 
-export function beginCommissionReview(commission: MakingCommission): MakingCommission {
+export function beginCommissionReview(
+  commission: MakingCommission,
+): MakingCommission {
   if (commission.stage !== "design_submitted") return commission;
   return touch(
     commission,
@@ -52,7 +61,12 @@ export function beginCommissionReview(commission: MakingCommission): MakingCommi
 
 export function addCommissionMessage(
   commission: MakingCommission,
-  input: { author: "customer" | "artist"; body: LocaleCopy; internal?: boolean; operationId?: string },
+  input: {
+    author: "customer" | "artist";
+    body: LocaleCopy;
+    internal?: boolean;
+    operationId?: string;
+  },
 ) {
   const key = input.internal ? "internalNotes" : "messages";
   const id = input.operationId
@@ -86,12 +100,20 @@ export function artistDecideCommission(
 ) {
   if (decision === "decline") {
     const reason =
-      payload?.reason ?? loc("این طرح در ماده فعلی قابل ساخت نیست.", "This design cannot be made in the current material.");
+      payload?.reason ??
+      loc(
+        "این طرح در ماده فعلی قابل ساخت نیست.",
+        "This design cannot be made in the current material.",
+      );
     return withMessage(
       touch(
         commission,
         { stage: "declined", nextActor: "none" },
-        { actor: "artist", stageId: "feasibility", action: loc("طرح با دلیل رد شد", "Design declined with a reason") },
+        {
+          actor: "artist",
+          stageId: "feasibility",
+          action: loc("طرح با دلیل رد شد", "Design declined with a reason"),
+        },
       ),
       { stageId: "feasibility", author: "artist", body: reason },
     );
@@ -104,21 +126,38 @@ export function artistDecideCommission(
         nextActor: "customer",
         changeRequests: [
           ...commission.changeRequests,
-          { ...payload.change, id: newEntityId("c"), createdAt: Date.now(), status: "open" },
+          {
+            ...payload.change,
+            id: newEntityId("c"),
+            createdAt: Date.now(),
+            status: "open",
+          },
         ],
       },
       {},
-      { actor: "artist", stageId: "feasibility", action: loc("تغییر مشخص درخواست شد", "A specific change was requested") },
+      {
+        actor: "artist",
+        stageId: "feasibility",
+        action: loc("تغییر مشخص درخواست شد", "A specific change was requested"),
+      },
     );
   }
   if (decision === "offer_alternative") {
     const alternative =
-      payload?.alternative ?? loc("بدیلی ساده‌تر با همین حس پیشنهاد می‌شود.", "A simpler alternative with the same feeling is offered.");
+      payload?.alternative ??
+      loc(
+        "بدیلی ساده‌تر با همین حس پیشنهاد می‌شود.",
+        "A simpler alternative with the same feeling is offered.",
+      );
     return withMessage(
       touch(
         commission,
         { stage: "feasibility", nextActor: "customer" },
-        { actor: "artist", stageId: "feasibility", action: loc("بدیل پیشنهاد شد", "An alternative was offered") },
+        {
+          actor: "artist",
+          stageId: "feasibility",
+          action: loc("بدیل پیشنهاد شد", "An alternative was offered"),
+        },
       ),
       { stageId: "feasibility", author: "artist", body: alternative },
     );
@@ -127,7 +166,11 @@ export function artistDecideCommission(
     touch(
       commission,
       { stage: "quote", nextActor: "artist" },
-      { actor: "artist", stageId: "feasibility", action: loc("طرح تأیید شد", "Design approved") },
+      {
+        actor: "artist",
+        stageId: "feasibility",
+        action: loc("طرح تأیید شد", "Design approved"),
+      },
     ),
     {
       stageId: "feasibility",

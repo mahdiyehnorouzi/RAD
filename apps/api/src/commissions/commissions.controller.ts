@@ -1,6 +1,10 @@
 import { Body, Controller, Get, Param, Post, Put, Req } from "@nestjs/common";
 import { CommissionsService } from "./commissions.service";
-import { CommissionMessageDto, CreateCommissionDto, SaveCommissionDto } from "./dto";
+import {
+  CommissionMessageDto,
+  CreateCommissionDto,
+  SaveCommissionDto,
+} from "./dto";
 import { IdentityService } from "../common/identity.service";
 import type { AuthedRequest } from "../common/session.middleware";
 
@@ -18,7 +22,9 @@ export class CommissionsController {
 
   @Get("workshop")
   async listWorkshop(@Req() request: AuthedRequest) {
-    return this.commissions.listWorkshop(await this.identity.fromRequest(request));
+    return this.commissions.listWorkshop(
+      await this.identity.fromRequest(request),
+    );
   }
 
   @Put("workshop/:id")
@@ -36,12 +42,21 @@ export class CommissionsController {
 
   @Get(":id")
   async get(@Param("id") id: string, @Req() request: AuthedRequest) {
-    return this.commissions.getMine(await this.identity.fromRequest(request), id);
+    return this.commissions.getMine(
+      await this.identity.fromRequest(request),
+      id,
+    );
   }
 
   @Post()
-  async create(@Body() body: CreateCommissionDto, @Req() request: AuthedRequest) {
-    return this.commissions.create(await this.identity.fromRequest(request), body);
+  async create(
+    @Body() body: CreateCommissionDto,
+    @Req() request: AuthedRequest,
+  ) {
+    return this.commissions.create(
+      await this.identity.fromRequest(request),
+      body,
+    );
   }
 
   @Put(":id")
@@ -50,7 +65,11 @@ export class CommissionsController {
     @Body() body: SaveCommissionDto,
     @Req() request: AuthedRequest,
   ) {
-    return this.commissions.saveMine(await this.identity.fromRequest(request), id, body.payload);
+    return this.commissions.saveMine(
+      await this.identity.fromRequest(request),
+      id,
+      body.payload,
+    );
   }
 
   @Post(":id/messages")
@@ -59,7 +78,11 @@ export class CommissionsController {
     @Body() body: CommissionMessageDto,
     @Req() request: AuthedRequest,
   ) {
-    return this.commissions.addMineMessage(await this.identity.fromRequest(request), id, body.body);
+    return this.commissions.addMineMessage(
+      await this.identity.fromRequest(request),
+      id,
+      body.body,
+    );
   }
 
   @Post("workshop/:id/messages")

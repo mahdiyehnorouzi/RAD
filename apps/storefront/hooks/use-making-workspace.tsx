@@ -190,10 +190,7 @@ export function MakingProvider({ children }: { children: ReactNode }) {
    * keep the typed draft - if the request fails.
    */
   const sendMessage = useCallback(
-    async (
-      id: string,
-      input: Parameters<MakingActions["addMessage"]>[1],
-    ) => {
+    async (id: string, input: Parameters<MakingActions["addMessage"]>[1]) => {
       if (isDemoCommission(id)) {
         return actions.addMessage(id, input);
       }
