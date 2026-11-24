@@ -5,7 +5,7 @@ import { useOptionalAdminChrome } from "./admin-shell";
 import { messageNoticeKey } from "../lib/staff-notice-keys";
 import { createSingleFlight } from "../lib/admin-mutation";
 import { AlertTriangle, Check, Mail, Phone, RotateCcw } from "lucide-react";
-import { Button } from "@rad/ui";
+import { AdminMessageComposer, Button } from "@rad/ui";
 import {
   contactSourceLabels,
   contactTopicLabels,
@@ -145,20 +145,14 @@ export function AdminContactMessageItem({
 
       {canWrite && onReply && (
         <div className="contact-message-reply-box">
-          <textarea
+          <AdminMessageComposer
             value={draft}
-            onChange={(event) => setDraft(event.target.value)}
+            onChange={setDraft}
+            onSend={sendReply}
+            sending={sending}
             placeholder="پاسخ به مشتری…"
-            rows={2}
+            sendLabel="ارسال پاسخ"
           />
-          <Button
-            variant="secondary"
-            onClick={sendReply}
-            disabled={!draft.trim()}
-            loading={sending}
-          >
-            ارسال پاسخ
-          </Button>
         </div>
       )}
 

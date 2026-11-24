@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ChevronRight, Package, Search } from "lucide-react";
-import { Button } from "@rad/ui";
+import { AdminSearchField, Button } from "@rad/ui";
 import {
   orderStatusLabels,
   orderStatusOptions,
@@ -168,6 +168,30 @@ export function AdminOrders({
   })();
   const active = (list ?? []).find((order) => order.id === activeId) ?? null;
   const showDetail = Boolean(active) && (!mobile || selectedId === active?.id);
+
+  // Opening an order on mobile replaces the list with the detail pane in
+  // place (same scroll container, no route change), so the browser keeps
+  // whatever scrollTop the list had — landing the admin mid-way down the
+  // detail instead of at its top. Scrolling to 0 only when the *id*
+  // changes (not on every render) keeps this from firing on background
+  // polling, which refreshes `orders` in place without changing which
+  // order is selected. Closing restores the list's own scroll position
+  // instead of leaving it at whatever offset the (now shorter) page
+  // scrolled to once the detail pane disappeared.
+  const detailScrollId = mobile && showDetail ? (active?.id ?? null) : null;
+  const previousDetailScrollId = useRef<string | null>(null);
+  const savedListScrollY = useRef(0);
+  useEffect(() => {
+    const previous = previousDetailScrollId.current;
+    if (detailScrollId && detailScrollId !== previous) {
+      window.scrollTo(0, 0);
+    } else if (!detailScrollId && previous) {
+      const target = savedListScrollY.current;
+      window.requestAnimationFrame(() => window.scrollTo(0, target));
+    }
+    previousDetailScrollId.current = detailScrollId;
+  }, [detailScrollId]);
+
   const readNotice = useOptionalAdminChrome()?.readNotice;
   const noticeKey = showDetail && active ? orderNoticeKey(active) : null;
   useEffect(() => {
@@ -246,20 +270,17 @@ export function AdminOrders({
           </div>
 
           <div className="orders-toolbar">
-            <label className="orders-search">
-              <Search aria-hidden="true" />
-              <span className="sr-only">جست‌وجوی سفارش</span>
-              <input
-                value={query}
-                onChange={(event) => {
-                  setQuery(event.target.value);
-                  setPage(1);
-                }}
-                placeholder="شماره سفارش، مشتری، اثر یا کد رهگیری"
-                type="search"
-                enterKeyHint="search"
-              />
-            </label>
+            <AdminSearchField
+              icon={<Search />}
+              value={query}
+              onChange={(next) => {
+                setQuery(next);
+                setPage(1);
+              }}
+              placeholder="شماره سفارش، مشتری، اثر یا کد رهگیری"
+              aria-label="جست‌وجوی سفارش"
+              enterKeyHint="search"
+            />
             <label>
               <span className="sr-only">بازه زمان ثبت</span>
               <select
@@ -321,7 +342,11 @@ export function AdminOrders({
                           fullWidth
                           className={`orders-row${selected ? " is-active" : ""}${review ? " is-review" : ""}`}
                           aria-current={selected ? "true" : undefined}
-                          onClick={() => setSelectedId(order.id)}
+                          onClick={() => {
+                            if (mobile)
+                              savedListScrollY.current = window.scrollY;
+                            setSelectedId(order.id);
+                          }}
                         >
                           <span className="orders-row-top">
                             <StatusBadge

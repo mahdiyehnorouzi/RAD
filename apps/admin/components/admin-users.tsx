@@ -1,8 +1,8 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
-import { Search, X } from "lucide-react";
-import { Button } from "@rad/ui";
+import { Search } from "lucide-react";
+import { AdminSearchField } from "@rad/ui";
 import type { AdminUser } from "../lib/admin-data";
 import { AdminAsyncRegion } from "./admin-async-region";
 import { EmptyState, StatusBadge } from "./admin-list-chrome";
@@ -47,30 +47,14 @@ export function UsersPanel({
         </div>
       </div>
       <div className="toolbar">
-        <div className="search-field">
-          <Search />
-          <input
-            ref={inputRef}
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="جست‌وجوی نام، ایمیل یا شناسه"
-            aria-label="جست‌وجوی مشتریان"
-          />
-          {query ? (
-            <Button
-              variant="ghost"
-              shape="icon"
-              size="sm"
-              onClick={() => {
-                setQuery("");
-                inputRef.current?.focus();
-              }}
-              aria-label="پاک کردن جست‌وجو"
-            >
-              <X />
-            </Button>
-          ) : null}
-        </div>
+        <AdminSearchField
+          ref={inputRef}
+          icon={<Search />}
+          value={query}
+          onChange={setQuery}
+          placeholder="جست‌وجوی نام، ایمیل یا شناسه"
+          aria-label="جست‌وجوی مشتریان"
+        />
       </div>
       <AdminAsyncRegion
         loading={loading}
