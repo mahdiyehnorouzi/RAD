@@ -3340,30 +3340,24 @@ table.products-table {
   gap: 14px;
 }
 .commission-thread {
-  list-style: none;
   margin: 0;
   padding: 0;
-  display: grid;
-  gap: 12px;
+  border-top: 0;
+  min-width: 0;
   max-height: 360px;
   overflow-y: auto;
+  overscroll-behavior: contain;
 }
 .commission-thread li {
-  padding: 12px 14px;
-  background: #fffaf2;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
-.commission-thread b {
-  margin-inline-end: 8px;
+.commission-thread li.from-customer {
+  justify-self: start;
 }
-.commission-thread span {
-  color: var(--muted);
-  font-size: 11px;
-}
-.commission-thread p {
-  margin: 8px 0 0;
-  line-height: 1.7;
+.commission-thread li.from-admin {
+  justify-self: end;
+  margin-inline-start: 0;
 }
 .commission-message {
   display: grid;
@@ -3569,33 +3563,24 @@ table.products-table {
   }
   .commission-view.has-detail .commission-list,
   .commission-view.has-detail .toolbar,
-  .commission-view.has-detail .commission-filters,
-  .commission-view.has-detail .view-heading {
+  .commission-view.has-detail .commission-filters {
     display: none;
   }
   .commission-detail-close {
     display: inline-flex;
   }
   .commission-detail {
-    position: fixed;
-    inset: 0;
-    z-index: 40;
-    border-radius: 0;
-    /* overflow-y:auto alone computes overflow-x to auto in Safari, so a
-       nowrap tab row widens the pane and the labels clip off-screen. */
-    overflow-x: hidden;
-    overflow-y: auto;
+    position: relative;
+    min-width: 0;
+    overflow: visible;
     padding: 16px;
-    padding-top: max(16px, env(safe-area-inset-top));
-    padding-bottom: max(16px, env(safe-area-inset-bottom));
   }
   .commission-tabs {
     position: sticky;
     top: 0;
     z-index: 3;
-    margin-inline: -16px;
-    padding-inline: 16px;
-    width: auto;
+    margin-inline: 0;
+    width: 100%;
   }
 }
 
@@ -3734,4 +3719,15 @@ table.products-table {
 }
 .product-media-actions button:disabled {
   opacity: 0.45;
+}
+
+/* Background polling must not move the content or its scroll anchor. */
+.admin-refresh-status {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
