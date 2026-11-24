@@ -174,7 +174,11 @@ export class CommissionsService {
     );
     if (!internal && previous !== next) {
       try {
-        await this.notices.createForOwner(row.ownerKey, "commission_message", id);
+        await this.notices.createForOwner(
+          row.ownerKey,
+          "commission_message",
+          id,
+        );
       } catch {
         // The append already committed. Do not report it as a failed send
         // or encourage another append because notification delivery failed.

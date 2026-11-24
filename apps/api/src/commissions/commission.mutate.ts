@@ -75,7 +75,10 @@ export function addCommissionMessage(
     : newEntityId(input.internal ? "n" : "m");
   const existing = commission[key].find((message) => message.id === id);
   if (existing) {
-    if (existing.body.fa !== input.body.fa || existing.body.en !== input.body.en) {
+    if (
+      existing.body.fa !== input.body.fa ||
+      existing.body.en !== input.body.en
+    ) {
       throw new ConflictException("Message operation already used");
     }
     return commission;
