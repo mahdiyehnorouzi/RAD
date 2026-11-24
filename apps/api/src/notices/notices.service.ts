@@ -89,6 +89,19 @@ export class NoticesService {
     return this.snapshot(ownerKey);
   }
 
+  async markCommissionMessagesRead(actor: Actor, commissionId: string) {
+    await this.notices.update(
+      {
+        ownerKey: this.identity.key(actor),
+        kind: "commission_message",
+        productSlug: commissionId,
+        read: false,
+      },
+      { read: true },
+    );
+    return this.list(actor);
+  }
+
   async markAllRead(actor: Actor) {
     await this.notices.update(
       { ownerKey: this.identity.key(actor), read: false },

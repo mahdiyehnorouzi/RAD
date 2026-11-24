@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useRef } from "react";
+import { useCommerce } from "@/components/commerce";
 import type { MakingCommission } from "@/components/making/type";
 import { useMaking } from "@/hooks/use-making-workspace";
 import { useLocale } from "@/components/i18n";
@@ -17,8 +19,24 @@ export function CustomerMakingSidebar({
 }) {
   const { addMessage } = useMaking();
   const { locale } = useLocale();
-  const showMessages =
-    commission.stage !== "complete" && commission.stage !== "shipping";
+  const { notices, markCommissionMessagesRead } = useCommerce();
+  const unread = notices.filter(
+    (notice) =>
+      !notice.read &&
+      notice.kind === "commission_message" &&
+      notice.productSlug === commission.id,
+  );
+  const unreadKey = unread.map((notice) => notice.id).join(",");
+  const attempted = useRef("");
+  useEffect(() => {
+    if (readOnly || !unreadKey || attempted.current === unreadKey) return;
+    if (document.visibilityState !== "visible") return;
+    attempted.current = unreadKey;
+    void markCommissionMessagesRead(commission.id).catch(() => {
+      attempted.current = "";
+    });
+  }, [commission.id, markCommissionMessagesRead, readOnly, unreadKey]);
+  const showMessages = true;
   const canCompose =
     !readOnly &&
     commission.stage !== "complete" &&

@@ -6,7 +6,8 @@ import { useEffect, useState } from "react";
 import { useCart } from "@/features/cart";
 import { useLocale } from "@/components/i18n";
 import { useHeaderMotion } from "./hooks";
-import { Heart, Menu as MenuIcon, ShoppingBag, X } from "lucide-react";
+import { Bell, Heart, Menu as MenuIcon, ShoppingBag, X } from "lucide-react";
+import { useCommerce } from "@/components/commerce";
 import { RAD_INSTAGRAM, InstagramIcon } from "@/components/contact";
 import "./header.css";
 
@@ -15,6 +16,7 @@ export function Header() {
   const { compact } = useHeaderMotion(open);
   const pathname = usePathname();
   const { count } = useCart();
+  const { user, unread } = useCommerce();
   const { locale, setLocale, t, href, number } = useLocale();
 
   useEffect(() => setOpen(false), [pathname]);
@@ -144,6 +146,16 @@ export function Header() {
         >
           <Heart aria-hidden="true" />
         </Link>
+        {user && (
+          <Link
+            href={href("/account/notifications")}
+            className="utility-button"
+            aria-label={t("notifications")}
+          >
+            <Bell aria-hidden="true" />
+            {unread > 0 && <i>{number(unread)}</i>}
+          </Link>
+        )}
         <Link
           href={href("/cart")}
           className="utility-button cart-button"

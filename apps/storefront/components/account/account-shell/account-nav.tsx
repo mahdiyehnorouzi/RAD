@@ -12,7 +12,7 @@ import { useProfileTabs } from "../profile-tabs";
 export function AccountNav() {
   const pathname = usePublicPathname();
   const { t, href, number } = useLocale();
-  const { unread } = useCommerce();
+  const { unread, notices } = useCommerce();
   const tabs = useProfileTabs();
   const activeRef = useRef<HTMLElement>(null);
   const setActive = (node: HTMLElement | null) => {
@@ -68,7 +68,15 @@ export function AccountNav() {
           ? tabs.section === section
           : isAccountNavActive(pathname, item);
         const Icon = item.icon;
-        const count = item.href === "/account/notifications" ? unread : 0;
+        const count =
+          item.href === "/account/notifications"
+            ? unread
+            : item.href === "/account/making"
+              ? notices.filter(
+                  (notice) =>
+                    !notice.read && notice.kind === "commission_message",
+                ).length
+              : 0;
         const body = (
           <>
             <Icon

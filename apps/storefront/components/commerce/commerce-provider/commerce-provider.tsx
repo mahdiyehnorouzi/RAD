@@ -57,6 +57,7 @@ type CommerceContextValue = {
   unread: number;
   addNotice: (kind: NoticeKind, productSlug?: string) => Promise<void>;
   markAllRead: () => Promise<void>;
+  markCommissionMessagesRead: (id: string) => Promise<void>;
   /** Empty until a page calls {@link useOrders}; single orders are upserted as they change. */
   orders: Order[];
   ordersReady: boolean;
@@ -80,7 +81,7 @@ type CommerceContextValue = {
 
 const CommerceContext = createContext<CommerceContextValue | null>(null);
 
-const NOTICE_POLL_MS = 30_000;
+const NOTICE_POLL_MS = 12_000;
 const FAVORITES_CACHE_KEY = "rad.favorites.cache";
 
 function publishSession(userId: string | null) {
@@ -122,6 +123,7 @@ export function CommerceProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [favorites, setFavorites] = useState<string[]>([]);
   const [notices, setNotices] = useState<Notice[]>([]);
+  const noticeEpoch = useRef(0);
   const [orders, setOrders] = useState<Order[]>([]);
   const [ordersReady, setOrdersReady] = useState(false);
   const ordersWanted = useRef(false);
@@ -144,6 +146,7 @@ export function CommerceProvider({ children }: { children: React.ReactNode }) {
   };
 
   const applySession = useCallback((session: SessionState) => {
+    noticeEpoch.current += 1;
     setUser(session.user);
     // Same defensive fallback as `notices` above, for the same reason: a
     // malformed/partial `/session` response must not leave `favorites`
@@ -203,19 +206,30 @@ export function CommerceProvider({ children }: { children: React.ReactNode }) {
   }, [applySession]);
 
   useEffect(() => {
+    if (!user?.id) return;
+    let cancelled = false;
     const refreshNotices = () => {
       if (document.visibilityState !== "visible") return;
+      const epoch = ++noticeEpoch.current;
       api<{ notices?: Notice[] }>("/notices")
-        .then((payload) => setNotices(visibleNotices(payload.notices)))
+        .then((payload) => {
+          if (!cancelled && epoch === noticeEpoch.current) {
+            setNotices(visibleNotices(payload.notices));
+          }
+        })
         .catch((error) => logRecovered("notices", error));
     };
+    refreshNotices();
     const timer = window.setInterval(refreshNotices, NOTICE_POLL_MS);
     document.addEventListener("visibilitychange", refreshNotices);
+    window.addEventListener("focus", refreshNotices);
     return () => {
+      cancelled = true;
       window.clearInterval(timer);
       document.removeEventListener("visibilitychange", refreshNotices);
+      window.removeEventListener("focus", refreshNotices);
     };
-  }, []);
+  }, [user?.id]);
 
   useEffect(() => {
     if (!toast) return;
@@ -303,9 +317,19 @@ export function CommerceProvider({ children }: { children: React.ReactNode }) {
       unread: notices.filter((notice) => !notice.read).length,
       addNotice,
       markAllRead: async () => {
-        applyNotices(
-          await api<{ notices: Notice[] }>("/notices/read", { method: "POST" }),
+        const epoch = ++noticeEpoch.current;
+        const result = await api<{ notices: Notice[] }>("/notices/read", {
+          method: "POST",
+        });
+        if (epoch === noticeEpoch.current) applyNotices(result);
+      },
+      markCommissionMessagesRead: async (id) => {
+        const epoch = ++noticeEpoch.current;
+        const result = await api<{ notices: Notice[] }>(
+          `/notices/commissions/${encodeURIComponent(id)}/read`,
+          { method: "POST" },
         );
+        if (epoch === noticeEpoch.current) applyNotices(result);
       },
       orders,
       ordersReady,
