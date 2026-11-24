@@ -242,7 +242,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
     return (
       <div className="admin-shell">
         <main className="admin-main">
-          <p className="admin-loading">در حال اتصال به پایگاه داده…</p>
+          <p className="admin-loading">در حال بارگذاری…</p>
         </main>
       </div>
     );
@@ -343,9 +343,17 @@ export function AdminShell({ children }: { children: ReactNode }) {
             <X />
           </Button>
           <div className="brand-lockup">
-            <span className="brand-mark">
+            <Link
+              href="/"
+              className="brand-mark"
+              aria-label="مرور استودیو"
+              onClick={(event) => {
+                event.preventDefault();
+                go("overview");
+              }}
+            >
               <img src="/rad-logo.png" alt="رَد" width={52} height={52} />
-            </span>
+            </Link>
             <div>
               <strong>دفتر کوره</strong>
               <small>پنل مدیریت استودیو</small>
