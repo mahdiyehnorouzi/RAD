@@ -94,6 +94,8 @@
   --font: var(--font-sans);
   --font-weight-regular: 400;
   --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
   --text-body: 16px;
   --text-label: 0.8rem;
   --text-caption: 0.75rem;
@@ -214,7 +216,7 @@ textarea:focus-visible {
   display: grid;
 }
 .brand-lockup strong {
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 .brand-lockup small,
 .sidebar-foot small {
@@ -283,7 +285,7 @@ textarea:focus-visible {
 }
 .sidebar-foot strong {
   font-size: 13px;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 .sidebar-foot > button,
 .nav-close {
@@ -327,7 +329,7 @@ textarea:focus-visible {
 .eyebrow {
   color: var(--oxide);
   font-size: 12px;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
   letter-spacing: 0.02em;
 }
 .topbar-status {
@@ -427,7 +429,7 @@ textarea:focus-visible {
 }
 .kiln-dial strong {
   font-size: 52px;
-  font-weight: 400;
+  font-weight: var(--font-weight-regular);
   line-height: 1;
 }
 .kiln-dial span {
@@ -457,7 +459,7 @@ textarea:focus-visible {
   grid-row: 1/3;
   grid-column: 2;
   font-size: 48px;
-  font-weight: 400;
+  font-weight: var(--font-weight-regular);
   font-variant-numeric: tabular-nums;
 }
 .metric small {
@@ -494,7 +496,7 @@ textarea:focus-visible {
 .dark-panel h3 {
   margin: 0;
   font-size: 29px;
-  font-weight: 400;
+  font-weight: var(--font-weight-regular);
 }
 .dark-panel p {
   color: #c4cec9;
@@ -703,7 +705,7 @@ textarea:focus-visible {
 }
 .product-meta strong {
   font-size: 13px;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 .product-meta small {
   color: var(--muted);
@@ -764,7 +766,7 @@ th {
   padding: 13px 12px;
   color: var(--muted);
   font-size: 11px;
-  font-weight: 400;
+  font-weight: var(--font-weight-regular);
   text-align: right;
   border-bottom: 1px solid var(--line);
 }
@@ -820,7 +822,7 @@ td select,
   gap: 4px;
 }
 .member-row strong {
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 .member-row small {
   color: var(--muted);
@@ -862,7 +864,7 @@ td select,
 .empty-state h3 {
   color: var(--ink);
   margin: 15px 0 0;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 .empty-state p {
   font-size: 13px;
@@ -897,7 +899,7 @@ td select,
 .dialog > header h2 {
   margin: 6px 0;
   font-size: 31px;
-  font-weight: 400;
+  font-weight: var(--font-weight-regular);
 }
 .dialog > header p {
   margin: 0;
@@ -934,7 +936,7 @@ td select,
 }
 .field > span,
 .field-label > span {
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 .field input,
 .field select,
@@ -1255,7 +1257,7 @@ td select,
 .admin-login h1 {
   margin: 10px 0 8px;
   font-size: 34px;
-  font-weight: 400;
+  font-weight: var(--font-weight-regular);
 }
 .admin-login p {
   margin: 0 0 8px;
@@ -1356,7 +1358,7 @@ td select,
   gap: 4px;
 }
 .order-process-meta b {
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 .order-process-meta span {
   font-size: 13px;
@@ -1463,7 +1465,7 @@ td select,
 .order-payment h4 {
   margin: 0;
   font-size: 13px;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 .order-payment .order-facts {
   margin: 0;
@@ -1522,7 +1524,7 @@ td select,
 .order-payment-reject legend {
   margin-bottom: 8px;
   font-size: 13px;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 .order-payment-reject label {
   display: flex;
@@ -1552,7 +1554,7 @@ td select,
 }
 .order-payment-rejected strong {
   color: #8e3e31;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   font-size: 13px;
 }
 .order-payment-rejected p {
@@ -1915,7 +1917,7 @@ td select,
   min-width: 0;
 }
 .contact-message header strong {
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
   overflow-wrap: anywhere;
 }
 .contact-message header small {
@@ -1961,7 +1963,7 @@ td select,
   grid-column: 1;
   min-width: 0;
   font-size: 11px;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
   color: var(--muted);
   overflow-wrap: anywhere;
 }
@@ -2070,12 +2072,12 @@ td select,
   gap: 4px 10px;
   margin: 0;
   font-size: 13px;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 .order-messages h4 span {
   color: var(--oxide);
   font-size: 12px;
-  font-weight: 400;
+  font-weight: var(--font-weight-regular);
 }
 @media (max-width: 760px) {
   .contact-message {
@@ -2155,7 +2157,7 @@ td select,
 }
 .damage-claim-decision strong {
   font-size: 13px;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 .damage-claim-decision p {
   margin: 0;
@@ -2173,7 +2175,7 @@ td select,
 }
 .damage-claim-form > label {
   font-size: 13px;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 .order-policies {
   display: grid;
@@ -2189,12 +2191,12 @@ td select,
   gap: 4px 10px;
   margin: 0;
   font-size: 13px;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 .order-policies h4 span {
   color: var(--muted);
   font-size: 12px;
-  font-weight: 400;
+  font-weight: var(--font-weight-regular);
 }
 .order-policies ul {
   display: flex;
@@ -2312,7 +2314,7 @@ td select,
 .shape-choice-editor legend {
   padding: 0 6px;
   font-size: 13px;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 .shape-choice-preview {
   width: 120px;
@@ -2364,7 +2366,7 @@ td select,
 }
 .login-visual .brand-block strong {
   font-size: 14px;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 .login-visual .brand-block small {
   color: var(--muted);
@@ -2372,7 +2374,7 @@ td select,
 }
 .login-visual .visual-tagline {
   margin: 0;
-  font-family: var(--font-hand, var(--font));
+  font-family: var(--font);
   font-size: 15px;
   color: var(--ink);
   line-height: var(--leading-tight);
@@ -2394,7 +2396,7 @@ td select,
 .login-form-card h1 {
   margin: 4px 0 10px;
   font-size: 1.5rem;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
   line-height: var(--leading-tight);
 }
 .login-form-card > p {
@@ -2531,7 +2533,7 @@ td select,
 }
 .stat-tile strong {
   font-size: 34px;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
   font-variant-numeric: tabular-nums;
   line-height: 1;
 }
@@ -2589,7 +2591,7 @@ td select,
 .shortcut-tile span {
   flex: 1;
   font-size: 12.5px;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 .shortcut-tile svg:last-child {
   width: 15px;
@@ -2617,7 +2619,7 @@ td select,
 }
 .recent-card strong {
   font-size: 13px;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -2723,7 +2725,7 @@ table.products-table {
   padding: 14px 12px;
   text-align: right;
   font-size: 11.5px;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
   color: var(--muted);
   border-bottom: 1px solid var(--line);
   white-space: nowrap;
@@ -2982,7 +2984,7 @@ table.products-table {
 .editor-main-head h2 {
   margin: 0;
   font-size: 24px;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 .editor-main-head .rad-button svg {
   width: 16px;
@@ -3003,7 +3005,7 @@ table.products-table {
 .editor-section-card h3 {
   margin: 0 0 16px;
   font-size: 14px;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   display: flex;
   align-items: center;
   gap: 8px;
@@ -3079,7 +3081,7 @@ table.products-table {
 }
 .commission-card strong {
   font-size: 15px;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 .commission-card-id {
   color: var(--muted);
@@ -3157,7 +3159,7 @@ table.products-table {
 .commission-detail header h3 {
   margin: 6px 0;
   font-size: 24px;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 .commission-detail header p {
   margin: 0;
@@ -3200,7 +3202,7 @@ table.products-table {
 .commission-tabs button[aria-selected="true"] {
   color: var(--mineral);
   border-bottom-color: var(--mineral);
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 .commission-facts {
   display: grid;
@@ -3417,7 +3419,7 @@ table.products-table {
 }
 .commission-decision-card strong {
   font-size: 13px;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
   padding-inline-end: 22px;
 }
 .commission-decision-card span {
@@ -3489,7 +3491,7 @@ table.products-table {
 }
 .commission-history-stage.current span:last-child {
   color: var(--ink);
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 .commission-history-stage.current .commission-history-stage-marker {
   border-color: var(--oxide);
@@ -3511,7 +3513,7 @@ table.products-table {
   gap: 6px;
   margin: 0;
   font-size: 13px;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 .commission-history-heading svg {
   width: 15px;
@@ -3865,4 +3867,19 @@ table.products-table {
 
 .commission-tabs button {
   border-radius: 0;
+}
+
+strong,
+b,
+th {
+  font-weight: var(--font-weight-semibold);
+}
+
+.member-resend {
+  grid-column: 2 / -1;
+  justify-self: start;
+}
+
+.member-row small {
+  overflow-wrap: anywhere;
 }

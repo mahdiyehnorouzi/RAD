@@ -149,7 +149,7 @@
   margin-inline-start: auto;
 }
 .orders-row strong {
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
 }
 .orders-row-product {
   display: -webkit-box;
@@ -199,7 +199,7 @@
 .orders-detail-head h3 {
   margin: 0;
   font-size: 1.15rem;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   line-height: 1.4;
   overflow-wrap: anywhere;
 }
@@ -246,7 +246,7 @@
 .orders-steps li.is-current {
   border-top-color: var(--oxide);
   color: var(--ink);
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
 }
 .orders-sheets {
   display: grid;
@@ -256,7 +256,7 @@
 .orders-detail h4 {
   margin: 0 0 8px;
   font-size: 0.95rem;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
 }
 .orders-detail dl {
   display: grid;

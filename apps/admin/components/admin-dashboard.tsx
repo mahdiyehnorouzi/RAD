@@ -320,6 +320,10 @@ export function AdminDashboard() {
           {...sectionAsync(workspace, "members")}
           canWrite={workspace.can("member.write")}
           onInvite={() => setInviteOpen(true)}
+          onResend={async (id) => {
+            await workspace.resendInvite(id);
+            announce("دعوت‌نامه دوباره ارسال شد.");
+          }}
           onChange={async (member) => {
             await workspace.updateMember(member);
             announce("سطح دسترسی به‌روزرسانی شد.");

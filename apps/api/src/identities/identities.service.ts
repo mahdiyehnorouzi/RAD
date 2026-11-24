@@ -352,7 +352,10 @@ export class IdentitiesService {
     if (!identity && !product) return null;
     const status: RadIdentityStatus = identity?.status ?? "assigned";
     const storyPublished = Boolean(
-      product && status === "assigned" && STORY_PUBLISHED.has(product.status),
+      product &&
+        product.radNumber === radNumber &&
+        status === "assigned" &&
+        STORY_PUBLISHED.has(product.status),
     );
     const padded = formatRadCode(radNumber);
     return {

@@ -90,3 +90,22 @@ test("the placeholder names the number and stays out of search indexes", () => {
   assert.match(english, /RAD 084/);
   assert.match(english, /lang="en"/);
 });
+
+test("a QR cannot redirect to another identity or an external URL", () => {
+  for (const passportPath of ["/passport/085", "//example.org/passport/084"]) {
+    const plan = planIdentityRequest({
+      code: "084",
+      search: "",
+      lookup: {
+        kind: "found",
+        identity: {
+          ...reserved,
+          status: "assigned",
+          storyPublished: true,
+          passportPath,
+        },
+      },
+    });
+    assert.equal(plan.status, 200);
+  }
+});

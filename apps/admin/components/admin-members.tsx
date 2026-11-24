@@ -22,6 +22,7 @@ export function Members({
   onRetry,
   canWrite,
   onInvite,
+  onResend,
   onChange,
 }: {
   members: AdminMember[];
@@ -32,11 +33,28 @@ export function Members({
   onRetry: () => void;
   canWrite: boolean;
   onInvite: () => void;
+  onResend: (id: string) => Promise<void>;
   onChange: (member: AdminMember) => void | Promise<void>;
 }) {
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [rowError, setRowError] = useState("");
   const roleFlight = useRef(createSingleFlight());
+
+  const resend = (id: string) => {
+    void roleFlight.current.run(async () => {
+      setPendingId(id);
+      setRowError("");
+      try {
+        await onResend(id);
+      } catch (error) {
+        setRowError(
+          error instanceof Error ? error.message : "ارسال دوباره ناموفق بود.",
+        );
+      } finally {
+        setPendingId(null);
+      }
+    });
+  };
 
   const changeRole = (member: AdminMember) => {
     void roleFlight.current.run(async () => {
@@ -121,6 +139,17 @@ export function Members({
                     </option>
                   ))}
                 </select>
+                {canWrite && member.status === "invited" && (
+                  <Button
+                    className="member-resend"
+                    variant="secondary"
+                    size="sm"
+                    disabled={pendingId !== null}
+                    onClick={() => resend(member.id)}
+                  >
+                    ارسال دوباره دعوت‌نامه
+                  </Button>
+                )}
               </article>
             ))}
           </div>
@@ -170,7 +199,7 @@ export function InviteDialog({
         onSubmit={(event) => {
           event.preventDefault();
           if (saving) return;
-          if (!name.trim() || !/^\S+@\S+\.\S+$/.test(email)) {
+          if (!name.trim() || !/^\S+@\S+\.\S+$/.test(email.trim())) {
             setError("نام و ایمیل معتبر را وارد کنید.");
             return;
           }
@@ -180,8 +209,8 @@ export function InviteDialog({
             try {
               await onInvite({
                 id: crypto.randomUUID(),
-                name,
-                email,
+                name: name.trim(),
+                email: email.trim().toLowerCase(),
                 role,
                 status: "invited",
               });
