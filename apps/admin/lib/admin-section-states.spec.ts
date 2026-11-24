@@ -484,6 +484,7 @@ test("members distinguish loading, failure, empty, a real row, and a failed refr
       onRetry: retry,
       canWrite: true,
       onInvite: retry,
+      onResend: noop,
       onChange: noop,
     }),
   );
@@ -500,6 +501,7 @@ test("members distinguish loading, failure, empty, a real row, and a failed refr
       onRetry: retry,
       canWrite: true,
       onInvite: retry,
+      onResend: noop,
       onChange: noop,
     }),
   );
@@ -515,6 +517,7 @@ test("members distinguish loading, failure, empty, a real row, and a failed refr
       onRetry: retry,
       canWrite: true,
       onInvite: retry,
+      onResend: noop,
       onChange: noop,
     }),
   );
@@ -529,6 +532,7 @@ test("members distinguish loading, failure, empty, a real row, and a failed refr
       onRetry: retry,
       canWrite: true,
       onInvite: retry,
+      onResend: noop,
       onChange: noop,
     }),
   );

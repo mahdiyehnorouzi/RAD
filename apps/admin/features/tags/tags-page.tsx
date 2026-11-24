@@ -165,7 +165,10 @@ export function TagsPage() {
   }
 
   async function downloadBatch(id: string) {
-    await downloadFile(`/admin/identities/batches/${id}/export`, "rad-tags.zip");
+    await downloadFile(
+      `/admin/identities/batches/${id}/export`,
+      "rad-tags.zip",
+    );
   }
 
   async function markPrinted(id: string) {

@@ -73,7 +73,10 @@ export class AdminController {
   }
 
   @Post("notice-reads")
-  markNoticeRead(@Body() body: { key?: unknown }, @Req() request: AuthedRequest) {
+  markNoticeRead(
+    @Body() body: { key?: unknown },
+    @Req() request: AuthedRequest,
+  ) {
     if (
       typeof body.key !== "string" ||
       body.key.length > 300 ||

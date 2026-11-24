@@ -14,7 +14,7 @@ import {
   type AdminOrderStatus,
   type AdminProduct,
 } from "../../lib/admin-data";
-import { useAdminChrome } from "../admin-shell";
+import { useOptionalAdminChrome } from "../admin-shell";
 import { orderNoticeKey } from "../../lib/staff-notice-keys";
 import { coverImage } from "../../lib/product-cover";
 import {
@@ -168,10 +168,10 @@ export function AdminOrders({
   })();
   const active = (list ?? []).find((order) => order.id === activeId) ?? null;
   const showDetail = Boolean(active) && (!mobile || selectedId === active?.id);
-  const { readNotice } = useAdminChrome();
+  const readNotice = useOptionalAdminChrome()?.readNotice;
   const noticeKey = showDetail && active ? orderNoticeKey(active) : null;
   useEffect(() => {
-    if (noticeKey) readNotice(noticeKey);
+    if (noticeKey) readNotice?.(noticeKey);
   }, [noticeKey, readNotice]);
 
   const covers = useMemo(() => {

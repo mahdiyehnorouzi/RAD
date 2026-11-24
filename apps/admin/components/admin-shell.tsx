@@ -101,6 +101,10 @@ type AdminChrome = {
 
 const AdminChromeContext = createContext<AdminChrome | null>(null);
 
+export function useOptionalAdminChrome() {
+  return useContext(AdminChromeContext);
+}
+
 export function useAdminChrome() {
   const chrome = useContext(AdminChromeContext);
   if (!chrome) {
@@ -114,7 +118,8 @@ export function AdminShell({ children }: { children: ReactNode }) {
   const noticeReads = useStaffNoticeReads(workspace.user?.id);
   const readNotice = useCallback(
     (key: string) => {
-      if (!noticeReads.keys?.has(key)) void noticeReads.markRead(key).catch(() => {});
+      if (!noticeReads.keys?.has(key))
+        void noticeReads.markRead(key).catch(() => {});
     },
     [noticeReads.keys, noticeReads.markRead],
   );

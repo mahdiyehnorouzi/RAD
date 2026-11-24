@@ -28,7 +28,7 @@ import {
   type AdminCommission,
   type AdminCommissionStage,
 } from "../lib/admin-data";
-import { useAdminChrome } from "./admin-shell";
+import { useOptionalAdminChrome } from "./admin-shell";
 import { commissionNoticeKey } from "../lib/staff-notice-keys";
 import { briefExcerpt } from "../lib/product-cover";
 import {
@@ -180,10 +180,10 @@ export function AdminCommissions({
     [commissions, requestedId],
   );
   const selected = commissions.find((item) => item.id === selectedId) ?? null;
-  const { readNotice } = useAdminChrome();
+  const readNotice = useOptionalAdminChrome()?.readNotice;
   const noticeKey = selected ? commissionNoticeKey(selected) : null;
   useEffect(() => {
-    if (noticeKey) readNotice(noticeKey);
+    if (noticeKey) readNotice?.(noticeKey);
   }, [noticeKey, readNotice]);
 
   const filtered = useMemo(
