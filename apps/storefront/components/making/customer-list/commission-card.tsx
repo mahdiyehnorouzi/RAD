@@ -37,7 +37,10 @@ export function CommissionCard({
       </header>
       <StageMeter commission={commission} compact />
       <p>{copy(situation.actorLabel, locale)}</p>
-      <Link className="button outline" href={href(`${hrefBase}/${commission.id}`)}>
+      <Link
+        className="button outline"
+        href={href(`${hrefBase}/${commission.id}`)}
+      >
         {t("makingPathTitle")}
       </Link>
     </article>

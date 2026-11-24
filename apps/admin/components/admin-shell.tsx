@@ -288,7 +288,9 @@ export function AdminShell({ children }: { children: ReactNode }) {
       order.status === "confirmed",
   );
   const pendingCommissions = workspace.commissions.filter((commission) => {
-    const last = commission.messages.filter((message) => !message.internal).at(-1);
+    const last = commission.messages
+      .filter((message) => !message.internal)
+      .at(-1);
     return (
       commission.stage === "design_submitted" ||
       commission.stage === "feasibility" ||

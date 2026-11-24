@@ -37,6 +37,7 @@ import {
 import { StageMeter } from "@rad/ui";
 import {
   ConfirmDialog,
+  useBodyScrollLock,
   useIsMobileViewport,
 } from "./admin-dialog";
 
