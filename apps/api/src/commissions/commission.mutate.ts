@@ -52,14 +52,22 @@ export function beginCommissionReview(commission: MakingCommission): MakingCommi
 
 export function addCommissionMessage(
   commission: MakingCommission,
-  input: { author: "customer" | "artist"; body: LocaleCopy; internal?: boolean },
+  input: { author: "customer" | "artist"; body: LocaleCopy; internal?: boolean; operationId?: string },
 ) {
-  return withMessage(commission, {
+  const key = input.internal ? "internalNotes" : "messages";
+  const id = input.operationId
+    ? `op-${input.author}-${input.internal ? "n" : "m"}-${input.operationId}`
+    : newEntityId(input.internal ? "n" : "m");
+  if (commission[key].some((message) => message.id === id)) return commission;
+  const entry: StageMessage = {
+    id,
     stageId: commission.stage,
     author: input.author,
     body: input.body,
     internal: input.internal,
-  });
+    createdAt: Date.now(),
+  };
+  return { ...commission, [key]: [...commission[key], entry] };
 }
 
 export function artistDecideCommission(
