@@ -33,6 +33,12 @@ import {
   Users,
   X,
 } from "lucide-react";
+import { useStaffNoticeReads } from "../hooks/use-staff-notice-reads";
+import {
+  commissionNoticeKey,
+  messageNoticeKey,
+  orderNoticeKey,
+} from "../lib/staff-notice-keys";
 import { useAdminWorkspace } from "../hooks/use-admin-workspace";
 import { roleLabels, type AdminSection } from "../lib/admin-data";
 import {
@@ -90,6 +96,7 @@ type AdminChrome = {
   /** Order id from the Messages handoff that just committed. Null after it is used or canceled. */
   handedOrderId: string | null;
   clearHandedOrder: () => void;
+  readNotice: (key: string) => void;
 };
 
 const AdminChromeContext = createContext<AdminChrome | null>(null);
@@ -104,6 +111,13 @@ export function useAdminChrome() {
 
 export function AdminShell({ children }: { children: ReactNode }) {
   const workspace = useAdminWorkspace();
+  const noticeReads = useStaffNoticeReads(workspace.user?.id);
+  const readNotice = useCallback(
+    (key: string) => {
+      if (!noticeReads.keys?.has(key)) void noticeReads.markRead(key).catch(() => {});
+    },
+    [noticeReads.keys, noticeReads.markRead],
+  );
   const pathname = usePathname();
   const router = useRouter();
   const [section, setSection] = useState<AdminSection>(() =>
@@ -303,22 +317,35 @@ export function AdminShell({ children }: { children: ReactNode }) {
   }
 
   const openMessages = workspace.messages.filter(
-    (message) => !message.parentId && message.status === "new",
+    (message) =>
+      !message.parentId &&
+      message.status === "new" &&
+      noticeReads.ready &&
+      !noticeReads.keys?.has(
+        messageNoticeKey(
+          message,
+          workspace.messages.filter((reply) => reply.parentId === message.id),
+        ),
+      ),
   ).length;
   const pendingOrders = workspace.orders.filter(
     (order) =>
-      order.status === "pending_payment" ||
-      order.status === "pending_verification" ||
-      order.status === "confirmed",
+      noticeReads.ready &&
+      !noticeReads.keys?.has(orderNoticeKey(order)) &&
+      (order.status === "pending_payment" ||
+        order.status === "pending_verification" ||
+        order.status === "confirmed"),
   );
   const pendingCommissions = workspace.commissions.filter((commission) => {
     const last = commission.messages
       .filter((message) => !message.internal)
       .at(-1);
     return (
-      commission.stage === "design_submitted" ||
-      commission.stage === "feasibility" ||
-      last?.author === "customer"
+      noticeReads.ready &&
+      !noticeReads.keys?.has(commissionNoticeKey(commission)) &&
+      (commission.stage === "design_submitted" ||
+        commission.stage === "feasibility" ||
+        last?.author === "customer")
     );
   });
   const notificationCount =
@@ -350,6 +377,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
         openOrder,
         handedOrderId,
         clearHandedOrder,
+        readNotice,
       }}
     >
       <div className="admin-shell">
@@ -421,7 +449,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
                     {id === "messages" && openMessages ? (
                       <em
                         className="nav-count"
-                        aria-label={`${number.format(openMessages)} پیام رسیدگی‌نشده`}
+                        aria-label={`${number.format(openMessages)} پیام خوانده‌نشده`}
                       >
                         {number.format(openMessages)}
                       </em>
@@ -542,7 +570,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
               </button>
               {noticesOpen && (
                 <section className="admin-notice-panel" aria-label="اعلان‌ها">
-                  <strong>نیازمند رسیدگی</strong>
+                  <strong>اعلان‌های خوانده‌نشده</strong>
                   {openMessages > 0 && (
                     <Button
                       variant="ghost"
@@ -551,7 +579,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
                         go("messages");
                       }}
                     >
-                      {number.format(openMessages)} گفت‌وگوی رسیدگی‌نشده
+                      {number.format(openMessages)} گفت‌وگوی خوانده‌نشده
                     </Button>
                   )}
                   {pendingOrders.map((order) => (
@@ -575,7 +603,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
                       سفارش اختصاصی · {commission.id}
                     </a>
                   ))}
-                  {!notificationCount && <p>موردی برای رسیدگی نیست.</p>}
+                  {!notificationCount && <p>اعلان خوانده‌نشده‌ای نیست.</p>}
                 </section>
               )}
             </div>
