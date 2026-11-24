@@ -1,6 +1,7 @@
 import {
   ForbiddenException,
   Injectable,
+  Logger,
   NotFoundException,
   UnauthorizedException,
 } from "@nestjs/common";
@@ -24,6 +25,8 @@ import type { CommissionDecideDto, CreateCommissionDto } from "./dto";
 
 @Injectable()
 export class CommissionsService {
+  private readonly logger = new Logger(CommissionsService.name);
+
   constructor(
     @InjectRepository(Commission)
     private readonly commissions: Repository<Commission>,
@@ -78,19 +81,21 @@ export class CommissionsService {
 
   async saveMine(actor: Actor, id: string, payload: MakingCommission) {
     this.requireSignedIn(actor);
-    const row = await this.requireOwned(actor, id);
-    // Customer saves may update the editable brief only. Never trust a client
-    // to write workflow state, payments, audit entries, or internal notes.
-    const current = this.toCommission(row.payload);
-    const next = {
+    await this.requireOwned(actor, id);
+    // Customer saves may update the editable brief only. Never trust a
+    // client to write workflow state, payments, audit entries, or internal
+    // notes - and derive `next` from the freshly row-locked `current`
+    // (inside mutateCommission's transaction), never from a snapshot read
+    // before the lock, so a concurrent message append can't be lost under
+    // this save. See commissions-conversation-sync.spec.ts.
+    const { next } = await this.mutateCommission(id, (current) => ({
       ...current,
       title: payload.title,
       customerName: payload.customerName,
       brief: payload.brief,
-      id: row.id,
+      id,
       updatedAt: Date.now(),
-    };
-    await this.commissions.update({ id }, { payload: next });
+    }));
     return this.toCustomer(next);
   }
 
@@ -99,11 +104,16 @@ export class CommissionsService {
     return this.saveAdmin(id, payload).then((row) => row.payload);
   }
 
-  async addMineMessage(actor: Actor, id: string, body: LocaleCopy) {
+  async addMineMessage(
+    actor: Actor,
+    id: string,
+    body: LocaleCopy,
+    operationId?: string,
+  ) {
     this.requireSignedIn(actor);
     await this.requireOwned(actor, id);
     const { next } = await this.mutateCommission(id, (current) =>
-      addCommissionMessage(current, { author: "customer", body }),
+      addCommissionMessage(current, { author: "customer", body, operationId }),
     );
     return this.toCustomer(next);
   }
@@ -148,22 +158,77 @@ export class CommissionsService {
     return this.toAdmin({ ...row, payload: next });
   }
 
-  async addArtistMessage(id: string, body: LocaleCopy, internal?: boolean) {
-    const { row, next } = await this.mutateCommission(id, (current) =>
-      addCommissionMessage(current, { author: "artist", body, internal }),
+  async addArtistMessage(
+    id: string,
+    body: LocaleCopy,
+    internal?: boolean,
+    operationId?: string,
+  ) {
+    const { row, previous, next } = await this.mutateCommission(id, (current) =>
+      addCommissionMessage(current, {
+        author: "artist",
+        body,
+        internal,
+        operationId,
+      }),
     );
-    if (!internal) {
-      await this.notices.createForOwner(row.ownerKey, "commission_message", id);
+    if (!internal && previous !== next) {
+      try {
+        await this.notices.createForOwner(
+          row.ownerKey,
+          "commission_message",
+          id,
+        );
+      } catch {
+        // The append already committed. Do not report it as a failed send
+        // or encourage another append because notification delivery failed.
+        this.logger.warn(`Commission message notice failed: ${id}`);
+      }
     }
     return this.toAdmin({ ...row, payload: next });
   }
 
+  /**
+   * The storefront workshop UI's own message box, for a maker/artist who
+   * reaches commissions through `apps/storefront` rather than the admin
+   * dashboard. Reuses `addArtistMessage`'s lock-protected append so both
+   * surfaces write through the same safe path. `addArtistMessage` returns
+   * the Admin DTO (`toAdmin`'s shape, with the full commission nested
+   * under `.payload`) for the admin dashboard's own contract - the
+   * storefront's commissions controller returns a plain `MakingCommission`
+   * everywhere else (see `saveWorkshop` below), so this extracts `.payload`
+   * to match that contract instead of leaking the Admin DTO shape.
+   */
+  async addWorkshopMessage(
+    actor: Actor,
+    id: string,
+    body: LocaleCopy,
+    internal?: boolean,
+    operationId?: string,
+  ): Promise<MakingCommission> {
+    this.requireMaker(actor);
+    const admin = await this.addArtistMessage(id, body, internal, operationId);
+    return admin.payload;
+  }
+
   async saveAdmin(id: string, payload: MakingCommission) {
-    const { row, previous, next } = await this.mutateCommission(id, () => ({
-      ...payload,
+    const { row, previous, next } = await this.mutateCommission(
       id,
-      updatedAt: Date.now(),
-    }));
+      (current) => ({
+        ...payload,
+        id,
+        // `messages`/`internalNotes` are append-only and owned by the
+        // message endpoints (`addArtistMessage`/`addMineMessage`/
+        // `addWorkshopMessage`), never by a whole-payload save. A client's
+        // local snapshot of these can be stale by the time this write
+        // lands (another actor may have added a message since), and this
+        // write must never regress them - see
+        // commissions-conversation-sync.spec.ts.
+        messages: current.messages,
+        internalNotes: current.internalNotes,
+        updatedAt: Date.now(),
+      }),
+    );
     await this.emitStageNotice(row.ownerKey, previous.stage, next.stage, id);
     return this.toAdmin({ ...row, payload: next });
   }
@@ -198,7 +263,14 @@ export class CommissionsService {
       });
       if (!row) throw new NotFoundException("سفارش اختصاصی پیدا نشد.");
       const current = this.toCommission(row.payload);
-      const next = mutate(current, row);
+      const changed = mutate(current, row);
+      const next =
+        changed === current
+          ? current
+          : {
+              ...changed,
+              updatedAt: Math.max(Date.now(), current.updatedAt + 1),
+            };
       if (next !== current) {
         await manager
           .getRepository(Commission)

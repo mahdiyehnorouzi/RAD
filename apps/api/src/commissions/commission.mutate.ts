@@ -1,3 +1,4 @@
+import { ConflictException } from "@nestjs/common";
 import {
   loc,
   newEntityId,
@@ -9,7 +10,11 @@ import {
 function touch(
   commission: MakingCommission,
   patch: Partial<MakingCommission>,
-  event: { actor: "customer" | "artist" | "system"; stageId: MakingCommission["stage"]; action: LocaleCopy },
+  event: {
+    actor: "customer" | "artist" | "system";
+    stageId: MakingCommission["stage"];
+    action: LocaleCopy;
+  },
 ): MakingCommission {
   return {
     ...commission,
@@ -32,12 +37,17 @@ function withMessage(
     createdAt: Date.now(),
   };
   if (message.internal) {
-    return { ...commission, internalNotes: [...commission.internalNotes, entry] };
+    return {
+      ...commission,
+      internalNotes: [...commission.internalNotes, entry],
+    };
   }
   return { ...commission, messages: [...commission.messages, entry] };
 }
 
-export function beginCommissionReview(commission: MakingCommission): MakingCommission {
+export function beginCommissionReview(
+  commission: MakingCommission,
+): MakingCommission {
   if (commission.stage !== "design_submitted") return commission;
   return touch(
     commission,
@@ -52,14 +62,36 @@ export function beginCommissionReview(commission: MakingCommission): MakingCommi
 
 export function addCommissionMessage(
   commission: MakingCommission,
-  input: { author: "customer" | "artist"; body: LocaleCopy; internal?: boolean },
+  input: {
+    author: "customer" | "artist";
+    body: LocaleCopy;
+    internal?: boolean;
+    operationId?: string;
+  },
 ) {
-  return withMessage(commission, {
+  const key = input.internal ? "internalNotes" : "messages";
+  const id = input.operationId
+    ? `op-${input.author}-${input.internal ? "n" : "m"}-${input.operationId}`
+    : newEntityId(input.internal ? "n" : "m");
+  const existing = commission[key].find((message) => message.id === id);
+  if (existing) {
+    if (
+      existing.body.fa !== input.body.fa ||
+      existing.body.en !== input.body.en
+    ) {
+      throw new ConflictException("Message operation already used");
+    }
+    return commission;
+  }
+  const entry: StageMessage = {
+    id,
     stageId: commission.stage,
     author: input.author,
     body: input.body,
     internal: input.internal,
-  });
+    createdAt: Date.now(),
+  };
+  return { ...commission, [key]: [...commission[key], entry] };
 }
 
 export function artistDecideCommission(
@@ -78,12 +110,20 @@ export function artistDecideCommission(
 ) {
   if (decision === "decline") {
     const reason =
-      payload?.reason ?? loc("این طرح در ماده فعلی قابل ساخت نیست.", "This design cannot be made in the current material.");
+      payload?.reason ??
+      loc(
+        "این طرح در ماده فعلی قابل ساخت نیست.",
+        "This design cannot be made in the current material.",
+      );
     return withMessage(
       touch(
         commission,
         { stage: "declined", nextActor: "none" },
-        { actor: "artist", stageId: "feasibility", action: loc("طرح با دلیل رد شد", "Design declined with a reason") },
+        {
+          actor: "artist",
+          stageId: "feasibility",
+          action: loc("طرح با دلیل رد شد", "Design declined with a reason"),
+        },
       ),
       { stageId: "feasibility", author: "artist", body: reason },
     );
@@ -96,21 +136,38 @@ export function artistDecideCommission(
         nextActor: "customer",
         changeRequests: [
           ...commission.changeRequests,
-          { ...payload.change, id: newEntityId("c"), createdAt: Date.now(), status: "open" },
+          {
+            ...payload.change,
+            id: newEntityId("c"),
+            createdAt: Date.now(),
+            status: "open",
+          },
         ],
       },
       {},
-      { actor: "artist", stageId: "feasibility", action: loc("تغییر مشخص درخواست شد", "A specific change was requested") },
+      {
+        actor: "artist",
+        stageId: "feasibility",
+        action: loc("تغییر مشخص درخواست شد", "A specific change was requested"),
+      },
     );
   }
   if (decision === "offer_alternative") {
     const alternative =
-      payload?.alternative ?? loc("بدیلی ساده‌تر با همین حس پیشنهاد می‌شود.", "A simpler alternative with the same feeling is offered.");
+      payload?.alternative ??
+      loc(
+        "بدیلی ساده‌تر با همین حس پیشنهاد می‌شود.",
+        "A simpler alternative with the same feeling is offered.",
+      );
     return withMessage(
       touch(
         commission,
         { stage: "feasibility", nextActor: "customer" },
-        { actor: "artist", stageId: "feasibility", action: loc("بدیل پیشنهاد شد", "An alternative was offered") },
+        {
+          actor: "artist",
+          stageId: "feasibility",
+          action: loc("بدیل پیشنهاد شد", "An alternative was offered"),
+        },
       ),
       { stageId: "feasibility", author: "artist", body: alternative },
     );
@@ -119,7 +176,11 @@ export function artistDecideCommission(
     touch(
       commission,
       { stage: "quote", nextActor: "artist" },
-      { actor: "artist", stageId: "feasibility", action: loc("طرح تأیید شد", "Design approved") },
+      {
+        actor: "artist",
+        stageId: "feasibility",
+        action: loc("طرح تأیید شد", "Design approved"),
+      },
     ),
     {
       stageId: "feasibility",

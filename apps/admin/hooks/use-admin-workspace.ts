@@ -5,6 +5,8 @@ import type { AuthUser } from "@rad/types";
 import { api } from "../lib/api";
 import {
   isRemoteMediaStorage,
+  mergeFreshCommission,
+  mergeFreshCommissions,
   permissions,
   type AdminCommission,
   type AdminContactMessage,
@@ -208,7 +210,9 @@ export function useAdminWorkspace() {
         setUsers(data as AdminUser[]);
         break;
       case "commissions":
-        setCommissions(data as AdminCommission[]);
+        setCommissions((current) =>
+          mergeFreshCommissions(current, data as AdminCommission[]),
+        );
         break;
       case "messages":
         setMessages(data as AdminContactMessage[]);
@@ -825,9 +829,7 @@ export function useAdminWorkspace() {
             method: "POST",
           },
         );
-        setCommissions((items) =>
-          items.map((item) => (item.id === saved.id ? saved : item)),
-        );
+        setCommissions((items) => mergeFreshCommission(items, saved));
         return saved;
       },
       async decideCommission(input: {
@@ -855,26 +857,27 @@ export function useAdminWorkspace() {
             }),
           },
         );
-        setCommissions((items) =>
-          items.map((item) => (item.id === saved.id ? saved : item)),
-        );
+        setCommissions((items) => mergeFreshCommission(items, saved));
         return saved;
       },
       async messageCommission(
         id: string,
         body: { fa: string; en: string },
         internal?: boolean,
+        operationId?: string,
       ) {
+        const epoch = sessionEpochRef.current;
         const saved = await api<AdminCommission>(
           `/admin/commissions/${id}/messages`,
           {
             method: "POST",
-            body: JSON.stringify({ body, internal }),
+            body: JSON.stringify({ body, internal, operationId }),
           },
         );
-        setCommissions((items) =>
-          items.map((item) => (item.id === saved.id ? saved : item)),
-        );
+        if (epoch === sessionEpochRef.current) {
+          bumpWrite("commissions");
+          setCommissions((items) => mergeFreshCommission(items, saved));
+        }
         return saved;
       },
     }),

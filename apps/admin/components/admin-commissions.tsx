@@ -142,6 +142,7 @@ export function AdminCommissions({
     id: string,
     body: { fa: string; en: string },
     internal?: boolean,
+    operationId?: string,
   ) => Promise<unknown>;
   onBeginReview: (id: string) => Promise<unknown>;
 }) {
@@ -571,6 +572,7 @@ function CommissionDetail({
 
       {tab === "messages" && (
         <CommissionMessages
+          key={commission.id}
           commission={commission}
           canWrite={canWrite}
           onMessage={onMessage}
@@ -809,20 +811,32 @@ function CommissionMessages({
   onMessage: Parameters<typeof AdminCommissions>[0]["onMessage"];
 }) {
   const [message, setMessage] = useState("");
+  const pending = useRef<string | null>(null);
+  const inFlight = useRef(false);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
 
   const send = () => {
     const body = message.trim();
-    if (!body || !canWrite || sending) return;
+    if (!body || !canWrite || inFlight.current) return;
+    const operationId = pending.current ?? crypto.randomUUID();
+    pending.current = operationId;
+    inFlight.current = true;
     setSending(true);
     setError("");
-    void onMessage(commission.id, asCopy(body))
-      .then(() => setMessage(""))
+    void Promise.resolve()
+      .then(() => onMessage(commission.id, asCopy(body), false, operationId))
+      .then(() => {
+        pending.current = null;
+        setMessage("");
+      })
       .catch((err) =>
         setError((err as Error).message || "ارسال پیام ناموفق بود."),
       )
-      .finally(() => setSending(false));
+      .finally(() => {
+        inFlight.current = false;
+        setSending(false);
+      });
   };
 
   return (
@@ -858,7 +872,10 @@ function CommissionMessages({
         <textarea
           id="studio-message"
           value={message}
-          onChange={(event) => setMessage(event.target.value)}
+          onChange={(event) => {
+            pending.current = null;
+            setMessage(event.target.value);
+          }}
           rows={3}
           disabled={sending}
         />

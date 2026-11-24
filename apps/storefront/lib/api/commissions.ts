@@ -3,6 +3,13 @@ import type { MakingBrief, MakingCommission } from "@/components/making/type";
 import type { LocaleCopy } from "@/types/locale";
 import { api } from "./client";
 
+/** A message append, always via the lock-protected endpoint - never the whole-payload save. */
+type CommissionMessageInput = {
+  body: LocaleCopy;
+  internal?: boolean;
+  operationId?: string;
+};
+
 /** Sketch plus the studio's four reference photos, each pre-compressed under the slim limit. */
 export const COMMISSION_UPLOAD_IMAGES = 5;
 
@@ -71,5 +78,37 @@ export async function saveWorkshopCommission(
   return api<MakingCommission>(`/commissions/workshop/${id}`, {
     method: "PUT",
     body: JSON.stringify({ payload }),
+  });
+}
+
+/**
+ * Appends a customer message through the dedicated, lock-protected
+ * endpoint - never through `saveCommission`'s whole-payload PUT, which
+ * silently drops any `messages` the client sends (by design: a brief save
+ * must never let a client write workflow/conversation state).
+ */
+export async function addCommissionMessage(
+  id: string,
+  input: CommissionMessageInput,
+) {
+  return api<MakingCommission>(`/commissions/${id}/messages`, {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+/**
+ * Appends an artist/maker message through the dedicated, lock-protected
+ * workshop endpoint - never through `saveWorkshopCommission`'s
+ * whole-payload PUT, which can overwrite a message someone else added
+ * (customer, or the admin dashboard) after this client's local snapshot.
+ */
+export async function addWorkshopCommissionMessage(
+  id: string,
+  input: CommissionMessageInput,
+) {
+  return api<MakingCommission>(`/commissions/workshop/${id}/messages`, {
+    method: "POST",
+    body: JSON.stringify(input),
   });
 }

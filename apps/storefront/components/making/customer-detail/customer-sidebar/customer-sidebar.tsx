@@ -41,8 +41,13 @@ export function CustomerMakingSidebar({
           ) : null}
           {canCompose ? (
             <MessageComposer
-              onSend={(body) =>
-                addMessage(commission.id, { author: "customer", body })
+              key={commission.id}
+              onSend={(body, operationId) =>
+                addMessage(commission.id, {
+                  author: "customer",
+                  body,
+                  operationId,
+                })
               }
             />
           ) : null}
