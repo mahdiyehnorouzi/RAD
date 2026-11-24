@@ -57,6 +57,8 @@ type CommerceContextValue = {
   unread: number;
   addNotice: (kind: NoticeKind, productSlug?: string) => Promise<void>;
   markAllRead: () => Promise<void>;
+  markNoticeRead: (id: string) => Promise<void>;
+  refreshNotices: () => Promise<void>;
   markCommissionMessagesRead: (id: string) => Promise<void>;
   /** Empty until a page calls {@link useOrders}; single orders are upserted as they change. */
   orders: Order[];
@@ -124,6 +126,8 @@ export function CommerceProvider({ children }: { children: React.ReactNode }) {
   const [favorites, setFavorites] = useState<string[]>([]);
   const [notices, setNotices] = useState<Notice[]>([]);
   const noticeEpoch = useRef(0);
+  const noticeSession = useRef(0);
+  const noticeWrites = useRef(0);
   const [orders, setOrders] = useState<Order[]>([]);
   const [ordersReady, setOrdersReady] = useState(false);
   const ordersWanted = useRef(false);
@@ -141,12 +145,10 @@ export function CommerceProvider({ children }: { children: React.ReactNode }) {
   const visibleNotices = (items: Notice[] | undefined) =>
     (items ?? []).filter((notice) => isArtistNotice(notice.kind));
 
-  const applyNotices = (payload: { notices?: Notice[]; unread?: number }) => {
-    setNotices(visibleNotices(payload.notices));
-  };
-
   const applySession = useCallback((session: SessionState) => {
     noticeEpoch.current += 1;
+    noticeSession.current += 1;
+    noticeWrites.current = 0;
     setUser(session.user);
     // Same defensive fallback as `notices` above, for the same reason: a
     // malformed/partial `/session` response must not leave `favorites`
@@ -205,31 +207,77 @@ export function CommerceProvider({ children }: { children: React.ReactNode }) {
     };
   }, [applySession]);
 
+  const refreshNotices = useCallback(async () => {
+    if (!user?.id || noticeWrites.current > 0) return;
+    const epoch = ++noticeEpoch.current;
+    try {
+      const payload = await api<{ notices?: Notice[] }>("/notices");
+      if (epoch === noticeEpoch.current && noticeWrites.current === 0) {
+        setNotices(visibleNotices(payload.notices));
+      }
+    } catch (error) {
+      logRecovered("notices", error);
+    }
+  }, [user?.id]);
+
+  const readNotices = useCallback(
+    async (path: string, matches: (notice: Notice) => boolean) => {
+      const session = noticeSession.current;
+      noticeEpoch.current += 1;
+      noticeWrites.current += 1;
+      try {
+        await api(path, { method: "POST" });
+        if (session === noticeSession.current) {
+          setNotices((current) =>
+            current.map((notice) =>
+              matches(notice) ? { ...notice, read: true } : notice,
+            ),
+          );
+        }
+      } finally {
+        if (session === noticeSession.current) {
+          noticeWrites.current -= 1;
+          if (noticeWrites.current === 0) void refreshNotices();
+        }
+      }
+    },
+    [refreshNotices],
+  );
+
+  const markNoticeRead = useCallback(
+    (id: string) =>
+      readNotices(
+        `/notices/${encodeURIComponent(id)}/read`,
+        (notice) => notice.id === id,
+      ),
+    [readNotices],
+  );
+
+  const markCommissionMessagesRead = useCallback(
+    (id: string) =>
+      readNotices(
+        `/notices/commissions/${encodeURIComponent(id)}/read`,
+        (notice) =>
+          notice.kind === "commission_message" && notice.productSlug === id,
+      ),
+    [readNotices],
+  );
+
   useEffect(() => {
     if (!user?.id) return;
-    let cancelled = false;
-    const refreshNotices = () => {
-      if (document.visibilityState !== "visible") return;
-      const epoch = ++noticeEpoch.current;
-      api<{ notices?: Notice[] }>("/notices")
-        .then((payload) => {
-          if (!cancelled && epoch === noticeEpoch.current) {
-            setNotices(visibleNotices(payload.notices));
-          }
-        })
-        .catch((error) => logRecovered("notices", error));
+    const refreshVisible = () => {
+      if (document.visibilityState === "visible") void refreshNotices();
     };
-    refreshNotices();
-    const timer = window.setInterval(refreshNotices, NOTICE_POLL_MS);
-    document.addEventListener("visibilitychange", refreshNotices);
-    window.addEventListener("focus", refreshNotices);
+    refreshVisible();
+    const timer = window.setInterval(refreshVisible, NOTICE_POLL_MS);
+    document.addEventListener("visibilitychange", refreshVisible);
+    window.addEventListener("focus", refreshVisible);
     return () => {
-      cancelled = true;
       window.clearInterval(timer);
-      document.removeEventListener("visibilitychange", refreshNotices);
-      window.removeEventListener("focus", refreshNotices);
+      document.removeEventListener("visibilitychange", refreshVisible);
+      window.removeEventListener("focus", refreshVisible);
     };
-  }, [user?.id]);
+  }, [user?.id, refreshNotices]);
 
   useEffect(() => {
     if (!toast) return;
@@ -316,21 +364,10 @@ export function CommerceProvider({ children }: { children: React.ReactNode }) {
       notices,
       unread: notices.filter((notice) => !notice.read).length,
       addNotice,
-      markAllRead: async () => {
-        const epoch = ++noticeEpoch.current;
-        const result = await api<{ notices: Notice[] }>("/notices/read", {
-          method: "POST",
-        });
-        if (epoch === noticeEpoch.current) applyNotices(result);
-      },
-      markCommissionMessagesRead: async (id) => {
-        const epoch = ++noticeEpoch.current;
-        const result = await api<{ notices: Notice[] }>(
-          `/notices/commissions/${encodeURIComponent(id)}/read`,
-          { method: "POST" },
-        );
-        if (epoch === noticeEpoch.current) applyNotices(result);
-      },
+      markAllRead: () => readNotices("/notices/read", () => true),
+      markNoticeRead,
+      markCommissionMessagesRead,
+      refreshNotices,
       orders,
       ordersReady,
       requestOrders,
@@ -417,6 +454,10 @@ export function CommerceProvider({ children }: { children: React.ReactNode }) {
       requestOrders,
       reviews,
       refresh,
+      readNotices,
+      markNoticeRead,
+      markCommissionMessagesRead,
+      refreshNotices,
     ],
   );
 

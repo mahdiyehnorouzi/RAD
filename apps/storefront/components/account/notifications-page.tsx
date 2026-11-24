@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect } from "react";
+import { logRecovered } from "@/lib/log";
 import { Bell, CheckCheck } from "lucide-react";
 import { isArtistNotice, type Notice } from "@rad/types";
 import { productCopy } from "@/lib/catalog/products";
@@ -26,7 +28,11 @@ export function NotificationsPage({
 }: {
   embedded?: boolean;
 }) {
-  const { notices, unread, markAllRead, ready } = useCommerce();
+  const { notices, unread, markAllRead, markNoticeRead, refreshNotices, ready } =
+    useCommerce();
+  useEffect(() => {
+    void refreshNotices();
+  }, [refreshNotices]);
   const artistNotices = notices.filter((notice) => isArtistNotice(notice.kind));
   const { locale, t, href } = useLocale();
   const { getProduct } = useCatalog();
@@ -73,7 +79,11 @@ export function NotificationsPage({
             <button
               className="account-button account-button--quiet"
               type="button"
-              onClick={markAllRead}
+              onClick={() => {
+                void markAllRead().catch((error) =>
+                  logRecovered("notices", error),
+                );
+              }}
             >
               <CheckCheck aria-hidden="true" strokeWidth={1.6} />
               {t("markAllRead")}
@@ -105,7 +115,18 @@ export function NotificationsPage({
                 className={notice.read ? undefined : "unread"}
               >
                 {target ? (
-                  <Link href={href(target)}>{body}</Link>
+                  <Link
+                    href={href(target)}
+                    onClick={() => {
+                      if (!notice.read) {
+                        void markNoticeRead(notice.id).catch((error) =>
+                          logRecovered("notices", error),
+                        );
+                      }
+                    }}
+                  >
+                    {body}
+                  </Link>
                 ) : (
                   <div>{body}</div>
                 )}

@@ -36,6 +36,11 @@ export class NoticesController {
     );
   }
 
+  @Post(":id/read")
+  async markRead(@Param("id") id: string, @Req() request: AuthedRequest) {
+    return this.notices.markRead(await this.identity.fromRequest(request), id);
+  }
+
   @Post("read")
   async markAllRead(@Req() request: AuthedRequest) {
     return this.notices.markAllRead(await this.identity.fromRequest(request));
