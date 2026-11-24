@@ -158,12 +158,40 @@ export class CommissionsService {
     return this.toAdmin({ ...row, payload: next });
   }
 
+  /**
+   * The storefront workshop UI's own message box, for a maker/artist who
+   * reaches commissions through `apps/storefront` rather than the admin
+   * dashboard. Reuses `addArtistMessage`'s lock-protected append so both
+   * surfaces write through the same safe path.
+   */
+  async addWorkshopMessage(
+    actor: Actor,
+    id: string,
+    body: LocaleCopy,
+    internal?: boolean,
+  ) {
+    this.requireMaker(actor);
+    return this.addArtistMessage(id, body, internal);
+  }
+
   async saveAdmin(id: string, payload: MakingCommission) {
-    const { row, previous, next } = await this.mutateCommission(id, () => ({
-      ...payload,
+    const { row, previous, next } = await this.mutateCommission(
       id,
-      updatedAt: Date.now(),
-    }));
+      (current) => ({
+        ...payload,
+        id,
+        // `messages`/`internalNotes` are append-only and owned by the
+        // message endpoints (`addArtistMessage`/`addMineMessage`/
+        // `addWorkshopMessage`), never by a whole-payload save. A client's
+        // local snapshot of these can be stale by the time this write
+        // lands (another actor may have added a message since), and this
+        // write must never regress them - see
+        // commissions-conversation-sync.spec.ts.
+        messages: current.messages,
+        internalNotes: current.internalNotes,
+        updatedAt: Date.now(),
+      }),
+    );
     await this.emitStageNotice(row.ownerKey, previous.stage, next.stage, id);
     return this.toAdmin({ ...row, payload: next });
   }

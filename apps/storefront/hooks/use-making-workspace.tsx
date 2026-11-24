@@ -13,8 +13,10 @@ import {
 import { create } from "zustand";
 import type { AuthUser } from "@rad/types";
 import type { MakingCommission } from "@/components/making/type";
-import { isDemoCommission, seedCommissions } from "@/lib/making";
+import { isDemoCommission, newEntityId, seedCommissions } from "@/lib/making";
 import {
+  addCommissionMessage,
+  addWorkshopCommissionMessage,
   COMMISSION_UPLOAD_IMAGES,
   createCommission,
   fetchMyCommissions,
@@ -176,6 +178,78 @@ export function MakingProvider({ children }: { children: ReactNode }) {
     [update],
   );
 
+  /**
+   * Overrides `actions.addMessage` for real commissions. Appends through
+   * the dedicated, lock-protected message endpoint instead of the
+   * whole-payload `update()`/save path, which cannot safely carry a new
+   * message - see commissions-conversation-sync.spec.ts on the API side.
+   * Optimistic locally for instant feedback; reconciled with the server's
+   * authoritative response (never applied if it is staler than what is
+   * already shown, guarding against an out-of-order network response);
+   * rolled back - and the error re-thrown so the composer can show it and
+   * keep the typed draft - if the request fails.
+   */
+  const sendMessage = useCallback(
+    async (
+      id: string,
+      input: Parameters<MakingActions["addMessage"]>[1],
+    ) => {
+      if (isDemoCommission(id)) {
+        return actions.addMessage(id, input);
+      }
+      const tempId = newEntityId(input.internal ? "n" : "m");
+      setCommissions((current) =>
+        current.map((item) => {
+          if (item.id !== id) return item;
+          const entry = {
+            id: tempId,
+            stageId: item.stage,
+            author: input.author,
+            body: input.body,
+            internal: input.internal,
+            createdAt: Date.now(),
+          };
+          return input.internal
+            ? { ...item, internalNotes: [...item.internalNotes, entry] }
+            : { ...item, messages: [...item.messages, entry] };
+        }),
+      );
+      try {
+        const saved = maker
+          ? await addWorkshopCommissionMessage(id, {
+              body: input.body,
+              internal: input.internal,
+            })
+          : await addCommissionMessage(id, { body: input.body });
+        setCommissions((current) =>
+          current.map((item) =>
+            item.id === saved.id && saved.updatedAt >= item.updatedAt
+              ? saved
+              : item,
+          ),
+        );
+      } catch (error) {
+        setCommissions((current) =>
+          current.map((item) =>
+            item.id === id
+              ? {
+                  ...item,
+                  messages: item.messages.filter(
+                    (message) => message.id !== tempId,
+                  ),
+                  internalNotes: item.internalNotes.filter(
+                    (message) => message.id !== tempId,
+                  ),
+                }
+              : item,
+          ),
+        );
+        throw error;
+      }
+    },
+    [actions, maker],
+  );
+
   const submitDesign = useCallback(
     async (input: Parameters<MakingActions["submitDesign"]>[0]) => {
       const slimInput = {
@@ -201,9 +275,10 @@ export function MakingProvider({ children }: { children: ReactNode }) {
         commissions.find((item) => item.id === id) ??
         (!maker ? seedCommissions.find((item) => item.id === id) : undefined),
       ...actions,
+      addMessage: sendMessage,
       submitDesign,
     }),
-    [actions, commissions, maker, ready, submitDesign],
+    [actions, commissions, maker, ready, sendMessage, submitDesign],
   );
 
   useEffect(() => {

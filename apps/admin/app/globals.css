@@ -1937,6 +1937,10 @@ td select,
   gap: 8px;
 }
 .contact-message-thread li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  column-gap: 8px;
   max-width: 85%;
   padding: 8px 12px;
   border-radius: var(--radius-sm, 8px);
@@ -1948,17 +1952,21 @@ td select,
   background: var(--success);
 }
 .contact-message-thread li b {
-  display: block;
+  grid-column: 1;
+  min-width: 0;
   font-size: 11px;
   font-weight: 500;
   color: var(--muted);
+  overflow-wrap: anywhere;
 }
 .contact-message-thread li span {
-  float: inline-end;
+  grid-column: 2;
   color: var(--muted);
   font-size: 10.5px;
+  white-space: nowrap;
 }
 .contact-message-thread li p {
+  grid-column: 1 / -1;
   margin: 4px 0 0;
   font-size: 13px;
   line-height: 1.8;

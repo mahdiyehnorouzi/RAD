@@ -343,6 +343,37 @@ export function resolveCommissionSelection(
     : null;
 }
 
+// Two requests for the same commission (two messages sent close together,
+// or a mutation response racing the 20s poll) can resolve out of order.
+// Applying whichever lands last, unguarded, can show older data - fewer
+// messages, an earlier stage - over state the admin already sees. Each
+// incoming commission replaces the current one only if it is at least as
+// fresh (by `updatedAt`); a staler response is dropped, never applied.
+export function mergeFreshCommission(
+  current: AdminCommission[],
+  incoming: AdminCommission,
+): AdminCommission[] {
+  return current.map((item) =>
+    item.id === incoming.id && incoming.updatedAt >= item.updatedAt
+      ? incoming
+      : item,
+  );
+}
+
+export function mergeFreshCommissions(
+  current: AdminCommission[],
+  incoming: AdminCommission[],
+): AdminCommission[] {
+  const byId = new Map(current.map((item) => [item.id, item]));
+  for (const next of incoming) {
+    const existing = byId.get(next.id);
+    if (!existing || next.updatedAt >= existing.updatedAt) {
+      byId.set(next.id, next);
+    }
+  }
+  return [...byId.values()].sort((a, b) => b.updatedAt - a.updatedAt);
+}
+
 export const roleLabels: Record<AdminRole, string> = {
   owner: "مالک",
   manager: "مدیر",

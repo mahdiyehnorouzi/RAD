@@ -50,7 +50,7 @@ export type MakingActions = {
       body: LocaleCopy;
       internal?: boolean;
     },
-  ) => void;
+  ) => Promise<void>;
   artistDecide: (
     id: string,
     decision: FeasibilityDecision,
@@ -98,7 +98,16 @@ export function createMakingActions(
       setCommissions((current) => [created, ...current]);
       return created;
     },
-    addMessage: (id, input) => {
+    /**
+     * Local-only fallback, used only for demo/seed commissions that are
+     * never persisted (see `isDemoCommission` in `use-making-workspace`).
+     * Any real commission's `addMessage` is overridden there with a call
+     * through the dedicated message endpoint instead - never through this
+     * module's `update()`, which sends the whole commission payload and
+     * cannot safely carry a new message (see
+     * commissions-conversation-sync.spec.ts on the API side).
+     */
+    addMessage: async (id, input) => {
       update(id, (current) =>
         withMessage(current, {
           stageId: current.stage,

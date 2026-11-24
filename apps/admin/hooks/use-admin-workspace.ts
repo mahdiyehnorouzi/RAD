@@ -5,6 +5,8 @@ import type { AuthUser } from "@rad/types";
 import { api } from "../lib/api";
 import {
   isRemoteMediaStorage,
+  mergeFreshCommission,
+  mergeFreshCommissions,
   permissions,
   type AdminCommission,
   type AdminContactMessage,
@@ -208,7 +210,9 @@ export function useAdminWorkspace() {
         setUsers(data as AdminUser[]);
         break;
       case "commissions":
-        setCommissions(data as AdminCommission[]);
+        setCommissions((current) =>
+          mergeFreshCommissions(current, data as AdminCommission[]),
+        );
         break;
       case "messages":
         setMessages(data as AdminContactMessage[]);
@@ -825,9 +829,7 @@ export function useAdminWorkspace() {
             method: "POST",
           },
         );
-        setCommissions((items) =>
-          items.map((item) => (item.id === saved.id ? saved : item)),
-        );
+        setCommissions((items) => mergeFreshCommission(items, saved));
         return saved;
       },
       async decideCommission(input: {
@@ -855,9 +857,7 @@ export function useAdminWorkspace() {
             }),
           },
         );
-        setCommissions((items) =>
-          items.map((item) => (item.id === saved.id ? saved : item)),
-        );
+        setCommissions((items) => mergeFreshCommission(items, saved));
         return saved;
       },
       async messageCommission(
@@ -872,9 +872,7 @@ export function useAdminWorkspace() {
             body: JSON.stringify({ body, internal }),
           },
         );
-        setCommissions((items) =>
-          items.map((item) => (item.id === saved.id ? saved : item)),
-        );
+        setCommissions((items) => mergeFreshCommission(items, saved));
         return saved;
       },
     }),

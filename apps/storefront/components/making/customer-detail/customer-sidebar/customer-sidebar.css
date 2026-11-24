@@ -146,6 +146,12 @@
   width: 100%;
 }
 
+.making-compose-error {
+  margin: 0;
+  color: var(--clay);
+  font-size: 0.85rem;
+}
+
 @media (--phone) {
   .making-compose {
     grid-template-columns: minmax(0, 1fr) !important;

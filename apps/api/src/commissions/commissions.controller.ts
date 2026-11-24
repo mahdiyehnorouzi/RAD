@@ -61,4 +61,18 @@ export class CommissionsController {
   ) {
     return this.commissions.addMineMessage(await this.identity.fromRequest(request), id, body.body);
   }
+
+  @Post("workshop/:id/messages")
+  async workshopMessage(
+    @Param("id") id: string,
+    @Body() body: CommissionMessageDto,
+    @Req() request: AuthedRequest,
+  ) {
+    return this.commissions.addWorkshopMessage(
+      await this.identity.fromRequest(request),
+      id,
+      body.body,
+      body.internal,
+    );
+  }
 }
