@@ -3543,7 +3543,7 @@ table.products-table {
     grid-template-columns: 1fr;
   }
 }
-@media (max-width: 760px) {
+@media (max-width: 1100px) {
   .commission-layout {
     grid-template-columns: 1fr;
     gap: 14px;
@@ -3561,6 +3561,7 @@ table.products-table {
   .commission-view:not(.has-detail) .commission-empty-detail {
     display: none;
   }
+  .commission-view.has-detail .view-heading,
   .commission-view.has-detail .commission-list,
   .commission-view.has-detail .toolbar,
   .commission-view.has-detail .commission-filters {
@@ -3763,4 +3764,26 @@ table.products-table {
     order: 3;
     margin-inline-start: 0;
   }
+}
+
+/* Numeric badges must not inherit navigation text or icon spacing. */
+.admin-nav .nav-count,
+.topbar-bell .nav-count {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: auto;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  line-height: 1;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+}
+
+.topbar-bell .nav-count {
+  margin: 0;
 }

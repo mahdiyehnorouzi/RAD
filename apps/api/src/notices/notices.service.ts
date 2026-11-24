@@ -102,6 +102,14 @@ export class NoticesService {
     return this.list(actor);
   }
 
+  async markRead(actor: Actor, id: string) {
+    await this.notices.update(
+      { ownerKey: this.identity.key(actor), id, read: false },
+      { read: true },
+    );
+    return this.list(actor);
+  }
+
   async markAllRead(actor: Actor) {
     await this.notices.update(
       { ownerKey: this.identity.key(actor), read: false },

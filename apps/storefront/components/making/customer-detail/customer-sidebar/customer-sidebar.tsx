@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
+import { logRecovered } from "@/lib/log";
 import { useCommerce } from "@/components/commerce";
 import type { MakingCommission } from "@/components/making/type";
 import { useMaking } from "@/hooks/use-making-workspace";
@@ -27,15 +28,26 @@ export function CustomerMakingSidebar({
       notice.productSlug === commission.id,
   );
   const unreadKey = unread.map((notice) => notice.id).join(",");
-  const attempted = useRef("");
   useEffect(() => {
-    if (readOnly || !unreadKey || attempted.current === unreadKey) return;
-    if (document.visibilityState !== "visible") return;
-    attempted.current = unreadKey;
-    void markCommissionMessagesRead(commission.id).catch(() => {
-      attempted.current = "";
-    });
-  }, [commission.id, markCommissionMessagesRead, readOnly, unreadKey]);
+    if (!unreadKey) return;
+    let running = false;
+    const markRead = () => {
+      if (running || document.visibilityState !== "visible") return;
+      running = true;
+      void markCommissionMessagesRead(commission.id)
+        .catch((error) => logRecovered("notices", error))
+        .finally(() => {
+          running = false;
+        });
+    };
+    markRead();
+    const timer = window.setInterval(markRead, 12_000);
+    document.addEventListener("visibilitychange", markRead);
+    return () => {
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", markRead);
+    };
+  }, [commission.id, markCommissionMessagesRead, unreadKey]);
   const showMessages = true;
   const canCompose =
     !readOnly &&
