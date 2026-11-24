@@ -49,6 +49,7 @@ export type MakingActions = {
       author: StageMessage["author"];
       body: LocaleCopy;
       internal?: boolean;
+      operationId?: string;
     },
   ) => Promise<void>;
   artistDecide: (

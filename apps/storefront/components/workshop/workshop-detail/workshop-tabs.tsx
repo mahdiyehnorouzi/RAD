@@ -2,7 +2,7 @@
 import "./workshop-tabs.css";
 import "../../making/customer-detail/customer-detail.css";
 
-import type {MakingCommission} from "@/components/making/type";
+import type { MakingCommission } from "@/components/making/type";
 import { useMaking } from "@/hooks/use-making-workspace";
 import { useLocale } from "@/components/i18n";
 import {
@@ -22,7 +22,11 @@ import { PreKilnPanel } from "./pre-kiln-panel";
 import { QuotePanel } from "./quote-panel";
 import { ShipPanel } from "./ship-panel";
 
-export function WorkshopWorkTab({ commission }: { commission: MakingCommission }) {
+export function WorkshopWorkTab({
+  commission,
+}: {
+  commission: MakingCommission;
+}) {
   const making = useMaking();
   const { locale } = useLocale();
   return (
@@ -36,7 +40,9 @@ export function WorkshopWorkTab({ commission }: { commission: MakingCommission }
         <ShipPanel commission={commission} />
         <ChangeCards commission={commission} />
         <QuoteCard commission={commission} />
-        {commission.approvedSnapshot ? <QuoteCard commission={commission} snapshot /> : null}
+        {commission.approvedSnapshot ? (
+          <QuoteCard commission={commission} snapshot />
+        ) : null}
         <PreKilnCard commission={commission} />
         <ProgressPhotographs commission={commission} />
       </div>
@@ -46,19 +52,38 @@ export function WorkshopWorkTab({ commission }: { commission: MakingCommission }
         <h2>{locale === "fa" ? "پیام‌های مشتری" : "Customer messages"}</h2>
         <StageMessages commission={commission} />
         <MessageComposer
-          onSend={(body) => making.addMessage(commission.id, { author: "artist", body })}
+          key={`${commission.id}-message`}
+          onSend={(body, operationId) =>
+            making.addMessage(commission.id, {
+              author: "artist",
+              body,
+              operationId,
+            })
+          }
         />
         <h2>{locale === "fa" ? "یادداشت داخلی" : "Internal notes"}</h2>
         <StageMessages commission={commission} internalOnly />
         <MessageComposer
           internal
-          onSend={(body) => making.addMessage(commission.id, { author: "artist", body, internal: true })}
+          key={`${commission.id}-note`}
+          onSend={(body, operationId) =>
+            making.addMessage(commission.id, {
+              author: "artist",
+              body,
+              internal: true,
+              operationId,
+            })
+          }
         />
       </aside>
     </div>
   );
 }
 
-export function WorkshopAuditTab({ commission }: { commission: MakingCommission }) {
+export function WorkshopAuditTab({
+  commission,
+}: {
+  commission: MakingCommission;
+}) {
   return <AuditTrail commission={commission} />;
 }

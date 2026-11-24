@@ -13,7 +13,7 @@ import {
 import { create } from "zustand";
 import type { AuthUser } from "@rad/types";
 import type { MakingCommission } from "@/components/making/type";
-import { isDemoCommission, newEntityId, seedCommissions } from "@/lib/making";
+import { isDemoCommission, seedCommissions } from "@/lib/making";
 import {
   addCommissionMessage,
   addWorkshopCommissionMessage,
@@ -31,8 +31,6 @@ import {
 } from "@/hooks/making-actions";
 import { useCommerce } from "@/components/commerce";
 import { logRecovered } from "@/lib/log";
-
-const storageKey = "rad-making-commissions-v2";
 
 type MakingContextValue = Omit<MakingActions, "submitDesign"> & {
   ready: boolean;
@@ -67,16 +65,23 @@ function isMaker(user: AuthUser | null) {
   );
 }
 
-function persistable(commissions: MakingCommission[]) {
-  return commissions.map((item) => ({
-    ...item,
-    brief: slimCommissionBrief(item.brief),
-  }));
-}
-
 export function MakingProvider({ children }: { children: ReactNode }) {
   const { user } = useCommerce();
   const maker = isMaker(user);
+  return (
+    <MakingSession key={`${user?.id ?? "guest"}:${maker}`} maker={maker}>
+      {children}
+    </MakingSession>
+  );
+}
+
+function MakingSession({
+  children,
+  maker,
+}: {
+  children: ReactNode;
+  maker: boolean;
+}) {
   const [commissions, setCommissions] = useState<MakingCommission[]>([]);
   const [ready, setReady] = useState(false);
 
@@ -86,68 +91,28 @@ export function MakingProvider({ children }: { children: ReactNode }) {
         ? await fetchWorkshopCommissions()
         : await fetchMyCommissions();
       if (Array.isArray(remote)) {
-        setCommissions((current) =>
-          maker
-            ? remote
-            : mergeCommissions(
-                current.filter((item) => !isDemoCommission(item.id)),
-                remote,
-              ),
-        );
-        return true;
+        setCommissions((current) => mergeCommissions(current, remote));
       }
     } catch (error) {
       logRecovered("commissions", error);
     }
-    return false;
   }, [maker]);
 
   useEffect(() => {
     let cancelled = false;
-    setReady(false);
-    const local = maker ? [] : readLocal();
-    (async () => {
-      const remote = await (
-        maker ? fetchWorkshopCommissions() : fetchMyCommissions()
-      ).catch(() => [] as MakingCommission[]);
-      if (cancelled) return;
-      if (maker) setCommissions(remote);
-      else {
-        const seedIds = new Set(seedCommissions.map((item) => item.id));
-        const owned = local.filter((item) => !seedIds.has(item.id));
-        setCommissions(remote.length ? mergeCommissions(owned, remote) : owned);
-      }
-      setReady(true);
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [maker, user?.id]);
-
-  useEffect(() => {
-    if (!ready || maker) return;
-    try {
-      window.localStorage.setItem(
-        storageKey,
-        JSON.stringify(persistable(commissions)),
-      );
-    } catch {
-      /* quota */
-    }
-  }, [commissions, ready, maker]);
-
-  useEffect(() => {
+    void loadRemote().finally(() => {
+      if (!cancelled) setReady(true);
+    });
     const onFocus = () => {
       void loadRemote();
     };
     window.addEventListener("focus", onFocus);
-    window.addEventListener("rad:session", onFocus);
     const timer = window.setInterval(() => {
       if (document.visibilityState === "visible") void loadRemote();
     }, 12_000);
     return () => {
+      cancelled = true;
       window.removeEventListener("focus", onFocus);
-      window.removeEventListener("rad:session", onFocus);
       window.clearInterval(timer);
     };
   }, [loadRemote]);
@@ -178,71 +143,24 @@ export function MakingProvider({ children }: { children: ReactNode }) {
     [update],
   );
 
-  /**
-   * Overrides `actions.addMessage` for real commissions. Appends through
-   * the dedicated, lock-protected message endpoint instead of the
-   * whole-payload `update()`/save path, which cannot safely carry a new
-   * message - see commissions-conversation-sync.spec.ts on the API side.
-   * Optimistic locally for instant feedback; reconciled with the server's
-   * authoritative response (never applied if it is staler than what is
-   * already shown, guarding against an out-of-order network response);
-   * rolled back - and the error re-thrown so the composer can show it and
-   * keep the typed draft - if the request fails.
-   */
+  // Only confirmed messages enter the history. The composer owns the
+  // pending draft and its stable retry ID, not the server-state cache.
   const sendMessage = useCallback(
     async (id: string, input: Parameters<MakingActions["addMessage"]>[1]) => {
       if (isDemoCommission(id)) {
         return actions.addMessage(id, input);
       }
-      const tempId = newEntityId(input.internal ? "n" : "m");
-      setCommissions((current) =>
-        current.map((item) => {
-          if (item.id !== id) return item;
-          const entry = {
-            id: tempId,
-            stageId: item.stage,
-            author: input.author,
+      const saved = maker
+        ? await addWorkshopCommissionMessage(id, {
             body: input.body,
             internal: input.internal,
-            createdAt: Date.now(),
-          };
-          return input.internal
-            ? { ...item, internalNotes: [...item.internalNotes, entry] }
-            : { ...item, messages: [...item.messages, entry] };
-        }),
-      );
-      try {
-        const saved = maker
-          ? await addWorkshopCommissionMessage(id, {
-              body: input.body,
-              internal: input.internal,
-            })
-          : await addCommissionMessage(id, { body: input.body });
-        setCommissions((current) =>
-          current.map((item) =>
-            item.id === saved.id && saved.updatedAt >= item.updatedAt
-              ? saved
-              : item,
-          ),
-        );
-      } catch (error) {
-        setCommissions((current) =>
-          current.map((item) =>
-            item.id === id
-              ? {
-                  ...item,
-                  messages: item.messages.filter(
-                    (message) => message.id !== tempId,
-                  ),
-                  internalNotes: item.internalNotes.filter(
-                    (message) => message.id !== tempId,
-                  ),
-                }
-              : item,
-          ),
-        );
-        throw error;
-      }
+            operationId: input.operationId,
+          })
+        : await addCommissionMessage(id, {
+            body: input.body,
+            operationId: input.operationId,
+          });
+      setCommissions((current) => mergeCommissions(current, [saved]));
     },
     [actions, maker],
   );
@@ -299,19 +217,6 @@ export function useCommissionLookup() {
   return useCommissionIndex((state) => state.get);
 }
 
-function readLocal(): MakingCommission[] {
-  try {
-    const raw =
-      window.localStorage.getItem(storageKey) ??
-      window.localStorage.getItem("rad-making-commissions");
-    if (!raw) return [];
-    const parsed = JSON.parse(raw) as MakingCommission[];
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-}
-
 function mergeCommissions(
   local: MakingCommission[],
   remote: MakingCommission[],
@@ -319,7 +224,7 @@ function mergeCommissions(
   const byId = new Map(local.map((item) => [item.id, item]));
   for (const item of remote) {
     const existing = byId.get(item.id);
-    if (!existing || item.updatedAt >= existing.updatedAt)
+    if (!existing || item.updatedAt > existing.updatedAt)
       byId.set(item.id, item);
   }
   return [...byId.values()].sort((a, b) => b.updatedAt - a.updatedAt);

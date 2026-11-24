@@ -864,15 +864,20 @@ export function useAdminWorkspace() {
         id: string,
         body: { fa: string; en: string },
         internal?: boolean,
+        operationId?: string,
       ) {
+        const epoch = sessionEpochRef.current;
         const saved = await api<AdminCommission>(
           `/admin/commissions/${id}/messages`,
           {
             method: "POST",
-            body: JSON.stringify({ body, internal }),
+            body: JSON.stringify({ body, internal, operationId }),
           },
         );
-        setCommissions((items) => mergeFreshCommission(items, saved));
+        if (epoch === sessionEpochRef.current) {
+          bumpWrite("commissions");
+          setCommissions((items) => mergeFreshCommission(items, saved));
+        }
         return saved;
       },
     }),

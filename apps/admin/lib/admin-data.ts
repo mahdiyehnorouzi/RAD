@@ -347,14 +347,14 @@ export function resolveCommissionSelection(
 // or a mutation response racing the 20s poll) can resolve out of order.
 // Applying whichever lands last, unguarded, can show older data - fewer
 // messages, an earlier stage - over state the admin already sees. Each
-// incoming commission replaces the current one only if it is at least as
-// fresh (by `updatedAt`); a staler response is dropped, never applied.
+// incoming commission replaces the current one only if it is strictly
+// fresher (by `updatedAt`); a staler response is dropped, never applied.
 export function mergeFreshCommission(
   current: AdminCommission[],
   incoming: AdminCommission,
 ): AdminCommission[] {
   return current.map((item) =>
-    item.id === incoming.id && incoming.updatedAt >= item.updatedAt
+    item.id === incoming.id && incoming.updatedAt > item.updatedAt
       ? incoming
       : item,
   );
@@ -367,7 +367,7 @@ export function mergeFreshCommissions(
   const byId = new Map(current.map((item) => [item.id, item]));
   for (const next of incoming) {
     const existing = byId.get(next.id);
-    if (!existing || next.updatedAt >= existing.updatedAt) {
+    if (!existing || next.updatedAt > existing.updatedAt) {
       byId.set(next.id, next);
     }
   }
