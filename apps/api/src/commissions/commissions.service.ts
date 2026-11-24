@@ -1,6 +1,7 @@
 import {
   ForbiddenException,
   Injectable,
+  Logger,
   NotFoundException,
   UnauthorizedException,
 } from "@nestjs/common";
@@ -24,6 +25,8 @@ import type { CommissionDecideDto, CreateCommissionDto } from "./dto";
 
 @Injectable()
 export class CommissionsService {
+  private readonly logger = new Logger(CommissionsService.name);
+
   constructor(
     @InjectRepository(Commission)
     private readonly commissions: Repository<Commission>,
@@ -101,11 +104,16 @@ export class CommissionsService {
     return this.saveAdmin(id, payload).then((row) => row.payload);
   }
 
-  async addMineMessage(actor: Actor, id: string, body: LocaleCopy) {
+  async addMineMessage(
+    actor: Actor,
+    id: string,
+    body: LocaleCopy,
+    operationId?: string,
+  ) {
     this.requireSignedIn(actor);
     await this.requireOwned(actor, id);
     const { next } = await this.mutateCommission(id, (current) =>
-      addCommissionMessage(current, { author: "customer", body }),
+      addCommissionMessage(current, { author: "customer", body, operationId }),
     );
     return this.toCustomer(next);
   }
@@ -150,12 +158,28 @@ export class CommissionsService {
     return this.toAdmin({ ...row, payload: next });
   }
 
-  async addArtistMessage(id: string, body: LocaleCopy, internal?: boolean) {
-    const { row, next } = await this.mutateCommission(id, (current) =>
-      addCommissionMessage(current, { author: "artist", body, internal }),
+  async addArtistMessage(
+    id: string,
+    body: LocaleCopy,
+    internal?: boolean,
+    operationId?: string,
+  ) {
+    const { row, previous, next } = await this.mutateCommission(id, (current) =>
+      addCommissionMessage(current, {
+        author: "artist",
+        body,
+        internal,
+        operationId,
+      }),
     );
-    if (!internal) {
-      await this.notices.createForOwner(row.ownerKey, "commission_message", id);
+    if (!internal && previous !== next) {
+      try {
+        await this.notices.createForOwner(row.ownerKey, "commission_message", id);
+      } catch {
+        // The append already committed. Do not report it as a failed send
+        // or encourage another append because notification delivery failed.
+        this.logger.warn(`Commission message notice failed: ${id}`);
+      }
     }
     return this.toAdmin({ ...row, payload: next });
   }
@@ -176,9 +200,10 @@ export class CommissionsService {
     id: string,
     body: LocaleCopy,
     internal?: boolean,
+    operationId?: string,
   ): Promise<MakingCommission> {
     this.requireMaker(actor);
-    const admin = await this.addArtistMessage(id, body, internal);
+    const admin = await this.addArtistMessage(id, body, internal, operationId);
     return admin.payload;
   }
 
@@ -234,7 +259,14 @@ export class CommissionsService {
       });
       if (!row) throw new NotFoundException("سفارش اختصاصی پیدا نشد.");
       const current = this.toCommission(row.payload);
-      const next = mutate(current, row);
+      const changed = mutate(current, row);
+      const next =
+        changed === current
+          ? current
+          : {
+              ...changed,
+              updatedAt: Math.max(Date.now(), current.updatedAt + 1),
+            };
       if (next !== current) {
         await manager
           .getRepository(Commission)

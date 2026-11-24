@@ -452,3 +452,40 @@ test("a failed message send (not-found commission) leaves no partial state", asy
     }),
   );
 });
+
+test("retrying the same operation does not append another message", async () => {
+  const id = "sync-retry-operation";
+  const customer = actorFor("retry-customer");
+  await dataSource.getRepository(Commission).save({
+    id,
+    ownerKey: "user:retry-customer",
+    payload: seedCommission(id),
+  });
+  const body = { fa: "پیام", en: "Message" };
+  const operationId = "bba0cf60-dc66-4b5b-bd18-6fe064490e04";
+  const initial = await readRow(id);
+  await Promise.all([
+    commissions.addMineMessage(customer, id, body, operationId),
+    commissions.addMineMessage(customer, id, body, operationId),
+  ]);
+  const after = await readRow(id);
+  assert.equal(after.messages.length, 1);
+  assert.ok(after.updatedAt > initial.updatedAt);
+  await assert.rejects(() =>
+    commissions.addMineMessage(
+      customer,
+      id,
+      { fa: "دیگر", en: "Different" },
+      operationId,
+    ),
+  );
+  await commissions.addMineMessage(
+    customer,
+    id,
+    body,
+    "2af273ee-cc25-44b1-82a4-47a448558c4d",
+  );
+  const final = await readRow(id);
+  assert.equal(final.messages.length, 2);
+  assert.ok(final.updatedAt > after.updatedAt);
+});

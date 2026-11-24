@@ -412,7 +412,12 @@ export class AdminController {
     @Req() request: AuthedRequest,
   ) {
     this.admin.assert(request.adminRole, "order.write");
-    return this.commissions.addArtistMessage(id, body.body, body.internal);
+    return this.commissions.addArtistMessage(
+      id,
+      body.body,
+      body.internal,
+      body.operationId,
+    );
   }
 
   @Get("users")

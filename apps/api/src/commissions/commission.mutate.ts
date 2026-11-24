@@ -1,3 +1,4 @@
+import { ConflictException } from "@nestjs/common";
 import {
   loc,
   newEntityId,
@@ -72,7 +73,13 @@ export function addCommissionMessage(
   const id = input.operationId
     ? `op-${input.author}-${input.internal ? "n" : "m"}-${input.operationId}`
     : newEntityId(input.internal ? "n" : "m");
-  if (commission[key].some((message) => message.id === id)) return commission;
+  const existing = commission[key].find((message) => message.id === id);
+  if (existing) {
+    if (existing.body.fa !== input.body.fa || existing.body.en !== input.body.en) {
+      throw new ConflictException("Message operation already used");
+    }
+    return commission;
+  }
   const entry: StageMessage = {
     id,
     stageId: commission.stage,

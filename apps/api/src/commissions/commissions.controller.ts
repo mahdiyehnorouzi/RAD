@@ -82,6 +82,7 @@ export class CommissionsController {
       await this.identity.fromRequest(request),
       id,
       body.body,
+      body.operationId,
     );
   }
 
@@ -96,6 +97,7 @@ export class CommissionsController {
       id,
       body.body,
       body.internal,
+      body.operationId,
     );
   }
 }
