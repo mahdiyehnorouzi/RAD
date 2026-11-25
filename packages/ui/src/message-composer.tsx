@@ -1,6 +1,29 @@
 import * as React from "react";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import "./message-composer.css";
+
+/**
+ * Whether Enter should submit at all on this device. There is no Shift
+ * key on a touch keyboard, so if Enter also sent on a touch device the
+ * admin would have no way left to type a deliberate newline — Enter must
+ * stay a plain newline there, every time, and sending goes through the
+ * button only. `(pointer: coarse)` is the standard signal for "the
+ * primary input is a finger, not a mouse"; this re-checks on orientation
+ * change / an external keyboard being attached, rather than caching the
+ * device type once at mount.
+ */
+function useEnterToSendAllowed(): boolean {
+  const [allowed, setAllowed] = useState(true);
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.matchMedia) return;
+    const query = window.matchMedia("(pointer: coarse)");
+    const sync = () => setAllowed(!query.matches);
+    sync();
+    query.addEventListener("change", sync);
+    return () => query.removeEventListener("change", sync);
+  }, []);
+  return allowed;
+}
 
 export interface AdminMessageComposerProps {
   value: string;
@@ -44,6 +67,7 @@ export function AdminMessageComposer({
   errorAction,
 }: AdminMessageComposerProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const enterToSendAllowed = useEnterToSendAllowed();
 
   useEffect(() => {
     const el = textareaRef.current;
@@ -69,10 +93,19 @@ export function AdminMessageComposer({
           value={value}
           onChange={(event) => onChange(event.target.value)}
           onKeyDown={(event) => {
-            if (event.key === "Enter" && !event.shiftKey) {
-              event.preventDefault();
-              if (canSend) onSend();
+            if (event.key !== "Enter" || event.shiftKey) return;
+            // This Enter may be confirming an IME composition candidate
+            // (predictive text, an accent/combining-character picker, a
+            // CJK candidate list) rather than submitting the message —
+            // `isComposing` is the standard signal; `keyCode === 229` is
+            // the legacy fallback some browsers (notably older Safari)
+            // use instead of setting it reliably.
+            if (event.nativeEvent.isComposing || event.keyCode === 229) {
+              return;
             }
+            if (!enterToSendAllowed) return;
+            event.preventDefault();
+            if (canSend) onSend();
           }}
           placeholder={placeholder}
           disabled={disabled || sending}

@@ -41,3 +41,26 @@ test("an empty or whitespace-only query has no numeric match", () => {
   assert.equal(parseIdentitySearchQuery("").radNumber, null);
   assert.equal(parseIdentitySearchQuery("   ").radNumber, null);
 });
+
+test("a product name that merely contains digits is never treated as a RAD number", () => {
+  // A product genuinely named with digits in it ("model 82", an artist
+  // whose name has a year in it, …) must stay a name-only search — it
+  // must not *also* match identity #82 just because "82" appears inside
+  // otherwise non-numeric text.
+  assert.equal(parseIdentitySearchQuery("فنجان82").radNumber, null);
+  assert.equal(parseIdentitySearchQuery("82-مدل").radNumber, null);
+  assert.equal(parseIdentitySearchQuery("test82abc").radNumber, null);
+  assert.equal(parseIdentitySearchQuery("82 کوچک").radNumber, null);
+});
+
+test("a product name that only starts with letters resembling the RAD prefix stays a name search", () => {
+  // "radiant" or "Radin" are real product/artist names — stripping "rad"
+  // must not fire unless everything left over is purely numeric.
+  assert.equal(parseIdentitySearchQuery("radiant bowl").radNumber, null);
+  assert.equal(parseIdentitySearchQuery("Radin").radNumber, null);
+});
+
+test("garbage after a RAD- prefix is not treated as a numeric code", () => {
+  assert.equal(parseIdentitySearchQuery("RAD-082extra").radNumber, null);
+  assert.equal(parseIdentitySearchQuery("RAD-").radNumber, null);
+});

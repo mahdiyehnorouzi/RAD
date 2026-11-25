@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ChevronRight, Package, Search } from "lucide-react";
 import { AdminSearchField, Button } from "@rad/ui";
+import { useDetailScrollRestore } from "../../hooks/use-detail-scroll-restore";
 import {
   orderStatusLabels,
   orderStatusOptions,
@@ -172,25 +173,12 @@ export function AdminOrders({
   // Opening an order on mobile replaces the list with the detail pane in
   // place (same scroll container, no route change), so the browser keeps
   // whatever scrollTop the list had — landing the admin mid-way down the
-  // detail instead of at its top. Scrolling to 0 only when the *id*
-  // changes (not on every render) keeps this from firing on background
-  // polling, which refreshes `orders` in place without changing which
-  // order is selected. Closing restores the list's own scroll position
-  // instead of leaving it at whatever offset the (now shorter) page
-  // scrolled to once the detail pane disappeared.
+  // detail instead of at its top. See useDetailScrollRestore for how this
+  // stays inert for a background poll (same id, refreshed data) and for
+  // the exact relationship between browser Back and this component's own
+  // close button.
   const detailScrollId = mobile && showDetail ? (active?.id ?? null) : null;
-  const previousDetailScrollId = useRef<string | null>(null);
-  const savedListScrollY = useRef(0);
-  useEffect(() => {
-    const previous = previousDetailScrollId.current;
-    if (detailScrollId && detailScrollId !== previous) {
-      window.scrollTo(0, 0);
-    } else if (!detailScrollId && previous) {
-      const target = savedListScrollY.current;
-      window.requestAnimationFrame(() => window.scrollTo(0, target));
-    }
-    previousDetailScrollId.current = detailScrollId;
-  }, [detailScrollId]);
+  const { saveScroll } = useDetailScrollRestore(detailScrollId);
 
   const readNotice = useOptionalAdminChrome()?.readNotice;
   const noticeKey = showDetail && active ? orderNoticeKey(active) : null;
@@ -343,8 +331,7 @@ export function AdminOrders({
                           className={`orders-row${selected ? " is-active" : ""}${review ? " is-review" : ""}`}
                           aria-current={selected ? "true" : undefined}
                           onClick={() => {
-                            if (mobile)
-                              savedListScrollY.current = window.scrollY;
+                            if (mobile) saveScroll();
                             setSelectedId(order.id);
                           }}
                         >

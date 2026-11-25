@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   formatRadCode,
   type RadIdentityBatchView,
@@ -14,6 +14,7 @@ import { StatTile } from "../../components/admin-stat-tile";
 import { api, API_BASE } from "../../lib/api";
 import type { AdminProduct } from "../../lib/admin-data";
 import { useDebouncedValue } from "../../hooks/use-debounced-value";
+import { useLatestRequest } from "../../hooks/use-latest-request";
 
 const number = new Intl.NumberFormat("fa-IR");
 const date = new Intl.DateTimeFormat("fa-IR", { dateStyle: "medium" });
@@ -51,10 +52,10 @@ export function TagsPage() {
   // additionally makes sure that whichever request started *last* is the
   // only one allowed to apply its result, regardless of resolve order.
   const debouncedQuery = useDebouncedValue(query, 300);
-  const latestRequestId = useRef(0);
+  const { begin, isLatest } = useLatestRequest();
 
   const load = useCallback(async () => {
-    const requestId = ++latestRequestId.current;
+    const requestId = begin();
     setLoading(true);
     setError("");
     const params = new URLSearchParams();
@@ -69,17 +70,17 @@ export function TagsPage() {
         api<RadIdentityView[]>(`/admin/identities${suffix}`),
         api<RadIdentityBatchView[]>("/admin/identities/batches"),
       ]);
-      if (requestId !== latestRequestId.current) return;
+      if (!isLatest(requestId)) return;
       setSummary(nextSummary);
       setRows(nextRows);
       setBatches(nextBatches);
     } catch (cause) {
-      if (requestId !== latestRequestId.current) return;
+      if (!isLatest(requestId)) return;
       setError((cause as Error).message);
     } finally {
-      if (requestId === latestRequestId.current) setLoading(false);
+      if (isLatest(requestId)) setLoading(false);
     }
-  }, [assignment, batchId, debouncedQuery, status]);
+  }, [assignment, batchId, debouncedQuery, status, begin, isLatest]);
 
   useEffect(() => {
     void load();

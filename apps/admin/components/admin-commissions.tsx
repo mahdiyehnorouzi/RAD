@@ -29,6 +29,7 @@ import {
   type AdminCommissionStage,
 } from "../lib/admin-data";
 import { useOptionalAdminChrome } from "./admin-shell";
+import { useDetailScrollRestore } from "../hooks/use-detail-scroll-restore";
 import { commissionNoticeKey } from "../lib/staff-notice-keys";
 import { briefExcerpt } from "../lib/product-cover";
 import {
@@ -181,25 +182,16 @@ export function AdminCommissions({
   );
   const selected = commissions.find((item) => item.id === selectedId) ?? null;
 
-  // Same scroll-to-top-on-open / restore-on-close fix as AdminOrders (see
-  // that file's comment): on mobile, opening a Custom Order replaces the
-  // list in place rather than navigating, so without this the detail pane
-  // opens at whatever scrollTop the list happened to have. Gating on the
-  // *id* (not every render) means a background poll refreshing
-  // `commissions` with the same selection does not reset scroll.
+  // Same scroll-to-top-on-open / restore-on-close fix as AdminOrders: on
+  // mobile, opening a Custom Order replaces the list in place rather than
+  // navigating, so without this the detail pane opens at whatever
+  // scrollTop the list happened to have. `selectedId` is driven identically
+  // by the in-app close button (clearing `requestedId`) and by browser
+  // Back (the popstate listener below, re-reading the hash) — both just
+  // change this same value, so useDetailScrollRestore treats them the same
+  // way and a test against one covers the other.
   const detailScrollId = isMobile && selected ? selectedId : null;
-  const previousDetailScrollId = useRef<string | null>(null);
-  const savedListScrollY = useRef(0);
-  useEffect(() => {
-    const previous = previousDetailScrollId.current;
-    if (detailScrollId && detailScrollId !== previous) {
-      window.scrollTo(0, 0);
-    } else if (!detailScrollId && previous) {
-      const target = savedListScrollY.current;
-      window.requestAnimationFrame(() => window.scrollTo(0, target));
-    }
-    previousDetailScrollId.current = detailScrollId;
-  }, [detailScrollId]);
+  const { saveScroll } = useDetailScrollRestore(detailScrollId);
 
   const readNotice = useOptionalAdminChrome()?.readNotice;
   const noticeKey = selected ? commissionNoticeKey(selected) : null;
@@ -220,7 +212,7 @@ export function AdminCommissions({
   );
 
   const selectCommission = (id: string) => {
-    if (isMobile) savedListScrollY.current = window.scrollY;
+    if (isMobile) saveScroll();
     setRequestedId(id);
     window.history.pushState(
       null,
@@ -818,7 +810,7 @@ function CommissionLightbox({
   );
 }
 
-function CommissionMessages({
+export function CommissionMessages({
   commission,
   canWrite,
   onMessage,

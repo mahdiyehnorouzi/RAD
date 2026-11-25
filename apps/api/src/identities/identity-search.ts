@@ -19,8 +19,12 @@ export interface IdentitySearchQuery {
   /**
    * Digits to match against `identity.radNumber`: Persian/Arabic-Indic
    * digits normalized to ASCII, an optional "RAD" prefix and leading
-   * zeros stripped. `null` when the query has no digits at all (a
-   * plain product-name search).
+   * zeros stripped. `null` unless the *entire* query — after that
+   * normalization — is nothing but a RAD code, so this is never a
+   * substring plucked out of an otherwise-alphanumeric query: a product
+   * literally named "model 82" or an artist's name that happens to
+   * contain a number must stay a plain name search, not also match
+   * identity #82.
    */
   radNumber: string | null;
 }
@@ -37,11 +41,17 @@ export interface IdentitySearchQuery {
 export function parseIdentitySearchQuery(raw: string): IdentitySearchQuery {
   const trimmed = raw.trim();
   const ascii = toAsciiDigits(trimmed);
+  // Strip an optional "RAD" prefix (RAD-014, rad 014, RAD014 — case and
+  // spacing insensitive) only as a candidate; it's accepted below only if
+  // everything left after it is purely numeric, so a product name that
+  // merely starts with "rad" is never mistaken for a code.
   const withoutPrefix = ascii.replace(/^rad[\s-]*/i, "");
-  const digitsOnly = withoutPrefix.replace(/\D/g, "");
-  const withoutLeadingZeros = digitsOnly.replace(/^0+(?=\d)/, "");
+  const isWholeQueryNumeric = /^\d+$/.test(withoutPrefix);
+  const withoutLeadingZeros = isWholeQueryNumeric
+    ? withoutPrefix.replace(/^0+(?=\d)/, "")
+    : null;
   return {
     raw: trimmed,
-    radNumber: withoutLeadingZeros || null,
+    radNumber: withoutLeadingZeros,
   };
 }
