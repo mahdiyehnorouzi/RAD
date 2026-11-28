@@ -6,6 +6,7 @@ export * from "./content";
 export * from "./damage-report";
 export * from "./policy";
 export * from "./product-attribute";
+export * from "./category";
 
 import type { LocalizedText, WorkMark } from "./artwork";
 import type { PolicyAcceptance } from "./policy";
@@ -168,6 +169,8 @@ export interface Product {
   accent: string;
   shape: ProductShape;
   category: ProductCategory;
+  /** Subcategory slug. Absent or null when the product has no subcategory. */
+  subcategory?: string | null;
   visual?: ProductVisual;
   status?: ProductStatus;
   /** Epoch ms. Set while a `sold` work is only held by a cart or unpaid checkout. */

@@ -35,6 +35,7 @@ export type ArtworkResponse = {
   title: LocalizedText;
   artist: ArtworkArtist;
   category: string;
+  subcategory?: string | null;
   status: string;
   reservedUntil?: number;
   price: number | null;

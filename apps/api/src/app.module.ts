@@ -13,6 +13,7 @@ import { ApiExceptionFilter } from "./common/http-exception.filter";
 import { AuthModule } from "./auth/auth.module";
 import { AddressesModule } from "./addresses/addresses.module";
 import { CatalogModule } from "./catalog/catalog.module";
+import { CategoriesModule } from "./categories/categories.module";
 import { CartModule } from "./cart/cart.module";
 import { FavoritesModule } from "./favorites/favorites.module";
 import { ReviewsModule } from "./reviews/reviews.module";
@@ -70,6 +71,7 @@ import { IdentitiesModule } from "./identities/identities.module";
     AuthModule,
     AddressesModule,
     CatalogModule,
+    CategoriesModule,
     CartModule,
     FavoritesModule,
     ReviewsModule,
