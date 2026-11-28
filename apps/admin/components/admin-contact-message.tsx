@@ -1,6 +1,8 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useOptionalAdminChrome } from "./admin-shell";
+import { messageNoticeKey } from "../lib/staff-notice-keys";
 import { createSingleFlight } from "../lib/admin-mutation";
 import { AlertTriangle, Check, Mail, Phone, RotateCcw } from "lucide-react";
 import { Button } from "@rad/ui";
@@ -49,6 +51,23 @@ export function AdminContactMessageItem({
   const replyFlight = useRef(createSingleFlight());
   const isEmail = message.contact.includes("@");
   const resolved = message.status === "resolved";
+  const readNotice = useOptionalAdminChrome()?.readNotice;
+  const articleRef = useRef<HTMLElement>(null);
+  const noticeKey = messageNoticeKey(message, replies);
+  useEffect(() => {
+    const article = articleRef.current;
+    if (!article || resolved || !readNotice) return;
+    const observer = new IntersectionObserver((entries) => {
+      if (
+        document.visibilityState === "visible" &&
+        entries.some((entry) => entry.isIntersecting)
+      ) {
+        readNotice(noticeKey);
+      }
+    });
+    observer.observe(article);
+    return () => observer.disconnect();
+  }, [noticeKey, readNotice, resolved]);
 
   const toggle = () => {
     void statusFlight.current.run(async () => {
@@ -89,7 +108,10 @@ export function AdminContactMessageItem({
   };
 
   return (
-    <article className={`contact-message is-${message.status}`}>
+    <article
+      ref={articleRef}
+      className={`contact-message is-${message.status}`}
+    >
       <header>
         <div>
           <strong>{message.name || message.contact}</strong>

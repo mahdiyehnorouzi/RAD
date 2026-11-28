@@ -1,5 +1,6 @@
 import {
   formatRadCode,
+  isRedundantArtworkNumberSpec,
   visualForCategory,
   type Artwork,
   type Locale,
@@ -50,7 +51,9 @@ export function productFromArtwork(artwork: Artwork): Product {
       ? `RAD-${formatRadCode(artwork.radNumber)}`
       : undefined,
     listedAt: artwork.createdAt,
-    attributes: artwork.attributes,
+    attributes: artwork.attributes?.filter(
+      (attribute) => !isRedundantArtworkNumberSpec(attribute),
+    ),
     en: {
       name: artwork.title.en,
       subtitle: artwork.description.en,

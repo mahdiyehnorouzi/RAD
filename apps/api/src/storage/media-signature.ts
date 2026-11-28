@@ -1,11 +1,11 @@
 /**
  * Server-side byte-signature inspection for product image/video uploads.
  *
- * This exists because S3-compatible storage (unlike Cloudinary's Admin
+ * This exists because S3-compatible storage (unlike SeaweedFS's Admin
  * API) does not decode/transcode uploads and hand back verified
  * format/dimension metadata — `S3StorageService.verifyMedia` has to derive
- * that itself from the actual bytes, the same way `CloudinaryStorageService
- * .verifyMedia` trusts only what Cloudinary decoded, never the client's
+ * that itself from the actual bytes, the same way `SeaweedfsStorageService
+ * .verifyMedia` trusts only what SeaweedFS decoded, never the client's
  * claimed `Content-Type` or file extension.
  *
  * Deliberately dependency-free: these are well-documented, stable binary
@@ -26,7 +26,7 @@
  *   that far. A real decoder (e.g. a future thumbnailing step) can still
  *   fail or behave unexpectedly on such a file; this module does not
  *   protect against that, only against a file that isn't really an image
- *   at all (the actual threat `verifyMedia` exists to stop: Cloudinary
+ *   at all (the actual threat `verifyMedia` exists to stop: SeaweedFS
  *   used to decode-and-validate for us, S3 does not).
  * - A header-declared width/height is trusted as reported (bounded only by
  *   `media-policy.ts#MAX_IMAGE_DIMENSION_PX` at the call site) — it is not

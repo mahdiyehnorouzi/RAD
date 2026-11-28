@@ -11,7 +11,7 @@ const monorepoRoot = path.resolve(appRoot, "../..");
 
 // SEAWEEDFS_PUBLIC_URL is a per-deployment env var (see
 // apps/api/src/storage/seaweedfs-storage.service.ts), not a fixed domain
-// the way Cloudinary's is — it can still be parsed at build/start time,
+// the way SeaweedFS's is — it can still be parsed at build/start time,
 // though, letting `remotePatterns` allowlist it (and, via `env` below,
 // letting `product-media.tsx`'s client-side loader recognize it) so
 // SeaweedFS-hosted thumbnails stop bypassing Next's image optimizer and
@@ -56,7 +56,7 @@ const nextConfig = {
   turbopack: { root: monorepoRoot },
   // Next's default (60s) means the on-demand image optimizer re-resizes
   // the same url+width+quality from scratch once a minute, all day, for
-  // local/public images (Cloudinary/SeaweedFS photos bypass this route
+  // local/public images (SeaweedFS/SeaweedFS photos bypass this route
   // entirely via product-media.tsx's custom loaders). These are static
   // product/marketing photos that don't change in place — a day-long
   // cache removes the repeat resize cost without real staleness risk.

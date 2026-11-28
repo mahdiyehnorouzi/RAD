@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ChevronRight, Package, Search } from "lucide-react";
 import { Button } from "@rad/ui";
 import {
@@ -14,6 +14,8 @@ import {
   type AdminOrderStatus,
   type AdminProduct,
 } from "../../lib/admin-data";
+import { useOptionalAdminChrome } from "../admin-shell";
+import { orderNoticeKey } from "../../lib/staff-notice-keys";
 import { coverImage } from "../../lib/product-cover";
 import {
   fulfillmentPresentation,
@@ -166,6 +168,11 @@ export function AdminOrders({
   })();
   const active = (list ?? []).find((order) => order.id === activeId) ?? null;
   const showDetail = Boolean(active) && (!mobile || selectedId === active?.id);
+  const readNotice = useOptionalAdminChrome()?.readNotice;
+  const noticeKey = showDetail && active ? orderNoticeKey(active) : null;
+  useEffect(() => {
+    if (noticeKey) readNotice?.(noticeKey);
+  }, [noticeKey, readNotice]);
 
   const covers = useMemo(() => {
     const map = new Map<string, string>();
@@ -546,6 +553,32 @@ function OrderDetail({
         <section aria-labelledby={`address-${order.id}`}>
           <h4 id={`address-${order.id}`}>نشانی تحویل</h4>
           <dl>
+            {order.recipientName && order.recipientPhone ? (
+              <>
+                <div>
+                  <dt>نام گیرنده</dt>
+                  <dd>{order.recipientName}</dd>
+                </div>
+                <div>
+                  <dt>شماره موبایل گیرنده</dt>
+                  <dd dir="ltr">
+                    <a href={`tel:${order.recipientPhone}`}>
+                      {order.recipientPhone}
+                    </a>
+                  </dd>
+                </div>
+              </>
+            ) : null}
+            {order.giftMessage ? (
+              <div>
+                <dt>متن کارت هدیه</dt>
+                <dd
+                  style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}
+                >
+                  {order.giftMessage}
+                </dd>
+              </div>
+            ) : null}
             <div>
               <dt>شهر</dt>
               <dd>{order.city || "ثبت نشده"}</dd>

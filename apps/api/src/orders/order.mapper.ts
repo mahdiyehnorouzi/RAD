@@ -23,9 +23,9 @@ export function toOrder(order: OrderRow, redirectUrl?: string) {
     createdAt: order.createdAt.getTime(),
     status,
     delivery: {
-      name: order.name,
+      name: order.recipientName ?? order.name,
       city: order.city,
-      phone: order.phone,
+      phone: order.recipientPhone ?? order.phone,
       address: order.address,
     },
     shipping: order.shippingMethod

@@ -1,7 +1,7 @@
 "use client";
 import "./order-detail.css";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Order } from "@rad/types";
 import { fetchOrder, errorMessage } from "@/lib/api";
 import { useCommerce } from "@/components/commerce";
@@ -9,22 +9,17 @@ import { useLocale } from "@/components/i18n";
 import { useCatalog } from "@/components/catalog";
 import { AccountShell } from "../../account/account-shell";
 import { CardListSkeleton } from "@/components/ui/skeleton";
-import { HelpPanel } from "@/components/contact";
-// Imported from its own sub-path, not the `@/components/help` barrel —
-// that barrel also reaches help-hub/policy-page, which this client
-// component (order detail) has no use for.
 import {
   OrderPolicies,
   OrderStatusGuide,
 } from "@/components/help/purchase-path";
 import { NoAccessState, NotFoundState } from "@/components/states";
 import {
-  PAYMENT_HELP_STATUSES,
   STORE_ORDER_PROGRESS,
   STORE_ORDER_STATUS_KEY,
   isTerminalStoreStatus,
 } from "../const";
-import { OrderAddress } from "./order-address";
+import { showOrderPolicies } from "../order-policies";
 import { OrderNextAction } from "./order-next-action";
 import { OrderSprig } from "./order-sprig";
 import { OrderSummary } from "./order-summary";
@@ -58,6 +53,15 @@ export function OrderDetail({ id }: { id: string }) {
   const [ready, setReady] = useState(false);
 
   const order = orders.find((item) => item.id === id) ?? fetched;
+  const detailRef = useRef<HTMLElement>(null);
+  const positionedId = useRef<string | null>(null);
+
+  useEffect(() => {
+    const detail = detailRef.current;
+    if (!detail || !order || positionedId.current === id) return;
+    positionedId.current = id;
+    detail.scrollIntoView({ block: "start", behavior: "instant" });
+  }, [id, order]);
 
   useEffect(() => {
     if (orders.some((item) => item.id === id)) {
@@ -129,7 +133,7 @@ export function OrderDetail({ id }: { id: string }) {
 
   return (
     <AccountShell>
-      <section className="order-detail section">
+      <section ref={detailRef} className="order-detail section">
         <header className="track-heading">
           <OrderSprig />
           <span className="track-eyebrow">{t("ordersEyebrow")}</span>
@@ -147,7 +151,6 @@ export function OrderDetail({ id }: { id: string }) {
               progressHref={terminal ? "#order-next" : "#order-progress"}
               formatDate={(value) => formatDate(value, locale)}
             />
-            <OrderAddress order={order} helpHref="#order-help" />
           </div>
 
           <div className="track-main">
@@ -189,21 +192,9 @@ export function OrderDetail({ id }: { id: string }) {
               onCancel={() => run(() => cancelOrder(order.id))}
             />
             <DamageReportPanel order={order} />
-            {order.policyAcceptance ? (
+            {showOrderPolicies(order) && order.policyAcceptance ? (
               <OrderPolicies acceptance={order.policyAcceptance} />
             ) : null}
-            <div id="order-help" className="track-decorated is-top">
-              <HelpPanel
-                context="order"
-                orderId={order.id}
-                tone={
-                  PAYMENT_HELP_STATUSES.includes(order.status)
-                    ? "payment"
-                    : "general"
-                }
-              />
-              <OrderSprig />
-            </div>
           </div>
         </div>
       </section>

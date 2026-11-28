@@ -891,10 +891,10 @@ div.checkout-alert p {
 .checkout-flow .help-panel.is-order {
   gap: 0.25rem;
   margin: 0;
-  padding: 0.45rem 0;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
+  padding: clamp(0.9rem, 3vw, 1.35rem);
+  border: 1px solid var(--line);
+  border-radius: var(--field-radius);
+  background: color-mix(in srgb, var(--moss) 7%, var(--paper));
   box-shadow: none;
 }
 
@@ -1096,4 +1096,24 @@ div.checkout-alert p {
   .checkout-flow.section {
     padding-inline: var(--checkout-gutter);
   }
+}
+
+.checkout-flow-head .checkout-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  width: fit-content;
+  min-height: 44px;
+  margin-block-end: 0.25rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font-size: var(--text-caption);
+  text-decoration: none;
+}
+
+.checkout-flow-head .checkout-back svg {
+  width: 1rem;
+  height: 1rem;
+  rotate: 180deg;
 }

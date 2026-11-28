@@ -1,7 +1,7 @@
 "use client";
 
 import "./customer-sidebar.css";
-import type {MakingCommission} from "@/components/making/type";
+import type { MakingCommission } from "@/components/making/type";
 import { copy, STAGE_LABEL } from "@/lib/making";
 import { formatWhen } from "@/lib/making";
 import { useLocale } from "@/components/i18n";
@@ -19,17 +19,12 @@ export function StageMessages({
   const items = (
     internalOnly
       ? commission.internalNotes
-      : [...commission.messages, ...(revealInternal ? commission.internalNotes : [])]
+      : [
+          ...commission.messages,
+          ...(revealInternal ? commission.internalNotes : []),
+        ]
   ).sort((a, b) => a.createdAt - b.createdAt);
-  if (!items.length) {
-    return (
-      <p className="making-empty">
-        {locale === "fa"
-          ? "هنوز پیامی به این مسیر وصل نشده است."
-          : "No messages are attached to this biography yet."}
-      </p>
-    );
-  }
+  if (!items.length) return null;
   return (
     <ol className="making-messages">
       {items.map((item) => (
@@ -41,8 +36,14 @@ export function StageMessages({
                   ? "یادداشت داخلی"
                   : "Internal note"
                 : item.author === "artist"
-                  ? commission.artistName
-                  : commission.customerName}
+                  ? locale === "fa"
+                    ? "کارگاه"
+                    : "Workshop"
+                  : item.author === "system"
+                    ? locale === "fa"
+                      ? "سامانه"
+                      : "System"
+                    : commission.customerName}
             </b>
             <span>{copy(STAGE_LABEL[item.stageId], locale)}</span>
             <time>{formatWhen(item.createdAt, locale)}</time>

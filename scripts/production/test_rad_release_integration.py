@@ -66,6 +66,16 @@ RAD_IDENTITY_MIGRATION = "1794000000000-AddRadIdentity.ts"
 # columns only. Chronologically the newest migration, so it is the one
 # `migration:revert` reverts first below.
 ORDER_SHIPPING_MIGRATION = "1794100000000-AddOrderShipping.ts"
+ORDER_GIFT_DELIVERY_MIGRATION = "1794200000000-AddOrderGiftDelivery.ts"
+# Data-only backfill of the self-reported contact `User.phone` from the
+# OTP-proven `User.verifiedPhone`, the first time `phone` is still unset
+# (see `AuthService.backfillContactPhone`). No column/index change, and a
+# no-op for both seed users below (neither has a `verifiedPhone` set), so
+# it adds no new forward-state assertions here. Chronologically the
+# newest migration, so it is the one `migration:revert` reverts first.
+BACKFILL_CONTACT_PHONE_MIGRATION = (
+    "1794300000000-BackfillContactPhoneFromVerifiedPhone.ts"
+)
 CLI_DATA_SOURCE = API_DIR / "src" / "database" / "cli-data-source.ts"
 
 DOCKER = shutil.which("docker")
@@ -319,7 +329,15 @@ class RealPostgresMigrationTests(unittest.TestCase):
         self.assertIn(ORDER_MESSAGE_MIGRATION, names)
         self.assertIn(RAD_IDENTITY_MIGRATION, names)
         self.assertIn(ORDER_SHIPPING_MIGRATION, names)
-        self.assertEqual(names[-1], ORDER_SHIPPING_MIGRATION)
+        self.assertIn(ORDER_GIFT_DELIVERY_MIGRATION, names)
+        self.assertEqual(
+            names[-3:],
+            [
+                ORDER_SHIPPING_MIGRATION,
+                ORDER_GIFT_DELIVERY_MIGRATION,
+                BACKFILL_CONTACT_PHONE_MIGRATION,
+            ],
+        )
         return self.manifest_for(*files)
 
     def user_rows(self):
@@ -561,7 +579,59 @@ class RealPostgresMigrationTests(unittest.TestCase):
         shown_after = broker.migration_show(NPM, self.api_dir, self.database_url, "127.0.0.1")
         self.assertEqual(broker.reconcile_migrations(manifest, shown_after), [])
 
-        # 5. Reverting the last migration (order shipping) drops only those
+        # 4a. Reverting the contact-phone backfill (the newest migration)
+        #     changes nothing for these two seed users — neither has a
+        #     `verifiedPhone`, so `down()` finds no row where `phone`
+        #     equals `verifiedPhone` to clear.
+        broker.run(
+            NPM, "run", "migration:revert",
+            env={**broker.SAFE_ENV, "PATH": os.environ.get("PATH", ""),
+                 "DATABASE_URL": self.database_url, "RAD_ALLOW_REMOTE_DB_WRITE": "127.0.0.1"},
+            cwd=self.api_dir, timeout=1800)
+        self.assertEqual(self.user_rows(), before)
+        self.assertEqual(self.order_rows(), orders_before)
+        shown_after_backfill_revert = broker.migration_show(
+            NPM, self.api_dir, self.database_url, "127.0.0.1")
+        self.assertEqual(
+            [entry["name"] for entry in broker.reconcile_migrations(manifest, shown_after_backfill_revert)],
+            [BACKFILL_CONTACT_PHONE_MIGRATION],
+        )
+
+        def gift_delivery_columns():
+            return broker.run(
+                broker.PSQL, self.database_url, "-tAc",
+                "SELECT column_name || ':' || is_nullable "
+                "FROM information_schema.columns WHERE table_name = 'Order' "
+                "AND column_name IN ('recipientName', 'recipientPhone', 'giftMessage') "
+                "ORDER BY column_name;",
+            ).stdout.strip().splitlines()
+
+        self.assertEqual(
+            gift_delivery_columns(),
+            ["giftMessage:YES", "recipientName:YES", "recipientPhone:YES"],
+        )
+        gift_values = broker.run(
+            broker.PSQL, self.database_url, "-tAc",
+            'SELECT count(*) FROM "Order" WHERE "recipientName" IS NULL '
+            'AND "recipientPhone" IS NULL AND "giftMessage" IS NULL;',
+        )
+        self.assertEqual(gift_values.stdout.strip(), str(len(orders_before)))
+        broker.run(
+            NPM, "run", "migration:revert",
+            env={**broker.SAFE_ENV, "PATH": os.environ.get("PATH", ""),
+                 "DATABASE_URL": self.database_url, "RAD_ALLOW_REMOTE_DB_WRITE": "127.0.0.1"},
+            cwd=self.api_dir, timeout=1800)
+        self.assertEqual(gift_delivery_columns(), [])
+        self.assertEqual(self.order_shipping_columns(), ["shippingFee", "shippingMethod"])
+        self.assertEqual(self.order_rows(), orders_before)
+        shown_after_gift_revert = broker.migration_show(
+            NPM, self.api_dir, self.database_url, "127.0.0.1")
+        self.assertEqual(
+            [entry["name"] for entry in broker.reconcile_migrations(manifest, shown_after_gift_revert)],
+            [ORDER_GIFT_DELIVERY_MIGRATION, BACKFILL_CONTACT_PHONE_MIGRATION],
+        )
+
+        # 5. Reverting order shipping drops only those
         #    columns. The identity registry, Order.message, and everything
         #    older stay.
         broker.run(
@@ -584,7 +654,11 @@ class RealPostgresMigrationTests(unittest.TestCase):
             manifest, shown_after_shipping_revert)
         self.assertEqual(
             [entry["name"] for entry in pending_after_shipping_revert],
-            [ORDER_SHIPPING_MIGRATION],
+            [
+                ORDER_SHIPPING_MIGRATION,
+                ORDER_GIFT_DELIVERY_MIGRATION,
+                BACKFILL_CONTACT_PHONE_MIGRATION,
+            ],
         )
 
         # 6. Reverting again now hits RadIdentity. Order.message stays.
@@ -608,7 +682,12 @@ class RealPostgresMigrationTests(unittest.TestCase):
             manifest, shown_after_identity_revert)
         self.assertEqual(
             [entry["name"] for entry in pending_after_identity_revert],
-            [RAD_IDENTITY_MIGRATION, ORDER_SHIPPING_MIGRATION],
+            [
+                RAD_IDENTITY_MIGRATION,
+                ORDER_SHIPPING_MIGRATION,
+                ORDER_GIFT_DELIVERY_MIGRATION,
+                BACKFILL_CONTACT_PHONE_MIGRATION,
+            ],
         )
 
         # 7. Reverting again now hits Order.message. The address book,
@@ -628,7 +707,13 @@ class RealPostgresMigrationTests(unittest.TestCase):
             manifest, shown_after_message_revert)
         self.assertEqual(
             [entry["name"] for entry in pending_after_message_revert],
-            [ORDER_MESSAGE_MIGRATION, RAD_IDENTITY_MIGRATION, ORDER_SHIPPING_MIGRATION],
+            [
+                ORDER_MESSAGE_MIGRATION,
+                RAD_IDENTITY_MIGRATION,
+                ORDER_SHIPPING_MIGRATION,
+                ORDER_GIFT_DELIVERY_MIGRATION,
+                BACKFILL_CONTACT_PHONE_MIGRATION,
+            ],
         )
 
         # 8. Reverting again now hits googleId.
@@ -650,7 +735,14 @@ class RealPostgresMigrationTests(unittest.TestCase):
             manifest, shown_after_first_revert)
         self.assertEqual(
             [entry["name"] for entry in pending_after_first_revert],
-            [GOOGLE_AUTH_MIGRATION, ORDER_MESSAGE_MIGRATION, RAD_IDENTITY_MIGRATION, ORDER_SHIPPING_MIGRATION],
+            [
+                GOOGLE_AUTH_MIGRATION,
+                ORDER_MESSAGE_MIGRATION,
+                RAD_IDENTITY_MIGRATION,
+                ORDER_SHIPPING_MIGRATION,
+                ORDER_GIFT_DELIVERY_MIGRATION,
+                BACKFILL_CONTACT_PHONE_MIGRATION,
+            ],
         )
 
         # 9. Reverting again now hits verifiedPhone.
@@ -678,6 +770,8 @@ class RealPostgresMigrationTests(unittest.TestCase):
                 ORDER_MESSAGE_MIGRATION,
                 RAD_IDENTITY_MIGRATION,
                 ORDER_SHIPPING_MIGRATION,
+                ORDER_GIFT_DELIVERY_MIGRATION,
+                BACKFILL_CONTACT_PHONE_MIGRATION,
             ],
         )
 

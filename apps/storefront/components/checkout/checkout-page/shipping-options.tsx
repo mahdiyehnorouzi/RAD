@@ -62,15 +62,6 @@ export function ShippingOptions({
           </small>
         </span>
       </label>
-      {method ? (
-        <button
-          type="button"
-          className="checkout-shipping-clear"
-          onClick={() => onChange("")}
-        >
-          {copy.shippingClear}
-        </button>
-      ) : null}
     </fieldset>
   );
 }

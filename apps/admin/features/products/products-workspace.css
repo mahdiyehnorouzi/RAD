@@ -359,6 +359,12 @@
   grid-template-columns: 1fr 1fr;
 }
 
+.product-qr-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .product-editor input,
 .product-editor select,
 .product-editor textarea {

@@ -29,7 +29,7 @@
   gap: 0.2rem;
 }
 
-.account-nav a {
+.account-nav :is(a, button) {
   display: grid;
   grid-template-columns: 2.6rem minmax(0, 1fr) auto;
   align-items: center;
@@ -37,24 +37,29 @@
   padding: 0.6rem 0.7rem;
   border: 1px solid transparent;
   border-radius: var(--account-radius);
+  width: 100%;
   color: var(--ink);
+  background: transparent;
+  font: inherit;
+  text-align: start;
   text-decoration: none;
+  cursor: pointer;
   transition:
     background-color 0.2s ease,
     border-color 0.2s ease;
 }
 
-.account-nav a:hover {
+.account-nav :is(a, button):hover {
   background: color-mix(in srgb, var(--account-paper) 70%, transparent);
 }
 
-.account-nav a.active {
+.account-nav :is(a, button).active {
   border-color: var(--account-line);
   background: var(--account-paper);
   box-shadow: var(--account-shadow);
 }
 
-.account-nav a:focus-visible {
+.account-nav :is(a, button):focus-visible {
   outline: 2px solid var(--account-oxide);
   outline-offset: 2px;
 }
@@ -71,7 +76,7 @@
     color 0.2s ease;
 }
 
-.account-nav a.active .account-nav-icon {
+.account-nav :is(a, button).active .account-nav-icon {
   background: var(--account-green);
   color: var(--account-paper);
 }
@@ -140,8 +145,9 @@
     display: none;
   }
 
-  .account-nav a {
+  .account-nav :is(a, button) {
     display: inline-flex;
+    width: auto;
     flex: none;
     gap: 0.4rem;
     min-height: 40px;
@@ -151,7 +157,7 @@
     box-shadow: none;
   }
 
-  .account-nav a.active {
+  .account-nav :is(a, button).active {
     background: var(--account-green);
     box-shadow: none;
   }
@@ -168,7 +174,7 @@
     white-space: nowrap;
   }
 
-  .account-nav a.active .account-nav-text b {
+  .account-nav :is(a, button).active .account-nav-text b {
     color: var(--account-paper);
   }
 

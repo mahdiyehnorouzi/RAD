@@ -105,9 +105,13 @@ export function TagsPage() {
   }
 
   async function openIdentity(id: string) {
-    const detail = await api<Detail>(`/admin/identities/${id}`);
-    setSelected(detail);
-    setAssignProductId("");
+    try {
+      const detail = await api<Detail>(`/admin/identities/${id}`);
+      setSelected(detail);
+      setAssignProductId("");
+    } catch (cause) {
+      announce((cause as Error).message);
+    }
   }
 
   async function assign() {
@@ -125,25 +129,46 @@ export function TagsPage() {
     }
   }
 
-  async function downloadBatch(id: string) {
-    const response = await fetch(
-      `${API_BASE}/admin/identities/batches/${id}/export`,
-      { credentials: "include" },
-    );
-    if (!response.ok) {
-      const data = (await response.json().catch(() => ({}))) as {
-        message?: string;
-      };
-      announce(data.message || "فایل چاپ ساخته نشد.");
-      return;
+  async function downloadFile(path: string, filename: string) {
+    try {
+      const response = await fetch(`${API_BASE}${path}`, {
+        credentials: "include",
+      });
+      if (!response.ok) {
+        const data = (await response.json().catch(() => ({}))) as {
+          message?: string;
+        };
+        throw new Error(data.message || "فایل چاپ ساخته نشد.");
+      }
+      const blob = await response.blob();
+      if (!blob.size || blob.type.includes("text/html")) {
+        throw new Error("فایل دانلود نامعتبر است.");
+      }
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 30_000);
+    } catch (cause) {
+      announce((cause as Error).message);
     }
-    const blob = await response.blob();
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = "rad-tags.zip";
-    link.click();
-    URL.revokeObjectURL(url);
+  }
+
+  async function downloadLegacy() {
+    await downloadFile(
+      "/admin/identities/legacy-artworks/export",
+      "rad-legacy-artworks.zip",
+    );
+  }
+
+  async function downloadBatch(id: string) {
+    await downloadFile(
+      `/admin/identities/batches/${id}/export`,
+      "rad-tags.zip",
+    );
   }
 
   async function markPrinted(id: string) {
@@ -157,12 +182,16 @@ export function TagsPage() {
   }
 
   async function copyUrl(url: string) {
-    await navigator.clipboard.writeText(url);
-    announce("پیوند کپی شد.");
+    try {
+      await navigator.clipboard.writeText(url);
+      announce("پیوند کپی شد.");
+    } catch {
+      announce("کپی پیوند ناموفق بود.");
+    }
   }
 
   return (
-    <section className="admin-section">
+    <section className="admin-section tags-workspace">
       <div className="panel-heading">
         <div>
           <h1>تگ‌ها و QR</h1>
@@ -292,8 +321,15 @@ export function TagsPage() {
             </thead>
             <tbody>
               {rows.map((row) => (
-                <tr key={row.id} onClick={() => void openIdentity(row.id)}>
-                  <td dir="ltr">{row.label}</td>
+                <tr key={row.id}>
+                  <td dir="ltr">
+                    <Button
+                      variant="link"
+                      onClick={() => void openIdentity(row.id)}
+                    >
+                      {row.label}
+                    </Button>
+                  </td>
                   <td>
                     <svg
                       viewBox={`0 0 ${row.qr.size} ${row.qr.size}`}
@@ -319,6 +355,20 @@ export function TagsPage() {
           <p>شماره‌ای با این فیلتر نیست.</p>
         ) : null}
       </div>
+
+      {canWrite ? (
+        <div className="paper-panel">
+          <h2>QR آثار موجود</h2>
+          <p>
+            SVG، PNG و فهرست اثرها برای شماره‌هایی که همین حالا روی آثار هستند.
+            این خروجی به دسته چاپ وصل نیست و شماره رزروشده تازه‌ای مصرف نمی‌کند.
+            اگر شماره اثر با شناسه دائمی یکی نباشد، فایل ساخته نمی‌شود.
+          </p>
+          <Button type="button" onClick={() => void downloadLegacy()}>
+            دانلود QR آثار موجود
+          </Button>
+        </div>
+      ) : null}
 
       {batchId && canWrite ? (
         <div className="paper-panel">
@@ -350,9 +400,18 @@ export function TagsPage() {
           >
             کپی پیوند
           </Button>
-          <a href={`${API_BASE}/admin/identities/${selected.id}/qr.svg`}>
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={() =>
+              void downloadFile(
+                `/admin/identities/${selected.id}/qr.svg`,
+                `${selected.label.replace(/[^a-zA-Z0-9-]/g, "-")}.svg`,
+              )
+            }
+          >
             دانلود SVG
-          </a>
+          </Button>
           {selected.productName ? <p>اثر: {selected.productName}</p> : null}
           {selected.status === "reserved" && canWrite ? (
             <form

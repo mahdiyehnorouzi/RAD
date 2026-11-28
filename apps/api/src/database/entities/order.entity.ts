@@ -52,6 +52,15 @@ export class Order {
   @Column("text", { nullable: true })
   message!: string | null;
 
+  @Column("text", { nullable: true })
+  recipientName!: string | null;
+
+  @Column("text", { nullable: true })
+  recipientPhone!: string | null;
+
+  @Column("text", { nullable: true })
+  giftMessage!: string | null;
+
   /** `express` or `courier`. Null on orders placed before a method was stored. */
   @Column("text", { nullable: true })
   shippingMethod!: "express" | "courier" | null;

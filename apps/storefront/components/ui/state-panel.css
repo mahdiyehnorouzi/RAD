@@ -111,3 +111,7 @@
   outline: 1px solid var(--clay);
   outline-offset: 3px;
 }
+
+.state-panel--empty .state-panel-actions .button:not(.outline) {
+  border-radius: 999px;
+}

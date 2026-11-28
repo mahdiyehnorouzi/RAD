@@ -22,50 +22,13 @@ export const productImageSelect: (keyof ProductImage)[] = [
   "objectKey",
 ];
 
-/**
- * `static` and `external` rows hold a real, directly-usable path/URL in
- * `src` — return it as-is. Only `legacy_base64` masks the row behind
- * `/catalog/images/:id` (that route decodes the data URI and streams
- * bytes). `cloudinary` rows derive their URL from `objectKey` (the
- * Cloudinary public_id) below.
- */
-/**
- * Cloudinary delivery URL for a `cloudinary`-storage row, derived from the
- * public_id (`objectKey`, the durable source of truth persisted in the
- * DB) plus `CLOUDINARY_CLOUD_NAME` config — never persisted itself, so
- * renaming the cloud or moving assets around only ever requires updating
- * config, not every row.
- *
- * `f_auto,q_auto` is baked in here (Cloudinary's own format/quality
- * auto-negotiation) so every consumer gets a reasonably optimized asset by
- * default even without going through `next/image`. `apps/storefront`'s
- * `ProductMedia` component additionally applies a width (`w_<width>`) on
- * top of this exact transformation segment via a custom `next/image`
- * loader scoped to Cloudinary URLs — see `product-media.tsx` — so the
- * existing per-context `sizes` logic (PLP vs PDP vs cart/checkout) still
- * drives how large an image Cloudinary actually serves, without also
- * paying for Cloudflare's Workers-level image resizing on top of it. Keep
- * this transformation segment's exact text (`f_auto,q_auto`) in sync with
- * that loader's string replace.
- */
-function cloudinaryDeliveryUrl(objectKey: string, video = false) {
-  const cloudName = (process.env.CLOUDINARY_CLOUD_NAME ?? "").trim();
-  if (!cloudName) {
-    // Not configured — fall back to the legacy proxy route so the app
-    // doesn't crash; the image simply won't resolve until
-    // CLOUDINARY_CLOUD_NAME is set (see apps/api/.env.example).
-    return undefined;
-  }
-  return `https://res.cloudinary.com/${cloudName}/${video ? "video" : "image"}/upload/${objectKey}`;
-}
-
+/** Static/external rows use `src`; base64 rows use the image proxy. */
 /**
  * Delivery URL for a `seaweedfs`/`seaweedfs_video` row, derived from
  * `objectKey` (the S3 key, durable source of truth) plus
  * `SEAWEEDFS_PUBLIC_URL` (or, when unset, `SEAWEEDFS_ENDPOINT` +
- * `SEAWEEDFS_BUCKET`) — never persisted itself, same rationale as
- * `cloudinaryDeliveryUrl` above. Unlike Cloudinary, there is no
- * on-the-fly transform API, so this is always the full-size asset.
+ * `SEAWEEDFS_BUCKET`). Delivery URLs are derived from configuration and
+ * are not persisted. The S3-compatible store serves the original asset.
  */
 function seaweedfsDeliveryUrl(objectKey: string) {
   const base = (process.env.SEAWEEDFS_PUBLIC_URL ?? "").trim();
@@ -82,16 +45,6 @@ export function imageSrc(image: ProductImageMeta, embedImages: boolean) {
     case "static":
     case "external":
       return image.src ?? `/catalog/images/${image.id}`;
-    case "cloudinary_video":
-    case "cloudinary":
-      return (
-        (image.objectKey
-          ? cloudinaryDeliveryUrl(
-              image.objectKey,
-              image.storage === "cloudinary_video",
-            )
-          : undefined) ?? `/catalog/images/${image.id}`
-      );
     case "seaweedfs_video":
     case "seaweedfs":
       return (
@@ -111,7 +64,7 @@ export function toCatalogImages(
   includeVideos = false,
 ): CatalogImage[] {
   const isVideo = (storage: ProductImageMeta["storage"]) =>
-    storage === "cloudinary_video" || storage === "seaweedfs_video";
+    storage === "seaweedfs_video";
   return [...images]
     .filter((image) => includeVideos || !isVideo(image.storage))
     .sort((a, b) => a.sortOrder - b.sortOrder)
@@ -120,14 +73,9 @@ export function toCatalogImages(
       kind: isVideo(image.storage) ? ("video" as const) : ("image" as const),
       thumbnail:
         image.objectKey &&
-        (image.storage === "cloudinary" || image.storage === "cloudinary_video")
-          ? `https://res.cloudinary.com/${process.env.CLOUDINARY_CLOUD_NAME}/${image.storage === "cloudinary_video" ? "video" : "image"}/upload/c_limit,w_320/${image.objectKey}.jpg`
-          : // SeaweedFS has no on-the-fly transform API — fall back to the full asset.
-            image.objectKey &&
-              (image.storage === "seaweedfs" ||
-                image.storage === "seaweedfs_video")
-            ? seaweedfsDeliveryUrl(image.objectKey)
-            : undefined,
+        (image.storage === "seaweedfs" || image.storage === "seaweedfs_video")
+          ? seaweedfsDeliveryUrl(image.objectKey)
+          : undefined,
       alt: image.alt,
       enAlt: image.enAlt,
       color: image.color ?? undefined,
@@ -281,7 +229,7 @@ export function stripImageSrc(images: ProductImage[]): ProductImageMeta[] {
       objectKey,
       // Only keep `src` for the formats the public mapper actually returns
       // as-is (`static`/`external`); never carry the base64 payload past
-      // this point for `legacy_base64` rows, and `cloudinary` rows never
+      // this point for `legacy_base64` rows, and remote S3 rows never
       // have a `src` to begin with (see `replaceImages`).
       src: storage === "legacy_base64" ? null : src,
     }),

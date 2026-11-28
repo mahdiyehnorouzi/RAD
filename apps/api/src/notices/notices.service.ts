@@ -1,6 +1,8 @@
 import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
+import { IsNull, Repository } from "typeorm";
+import { createHash } from "node:crypto";
+import { isArtistNotice, shouldSkipDuplicateNotice } from "@rad/types";
 import { Notice } from "../database/entities";
 import { IdentityService } from "../common/identity.service";
 import type { Actor } from "../common/identity";
@@ -15,14 +17,21 @@ export class NoticesService {
   ) {}
 
   async list(actor: Actor) {
+    return this.snapshot(this.identity.key(actor));
+  }
+
+  private async snapshot(ownerKey: string) {
     const notices = await this.notices.find({
-      where: { ownerKey: this.identity.key(actor) },
+      where: { ownerKey },
       order: { createdAt: "DESC" },
-      take: 20,
+      take: 50,
     });
+    const visible = notices
+      .filter((notice) => isArtistNotice(notice.kind))
+      .slice(0, 20);
     return {
-      notices: notices.map((notice) => this.toNotice(notice)),
-      unread: notices.filter((notice) => !notice.read).length,
+      notices: visible.map((notice) => this.toNotice(notice)),
+      unread: visible.filter((notice) => !notice.read).length,
     };
   }
 
@@ -42,11 +51,35 @@ export class NoticesService {
     };
   }
 
-  async create(actor: Actor, kind: StoredNoticeKind, productSlug?: string) {
-    return this.createForOwner(this.identity.key(actor), kind, productSlug);
+  /**
+   * Public create is a no-op. Favorite, cart, and checkout notices are the
+   * customer's own actions. Studio events go through `createForOwner`.
+   */
+  async create(actor: Actor, kind?: StoredNoticeKind, productSlug?: string) {
+    void kind;
+    void productSlug;
+    return this.list(actor);
   }
 
-  async createForOwner(ownerKey: string, kind: StoredNoticeKind, productSlug?: string) {
+  async createForOwner(
+    ownerKey: string,
+    kind: StoredNoticeKind,
+    productSlug?: string,
+  ) {
+    if (!isArtistNotice(kind)) return this.snapshot(ownerKey);
+    if (kind !== "commission_message") {
+      const existing = await this.notices.findOne({
+        where: {
+          ownerKey,
+          kind,
+          read: false,
+          productSlug: productSlug ? productSlug : IsNull(),
+        },
+      });
+      if (shouldSkipDuplicateNotice(kind, Boolean(existing))) {
+        return this.snapshot(ownerKey);
+      }
+    }
     await this.notices.save(
       this.notices.create({
         ownerKey,
@@ -54,15 +87,48 @@ export class NoticesService {
         productSlug: productSlug ?? null,
       }),
     );
-    const notices = await this.notices.find({
-      where: { ownerKey },
-      order: { createdAt: "DESC" },
-      take: 20,
+    return this.snapshot(ownerKey);
+  }
+
+  async markCommissionMessagesRead(actor: Actor, commissionId: string) {
+    await this.notices.update(
+      {
+        ownerKey: this.identity.key(actor),
+        kind: "commission_message",
+        productSlug: commissionId,
+        read: false,
+      },
+      { read: true },
+    );
+    return this.list(actor);
+  }
+
+  async staffReadKeys(userId: string) {
+    const rows = await this.notices.find({
+      where: { ownerKey: `staff:${userId}`, kind: "staff_read" },
+      select: { productSlug: true },
     });
-    return {
-      notices: notices.map((notice) => this.toNotice(notice)),
-      unread: notices.filter((notice) => !notice.read).length,
-    };
+    return rows.flatMap((row) => (row.productSlug ? [row.productSlug] : []));
+  }
+
+  async markStaffRead(userId: string, key: string) {
+    const ownerKey = `staff:${userId}`;
+    const id = createHash("sha256")
+      .update(JSON.stringify([ownerKey, key]))
+      .digest("hex");
+    await this.notices.upsert(
+      { id, ownerKey, kind: "staff_read", productSlug: key, read: true },
+      ["id"],
+    );
+    return { key };
+  }
+
+  async markRead(actor: Actor, id: string) {
+    await this.notices.update(
+      { ownerKey: this.identity.key(actor), id, read: false },
+      { read: true },
+    );
+    return this.list(actor);
   }
 
   async markAllRead(actor: Actor) {

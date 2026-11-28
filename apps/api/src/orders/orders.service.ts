@@ -1,3 +1,4 @@
+import { normalizeIranianMobile } from "../sms/phone";
 import {
   BadRequestException,
   ConflictException,
@@ -114,6 +115,9 @@ export class OrdersService implements OnModuleInit {
       phone?: string;
       address?: string;
       message?: string;
+      recipientName?: string;
+      recipientPhone?: string;
+      giftMessage?: string;
       acceptedPolicies?: Record<string, string>;
       shippingMethod?: "express" | "courier";
     },
@@ -134,6 +138,22 @@ export class OrdersService implements OnModuleInit {
         message: "سبد خرید خالی است.",
         code: "cart_empty",
       });
+    }
+
+    const recipientName = input.recipientName?.trim();
+    const recipientPhone = normalizeIranianMobile(input.recipientPhone);
+    if (
+      (input.recipientName !== undefined ||
+        input.recipientPhone !== undefined) &&
+      (!recipientName ||
+        recipientName.length < 2 ||
+        !recipientPhone ||
+        !input.city?.trim() ||
+        (input.address?.trim().length ?? 0) < 8)
+    ) {
+      throw new BadRequestException(
+        "نام، شماره موبایل و نشانی کامل گیرنده را وارد کنید.",
+      );
     }
 
     const city = input.city?.trim() || "تهران";
@@ -205,6 +225,9 @@ export class OrdersService implements OnModuleInit {
         phone,
         address: input.address?.trim() ?? "",
         message: input.message?.trim() || null,
+        recipientName: recipientName || null,
+        recipientPhone,
+        giftMessage: input.giftMessage?.trim() || null,
         shippingMethod: quoted.method,
         shippingFee: quoted.feeToman,
         policyVersions,
@@ -263,7 +286,6 @@ export class OrdersService implements OnModuleInit {
       );
     }
 
-    await this.notices.create(actor, "order", slugs[0]);
     const saved = await this.orders.findOneOrFail({
       where: { id: order.id },
       relations: orderRelations,

@@ -48,7 +48,16 @@ test("cart, checkout, order and payment amount/item-count agree with the same so
   await expect(
     page.getByText(new RegExp(expectedPattern)).first(),
   ).toBeVisible();
-  expect(cartAmountText).toMatch(new RegExp(expectedPattern));
+  expect(order.shipping?.method).toBe("express");
+  expect(order.shipping?.fee).toBeGreaterThan(0);
+  const itemsAmount = formatThousands(String(order.total - order.shipping.fee));
+  expect(cartAmountText).toMatch(new RegExp(itemsAmount));
+  await expect(
+    page
+      .locator(".checkout-summary")
+      .getByText(new RegExp(formatThousands(String(order.shipping.fee))))
+      .first(),
+  ).toBeVisible();
 });
 
 function formatThousands(digits: string): string {

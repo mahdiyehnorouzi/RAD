@@ -5,7 +5,7 @@ import { publicProductWhere } from "./product.mapper";
 
 /**
  * Public works. `images.storage` is selected so `product.mapper.ts` can
- * resolve a real path for `static`/`external`/`cloudinary`/`cloudinary_video`
+ * resolve a real path for `static`/`external`/`seaweedfs`/`seaweedfs_video`
  * rows directly; only `legacy_base64` rows get masked behind
  * `/catalog/images/:id` there. The join condition must list every
  * `src`-less storage kind explicitly — a kind missing here is silently

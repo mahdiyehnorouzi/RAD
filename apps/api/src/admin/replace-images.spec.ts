@@ -36,7 +36,7 @@ import type { CatalogRevalidationService } from "../catalog/catalog-revalidation
 const catalogRevalidation = {
   notifyChanged: async () => {},
 } as unknown as CatalogRevalidationService;
-import { CloudinaryStorageService } from "../storage/cloudinary-storage.service";
+import { SeaweedfsStorageService } from "../storage/seaweedfs-storage.service";
 import {
   createMediaStorageResolver,
   type MediaStorageService,
@@ -48,7 +48,7 @@ import {
 
 /**
  * DB-backed coverage for `AdminService.saveProduct`/`replaceImages` (Phase
- * 2: direct-to-Cloudinary admin image uploads). Requires embedded-postgres,
+ * 2: direct-to-SeaweedFS admin image uploads). Requires embedded-postgres,
  * which needs to spin up a real Postgres server — this sandbox's
  * Docker/root restrictions block that (same limitation noted for the
  * existing `catalog-image-select.spec.ts`), so this file is not expected
@@ -118,20 +118,20 @@ before(async () => {
     notices,
     mail,
   );
-  const storage = new CloudinaryStorageService(new ConfigService({}));
-  // This sandbox has no real Cloudinary credentials, and these specs never
-  // actually upload bytes to Cloudinary — only `objectKey` (public_id)
-  // strings are exercised. Stub the one Cloudinary call `replaceImages`
+  const storage = new SeaweedfsStorageService(new ConfigService({}));
+  // This sandbox has no real SeaweedFS credentials, and these specs never
+  // actually upload bytes to SeaweedFS — only `objectKey` (object key)
+  // strings are exercised. Stub the one SeaweedFS call `replaceImages`
   // makes (delete of an orphaned/removed asset) so the DB-level logic can
-  // be asserted without a live Cloudinary connection; it resolves
+  // be asserted without a live SeaweedFS connection; it resolves
   // successfully by default.
   storage.verifyMedia = async (objectKey, kind) => ({
     objectKey,
-    storage: kind === "video" ? "cloudinary_video" : "cloudinary",
+    storage: kind === "video" ? "seaweedfs_video" : "seaweedfs",
   });
   deleteCalls = [];
-  storage.destroy = async (publicId: string) => {
-    deleteCalls.push(publicId);
+  storage.destroy = async (objectKey: string) => {
+    deleteCalls.push(objectKey);
   };
   admin = new AdminService(
     dataSource,
@@ -180,39 +180,41 @@ function baseInput(slug: string, images: unknown) {
   };
 }
 
-describe("AdminService.saveProduct — cloudinary images (Phase 2)", () => {
-  test("persists a new cloudinary image uploaded pre-creation (rad/pending/ public_id) as-is — no migration step", async () => {
-    const slug = `cloudinary-new-${Date.now()}`;
+describe("AdminService.saveProduct — seaweedfs images (Phase 2)", () => {
+  test("persists a new seaweedfs image uploaded pre-creation (rad/pending/ object key) as-is — no migration step", async () => {
+    const slug = `seaweedfs-new-${Date.now()}`;
     // Simulates the real flow: the admin dialog signs before the product
-    // exists, so the public_id comes back under rad/pending/, not
+    // exists, so the object key comes back under rad/pending/, not
     // rad/products/<id>/ — see signProductImageUpload's productId=null
-    // branch. Unlike the old R2 design, this public_id is never migrated —
+    // branch. Unlike the old R2 design, this object key is never migrated —
     // it is persisted exactly as the client sends it (after namespace
     // validation), forever.
     const objectKey = `rad/pending/abc111DEF`;
+    recordIssuedUpload(objectKey, null, "image");
     const saved = await admin.saveProduct(
-      baseInput(slug, [{ storage: "cloudinary", objectKey }]) as never,
+      baseInput(slug, [{ storage: "seaweedfs", objectKey }]) as never,
     );
     assert.equal(saved.images.length, 1);
     const row = await dataSource
       .getRepository(ProductImage)
       .findOneOrFail({ where: { productSlug: slug } });
-    assert.equal(row.storage, "cloudinary");
+    assert.equal(row.storage, "seaweedfs");
     assert.equal(row.objectKey, objectKey);
     assert.equal(row.src, null);
     assert.deepEqual(deleteCalls, []);
   });
 
-  test("persists a new cloudinary image keyed by the product's id (post-creation edit upload)", async () => {
-    const slug = `cloudinary-byid-${Date.now()}`;
+  test("persists a new seaweedfs image keyed by the product's id (post-creation edit upload)", async () => {
+    const slug = `seaweedfs-byid-${Date.now()}`;
     const created = await admin.saveProduct(
       baseInput(slug, [
         { storage: "static", src: "/catalog/test.jpg" },
       ]) as never,
     );
     const objectKey = `rad/products/${created.id}/xyz222ABC`;
+    recordIssuedUpload(objectKey, created.id, "image");
     const saved = await admin.saveProduct(
-      baseInput(slug, [{ storage: "cloudinary", objectKey }]) as never,
+      baseInput(slug, [{ storage: "seaweedfs", objectKey }]) as never,
       created.id,
     );
     assert.equal(saved.images.length, 1);
@@ -222,13 +224,13 @@ describe("AdminService.saveProduct — cloudinary images (Phase 2)", () => {
     assert.equal(row.objectKey, objectKey);
   });
 
-  test("rejects a client-supplied cloudinary objectKey that doesn't match the expected id-namespaced pattern", async () => {
-    const slug = `cloudinary-bad-key-${Date.now()}`;
+  test("rejects a client-supplied seaweedfs objectKey that doesn't match the expected id-namespaced pattern", async () => {
+    const slug = `seaweedfs-bad-key-${Date.now()}`;
     await assert.rejects(() =>
       admin.saveProduct(
         baseInput(slug, [
           {
-            storage: "cloudinary",
+            storage: "seaweedfs",
             objectKey: "rad/products/someone-elses-product-id/x",
           },
         ]) as never,
@@ -237,13 +239,13 @@ describe("AdminService.saveProduct — cloudinary images (Phase 2)", () => {
   });
 
   test("rejects a forged objectKey that reuses another product's real id", async () => {
-    const slugA = `cloudinary-forge-a-${Date.now()}`;
+    const slugA = `seaweedfs-forge-a-${Date.now()}`;
     const productA = await admin.saveProduct(
       baseInput(slugA, [
         { storage: "static", src: "/catalog/test.jpg" },
       ]) as never,
     );
-    const slugB = `cloudinary-forge-b-${Date.now()}`;
+    const slugB = `seaweedfs-forge-b-${Date.now()}`;
     // An admin crafts a key that *looks* legitimate (correct pattern) but
     // targets product A's namespace while saving product B — must still
     // be rejected because the validation is against *this* product's id.
@@ -251,14 +253,14 @@ describe("AdminService.saveProduct — cloudinary images (Phase 2)", () => {
     await assert.rejects(() =>
       admin.saveProduct(
         baseInput(slugB, [
-          { storage: "cloudinary", objectKey: forgedKey },
+          { storage: "seaweedfs", objectKey: forgedKey },
         ]) as never,
       ),
     );
   });
 
   test("slug rename regression: current code forbids changing slug after creation", async () => {
-    const slug = `cloudinary-rename-${Date.now()}`;
+    const slug = `seaweedfs-rename-${Date.now()}`;
     const baseline = await admin.saveProduct(
       baseInput(slug, [
         { storage: "static", src: "/catalog/test.jpg" },
@@ -276,15 +278,16 @@ describe("AdminService.saveProduct — cloudinary images (Phase 2)", () => {
     );
   });
 
-  test("duplicate/repeated save with the same cloudinary image payload is idempotent (no duplicate rows, no delete calls)", async () => {
-    const slug = `cloudinary-dup-${Date.now()}`;
+  test("duplicate/repeated save with the same seaweedfs image payload is idempotent (no duplicate rows, no delete calls)", async () => {
+    const slug = `seaweedfs-dup-${Date.now()}`;
     const created = await admin.saveProduct(
       baseInput(slug, [
         { storage: "static", src: "/catalog/test.jpg" },
       ]) as never,
     );
     const objectKey = `rad/products/${created.id}/dup444`;
-    const input = baseInput(slug, [{ storage: "cloudinary", objectKey }]);
+    recordIssuedUpload(objectKey, created.id, "image");
+    const input = baseInput(slug, [{ storage: "seaweedfs", objectKey }]);
     await admin.saveProduct(input as never, created.id);
     deleteCalls.length = 0;
     const second = await admin.saveProduct(input as never, created.id);
@@ -301,8 +304,8 @@ describe("AdminService.saveProduct — cloudinary images (Phase 2)", () => {
     );
   });
 
-  test("removing one cloudinary image from a multi-image product deletes only the removed asset, post-commit", async () => {
-    const slug = `cloudinary-partial-remove-${Date.now()}`;
+  test("removing one seaweedfs image from a multi-image product deletes only the removed asset, post-commit", async () => {
+    const slug = `seaweedfs-partial-remove-${Date.now()}`;
     const created = await admin.saveProduct(
       baseInput(slug, [
         { storage: "static", src: "/catalog/test.jpg" },
@@ -310,16 +313,18 @@ describe("AdminService.saveProduct — cloudinary images (Phase 2)", () => {
     );
     const keyA = `rad/products/${created.id}/keep555`;
     const keyB = `rad/products/${created.id}/drop666`;
+    recordIssuedUpload(keyA, created.id, "image");
+    recordIssuedUpload(keyB, created.id, "image");
     await admin.saveProduct(
       baseInput(slug, [
-        { storage: "cloudinary", objectKey: keyA },
-        { storage: "cloudinary", objectKey: keyB },
+        { storage: "seaweedfs", objectKey: keyA },
+        { storage: "seaweedfs", objectKey: keyB },
       ]) as never,
       created.id,
     );
     deleteCalls.length = 0;
     const after = await admin.saveProduct(
-      baseInput(slug, [{ storage: "cloudinary", objectKey: keyA }]) as never,
+      baseInput(slug, [{ storage: "seaweedfs", objectKey: keyA }]) as never,
       created.id,
     );
     assert.equal(after.images.length, 1);
@@ -332,15 +337,16 @@ describe("AdminService.saveProduct — cloudinary images (Phase 2)", () => {
   });
 
   test("editing a product without touching images leaves its image rows byte-for-byte unchanged, and deletes nothing", async () => {
-    const slug = `cloudinary-no-image-change-${Date.now()}`;
+    const slug = `seaweedfs-no-image-change-${Date.now()}`;
     const created = await admin.saveProduct(
       baseInput(slug, [
         { storage: "static", src: "/catalog/test.jpg" },
       ]) as never,
     );
     const key = `rad/products/${created.id}/stable777`;
+    recordIssuedUpload(key, created.id, "image");
     await admin.saveProduct(
-      baseInput(slug, [{ storage: "cloudinary", objectKey: key }]) as never,
+      baseInput(slug, [{ storage: "seaweedfs", objectKey: key }]) as never,
       created.id,
     );
     const before = await dataSource
@@ -348,7 +354,7 @@ describe("AdminService.saveProduct — cloudinary images (Phase 2)", () => {
       .find({ where: { productSlug: slug } });
     deleteCalls.length = 0;
     const input = {
-      ...baseInput(slug, [{ storage: "cloudinary", objectKey: key }]),
+      ...baseInput(slug, [{ storage: "seaweedfs", objectKey: key }]),
       price: 2_000_000,
     };
     await admin.saveProduct(input as never, created.id);
@@ -360,19 +366,20 @@ describe("AdminService.saveProduct — cloudinary images (Phase 2)", () => {
     assert.deepEqual(deleteCalls, []);
   });
 
-  test("mixed array of legacy_base64 and cloudinary images preserves order", async () => {
-    const slug = `cloudinary-mixed-${Date.now()}`;
+  test("mixed array of legacy_base64 and seaweedfs images preserves order", async () => {
+    const slug = `seaweedfs-mixed-${Date.now()}`;
     const created = await admin.saveProduct(
       baseInput(slug, [
         { storage: "static", src: "/catalog/test.jpg" },
       ]) as never,
     );
     const objectKey = `rad/products/${created.id}/mixed888`;
+    recordIssuedUpload(objectKey, created.id, "image");
     const base64 = `data:image/png;base64,${Buffer.from("x").toString("base64")}`;
     const saved = await admin.saveProduct(
       baseInput(slug, [
         { storage: "legacy_base64", src: base64 },
-        { storage: "cloudinary", objectKey },
+        { storage: "seaweedfs", objectKey },
       ]) as never,
       created.id,
     );
@@ -382,7 +389,7 @@ describe("AdminService.saveProduct — cloudinary images (Phase 2)", () => {
     assert.equal(rows.length, 2);
     assert.equal(rows[0].storage, "legacy_base64");
     assert.equal(rows[0].sortOrder, 0);
-    assert.equal(rows[1].storage, "cloudinary");
+    assert.equal(rows[1].storage, "seaweedfs");
     assert.equal(rows[1].objectKey, objectKey);
     assert.equal(rows[1].sortOrder, 1);
     assert.equal(saved.images.length, 2);
@@ -413,22 +420,23 @@ describe("AdminService.saveProduct — cloudinary images (Phase 2)", () => {
     assert.equal(rows[1].sortOrder, 1);
   });
 
-  test("a failed Cloudinary delete during cleanup is logged/non-fatal — the save itself still succeeds", async () => {
-    const slug = `cloudinary-delete-fails-${Date.now()}`;
+  test("a failed SeaweedFS delete during cleanup is logged/non-fatal — the save itself still succeeds", async () => {
+    const slug = `seaweedfs-delete-fails-${Date.now()}`;
     const created = await admin.saveProduct(
       baseInput(slug, [
         { storage: "static", src: "/catalog/test.jpg" },
       ]) as never,
     );
     const keyA = `rad/products/${created.id}/flaky999`;
+    recordIssuedUpload(keyA, created.id, "image");
     await admin.saveProduct(
-      baseInput(slug, [{ storage: "cloudinary", objectKey: keyA }]) as never,
+      baseInput(slug, [{ storage: "seaweedfs", objectKey: keyA }]) as never,
       created.id,
     );
-    const storage = admin["storage"] as CloudinaryStorageService;
+    const storage = admin["storage"] as SeaweedfsStorageService;
     const originalDestroy = storage.destroy;
     storage.destroy = async () => {
-      throw new Error("simulated Cloudinary outage");
+      throw new Error("simulated SeaweedFS outage");
     };
     try {
       const after = await admin.saveProduct(
@@ -447,7 +455,7 @@ describe("AdminService.saveProduct — cloudinary images (Phase 2)", () => {
     assert.equal(
       rows.length,
       1,
-      "the DB-side replacement must still have committed despite the failed Cloudinary delete",
+      "the DB-side replacement must still have committed despite the failed SeaweedFS delete",
     );
     assert.equal(rows[0].storage, "static");
   });
@@ -539,17 +547,7 @@ describe("AdminService — SeaweedFS fail-closed ownership (upload-intent audit 
         seaweedfsDeleteCalls.push(objectKey);
       },
     };
-    const cloudinaryStub: MediaStorageService = {
-      createSignedUpload: () => {
-        throw new Error("not used in these tests");
-      },
-      verifyMedia: async (objectKey, kind) => ({
-        objectKey,
-        storage: kind === "video" ? "cloudinary_video" : "cloudinary",
-      }),
-      destroy: async () => {},
-    };
-    const resolver = createMediaStorageResolver(cloudinaryStub, seaweedfsStub);
+    const resolver = createMediaStorageResolver(seaweedfsStub);
     const repo = dataSource.getRepository.bind(dataSource);
     const inventory = new InventoryService(dataSource);
     const notices = {

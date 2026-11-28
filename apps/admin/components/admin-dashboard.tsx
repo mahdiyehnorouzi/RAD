@@ -255,9 +255,14 @@ export function AdminDashboard() {
               throw error;
             }
           }}
-          onMessage={async (id, body, internal) => {
+          onMessage={async (id, body, internal, operationId) => {
             try {
-              await workspace.messageCommission(id, body, internal);
+              await workspace.messageCommission(
+                id,
+                body,
+                internal,
+                operationId,
+              );
               announce("پیام برای مشتری ارسال شد.");
             } catch (error) {
               announce((error as Error).message);
@@ -284,9 +289,9 @@ export function AdminDashboard() {
               return false;
             }
           }}
-          onDelete={async (id) => {
+          onDelete={async (id, options) => {
             try {
-              await workspace.deleteProductAttribute(id);
+              await workspace.deleteProductAttribute(id, options);
               announce("ویژگی حذف شد.");
               return true;
             } catch (error) {
@@ -315,6 +320,10 @@ export function AdminDashboard() {
           {...sectionAsync(workspace, "members")}
           canWrite={workspace.can("member.write")}
           onInvite={() => setInviteOpen(true)}
+          onResend={async (id) => {
+            await workspace.resendInvite(id);
+            announce("دعوت‌نامه دوباره ارسال شد.");
+          }}
           onChange={async (member) => {
             await workspace.updateMember(member);
             announce("سطح دسترسی به‌روزرسانی شد.");

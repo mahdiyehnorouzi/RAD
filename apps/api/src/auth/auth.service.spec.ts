@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { describe, test } from "node:test";
 import { BadRequestException, UnauthorizedException } from "@nestjs/common";
 import { compare, hash } from "bcryptjs";
+import { QueryFailedError } from "typeorm";
 import { AuthService } from "./auth.service";
 import type { Actor } from "../common/identity";
 import type { User } from "../database/entities";
@@ -148,6 +149,26 @@ function fakeUsersStore(seed: Partial<User>[] = []) {
       const row = { id: `generated-${nextId++}`, ...input };
       rows.push(row);
       return row;
+    },
+    // Mirrors the real unique index on `phone` too, same shape as
+    // `profile.service.spec.ts`'s fake repo — `AuthService
+    // .backfillContactPhone` relies on `isUniqueViolation` recognizing a
+    // real `QueryFailedError` to catch and skip the write instead of
+    // failing sign-in.
+    update: async (where: { id: string }, patch: Partial<User>) => {
+      if (
+        patch.phone != null &&
+        rows.some((row) => row.id !== where.id && row.phone === patch.phone)
+      ) {
+        const driverError = new Error("duplicate key") as Error & {
+          code: string;
+        };
+        driverError.code = "23505";
+        throw new QueryFailedError("update", [], driverError);
+      }
+      const row = rows.find((candidate) => candidate.id === where.id);
+      if (row) Object.assign(row, patch);
+      return {};
     },
   };
   return { repo: repo as never, rows };
@@ -552,9 +573,19 @@ describe("AuthService.signInWithPhone", () => {
 
     assert.equal(rows.length, 1);
     assert.equal(rows[0].verifiedPhone, "09121234567");
+    assert.equal(
+      rows[0].phone,
+      "09121234567",
+      "the verified number is also persisted as the contact phone",
+    );
     assert.equal(rows[0].email, null);
     assert.ok(rows[0].passwordHash, "a random unusable hash must still be set");
     assert.equal(result.user.email, null);
+    assert.equal(
+      result.user.phone,
+      "09121234567",
+      "the profile API returns the persisted phone right away",
+    );
     assert.equal(typeof result.sessionToken, "string");
   });
 
@@ -576,6 +607,66 @@ describe("AuthService.signInWithPhone", () => {
 
     assert.equal(rows.length, 1, "no second account was created");
     assert.equal(result.user.id, "existing-otp-user");
+    assert.equal(
+      rows[0].phone,
+      "09127654321",
+      "a returning OTP account with no contact phone yet is backfilled too",
+    );
+  });
+
+  test("a returning verifiedPhone never overwrites a contact phone the account already has", async () => {
+    const { repo, rows } = fakeUsersStore([
+      {
+        id: "existing-otp-user",
+        name: "مشتری رَد",
+        email: null,
+        phone: "09120000001",
+        verifiedPhone: "09127654321",
+        passwordHash: "unusable",
+        role: "customer",
+        adminRole: null,
+        status: "active",
+      },
+    ]);
+    const auth = authServiceWithUsers(repo);
+    await auth.signInWithPhone("09127654321", guest);
+
+    assert.equal(
+      rows[0].phone,
+      "09120000001",
+      "an already-set contact phone is left alone",
+    );
+  });
+
+  test("a contact-phone collision with an unrelated account is swallowed, not a failed sign-in", async () => {
+    const { repo, rows } = fakeUsersStore([
+      {
+        id: "unrelated-contact-owner",
+        name: "Someone else",
+        email: "someone@example.com",
+        phone: "09121234567",
+        verifiedPhone: null,
+        passwordHash: "unusable",
+        role: "customer",
+        adminRole: null,
+        status: "active",
+      },
+    ]);
+    const auth = authServiceWithUsers(repo);
+    const result = await auth.signInWithPhone("09121234567", guest);
+
+    assert.equal(rows.length, 2, "a brand-new account was still created");
+    const created = rows.find((row) => row.id === result.user.id);
+    assert.equal(
+      created?.phone,
+      undefined,
+      "the collision left the new account's contact phone unset rather than failing sign-in",
+    );
+    assert.equal(
+      rows.find((row) => row.id === "unrelated-contact-owner")?.phone,
+      "09121234567",
+      "the unrelated account's own contact phone is untouched",
+    );
   });
 
   test("never auto-links to an existing email/password account merely by chance — only an exact stored verifiedPhone match signs in", async () => {

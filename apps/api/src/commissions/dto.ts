@@ -6,6 +6,7 @@ import {
   IsObject,
   IsOptional,
   IsString,
+  IsUUID,
   MinLength,
 } from "class-validator";
 import type {
@@ -100,6 +101,11 @@ export class CommissionMessageDto {
   @IsOptional()
   @IsBoolean()
   internal?: boolean;
+
+  @ApiPropertyOptional({ description: "Stable UUID for message retries" })
+  @IsOptional()
+  @IsUUID("4")
+  operationId?: string;
 }
 
 export class CommissionDecideDto {

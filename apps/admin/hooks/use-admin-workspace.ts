@@ -5,6 +5,8 @@ import type { AuthUser } from "@rad/types";
 import { api } from "../lib/api";
 import {
   isRemoteMediaStorage,
+  mergeFreshCommission,
+  mergeFreshCommissions,
   permissions,
   type AdminCommission,
   type AdminContactMessage,
@@ -208,7 +210,9 @@ export function useAdminWorkspace() {
         setUsers(data as AdminUser[]);
         break;
       case "commissions":
-        setCommissions(data as AdminCommission[]);
+        setCommissions((current) =>
+          mergeFreshCommissions(current, data as AdminCommission[]),
+        );
         break;
       case "messages":
         setMessages(data as AdminContactMessage[]);
@@ -292,8 +296,12 @@ export function useAdminWorkspace() {
   useEffect(() => {
     if (authStatus !== "authenticated") return;
     const timer = window.setInterval(() => {
-      if (gateRef.current.status("messages").loaded) {
-        void runResource("messages", "refresh");
+      if (document.visibilityState !== "visible") return;
+      for (const key of ["messages", "orders", "commissions"] as const) {
+        void runResource(
+          key,
+          gateRef.current.status(key).loaded ? "refresh" : "initial",
+        );
       }
     }, 20_000);
     return () => window.clearInterval(timer);
@@ -385,6 +393,8 @@ export function useAdminWorkspace() {
   useEffect(() => {
     if (authStatus !== "authenticated") return;
     void fetchResource("messages");
+    void fetchResource("orders");
+    void fetchResource("commissions");
     void fetchResource("damageReports");
   }, [authStatus, fetchResource]);
 
@@ -554,8 +564,14 @@ export function useAdminWorkspace() {
             : [...items, saved],
         );
       },
-      async deleteProductAttribute(id: string) {
-        await api(`/admin/product-attributes/${id}`, { method: "DELETE" });
+      async deleteProductAttribute(
+        id: string,
+        options?: { purgeValues?: boolean },
+      ) {
+        const purge = options?.purgeValues ? "?purgeValues=true" : "";
+        await api(`/admin/product-attributes/${id}${purge}`, {
+          method: "DELETE",
+        });
         setProductAttributes((items) => items.filter((item) => item.id !== id));
       },
       async reorderProductAttributes(ids: string[]) {
@@ -586,8 +602,7 @@ export function useAdminWorkspace() {
        * save — never trusted blindly from the client.
        *
        * Which provider is active (`signed.provider`) is decided entirely
-       * server-side by `MEDIA_STORAGE_PROVIDER` (see
-       * `apps/api/src/storage`) — `buildUploadRequest`/
+       * server-side by the S3-compatible media storage module — `buildUploadRequest`/
        * `resolveUploadedObjectKey` (`../lib/media-upload`) do the
        * provider-specific part (request shape, response parsing); this
        * function only owns the XHR plumbing (progress/abort/error), which
@@ -802,6 +817,16 @@ export function useAdminWorkspace() {
         bumpWrite("members");
         setMembers((items) => [saved, ...items]);
       },
+      async resendInvite(id: string) {
+        const saved = await api<AdminMember>(
+          `/admin/members/${encodeURIComponent(id)}/resend-invite`,
+          { method: "POST" },
+        );
+        bumpWrite("members");
+        setMembers((items) =>
+          items.map((item) => (item.id === saved.id ? saved : item)),
+        );
+      },
       async updateMember(member: AdminMember) {
         const saved = await api<AdminMember>(`/admin/members/${member.id}`, {
           method: "PATCH",
@@ -819,9 +844,7 @@ export function useAdminWorkspace() {
             method: "POST",
           },
         );
-        setCommissions((items) =>
-          items.map((item) => (item.id === saved.id ? saved : item)),
-        );
+        setCommissions((items) => mergeFreshCommission(items, saved));
         return saved;
       },
       async decideCommission(input: {
@@ -849,26 +872,27 @@ export function useAdminWorkspace() {
             }),
           },
         );
-        setCommissions((items) =>
-          items.map((item) => (item.id === saved.id ? saved : item)),
-        );
+        setCommissions((items) => mergeFreshCommission(items, saved));
         return saved;
       },
       async messageCommission(
         id: string,
         body: { fa: string; en: string },
         internal?: boolean,
+        operationId?: string,
       ) {
+        const epoch = sessionEpochRef.current;
         const saved = await api<AdminCommission>(
           `/admin/commissions/${id}/messages`,
           {
             method: "POST",
-            body: JSON.stringify({ body, internal }),
+            body: JSON.stringify({ body, internal, operationId }),
           },
         );
-        setCommissions((items) =>
-          items.map((item) => (item.id === saved.id ? saved : item)),
-        );
+        if (epoch === sessionEpochRef.current) {
+          bumpWrite("commissions");
+          setCommissions((items) => mergeFreshCommission(items, saved));
+        }
         return saved;
       },
     }),

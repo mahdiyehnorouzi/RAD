@@ -9,12 +9,13 @@ import {
   ImagePlus,
   Package,
   Pencil,
+  QrCode,
   SlidersHorizontal,
   Tag,
   Trash2,
 } from "lucide-react";
 import { Button } from "@rad/ui";
-import { api } from "../../lib/api";
+import { api, API_BASE } from "../../lib/api";
 import { formatRadCode } from "@rad/types";
 import { storefrontUrl } from "../../lib/storefront-url";
 import { StatusBadge } from "../../components/admin-list-chrome";
@@ -118,6 +119,49 @@ export function ProductDialog({
   const [reservedNumbers, setReservedNumbers] = useState<
     Array<{ id: string; radNumber: number; label: string }>
   >([]);
+  const [qrSvg, setQrSvg] = useState("");
+  const [qrNote, setQrNote] = useState("");
+  useEffect(() => {
+    if (!product?.id || !product.radNumber) {
+      setQrSvg("");
+      setQrNote("");
+      return;
+    }
+    let active = true;
+    fetch(`${API_BASE}/admin/identities/products/${product.id}/qr.svg`, {
+      credentials: "include",
+    })
+      .then(async (response) => {
+        if (!response.ok) {
+          const data = (await response.json().catch(() => ({}))) as {
+            message?: string;
+          };
+          return {
+            svg: "",
+            note: data.message || "QR این اثر قابل دانلود نیست.",
+          };
+        }
+        const svg = await response.text();
+        const start = svg.indexOf("<svg");
+        return {
+          svg: start >= 0 ? svg.slice(start) : "",
+          note: start >= 0 ? "" : "QR این اثر قابل دانلود نیست.",
+        };
+      })
+      .then((result) => {
+        if (!active) return;
+        setQrSvg(result.svg);
+        setQrNote(result.note);
+      })
+      .catch(() => {
+        if (!active) return;
+        setQrSvg("");
+        setQrNote("QR این اثر قابل دانلود نیست.");
+      });
+    return () => {
+      active = false;
+    };
+  }, [product?.id, product?.radNumber]);
   useEffect(() => {
     if (product) return;
     let active = true;
@@ -231,6 +275,22 @@ export function ProductDialog({
       previewUrls.forEach((url) => URL.revokeObjectURL(url));
     };
   }, []);
+  async function downloadProductQr(kind: "svg" | "png") {
+    if (!product?.id) return;
+    const response = await fetch(
+      `${API_BASE}/admin/identities/products/${product.id}/qr.${kind}`,
+      { credentials: "include" },
+    );
+    if (!response.ok) return;
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `RAD-${formatRadCode(product.radNumber ?? 0)}.${kind}`;
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+
   const submit = async (event: React.FormEvent) => {
     event.preventDefault();
     if (saving || unresolvedUploads) return;
@@ -370,8 +430,8 @@ export function ProductDialog({
           ...item.images,
           {
             storage: file.type.startsWith("video/")
-              ? "cloudinary_video"
-              : "cloudinary",
+              ? "seaweedfs_video"
+              : "seaweedfs",
             objectKey: "",
             src,
           },
@@ -550,6 +610,50 @@ export function ProductDialog({
                 </select>
               )}
             </Field>
+            {product ? (
+              <Field label="QR دائمی">
+                {draft.radNumber ? (
+                  <>
+                    {qrSvg ? (
+                      <span
+                        aria-label={`QR ${formatRadCode(draft.radNumber)}`}
+                        dangerouslySetInnerHTML={{ __html: qrSvg }}
+                        style={{
+                          display: "inline-block",
+                          width: 96,
+                          height: 96,
+                        }}
+                      />
+                    ) : (
+                      <span>{qrNote || "QR آماده نیست."}</span>
+                    )}
+                    {qrSvg ? (
+                      <div className="product-qr-actions">
+                        <Button
+                          type="button"
+                          onClick={() => void downloadProductQr("svg")}
+                        >
+                          <QrCode />
+                          دانلود SVG
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          onClick={() => void downloadProductQr("png")}
+                        >
+                          دانلود PNG
+                        </Button>
+                      </div>
+                    ) : null}
+                  </>
+                ) : (
+                  <span>
+                    این اثر شماره رَد ندارد. برای آثار قبلی شماره تازه‌ای ساخته
+                    نمی‌شود.
+                  </span>
+                )}
+              </Field>
+            ) : null}
             <Field label="هنرمند" error={errors.artist}>
               <input
                 value={draft.artist}

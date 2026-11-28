@@ -2,6 +2,7 @@ import { VerifyProductMediaDto } from "./dto/verify-product-media.dto";
 import { mediaLimits as configuredMediaLimits } from "../storage/media-policy";
 import {
   Body,
+  BadRequestException,
   Controller,
   Delete,
   Get,
@@ -9,9 +10,11 @@ import {
   Patch,
   Post,
   Put,
+  Query,
   Req,
   UseGuards,
 } from "@nestjs/common";
+import { NoticesService } from "../notices/notices.service";
 import { AdminGuard } from "../common/guards/admin.guard";
 import { AdminService } from "./admin.service";
 import {
@@ -61,7 +64,28 @@ export class AdminController {
     private readonly shape: ShapeService,
     private readonly help: HelpService,
     private readonly productAttributes: ProductAttributesService,
+    private readonly notices: NoticesService,
   ) {}
+
+  @Get("notice-reads")
+  listNoticeReads(@Req() request: AuthedRequest) {
+    return this.notices.staffReadKeys(request.userId!);
+  }
+
+  @Post("notice-reads")
+  markNoticeRead(
+    @Body() body: { key?: unknown },
+    @Req() request: AuthedRequest,
+  ) {
+    if (
+      typeof body.key !== "string" ||
+      body.key.length > 300 ||
+      !/^(message|order|commission):[^:]+:[^:]+$/.test(body.key)
+    ) {
+      throw new BadRequestException("شناسه اعلان نامعتبر است.");
+    }
+    return this.notices.markStaffRead(request.userId!, body.key);
+  }
 
   @Get("products")
   listProducts() {
@@ -356,10 +380,13 @@ export class AdminController {
   @Delete("product-attributes/:id")
   deleteProductAttribute(
     @Param("id") id: string,
+    @Query("purgeValues") purgeValues: string | undefined,
     @Req() request: AuthedRequest,
   ) {
     this.admin.assert(request.adminRole, "product.delete");
-    return this.productAttributes.remove(id);
+    return this.productAttributes.remove(id, {
+      purgeValues: purgeValues === "true",
+    });
   }
 
   @Get("commissions")
@@ -408,7 +435,12 @@ export class AdminController {
     @Req() request: AuthedRequest,
   ) {
     this.admin.assert(request.adminRole, "order.write");
-    return this.commissions.addArtistMessage(id, body.body, body.internal);
+    return this.commissions.addArtistMessage(
+      id,
+      body.body,
+      body.internal,
+      body.operationId,
+    );
   }
 
   @Get("users")

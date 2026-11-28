@@ -29,6 +29,8 @@
   width: 18px;
   height: 18px;
   flex-shrink: 0;
+  display: block;
+  align-self: center;
 }
 
 /* Sizes */

@@ -83,8 +83,8 @@ export class SaveProductDto {
   @ApiProperty({
     example: [],
     description:
-      "Product images: legacy_base64/static/external carry `src`, cloudinary carries " +
-      "the `objectKey` (Cloudinary public_id) the signed upload from " +
+      "Product images: legacy_base64/static/external carry `src`, seaweedfs carries " +
+      "the `objectKey` (SeaweedFS object key) the signed upload from " +
       "POST /admin/products/:slug/images/sign wrote to.",
     type: [AdminProductImageInputDto],
   })

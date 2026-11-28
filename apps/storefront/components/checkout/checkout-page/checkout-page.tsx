@@ -69,7 +69,14 @@ import {
 import { ShippingOptions } from "./shipping-options";
 
 type FieldName =
-  "name" | "phone" | "province" | "city" | "address" | "postalCode";
+  | "recipientName"
+  | "recipientPhone"
+  | "name"
+  | "phone"
+  | "province"
+  | "city"
+  | "address"
+  | "postalCode";
 type FieldErrors = Partial<Record<FieldName, string>>;
 
 /** Backend codes meaning the cart/hold this form was built from no longer matches reality. */
@@ -84,6 +91,8 @@ const FORM_ID = "checkout-details";
 const FIELD_ORDER: FieldName[] = [
   "name",
   "phone",
+  "recipientName",
+  "recipientPhone",
   "province",
   "city",
   "address",
@@ -178,6 +187,7 @@ export function CheckoutPage() {
   const [accepted, setAccepted] = useState(false);
   const [agreeMissing, setAgreeMissing] = useState(false);
   const [panel, setPanel] = useState<"contact" | "delivery">("contact");
+  const [alternateRecipient, setAlternateRecipient] = useState(false);
   const [shippingMethod, setShippingMethod] = useState<
     "express" | "courier" | ""
   >("");
@@ -185,7 +195,6 @@ export function CheckoutPage() {
   panelRef.current = panel;
   const formRef = useRef<HTMLFormElement>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
-  const panelReady = useRef(false);
   const phoneRef = useRef<HTMLInputElement>(null);
   const phoneCaret = useRef<number | null>(null);
   const agreeRef = useRef<HTMLInputElement>(null);
@@ -209,15 +218,28 @@ export function CheckoutPage() {
     errorRef.current?.focus();
   }, [error]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!formVisible) return;
-    if (!panelReady.current) {
-      panelReady.current = true;
-      return;
-    }
-    headingRef.current?.focus();
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    headingRef.current?.focus({ preventScroll: true });
+    window.scrollTo({ top: 0, behavior: "instant" });
   }, [panel, formVisible]);
+
+  useEffect(() => {
+    const syncPanel = () => {
+      setPanel(
+        new URLSearchParams(window.location.search).get("step") === "delivery"
+          ? "delivery"
+          : "contact",
+      );
+    };
+    const scrollRestoration = window.history.scrollRestoration;
+    window.history.scrollRestoration = "manual";
+    window.addEventListener("popstate", syncPanel);
+    return () => {
+      window.removeEventListener("popstate", syncPanel);
+      window.history.scrollRestoration = scrollRestoration;
+    };
+  }, []);
 
   // The bag is not ready on the first render, so the form is not mounted
   // yet. Restore only once it is actually in the document — including a
@@ -227,7 +249,10 @@ export function CheckoutPage() {
     const form = formRef.current;
     if (!form) return;
     let draft = readDraft();
-    const savedPanel = draft.panel;
+    const savedPanel =
+      new URLSearchParams(window.location.search).get("step") === "delivery"
+        ? "delivery"
+        : "contact";
     const preset =
       addressStatus === "ready"
         ? defaultAddressToApply(draft, savedAddresses)
@@ -235,6 +260,7 @@ export function CheckoutPage() {
     if (preset) {
       const next = deliveryFromSaved(preset);
       draft = {
+        ...draft,
         ...next,
         addressChoice: "saved",
         savedAddressId: preset.id,
@@ -243,9 +269,16 @@ export function CheckoutPage() {
       writeDraft(draft);
       writeControls(form, next);
     }
-    for (const name of ["address", "postalCode", "message"] as const) {
+    for (const name of [
+      "address",
+      "postalCode",
+      "message",
+      "recipientName",
+      "recipientPhone",
+      "giftMessage",
+    ] as const) {
       const value = draft[name];
-      if (!value) continue;
+      if (value === undefined) continue;
       const field = form.elements.namedItem(name);
       if (
         field instanceof HTMLInputElement ||
@@ -276,6 +309,7 @@ export function CheckoutPage() {
     setProvinceId(location.provinceId);
     setCityId(location.cityId);
     setPhone(nextPhone);
+    setAlternateRecipient(draft.alternateRecipient === true);
     setAddressChoice(choice);
     setSavedAddressId(savedAddressIdOf(draft));
     const nextShipping = normalizeShippingMethod(
@@ -313,18 +347,28 @@ export function CheckoutPage() {
       postalCode: draft.postalCode ?? "",
     };
     writeDraft({
+      ...readDraft(),
       ...next,
       addressChoice: choice || undefined,
       savedAddressId: choice === "saved" ? (draft.savedAddressId ?? "") : "",
       panel: panelRef.current,
-      message: readDraft().message,
+      alternateRecipient: draft.alternateRecipient,
+      shippingMethod: normalizeShippingMethod(
+        next.provinceId,
+        next.cityId,
+        shippingMethod,
+      ),
     });
+    setAlternateRecipient(draft.alternateRecipient === true);
     setFields(next);
     setAddressChoice(choice);
     setSavedAddressId(choice === "saved" ? (draft.savedAddressId ?? "") : "");
     setPhone(next.phone);
     setProvinceId(next.provinceId);
     setCityId(next.cityId);
+    setShippingMethod(
+      normalizeShippingMethod(next.provinceId, next.cityId, shippingMethod),
+    );
     const form = formRef.current;
     if (form) writeControls(form, next);
     setErrors({});
@@ -351,6 +395,17 @@ export function CheckoutPage() {
     });
   };
 
+  const changeRecipient = (checked: boolean) => {
+    remember({
+      name: formRef.current
+        ? readControl(formRef.current, "name")
+        : fields.name,
+      phone,
+      addressChoice: checked ? "manual" : undefined,
+      alternateRecipient: checked,
+    });
+  };
+
   const storeDraft = (form: HTMLFormElement, patch?: Partial<Draft>) => {
     const data = new FormData(form);
     const choice = addressChoiceOf({ addressChoice, ...patch });
@@ -370,6 +425,10 @@ export function CheckoutPage() {
       address: String(data.get("address") ?? ""),
       postalCode: String(data.get("postalCode") ?? ""),
       message: String(data.get("message") ?? ""),
+      alternateRecipient,
+      recipientName: String(data.get("recipientName") ?? ""),
+      recipientPhone: String(data.get("recipientPhone") ?? ""),
+      giftMessage: String(data.get("giftMessage") ?? ""),
       addressChoice: choice || undefined,
       savedAddressId: choice === "saved" ? savedAddressId : "",
       panel: panelRef.current,
@@ -397,8 +456,20 @@ export function CheckoutPage() {
   const phoneCopy = { empty: c.phoneEmpty, invalid: c.phoneError };
 
   const openPanel = (next: "contact" | "delivery") => {
-    setPanel(next);
+    if (next === panel) return;
     persistDraft({ panel: next });
+    const url = new URL(window.location.href);
+    if (next === "delivery") {
+      url.searchParams.set("step", "delivery");
+      window.history.pushState({ radCheckoutDelivery: true }, "", url);
+    } else if (window.history.state?.radCheckoutDelivery) {
+      window.history.back();
+      return;
+    } else {
+      url.searchParams.delete("step");
+      window.history.replaceState(null, "", url);
+    }
+    setPanel(next);
   };
 
   const continueContact = () => {
@@ -431,6 +502,17 @@ export function CheckoutPage() {
     if (value("name").length < 2) next.name = c.nameError;
     const phoneError = iranMobileMessage(phone, true, phoneCopy);
     if (phoneError) next.phone = phoneError;
+    if (alternateRecipient) {
+      if (String(data.get("recipientName") ?? "").trim().length < 2) {
+        next.recipientName = c.nameError;
+      }
+      const recipientError = iranMobileMessage(
+        String(data.get("recipientPhone") ?? ""),
+        true,
+        phoneCopy,
+      );
+      if (recipientError) next.recipientPhone = recipientError;
+    }
     const place = locationSelection(provinceId, cityId);
     if (!place.ok) {
       if (place.reason === "province") next.province = c.provinceError;
@@ -486,6 +568,10 @@ export function CheckoutPage() {
       }, 0);
       return;
     }
+    if (!shippingMethod) {
+      setError(c.shippingRequired);
+      return;
+    }
     if (!accepted) {
       setAgreeMissing(true);
       agreeRef.current?.focus();
@@ -511,18 +597,23 @@ export function CheckoutPage() {
           locale,
         ),
         message: field("message") || undefined,
+        recipientName: alternateRecipient ? field("recipientName") : undefined,
+        recipientPhone: alternateRecipient
+          ? (canonicalIranMobile(field("recipientPhone")) ?? undefined)
+          : undefined,
+        giftMessage: field("giftMessage") || undefined,
         acceptedPolicies: currentPolicyVersions(ORDER_POLICY_SLUGS),
-        shippingMethod: shippingMethod || undefined,
+        shippingMethod,
       });
       setLeaving(true);
       clearDraft();
-      // Always land on the Review & Payment screen next — even for a
-      // gateway order, which already has a live redirectUrl at this point.
-      // Jumping straight to the external gateway from here would skip the
-      // approved "review your order, then pay" step entirely; checkout-
-      // payment.tsx is what actually shows the summary and the "پرداخت و
-      // تکمیل خرید" button that starts the real redirect.
-      router.push(href(`/checkout/${encodeURIComponent(created.id)}`));
+      // The order now owns the reservation. Replace the editable delivery
+      // entry with the saved delivery snapshot before opening payment.
+      router.replace(
+        href(
+          `/checkout/${encodeURIComponent(created.id)}?step=delivery&advance=payment`,
+        ),
+      );
       // Checkout already deleted this bag. A second DELETE would release a
       // hold created after that transaction — another tab can add a work
       // while catalog refresh is still in flight. `placeOrder` reloads the
@@ -622,6 +713,17 @@ export function CheckoutPage() {
     <section className="checkout-flow section" data-panel={panel}>
       <CheckoutSteps current={panel} onSelect={selectStep} />
       <header className="checkout-flow-head">
+        {panel === "delivery" ? (
+          <button
+            type="button"
+            className="checkout-back"
+            onClick={() => openPanel("contact")}
+            disabled={busy}
+          >
+            <ArrowIcon aria-hidden="true" />
+            {c.back}
+          </button>
+        ) : null}
         <h1 ref={headingRef} tabIndex={-1}>
           <StageIcon aria-hidden="true" />
           {panel === "contact" ? c.contactTitle : c.detailsTitle}
@@ -723,7 +825,7 @@ export function CheckoutPage() {
             />
           </div>
           <div className="checkout-panel" hidden={panel !== "delivery"}>
-            {signedIn ? (
+            {signedIn && !alternateRecipient ? (
               <SavedAddressPicker
                 status={addressStatus === "idle" ? "loading" : addressStatus}
                 addresses={savedAddresses}
@@ -738,6 +840,47 @@ export function CheckoutPage() {
                 onRetry={retryAddresses}
               />
             ) : null}
+            <label className="checkout-recipient-toggle">
+              <input
+                type="checkbox"
+                checked={alternateRecipient}
+                disabled={busy}
+                onChange={(event) =>
+                  changeRecipient(event.currentTarget.checked)
+                }
+              />
+              <span>{c.alternateRecipient}</span>
+            </label>
+            <div
+              className="checkout-recipient-fields"
+              hidden={!alternateRecipient}
+            >
+              <CheckoutField
+                id="checkout-recipientName"
+                label={c.recipientName}
+                error={errors.recipientName}
+              >
+                <input
+                  {...fieldProps("recipientName")}
+                  maxLength={120}
+                  autoComplete="shipping name"
+                />
+              </CheckoutField>
+              <CheckoutField
+                id="checkout-recipientPhone"
+                label={c.recipientPhone}
+                error={errors.recipientPhone}
+              >
+                <input
+                  {...fieldProps("recipientPhone")}
+                  type="tel"
+                  inputMode="tel"
+                  dir="ltr"
+                  maxLength={32}
+                  autoComplete="shipping tel"
+                />
+              </CheckoutField>
+            </div>
             <div className="checkout-location-row">
               <LocationFields
                 provinceId={provinceId}
@@ -788,6 +931,7 @@ export function CheckoutPage() {
               copy={c}
               onChange={(next) => {
                 setShippingMethod(next);
+                setError("");
                 persistDraft({ shippingMethod: next });
               }}
             />
@@ -835,6 +979,28 @@ export function CheckoutPage() {
                     "postalCode",
                     postal.ok ? undefined : c.postalError,
                   );
+                }}
+              />
+            </CheckoutField>
+            <CheckoutField
+              id="checkout-giftMessage"
+              label={c.giftMessage}
+              optional={c.optional}
+              wide
+            >
+              <p id="checkout-gift-hint" className="checkout-gift-hint">
+                {c.giftMessageHint}
+              </p>
+              <textarea
+                id="checkout-giftMessage"
+                name="giftMessage"
+                rows={3}
+                maxLength={240}
+                disabled={busy}
+                aria-describedby="checkout-gift-hint"
+                onInput={(event) => {
+                  const form = event.currentTarget.form;
+                  if (form) storeDraft(form);
                 }}
               />
             </CheckoutField>
@@ -931,25 +1097,16 @@ export function CheckoutPage() {
             </button>
           ) : null}
           {panel === "delivery" ? (
-            <>
-              <button
-                type="submit"
-                form={FORM_ID}
-                className="checkout-submit"
-                disabled={busy || lost}
-                aria-busy={busy || undefined}
-              >
-                <span>{submitting ? c.submitting : c.submit}</span>
-                <ArrowIcon aria-hidden="true" />
-              </button>
-              <button
-                type="button"
-                className="checkout-back"
-                onClick={() => openPanel("contact")}
-              >
-                {c.back}
-              </button>
-            </>
+            <button
+              type="submit"
+              form={FORM_ID}
+              className="checkout-submit"
+              disabled={busy || lost}
+              aria-busy={busy || undefined}
+            >
+              <span>{submitting ? c.submitting : c.submit}</span>
+              <ArrowIcon aria-hidden="true" />
+            </button>
           ) : null}
         </div>
 

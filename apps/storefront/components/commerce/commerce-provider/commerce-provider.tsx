@@ -12,13 +12,14 @@ import {
   useState,
   type CSSProperties,
 } from "react";
-import type {
-  AuthUser,
-  Notice,
-  NoticeKind,
-  Order,
-  Review,
-  SessionState,
+import {
+  isArtistNotice,
+  type AuthUser,
+  type Notice,
+  type NoticeKind,
+  type Order,
+  type Review,
+  type SessionState,
 } from "@rad/types";
 import type { PaymentReceiptInput, PlaceOrderInput } from "@/types/api";
 import { api } from "@/lib/api";
@@ -56,6 +57,9 @@ type CommerceContextValue = {
   unread: number;
   addNotice: (kind: NoticeKind, productSlug?: string) => Promise<void>;
   markAllRead: () => Promise<void>;
+  markNoticeRead: (id: string) => Promise<void>;
+  refreshNotices: () => Promise<void>;
+  markCommissionMessagesRead: (id: string) => Promise<void>;
   /** Empty until a page calls {@link useOrders}; single orders are upserted as they change. */
   orders: Order[];
   ordersReady: boolean;
@@ -79,7 +83,7 @@ type CommerceContextValue = {
 
 const CommerceContext = createContext<CommerceContextValue | null>(null);
 
-const NOTICE_POLL_MS = 30_000;
+const NOTICE_POLL_MS = 12_000;
 const FAVORITES_CACHE_KEY = "rad.favorites.cache";
 
 function publishSession(userId: string | null) {
@@ -121,6 +125,9 @@ export function CommerceProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [favorites, setFavorites] = useState<string[]>([]);
   const [notices, setNotices] = useState<Notice[]>([]);
+  const noticeEpoch = useRef(0);
+  const noticeSession = useRef(0);
+  const noticeWrites = useRef(0);
   const [orders, setOrders] = useState<Order[]>([]);
   const [ordersReady, setOrdersReady] = useState(false);
   const ordersWanted = useRef(false);
@@ -135,11 +142,13 @@ export function CommerceProvider({ children }: { children: React.ReactNode }) {
   // malformed/partial API response (seen locally with the dev proxy's
   // ERR_CONTENT_DECODING_FAILED) must not leave `notices` as `undefined`,
   // which crashes every render that calls `.filter` on it below.
-  const applyNotices = (payload: { notices?: Notice[]; unread?: number }) => {
-    setNotices(payload.notices ?? []);
-  };
+  const visibleNotices = (items: Notice[] | undefined) =>
+    (items ?? []).filter((notice) => isArtistNotice(notice.kind));
 
   const applySession = useCallback((session: SessionState) => {
+    noticeEpoch.current += 1;
+    noticeSession.current += 1;
+    noticeWrites.current = 0;
     setUser(session.user);
     // Same defensive fallback as `notices` above, for the same reason: a
     // malformed/partial `/session` response must not leave `favorites`
@@ -148,7 +157,7 @@ export function CommerceProvider({ children }: { children: React.ReactNode }) {
     const favorites = session.favorites ?? [];
     setFavorites(favorites);
     cacheFavorites(favorites);
-    setNotices(session.notices ?? []);
+    setNotices(visibleNotices(session.notices));
   }, []);
 
   // Runs before paint so a refresh or locale switch (a full page reload,
@@ -198,20 +207,77 @@ export function CommerceProvider({ children }: { children: React.ReactNode }) {
     };
   }, [applySession]);
 
+  const refreshNotices = useCallback(async () => {
+    if (!user?.id || noticeWrites.current > 0) return;
+    const epoch = ++noticeEpoch.current;
+    try {
+      const payload = await api<{ notices?: Notice[] }>("/notices");
+      if (epoch === noticeEpoch.current && noticeWrites.current === 0) {
+        setNotices(visibleNotices(payload.notices));
+      }
+    } catch (error) {
+      logRecovered("notices", error);
+    }
+  }, [user?.id]);
+
+  const readNotices = useCallback(
+    async (path: string, matches: (notice: Notice) => boolean) => {
+      const session = noticeSession.current;
+      noticeEpoch.current += 1;
+      noticeWrites.current += 1;
+      try {
+        await api(path, { method: "POST" });
+        if (session === noticeSession.current) {
+          setNotices((current) =>
+            current.map((notice) =>
+              matches(notice) ? { ...notice, read: true } : notice,
+            ),
+          );
+        }
+      } finally {
+        if (session === noticeSession.current) {
+          noticeWrites.current -= 1;
+          if (noticeWrites.current === 0) void refreshNotices();
+        }
+      }
+    },
+    [refreshNotices],
+  );
+
+  const markNoticeRead = useCallback(
+    (id: string) =>
+      readNotices(
+        `/notices/${encodeURIComponent(id)}/read`,
+        (notice) => notice.id === id,
+      ),
+    [readNotices],
+  );
+
+  const markCommissionMessagesRead = useCallback(
+    (id: string) =>
+      readNotices(
+        `/notices/commissions/${encodeURIComponent(id)}/read`,
+        (notice) =>
+          notice.kind === "commission_message" && notice.productSlug === id,
+      ),
+    [readNotices],
+  );
+
   useEffect(() => {
-    const refreshNotices = () => {
-      if (document.visibilityState !== "visible") return;
-      api<{ notices?: Notice[] }>("/notices")
-        .then((payload) => setNotices(payload.notices ?? []))
-        .catch((error) => logRecovered("notices", error));
+    if (!user?.id) return;
+    const refreshVisible = () => {
+      if (document.visibilityState === "visible") void refreshNotices();
     };
-    const timer = window.setInterval(refreshNotices, NOTICE_POLL_MS);
-    document.addEventListener("visibilitychange", refreshNotices);
+    refreshVisible();
+    const timer = window.setInterval(refreshVisible, NOTICE_POLL_MS);
+    document.addEventListener("visibilitychange", refreshVisible);
+    window.addEventListener("focus", refreshVisible);
     return () => {
       window.clearInterval(timer);
-      document.removeEventListener("visibilitychange", refreshNotices);
+      document.removeEventListener("visibilitychange", refreshVisible);
+      window.removeEventListener("focus", refreshVisible);
     };
-  }, []);
+  }, [user?.id, refreshNotices]);
 
   useEffect(() => {
     if (!toast) return;
@@ -220,13 +286,9 @@ export function CommerceProvider({ children }: { children: React.ReactNode }) {
   }, [toast]);
 
   const addNotice = async (kind: NoticeKind, productSlug?: string) => {
-    const payload = await api<{ notices: Notice[] }>("/notices", {
-      method: "POST",
-      body: JSON.stringify({ kind, productSlug }),
-    });
-    applyNotices(payload);
-    if (kind === "cart")
+    if (kind === "cart") {
       setToast({ id: Date.now(), kind: "cartAdded", productSlug });
+    }
   };
 
   const value = useMemo<CommerceContextValue>(
@@ -285,7 +347,6 @@ export function CommerceProvider({ children }: { children: React.ReactNode }) {
         setFavorites(payload.slugs);
         cacheFavorites(payload.slugs);
         if (payload.added) {
-          await addNotice("favorite", slug);
           setToast({
             id: Date.now(),
             kind: "favoriteAdded",
@@ -303,11 +364,10 @@ export function CommerceProvider({ children }: { children: React.ReactNode }) {
       notices,
       unread: notices.filter((notice) => !notice.read).length,
       addNotice,
-      markAllRead: async () => {
-        applyNotices(
-          await api<{ notices: Notice[] }>("/notices/read", { method: "POST" }),
-        );
-      },
+      markAllRead: () => readNotices("/notices/read", () => true),
+      markNoticeRead,
+      markCommissionMessagesRead,
+      refreshNotices,
       orders,
       ordersReady,
       requestOrders,
@@ -394,6 +454,10 @@ export function CommerceProvider({ children }: { children: React.ReactNode }) {
       requestOrders,
       reviews,
       refresh,
+      readNotices,
+      markNoticeRead,
+      markCommissionMessagesRead,
+      refreshNotices,
     ],
   );
 

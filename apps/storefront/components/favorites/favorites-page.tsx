@@ -14,14 +14,16 @@ import { availableWorks } from "@/lib/catalog/product-status";
 import { AccountShell } from "../account/account-shell";
 import { AccountHeading } from "../account/account-heading";
 
-export function FavoritesPage() {
+export function FavoritesPage({ embedded = false }: { embedded?: boolean }) {
   const params = useSearchParams();
   const { favorites, ready } = useCommerce();
   const { t, number } = useLocale();
   const { products, getProduct } = useCatalog();
   const [shared, setShared] = useState(false);
 
-  const sharedSlugs = params.get("items")?.split(",").filter(Boolean);
+  const sharedSlugs = embedded
+    ? undefined
+    : params.get("items")?.split(",").filter(Boolean);
   const slugs = sharedSlugs?.length ? sharedSlugs : favorites;
 
   const items = useMemo(
@@ -83,6 +85,6 @@ export function FavoritesPage() {
     </section>
   );
 
-  if (sharedSlugs?.length) return content;
+  if (sharedSlugs?.length || embedded) return content;
   return <AccountShell>{content}</AccountShell>;
 }

@@ -28,6 +28,8 @@ import {
   type AdminCommission,
   type AdminCommissionStage,
 } from "../lib/admin-data";
+import { useOptionalAdminChrome } from "./admin-shell";
+import { commissionNoticeKey } from "../lib/staff-notice-keys";
 import { briefExcerpt } from "../lib/product-cover";
 import {
   commissionDetailTabs,
@@ -142,6 +144,7 @@ export function AdminCommissions({
     id: string,
     body: { fa: string; en: string },
     internal?: boolean,
+    operationId?: string,
   ) => Promise<unknown>;
   onBeginReview: (id: string) => Promise<unknown>;
 }) {
@@ -160,12 +163,16 @@ export function AdminCommissions({
     "all",
   );
   const inputRef = useRef<HTMLInputElement>(null);
-  const isMobile = useIsMobileViewport();
+  const isMobile = useIsMobileViewport(1100);
 
   useEffect(() => {
     const onPopState = () => setRequestedId(readHashCommissionId());
     window.addEventListener("popstate", onPopState);
-    return () => window.removeEventListener("popstate", onPopState);
+    window.addEventListener("hashchange", onPopState);
+    return () => {
+      window.removeEventListener("popstate", onPopState);
+      window.removeEventListener("hashchange", onPopState);
+    };
   }, []);
 
   const selectedId = useMemo(
@@ -173,6 +180,11 @@ export function AdminCommissions({
     [commissions, requestedId],
   );
   const selected = commissions.find((item) => item.id === selectedId) ?? null;
+  const readNotice = useOptionalAdminChrome()?.readNotice;
+  const noticeKey = selected ? commissionNoticeKey(selected) : null;
+  useEffect(() => {
+    if (noticeKey) readNotice?.(noticeKey);
+  }, [noticeKey, readNotice]);
 
   const filtered = useMemo(
     () =>
@@ -352,6 +364,7 @@ export function AdminCommissions({
           </div>
           {selected ? (
             <CommissionDetail
+              key={selected.id}
               commission={selected}
               canWrite={canWrite}
               onDecide={onDecide}
@@ -404,12 +417,6 @@ function CommissionDetail({
   onMessage: Parameters<typeof AdminCommissions>[0]["onMessage"];
   onClose: () => void;
 }) {
-  // Below the mobile breakpoint, `.commission-detail` becomes a position:
-  // fixed full-screen overlay (see the `.commission-view.has-detail` rule
-  // in globals.css) — only lock background scroll then; on desktop this
-  // is just an inline panel beside the list and must not block the page.
-  const isMobile = useIsMobileViewport();
-  useBodyScrollLock(isMobile);
   const open =
     commission.stage === "design_submitted" ||
     (commission.stage === "feasibility" && commission.nextActor === "artist");
@@ -571,6 +578,7 @@ function CommissionDetail({
 
       {tab === "messages" && (
         <CommissionMessages
+          key={commission.id}
           commission={commission}
           canWrite={canWrite}
           onMessage={onMessage}
@@ -809,28 +817,45 @@ function CommissionMessages({
   onMessage: Parameters<typeof AdminCommissions>[0]["onMessage"];
 }) {
   const [message, setMessage] = useState("");
+  const pending = useRef<string | null>(null);
+  const inFlight = useRef(false);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
 
   const send = () => {
     const body = message.trim();
-    if (!body || !canWrite || sending) return;
+    if (!body || !canWrite || inFlight.current) return;
+    const operationId = pending.current ?? crypto.randomUUID();
+    pending.current = operationId;
+    inFlight.current = true;
     setSending(true);
     setError("");
-    void onMessage(commission.id, asCopy(body))
-      .then(() => setMessage(""))
+    void Promise.resolve()
+      .then(() => onMessage(commission.id, asCopy(body), false, operationId))
+      .then(() => {
+        pending.current = null;
+        setMessage("");
+      })
       .catch((err) =>
         setError((err as Error).message || "ارسال پیام ناموفق بود."),
       )
-      .finally(() => setSending(false));
+      .finally(() => {
+        inFlight.current = false;
+        setSending(false);
+      });
   };
 
   return (
     <div className="commission-messages-pane">
-      <ol className="commission-thread">
+      <ol className="contact-message-thread commission-thread" dir="rtl">
         {commission.messages.length ? (
           commission.messages.map((item) => (
-            <li key={item.id} className={item.author}>
+            <li
+              key={item.id}
+              className={
+                item.author === "artist" ? "from-admin" : "from-customer"
+              }
+            >
               <b>
                 {item.author === "artist" ? "کارگاه" : commission.customerName}
               </b>
@@ -858,7 +883,10 @@ function CommissionMessages({
         <textarea
           id="studio-message"
           value={message}
-          onChange={(event) => setMessage(event.target.value)}
+          onChange={(event) => {
+            pending.current = null;
+            setMessage(event.target.value);
+          }}
           rows={3}
           disabled={sending}
         />

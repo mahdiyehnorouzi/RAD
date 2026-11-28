@@ -23,6 +23,8 @@ export {
   SERVER_API_URL,
 } from "./client";
 export {
+  addCommissionMessage,
+  addWorkshopCommissionMessage,
   COMMISSION_UPLOAD_IMAGES,
   createCommission,
   fetchCommission,

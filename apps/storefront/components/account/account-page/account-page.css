@@ -252,37 +252,13 @@
   margin-top: 1rem;
 }
 
-.otp-cells {
-  display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: var(--field-gap);
-  direction: ltr;
-}
-
-.auth-form .otp-cells input,
-.checkout-account .otp-cells input {
-  width: 100%;
-  min-width: 0;
-  min-height: 3rem;
-  padding: 0.35rem 0;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  background: var(--paper);
-  color: var(--ink);
-  font-family: var(--font);
-  font-size: max(16px, 1rem);
-  font-variant-numeric: tabular-nums;
-  line-height: 1.2;
-  text-align: center;
-}
-
-.otp-cells input:focus-visible {
-  outline: 2px solid var(--focus);
-  outline-offset: 2px;
-}
-
-.otp-cells input:disabled {
-  opacity: 0.45;
+/* Matches the rounded mobile OTP action button already established in
+   checkout-page.css's .checkout-account-action (same phone-OTP control). */
+@media (--phone) {
+  .auth-stack > .button.auth-otp-action,
+  .auth-stack .phone-otp-code > .button.auth-otp-action {
+    border-radius: 30px;
+  }
 }
 
 .auth-stack > small {
@@ -452,7 +428,7 @@ html[lang="en"] .account-banner-line {
   list-style: none;
 }
 
-.account-menu a {
+.account-menu :is(a, button) {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto auto;
   align-items: center;
@@ -463,12 +439,16 @@ html[lang="en"] .account-banner-line {
   border-radius: var(--account-radius);
   background: var(--account-paper);
   box-shadow: var(--account-shadow);
+  width: 100%;
   color: inherit;
+  font: inherit;
+  text-align: start;
   text-decoration: none;
+  cursor: pointer;
   transition: border-color 0.2s ease;
 }
 
-.account-menu a:hover {
+.account-menu :is(a, button):hover {
   border-color: color-mix(
     in srgb,
     var(--account-green) 35%,
@@ -476,7 +456,7 @@ html[lang="en"] .account-banner-line {
   );
 }
 
-.account-menu a:focus-visible {
+.account-menu :is(a, button):focus-visible {
   outline: 2px solid var(--account-oxide);
   outline-offset: 2px;
 }

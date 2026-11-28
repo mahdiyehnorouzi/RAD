@@ -1,5 +1,5 @@
-import { AddressBookPage } from "@/features/address-book";
+import { ProfileExperience } from "@/components/account";
 
 export default function Page() {
-  return <AddressBookPage />;
+  return <ProfileExperience initial="addresses" />;
 }

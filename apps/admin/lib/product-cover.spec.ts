@@ -14,8 +14,6 @@ function image(
   overrides: Partial<AdminProductImage> & Pick<AdminProductImage, "storage">,
 ): AdminProductImage {
   if (
-    overrides.storage === "cloudinary" ||
-    overrides.storage === "cloudinary_video" ||
     overrides.storage === "seaweedfs" ||
     overrides.storage === "seaweedfs_video"
   ) {
@@ -36,8 +34,8 @@ function image(
 
 test("the first persisted still image is the cover", () => {
   const images = [
-    image({ storage: "cloudinary", objectKey: "cover-key", src: "/cover.jpg" }),
-    image({ storage: "cloudinary", objectKey: "other-key", src: "/other.jpg" }),
+    image({ storage: "seaweedfs", objectKey: "cover-key", src: "/cover.jpg" }),
+    image({ storage: "seaweedfs", objectKey: "other-key", src: "/other.jpg" }),
   ];
   assert.equal(coverImageIndex(images), 0);
   assert.equal(coverImage(images)?.objectKey, "cover-key");
@@ -45,12 +43,12 @@ test("the first persisted still image is the cover", () => {
 
 test("video cannot be selected or treated as cover", () => {
   const video = image({
-    storage: "cloudinary_video",
+    storage: "seaweedfs_video",
     objectKey: "vid-key",
     src: "/clip.mp4",
   });
   const photo = image({
-    storage: "cloudinary",
+    storage: "seaweedfs",
     objectKey: "photo-key",
     src: "/photo.jpg",
   });
@@ -61,12 +59,12 @@ test("video cannot be selected or treated as cover", () => {
 
 test("incomplete or failed uploads cannot become the persisted cover", () => {
   const pending = image({
-    storage: "cloudinary",
+    storage: "seaweedfs",
     objectKey: "",
     src: "blob:pending",
   });
   const ready = image({
-    storage: "cloudinary",
+    storage: "seaweedfs",
     objectKey: "ready-key",
     src: "/ready.jpg",
   });
@@ -88,12 +86,12 @@ test("selectAsCover moves the chosen image first and keeps the rest in order", (
 
 test("selectAsCoverBySrc is a no-op for unknown or unfinished media", () => {
   const ready = image({
-    storage: "cloudinary",
+    storage: "seaweedfs",
     objectKey: "ready-key",
     src: "/ready.jpg",
   });
   const pending = image({
-    storage: "cloudinary",
+    storage: "seaweedfs",
     objectKey: "",
     src: "blob:pending",
   });
