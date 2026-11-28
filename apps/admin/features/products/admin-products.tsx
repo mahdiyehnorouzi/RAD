@@ -1,7 +1,14 @@
 "use client";
 import { useMemo, useRef, useState } from "react";
 import { effectiveProductStatus, formatRadCode } from "@rad/types";
-import { ChevronLeft, ChevronRight, Package, Plus, Search } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  Package,
+  Plus,
+  Search,
+} from "lucide-react";
 import { AdminSearchField, Button } from "@rad/ui";
 import {
   productStatusLabel,
@@ -149,12 +156,17 @@ export function Products({
       />
       <button
         type="button"
-        className="product-filter-toggle"
+        className={`product-filter-toggle${filtersOpen ? " is-open" : ""}`}
         aria-expanded={filtersOpen}
         onClick={() => setFiltersOpen((open) => !open)}
       >
-        فیلترها
-        {filtersActive ? <span>فعال</span> : null}
+        <span>
+          فیلترها
+          {filtersActive ? (
+            <span className="product-filter-active">فعال</span>
+          ) : null}
+        </span>
+        <ChevronDown aria-hidden="true" />
       </button>
       <div className={`product-filters${filtersOpen ? " is-open" : ""}`}>
         <select
@@ -223,6 +235,10 @@ export function Products({
                     id={`product-card-${product.id}`}
                     className={`product-card${selected ? " is-selected" : ""}`}
                   >
+                    <StatusBadge
+                      label={productStatusLabel(product)}
+                      tone={productStatusTone(product)}
+                    />
                     <button
                       type="button"
                       className="product-card-open"
@@ -234,7 +250,9 @@ export function Products({
                           {product.category} · {product.artist}
                         </span>
                         <h3>{product.name}</h3>
-                        <strong>{money(product.price)}</strong>
+                        <span className="product-card-price">
+                          {money(product.price)}
+                        </span>
                         <span className="product-card-meta">
                           {product.radNumber
                             ? `RAD-${formatRadCode(product.radNumber)} · `
@@ -243,10 +261,6 @@ export function Products({
                         </span>
                       </div>
                       <div className="product-card-side">
-                        <StatusBadge
-                          label={productStatusLabel(product)}
-                          tone={productStatusTone(product)}
-                        />
                         <ProductThumb product={product} />
                         <span className="product-photo-count">
                           {number.format(product.images.length)} عکس

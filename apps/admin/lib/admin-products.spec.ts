@@ -271,7 +271,7 @@ async function mountDialog(overrides: Partial<DialogProps> = {}) {
 
 test("a new product starts with empty defaults and no delete button", async () => {
   const { host, restoreFetch } = await mountDialog();
-  assert.match(textOf(host), /اثر تازه/);
+  assert.equal(textOf(host).match(/اثر تازه/g)?.length, 1);
   assert.equal((field(host, "نام اثر") as DomNode).value, "");
   assert.equal(buttons(host, "حذف محصول").length, 0);
   restoreFetch();

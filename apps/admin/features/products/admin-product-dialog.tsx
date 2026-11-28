@@ -499,21 +499,42 @@ export function ProductDialog({
   return (
     <form className="product-editor" onSubmit={submit} noValidate>
       <div className="product-editor-top">
-        <Button
-          variant="ghost"
-          className="product-back product-back-mobile"
-          onClick={onClose}
-        >
-          <ChevronRight />
-          بازگشت به لیست
-        </Button>
+        <div className="product-editor-toolbar">
+          <div className="product-editor-toolbar-start">
+            <Button variant="ghost" className="product-back" onClick={onClose}>
+              <ChevronRight />
+              بازگشت به لیست
+            </Button>
+            <div className="product-editor-actions-desktop">
+              <PreviewLink href={previewHref} />
+              <Button
+                type="submit"
+                disabled={!canWrite || unresolvedUploads}
+                loading={saving}
+              >
+                <Check />
+                {uploadingCount > 0 ? "در حال بارگذاری…" : "ذخیره تغییرات"}
+              </Button>
+            </div>
+          </div>
+          {product && onDelete ? (
+            <Button
+              variant="secondary"
+              size="sm"
+              className="product-editor-delete"
+              onClick={onDelete}
+              disabled={!canWrite}
+            >
+              <Trash2 />
+              حذف محصول
+            </Button>
+          ) : null}
+        </div>
         <div className="product-editor-identity">
           <div className="product-editor-copy">
-            <span className="editor-kicker">
-              {product ? "ویرایش اثر" : "اثر تازه"}
-            </span>
+            {product ? <span className="editor-kicker">ویرایش اثر</span> : null}
             <h2 id="editor-title" tabIndex={-1} ref={titleRef}>
-              {product ? draft.name || "ویرایش اثر" : "اثر تازه"}
+              {draft.name || (product ? "ویرایش اثر" : "اثر تازه")}
             </h2>
             <p className="editor-meta">
               <span>{draft.artist || "هنرمند"}</span>
@@ -551,34 +572,6 @@ export function ProductDialog({
               onChange={(event) => addImage(event, true)}
               disabled={!limits || locked}
             />
-          </div>
-        </div>
-        <div className="product-editor-actions">
-          {product && onDelete ? (
-            <Button
-              variant="ghost"
-              className="content-danger product-editor-delete"
-              onClick={onDelete}
-              disabled={!canWrite}
-            >
-              <Trash2 />
-              حذف محصول
-            </Button>
-          ) : null}
-          <div className="product-editor-actions-desktop">
-            <Button variant="ghost" className="product-back" onClick={onClose}>
-              <ChevronRight />
-              بازگشت به لیست
-            </Button>
-            <PreviewLink href={previewHref} />
-            <Button
-              type="submit"
-              disabled={!canWrite || unresolvedUploads}
-              loading={saving}
-            >
-              <Check />
-              {uploadingCount > 0 ? "در حال بارگذاری…" : "ذخیره تغییرات"}
-            </Button>
           </div>
         </div>
       </div>
