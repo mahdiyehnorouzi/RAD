@@ -50,6 +50,17 @@ type SpecRow = {
   icon: ReactNode;
 };
 
+const PHOTO_ESTIMATE_DISCLAIMER = "تخمینی از روی عکس؛ اندازه‌گیری نشده";
+
+function withoutPhotoEstimateDisclaimer(value: string | null | undefined) {
+  if (!value) return value;
+  const stripped = value
+    .replaceAll(PHOTO_ESTIMATE_DISCLAIMER, "")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+  return stripped || undefined;
+}
+
 const ATTRIBUTE_ICON: Record<string, LucideIcon> = {
   Palette,
   Hand,
@@ -139,7 +150,7 @@ function specRows(
     return {
       key,
       label: c.specSize,
-      value: artwork?.dimensions?.[locale],
+      value: withoutPhotoEstimateDisclaimer(artwork?.dimensions?.[locale]),
       icon: <Ruler />,
     };
   };
@@ -182,7 +193,7 @@ function specRows(
       return {
         key: `attribute-${attribute.key}`,
         label: attribute.label,
-        value: attribute.value,
+        value: withoutPhotoEstimateDisclaimer(attribute.value),
         icon: attributeIcon(name),
       };
     });

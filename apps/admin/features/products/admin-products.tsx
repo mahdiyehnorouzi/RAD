@@ -12,6 +12,7 @@ import { AdminRowMenu } from "../../components/admin-row-menu";
 import { EmptyState, StatusBadge } from "../../components/admin-list-chrome";
 import { API_BASE } from "../../lib/api";
 import { coverImage } from "../../lib/product-cover";
+import { persianSearchIncludes } from "../../lib/persian-text";
 import "./products-workspace.css";
 
 const number = new Intl.NumberFormat("fa-IR");
@@ -57,7 +58,10 @@ export function Products({
   const [page, setPage] = useState(1);
   const [trackedSelection, setTrackedSelection] = useState(selectedId);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const filtersActive =
+    sort !== "newest" || statusFilter !== "all" || categoryFilter !== "all";
 
   const categories = useMemo(
     () => Array.from(new Set(products.map((item) => item.category))),
@@ -67,8 +71,9 @@ export function Products({
   const filtered = useMemo(() => {
     const list = products
       .filter((product) =>
-        `${product.name} ${product.artist} ${product.slug}`.includes(
-          query.trim(),
+        persianSearchIncludes(
+          `${product.name} ${product.artist} ${product.slug}`,
+          query,
         ),
       )
       .filter(
@@ -118,9 +123,15 @@ export function Products({
           <h2>آثار و محصولات</h2>
           <p>تمام آثار ثبت‌شده در استودیو؛ هر اثر فقط یک‌بار ساخته شده است.</p>
         </div>
-        <Button className="product-add" onClick={onCreate} disabled={!canWrite}>
+        <Button
+          className="product-add"
+          shape="icon"
+          size="sm"
+          onClick={onCreate}
+          disabled={!canWrite}
+          aria-label="افزودن اثر"
+        >
           <Plus />
-          افزودن اثر
         </Button>
       </div>
       <AdminSearchField
@@ -136,7 +147,16 @@ export function Products({
         aria-label="جست‌وجوی محصولات"
         clearLabel="پاک کردن جست‌وجو"
       />
-      <div className="product-filters">
+      <button
+        type="button"
+        className="product-filter-toggle"
+        aria-expanded={filtersOpen}
+        onClick={() => setFiltersOpen((open) => !open)}
+      >
+        فیلترها
+        {filtersActive ? <span>فعال</span> : null}
+      </button>
+      <div className={`product-filters${filtersOpen ? " is-open" : ""}`}>
         <select
           className="filter-select"
           value={sort}
@@ -214,22 +234,24 @@ export function Products({
                           {product.category} · {product.artist}
                         </span>
                         <h3>{product.name}</h3>
-                        <div className="product-card-row">
-                          <StatusBadge
-                            label={productStatusLabel(product)}
-                            tone={productStatusTone(product)}
-                          />
-                          <strong>{money(product.price)}</strong>
-                        </div>
+                        <strong>{money(product.price)}</strong>
                         <span className="product-card-meta">
-                          {product.slug}
                           {product.radNumber
-                            ? ` · RAD-${formatRadCode(product.radNumber)}`
+                            ? `RAD-${formatRadCode(product.radNumber)} · `
                             : ""}
-                          {` · ویرایش ${date(product.updatedAt)}`}
+                          {`ویرایش ${date(product.updatedAt)}`}
                         </span>
                       </div>
-                      <ProductThumb product={product} />
+                      <div className="product-card-side">
+                        <StatusBadge
+                          label={productStatusLabel(product)}
+                          tone={productStatusTone(product)}
+                        />
+                        <ProductThumb product={product} />
+                        <span className="product-photo-count">
+                          {number.format(product.images.length)} عکس
+                        </span>
+                      </div>
                     </button>
                     <AdminRowMenu
                       open={openMenuId === product.id}
@@ -323,7 +345,6 @@ export function ProductThumb({ product }: { product: AdminProduct }) {
       ) : (
         <Package />
       )}
-      <span>{number.format(product.images.length)} عکس</span>
     </div>
   );
 }

@@ -106,13 +106,14 @@ async function mountProducts(overrides: Partial<ProductsProps> = {}) {
   return { host, root };
 }
 
-test("renders every product's name, slug, and category", async () => {
+test("renders every product's name and category without the English slug", async () => {
   const { host } = await mountProducts();
   const text = textOf(host);
   assert.match(text, /گلدان یک/);
   assert.match(text, /فنجان دو/);
-  assert.match(text, /vase-one/);
-  assert.match(text, /cup-two/);
+  assert.match(text, /گلدان/);
+  assert.doesNotMatch(text, /vase-one/);
+  assert.doesNotMatch(text, /cup-two/);
 });
 
 test("search filters the list by name, artist, or slug", async () => {
@@ -120,6 +121,16 @@ test("search filters the list by name, artist, or slug", async () => {
   await fill(elements(host, "input")[0], "فنجان");
   assert.match(textOf(host), /فنجان دو/);
   assert.doesNotMatch(textOf(host), /گلدان یک/);
+  await fill(elements(host, "input")[0], "vase-one");
+  assert.match(textOf(host), /گلدان یک/);
+  assert.doesNotMatch(textOf(host), /فنجان دو/);
+});
+
+test("search ignores Persian diacritics and Arabic yeh or kaf", async () => {
+  const { host } = await mountProducts();
+  await fill(elements(host, "input")[0], "گُلدان");
+  assert.match(textOf(host), /گلدان یک/);
+  assert.doesNotMatch(textOf(host), /فنجان دو/);
 });
 
 test("status filter narrows the list to the chosen status", async () => {
@@ -169,7 +180,9 @@ test("the add button is disabled for a read-only admin and does not call onCreat
       created = true;
     },
   });
-  const add = buttons(host, "افزودن اثر")[0];
+  const add = elements(host, "button").find(
+    (node) => node.getAttribute("aria-label") === "افزودن اثر",
+  );
   assert.ok(add);
   assert.ok(add.disabled);
   await press(add);
@@ -204,7 +217,11 @@ test("a writer can click add to open the creator", async () => {
       created = true;
     },
   });
-  await press(buttons(host, "افزودن اثر")[0]);
+  await press(
+    elements(host, "button").find(
+      (node) => node.getAttribute("aria-label") === "افزودن اثر",
+    )!,
+  );
   assert.equal(created, true);
 });
 

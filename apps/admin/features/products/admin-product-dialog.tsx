@@ -508,27 +508,6 @@ export function ProductDialog({
           بازگشت به لیست
         </Button>
         <div className="product-editor-identity">
-          <div className="product-editor-cover-stack">
-            <div className="product-editor-cover">
-              {mediaSrc(previewCover?.src) ? (
-                <img src={mediaSrc(previewCover?.src)} alt="" />
-              ) : (
-                <Package />
-              )}
-            </div>
-            <label htmlFor={coverInputId} className="cover-change">
-              <ImagePlus />
-              تغییر کاور
-            </label>
-            <input
-              id={coverInputId}
-              className="sr-file"
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
-              onChange={(event) => addImage(event, true)}
-              disabled={!limits || locked}
-            />
-          </div>
           <div className="product-editor-copy">
             <span className="editor-kicker">
               {product ? "ویرایش اثر" : "اثر تازه"}
@@ -552,21 +531,55 @@ export function ProductDialog({
               </p>
             ) : null}
           </div>
+          <div className="product-editor-cover-stack">
+            <div className="product-editor-cover">
+              {mediaSrc(previewCover?.src) ? (
+                <img src={mediaSrc(previewCover?.src)} alt="" />
+              ) : (
+                <Package />
+              )}
+            </div>
+            <label htmlFor={coverInputId} className="cover-change">
+              <ImagePlus />
+              تغییر کاور
+            </label>
+            <input
+              id={coverInputId}
+              className="sr-file"
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              onChange={(event) => addImage(event, true)}
+              disabled={!limits || locked}
+            />
+          </div>
         </div>
-        <div className="product-editor-actions product-editor-actions-desktop">
-          <Button variant="ghost" className="product-back" onClick={onClose}>
-            <ChevronRight />
-            بازگشت به لیست
-          </Button>
-          <PreviewLink href={previewHref} />
-          <Button
-            type="submit"
-            disabled={!canWrite || unresolvedUploads}
-            loading={saving}
-          >
-            <Check />
-            {uploadingCount > 0 ? "در حال بارگذاری…" : "ذخیره تغییرات"}
-          </Button>
+        <div className="product-editor-actions">
+          {product && onDelete ? (
+            <Button
+              variant="ghost"
+              className="content-danger product-editor-delete"
+              onClick={onDelete}
+              disabled={!canWrite}
+            >
+              <Trash2 />
+              حذف محصول
+            </Button>
+          ) : null}
+          <div className="product-editor-actions-desktop">
+            <Button variant="ghost" className="product-back" onClick={onClose}>
+              <ChevronRight />
+              بازگشت به لیست
+            </Button>
+            <PreviewLink href={previewHref} />
+            <Button
+              type="submit"
+              disabled={!canWrite || unresolvedUploads}
+              loading={saving}
+            >
+              <Check />
+              {uploadingCount > 0 ? "در حال بارگذاری…" : "ذخیره تغییرات"}
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -908,15 +921,16 @@ export function ProductDialog({
                     </p>
                   )}
                   <div className="artwork-media-actions">
-                    {!isVideoStorage(image.storage) && !isCover && (
+                    {!isVideoStorage(image.storage) && (
                       <Button
-                        variant="secondary"
+                        variant={isCover ? "primary" : "secondary"}
                         size="sm"
-                        disabled={locked || !coverReady}
+                        className={isCover ? "is-cover-choice" : undefined}
+                        aria-pressed={isCover}
+                        disabled={locked || isCover || !coverReady}
                         onClick={() => setCover(index)}
-                        aria-label="انتخاب به‌عنوان کاور"
                       >
-                        کاور
+                        انتخاب به‌عنوان کاور
                       </Button>
                     )}
                     {upload?.error && (
@@ -975,22 +989,6 @@ export function ProductDialog({
           />
         </div>
       </details>
-
-      <div className="product-editor-footer">
-        {product && onDelete ? (
-          <Button
-            variant="ghost"
-            className="content-danger"
-            onClick={onDelete}
-            disabled={!canWrite}
-          >
-            <Trash2 />
-            حذف محصول
-          </Button>
-        ) : (
-          <span />
-        )}
-      </div>
 
       <div className="product-editor-dock">
         <PreviewLink href={previewHref} />
