@@ -178,6 +178,7 @@ export class CommissionsService {
           row.ownerKey,
           "commission_message",
           id,
+          next.messages.at(-1)?.id,
         );
       } catch {
         // The append already committed. Do not report it as a failed send

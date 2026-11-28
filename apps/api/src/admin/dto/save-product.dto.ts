@@ -7,8 +7,10 @@ import {
   IsObject,
   IsOptional,
   IsString,
+  MaxLength,
   Min,
   MinLength,
+  ValidateIf,
   ValidateNested,
 } from "class-validator";
 import { PRODUCT_STATUSES } from "../../inventory/const/product-status";
@@ -60,6 +62,18 @@ export class SaveProductDto {
   @IsIn(ADMIN_CATEGORIES)
   category!: string;
 
+  /**
+   * Optional subcategory slug. Omitted keeps the stored value.
+   * Null or blank clears it. When set, the API checks that the child
+   * belongs to the selected parent category.
+   */
+  @ApiPropertyOptional({ nullable: true, example: null })
+  @IsOptional()
+  @ValidateIf((_, value) => value !== null && value !== "")
+  @IsString()
+  @MaxLength(64)
+  subcategory?: string | null;
+
   @ApiProperty({ example: 8500000 })
   @Type(() => Number)
   @IsInt()
@@ -103,4 +117,16 @@ export class SaveProductDto {
   @IsOptional()
   @IsObject()
   attributeValues?: Record<string, ProductAttributeValue>;
+
+  @ApiPropertyOptional({
+    example: "A hand-thrown vase with a matte glaze.",
+    description:
+      "English translation of the story (`description`) shown on the " +
+      "English storefront. Falls back to the Persian `description` when " +
+      "left blank, same as today's create-time default; an update only " +
+      "overwrites the stored value when this is explicitly set.",
+  })
+  @IsOptional()
+  @IsString()
+  storyEn?: string;
 }

@@ -59,7 +59,11 @@ type CommerceContextValue = {
   markAllRead: () => Promise<void>;
   markNoticeRead: (id: string) => Promise<void>;
   refreshNotices: () => Promise<void>;
-  markCommissionMessagesRead: (id: string) => Promise<void>;
+  /** Marks exactly one incoming commission message read (BUG-03), not the whole conversation. */
+  markCommissionMessageRead: (
+    commissionId: string,
+    messageId: string,
+  ) => Promise<void>;
   /** Empty until a page calls {@link useOrders}; single orders are upserted as they change. */
   orders: Order[];
   ordersReady: boolean;
@@ -253,12 +257,14 @@ export function CommerceProvider({ children }: { children: React.ReactNode }) {
     [readNotices],
   );
 
-  const markCommissionMessagesRead = useCallback(
-    (id: string) =>
+  const markCommissionMessageRead = useCallback(
+    (commissionId: string, messageId: string) =>
       readNotices(
-        `/notices/commissions/${encodeURIComponent(id)}/read`,
+        `/notices/commissions/${encodeURIComponent(commissionId)}/messages/${encodeURIComponent(messageId)}/read`,
         (notice) =>
-          notice.kind === "commission_message" && notice.productSlug === id,
+          notice.kind === "commission_message" &&
+          notice.productSlug === commissionId &&
+          notice.messageId === messageId,
       ),
     [readNotices],
   );
@@ -366,7 +372,7 @@ export function CommerceProvider({ children }: { children: React.ReactNode }) {
       addNotice,
       markAllRead: () => readNotices("/notices/read", () => true),
       markNoticeRead,
-      markCommissionMessagesRead,
+      markCommissionMessageRead,
       refreshNotices,
       orders,
       ordersReady,
@@ -456,7 +462,7 @@ export function CommerceProvider({ children }: { children: React.ReactNode }) {
       refresh,
       readNotices,
       markNoticeRead,
-      markCommissionMessagesRead,
+      markCommissionMessageRead,
       refreshNotices,
     ],
   );

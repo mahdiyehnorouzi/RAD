@@ -26,11 +26,15 @@ import {
   resolveCommissionSelection,
   stageCountLabel,
   type AdminCommission,
+  type AdminCommissionMessage,
   type AdminCommissionStage,
 } from "../lib/admin-data";
 import { useOptionalAdminChrome } from "./admin-shell";
 import { useDetailScrollRestore } from "../hooks/use-detail-scroll-restore";
-import { commissionNoticeKey } from "../lib/staff-notice-keys";
+import {
+  commissionMessageNoticeKey,
+  commissionNoticeKey,
+} from "../lib/staff-notice-keys";
 import { briefExcerpt } from "../lib/product-cover";
 import {
   commissionDetailTabs,
@@ -202,6 +206,10 @@ export function AdminCommissions({
   const detailScrollId = isMobile && selected ? selectedId : null;
   const { saveScroll } = useDetailScrollRestore(detailScrollId);
 
+  // BUG-03: merely opening a commission must not mark its messages read.
+  // Each customer message is marked individually, only once it scrolls
+  // into view. An order notice (no customer message) is marked from the
+  // summary or decision tab, after that surface is actually shown.
   const filtered = useMemo(
     () =>
       commissions
@@ -861,6 +869,60 @@ function CommissionLightbox({
   );
 }
 
+/**
+ * One message bubble in the staff thread. Unread (BUG-03) is per message,
+ * not per conversation: a customer message is only marked read once it
+ * actually scrolls into view while the tab is visible, the same pattern
+ * `AdminContactMessageItem` already uses for contact messages - never
+ * just because the commission was opened.
+ */
+function CommissionMessageItem({
+  commissionId,
+  item,
+  customerName,
+}: {
+  commissionId: string;
+  item: AdminCommissionMessage;
+  customerName: string;
+}) {
+  const chrome = useOptionalAdminChrome();
+  const noticeKey = commissionMessageNoticeKey(commissionId, item.id);
+  const isCustomerMessage = item.author !== "artist";
+  const unread =
+    isCustomerMessage &&
+    Boolean(chrome?.noticeKeysReady) &&
+    !chrome?.noticeKeys?.has(noticeKey);
+  const ref = useRef<HTMLLIElement>(null);
+  useEffect(() => {
+    const node = ref.current;
+    if (!node || !isCustomerMessage || !chrome?.readNotice) return;
+    if (typeof IntersectionObserver === "undefined") return;
+    const observer = new IntersectionObserver((entries) => {
+      if (
+        document.visibilityState === "visible" &&
+        entries.some((entry) => entry.isIntersecting)
+      ) {
+        chrome.readNotice(noticeKey);
+      }
+    });
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [chrome, isCustomerMessage, noticeKey]);
+
+  return (
+    <li
+      ref={ref}
+      id={`commission-message-${item.id}`}
+      className={`${item.author === "artist" ? "from-admin" : "from-customer"}${unread ? " unread" : ""}`}
+    >
+      <b>{item.author === "artist" ? "کارگاه" : customerName}</b>
+      {unread ? <span className="sr-only">پیام خوانده‌نشده</span> : null}
+      <span>{date(item.createdAt)}</span>
+      <p>{copy(item.body)}</p>
+    </li>
+  );
+}
+
 export function CommissionMessages({
   commission,
   canWrite,
@@ -904,19 +966,12 @@ export function CommissionMessages({
       <ol className="contact-message-thread commission-thread" dir="rtl">
         {commission.messages.length ? (
           commission.messages.map((item) => (
-            <li
+            <CommissionMessageItem
               key={item.id}
-              id={`commission-message-${item.id}`}
-              className={
-                item.author === "artist" ? "from-admin" : "from-customer"
-              }
-            >
-              <b>
-                {item.author === "artist" ? "کارگاه" : commission.customerName}
-              </b>
-              <span>{date(item.createdAt)}</span>
-              <p>{copy(item.body)}</p>
-            </li>
+              commissionId={commission.id}
+              item={item}
+              customerName={commission.customerName}
+            />
           ))
         ) : (
           <li>

@@ -102,9 +102,16 @@ type AdminChrome = {
   handedOrderId: string | null;
   clearHandedOrder: () => void;
   readNotice: (key: string) => void;
+  /** The same staff read-cursor `readNotice` writes to (BUG-03) - lets a
+   * component check whether a specific key (e.g. one commission message)
+   * is already read, without opening its own parallel poll. */
+  noticeKeys: Set<string> | undefined;
+  noticeKeysReady: boolean;
 };
 
-const AdminChromeContext = createContext<AdminChrome | null>(null);
+// Exported so tests (e.g. `admin-commission-unread.spec.ts`) can wrap a
+// component in a fake chrome value without mounting the whole shell.
+export const AdminChromeContext = createContext<AdminChrome | null>(null);
 
 export function useOptionalAdminChrome() {
   return useContext(AdminChromeContext);
@@ -431,6 +438,8 @@ export function AdminShell({ children }: { children: ReactNode }) {
         handedOrderId,
         clearHandedOrder,
         readNotice,
+        noticeKeys: noticeReads.keys,
+        noticeKeysReady: noticeReads.ready,
       }}
     >
       <div className="admin-shell">

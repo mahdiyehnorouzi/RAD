@@ -168,16 +168,20 @@ export function DialogShell({
 
 export function Field({
   label,
+  hint,
   error,
   children,
 }: {
   label: string;
+  /** Short explanatory text shown under the label, above the control. */
+  hint?: string;
   error?: string;
   children: React.ReactNode;
 }) {
   return (
     <label className="field">
       <span>{label}</span>
+      {hint && <small className="field-hint">{hint}</small>}
       {children}
       {error && (
         <small className="field-error" role="alert">
