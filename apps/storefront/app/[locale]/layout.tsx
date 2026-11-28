@@ -17,6 +17,7 @@ import { LocaleProvider } from "@/components/i18n";
 import { CommerceProvider } from "@/components/commerce";
 import { CatalogIndexProvider } from "@/components/catalog";
 import { getCatalogIndex } from "@/lib/catalog/get-catalog-works";
+import { recover } from "@/lib/log";
 import { ProductOverlayGate } from "@/features/product-detail/transition/product-overlay-gate";
 import { AppNavigationTracker } from "@/features/navigation/app-navigation-tracker";
 import {
@@ -118,7 +119,11 @@ export default async function RootLayout({
   const { locale: segment } = await params;
   // The 404 page renders this layout without a `locale` param.
   const locale = isLocale(segment) ? segment : DEFAULT_LOCALE;
-  const catalogIndex = await getCatalogIndex();
+  // The navigation index must not take down every route (including the QR
+  // passport error boundary) during a transient catalog API outage.
+  const catalogIndex = await getCatalogIndex().catch(
+    recover("layout catalog index", []),
+  );
   const gaMeasurementId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
   const gaEnabled = Boolean(
     gaMeasurementId && /^G-[A-Z0-9]+$/i.test(gaMeasurementId),
