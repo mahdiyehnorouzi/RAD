@@ -731,6 +731,20 @@ export function ProductDialog({
               }
             />
           </Field>
+          <Field
+            label="استوری انگلیسی (اختیاری)"
+            hint="خالی بماند تا همان توضیحات فارسی برای نسخهٔ انگلیسی فروشگاه استفاده شود."
+          >
+            <textarea
+              dir="ltr"
+              rows={5}
+              value={draft.storyEn ?? ""}
+              disabled={locked}
+              onChange={(event) =>
+                setDraft({ ...draft, storyEn: event.target.value })
+              }
+            />
+          </Field>
         </div>
       </details>
 
