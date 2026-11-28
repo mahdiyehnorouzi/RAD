@@ -1,13 +1,13 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import {
-  ChevronLeft,
+  Check,
+  ChevronDown,
   ChevronRight,
   CircleDollarSign,
   Image as ImageIcon,
   ImagePlus,
   Package,
-  PackageCheck,
   Pencil,
   QrCode,
   SlidersHorizontal,
@@ -17,6 +17,11 @@ import {
 import { Button } from "@rad/ui";
 import { api, API_BASE } from "../../lib/api";
 import { formatRadCode } from "@rad/types";
+import { storefrontUrl } from "../../lib/storefront-url";
+import { StatusBadge } from "../../components/admin-list-chrome";
+import { productStatusTone } from "./admin-products";
+import { productSnapshot } from "./product-workspace";
+import "./products-workspace.css";
 import {
   isVideoStorage,
   productStatusLabel,
@@ -28,7 +33,7 @@ import {
   type ProductAttribute,
   type ProductAttributeValue,
 } from "../../lib/admin-data";
-import { Field, useBodyScrollLock } from "../../components/admin-dialog";
+import { Field } from "../../components/admin-dialog";
 import { ProductAttributeFields } from "../../components/admin-product-attribute-fields";
 import {
   canSelectAsCover,
@@ -38,6 +43,20 @@ import {
 } from "../../lib/product-cover";
 
 const number = new Intl.NumberFormat("fa-IR");
+
+/** Browser-ready URL. Relative catalog paths go through the admin API proxy. */
+function mediaSrc(src?: string | null) {
+  const value = src?.trim();
+  if (!value) return undefined;
+  if (
+    value.startsWith("data:") ||
+    value.startsWith("blob:") ||
+    value.startsWith("http")
+  ) {
+    return value;
+  }
+  return value.startsWith("/") ? `${API_BASE}${value}` : value;
+}
 
 export function parsePriceInput(raw: string) {
   const persian = "۰۱۲۳۴۵۶۷۸۹";
@@ -62,10 +81,14 @@ export function ProductDialog({
   onUploadImage,
   onFetchAttributes,
   onDelete,
+  canWrite = true,
+  onDirtyChange,
 }: {
   product: AdminProduct | null;
   onClose: () => void;
   onSave: (product: AdminProduct) => void | Promise<void>;
+  canWrite?: boolean;
+  onDirtyChange?: (dirty: boolean) => void;
   onUploadImage: (
     slug: string,
     file: File,
@@ -78,7 +101,6 @@ export function ProductDialog({
   onFetchAttributes: (category: string) => Promise<ProductAttribute[]>;
   onDelete?: () => void;
 }) {
-  useBodyScrollLock();
   const [draft, setDraft] = useState<AdminProduct>(
     product ?? {
       id: crypto.randomUUID(),
@@ -205,6 +227,48 @@ export function ProductDialog({
   const unresolvedUploads = Object.values(uploads).some(
     (item) => item.pending || item.error,
   );
+  const baseline = useRef<string | null>(null);
+  if (baseline.current === null) baseline.current = productSnapshot(draft);
+  const isDirty =
+    productSnapshot(draft) !== baseline.current || unresolvedUploads;
+  useEffect(() => {
+    onDirtyChange?.(isDirty);
+  }, [isDirty, onDirtyChange]);
+  useEffect(() => {
+    if (!isDirty) return;
+    const onLeave = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    window.addEventListener("beforeunload", onLeave);
+    return () => window.removeEventListener("beforeunload", onLeave);
+  }, [isDirty]);
+  useEffect(() => {
+    const viewport = window.visualViewport;
+    if (!viewport) return;
+    const sync = () => {
+      const overlap = Math.max(
+        0,
+        window.innerHeight - viewport.height - viewport.offsetTop,
+      );
+      document.documentElement.style.setProperty(
+        "--keyboard-inset",
+        `${overlap}px`,
+      );
+    };
+    sync();
+    viewport.addEventListener("resize", sync);
+    viewport.addEventListener("scroll", sync);
+    return () => {
+      viewport.removeEventListener("resize", sync);
+      viewport.removeEventListener("scroll", sync);
+      document.documentElement.style.removeProperty("--keyboard-inset");
+    };
+  }, []);
+  const titleRef = useRef<HTMLHeadingElement>(null);
+  useEffect(() => {
+    titleRef.current?.focus();
+  }, []);
   useEffect(() => {
     let mounted = true;
     api<{ image: number; video: number }>("/admin/media/limits")
@@ -218,10 +282,11 @@ export function ProductDialog({
           );
       });
     const activeControllers = controllers.current;
+    const previewUrls = previewUrlsRef.current;
     return () => {
       mounted = false;
       activeControllers.forEach((controller) => controller.abort());
-      previewUrlsRef.current.forEach((url) => URL.revokeObjectURL(url));
+      previewUrls.forEach((url) => URL.revokeObjectURL(url));
     };
   }, []);
   async function downloadProductQr(kind: "svg" | "png") {
@@ -421,64 +486,37 @@ export function ProductDialog({
       images: selectAsCover(item.images, index, uploads),
     }));
   const previewCover = coverImage(draft.images, uploads);
-  const sections: { id: string; label: string; icon: React.ReactNode }[] = [
-    { id: "section-basics", label: "اطلاعات اصلی", icon: <Pencil /> },
-    { id: "section-category", label: "دسته‌بندی", icon: <Tag /> },
-    {
-      id: "section-attributes",
-      label: "ویژگی‌های محصول",
-      icon: <SlidersHorizontal />,
-    },
-    {
-      id: "section-pricing",
-      label: "وضعیت و قیمت",
-      icon: <CircleDollarSign />,
-    },
-    { id: "section-images", label: "تصویر و ویدیوی اثر", icon: <ImageIcon /> },
-  ];
-  const [activeSection, setActiveSection] = useState(sections[0].id);
-  const goToSection = (id: string) => {
-    setActiveSection(id);
-    document
-      .getElementById(id)
-      ?.scrollIntoView({ block: "start", behavior: "smooth" });
-  };
+  const previewHref = draft.slug.trim()
+    ? storefrontUrl(`/products/${encodeURIComponent(draft.slug.trim())}`)
+    : "";
+  const locked = saving || !canWrite;
+  const radLabel = draft.radNumber
+    ? `RAD-${formatRadCode(draft.radNumber)}`
+    : product
+      ? "شماره بعد از ذخیره"
+      : "شماره تازه";
 
   return (
-    <div
-      className="editor-shell"
-      role="presentation"
-      onMouseDown={(event) => {
-        if (event.target === event.currentTarget) onClose();
-      }}
-    >
-      <form
-        className="editor-dialog"
-        onSubmit={submit}
-        noValidate
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="editor-title"
-      >
-        <aside className="editor-aside">
-          <Button variant="ghost" className="editor-back" onClick={onClose}>
-            <ChevronRight />
-            بازگشت به لیست
-          </Button>
-          <div className="editor-cover">
-            {previewCover?.src ? (
-              <img
-                className="product-thumb"
-                src={previewCover.src}
-                alt=""
-                style={{ objectFit: "cover" }}
-              />
-            ) : (
-              <div className="product-thumb">
+    <form className="product-editor" onSubmit={submit} noValidate>
+      <div className="product-editor-top">
+        <Button
+          variant="ghost"
+          className="product-back product-back-mobile"
+          onClick={onClose}
+        >
+          <ChevronRight />
+          بازگشت به لیست
+        </Button>
+        <div className="product-editor-identity">
+          <div className="product-editor-cover-stack">
+            <div className="product-editor-cover">
+              {mediaSrc(previewCover?.src) ? (
+                <img src={mediaSrc(previewCover?.src)} alt="" />
+              ) : (
                 <Package />
-              </div>
-            )}
-            <label htmlFor={coverInputId} className="upload-button">
+              )}
+            </div>
+            <label htmlFor={coverInputId} className="cover-change">
               <ImagePlus />
               تغییر کاور
             </label>
@@ -488,213 +526,250 @@ export function ProductDialog({
               type="file"
               accept="image/jpeg,image/png,image/webp"
               onChange={(event) => addImage(event, true)}
-              disabled={!limits || saving}
+              disabled={!limits || locked}
             />
           </div>
-          <nav className="editor-section-nav">
-            {sections.map((item) => (
-              <Button
-                key={item.id}
-                variant="ghost"
-                fullWidth
-                className={activeSection === item.id ? "active" : ""}
-                onClick={() => goToSection(item.id)}
-              >
-                {item.icon}
-                <span>{item.label}</span>
-                <ChevronLeft />
-              </Button>
-            ))}
-            {product && onDelete && (
-              <Button
-                variant="ghost"
-                fullWidth
-                className="danger"
-                onClick={onDelete}
-              >
-                <Trash2 />
-                <span>حذف محصول</span>
-              </Button>
-            )}
-          </nav>
-        </aside>
-
-        <div className="editor-main">
-          <div className="editor-main-head">
-            <h2 id="editor-title">{product ? "ویرایش اثر" : "اثر تازه"}</h2>
-            <Button type="submit" disabled={unresolvedUploads} loading={saving}>
-              <PackageCheck />
-              {uploadingCount > 0 ? "در حال بارگذاری…" : "ذخیره تغییرات"}
-            </Button>
+          <div className="product-editor-copy">
+            <span className="editor-kicker">
+              {product ? "ویرایش اثر" : "اثر تازه"}
+            </span>
+            <h2 id="editor-title" tabIndex={-1} ref={titleRef}>
+              {product ? draft.name || "ویرایش اثر" : "اثر تازه"}
+            </h2>
+            <p className="editor-meta">
+              <span>{draft.artist || "هنرمند"}</span>
+              <span className="editor-rad" dir="ltr">
+                {radLabel}
+              </span>
+            </p>
+            <StatusBadge
+              label={productStatusLabel(draft)}
+              tone={productStatusTone(draft)}
+            />
+            {isDirty ? (
+              <p className="editor-unsaved" role="status">
+                تغییرات ذخیره نشده
+              </p>
+            ) : null}
           </div>
+        </div>
+        <div className="product-editor-actions product-editor-actions-desktop">
+          <Button variant="ghost" className="product-back" onClick={onClose}>
+            <ChevronRight />
+            بازگشت به لیست
+          </Button>
+          <PreviewLink href={previewHref} />
+          <Button
+            type="submit"
+            disabled={!canWrite || unresolvedUploads}
+            loading={saving}
+          >
+            <Check />
+            {uploadingCount > 0 ? "در حال بارگذاری…" : "ذخیره تغییرات"}
+          </Button>
+        </div>
+      </div>
 
-          <section id="section-basics" className="editor-section-card">
-            <h3>
-              <Pencil />
-              اطلاعات اصلی
-            </h3>
-            <div className="form-grid">
-              <Field label="نام اثر" error={errors.name}>
-                <input
-                  value={draft.name}
-                  onChange={(event) =>
-                    setDraft({ ...draft, name: event.target.value })
-                  }
-                  aria-invalid={Boolean(errors.name)}
-                />
-              </Field>
-              <Field label="شناسه (خودکار)" error={errors.slug}>
+      <details className="editor-accordion" id="section-basics" open>
+        <summary>
+          <Pencil />
+          اطلاعات اصلی
+          <ChevronDown className="accordion-chevron" />
+        </summary>
+        <div className="editor-accordion-body">
+          <div className="form-grid">
+            <Field label="نام اثر" error={errors.name}>
+              <input
+                value={draft.name}
+                disabled={locked}
+                onChange={(event) =>
+                  setDraft({ ...draft, name: event.target.value })
+                }
+                aria-invalid={Boolean(errors.name)}
+              />
+            </Field>
+            <Field label="شناسه (خودکار)" error={errors.slug}>
+              <input
+                dir="ltr"
+                value={draft.slug}
+                readOnly={Boolean(product) || !canWrite}
+                disabled={locked && !product}
+                onChange={(event) =>
+                  setDraft({
+                    ...draft,
+                    slug: event.target.value.toLowerCase().replace(/\s+/g, "-"),
+                  })
+                }
+                aria-invalid={Boolean(errors.slug)}
+              />
+            </Field>
+            <Field label={draft.radNumber ? "شماره رَد" : "شماره رزروشده"}>
+              {product ? (
                 <input
                   dir="ltr"
-                  value={draft.slug}
-                  readOnly={Boolean(product)}
-                  onChange={(event) =>
-                    setDraft({
-                      ...draft,
-                      slug: event.target.value
-                        .toLowerCase()
-                        .replace(/\s+/g, "-"),
-                    })
+                  readOnly
+                  value={
+                    draft.radNumber
+                      ? `RAD-${formatRadCode(draft.radNumber)}`
+                      : "بعد از ذخیره ثبت می‌شود"
                   }
-                  aria-invalid={Boolean(errors.slug)}
                 />
-              </Field>
-              <Field label={draft.radNumber ? "شماره رَد" : "شماره رزروشده"}>
-                {product ? (
-                  <input
-                    dir="ltr"
-                    readOnly
-                    value={
-                      draft.radNumber
-                        ? `RAD-${formatRadCode(draft.radNumber)}`
-                        : "بعد از ذخیره ثبت می‌شود"
-                    }
-                  />
-                ) : (
-                  <select
-                    value={draft.reservedRadNumber ?? ""}
-                    onChange={(event) =>
-                      setDraft({
-                        ...draft,
-                        reservedRadNumber: event.target.value
-                          ? Number(event.target.value)
-                          : undefined,
-                      })
-                    }
-                  >
-                    <option value="">شماره تازه، بعد از ذخیره</option>
-                    {reservedNumbers.map((identity) => (
-                      <option key={identity.id} value={identity.radNumber}>
-                        {identity.label}
-                      </option>
-                    ))}
-                  </select>
-                )}
-              </Field>
-              {product ? (
-                <Field label="QR دائمی">
-                  {draft.radNumber ? (
-                    <>
-                      {qrSvg ? (
-                        <span
-                          aria-label={`QR ${formatRadCode(draft.radNumber)}`}
-                          dangerouslySetInnerHTML={{ __html: qrSvg }}
-                          style={{
-                            display: "inline-block",
-                            width: 96,
-                            height: 96,
-                          }}
-                        />
-                      ) : (
-                        <span>{qrNote || "QR آماده نیست."}</span>
-                      )}
-                      {qrSvg ? (
-                        <>
-                          <Button
-                            type="button"
-                            onClick={() => void downloadProductQr("svg")}
-                          >
-                            <QrCode />
-                            دانلود SVG
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="secondary"
-                            onClick={() => void downloadProductQr("png")}
-                          >
-                            دانلود PNG
-                          </Button>
-                        </>
-                      ) : null}
-                    </>
-                  ) : (
-                    <span>
-                      این اثر شماره رَد ندارد. برای آثار قبلی شماره تازه‌ای
-                      ساخته نمی‌شود.
-                    </span>
-                  )}
-                </Field>
-              ) : null}
-              <Field label="هنرمند" error={errors.artist}>
-                <input
-                  value={draft.artist}
-                  onChange={(event) =>
-                    setDraft({ ...draft, artist: event.target.value })
-                  }
-                  aria-invalid={Boolean(errors.artist)}
-                />
-              </Field>
-            </div>
-            <Field label="توضیحات اثر" error={errors.description}>
-              <textarea
-                rows={5}
-                value={draft.description}
-                onChange={(event) =>
-                  setDraft({ ...draft, description: event.target.value })
-                }
-                aria-invalid={Boolean(errors.description)}
-              />
-            </Field>
-            <Field label="زیرعنوان کوتاه (اختیاری)">
-              <input
-                value={draft.subtitle ?? ""}
-                placeholder="خالی بماند تا از ابتدای توضیحات ساخته شود"
-                onChange={(event) =>
-                  setDraft({ ...draft, subtitle: event.target.value })
-                }
-              />
-            </Field>
-          </section>
-
-          <section id="section-category" className="editor-section-card">
-            <h3>
-              <Tag />
-              دسته‌بندی
-            </h3>
-            <div className="form-grid">
-              <Field label="دسته‌بندی فرعی">
+              ) : (
                 <select
-                  value={draft.category}
+                  value={draft.reservedRadNumber ?? ""}
+                  disabled={locked}
                   onChange={(event) =>
                     setDraft({
                       ...draft,
-                      category: event.target.value as AdminProduct["category"],
+                      reservedRadNumber: event.target.value
+                        ? Number(event.target.value)
+                        : undefined,
                     })
                   }
                 >
-                  {PRODUCT_CATEGORY_LABELS.map((label) => (
-                    <option key={label}>{label}</option>
+                  <option value="">شماره تازه، بعد از ذخیره</option>
+                  {reservedNumbers.map((identity) => (
+                    <option key={identity.id} value={identity.radNumber}>
+                      {identity.label}
+                    </option>
                   ))}
                 </select>
-              </Field>
-            </div>
-          </section>
+              )}
+            </Field>
+            <Field label="هنرمند" error={errors.artist}>
+              <input
+                value={draft.artist}
+                disabled={locked}
+                onChange={(event) =>
+                  setDraft({ ...draft, artist: event.target.value })
+                }
+                aria-invalid={Boolean(errors.artist)}
+              />
+            </Field>
+          </div>
+        </div>
+      </details>
 
-          <section id="section-attributes" className="editor-section-card">
-            <h3>
-              <SlidersHorizontal />
-              ویژگی‌های محصول
-            </h3>
+      {product ? (
+        <details className="editor-accordion" id="section-identity">
+          <summary>
+            <QrCode />
+            شناسه و QR
+            <ChevronDown className="accordion-chevron" />
+          </summary>
+          <div className="editor-accordion-body">
+            <Field label="QR دائمی">
+              {draft.radNumber ? (
+                <>
+                  <p className="product-qr-url" dir="ltr">
+                    {`https://www.rad-object.com/r/${formatRadCode(draft.radNumber)}`}
+                  </p>
+                  {qrSvg ? (
+                    <span
+                      className="product-qr-preview"
+                      aria-label={`QR ${formatRadCode(draft.radNumber)}`}
+                      dangerouslySetInnerHTML={{ __html: qrSvg }}
+                    />
+                  ) : (
+                    <span>{qrNote || "QR آماده نیست."}</span>
+                  )}
+                  {qrSvg ? (
+                    <div className="product-qr-actions">
+                      <Button
+                        type="button"
+                        onClick={() => void downloadProductQr("svg")}
+                      >
+                        <QrCode />
+                        دانلود SVG
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        onClick={() => void downloadProductQr("png")}
+                      >
+                        دانلود PNG
+                      </Button>
+                    </div>
+                  ) : null}
+                </>
+              ) : (
+                <span>
+                  این اثر شماره رَد ندارد. برای آثار قبلی شماره تازه‌ای ساخته
+                  نمی‌شود.
+                </span>
+              )}
+            </Field>
+          </div>
+        </details>
+      ) : null}
+
+      <details className="editor-accordion" id="section-description">
+        <summary>
+          <Pencil />
+          توضیحات اثر
+          <ChevronDown className="accordion-chevron" />
+        </summary>
+        <div className="editor-accordion-body">
+          <Field label="توضیحات اثر" error={errors.description}>
+            <textarea
+              rows={5}
+              value={draft.description}
+              disabled={locked}
+              onChange={(event) =>
+                setDraft({ ...draft, description: event.target.value })
+              }
+              aria-invalid={Boolean(errors.description)}
+            />
+          </Field>
+          <Field label="زیرعنوان کوتاه (اختیاری)">
+            <input
+              value={draft.subtitle ?? ""}
+              disabled={locked}
+              placeholder="خالی بماند تا از ابتدای توضیحات ساخته شود"
+              onChange={(event) =>
+                setDraft({ ...draft, subtitle: event.target.value })
+              }
+            />
+          </Field>
+        </div>
+      </details>
+
+      <details className="editor-accordion" id="section-category">
+        <summary>
+          <Tag />
+          دسته‌بندی
+          <ChevronDown className="accordion-chevron" />
+        </summary>
+        <div className="editor-accordion-body">
+          <div className="form-grid">
+            <Field label="دسته‌بندی فرعی">
+              <select
+                value={draft.category}
+                disabled={locked}
+                onChange={(event) =>
+                  setDraft({
+                    ...draft,
+                    category: event.target.value as AdminProduct["category"],
+                  })
+                }
+              >
+                {PRODUCT_CATEGORY_LABELS.map((label) => (
+                  <option key={label}>{label}</option>
+                ))}
+              </select>
+            </Field>
+          </div>
+        </div>
+      </details>
+
+      <details className="editor-accordion" id="section-attributes">
+        <summary>
+          <SlidersHorizontal />
+          ویژگی‌های محصول
+          <ChevronDown className="accordion-chevron" />
+        </summary>
+        <div className="editor-accordion-body">
+          <fieldset className="editor-fields" disabled={locked}>
             <ProductAttributeFields
               attributes={categoryAttributes}
               loading={attributesLoading}
@@ -702,196 +777,252 @@ export function ProductDialog({
               errors={attributeErrors}
               onChange={setAttributeValue}
             />
-          </section>
-
-          <section id="section-pricing" className="editor-section-card">
-            <h3>
-              <CircleDollarSign />
-              وضعیت و قیمت
-            </h3>
-            <div className="form-grid">
-              <Field label="قیمت اثر (تومان)" error={errors.price}>
-                <input
-                  dir="ltr"
-                  inputMode="numeric"
-                  value={formatPriceInput(draft.price)}
-                  onChange={(event) =>
-                    setDraft({
-                      ...draft,
-                      price: parsePriceInput(event.target.value),
-                    })
-                  }
-                  aria-invalid={Boolean(errors.price)}
-                />
-              </Field>
-              <Field label="وضعیت اثر">
-                <select
-                  value={draft.status}
-                  disabled={Boolean(product?.held)}
-                  title={
-                    product?.held ? productStatusLabel(product) : undefined
-                  }
-                  onChange={(event) =>
-                    setDraft({
-                      ...draft,
-                      status: event.target.value as AdminProduct["status"],
-                    })
-                  }
-                >
-                  {productStatusOptions(product?.status).map((value) => (
-                    <option key={value} value={value}>
-                      {productStatusLabels[value]}
-                    </option>
-                  ))}
-                </select>
-              </Field>
-            </div>
-          </section>
-
-          <section id="section-images" className="editor-section-card">
-            <h3>
-              <ImageIcon />
-              تصویر و ویدیوی اثر
-            </h3>
-            <div className="image-editor">
-              <p>
-                حداقل یک تصویر لازم است. تصویر کاور در کارت فروشگاه و اولین
-                تصویر صفحهٔ اثر نمایش داده می‌شود.
-              </p>
-              <p>
-                {limits
-                  ? `تصویر JPEG، PNG، WebP تا ${number.format(limits.image / 1024 / 1024)} مگابایت؛ ویدیوی MP4، WebM تا ${number.format(limits.video / 1024 / 1024)} مگابایت.`
-                  : "در حال دریافت محدودیت فایل…"}
-              </p>
-              <label htmlFor={mediaInputId} className="upload-button">
-                <ImagePlus /> افزودن تصویر یا ویدیو
-              </label>
-              <input
-                id={mediaInputId}
-                className="sr-file"
-                type="file"
-                multiple
-                accept="image/jpeg,image/png,image/webp,video/mp4,video/webm"
-                onChange={(event) => addImage(event)}
-                disabled={!limits || saving}
-              />
-              {imageError && (
-                <p className="field-error" role="alert">
-                  {imageError}
-                </p>
-              )}
-              {unresolvedUploads && (
-                <p role="status">
-                  برای ذخیره، منتظر پایان بارگذاری بمانید و فایل‌های ناموفق را
-                  دوباره بارگذاری یا حذف کنید.
-                </p>
-              )}
-              <div className="product-media-list">
-                {draft.images.map((image, index) => {
-                  const upload = image.src ? uploads[image.src] : undefined;
-                  const isCover = coverImage(draft.images, uploads) === image;
-                  const coverReady = canSelectAsCover(image, upload);
-                  return (
-                    <div
-                      className={`product-media-item${isCover ? " is-cover" : ""}`}
-                      key={image.src || image.objectKey || index}
-                    >
-                      {isVideoStorage(image.storage) ? (
-                        <video
-                          src={image.src ?? undefined}
-                          controls
-                          playsInline
-                          preload="metadata"
-                        />
-                      ) : (
-                        <img
-                          src={image.src ?? undefined}
-                          alt={`تصویر ${number.format(index + 1)}`}
-                        />
-                      )}
-                      {isCover && (
-                        <span className="cover-badge">کاور انتخاب‌شده</span>
-                      )}
-                      {upload && <small>{upload.file.name}</small>}
-                      {upload?.pending && (
-                        <>
-                          <progress
-                            max={100}
-                            value={upload.progress}
-                            aria-label="پیشرفت بارگذاری"
-                          />
-                          <small role="status">
-                            {upload.progress === 100
-                              ? "در حال بررسی فایل…"
-                              : `بارگذاری ${number.format(upload.progress)}٪`}
-                          </small>
-                        </>
-                      )}
-                      {upload?.error && (
-                        <p className="field-error" role="alert">
-                          {upload.error}
-                        </p>
-                      )}
-                      <div className="product-media-actions">
-                        {!isVideoStorage(image.storage) && (
-                          <Button
-                            variant="secondary"
-                            size="sm"
-                            className={isCover ? "cover-selected" : ""}
-                            disabled={saving || isCover || !coverReady}
-                            onClick={() => setCover(index)}
-                          >
-                            {isCover ? "کاور فعلی" : "انتخاب به‌عنوان کاور"}
-                          </Button>
-                        )}
-                        {upload?.error && (
-                          <Button
-                            variant="secondary"
-                            size="sm"
-                            onClick={() =>
-                              void uploadFile(upload.file, image.src!)
-                            }
-                          >
-                            تلاش دوباره
-                          </Button>
-                        )}
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          className="content-danger"
-                          disabled={saving}
-                          onClick={() => removeMedia(index)}
-                          aria-label={`حذف فایل ${number.format(index + 1)}`}
-                        >
-                          حذف
-                        </Button>
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          disabled={saving || index === 0}
-                          onClick={() => moveMedia(index, -1)}
-                          aria-label={`جابه‌جایی فایل ${number.format(index + 1)} به قبل`}
-                        >
-                          قبل
-                        </Button>
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          disabled={saving || index === draft.images.length - 1}
-                          onClick={() => moveMedia(index, 1)}
-                          aria-label={`جابه‌جایی فایل ${number.format(index + 1)} به بعد`}
-                        >
-                          بعد
-                        </Button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </section>
+          </fieldset>
         </div>
-      </form>
-    </div>
+      </details>
+
+      <details className="editor-accordion" id="section-pricing">
+        <summary>
+          <CircleDollarSign />
+          وضعیت و قیمت
+          <ChevronDown className="accordion-chevron" />
+        </summary>
+        <div className="editor-accordion-body">
+          <div className="form-grid">
+            <Field label="قیمت اثر (تومان)" error={errors.price}>
+              <input
+                dir="ltr"
+                inputMode="numeric"
+                value={formatPriceInput(draft.price)}
+                disabled={locked}
+                onChange={(event) =>
+                  setDraft({
+                    ...draft,
+                    price: parsePriceInput(event.target.value),
+                  })
+                }
+                aria-invalid={Boolean(errors.price)}
+              />
+            </Field>
+            <Field label="وضعیت اثر">
+              <select
+                value={draft.status}
+                disabled={locked || Boolean(product?.held)}
+                title={product?.held ? productStatusLabel(product) : undefined}
+                onChange={(event) =>
+                  setDraft({
+                    ...draft,
+                    status: event.target.value as AdminProduct["status"],
+                  })
+                }
+              >
+                {productStatusOptions(product?.status).map((value) => (
+                  <option key={value} value={value}>
+                    {productStatusLabels[value]}
+                  </option>
+                ))}
+              </select>
+            </Field>
+          </div>
+        </div>
+      </details>
+
+      <details className="editor-accordion" id="section-images">
+        <summary>
+          <ImageIcon />
+          تصویر و ویدیوی اثر
+          <ChevronDown className="accordion-chevron" />
+        </summary>
+        <div className="editor-accordion-body">
+          <p>
+            حداقل یک تصویر لازم است. تصویر کاور در کارت فروشگاه و اولین تصویر
+            صفحهٔ اثر نمایش داده می‌شود.
+          </p>
+          <p>
+            {limits
+              ? `تصویر JPEG، PNG، WebP تا ${number.format(limits.image / 1024 / 1024)} مگابایت؛ ویدیوی MP4، WebM تا ${number.format(limits.video / 1024 / 1024)} مگابایت.`
+              : "در حال دریافت محدودیت فایل…"}
+          </p>
+          {imageError && (
+            <p className="field-error" role="alert">
+              {imageError}
+            </p>
+          )}
+          {unresolvedUploads && (
+            <p role="status">
+              برای ذخیره، منتظر پایان بارگذاری بمانید و فایل‌های ناموفق را
+              دوباره بارگذاری یا حذف کنید.
+            </p>
+          )}
+          <div className="artwork-media-grid">
+            {draft.images.map((image, index) => {
+              const upload = image.src ? uploads[image.src] : undefined;
+              const isCover = coverImage(draft.images, uploads) === image;
+              const coverReady = canSelectAsCover(image, upload);
+              const shown = mediaSrc(image.src);
+              return (
+                <div
+                  className={`artwork-media-card${isCover ? " is-cover" : ""}${shown ? "" : " is-missing"}`}
+                  key={image.src || image.objectKey || index}
+                >
+                  <div className="artwork-media-frame">
+                    {isVideoStorage(image.storage) ? (
+                      <video
+                        src={shown}
+                        controls
+                        playsInline
+                        preload="metadata"
+                      />
+                    ) : shown ? (
+                      <img
+                        src={shown}
+                        alt={`تصویر ${number.format(index + 1)}`}
+                      />
+                    ) : (
+                      <span className="media-missing">
+                        فایل تصویر موجود نیست
+                      </span>
+                    )}
+                    {isCover && (
+                      <span className="cover-badge">کاور انتخاب‌شده</span>
+                    )}
+                  </div>
+                  {upload && <small>{upload.file.name}</small>}
+                  {upload?.pending && (
+                    <>
+                      <progress
+                        max={100}
+                        value={upload.progress}
+                        aria-label="پیشرفت بارگذاری"
+                      />
+                      <small role="status">
+                        {upload.progress === 100
+                          ? "در حال بررسی فایل…"
+                          : `بارگذاری ${number.format(upload.progress)}٪`}
+                      </small>
+                    </>
+                  )}
+                  {upload?.error && (
+                    <p className="field-error" role="alert">
+                      {upload.error}
+                    </p>
+                  )}
+                  <div className="artwork-media-actions">
+                    {!isVideoStorage(image.storage) && !isCover && (
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        disabled={locked || !coverReady}
+                        onClick={() => setCover(index)}
+                        aria-label="انتخاب به‌عنوان کاور"
+                      >
+                        کاور
+                      </Button>
+                    )}
+                    {upload?.error && (
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => void uploadFile(upload.file, image.src!)}
+                      >
+                        تلاش دوباره
+                      </Button>
+                    )}
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      className="content-danger"
+                      disabled={locked}
+                      onClick={() => removeMedia(index)}
+                      aria-label={`حذف فایل ${number.format(index + 1)}`}
+                    >
+                      حذف
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      disabled={locked || index === 0}
+                      onClick={() => moveMedia(index, -1)}
+                      aria-label={`جابه‌جایی فایل ${number.format(index + 1)} به قبل`}
+                    >
+                      قبل
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      disabled={locked || index === draft.images.length - 1}
+                      onClick={() => moveMedia(index, 1)}
+                      aria-label={`جابه‌جایی فایل ${number.format(index + 1)} به بعد`}
+                    >
+                      بعد
+                    </Button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          <label htmlFor={mediaInputId} className="media-add">
+            <ImagePlus /> افزودن تصویر یا ویدیو
+          </label>
+          <input
+            id={mediaInputId}
+            className="sr-file"
+            type="file"
+            multiple
+            accept="image/jpeg,image/png,image/webp,video/mp4,video/webm"
+            onChange={(event) => addImage(event)}
+            disabled={!limits || locked}
+          />
+        </div>
+      </details>
+
+      <div className="product-editor-footer">
+        {product && onDelete ? (
+          <Button
+            variant="ghost"
+            className="content-danger"
+            onClick={onDelete}
+            disabled={!canWrite}
+          >
+            <Trash2 />
+            حذف محصول
+          </Button>
+        ) : (
+          <span />
+        )}
+      </div>
+
+      <div className="product-editor-dock">
+        <PreviewLink href={previewHref} />
+        <Button
+          type="submit"
+          disabled={!canWrite || unresolvedUploads}
+          loading={saving}
+        >
+          <Check />
+          {uploadingCount > 0 ? "در حال بارگذاری…" : "ذخیره تغییرات"}
+        </Button>
+      </div>
+    </form>
+  );
+}
+
+function PreviewLink({ href }: { href: string }) {
+  if (!href) {
+    return (
+      <Button variant="secondary" disabled>
+        پیش‌نمایش
+      </Button>
+    );
+  }
+  return (
+    <a
+      className="rad-button rad-button-secondary rad-button-md"
+      href={href}
+      target="_blank"
+      rel="noreferrer"
+    >
+      پیش‌نمایش
+    </a>
   );
 }
