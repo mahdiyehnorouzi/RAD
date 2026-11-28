@@ -119,8 +119,9 @@ export default async function RootLayout({
   const { locale: segment } = await params;
   // The 404 page renders this layout without a `locale` param.
   const locale = isLocale(segment) ? segment : DEFAULT_LOCALE;
-  // The navigation index must not take down every route (including the QR
-  // passport error boundary) during a transient catalog API outage.
+  // A transient catalog-API hiccup must degrade search/breadcrumbs, not take
+  // down every page this root layout wraps (BUG-12: this previously left a
+  // scanned QR's passport page, and any other page, rendering nothing).
   const catalogIndex = await getCatalogIndex().catch(
     recover("layout catalog index", []),
   );

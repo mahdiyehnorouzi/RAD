@@ -64,7 +64,13 @@ export default async function PassportDetail({
     resolvePassport(code),
     // Related works are optional; never fail an otherwise valid passport
     // because a separate catalog listing request failed.
-    getCatalog().catch(recover(`passport related artworks ${code}`, { artworks: [], products: [], origin: "api" as const })),
+    getCatalog().catch(
+      recover(`passport catalog ${code}`, {
+        artworks: [],
+        products: [],
+        origin: "registry" as const,
+      }),
+    ),
   ]);
   if (!passport) notFound();
   const passports = passportsFrom(artworks);
