@@ -247,6 +247,12 @@ textarea:focus-visible {
   grid-template-columns: 22px minmax(0, 1fr) 18px;
   align-items: center;
   gap: 12px;
+  /* Explicit here, not left to the shared Button component: some nav
+     items render as <Link> (route-backed sections) and some as <Button>
+     (local sections). Without this, only the Button-rendered rows got a
+     44px tap target from `.rad-button-md`'s min-height, so rows shifted
+     height depending on which element they happened to render as. */
+  min-height: 44px;
   padding: 13px 14px;
   border: 0;
   background: transparent;
@@ -1693,6 +1699,13 @@ td select,
     min-width: 44px;
     font-size: 0;
     padding: 0 11px;
+    /* The label text is visually collapsed (font-size: 0) rather than
+       removed, so it stays readable to assistive tech — but `.rad-button`'s
+       flex `gap: 8px` still reserved space for it as a layout item, pushing
+       the Plus/icon off-center inside the now icon-only button. Zeroing
+       the gap here removes that phantom space without touching the
+       shared Button component. */
+    gap: 0;
   }
   .view-heading .rad-button svg {
     margin: 0;
@@ -1982,20 +1995,7 @@ td select,
   overflow-wrap: anywhere;
 }
 .contact-message-reply-box {
-  display: flex;
-  gap: 8px;
-  align-items: flex-end;
   margin-top: 10px;
-}
-.contact-message-reply-box textarea {
-  flex: 1;
-  min-width: 0;
-  border: 1px solid var(--line);
-  background: #fffaf2;
-  border-radius: var(--radius-sm, 8px);
-  padding: 8px 10px;
-  font: inherit;
-  resize: vertical;
 }
 .contact-message footer {
   display: flex;
@@ -3053,7 +3053,19 @@ table.products-table {
   overflow-x: hidden;
   overflow-y: auto;
 }
-.commission-card {
+/* `button.commission-card` (not plain `.commission-card`): the shared
+   Button component renders this as a <button> with its own `.rad-button`
+   class carrying `display: inline-flex`. Both selectors are single
+   classes of equal specificity, so without the extra `button` qualifier
+   here the winner is whichever stylesheet happens to load second in the
+   webpack/Next bundle graph — globals.css (this file) loads first via the
+   root layout, and @rad/ui's button.css loads after it via the component
+   tree, so `.rad-button`'s row layout silently won and every card's text
+   nodes were squeezed into a single-column flex row and wrapped
+   character-by-character by the `overflow-wrap: anywhere` below. Scoping
+   to the element makes this grid layout win on specificity alone,
+   regardless of load order. */
+button.commission-card {
   min-width: 0;
   overflow-wrap: anywhere;
   display: grid;
@@ -3144,7 +3156,12 @@ table.products-table {
   border-radius: var(--radius-md);
   padding: 22px;
 }
-.commission-detail-close {
+/* Scoped to the element for the same reason as `button.commission-card`
+   above: this is a <button> (@rad/ui's Button), and `display: none` here
+   must deterministically beat `.rad-button`'s `display: inline-flex`
+   regardless of CSS load order, or the mobile-only back button can leak
+   into the desktop two-column layout where it is redundant. */
+button.commission-detail-close {
   display: none;
   align-items: center;
   gap: 6px;
@@ -3248,7 +3265,10 @@ table.products-table {
   grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
   gap: 10px;
 }
-.commission-file {
+/* Element-scoped, same cascade reason as `button.commission-card` above:
+   this is a <button> and must reliably win over `.rad-button`'s
+   `display: inline-flex`. */
+button.commission-file {
   display: block;
   width: 100%;
   aspect-ratio: 1;
@@ -3318,7 +3338,8 @@ table.products-table {
   object-fit: contain;
   border-radius: var(--radius-sm);
 }
-.commission-lightbox-nav {
+/* Element-scoped, same cascade reason as `button.commission-card` above. */
+button.commission-lightbox-nav {
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
@@ -3374,14 +3395,6 @@ table.products-table {
 .commission-message {
   display: grid;
   gap: 8px;
-}
-.commission-message textarea {
-  width: 100%;
-  border: 1px solid var(--line);
-  background: #fffaf2;
-  padding: 10px 12px;
-  border-radius: var(--radius-sm);
-  font-size: 16px;
 }
 .commission-decide {
   display: grid;
@@ -3579,7 +3592,7 @@ table.products-table {
   .commission-view.has-detail .commission-filters {
     display: none;
   }
-  .commission-detail-close {
+  button.commission-detail-close {
     display: inline-flex;
   }
   .commission-detail {

@@ -1,15 +1,8 @@
 "use client";
 import { useMemo, useRef, useState } from "react";
 import { effectiveProductStatus, formatRadCode } from "@rad/types";
-import {
-  ChevronLeft,
-  ChevronRight,
-  Package,
-  Plus,
-  Search,
-  X,
-} from "lucide-react";
-import { Button } from "@rad/ui";
+import { ChevronLeft, ChevronRight, Package, Plus, Search } from "lucide-react";
+import { AdminSearchField, Button } from "@rad/ui";
 import {
   productStatusLabel,
   productStatusLabels,
@@ -130,34 +123,19 @@ export function Products({
           افزودن اثر
         </Button>
       </div>
-      <div className="product-search">
-        <Search />
-        <input
-          ref={inputRef}
-          value={query}
-          onChange={(event) => {
-            setQuery(event.target.value);
-            resetToFirstPage();
-          }}
-          placeholder="جست‌وجوی نام، هنرمند یا شناسه"
-          aria-label="جست‌وجوی محصولات"
-        />
-        {query && (
-          <Button
-            variant="ghost"
-            shape="icon"
-            size="sm"
-            onClick={() => {
-              setQuery("");
-              inputRef.current?.focus();
-              resetToFirstPage();
-            }}
-            aria-label="پاک کردن جست‌وجو"
-          >
-            <X />
-          </Button>
-        )}
-      </div>
+      <AdminSearchField
+        ref={inputRef}
+        icon={<Search />}
+        value={query}
+        onChange={(next) => {
+          setQuery(next);
+          resetToFirstPage();
+          if (!next) inputRef.current?.focus();
+        }}
+        placeholder="جست‌وجوی نام، هنرمند یا شناسه"
+        aria-label="جست‌وجوی محصولات"
+        clearLabel="پاک کردن جست‌وجو"
+      />
       <div className="product-filters">
         <select
           className="filter-select"

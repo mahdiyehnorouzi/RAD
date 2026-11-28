@@ -47,8 +47,13 @@ const reply = message({
 });
 
 function buttons(root: DomNode, label: string) {
-  return elements(root, "button").filter((node) =>
-    textOf(node).includes(label),
+  // `AdminMessageComposer`'s send button is icon-only (Telegram-style),
+  // named by `aria-label` rather than visible text — match either so this
+  // helper still finds it alongside every other, text-labeled button.
+  return elements(root, "button").filter(
+    (node) =>
+      textOf(node).includes(label) ||
+      (node.getAttribute("aria-label") ?? "").includes(label),
   );
 }
 

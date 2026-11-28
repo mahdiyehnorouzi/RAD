@@ -1,7 +1,10 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { planIdentityRequest } from "./plan";
-import { identityHoldDocument } from "./hold-document";
+import {
+  identityHoldDocument,
+  identityNotFoundDocument,
+} from "./hold-document";
 
 const reserved = {
   radNumber: 84,
@@ -107,5 +110,32 @@ test("a QR cannot redirect to another identity or an external URL", () => {
       },
     });
     assert.equal(plan.status, 200);
+  }
+});
+
+test("unknown QR numbers get a readable, nonindexed 404 document in both locales", () => {
+  const fa = identityNotFoundDocument("fa");
+  const en = identityNotFoundDocument("en");
+  assert.match(fa, /<!doctype html>/);
+  assert.match(fa, /شماره رَد پیدا نشد/);
+  assert.match(fa, /noindex/);
+  assert.match(fa, /dir="rtl"/);
+  assert.match(en, /RAD number not found/);
+  assert.match(en, /dir="ltr"/);
+});
+
+test("retired or unpublished assigned identities never redirect to a passport", () => {
+  for (const identity of [
+    { ...reserved, status: "retired" as const, storyPublished: false },
+    { ...reserved, status: "assigned" as const, storyPublished: false },
+  ]) {
+    assert.equal(
+      planIdentityRequest({
+        code: "084",
+        search: "",
+        lookup: { kind: "found", identity },
+      }).status,
+      200,
+    );
   }
 });

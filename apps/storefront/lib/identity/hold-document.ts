@@ -59,3 +59,30 @@ export function identityHoldDocument(input: {
 </body>
 </html>`;
 }
+
+/** A real 404 page for an unknown printed number, not a misleading reserved tag. */
+export function identityNotFoundDocument(locale: Locale) {
+  const fa = locale === "fa";
+  const title = fa ? "این شماره رَد پیدا نشد" : "RAD number not found";
+  const message = fa
+    ? "برای این شماره شناسنامه‌ای ثبت نشده. شماره روی برچسب را بررسی کنید."
+    : "There is no identity record for this number. Check the number on the tag.";
+  return `<!doctype html>
+<html lang="${locale}" dir="${fa ? "rtl" : "ltr"}">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex" />
+  <title>${title}</title>
+  <style>
+    body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #eee7dc; color: #18231f; font-family: Tahoma, sans-serif; }
+    main { width: min(28rem, calc(100% - 2.5rem)); }
+    p { font-size: 1.05rem; line-height: 1.8; }
+    a { color: #263d34; }
+  </style>
+</head>
+<body>
+  <main><h1>${title}</h1><p>${message}</p><p><a href="/">${fa ? "بازگشت به رَد" : "Back to RAD"}</a></p></main>
+</body>
+</html>`;
+}
