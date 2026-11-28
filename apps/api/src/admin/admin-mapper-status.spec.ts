@@ -53,3 +53,17 @@ test("an available product never exposes reservedUntil, even with a stale holdEx
   );
   assert.equal(result.reservedUntil, undefined);
 });
+
+test("storyEn exposes en.story so Admin can edit the English translation (RAD-156)", () => {
+  const result = toAdminProduct(
+    product({
+      en: { name: "Moon vase", subtitle: "x", story: "English story" },
+    }),
+  );
+  assert.equal(result.storyEn, "English story");
+});
+
+test("storyEn is undefined when en has no story (never set, or legacy row)", () => {
+  const result = toAdminProduct(product({ en: { name: "Moon vase" } }));
+  assert.equal(result.storyEn, undefined);
+});
