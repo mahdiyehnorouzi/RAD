@@ -14,10 +14,15 @@ import {
 import { absoluteUrl, pageMetadata, safeJsonLd } from "@/lib/seo";
 import { recover } from "@/lib/log";
 
+// Published identities can be assigned after the production build. Never cache
+// a prerendered 404 or an earlier passport under a permanent printed QR.
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 const resolvePassport = cache(async (code: string) => {
-  const artwork = await resolveArtwork(code).catch(
-    recover(`passport ${code}`, null),
-  );
+  // A failed artwork API is not a missing passport. Allow the route error
+  // boundary to render an actionable error instead of a misleading 404.
+  const artwork = await resolveArtwork(code);
   return artwork ? passportFromArtwork(artwork) : null;
 });
 
@@ -57,7 +62,9 @@ export default async function PassportDetail({
   const { code } = await params;
   const [passport, { artworks }] = await Promise.all([
     resolvePassport(code),
-    getCatalog(),
+    // Related works are optional; never fail an otherwise valid passport
+    // because a separate catalog listing request failed.
+    getCatalog().catch(recover(`passport related artworks ${code}`, { artworks: [], products: [], origin: "api" as const })),
   ]);
   if (!passport) notFound();
   const passports = passportsFrom(artworks);
