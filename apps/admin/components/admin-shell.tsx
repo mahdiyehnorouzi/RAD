@@ -35,6 +35,10 @@ import {
 } from "lucide-react";
 import { useStaffNoticeReads } from "../hooks/use-staff-notice-reads";
 import {
+  commissionNoticeHash,
+  latestCustomerMessage,
+} from "../lib/commission-notice-link";
+import {
   commissionNoticeKey,
   messageNoticeKey,
   orderNoticeKey,
@@ -135,6 +139,8 @@ export function AdminShell({ children }: { children: ReactNode }) {
   const toastTimer = useRef<number | undefined>(undefined);
   useEffect(() => () => window.clearTimeout(toastTimer.current), []);
   const [noticesOpen, setNoticesOpen] = useState(false);
+  const noticeMenuRef = useRef<HTMLDivElement>(null);
+  const noticeBellRef = useRef<HTMLButtonElement>(null);
   const reviewsActive = isReviewsPath(pathname);
   const helpActive = isHelpPath(pathname);
   const messagesActive = isMessagesPath(pathname);
@@ -166,6 +172,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
 
   const go = (next: AdminSection) => {
     setMobileNav(false);
+    setNoticesOpen(false);
     const action = startSectionSelect(
       { pathname, section },
       pendingNav.current,
@@ -196,10 +203,50 @@ export function AdminShell({ children }: { children: ReactNode }) {
     if (!action.pending) setHandedOrderId(orderId);
   };
 
+  const openCommissionNotice = (targetHash: string) => {
+    setNoticesOpen(false);
+    setMobileNav(false);
+    const action = startSectionSelect(
+      { pathname, section: sectionRef.current },
+      pendingNav.current,
+      "commissions",
+    );
+    pendingNav.current = action.pending;
+    skipPathLoad.current = action.skip;
+    if (action.section !== sectionRef.current) setSection(action.section);
+    sectionRef.current = action.section;
+    const url = `/${targetHash}`;
+    if (action.push) router.push(url);
+    else if (action.replace) router.replace(url);
+    else window.location.hash = targetHash;
+    if (action.load) void workspace.loadSection(action.load);
+  };
+
+  useEffect(() => {
+    if (!noticesOpen) return;
+    const onPointerDown = (event: PointerEvent) => {
+      if (!noticeMenuRef.current?.contains(event.target as Node)) {
+        setNoticesOpen(false);
+      }
+    };
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      setNoticesOpen(false);
+      noticeBellRef.current?.focus();
+    };
+    document.addEventListener("pointerdown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [noticesOpen]);
+
   const followStudioLink = (
     route: "reviews" | "help" | "messages" | "shape" | "products" | "tags",
   ) => {
     setMobileNav(false);
+    setNoticesOpen(false);
     const visible = { pathname, section: sectionRef.current };
     const action =
       route === "reviews"
@@ -549,7 +596,10 @@ export function AdminShell({ children }: { children: ReactNode }) {
               variant="ghost"
               shape="icon"
               className="menu-button"
-              onClick={() => setMobileNav(true)}
+              onClick={() => {
+                setNoticesOpen(false);
+                setMobileNav(true);
+              }}
               aria-label="باز کردن منو"
             >
               <Menu />
@@ -558,12 +608,14 @@ export function AdminShell({ children }: { children: ReactNode }) {
               <span className="context-label">رَد / عملیات استودیو</span>
               <h1>{title}</h1>
             </div>
-            <div className="admin-notice-menu">
+            <div className="admin-notice-menu" ref={noticeMenuRef}>
               <button
+                ref={noticeBellRef}
                 type="button"
                 className="topbar-bell"
                 aria-label="اعلان‌های استودیو"
                 aria-expanded={noticesOpen}
+                aria-controls="admin-notices"
                 onClick={() => setNoticesOpen((open) => !open)}
               >
                 <Bell />
@@ -574,40 +626,72 @@ export function AdminShell({ children }: { children: ReactNode }) {
                 )}
               </button>
               {noticesOpen && (
-                <section className="admin-notice-panel" aria-label="اعلان‌ها">
+                <section
+                  id="admin-notices"
+                  className="admin-notice-panel"
+                  aria-label="اعلان‌ها"
+                >
                   <strong>اعلان‌های خوانده‌نشده</strong>
                   {openMessages > 0 && (
-                    <Button
-                      variant="ghost"
+                    <button
+                      type="button"
+                      className="admin-notice-row"
                       onClick={() => {
                         setNoticesOpen(false);
                         go("messages");
                       }}
                     >
-                      {number.format(openMessages)} گفت‌وگوی خوانده‌نشده
-                    </Button>
+                      <span className="admin-notice-dot" aria-hidden="true" />
+                      <span className="admin-notice-copy">
+                        <b>
+                          {number.format(openMessages)} گفت‌وگوی خوانده‌نشده
+                        </b>
+                      </span>
+                    </button>
                   )}
                   {pendingOrders.map((order) => (
-                    <Button
+                    <button
                       key={order.id}
-                      variant="ghost"
+                      type="button"
+                      className="admin-notice-row"
                       onClick={() => {
                         setNoticesOpen(false);
                         openOrder(order.id);
                       }}
                     >
-                      سفارش فروشگاه · {order.id}
-                    </Button>
+                      <span className="admin-notice-dot" aria-hidden="true" />
+                      <span className="admin-notice-copy">
+                        <b>سفارش فروشگاه</b>
+                        <span className="admin-notice-id">{order.id}</span>
+                      </span>
+                    </button>
                   ))}
-                  {pendingCommissions.map((commission) => (
-                    <a
-                      key={commission.id}
-                      href={`/#commissions/${encodeURIComponent(commission.id)}`}
-                      onClick={() => setNoticesOpen(false)}
-                    >
-                      سفارش اختصاصی · {commission.id}
-                    </a>
-                  ))}
+                  {pendingCommissions.map((commission) => {
+                    const message = latestCustomerMessage(commission);
+                    return (
+                      <a
+                        key={commission.id}
+                        className="admin-notice-row"
+                        href={`/${commissionNoticeHash(commission)}`}
+                        onClick={(event) => {
+                          event.preventDefault();
+                          openCommissionNotice(
+                            commissionNoticeHash(commission),
+                          );
+                        }}
+                      >
+                        <span className="admin-notice-dot" aria-hidden="true" />
+                        <span className="admin-notice-copy">
+                          <b>
+                            {message ? "پیام سفارش اختصاصی" : "سفارش اختصاصی"}
+                          </b>
+                          <span className="admin-notice-id">
+                            {commission.id}
+                          </span>
+                        </span>
+                      </a>
+                    );
+                  })}
                   {!notificationCount && <p>اعلان خوانده‌نشده‌ای نیست.</p>}
                 </section>
               )}

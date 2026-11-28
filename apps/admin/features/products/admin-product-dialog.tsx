@@ -83,12 +83,15 @@ export function ProductDialog({
   onDelete,
   canWrite = true,
   onDirtyChange,
+  focusStory = false,
 }: {
   product: AdminProduct | null;
   onClose: () => void;
   onSave: (product: AdminProduct) => void | Promise<void>;
   canWrite?: boolean;
   onDirtyChange?: (dirty: boolean) => void;
+  /** Scroll to the existing story field. Does not add a second editor. */
+  focusStory?: boolean;
   onUploadImage: (
     slug: string,
     file: File,
@@ -101,6 +104,17 @@ export function ProductDialog({
   onFetchAttributes: (category: string) => Promise<ProductAttribute[]>;
   onDelete?: () => void;
 }) {
+  const descriptionRef = useRef<HTMLDetailsElement>(null);
+  useEffect(() => {
+    if (!focusStory) return;
+    if (descriptionRef.current) descriptionRef.current.open = true;
+    const frame = requestAnimationFrame(() => {
+      document
+        .getElementById("artwork-story")
+        ?.scrollIntoView({ block: "start", behavior: "smooth" });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [focusStory]);
   const [draft, setDraft] = useState<AdminProduct>(
     product ?? {
       id: crypto.randomUUID(),
@@ -703,34 +717,40 @@ export function ProductDialog({
         </details>
       ) : null}
 
-      <details className="editor-accordion" id="section-description">
+      <details
+        className="editor-accordion"
+        id="section-description"
+        ref={descriptionRef}
+      >
         <summary>
           <Pencil />
           توضیحات اثر
           <ChevronDown className="accordion-chevron" />
         </summary>
         <div className="editor-accordion-body">
-          <Field label="توضیحات اثر" error={errors.description}>
-            <textarea
-              rows={5}
-              value={draft.description}
-              disabled={locked}
-              onChange={(event) =>
-                setDraft({ ...draft, description: event.target.value })
-              }
-              aria-invalid={Boolean(errors.description)}
-            />
-          </Field>
-          <Field label="زیرعنوان کوتاه (اختیاری)">
-            <input
-              value={draft.subtitle ?? ""}
-              disabled={locked}
-              placeholder="خالی بماند تا از ابتدای توضیحات ساخته شود"
-              onChange={(event) =>
-                setDraft({ ...draft, subtitle: event.target.value })
-              }
-            />
-          </Field>
+          <div id="artwork-story">
+            <Field label="توضیحات اثر" error={errors.description}>
+              <textarea
+                rows={5}
+                value={draft.description}
+                disabled={locked}
+                onChange={(event) =>
+                  setDraft({ ...draft, description: event.target.value })
+                }
+                aria-invalid={Boolean(errors.description)}
+              />
+            </Field>
+            <Field label="زیرعنوان کوتاه (اختیاری)">
+              <input
+                value={draft.subtitle ?? ""}
+                disabled={locked}
+                placeholder="خالی بماند تا از ابتدای توضیحات ساخته شود"
+                onChange={(event) =>
+                  setDraft({ ...draft, subtitle: event.target.value })
+                }
+              />
+            </Field>
+          </div>
         </div>
       </details>
 

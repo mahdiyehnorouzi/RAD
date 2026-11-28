@@ -117,6 +117,7 @@ export function ProductsPage() {
                   product={edited.kind === "edit" ? edited.product : null}
                   canWrite={canWrite}
                   onDirtyChange={onDirtyChange}
+                  focusStory={searchParams.get("section") === "story"}
                   onUploadImage={workspace.uploadProductImage}
                   onFetchAttributes={workspace.fetchAttributesForCategory}
                   onClose={() => navigate(null)}
