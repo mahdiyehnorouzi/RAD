@@ -7,6 +7,8 @@ export function StatTile({
   value,
   label,
   loading = false,
+  pressed = false,
+  onSelect,
 }: {
   icon: ReactNode;
   value: number;
@@ -14,9 +16,11 @@ export function StatTile({
   /** Before the first successful load only — a later background refetch
    * keeps showing the previous number instead of reverting to this. */
   loading?: boolean;
+  pressed?: boolean;
+  onSelect?: () => void;
 }) {
-  return (
-    <article className="stat-tile">
+  const body = (
+    <>
       <span className="stat-icon">{icon}</span>
       {loading ? (
         <span className="stat-skeleton" aria-hidden="true" />
@@ -24,6 +28,17 @@ export function StatTile({
         <strong>{number.format(value)}</strong>
       )}
       <span>{label}</span>
-    </article>
+    </>
+  );
+  if (!onSelect) return <article className="stat-tile">{body}</article>;
+  return (
+    <button
+      type="button"
+      className={`stat-tile${pressed ? " is-active" : ""}`}
+      aria-pressed={pressed}
+      onClick={onSelect}
+    >
+      {body}
+    </button>
   );
 }
