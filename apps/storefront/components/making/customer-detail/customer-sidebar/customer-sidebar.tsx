@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useCallback } from "react";
 import { logRecovered } from "@/lib/log";
 import { useCommerce } from "@/components/commerce";
 import type { MakingCommission } from "@/components/making/type";
@@ -9,6 +9,7 @@ import { useLocale } from "@/components/i18n";
 import { MessageComposer } from "./message-composer";
 import { PaymentHistory } from "./payment-history";
 import { StageMessages } from "./stage-messages";
+import { unreadMessageIds } from "./unread-messages";
 import "./customer-sidebar.css";
 
 export function CustomerMakingSidebar({
@@ -20,34 +21,20 @@ export function CustomerMakingSidebar({
 }) {
   const { addMessage } = useMaking();
   const { locale } = useLocale();
-  const { notices, markCommissionMessagesRead } = useCommerce();
-  const unread = notices.filter(
-    (notice) =>
-      !notice.read &&
-      notice.kind === "commission_message" &&
-      notice.productSlug === commission.id,
+  const { notices, markCommissionMessageRead } = useCommerce();
+  // BUG-03: a message is marked read only once the customer actually
+  // scrolls it into view (see `StageMessages`/`StageMessageItem`), never
+  // just because this page was opened - that used to bulk-mark every
+  // unread message in the conversation on mount/interval/visibility.
+  const unread = unreadMessageIds(notices, commission.id);
+  const onMessageSeen = useCallback(
+    (messageId: string) => {
+      void markCommissionMessageRead(commission.id, messageId).catch((error) =>
+        logRecovered("notices", error),
+      );
+    },
+    [commission.id, markCommissionMessageRead],
   );
-  const unreadKey = unread.map((notice) => notice.id).join(",");
-  useEffect(() => {
-    if (!unreadKey) return;
-    let running = false;
-    const markRead = () => {
-      if (running || document.visibilityState !== "visible") return;
-      running = true;
-      void markCommissionMessagesRead(commission.id)
-        .catch((error) => logRecovered("notices", error))
-        .finally(() => {
-          running = false;
-        });
-    };
-    markRead();
-    const timer = window.setInterval(markRead, 12_000);
-    document.addEventListener("visibilitychange", markRead);
-    return () => {
-      window.clearInterval(timer);
-      document.removeEventListener("visibilitychange", markRead);
-    };
-  }, [commission.id, markCommissionMessagesRead, unreadKey]);
   const showMessages = true;
   const canCompose =
     !readOnly &&
@@ -67,7 +54,11 @@ export function CustomerMakingSidebar({
         <section className="making-side-block">
           <h2>{locale === "fa" ? "گفتگو با سازنده" : "Talk with the maker"}</h2>
           {showMessages && hasMessages ? (
-            <StageMessages commission={commission} />
+            <StageMessages
+              commission={commission}
+              unreadMessageIds={unread}
+              onMessageSeen={onMessageSeen}
+            />
           ) : null}
           {canCompose ? (
             <MessageComposer

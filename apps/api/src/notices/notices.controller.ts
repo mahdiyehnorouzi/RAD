@@ -25,14 +25,16 @@ export class NoticesController {
     );
   }
 
-  @Post("commissions/:id/read")
-  async markCommissionMessagesRead(
+  @Post("commissions/:id/messages/:messageId/read")
+  async markCommissionMessageRead(
     @Param("id") id: string,
+    @Param("messageId") messageId: string,
     @Req() request: AuthedRequest,
   ) {
-    return this.notices.markCommissionMessagesRead(
+    return this.notices.markCommissionMessageRead(
       await this.identity.fromRequest(request),
       id,
+      messageId,
     );
   }
 

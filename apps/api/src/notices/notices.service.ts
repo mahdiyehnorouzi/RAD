@@ -39,6 +39,7 @@ export class NoticesService {
     id: string;
     kind: string;
     productSlug: string | null;
+    messageId: string | null;
     read: boolean;
     createdAt: Date;
   }) {
@@ -46,6 +47,7 @@ export class NoticesService {
       id: notice.id,
       kind: notice.kind as StoredNoticeKind,
       productSlug: notice.productSlug ?? undefined,
+      messageId: notice.messageId ?? undefined,
       read: notice.read,
       createdAt: notice.createdAt.getTime(),
     };
@@ -65,6 +67,7 @@ export class NoticesService {
     ownerKey: string,
     kind: StoredNoticeKind,
     productSlug?: string,
+    messageId?: string,
   ) {
     if (!isArtistNotice(kind)) return this.snapshot(ownerKey);
     if (kind !== "commission_message") {
@@ -85,17 +88,24 @@ export class NoticesService {
         ownerKey,
         kind,
         productSlug: productSlug ?? null,
+        messageId: messageId ?? null,
       }),
     );
     return this.snapshot(ownerKey);
   }
 
-  async markCommissionMessagesRead(actor: Actor, commissionId: string) {
+  /** Marks exactly one commission message's notice read, not the whole conversation (BUG-03). */
+  async markCommissionMessageRead(
+    actor: Actor,
+    commissionId: string,
+    messageId: string,
+  ) {
     await this.notices.update(
       {
         ownerKey: this.identity.key(actor),
         kind: "commission_message",
         productSlug: commissionId,
+        messageId,
         read: false,
       },
       { read: true },

@@ -408,6 +408,8 @@ export interface Notice {
   id: string;
   kind: NoticeKind;
   productSlug?: string;
+  /** The specific `StageMessage.id` this notice was created for, when `kind` is `commission_message`. */
+  messageId?: string;
   read: boolean;
   createdAt: number;
 }

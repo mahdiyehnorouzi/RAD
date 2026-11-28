@@ -110,6 +110,21 @@
   font-weight: 650;
 }
 
+/* Unread incoming message indicator (BUG-03): a subtle dot, matching the
+   same unread color already used on the account notifications list
+   (`--account-oxide: #8a4938`). Color alone never carries the meaning -
+   the sr-only label beside it in `stage-messages.tsx` does that. */
+.making-messages li.unread header b::before {
+  content: "";
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-inline-end: 6px;
+  border-radius: 50%;
+  background: #8a4938;
+  vertical-align: 2px;
+}
+
 .making-messages header span,
 .making-messages header time {
   color: var(--muted);

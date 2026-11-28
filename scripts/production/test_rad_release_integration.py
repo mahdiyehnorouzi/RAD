@@ -75,6 +75,10 @@ ORDER_GIFT_DELIVERY_MIGRATION = "1794200000000-AddOrderGiftDelivery.ts"
 BACKFILL_CONTACT_PHONE_MIGRATION = (
     "1794300000000-BackfillContactPhoneFromVerifiedPhone.ts"
 )
+# `Notice.messageId` (nullable text), linking a `commission_message`
+# notice to the specific `StageMessage.id` it was created for (BUG-03).
+# Purely additive, no constraint to loosen or tighten.
+ADD_NOTICE_MESSAGE_ID_MIGRATION = "1794400000000-AddNoticeMessageId.ts"
 # Parent category rows plus nullable Product.subcategoryId. Chronologically
 # the newest migration, so it is the one `migration:revert` reverts first.
 CATEGORIES_MIGRATION = "1794500000000-AddCategories.ts"
@@ -182,7 +186,10 @@ class RealPostgresMigrationTests(unittest.TestCase):
         # migration (AddUserPhone) ALTERs "User" (adds "phone", drops the
         # NOT NULL on "email") — same reasoning again: a bare "User" table
         # with a NOT NULL "email" column is enough to exercise that ALTER
-        # for real, including the "was NOT NULL, now isn't" part.
+        # for real, including the "was NOT NULL, now isn't" part. This
+        # PR's migration (AddNoticeMessageId) ALTERs "Notice" — same
+        # reasoning, a bare "Notice" table with just a primary key is
+        # enough to exercise that ALTER ADD COLUMN for real.
         subprocess.run(
             [DOCKER, "exec", cls.container, "psql",
              "postgresql://postgres:postgres@127.0.0.1:5432/rad_migrate_it", "-c",
@@ -213,7 +220,8 @@ class RealPostgresMigrationTests(unittest.TestCase):
              '  address text NOT NULL'
              ');'
              """INSERT INTO "Order" (id, name, city, phone, address) VALUES
-                ('o1', 'سارا', 'تهران، تهران', '09121234567', 'خیابان ولیعصر، پلاک ۱۲');"""],
+                ('o1', 'سارا', 'تهران، تهران', '09121234567', 'خیابان ولیعصر، پلاک ۱۲');"""
+             'CREATE TABLE IF NOT EXISTS "Notice" (id text PRIMARY KEY);'],
             check=True, capture_output=True, text=True, timeout=15)
 
     @classmethod
@@ -336,13 +344,14 @@ class RealPostgresMigrationTests(unittest.TestCase):
         self.assertIn(RAD_IDENTITY_MIGRATION, names)
         self.assertIn(ORDER_SHIPPING_MIGRATION, names)
         self.assertIn(ORDER_GIFT_DELIVERY_MIGRATION, names)
-        self.assertIn(BACKFILL_CONTACT_PHONE_MIGRATION, names)
+        self.assertIn(ADD_NOTICE_MESSAGE_ID_MIGRATION, names)
         self.assertIn(CATEGORIES_MIGRATION, names)
         self.assertEqual(
-            names[-3:],
+            names[-4:],
             [
                 ORDER_GIFT_DELIVERY_MIGRATION,
                 BACKFILL_CONTACT_PHONE_MIGRATION,
+                ADD_NOTICE_MESSAGE_ID_MIGRATION,
                 CATEGORIES_MIGRATION,
             ],
         )
@@ -382,6 +391,14 @@ class RealPostgresMigrationTests(unittest.TestCase):
             broker.PSQL, self.database_url, "-tAc",
             "SELECT is_nullable FROM information_schema.columns "
             "WHERE table_name = 'Order' AND column_name = 'message';"
+        ).stdout.strip()
+        return nullable
+
+    def notice_message_id_facts(self):
+        nullable = broker.run(
+            broker.PSQL, self.database_url, "-tAc",
+            "SELECT is_nullable FROM information_schema.columns "
+            "WHERE table_name = 'Notice' AND column_name = 'messageId';"
         ).stdout.strip()
         return nullable
 
@@ -590,13 +607,20 @@ class RealPostgresMigrationTests(unittest.TestCase):
             ["shippingFee", "shippingMethod"],
         )
 
+        # Notice.messageId (this PR's migration): nullable text, additive,
+        # no constraint to exercise. Existing `Notice` rows (none seeded
+        # here) would read it as NULL; nothing in this test selects it
+        # otherwise, so no other assertion above is affected.
+        self.assertEqual(self.notice_message_id_facts(), "YES")
+
         # 4. migration:show now reports every signed migration applied.
         shown_after = broker.migration_show(NPM, self.api_dir, self.database_url, "127.0.0.1")
         self.assertEqual(broker.reconcile_migrations(manifest, shown_after), [])
 
         # 4a. Reverting categories (the newest migration) drops only the
         #     Category table and Product.subcategoryId. Users and orders
-        #     stay. The contact-phone backfill is still applied.
+        #     stay. Notice.messageId and the contact-phone backfill are
+        #     still applied.
         self.assertIn("Category", self.table_names())
         self.assertEqual(self.product_subcategory_nullable(), "YES")
         broker.run(
@@ -615,7 +639,25 @@ class RealPostgresMigrationTests(unittest.TestCase):
             [CATEGORIES_MIGRATION],
         )
 
-        # 4b. Reverting the contact-phone backfill changes nothing for
+        # 4b. Reverting Notice.messageId (now the newest remaining
+        #     migration) just drops the column; nothing else reads or
+        #     writes it in this test.
+        broker.run(
+            NPM, "run", "migration:revert",
+            env={**broker.SAFE_ENV, "PATH": os.environ.get("PATH", ""),
+                 "DATABASE_URL": self.database_url, "RAD_ALLOW_REMOTE_DB_WRITE": "127.0.0.1"},
+            cwd=self.api_dir, timeout=1800)
+        self.assertEqual(self.notice_message_id_facts(), "")
+        self.assertEqual(self.user_rows(), before)
+        self.assertEqual(self.order_rows(), orders_before)
+        shown_after_notice_revert = broker.migration_show(
+            NPM, self.api_dir, self.database_url, "127.0.0.1")
+        self.assertEqual(
+            [entry["name"] for entry in broker.reconcile_migrations(manifest, shown_after_notice_revert)],
+            [ADD_NOTICE_MESSAGE_ID_MIGRATION, CATEGORIES_MIGRATION],
+        )
+
+        # 4c. Reverting the contact-phone backfill changes nothing for
         #     these two seed users — neither has a `verifiedPhone`, so
         #     `down()` finds no row where `phone` equals `verifiedPhone`
         #     to clear.
@@ -630,7 +672,7 @@ class RealPostgresMigrationTests(unittest.TestCase):
             NPM, self.api_dir, self.database_url, "127.0.0.1")
         self.assertEqual(
             [entry["name"] for entry in broker.reconcile_migrations(manifest, shown_after_backfill_revert)],
-            [BACKFILL_CONTACT_PHONE_MIGRATION, CATEGORIES_MIGRATION],
+            [BACKFILL_CONTACT_PHONE_MIGRATION, ADD_NOTICE_MESSAGE_ID_MIGRATION, CATEGORIES_MIGRATION],
         )
 
         def gift_delivery_columns():
@@ -664,7 +706,7 @@ class RealPostgresMigrationTests(unittest.TestCase):
             NPM, self.api_dir, self.database_url, "127.0.0.1")
         self.assertEqual(
             [entry["name"] for entry in broker.reconcile_migrations(manifest, shown_after_gift_revert)],
-            [ORDER_GIFT_DELIVERY_MIGRATION, BACKFILL_CONTACT_PHONE_MIGRATION, CATEGORIES_MIGRATION],
+            [ORDER_GIFT_DELIVERY_MIGRATION, BACKFILL_CONTACT_PHONE_MIGRATION, ADD_NOTICE_MESSAGE_ID_MIGRATION, CATEGORIES_MIGRATION],
         )
 
         # 5. Reverting order shipping drops only those
@@ -694,6 +736,7 @@ class RealPostgresMigrationTests(unittest.TestCase):
                 ORDER_SHIPPING_MIGRATION,
                 ORDER_GIFT_DELIVERY_MIGRATION,
                 BACKFILL_CONTACT_PHONE_MIGRATION,
+                ADD_NOTICE_MESSAGE_ID_MIGRATION,
                 CATEGORIES_MIGRATION,
             ],
         )
@@ -724,6 +767,7 @@ class RealPostgresMigrationTests(unittest.TestCase):
                 ORDER_SHIPPING_MIGRATION,
                 ORDER_GIFT_DELIVERY_MIGRATION,
                 BACKFILL_CONTACT_PHONE_MIGRATION,
+                ADD_NOTICE_MESSAGE_ID_MIGRATION,
                 CATEGORIES_MIGRATION,
             ],
         )
@@ -751,6 +795,7 @@ class RealPostgresMigrationTests(unittest.TestCase):
                 ORDER_SHIPPING_MIGRATION,
                 ORDER_GIFT_DELIVERY_MIGRATION,
                 BACKFILL_CONTACT_PHONE_MIGRATION,
+                ADD_NOTICE_MESSAGE_ID_MIGRATION,
                 CATEGORIES_MIGRATION,
             ],
         )
@@ -781,6 +826,7 @@ class RealPostgresMigrationTests(unittest.TestCase):
                 ORDER_SHIPPING_MIGRATION,
                 ORDER_GIFT_DELIVERY_MIGRATION,
                 BACKFILL_CONTACT_PHONE_MIGRATION,
+                ADD_NOTICE_MESSAGE_ID_MIGRATION,
                 CATEGORIES_MIGRATION,
             ],
         )
@@ -812,6 +858,7 @@ class RealPostgresMigrationTests(unittest.TestCase):
                 ORDER_SHIPPING_MIGRATION,
                 ORDER_GIFT_DELIVERY_MIGRATION,
                 BACKFILL_CONTACT_PHONE_MIGRATION,
+                ADD_NOTICE_MESSAGE_ID_MIGRATION,
                 CATEGORIES_MIGRATION,
             ],
         )
