@@ -71,11 +71,13 @@ ORDER_GIFT_DELIVERY_MIGRATION = "1794200000000-AddOrderGiftDelivery.ts"
 # OTP-proven `User.verifiedPhone`, the first time `phone` is still unset
 # (see `AuthService.backfillContactPhone`). No column/index change, and a
 # no-op for both seed users below (neither has a `verifiedPhone` set), so
-# it adds no new forward-state assertions here. Chronologically the
-# newest migration, so it is the one `migration:revert` reverts first.
+# it adds no new forward-state assertions here.
 BACKFILL_CONTACT_PHONE_MIGRATION = (
     "1794300000000-BackfillContactPhoneFromVerifiedPhone.ts"
 )
+# Parent category rows plus nullable Product.subcategoryId. Chronologically
+# the newest migration, so it is the one `migration:revert` reverts first.
+CATEGORIES_MIGRATION = "1794500000000-AddCategories.ts"
 CLI_DATA_SOURCE = API_DIR / "src" / "database" / "cli-data-source.ts"
 
 DOCKER = shutil.which("docker")
@@ -187,7 +189,11 @@ class RealPostgresMigrationTests(unittest.TestCase):
              'CREATE TABLE IF NOT EXISTS "Product" ('
              '  id text PRIMARY KEY,'
              '  "radNumber" integer,'
-             '  "createdAt" timestamptz'
+             '  "createdAt" timestamptz,'
+             # AddCategories seeds from distinct Product.category values.
+             # Nullable and empty here: the seed inserts known parents only
+             # and does not write product rows.
+             '  category text'
              ');'
              'CREATE TABLE IF NOT EXISTS "PaymentIntent" (id text PRIMARY KEY);'
              'CREATE TABLE IF NOT EXISTS "User" ('
@@ -330,12 +336,14 @@ class RealPostgresMigrationTests(unittest.TestCase):
         self.assertIn(RAD_IDENTITY_MIGRATION, names)
         self.assertIn(ORDER_SHIPPING_MIGRATION, names)
         self.assertIn(ORDER_GIFT_DELIVERY_MIGRATION, names)
+        self.assertIn(BACKFILL_CONTACT_PHONE_MIGRATION, names)
+        self.assertIn(CATEGORIES_MIGRATION, names)
         self.assertEqual(
             names[-3:],
             [
-                ORDER_SHIPPING_MIGRATION,
                 ORDER_GIFT_DELIVERY_MIGRATION,
                 BACKFILL_CONTACT_PHONE_MIGRATION,
+                CATEGORIES_MIGRATION,
             ],
         )
         return self.manifest_for(*files)
@@ -353,6 +361,13 @@ class RealPostgresMigrationTests(unittest.TestCase):
             "SELECT id || '|' || name || '|' || city || '|' || phone || '|' || address "
             'FROM "Order" ORDER BY id;')
         return [line.strip() for line in result.stdout.splitlines() if line.strip()]
+
+    def product_subcategory_nullable(self):
+        return broker.run(
+            broker.PSQL, self.database_url, "-tAc",
+            "SELECT is_nullable FROM information_schema.columns "
+            "WHERE table_name = 'Product' AND column_name = 'subcategoryId';",
+        ).stdout.strip()
 
     def order_shipping_columns(self):
         result = broker.run(
@@ -579,10 +594,31 @@ class RealPostgresMigrationTests(unittest.TestCase):
         shown_after = broker.migration_show(NPM, self.api_dir, self.database_url, "127.0.0.1")
         self.assertEqual(broker.reconcile_migrations(manifest, shown_after), [])
 
-        # 4a. Reverting the contact-phone backfill (the newest migration)
-        #     changes nothing for these two seed users — neither has a
-        #     `verifiedPhone`, so `down()` finds no row where `phone`
-        #     equals `verifiedPhone` to clear.
+        # 4a. Reverting categories (the newest migration) drops only the
+        #     Category table and Product.subcategoryId. Users and orders
+        #     stay. The contact-phone backfill is still applied.
+        self.assertIn("Category", self.table_names())
+        self.assertEqual(self.product_subcategory_nullable(), "YES")
+        broker.run(
+            NPM, "run", "migration:revert",
+            env={**broker.SAFE_ENV, "PATH": os.environ.get("PATH", ""),
+                 "DATABASE_URL": self.database_url, "RAD_ALLOW_REMOTE_DB_WRITE": "127.0.0.1"},
+            cwd=self.api_dir, timeout=1800)
+        self.assertNotIn("Category", self.table_names())
+        self.assertEqual(self.product_subcategory_nullable(), "")
+        self.assertEqual(self.user_rows(), before)
+        self.assertEqual(self.order_rows(), orders_before)
+        shown_after_categories_revert = broker.migration_show(
+            NPM, self.api_dir, self.database_url, "127.0.0.1")
+        self.assertEqual(
+            [entry["name"] for entry in broker.reconcile_migrations(manifest, shown_after_categories_revert)],
+            [CATEGORIES_MIGRATION],
+        )
+
+        # 4b. Reverting the contact-phone backfill changes nothing for
+        #     these two seed users — neither has a `verifiedPhone`, so
+        #     `down()` finds no row where `phone` equals `verifiedPhone`
+        #     to clear.
         broker.run(
             NPM, "run", "migration:revert",
             env={**broker.SAFE_ENV, "PATH": os.environ.get("PATH", ""),
@@ -594,7 +630,7 @@ class RealPostgresMigrationTests(unittest.TestCase):
             NPM, self.api_dir, self.database_url, "127.0.0.1")
         self.assertEqual(
             [entry["name"] for entry in broker.reconcile_migrations(manifest, shown_after_backfill_revert)],
-            [BACKFILL_CONTACT_PHONE_MIGRATION],
+            [BACKFILL_CONTACT_PHONE_MIGRATION, CATEGORIES_MIGRATION],
         )
 
         def gift_delivery_columns():
@@ -628,7 +664,7 @@ class RealPostgresMigrationTests(unittest.TestCase):
             NPM, self.api_dir, self.database_url, "127.0.0.1")
         self.assertEqual(
             [entry["name"] for entry in broker.reconcile_migrations(manifest, shown_after_gift_revert)],
-            [ORDER_GIFT_DELIVERY_MIGRATION, BACKFILL_CONTACT_PHONE_MIGRATION],
+            [ORDER_GIFT_DELIVERY_MIGRATION, BACKFILL_CONTACT_PHONE_MIGRATION, CATEGORIES_MIGRATION],
         )
 
         # 5. Reverting order shipping drops only those
@@ -658,6 +694,7 @@ class RealPostgresMigrationTests(unittest.TestCase):
                 ORDER_SHIPPING_MIGRATION,
                 ORDER_GIFT_DELIVERY_MIGRATION,
                 BACKFILL_CONTACT_PHONE_MIGRATION,
+                CATEGORIES_MIGRATION,
             ],
         )
 
@@ -687,6 +724,7 @@ class RealPostgresMigrationTests(unittest.TestCase):
                 ORDER_SHIPPING_MIGRATION,
                 ORDER_GIFT_DELIVERY_MIGRATION,
                 BACKFILL_CONTACT_PHONE_MIGRATION,
+                CATEGORIES_MIGRATION,
             ],
         )
 
@@ -713,6 +751,7 @@ class RealPostgresMigrationTests(unittest.TestCase):
                 ORDER_SHIPPING_MIGRATION,
                 ORDER_GIFT_DELIVERY_MIGRATION,
                 BACKFILL_CONTACT_PHONE_MIGRATION,
+                CATEGORIES_MIGRATION,
             ],
         )
 
@@ -742,6 +781,7 @@ class RealPostgresMigrationTests(unittest.TestCase):
                 ORDER_SHIPPING_MIGRATION,
                 ORDER_GIFT_DELIVERY_MIGRATION,
                 BACKFILL_CONTACT_PHONE_MIGRATION,
+                CATEGORIES_MIGRATION,
             ],
         )
 
@@ -772,6 +812,7 @@ class RealPostgresMigrationTests(unittest.TestCase):
                 ORDER_SHIPPING_MIGRATION,
                 ORDER_GIFT_DELIVERY_MIGRATION,
                 BACKFILL_CONTACT_PHONE_MIGRATION,
+                CATEGORIES_MIGRATION,
             ],
         )
 
