@@ -1,15 +1,20 @@
 import { LOCALE_COOKIE, LOCALE_QUERY, isLocale } from "@/lib/locale";
 import { formatRadCode, parseRadNumber, type Locale } from "@rad/types";
-import { identityHoldDocument } from "@/lib/identity/hold-document";
-import {
-  fetchPublicIdentity,
-  IdentityUnreachableError,
-} from "@/lib/identity/fetch";
+import { identityHoldDocument, identityNotFoundDocument } from "@/lib/identity/hold-document";
+import { logRecovered } from "@/lib/log";
+import { fetchPublicIdentity } from "@/lib/identity/fetch";
 import { planIdentityRequest } from "@/lib/identity/plan";
 
 type RouteContext = { params: Promise<{ code: string }> };
 
 const NO_STORE = { "cache-control": "no-store", "x-robots-tag": "noindex" };
+
+function unknownIdentity(request: Request) {
+  return new Response(identityNotFoundDocument(localeOf(request)), {
+    status: 404,
+    headers: { ...NO_STORE, "content-type": "text/html; charset=utf-8" },
+  });
+}
 
 function localeOf(request: Request): Locale {
   const url = new URL(request.url);
@@ -30,7 +35,7 @@ export async function GET(request: Request, context: RouteContext) {
   const search = url.search;
   const radNumber = /^\d+$/.test(code) ? parseRadNumber(code) : null;
   if (!radNumber) {
-    return new Response("Not found", { status: 404, headers: NO_STORE });
+    return unknownIdentity(request);
   }
   const canonical = formatRadCode(radNumber);
   if (code !== canonical) {
@@ -48,7 +53,9 @@ export async function GET(request: Request, context: RouteContext) {
     const identity = await fetchPublicIdentity(code);
     lookup = identity ? { kind: "found", identity } : { kind: "missing" };
   } catch (error) {
-    if (!(error instanceof IdentityUnreachableError)) throw error;
+    // Network failures, malformed upstream payloads and unexpected API errors
+    // must all yield a visible 503 document, never a bare white 500 page.
+    logRecovered(`public QR ${code}`, error);
     lookup = { kind: "unreachable" };
   }
 
