@@ -7,12 +7,14 @@ import {
   type RadIdentitySummary,
   type RadIdentityView,
 } from "@rad/types";
-import { Button } from "@rad/ui";
-import { QrCode } from "lucide-react";
+import { AdminSearchField, Button } from "@rad/ui";
+import { QrCode, Search } from "lucide-react";
 import { useAdminChrome } from "../../components/admin-shell";
 import { StatTile } from "../../components/admin-stat-tile";
 import { api, API_BASE } from "../../lib/api";
 import type { AdminProduct } from "../../lib/admin-data";
+import { useDebouncedValue } from "../../hooks/use-debounced-value";
+import { useLatestRequest } from "../../hooks/use-latest-request";
 
 const number = new Intl.NumberFormat("fa-IR");
 const date = new Intl.DateTimeFormat("fa-IR", { dateStyle: "medium" });
@@ -43,11 +45,21 @@ export function TagsPage() {
   const [selected, setSelected] = useState<Detail | null>(null);
   const [assignProductId, setAssignProductId] = useState("");
 
+  // A fast typist can fire several requests before the first one answers;
+  // without a guard, an older, slower response that resolves last would
+  // silently overwrite the rows for whatever the admin is now looking at.
+  // Debouncing the query (below) cuts the number of requests; this ref
+  // additionally makes sure that whichever request started *last* is the
+  // only one allowed to apply its result, regardless of resolve order.
+  const debouncedQuery = useDebouncedValue(query, 300);
+  const { begin, isLatest } = useLatestRequest();
+
   const load = useCallback(async () => {
+    const requestId = begin();
     setLoading(true);
     setError("");
     const params = new URLSearchParams();
-    if (query.trim()) params.set("q", query.trim());
+    if (debouncedQuery.trim()) params.set("q", debouncedQuery.trim());
     if (status) params.set("status", status);
     if (assignment) params.set("assignment", assignment);
     if (batchId) params.set("batchId", batchId);
@@ -58,15 +70,17 @@ export function TagsPage() {
         api<RadIdentityView[]>(`/admin/identities${suffix}`),
         api<RadIdentityBatchView[]>("/admin/identities/batches"),
       ]);
+      if (!isLatest(requestId)) return;
       setSummary(nextSummary);
       setRows(nextRows);
       setBatches(nextBatches);
     } catch (cause) {
+      if (!isLatest(requestId)) return;
       setError((cause as Error).message);
     } finally {
-      setLoading(false);
+      if (isLatest(requestId)) setLoading(false);
     }
-  }, [assignment, batchId, query, status]);
+  }, [assignment, batchId, debouncedQuery, status, begin, isLatest]);
 
   useEffect(() => {
     void load();
@@ -260,9 +274,10 @@ export function TagsPage() {
         <div className="form-grid">
           <label>
             جستجو
-            <input
+            <AdminSearchField
+              icon={<Search />}
               value={query}
-              onChange={(event) => setQuery(event.target.value)}
+              onChange={setQuery}
               placeholder="شماره یا نام اثر"
             />
           </label>

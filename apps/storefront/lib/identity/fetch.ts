@@ -1,7 +1,7 @@
 import { parseRadNumber, type PublicRadIdentity } from "@rad/types";
 import { api, ApiError } from "@/lib/api/client";
 
-export class IdentityUnreachableError extends Error {
+class IdentityUnreachableError extends Error {
   constructor(code: string, cause: unknown) {
     super(`RAD identity API unreachable for "${code}"`, { cause });
     this.name = "IdentityUnreachableError";

@@ -32,6 +32,7 @@ import {
   type QrArtworkFile,
 } from "./identity-print";
 import { classifyLegacyArtwork } from "./legacy-artwork";
+import { parseIdentitySearchQuery } from "./identity-search";
 
 const STORY_PUBLISHED = new Set(["ready", "available", "sold", "archived"]);
 
@@ -131,10 +132,15 @@ export class IdentitiesService {
     }
     const query = filter.q?.trim();
     if (query) {
-      qb.andWhere(
-        `(CAST(identity."radNumber" AS text) LIKE :q OR product.name ILIKE :name)`,
-        { q: `%${query.replace(/\D/g, "") || query}%`, name: `%${query}%` },
-      );
+      const parsed = parseIdentitySearchQuery(query);
+      if (parsed.radNumber) {
+        qb.andWhere(
+          `(CAST(identity."radNumber" AS text) LIKE :q OR product.name ILIKE :name)`,
+          { q: `%${parsed.radNumber}%`, name: `%${parsed.raw}%` },
+        );
+      } else {
+        qb.andWhere(`product.name ILIKE :name`, { name: `%${parsed.raw}%` });
+      }
     }
     const rows = await qb.getMany();
     const productIds = rows
