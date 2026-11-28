@@ -21,6 +21,12 @@ export function latestCustomerMessage(commission: {
   return last?.author === "customer" ? last : null;
 }
 
+/** Writes the commission hash. Kept out of the shell so the location update stays a plain call. */
+export function applyCommissionHash(hash: string) {
+  if (typeof window === "undefined") return;
+  window.location.hash = hash;
+}
+
 export function commissionNoticeHash(commission: {
   id: string;
   messages: AdminCommission["messages"];

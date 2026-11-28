@@ -35,6 +35,7 @@ import {
 } from "lucide-react";
 import { useStaffNoticeReads } from "../hooks/use-staff-notice-reads";
 import {
+  applyCommissionHash,
   commissionNoticeHash,
   latestCustomerMessage,
 } from "../lib/commission-notice-link";
@@ -218,7 +219,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
     const url = `/${targetHash}`;
     if (action.push) router.push(url);
     else if (action.replace) router.replace(url);
-    else window.location.hash = targetHash;
+    else applyCommissionHash(targetHash);
     if (action.load) void workspace.loadSection(action.load);
   };
 

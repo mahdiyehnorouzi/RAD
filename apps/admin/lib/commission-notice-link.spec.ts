@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
+  applyCommissionHash,
   commissionNoticeHash,
   commissionNoticeShouldMarkRead,
   latestCustomerMessage,
@@ -14,6 +15,28 @@ const message = {
   createdAt: 1,
   stageId: "making",
 };
+
+test("applyCommissionHash writes the commission hash on the location", () => {
+  const location = { hash: "" };
+  const previous = globalThis.window;
+  Object.defineProperty(globalThis, "window", {
+    configurable: true,
+    value: { location },
+  });
+  try {
+    applyCommissionHash("#commissions/RAD-M-1/messages/msg-9");
+    assert.equal(location.hash, "#commissions/RAD-M-1/messages/msg-9");
+  } finally {
+    if (previous === undefined) {
+      Reflect.deleteProperty(globalThis, "window");
+    } else {
+      Object.defineProperty(globalThis, "window", {
+        configurable: true,
+        value: previous,
+      });
+    }
+  }
+});
 
 test("a customer message notice opens that message, and an order notice does not", () => {
   const withMessage = {
