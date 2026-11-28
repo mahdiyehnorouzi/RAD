@@ -239,52 +239,59 @@ export function Products({
                       label={productStatusLabel(product)}
                       tone={productStatusTone(product)}
                     />
-                    <button
-                      type="button"
-                      className="product-card-open"
-                      aria-pressed={selected}
-                      onClick={() => onEdit(product)}
-                    >
-                      <div className="product-card-copy">
-                        <span className="product-card-kicker">
-                          {product.category} · {product.artist}
-                        </span>
-                        <h3>{product.name}</h3>
-                        <span className="product-card-price">
-                          {money(product.price)}
-                        </span>
-                        <span className="product-card-meta">
-                          {product.radNumber
-                            ? `RAD-${formatRadCode(product.radNumber)} · `
-                            : ""}
-                          {`ویرایش ${date(product.updatedAt)}`}
-                        </span>
-                      </div>
-                      <div className="product-card-side">
-                        <ProductThumb product={product} />
-                        <span className="product-photo-count">
-                          {number.format(product.images.length)} عکس
-                        </span>
-                      </div>
-                    </button>
-                    <AdminRowMenu
-                      open={openMenuId === product.id}
-                      onToggle={() =>
-                        setOpenMenuId((current) =>
-                          current === product.id ? null : product.id,
-                        )
-                      }
-                      onClose={() => setOpenMenuId(null)}
-                      canWrite={canWrite}
-                      onEdit={() => {
-                        setOpenMenuId(null);
-                        onEdit(product);
-                      }}
-                      onDelete={() => {
-                        setOpenMenuId(null);
-                        onDelete(product);
-                      }}
-                    />
+                    <div className="product-card-main">
+                      <button
+                        type="button"
+                        className="product-card-open"
+                        aria-pressed={selected}
+                        onClick={() => onEdit(product)}
+                      >
+                        <div className="product-card-copy">
+                          <span className="product-card-kicker">
+                            <span className="product-card-category">
+                              {product.category}
+                            </span>
+                            <span className="product-card-artist">
+                              {product.artist}
+                            </span>
+                          </span>
+                          <h3>{product.name}</h3>
+                          <span className="product-card-price">
+                            {money(product.price)}
+                          </span>
+                          <span className="product-card-meta">
+                            {product.radNumber
+                              ? `RAD-${formatRadCode(product.radNumber)} · `
+                              : ""}
+                            {`ویرایش ${date(product.updatedAt)}`}
+                          </span>
+                        </div>
+                        <div className="product-card-side">
+                          <ProductThumb product={product} />
+                          <span className="product-photo-count">
+                            {number.format(product.images.length)} عکس
+                          </span>
+                        </div>
+                      </button>
+                      <AdminRowMenu
+                        open={openMenuId === product.id}
+                        onToggle={() =>
+                          setOpenMenuId((current) =>
+                            current === product.id ? null : product.id,
+                          )
+                        }
+                        onClose={() => setOpenMenuId(null)}
+                        canWrite={canWrite}
+                        onEdit={() => {
+                          setOpenMenuId(null);
+                          onEdit(product);
+                        }}
+                        onDelete={() => {
+                          setOpenMenuId(null);
+                          onDelete(product);
+                        }}
+                      />
+                    </div>
                   </article>
                 </li>
               );
