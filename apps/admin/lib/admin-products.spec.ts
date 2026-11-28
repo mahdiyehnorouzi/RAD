@@ -176,6 +176,27 @@ test("the add button is disabled for a read-only admin and does not call onCreat
   assert.equal(created, false);
 });
 
+test("choosing a product card opens that product", async () => {
+  const edited: AdminProduct[] = [];
+  const { host } = await mountProducts({
+    onEdit: (product) => {
+      edited.push(product);
+    },
+  });
+  await press(buttons(host, "گلدان یک")[0]);
+  assert.equal(edited.length, 1);
+  assert.equal(edited[0].id, p1.id);
+});
+
+test("the selected product card is marked", async () => {
+  const { host } = await mountProducts({ selectedId: p1.id });
+  const selected = elements(host, "article").find((node) =>
+    node.className.includes("is-selected"),
+  );
+  assert.ok(selected);
+  assert.match(textOf(selected!), /گلدان یک/);
+});
+
 test("a writer can click add to open the creator", async () => {
   let created = false;
   const { host } = await mountProducts({
@@ -268,6 +289,20 @@ test("submitting without a name, description, or image shows validation errors a
   await press(buttons(host, "ذخیره تغییرات")[0]);
   assert.match(textOf(host), /حداقل یک تصویر برای اثر لازم است/);
   assert.equal(saved, false);
+  restoreFetch();
+});
+
+test("editing a field reports unsaved changes", async () => {
+  const states: boolean[] = [];
+  const { host, restoreFetch } = await mountDialog({
+    product: p1,
+    onDirtyChange: (dirty) => {
+      states.push(dirty);
+    },
+  });
+  assert.equal(states.at(-1), false);
+  await fill(field(host, "نام اثر"), "گلدان عوض‌شده");
+  assert.equal(states.at(-1), true);
   restoreFetch();
 });
 

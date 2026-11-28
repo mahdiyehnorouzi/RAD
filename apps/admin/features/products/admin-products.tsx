@@ -1,6 +1,6 @@
 "use client";
 import { useMemo, useRef, useState } from "react";
-import { effectiveProductStatus } from "@rad/types";
+import { effectiveProductStatus, formatRadCode } from "@rad/types";
 import {
   ChevronLeft,
   ChevronRight,
@@ -15,17 +15,17 @@ import {
   productStatusLabels,
   type AdminProduct,
 } from "../../lib/admin-data";
-import { useIsMobileViewport } from "../../components/admin-dialog";
 import { AdminRowMenu } from "../../components/admin-row-menu";
 import { EmptyState, StatusBadge } from "../../components/admin-list-chrome";
 import { coverImage } from "../../lib/product-cover";
+import "./products-workspace.css";
 
 const number = new Intl.NumberFormat("fa-IR");
 const money = (value: number) => `${number.format(value)} تومان`;
 const date = (value: number) =>
   new Intl.DateTimeFormat("fa-IR", { dateStyle: "medium" }).format(value);
 
-function statusTone(
+export function productStatusTone(
   product: Pick<AdminProduct, "status" | "reservedUntil">,
 ): "green" | "oxide" | "sand" | "muted" {
   const effective = effectiveProductStatus(product);
@@ -45,12 +45,14 @@ export function Products({
   onCreate,
   onEdit,
   onDelete,
+  selectedId = null,
 }: {
   products: AdminProduct[];
   canWrite: boolean;
   onCreate: () => void;
   onEdit: (product: AdminProduct) => void;
   onDelete: (product: AdminProduct) => void;
+  selectedId?: string | null;
 }) {
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<ProductSort>("newest");
@@ -59,8 +61,8 @@ export function Products({
   >("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [page, setPage] = useState(1);
+  const [trackedSelection, setTrackedSelection] = useState(selectedId);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
-  const isMobile = useIsMobileViewport();
   const inputRef = useRef<HTMLInputElement>(null);
 
   const categories = useMemo(
@@ -98,51 +100,64 @@ export function Products({
   );
 
   const resetToFirstPage = () => setPage(1);
+  if (selectedId !== trackedSelection) {
+    setTrackedSelection(selectedId);
+    if (selectedId) {
+      const index = filtered.findIndex((item) => item.id === selectedId);
+      if (index >= 0) setPage(Math.floor(index / PAGE_SIZE) + 1);
+    }
+  }
+
+  const selectedHidden =
+    Boolean(selectedId) &&
+    products.some((item) => item.id === selectedId) &&
+    !filtered.some((item) => item.id === selectedId);
 
   return (
-    <section className="paper-panel data-view">
-      <div className="view-heading">
+    <section
+      className="product-pane products-list-pane"
+      aria-label="فهرست آثار"
+    >
+      <div className="product-pane-head">
         <div>
           <span className="eyebrow">کاتالوگ یک‌به‌یک</span>
           <h2>آثار و محصولات</h2>
           <p>تمام آثار ثبت‌شده در استودیو؛ هر اثر فقط یک‌بار ساخته شده است.</p>
         </div>
-        <Button onClick={onCreate} disabled={!canWrite}>
+        <Button className="product-add" onClick={onCreate} disabled={!canWrite}>
           <Plus />
           افزودن اثر
         </Button>
       </div>
-      <div className="toolbar">
-        <div className="search-field">
-          <Search />
-          <input
-            ref={inputRef}
-            value={query}
-            onChange={(event) => {
-              setQuery(event.target.value);
+      <div className="product-search">
+        <Search />
+        <input
+          ref={inputRef}
+          value={query}
+          onChange={(event) => {
+            setQuery(event.target.value);
+            resetToFirstPage();
+          }}
+          placeholder="جست‌وجوی نام، هنرمند یا شناسه"
+          aria-label="جست‌وجوی محصولات"
+        />
+        {query && (
+          <Button
+            variant="ghost"
+            shape="icon"
+            size="sm"
+            onClick={() => {
+              setQuery("");
+              inputRef.current?.focus();
               resetToFirstPage();
             }}
-            placeholder="جست‌وجوی نام، هنرمند یا شناسه"
-            aria-label="جست‌وجوی محصولات"
-          />
-          {query && (
-            <Button
-              variant="ghost"
-              shape="icon"
-              size="sm"
-              onClick={() => {
-                setQuery("");
-                inputRef.current?.focus();
-                resetToFirstPage();
-              }}
-              aria-label="پاک کردن جست‌وجو"
-            >
-              <X />
-            </Button>
-          )}
-        </div>
+            aria-label="پاک کردن جست‌وجو"
+          >
+            <X />
+          </Button>
+        )}
       </div>
-      <div className="filters-row">
+      <div className="product-filters">
         <select
           className="filter-select"
           value={sort}
@@ -188,119 +203,80 @@ export function Products({
             </option>
           ))}
         </select>
-        <span className="results-count">
-          {number.format(filtered.length)} محصول در این نما
+        <span className="product-results">
+          {number.format(filtered.length)} محصول
         </span>
       </div>
+      {selectedHidden ? (
+        <p className="product-results" role="status">
+          اثر انتخاب‌شده با جست‌وجو یا فیلتر فعلی دیده نمی‌شود. فیلتر را عوض
+          کنید تا در فهرست برگردد.
+        </p>
+      ) : null}
       {pageItems.length ? (
         <>
-          <div className="admin-table-wrap">
-            <table className="products-table">
-              <thead>
-                <tr>
-                  <th>کاور</th>
-                  <th>نام اثر</th>
-                  <th>شناسه</th>
-                  <th>دسته‌بندی</th>
-                  <th>وضعیت</th>
-                  <th>قیمت (تومان)</th>
-                  <th>آخرین ویرایش</th>
-                  <th>عملیات</th>
-                </tr>
-              </thead>
-              <tbody>
-                {pageItems.map((product) => (
-                  <tr key={product.id}>
-                    <td className="cell-thumb">
+          <ul className="product-card-list">
+            {pageItems.map((product) => {
+              const selected = product.id === selectedId;
+              return (
+                <li key={product.id}>
+                  <article
+                    id={`product-card-${product.id}`}
+                    className={`product-card${selected ? " is-selected" : ""}`}
+                  >
+                    <button
+                      type="button"
+                      className="product-card-open"
+                      aria-pressed={selected}
+                      onClick={() => onEdit(product)}
+                    >
+                      <div className="product-card-copy">
+                        <span className="product-card-kicker">
+                          {product.category} · {product.artist}
+                        </span>
+                        <h3>{product.name}</h3>
+                        <span className="product-card-meta">
+                          {product.slug}
+                        </span>
+                        <div className="product-card-row">
+                          <StatusBadge
+                            label={productStatusLabel(product)}
+                            tone={productStatusTone(product)}
+                          />
+                          <strong>{money(product.price)}</strong>
+                        </div>
+                        <span className="product-card-meta">
+                          {product.radNumber
+                            ? `RAD-${formatRadCode(product.radNumber)} · `
+                            : ""}
+                          ویرایش {date(product.updatedAt)}
+                        </span>
+                      </div>
                       <ProductThumb product={product} />
-                    </td>
-                    <td>{product.name}</td>
-                    <td>{product.slug}</td>
-                    <td>{product.category}</td>
-                    <td>
-                      <StatusBadge
-                        label={productStatusLabel(product)}
-                        tone={statusTone(product)}
-                      />
-                    </td>
-                    <td>{money(product.price)}</td>
-                    <td>{date(product.updatedAt)}</td>
-                    <td className="cell-actions">
-                      {isMobile ? null : (
-                        <AdminRowMenu
-                          open={openMenuId === product.id}
-                          onToggle={() =>
-                            setOpenMenuId((current) =>
-                              current === product.id ? null : product.id,
-                            )
-                          }
-                          onClose={() => setOpenMenuId(null)}
-                          canWrite={canWrite}
-                          onEdit={() => {
-                            setOpenMenuId(null);
-                            onEdit(product);
-                          }}
-                          onDelete={() => {
-                            setOpenMenuId(null);
-                            onDelete(product);
-                          }}
-                        />
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <div className="product-list">
-            {pageItems.map((product) => (
-              <article className="product-row" key={product.id}>
-                <ProductThumb product={product} />
-                <div className="product-copy">
-                  <div className="product-primary">
-                    <span>
-                      {product.category} · {product.artist}
-                    </span>
-                    <h3>{product.name}</h3>
-                    <p>{product.description}</p>
-                  </div>
-                  <div className="product-meta">
-                    <StatusBadge
-                      label={productStatusLabel(product)}
-                      tone={statusTone(product)}
+                    </button>
+                    <AdminRowMenu
+                      open={openMenuId === product.id}
+                      onToggle={() =>
+                        setOpenMenuId((current) =>
+                          current === product.id ? null : product.id,
+                        )
+                      }
+                      onClose={() => setOpenMenuId(null)}
+                      canWrite={canWrite}
+                      onEdit={() => {
+                        setOpenMenuId(null);
+                        onEdit(product);
+                      }}
+                      onDelete={() => {
+                        setOpenMenuId(null);
+                        onDelete(product);
+                      }}
                     />
-                    <strong>{money(product.price)}</strong>
-                    <small>
-                      {product.radNumber
-                        ? `RAD-${String(product.radNumber).padStart(3, "0")} · `
-                        : ""}
-                      ویرایش {date(product.updatedAt)}
-                    </small>
-                  </div>
-                </div>
-                {isMobile ? (
-                  <AdminRowMenu
-                    open={openMenuId === product.id}
-                    onToggle={() =>
-                      setOpenMenuId((current) =>
-                        current === product.id ? null : product.id,
-                      )
-                    }
-                    onClose={() => setOpenMenuId(null)}
-                    canWrite={canWrite}
-                    onEdit={() => {
-                      setOpenMenuId(null);
-                      onEdit(product);
-                    }}
-                    onDelete={() => {
-                      setOpenMenuId(null);
-                      onDelete(product);
-                    }}
-                  />
-                ) : null}
-              </article>
-            ))}
-          </div>
+                  </article>
+                </li>
+              );
+            })}
+          </ul>
           {totalPages > 1 && (
             <nav className="pagination" aria-label="صفحه‌بندی محصولات">
               <Button
