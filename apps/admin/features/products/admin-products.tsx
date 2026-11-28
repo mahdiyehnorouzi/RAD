@@ -235,10 +235,20 @@ export function Products({
                     id={`product-card-${product.id}`}
                     className={`product-card${selected ? " is-selected" : ""}`}
                   >
-                    <StatusBadge
-                      label={productStatusLabel(product)}
-                      tone={productStatusTone(product)}
-                    />
+                    <div className="product-card-top">
+                      <span className="product-card-kicker">
+                        <span className="product-card-category">
+                          {product.category}
+                        </span>
+                        <span className="product-card-artist">
+                          {product.artist}
+                        </span>
+                      </span>
+                      <StatusBadge
+                        label={productStatusLabel(product)}
+                        tone={productStatusTone(product)}
+                      />
+                    </div>
                     <div className="product-card-main">
                       <button
                         type="button"
@@ -247,14 +257,6 @@ export function Products({
                         onClick={() => onEdit(product)}
                       >
                         <div className="product-card-copy">
-                          <span className="product-card-kicker">
-                            <span className="product-card-category">
-                              {product.category}
-                            </span>
-                            <span className="product-card-artist">
-                              {product.artist}
-                            </span>
-                          </span>
                           <h3>{product.name}</h3>
                           <span className="product-card-price">
                             {money(product.price)}

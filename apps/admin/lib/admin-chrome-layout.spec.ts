@@ -30,4 +30,12 @@ test("product cards keep the category on one line and center the row menu on the
     products,
     /\.product-card-main > \.row-menu-anchor \{[^}]*height: 56px/,
   );
+  assert.match(
+    products,
+    /\.product-card-top \{[^}]*justify-content: space-between/,
+  );
+  assert.match(
+    products,
+    /\.product-editor-identity \{[^}]*justify-content: space-between/,
+  );
 });

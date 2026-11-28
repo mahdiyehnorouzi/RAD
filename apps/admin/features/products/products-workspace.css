@@ -207,11 +207,23 @@
   line-height: 1.45;
 }
 
+.product-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+}
+
 .product-card-kicker {
   display: flex;
   align-items: baseline;
+  justify-content: flex-start;
   gap: 6px;
   min-width: 0;
+  flex: 0 1 auto;
+  max-width: calc(100% - 72px);
 }
 
 .product-card-category,
@@ -227,7 +239,7 @@
 }
 
 .product-card-artist {
-  flex: 1 1 auto;
+  flex: 0 1 auto;
 }
 
 .product-card-artist::before {
@@ -248,8 +260,8 @@
 }
 
 .product-card .status-badge {
-  justify-self: start;
-  max-width: calc(100% - 8px);
+  flex: 0 0 auto;
+  max-width: 46%;
   padding: 2px 8px;
   font-size: 0.68rem;
 }
@@ -336,7 +348,7 @@
 
 .product-editor-identity {
   display: flex;
-  justify-content: flex-start;
+  justify-content: space-between;
   align-items: center;
   gap: 16px;
   width: 100%;
@@ -364,6 +376,7 @@
 .product-editor-copy {
   min-width: 0;
   flex: 0 1 auto;
+  max-width: calc(100% - 96px);
 }
 
 .product-editor-copy h2 {
