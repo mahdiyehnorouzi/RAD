@@ -1,6 +1,9 @@
 import { LOCALE_COOKIE, LOCALE_QUERY, isLocale } from "@/lib/locale";
 import { formatRadCode, parseRadNumber, type Locale } from "@rad/types";
-import { identityHoldDocument, identityNotFoundDocument } from "@/lib/identity/hold-document";
+import {
+  identityHoldDocument,
+  identityNotFoundDocument,
+} from "@/lib/identity/hold-document";
 import { logRecovered } from "@/lib/log";
 import { fetchPublicIdentity } from "@/lib/identity/fetch";
 import { planIdentityRequest } from "@/lib/identity/plan";

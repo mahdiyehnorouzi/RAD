@@ -89,7 +89,7 @@ test("a background poll that refreshes data under the same id never resets scrol
   });
 });
 
-test("closing restores the list's saved scroll position, from the real scroll container", async () => {
+test("closing restores the list's saved scroll position, from the real scroll container", async (t) => {
   const view = await mount();
   await view.render(null); // mount the hook (list screen, nothing selected)
   view.setScrollTop(300);
@@ -97,10 +97,16 @@ test("closing restores the list's saved scroll position, from the real scroll co
   await view.render("order-1");
   assert.equal(view.scrollTop(), 0);
 
+  // The rAF polyfill is a real `setTimeout(…, 0)` (see test-dom.ts), so
+  // asserting the pre-frame state against a real timer races the event
+  // loop's own macrotask scheduling and is flaky. Mocking just this timer
+  // for this one assertion makes the deferral itself deterministic to
+  // observe without touching the hook's actual (real-timer) behavior.
+  t.mock.timers.enable({ apis: ["setTimeout"] });
   await view.render(null);
   // The restore is deferred one frame (rAF), same as production.
   assert.equal(view.scrollTop(), 0, "not yet restored before the frame runs");
-  await nextTick();
+  t.mock.timers.tick(0);
   assert.equal(view.scrollTop(), 300);
   await act(async () => {
     view.root.unmount();

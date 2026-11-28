@@ -1,7 +1,10 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { planIdentityRequest } from "./plan";
-import { identityHoldDocument, identityNotFoundDocument } from "./hold-document";
+import {
+  identityHoldDocument,
+  identityNotFoundDocument,
+} from "./hold-document";
 
 const reserved = {
   radNumber: 84,
@@ -126,10 +129,13 @@ test("retired or unpublished assigned identities never redirect to a passport", 
     { ...reserved, status: "retired" as const, storyPublished: false },
     { ...reserved, status: "assigned" as const, storyPublished: false },
   ]) {
-    assert.equal(planIdentityRequest({
-      code: "084",
-      search: "",
-      lookup: { kind: "found", identity },
-    }).status, 200);
+    assert.equal(
+      planIdentityRequest({
+        code: "084",
+        search: "",
+        lookup: { kind: "found", identity },
+      }).status,
+      200,
+    );
   }
 });
