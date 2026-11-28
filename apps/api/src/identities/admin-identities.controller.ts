@@ -18,7 +18,7 @@ import {
 import { AssignIdentityDto, ReserveIdentityBatchDto } from "./dto";
 import { IdentitiesService } from "./identities.service";
 import { IdentityPrintService } from "./identity-print.service";
-import { qrSvg } from "./identity-print";
+import { qrPng, qrSvg } from "./identity-print";
 
 export function assertIdentityWrite(role: string | undefined) {
   if (!canAdmin(role, "product.write")) {
@@ -129,7 +129,18 @@ export class AdminIdentitiesController {
     const { svg } = qrSvg(identity.permanentUrl);
     return new StreamableFile(Buffer.from(svg), {
       type: "image/svg+xml",
-      disposition: `inline; filename="${identity.label}.svg"`,
+      disposition: `attachment; filename="${identity.label}.svg"`,
+    });
+  }
+
+  @Get(":id/qr.png")
+  @Header("Cache-Control", "public, max-age=86400")
+  async png(@Param("id") id: string) {
+    const identity = await this.identities.get(id);
+    if (!identity) throw new NotFoundException("این شماره پیدا نشد.");
+    return new StreamableFile(await qrPng(identity.permanentUrl), {
+      type: "image/png",
+      disposition: `attachment; filename="${identity.label}.png"`,
     });
   }
 

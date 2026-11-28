@@ -117,6 +117,8 @@ export interface Artwork {
   title: LocalizedText;
   artist: ArtworkArtist;
   category: ProductCategory;
+  /** Subcategory slug. Absent or null when the work has no subcategory. */
+  subcategory?: string | null;
   /** Owned by the API; absent in static fallback data. */
   status?: ProductStatus;
   reservedUntil?: number;

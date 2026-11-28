@@ -241,9 +241,10 @@ textarea:focus-visible {
   -webkit-overflow-scrolling: touch;
 }
 /* One geometry for route links and local buttons. Selection changes color
-   only, so an active row cannot grow or shift its icon, label, badge, or
-   chevron. Vertical padding is 0: the shared line box and icon box are
-   centered by the grid, not by padding around an inherited 1.8 line-height. */
+   only. Specificity beats `.rad-button` / `.rad-button-md` (padding, font,
+   border, inline-flex) so an active row cannot grow or shift. Vertical
+   padding is 0: the shared line box and icon box are centered by the grid,
+   not by padding around an inherited 1.8 line-height. */
 nav.admin-nav > :is(a, button) {
   box-sizing: border-box;
   width: 100%;
@@ -254,7 +255,7 @@ nav.admin-nav > :is(a, button) {
   display: grid;
   grid-template-columns: 22px minmax(0, 1fr) 18px;
   align-items: center;
-  justify-items: center;
+  justify-items: stretch;
   column-gap: 12px;
   padding: 0 14px;
   border: 0;
@@ -979,6 +980,10 @@ td select,
 .field-error {
   color: #9b4034;
 }
+.field-hint {
+  color: #6b6358;
+  margin-top: -2px;
+}
 .attribute-switch {
   display: flex;
   align-items: center;
@@ -1075,7 +1080,8 @@ td select,
   overflow-wrap: anywhere;
   text-align: center;
 }
-.sr-file {
+.sr-file,
+.sr-only {
   position: absolute;
   width: 1px;
   height: 1px;
@@ -2421,28 +2427,44 @@ td select,
 .password-field {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 44px;
-  align-items: stretch;
-  min-height: 44px;
+  align-items: center;
+  min-height: 48px;
   border: 1px solid var(--line);
+  border-radius: var(--radius-md);
   background: #fffaf2;
+  overflow: hidden;
 }
 .password-field input {
   min-width: 0;
   width: 100%;
+  height: 48px;
   border: 0;
+  border-radius: 0;
   background: transparent;
-  padding: 11px 12px;
-  padding-inline-end: 8px;
+  padding: 0 12px;
   font-size: 16px;
+  line-height: 1.4;
 }
-.password-toggle {
+.password-field input:focus-visible {
+  outline: none;
+}
+.password-field:focus-within {
+  border-color: var(--mineral);
+  outline: 2px solid var(--oxide);
+  outline-offset: 2px;
+}
+.password-field > button.password-toggle {
   position: static;
+  align-self: center;
+  justify-self: center;
   width: 44px;
   min-width: 44px;
+  height: 44px;
   min-height: 44px;
   margin: 0;
   padding: 0;
   border: 0;
+  border-radius: 0;
   border-inline-start: 1px solid var(--line);
   background: transparent;
   color: var(--muted);
@@ -2450,8 +2472,9 @@ td select,
   display: grid;
   place-items: center;
 }
-.password-toggle svg {
+.password-field > button.password-toggle svg {
   width: 18px;
+  height: 18px;
 }
 .remember-field input {
   accent-color: var(--mineral);
@@ -2531,6 +2554,17 @@ td select,
   display: grid;
   gap: 10px;
   align-content: start;
+}
+button.stat-tile {
+  width: 100%;
+  color: inherit;
+  font: inherit;
+  text-align: right;
+  cursor: pointer;
+}
+button.stat-tile.is-active {
+  border-color: var(--mineral);
+  box-shadow: inset 0 0 0 1px var(--mineral);
 }
 .stat-tile .stat-icon {
   width: 34px;
@@ -3051,6 +3085,10 @@ table.products-table {
   border-color: var(--mineral);
   color: #fff;
 }
+.commission-view {
+  min-width: 0;
+  overflow-x: hidden;
+}
 .commission-layout {
   display: grid;
   grid-template-columns: minmax(260px, 0.9fr) minmax(0, 1.4fr);
@@ -3213,7 +3251,12 @@ button.commission-detail-close {
   overscroll-behavior-x: contain;
   -webkit-overflow-scrolling: touch;
   touch-action: pan-x pan-y;
-  scrollbar-width: thin;
+  scrollbar-width: none;
+}
+.commission-tabs::-webkit-scrollbar {
+  height: 0;
+  width: 0;
+  background: transparent;
 }
 .commission-tabs button {
   flex: 0 0 auto;
@@ -3382,17 +3425,31 @@ button.commission-lightbox-nav {
   }
 }
 .commission-messages-pane {
-  display: grid;
-  gap: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  min-width: 0;
 }
 .commission-thread {
   margin: 0;
-  padding: 0;
+  padding: 12px 16px;
   border-top: 0;
   min-width: 0;
-  max-height: 360px;
+  max-height: min(58dvh, 640px);
   overflow-y: auto;
   overscroll-behavior: contain;
+}
+.commission-thread li {
+  max-width: min(78%, 520px);
+  border-radius: 16px;
+}
+.commission-message {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
+  background: color-mix(in srgb, var(--paper) 94%, transparent);
+  border-top: 1px solid var(--line);
 }
 .commission-thread li {
   min-width: 0;
@@ -3404,6 +3461,18 @@ button.commission-lightbox-nav {
 .commission-thread li.from-admin {
   justify-self: end;
   margin-inline-start: 0;
+}
+/* Unread incoming message indicator (BUG-03): same dot/color used for an
+   unread contact message (`.contact-message.is-new header strong::before`). */
+.commission-thread li.from-customer.unread b::before {
+  content: "";
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-inline-end: 6px;
+  border-radius: 50%;
+  background: var(--oxide);
+  vertical-align: 2px;
 }
 .commission-message {
   display: grid;
@@ -3608,11 +3677,34 @@ button.commission-lightbox-nav {
   button.commission-detail-close {
     display: inline-flex;
   }
+  .commission-view.has-detail {
+    padding: 12px 0 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
   .commission-detail {
     position: relative;
     min-width: 0;
     overflow: visible;
-    padding: 16px;
+    padding: 0 0 24px;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+  .commission-view.has-detail .commission-detail-close,
+  .commission-view.has-detail .commission-detail > header,
+  .commission-view.has-detail .stage-meter,
+  .commission-view.has-detail .commission-summary,
+  .commission-view.has-detail .commission-history,
+  .commission-view.has-detail .commission-decide,
+  .commission-view.has-detail .commission-files {
+    padding-inline: 16px;
+  }
+  .commission-view.has-detail .commission-tabs {
+    padding-inline: 12px;
   }
   .commission-tabs {
     position: sticky;
@@ -3780,21 +3872,81 @@ button.commission-lightbox-nav {
   position: absolute;
   inset-inline-end: 0;
   top: calc(100% + 8px);
-  z-index: 60;
+  z-index: 12;
   display: grid;
-  gap: 8px;
-  width: min(300px, 78vw);
-  max-height: 60vh;
+  align-content: start;
+  gap: 4px;
+  width: min(320px, calc(100vw - 24px));
+  max-height: min(280px, calc(100svh - 160px));
+  overflow-x: hidden;
   overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 12px;
   border: 1px solid var(--line);
   border-radius: var(--radius-md);
   background: var(--paper);
+  box-shadow: var(--shadow-sm);
 }
 
-.admin-notice-panel > a {
-  padding: 8px 12px;
+.admin-notice-panel > strong {
+  padding: 4px 8px 8px;
+}
+
+.admin-notice-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 48px;
+  margin: 0;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 14px;
+  font-weight: var(--font-weight-medium);
+  line-height: 1.4;
+  text-align: right;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.admin-notice-row:hover,
+.admin-notice-row:focus-visible {
+  background: var(--canvas);
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.admin-notice-copy {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.admin-notice-copy b {
+  font-weight: var(--font-weight-medium);
+}
+
+.admin-notice-id {
+  direction: ltr;
+  text-align: right;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: var(--font-weight-regular);
+  font-variant-numeric: tabular-nums;
   overflow-wrap: anywhere;
+}
+
+.admin-notice-dot {
+  width: 8px;
+  height: 8px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--oxide);
 }
 
 @media (max-width: 760px) {
@@ -3815,11 +3967,15 @@ button.commission-lightbox-nav {
   width: auto;
   min-width: 20px;
   height: 20px;
+  margin: 0;
   padding: 0 5px;
   line-height: 1;
   white-space: nowrap;
+  font-size: 11px;
+  font-weight: var(--font-weight-medium);
   font-variant-numeric: tabular-nums;
   letter-spacing: 0;
+  vertical-align: unset;
 }
 
 .topbar-bell .nav-count {
@@ -3857,6 +4013,140 @@ button.commission-lightbox-nav {
 
 .tags-workspace p {
   overflow-wrap: anywhere;
+}
+
+.identity-registry {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+  scroll-margin-top: 12px;
+}
+
+.identity-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.identity-count {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.identity-cards,
+.identity-table-wrap {
+  min-width: 0;
+}
+
+.identity-cards {
+  display: none;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.identity-card,
+.identity-detail {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--paper);
+  color: inherit;
+  text-align: right;
+}
+
+button.identity-card {
+  width: 100%;
+  font: inherit;
+  cursor: pointer;
+}
+
+.identity-card-head,
+.identity-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.identity-card img,
+.identity-thumb {
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+  background: #fff;
+}
+
+.identity-card strong,
+.identity-detail h2 {
+  font-variant-numeric: tabular-nums;
+}
+
+.identity-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  color: var(--muted);
+  font-size: 12.5px;
+}
+
+.identity-table-wrap {
+  overflow-x: auto;
+}
+
+.identity-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 720px;
+}
+
+.identity-table th,
+.identity-table td {
+  padding: 12px;
+  border-bottom: 1px solid var(--line);
+  text-align: right;
+  vertical-align: middle;
+}
+
+.identity-detail {
+  scroll-margin-top: 12px;
+}
+
+.identity-qr {
+  width: 120px;
+  height: 120px;
+  background: #fff;
+}
+
+.identity-secondary > summary {
+  cursor: pointer;
+  font-weight: var(--font-weight-medium);
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+}
+
+.identity-pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+@media (max-width: 760px) {
+  .identity-cards {
+    display: grid;
+  }
+  .identity-table-wrap {
+    display: none;
+  }
 }
 
 .commission-summary h4,

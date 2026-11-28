@@ -26,17 +26,26 @@ import {
   resolveCommissionSelection,
   stageCountLabel,
   type AdminCommission,
+  type AdminCommissionMessage,
   type AdminCommissionStage,
 } from "../lib/admin-data";
 import { useOptionalAdminChrome } from "./admin-shell";
 import { useDetailScrollRestore } from "../hooks/use-detail-scroll-restore";
-import { commissionNoticeKey } from "../lib/staff-notice-keys";
+import {
+  commissionMessageNoticeKey,
+  commissionNoticeKey,
+} from "../lib/staff-notice-keys";
 import { briefExcerpt } from "../lib/product-cover";
 import {
   commissionDetailTabs,
   defaultCommissionDetailTab,
   type CommissionDetailTabId,
 } from "../lib/commission-detail-tabs";
+import {
+  commissionNoticeShouldMarkRead,
+  parseCommissionHash,
+  type CommissionHashFocus,
+} from "../lib/commission-notice-link";
 import { StageMeter } from "@rad/ui";
 import {
   ConfirmDialog,
@@ -51,12 +60,9 @@ import {
 // selection to restore, and the browser back button a step to land on
 // (list -> detail -> back) without a full history stack per click.
 const HASH_PREFIX = "#commissions/";
-function readHashCommissionId(): string | null {
+function readCommissionFocus(): CommissionHashFocus | null {
   if (typeof window === "undefined") return null;
-  const { hash } = window.location;
-  return hash.startsWith(HASH_PREFIX)
-    ? decodeURIComponent(hash.slice(HASH_PREFIX.length))
-    : null;
+  return parseCommissionHash(window.location.hash);
 }
 
 const copy = (value: { fa: string; en: string }) => value.fa;
@@ -156,8 +162,11 @@ export function AdminCommissions({
   // clicked, or what the hash said); `selectedId` is derived from it
   // against the real list so a stale/removed id never resolves to some
   // other order.
-  const [requestedId, setRequestedId] = useState<string | null>(() =>
-    readHashCommissionId(),
+  const [requestedId, setRequestedId] = useState<string | null>(
+    () => readCommissionFocus()?.id ?? null,
+  );
+  const [focus, setFocus] = useState<CommissionHashFocus | null>(() =>
+    readCommissionFocus(),
   );
   const [query, setQuery] = useState("");
   const [stageFilter, setStageFilter] = useState<AdminCommissionStage | "all">(
@@ -167,7 +176,11 @@ export function AdminCommissions({
   const isMobile = useIsMobileViewport(1100);
 
   useEffect(() => {
-    const onPopState = () => setRequestedId(readHashCommissionId());
+    const onPopState = () => {
+      const next = readCommissionFocus();
+      setFocus(next);
+      setRequestedId(next?.id ?? null);
+    };
     window.addEventListener("popstate", onPopState);
     window.addEventListener("hashchange", onPopState);
     return () => {
@@ -193,12 +206,10 @@ export function AdminCommissions({
   const detailScrollId = isMobile && selected ? selectedId : null;
   const { saveScroll } = useDetailScrollRestore(detailScrollId);
 
-  const readNotice = useOptionalAdminChrome()?.readNotice;
-  const noticeKey = selected ? commissionNoticeKey(selected) : null;
-  useEffect(() => {
-    if (noticeKey) readNotice?.(noticeKey);
-  }, [noticeKey, readNotice]);
-
+  // BUG-03: merely opening a commission must not mark its messages read.
+  // Each customer message is marked individually, only once it scrolls
+  // into view. An order notice (no customer message) is marked from the
+  // summary or decision tab, after that surface is actually shown.
   const filtered = useMemo(
     () =>
       commissions
@@ -214,6 +225,7 @@ export function AdminCommissions({
   const selectCommission = (id: string) => {
     if (isMobile) saveScroll();
     setRequestedId(id);
+    setFocus({ id, tab: null, messageId: null });
     window.history.pushState(
       null,
       "",
@@ -232,6 +244,7 @@ export function AdminCommissions({
 
   const closeDetail = () => {
     setRequestedId(null);
+    setFocus(null);
     // Drop back to a plain hash-less URL rather than pushing another
     // history entry, so repeated open/close doesn't pile up back-stops.
     window.history.pushState(
@@ -366,6 +379,7 @@ export function AdminCommissions({
               commission={selected}
               mobile={isMobile}
               canWrite={canWrite}
+              noticeFocus={focus?.id === selected.id ? focus : null}
               onDecide={onDecide}
               onMessage={onMessage}
               onClose={closeDetail}
@@ -407,6 +421,7 @@ function CommissionDetail({
   commission,
   mobile,
   canWrite,
+  noticeFocus,
   onDecide,
   onMessage,
   onClose,
@@ -414,6 +429,7 @@ function CommissionDetail({
   commission: AdminCommission;
   mobile: boolean;
   canWrite: boolean;
+  noticeFocus: CommissionHashFocus | null;
   onDecide: Parameters<typeof AdminCommissions>[0]["onDecide"];
   onMessage: Parameters<typeof AdminCommissions>[0]["onMessage"];
   onClose: () => void;
@@ -422,8 +438,50 @@ function CommissionDetail({
     commission.stage === "design_submitted" ||
     (commission.stage === "feasibility" && commission.nextActor === "artist");
   const [tab, setTab] = useState<CommissionDetailTabId>(() =>
-    defaultCommissionDetailTab(commission),
+    noticeFocus?.tab === "messages"
+      ? "messages"
+      : defaultCommissionDetailTab(commission),
   );
+  const tabsRef = useRef<HTMLDivElement>(null);
+  const readNotice = useOptionalAdminChrome()?.readNotice;
+  const noticeKey = commissionNoticeKey(commission);
+  const [messageRendered, setMessageRendered] = useState(false);
+  useEffect(() => {
+    if (noticeFocus?.tab === "messages") setTab("messages");
+  }, [noticeFocus?.tab, noticeFocus?.messageId]);
+  useEffect(() => {
+    tabsRef.current
+      ?.querySelector<HTMLElement>('[aria-selected="true"]')
+      ?.scrollIntoView({ inline: "nearest", block: "nearest" });
+  }, [tab]);
+  useEffect(() => {
+    if (tab !== "messages") {
+      setMessageRendered(false);
+      return;
+    }
+    const messageId = noticeFocus?.messageId;
+    if (!messageId) {
+      setMessageRendered(true);
+      return;
+    }
+    const node = document.getElementById(`commission-message-${messageId}`);
+    node?.scrollIntoView({ block: "center" });
+    setMessageRendered(Boolean(node));
+  }, [tab, noticeFocus?.messageId, commission.messages]);
+  useEffect(() => {
+    if (
+      !readNotice ||
+      !commissionNoticeShouldMarkRead({
+        noticeKey,
+        tab,
+        messageId: noticeFocus?.messageId ?? null,
+        messageRendered,
+      })
+    ) {
+      return;
+    }
+    readNotice(noticeKey);
+  }, [readNotice, noticeKey, tab, noticeFocus?.messageId, messageRendered]);
   const meter = commissionMeter(commission);
   const payload = readPayload(commission.payload);
   const brief = payload.brief;
@@ -466,6 +524,7 @@ function CommissionDetail({
         nextLabel={meter.nextLabel}
       />
       <div
+        ref={tabsRef}
         className="commission-tabs"
         role="tablist"
         aria-label="بخش‌های سفارش اختصاصی"
@@ -810,6 +869,60 @@ function CommissionLightbox({
   );
 }
 
+/**
+ * One message bubble in the staff thread. Unread (BUG-03) is per message,
+ * not per conversation: a customer message is only marked read once it
+ * actually scrolls into view while the tab is visible, the same pattern
+ * `AdminContactMessageItem` already uses for contact messages - never
+ * just because the commission was opened.
+ */
+function CommissionMessageItem({
+  commissionId,
+  item,
+  customerName,
+}: {
+  commissionId: string;
+  item: AdminCommissionMessage;
+  customerName: string;
+}) {
+  const chrome = useOptionalAdminChrome();
+  const noticeKey = commissionMessageNoticeKey(commissionId, item.id);
+  const isCustomerMessage = item.author !== "artist";
+  const unread =
+    isCustomerMessage &&
+    Boolean(chrome?.noticeKeysReady) &&
+    !chrome?.noticeKeys?.has(noticeKey);
+  const ref = useRef<HTMLLIElement>(null);
+  useEffect(() => {
+    const node = ref.current;
+    if (!node || !isCustomerMessage || !chrome?.readNotice) return;
+    if (typeof IntersectionObserver === "undefined") return;
+    const observer = new IntersectionObserver((entries) => {
+      if (
+        document.visibilityState === "visible" &&
+        entries.some((entry) => entry.isIntersecting)
+      ) {
+        chrome.readNotice(noticeKey);
+      }
+    });
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [chrome, isCustomerMessage, noticeKey]);
+
+  return (
+    <li
+      ref={ref}
+      id={`commission-message-${item.id}`}
+      className={`${item.author === "artist" ? "from-admin" : "from-customer"}${unread ? " unread" : ""}`}
+    >
+      <b>{item.author === "artist" ? "کارگاه" : customerName}</b>
+      {unread ? <span className="sr-only">پیام خوانده‌نشده</span> : null}
+      <span>{date(item.createdAt)}</span>
+      <p>{copy(item.body)}</p>
+    </li>
+  );
+}
+
 export function CommissionMessages({
   commission,
   canWrite,
@@ -853,18 +966,12 @@ export function CommissionMessages({
       <ol className="contact-message-thread commission-thread" dir="rtl">
         {commission.messages.length ? (
           commission.messages.map((item) => (
-            <li
+            <CommissionMessageItem
               key={item.id}
-              className={
-                item.author === "artist" ? "from-admin" : "from-customer"
-              }
-            >
-              <b>
-                {item.author === "artist" ? "کارگاه" : commission.customerName}
-              </b>
-              <span>{date(item.createdAt)}</span>
-              <p>{copy(item.body)}</p>
-            </li>
+              commissionId={commission.id}
+              item={item}
+              customerName={commission.customerName}
+            />
           ))
         ) : (
           <li>
@@ -879,6 +986,7 @@ export function CommissionMessages({
         <label htmlFor="studio-message">پیام به مشتری</label>
         <AdminMessageComposer
           id="studio-message"
+          placeholder="پیام کارگاه را بنویسید"
           value={message}
           onChange={(next) => {
             pending.current = null;

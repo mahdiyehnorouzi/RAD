@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import {
   formatRadCode,
   type RadIdentityBatchView,
@@ -13,11 +14,22 @@ import { useAdminChrome } from "../../components/admin-shell";
 import { StatTile } from "../../components/admin-stat-tile";
 import { api, API_BASE } from "../../lib/api";
 import type { AdminProduct } from "../../lib/admin-data";
+import { readDownload, shouldShareDownload } from "../../lib/download-file";
+import {
+  activeIdentityCard,
+  artworkStoryIsPublic,
+  identityFilterForCard,
+  productEditorHref,
+  publicPassportUrl,
+  type IdentitySummaryCard,
+} from "../../lib/identity-registry";
+import { coverImage } from "../../lib/product-cover";
 import { useDebouncedValue } from "../../hooks/use-debounced-value";
 import { useLatestRequest } from "../../hooks/use-latest-request";
 
 const number = new Intl.NumberFormat("fa-IR");
 const date = new Intl.DateTimeFormat("fa-IR", { dateStyle: "medium" });
+const PAGE_SIZE = 24;
 
 const statusLabel = {
   reserved: "رزرو",
@@ -36,21 +48,22 @@ export function TagsPage() {
   const [rows, setRows] = useState<RadIdentityView[]>([]);
   const [batches, setBatches] = useState<RadIdentityBatchView[]>([]);
   const [query, setQuery] = useState("");
-  const [status, setStatus] = useState("");
-  const [assignment, setAssignment] = useState("");
+  const [status, setStatus] = useState<
+    "" | "reserved" | "assigned" | "retired"
+  >("");
+  const [assignment, setAssignment] = useState<"" | "unassigned" | "assigned">(
+    "",
+  );
+  const [printed, setPrinted] = useState<"" | "printed">("");
   const [batchId, setBatchId] = useState("");
+  const [page, setPage] = useState(0);
   const [quantity, setQuantity] = useState(100);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [selected, setSelected] = useState<Detail | null>(null);
   const [assignProductId, setAssignProductId] = useState("");
+  const [busyDownload, setBusyDownload] = useState<string | null>(null);
 
-  // A fast typist can fire several requests before the first one answers;
-  // without a guard, an older, slower response that resolves last would
-  // silently overwrite the rows for whatever the admin is now looking at.
-  // Debouncing the query (below) cuts the number of requests; this ref
-  // additionally makes sure that whichever request started *last* is the
-  // only one allowed to apply its result, regardless of resolve order.
   const debouncedQuery = useDebouncedValue(query, 300);
   const { begin, isLatest } = useLatestRequest();
 
@@ -86,6 +99,23 @@ export function TagsPage() {
     void load();
   }, [load]);
 
+  useEffect(() => {
+    setPage(0);
+  }, [debouncedQuery, status, assignment, printed, batchId]);
+
+  const visible = useMemo(
+    () => rows.filter((row) => (printed === "printed" ? row.printed : true)),
+    [printed, rows],
+  );
+  const pageCount = Math.max(1, Math.ceil(visible.length / PAGE_SIZE));
+  const pageRows = visible.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+  const activeCard = activeIdentityCard({
+    status,
+    assignment,
+    printed,
+    batchId,
+  });
+
   const openProducts = useMemo(
     () =>
       workspace.products.filter(
@@ -93,6 +123,22 @@ export function TagsPage() {
       ),
     [workspace.products],
   );
+  const productById = useMemo(
+    () => new Map(workspace.products.map((product) => [product.id, product])),
+    [workspace.products],
+  );
+
+  function applyCard(card: IdentitySummaryCard) {
+    const next = identityFilterForCard(card);
+    setQuery("");
+    setStatus(next.status);
+    setAssignment(next.assignment);
+    setPrinted(next.printed);
+    setBatchId("");
+    document
+      .getElementById("identity-registry")
+      ?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
 
   async function reserve() {
     try {
@@ -123,6 +169,11 @@ export function TagsPage() {
       const detail = await api<Detail>(`/admin/identities/${id}`);
       setSelected(detail);
       setAssignProductId("");
+      requestAnimationFrame(() => {
+        document
+          .getElementById("identity-detail")
+          ?.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
     } catch (cause) {
       announce((cause as Error).message);
     }
@@ -143,7 +194,9 @@ export function TagsPage() {
     }
   }
 
-  async function downloadFile(path: string, filename: string) {
+  async function downloadFile(path: string, fallback: string) {
+    if (busyDownload) return;
+    setBusyDownload(path);
     try {
       const response = await fetch(`${API_BASE}${path}`, {
         credentials: "include",
@@ -152,37 +205,39 @@ export function TagsPage() {
         const data = (await response.json().catch(() => ({}))) as {
           message?: string;
         };
-        throw new Error(data.message || "فایل چاپ ساخته نشد.");
+        throw new Error(data.message || "دانلود انجام نشد. دوباره تلاش کنید.");
       }
-      const blob = await response.blob();
-      if (!blob.size || blob.type.includes("text/html")) {
-        throw new Error("فایل دانلود نامعتبر است.");
+      const result = await readDownload(response, fallback);
+      if ("error" in result) throw new Error(result.error);
+      const file = new File([result.blob], result.filename, {
+        type: result.blob.type || "application/octet-stream",
+      });
+      const canShare =
+        typeof navigator.canShare === "function" &&
+        navigator.canShare({ files: [file] });
+      if (shouldShareDownload(navigator.userAgent, canShare)) {
+        try {
+          await navigator.share({ files: [file], title: result.filename });
+        } catch (cause) {
+          if ((cause as Error).name === "AbortError") return;
+          throw cause;
+        }
+        return;
       }
-      const url = URL.createObjectURL(blob);
+      const url = URL.createObjectURL(result.blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = filename;
+      link.download = result.filename;
       document.body.appendChild(link);
       link.click();
       link.remove();
-      window.setTimeout(() => URL.revokeObjectURL(url), 30_000);
+      window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+      announce("دانلود شروع شد.");
     } catch (cause) {
       announce((cause as Error).message);
+    } finally {
+      setBusyDownload(null);
     }
-  }
-
-  async function downloadLegacy() {
-    await downloadFile(
-      "/admin/identities/legacy-artworks/export",
-      "rad-legacy-artworks.zip",
-    );
-  }
-
-  async function downloadBatch(id: string) {
-    await downloadFile(
-      `/admin/identities/batches/${id}/export`,
-      "rad-tags.zip",
-    );
   }
 
   async function markPrinted(id: string) {
@@ -204,6 +259,10 @@ export function TagsPage() {
     }
   }
 
+  const filtersActive = Boolean(
+    status || assignment || printed || batchId || query,
+  );
+
   return (
     <section className="admin-section tags-workspace">
       <div className="panel-heading">
@@ -220,57 +279,44 @@ export function TagsPage() {
           value={summary?.total ?? 0}
           label="همه شماره‌ها"
           loading={loading && !summary}
+          pressed={activeCard === "all"}
+          onSelect={() => applyCard("all")}
         />
         <StatTile
           icon={<QrCode />}
           value={summary?.unassigned ?? 0}
           label="رزرو و بدون اثر"
           loading={loading && !summary}
+          pressed={activeCard === "unassigned"}
+          onSelect={() => applyCard("unassigned")}
         />
         <StatTile
           icon={<QrCode />}
           value={summary?.assigned ?? 0}
           label="متصل به اثر"
           loading={loading && !summary}
+          pressed={activeCard === "assigned"}
+          onSelect={() => applyCard("assigned")}
         />
         <StatTile
           icon={<QrCode />}
           value={summary?.printed ?? 0}
           label="چاپ‌شده"
           loading={loading && !summary}
+          pressed={activeCard === "printed"}
+          onSelect={() => applyCard("printed")}
         />
         <StatTile
           icon={<QrCode />}
           value={summary?.retired ?? 0}
           label="بازنشسته"
           loading={loading && !summary}
+          pressed={activeCard === "retired"}
+          onSelect={() => applyCard("retired")}
         />
       </div>
 
-      {canWrite && (
-        <form
-          className="paper-panel"
-          onSubmit={(event) => {
-            event.preventDefault();
-            void reserve();
-          }}
-        >
-          <h2>رزرو دسته‌ای شماره‌ها</h2>
-          <label>
-            تعداد
-            <input
-              type="number"
-              min={1}
-              max={200}
-              value={quantity}
-              onChange={(event) => setQuantity(Number(event.target.value))}
-            />
-          </label>
-          <Button type="submit">رزرو دسته‌ای شماره‌ها</Button>
-        </form>
-      )}
-
-      <div className="paper-panel">
+      <div className="paper-panel identity-registry" id="identity-registry">
         <div className="form-grid">
           <label>
             جستجو
@@ -278,14 +324,17 @@ export function TagsPage() {
               icon={<Search />}
               value={query}
               onChange={setQuery}
-              placeholder="شماره یا نام اثر"
+              placeholder="شماره، RAD-082 یا نام اثر"
+              aria-label="جستجوی شماره رَد"
             />
           </label>
           <label>
             وضعیت
             <select
               value={status}
-              onChange={(event) => setStatus(event.target.value)}
+              onChange={(event) =>
+                setStatus(event.target.value as typeof status)
+              }
             >
               <option value="">همه</option>
               <option value="reserved">رزرو</option>
@@ -297,7 +346,9 @@ export function TagsPage() {
             اتصال
             <select
               value={assignment}
-              onChange={(event) => setAssignment(event.target.value)}
+              onChange={(event) =>
+                setAssignment(event.target.value as typeof assignment)
+              }
             >
               <option value="">همه</option>
               <option value="unassigned">بدون اثر</option>
@@ -320,22 +371,52 @@ export function TagsPage() {
             </select>
           </label>
         </div>
-        {error ? <p>{error}</p> : null}
-        <div className="admin-table-wrap">
-          <table>
+        <div className="identity-filters">
+          <p className="identity-count" role="status">
+            {loading
+              ? "در حال جستجو…"
+              : `${number.format(visible.length)} شماره`}
+          </p>
+          {filtersActive ? (
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => applyCard("all")}
+            >
+              پاک کردن فیلترها
+            </Button>
+          ) : null}
+        </div>
+        {error ? <p role="alert">{error}</p> : null}
+        {!loading && visible.length === 0 ? (
+          <p>شماره‌ای با این فیلتر نیست.</p>
+        ) : null}
+        <ul className="identity-cards">
+          {pageRows.map((row) => (
+            <li key={row.id}>
+              <IdentityResult
+                row={row}
+                product={
+                  row.productId ? productById.get(row.productId) : undefined
+                }
+                onOpen={() => void openIdentity(row.id)}
+              />
+            </li>
+          ))}
+        </ul>
+        <div className="identity-table-wrap">
+          <table className="identity-table">
             <thead>
               <tr>
                 <th>شماره</th>
-                <th>QR</th>
                 <th>اثر</th>
                 <th>وضعیت</th>
                 <th>چاپ</th>
                 <th>دسته</th>
-                <th>تاریخ</th>
               </tr>
             </thead>
             <tbody>
-              {rows.map((row) => (
+              {pageRows.map((row) => (
                 <tr key={row.id}>
                   <td dir="ltr">
                     <Button
@@ -345,140 +426,317 @@ export function TagsPage() {
                       {row.label}
                     </Button>
                   </td>
-                  <td>
-                    <svg
-                      viewBox={`0 0 ${row.qr.size} ${row.qr.size}`}
-                      width="48"
-                      height="48"
-                      aria-hidden="true"
-                    >
-                      <rect width="100%" height="100%" fill="#ffffff" />
-                      <path d={row.qr.d} fill="#18231f" />
-                    </svg>
-                  </td>
-                  <td>{row.productName ?? "—"}</td>
+                  <td>{row.productName ?? "بدون اثر"}</td>
                   <td>{statusLabel[row.status]}</td>
                   <td>{row.printed ? "چاپ شده" : "چاپ نشده"}</td>
                   <td>{row.batchId ? row.batchId.slice(-6) : "—"}</td>
-                  <td>{date.format(row.createdAt)}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-        {!loading && rows.length === 0 ? (
-          <p>شماره‌ای با این فیلتر نیست.</p>
+        {pageCount > 1 ? (
+          <div className="identity-pager">
+            <Button
+              type="button"
+              variant="secondary"
+              disabled={page === 0}
+              onClick={() => setPage((current) => current - 1)}
+            >
+              قبلی
+            </Button>
+            <span>
+              {number.format(page + 1)} از {number.format(pageCount)}
+            </span>
+            <Button
+              type="button"
+              variant="secondary"
+              disabled={page + 1 >= pageCount}
+              onClick={() => setPage((current) => current + 1)}
+            >
+              بعدی
+            </Button>
+          </div>
         ) : null}
       </div>
 
+      {selected ? (
+        <IdentityDetail
+          selected={selected}
+          product={
+            selected.productId ? productById.get(selected.productId) : undefined
+          }
+          canWrite={canWrite}
+          busyDownload={busyDownload}
+          openProducts={openProducts}
+          assignProductId={assignProductId}
+          onAssignProductId={setAssignProductId}
+          onAssign={() => void assign()}
+          onCopy={() => void copyUrl(selected.permanentUrl)}
+          onDownload={(path, filename) => void downloadFile(path, filename)}
+          onClose={() => setSelected(null)}
+        />
+      ) : null}
+
       {canWrite ? (
-        <div className="paper-panel">
-          <h2>QR آثار موجود</h2>
+        <details className="paper-panel identity-secondary">
+          <summary>رزرو دسته‌ای شماره‌ها</summary>
+          <form
+            onSubmit={(event) => {
+              event.preventDefault();
+              void reserve();
+            }}
+          >
+            <label>
+              تعداد
+              <input
+                type="number"
+                min={1}
+                max={200}
+                value={quantity}
+                onChange={(event) => setQuantity(Number(event.target.value))}
+              />
+            </label>
+            <Button type="submit">رزرو دسته‌ای شماره‌ها</Button>
+          </form>
+        </details>
+      ) : null}
+
+      {canWrite ? (
+        <details className="paper-panel identity-secondary">
+          <summary>خروجی QR آثار موجود</summary>
           <p>
             SVG، PNG و فهرست اثرها برای شماره‌هایی که همین حالا روی آثار هستند.
             این خروجی به دسته چاپ وصل نیست و شماره رزروشده تازه‌ای مصرف نمی‌کند.
-            اگر شماره اثر با شناسه دائمی یکی نباشد، فایل ساخته نمی‌شود.
           </p>
-          <Button type="button" onClick={() => void downloadLegacy()}>
-            دانلود QR آثار موجود
+          <Button
+            type="button"
+            disabled={Boolean(busyDownload)}
+            onClick={() =>
+              void downloadFile(
+                "/admin/identities/legacy-artworks/export",
+                "rad-legacy-artworks.zip",
+              )
+            }
+          >
+            {busyDownload?.endsWith("legacy-artworks/export")
+              ? "در حال آماده‌سازی…"
+              : "دانلود QR آثار موجود"}
           </Button>
-        </div>
+        </details>
       ) : null}
 
       {batchId && canWrite ? (
-        <div className="paper-panel">
-          <h2>خروجی چاپ</h2>
+        <details className="paper-panel identity-secondary" open>
+          <summary>خروجی دسته چاپ</summary>
           <p>
             فایل ZIP فقط وقتی دانلود می‌شود که هر QR همان نشانی دائمی را
             برگرداند. علامت چاپ بعد از بررسی آدرس عمومی ثبت می‌شود.
           </p>
-          <Button type="button" onClick={() => void downloadBatch(batchId)}>
-            دانلود SVG و PNG
-          </Button>
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={() => void markPrinted(batchId)}
-          >
-            علامت‌گذاری به‌عنوان چاپ‌شده
-          </Button>
-        </div>
-      ) : null}
-
-      {selected ? (
-        <aside className="paper-panel">
-          <h2>{selected.label}</h2>
-          <p dir="ltr">{selected.permanentUrl}</p>
-          <Button
-            type="button"
-            onClick={() => void copyUrl(selected.permanentUrl)}
-          >
-            کپی پیوند
-          </Button>
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={() =>
-              void downloadFile(
-                `/admin/identities/${selected.id}/qr.svg`,
-                `${selected.label.replace(/[^a-zA-Z0-9-]/g, "-")}.svg`,
-              )
-            }
-          >
-            دانلود SVG
-          </Button>
-          {selected.productName ? <p>اثر: {selected.productName}</p> : null}
-          {selected.status === "reserved" && canWrite ? (
-            <form
-              onSubmit={(event) => {
-                event.preventDefault();
-                void assign();
-              }}
+          <div className="identity-actions">
+            <Button
+              type="button"
+              disabled={Boolean(busyDownload)}
+              onClick={() =>
+                void downloadFile(
+                  `/admin/identities/batches/${batchId}/export`,
+                  `RAD-batch-${batchId.slice(-6)}.zip`,
+                )
+              }
             >
-              <label>
-                اتصال به اثر
-                <select
-                  value={assignProductId}
-                  onChange={(event) => setAssignProductId(event.target.value)}
-                >
-                  <option value="">انتخاب اثر</option>
-                  {openProducts.map((product: AdminProduct) => (
-                    <option key={product.id} value={product.id}>
-                      {product.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <Button type="submit">اتصال شماره</Button>
-            </form>
-          ) : null}
-          <h3>تاریخچه</h3>
-          <ul>
-            {(selected.events ?? []).map((event, index) => (
-              <li key={`${event.kind}-${index}`}>
-                {event.kind} · {date.format(event.at)}
-              </li>
-            ))}
-          </ul>
-          <p>
-            رزرو {date.format(selected.reservedAt)}
-            {selected.assignedAt
-              ? ` · اتصال ${date.format(selected.assignedAt)}`
-              : ""}
-            {selected.printedAt
-              ? ` · چاپ ${date.format(selected.printedAt)}`
-              : ""}
-          </p>
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={() => setSelected(null)}
-          >
-            بستن
-          </Button>
-        </aside>
+              {busyDownload?.includes("/export")
+                ? "در حال آماده‌سازی…"
+                : "دانلود SVG و PNG"}
+            </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => void markPrinted(batchId)}
+            >
+              علامت‌گذاری به‌عنوان چاپ‌شده
+            </Button>
+          </div>
+        </details>
       ) : null}
-      <p>{number.format(rows.length)} شماره در این فهرست</p>
     </section>
+  );
+}
+
+function IdentityResult({
+  row,
+  product,
+  onOpen,
+}: {
+  row: RadIdentityView;
+  product: AdminProduct | undefined;
+  onOpen: () => void;
+}) {
+  const thumb = product ? coverImage(product.images)?.src : null;
+  return (
+    <button type="button" className="identity-card" onClick={onOpen}>
+      <span className="identity-card-head">
+        {thumb ? <img src={thumb} alt="" /> : <QrCode />}
+        <strong dir="ltr">{row.label}</strong>
+      </span>
+      <span className="identity-meta">
+        <span>{statusLabel[row.status]}</span>
+        <span>{row.productName ?? "بدون اثر"}</span>
+        <span>{row.printed ? "چاپ شده" : "چاپ نشده"}</span>
+      </span>
+    </button>
+  );
+}
+
+function IdentityDetail({
+  selected,
+  product,
+  canWrite,
+  busyDownload,
+  openProducts,
+  assignProductId,
+  onAssignProductId,
+  onAssign,
+  onCopy,
+  onDownload,
+  onClose,
+}: {
+  selected: Detail;
+  product: AdminProduct | undefined;
+  canWrite: boolean;
+  busyDownload: string | null;
+  openProducts: AdminProduct[];
+  assignProductId: string;
+  onAssignProductId: (value: string) => void;
+  onAssign: () => void;
+  onCopy: () => void;
+  onDownload: (path: string, filename: string) => void;
+  onClose: () => void;
+}) {
+  const published = artworkStoryIsPublic(product?.status);
+  const svgPath = `/admin/identities/${selected.id}/qr.svg`;
+  const pngPath = `/admin/identities/${selected.id}/qr.png`;
+  return (
+    <aside className="paper-panel identity-detail" id="identity-detail">
+      <h2 dir="ltr">{selected.label}</h2>
+      <svg
+        className="identity-qr"
+        viewBox={`0 0 ${selected.qr.size} ${selected.qr.size}`}
+        aria-label={`QR ${selected.label}`}
+      >
+        <rect width="100%" height="100%" fill="#ffffff" />
+        <path d={selected.qr.d} fill="#18231f" />
+      </svg>
+      <p className="identity-meta">
+        <span>{statusLabel[selected.status]}</span>
+        <span>{selected.printed ? "چاپ شده" : "چاپ نشده"}</span>
+        {selected.batchId ? (
+          <span>دسته {selected.batchId.slice(-6)}</span>
+        ) : null}
+      </p>
+      {selected.productName ? (
+        <p>اثر: {selected.productName}</p>
+      ) : (
+        <p>این شماره هنوز به اثری وصل نشده است.</p>
+      )}
+      <p dir="ltr">{selected.permanentUrl}</p>
+      <div className="identity-actions">
+        <a
+          className="rad-button rad-button-secondary rad-button-md"
+          href={selected.permanentUrl}
+          target="_blank"
+          rel="noreferrer"
+        >
+          مشاهده صفحه عمومی
+        </a>
+        <Button type="button" variant="secondary" onClick={onCopy}>
+          کپی لینک دائمی
+        </Button>
+        {published ? (
+          <a
+            className="rad-button rad-button-secondary rad-button-md"
+            href={publicPassportUrl(selected.permanentUrl, selected.code)}
+            target="_blank"
+            rel="noreferrer"
+          >
+            گذرنامه اثر
+          </a>
+        ) : null}
+        {selected.productId ? (
+          <>
+            <Link
+              className="rad-button rad-button-secondary rad-button-md"
+              href={productEditorHref(selected.productId, "artwork")}
+            >
+              ویرایش اثر
+            </Link>
+            <Link
+              className="rad-button rad-button-secondary rad-button-md"
+              href={productEditorHref(selected.productId, "story")}
+            >
+              ویرایش داستان اثر
+            </Link>
+          </>
+        ) : null}
+        <Button
+          type="button"
+          disabled={Boolean(busyDownload)}
+          onClick={() => onDownload(svgPath, `${selected.label}.svg`)}
+        >
+          {busyDownload === svgPath ? "در حال آماده‌سازی…" : "دانلود QR"}
+        </Button>
+        <Button
+          type="button"
+          variant="secondary"
+          disabled={Boolean(busyDownload)}
+          onClick={() => onDownload(pngPath, `${selected.label}.png`)}
+        >
+          {busyDownload === pngPath ? "در حال آماده‌سازی…" : "دانلود PNG"}
+        </Button>
+      </div>
+      {selected.status === "reserved" && canWrite ? (
+        <form
+          onSubmit={(event) => {
+            event.preventDefault();
+            onAssign();
+          }}
+        >
+          <label>
+            اتصال به اثر
+            <select
+              value={assignProductId}
+              onChange={(event) => onAssignProductId(event.target.value)}
+            >
+              <option value="">انتخاب اثر</option>
+              {openProducts.map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <Button type="submit" disabled={!assignProductId}>
+            اتصال شماره
+          </Button>
+        </form>
+      ) : null}
+      <h3>تاریخچه</h3>
+      <ul>
+        {(selected.events ?? []).map((event, index) => (
+          <li key={`${event.kind}-${index}`}>
+            {event.kind} · {date.format(event.at)}
+          </li>
+        ))}
+      </ul>
+      <p>
+        رزرو {date.format(selected.reservedAt)}
+        {selected.assignedAt
+          ? ` · اتصال ${date.format(selected.assignedAt)}`
+          : ""}
+        {selected.printedAt ? ` · چاپ ${date.format(selected.printedAt)}` : ""}
+      </p>
+      <Button type="button" variant="secondary" onClick={onClose}>
+        بستن
+      </Button>
+    </aside>
   );
 }

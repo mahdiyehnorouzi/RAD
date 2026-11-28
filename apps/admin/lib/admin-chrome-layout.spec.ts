@@ -10,6 +10,7 @@ const products = readFileSync(
   join(root, "features/products/products-workspace.css"),
   "utf8",
 );
+const shell = readFileSync(join(root, "components/admin-shell.tsx"), "utf8");
 
 test("active and inactive navigation rows share one fixed geometry", () => {
   const rule = css.match(/nav\.admin-nav > :is\(a, button\) \{[^}]*\}/)?.[0];
@@ -38,4 +39,30 @@ test("product cards keep the category on one line and center the row menu on the
     products,
     /\.product-editor-identity \{[^}]*justify-content: space-between/,
   );
+});
+
+test("the notice panel closes from outside, Escape, and the mobile drawer", () => {
+  assert.match(shell, /pointerdown/);
+  assert.match(shell, /Escape/);
+  assert.match(shell, /admin-notice-row/);
+  assert.match(shell, /setNoticesOpen\(false\)/);
+  assert.match(shell, /setMobileNav\(true\)/);
+  assert.doesNotMatch(css, /admin-notice-panel > a \{/);
+});
+
+test("password fields use the shared rounded field and a centered toggle", () => {
+  assert.match(
+    css,
+    /\.password-field \{[^}]*border-radius: var\(--radius-md\)/,
+  );
+  assert.match(
+    css,
+    /\.password-field > button\.password-toggle \{[^}]*min-height: 44px/,
+  );
+  assert.match(css, /\.password-field input \{[^}]*font-size: 16px/);
+});
+
+test("custom-order tabs keep swipe scrolling without a second scrollbar", () => {
+  assert.match(css, /\.commission-tabs \{[^}]*scrollbar-width: none/);
+  assert.match(css, /\.commission-tabs::-webkit-scrollbar/);
 });
