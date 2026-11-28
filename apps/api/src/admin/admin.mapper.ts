@@ -7,7 +7,11 @@ import type {
   Vendor,
 } from "../database/entities";
 import { imageSrc } from "../catalog/product.mapper";
-import { toAdminCategory, toStoreCategory } from "../catalog/category";
+import {
+  adminCategoryLabel,
+  toAdminCategory,
+  toStoreCategory,
+} from "../catalog/category";
 import { normalizeProductStatus } from "../inventory/product-status";
 import { normalizeStoreOrderStatus } from "../orders/store-order-status";
 import { toPolicyAcceptance } from "../policies/policy-acceptance";
@@ -38,7 +42,8 @@ export function toAdminProduct(
     description: product.story,
     subtitle: product.subtitle,
     storyEn: (product.en as { story?: string } | null)?.story,
-    category: toAdminCategory(product.category),
+    category: adminCategoryLabel(product.category),
+    categorySlug: product.category,
     subcategory: product.subcategory?.slug ?? null,
     price: product.tomanPrice ?? 0,
     status: normalizeProductStatus(product.status),

@@ -17,7 +17,7 @@ import { CategoriesService } from "./categories.service";
 import { SaveCategoryDto } from "./dto/save-category.dto";
 import { UpdateCategoryDto } from "./dto/update-category.dto";
 
-/** Same permission as product and attribute writes. Viewers cannot read or change categories. */
+/** Same permission as product writes. Viewing the list is open to every staff role. */
 export function assertCategoryWrite(role: string | undefined) {
   if (!canAdmin(role, "product.write")) {
     throw new ForbiddenException("برای این عملیات دسترسی ندارید.");
@@ -30,8 +30,7 @@ export class AdminCategoriesController {
   constructor(private readonly categories: CategoriesService) {}
 
   @Get()
-  list(@Req() request: AuthedRequest) {
-    assertCategoryWrite(request.adminRole);
+  list() {
     return this.categories.listAdmin();
   }
 

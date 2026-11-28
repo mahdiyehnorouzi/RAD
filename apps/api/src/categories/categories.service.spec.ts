@@ -11,6 +11,7 @@ import { createAppDataSource } from "../database/data-source";
 import { isLocalDatabaseUrl } from "../database/safe-target";
 import { Category, Product } from "../database/entities";
 import { CategoriesService } from "./categories.service";
+import { resolveProductParentSlug } from "./resolve-product-parent";
 import { resolveProductSubcategory } from "./resolve-product-subcategory";
 
 function freePort() {
@@ -373,4 +374,36 @@ test("product subcategory must belong to the selected parent", async () => {
         "subcategory_parent_mismatch",
   );
   assert.equal(painting.parentId, null);
+});
+
+test("a product parent accepts a category slug or a legacy Persian label", async () => {
+  const categories = dataSource.getRepository(Category);
+  await service.create({
+    slug: "ceramics",
+    name: { fa: "سفال و سرامیک", en: "Ceramics" },
+    active: true,
+  });
+  const child = await service.create({
+    slug: "mugs",
+    name: { fa: "ماگ", en: "Mugs" },
+    parentId: (await categories.findOneByOrFail({ slug: "ceramics" })).id,
+    active: true,
+  });
+  assert.equal(
+    await resolveProductParentSlug(categories, "ceramics"),
+    "ceramics",
+  );
+  assert.equal(await resolveProductParentSlug(categories, "گلدان"), "ceramics");
+  await assert.rejects(
+    () => resolveProductParentSlug(categories, child.slug),
+    (error: unknown) =>
+      error instanceof BadRequestException &&
+      (error.getResponse() as { code?: string }).code === "category_invalid",
+  );
+  await assert.rejects(
+    () => resolveProductParentSlug(categories, "not-a-category"),
+    (error: unknown) =>
+      error instanceof BadRequestException &&
+      (error.getResponse() as { code?: string }).code === "category_invalid",
+  );
 });

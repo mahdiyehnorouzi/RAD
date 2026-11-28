@@ -1,6 +1,10 @@
 "use client";
-import { useMemo, useRef, useState } from "react";
-import { effectiveProductStatus, formatRadCode } from "@rad/types";
+import { useCallback, useMemo, useRef, useState } from "react";
+import {
+  effectiveProductStatus,
+  formatRadCode,
+  type AdminCategory,
+} from "@rad/types";
 import {
   ChevronDown,
   ChevronLeft,
@@ -20,6 +24,7 @@ import { EmptyState, StatusBadge } from "../../components/admin-list-chrome";
 import { API_BASE } from "../../lib/api";
 import { coverImage } from "../../lib/product-cover";
 import { persianSearchIncludes } from "../../lib/persian-text";
+import { childrenOf, parentsOf } from "../../lib/product-category";
 import "./products-workspace.css";
 
 const number = new Intl.NumberFormat("fa-IR");
@@ -48,6 +53,7 @@ export function Products({
   onEdit,
   onDelete,
   selectedId = null,
+  catalog = [],
 }: {
   products: AdminProduct[];
   canWrite: boolean;
@@ -55,6 +61,7 @@ export function Products({
   onEdit: (product: AdminProduct) => void;
   onDelete: (product: AdminProduct) => void;
   selectedId?: string | null;
+  catalog?: AdminCategory[];
 }) {
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<ProductSort>("newest");
@@ -70,9 +77,25 @@ export function Products({
   const filtersActive =
     sort !== "newest" || statusFilter !== "all" || categoryFilter !== "all";
 
+  const categoryLabel = useCallback(
+    (product: AdminProduct) => {
+      if (!catalog.length) return product.category;
+      const parent = product.categorySlug
+        ? parentsOf(catalog).find((item) => item.slug === product.categorySlug)
+        : parentsOf(catalog).find((item) => item.name.fa === product.category);
+      if (!parent) return product.category;
+      const child = product.subcategory
+        ? childrenOf(parent.slug, catalog).find(
+            (item) => item.slug === product.subcategory,
+          )
+        : undefined;
+      return child ? `${parent.name.fa} / ${child.name.fa}` : parent.name.fa;
+    },
+    [catalog],
+  );
   const categories = useMemo(
-    () => Array.from(new Set(products.map((item) => item.category))),
-    [products],
+    () => Array.from(new Set(products.map((item) => categoryLabel(item)))),
+    [products, categoryLabel],
   );
 
   const filtered = useMemo(() => {
@@ -88,7 +111,7 @@ export function Products({
       )
       .filter(
         (product) =>
-          categoryFilter === "all" || product.category === categoryFilter,
+          categoryFilter === "all" || categoryLabel(product) === categoryFilter,
       );
     return [...list].sort((a, b) => {
       if (sort === "newest") return b.updatedAt - a.updatedAt;
@@ -96,7 +119,7 @@ export function Products({
       if (sort === "price_desc") return b.price - a.price;
       return a.price - b.price;
     });
-  }, [products, query, statusFilter, categoryFilter, sort]);
+  }, [products, query, statusFilter, categoryFilter, sort, categoryLabel]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const currentPage = Math.min(page, totalPages);
@@ -238,7 +261,7 @@ export function Products({
                     <div className="product-card-top">
                       <span className="product-card-kicker">
                         <span className="product-card-category">
-                          {product.category}
+                          {categoryLabel(product)}
                         </span>
                         <span className="product-card-artist">
                           {product.artist}

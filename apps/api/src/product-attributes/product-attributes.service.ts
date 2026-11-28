@@ -13,7 +13,7 @@ import {
   ProductAttributeOption,
   ProductAttributeValue,
 } from "../database/entities";
-import { toStoreCategory } from "../catalog/category";
+import { catalogCategoryKey } from "../catalog/category";
 import type { SaveProductAttributeDto } from "./dto";
 import {
   coerceAttributeValue,
@@ -52,7 +52,7 @@ export class ProductAttributesService {
   async byCategory(
     adminCategoryLabel: string,
   ): Promise<ProductAttributeView[]> {
-    const storeCategory = toStoreCategory(adminCategoryLabel);
+    const storeCategory = catalogCategoryKey(adminCategoryLabel);
     const rows = await this.attributes
       .createQueryBuilder("attribute")
       .leftJoinAndSelect("attribute.options", "options")

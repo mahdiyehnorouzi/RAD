@@ -15,6 +15,7 @@ import { Button } from "@rad/ui";
 import {
   Archive,
   Bell,
+  FolderTree,
   ChevronLeft,
   CircleHelp,
   Inbox,
@@ -50,6 +51,7 @@ import {
   initialDashboardSection,
   isHelpPath,
   isMessagesPath,
+  isCategoriesPath,
   isProductsPath,
   isTagsPath,
   isReviewsPath,
@@ -58,6 +60,7 @@ import {
   staffGate,
   startHelpLink,
   startMessagesLink,
+  startCategoriesLink,
   startProductsLink,
   startTagsLink,
   startReviewsLink,
@@ -73,6 +76,7 @@ import { AdminLogin } from "./admin-login";
 const navItems: { id: AdminSection; label: string; icon: typeof Archive }[] = [
   { id: "overview", label: "مرور استودیو", icon: LayoutDashboard },
   { id: "products", label: "آثار و محصولات", icon: Archive },
+  { id: "categories", label: "دسته‌بندی‌ها", icon: FolderTree },
   { id: "tags", label: "تگ‌ها و QR", icon: QrCode },
   { id: "orders", label: "سفارش‌های فروشگاه", icon: ShoppingBag },
   { id: "messages", label: "پیام‌ها", icon: Inbox },
@@ -154,6 +158,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
   const messagesActive = isMessagesPath(pathname);
   const shapeActive = isShapePath(pathname);
   const productsActive = isProductsPath(pathname);
+  const categoriesActive = isCategoriesPath(pathname);
   const tagsActive = isTagsPath(pathname);
   const routeActive =
     reviewsActive ||
@@ -161,6 +166,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
     messagesActive ||
     shapeActive ||
     productsActive ||
+    categoriesActive ||
     tagsActive;
   // skip: go() already fetched for a path change. pending: latest choice
   // whose URL has not committed. seen: last pathname this effect applied.
@@ -251,7 +257,14 @@ export function AdminShell({ children }: { children: ReactNode }) {
   }, [noticesOpen]);
 
   const followStudioLink = (
-    route: "reviews" | "help" | "messages" | "shape" | "products" | "tags",
+    route:
+      | "reviews"
+      | "help"
+      | "messages"
+      | "shape"
+      | "products"
+      | "categories"
+      | "tags",
   ) => {
     setMobileNav(false);
     setNoticesOpen(false);
@@ -267,7 +280,9 @@ export function AdminShell({ children }: { children: ReactNode }) {
               ? startShapeLink(visible, pendingNav.current)
               : route === "products"
                 ? startProductsLink(visible, pendingNav.current)
-                : startTagsLink(visible, pendingNav.current);
+                : route === "categories"
+                  ? startCategoriesLink(visible, pendingNav.current)
+                  : startTagsLink(visible, pendingNav.current);
     pendingNav.current = action.pending;
     skipPathLoad.current = action.skip;
     if (action.replace) router.replace(action.replace);
@@ -423,9 +438,11 @@ export function AdminShell({ children }: { children: ReactNode }) {
           ? "پرسشنامه‌ی شکل"
           : productsActive
             ? "آثار و محصولات"
-            : tagsActive
-              ? "تگ‌ها و QR"
-              : navItems.find((item) => item.id === section)?.label;
+            : categoriesActive
+              ? "دسته‌بندی‌ها"
+              : tagsActive
+                ? "تگ‌ها و QR"
+                : navItems.find((item) => item.id === section)?.label;
 
   return (
     <AdminChromeContext.Provider
@@ -496,13 +513,17 @@ export function AdminShell({ children }: { children: ReactNode }) {
                           ? productsActive
                             ? "active"
                             : ""
-                          : id === "tags"
-                            ? tagsActive
+                          : id === "categories"
+                            ? categoriesActive
                               ? "active"
                               : ""
-                            : !routeActive && section === id
-                              ? "active"
-                              : "";
+                            : id === "tags"
+                              ? tagsActive
+                                ? "active"
+                                : ""
+                              : !routeActive && section === id
+                                ? "active"
+                                : "";
               const body = (
                 <>
                   <Icon />
@@ -544,6 +565,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
                 id === "messages" ||
                 id === "shape" ||
                 id === "products" ||
+                id === "categories" ||
                 id === "tags"
               ) {
                 return (

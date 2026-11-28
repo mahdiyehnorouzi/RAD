@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { Button } from "@rad/ui";
 import { api, API_BASE } from "../../lib/api";
-import { formatRadCode } from "@rad/types";
+import { formatRadCode, type AdminCategory } from "@rad/types";
 import { storefrontUrl } from "../../lib/storefront-url";
 import { StatusBadge } from "../../components/admin-list-chrome";
 import { productStatusTone } from "./admin-products";
@@ -27,13 +27,18 @@ import {
   productStatusLabel,
   productStatusLabels,
   productStatusOptions,
-  PRODUCT_CATEGORY_LABELS,
   type AdminProduct,
   type AdminRemoteMediaStorage,
   type ProductAttribute,
   type ProductAttributeValue,
 } from "../../lib/admin-data";
 import { Field } from "../../components/admin-dialog";
+import {
+  alignProductCategory,
+  childrenOf,
+  keptSubcategory,
+  parentsOf,
+} from "../../lib/product-category";
 import { ProductAttributeFields } from "../../components/admin-product-attribute-fields";
 import {
   canSelectAsCover,
@@ -76,6 +81,7 @@ export function formatPriceInput(value: number) {
 
 export function ProductDialog({
   product,
+  categories = [],
   onClose,
   onSave,
   onUploadImage,
@@ -86,6 +92,7 @@ export function ProductDialog({
   focusStory = false,
 }: {
   product: AdminProduct | null;
+  categories?: AdminCategory[];
   onClose: () => void;
   onSave: (product: AdminProduct) => void | Promise<void>;
   canWrite?: boolean;
@@ -123,6 +130,7 @@ export function ProductDialog({
       description: "",
       subtitle: "",
       category: "گلدان",
+      subcategory: null,
       price: 0,
       status: "draft",
       artist: "استودیو رَد",
@@ -209,7 +217,7 @@ export function ProductDialog({
   useEffect(() => {
     let active = true;
     setAttributesLoading(true);
-    onFetchAttributes(draft.category)
+    onFetchAttributes(draft.categorySlug || draft.category)
       .then((list) => {
         if (active) setCategoryAttributes(list);
       })
@@ -223,7 +231,7 @@ export function ProductDialog({
       active = false;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [draft.category]);
+  }, [draft.categorySlug, draft.category]);
   const [uploads, setUploads] = useState<
     Record<
       string,
@@ -242,6 +250,19 @@ export function ProductDialog({
     (item) => item.pending || item.error,
   );
   const baseline = useRef<string | null>(null);
+  const categoryAligned = useRef(false);
+  if (!categoryAligned.current && categories.length > 0) {
+    categoryAligned.current = true;
+    const next = alignProductCategory(draft, categories, product == null);
+    if (
+      next.category !== draft.category ||
+      next.categorySlug !== draft.categorySlug ||
+      (next.subcategory ?? null) !== (draft.subcategory ?? null)
+    ) {
+      setDraft(next);
+      baseline.current = productSnapshot(next);
+    }
+  }
   if (baseline.current === null) baseline.current = productSnapshot(draft);
   const isDirty =
     productSnapshot(draft) !== baseline.current || unresolvedUploads;
@@ -782,20 +803,70 @@ export function ProductDialog({
         </summary>
         <div className="editor-accordion-body">
           <div className="form-grid">
-            <Field label="دسته‌بندی فرعی">
+            <Field label="دسته‌بندی">
               <select
-                value={draft.category}
-                disabled={locked}
+                aria-label="دسته‌بندی اثر"
+                value={draft.categorySlug ?? ""}
+                disabled={locked || parentsOf(categories).length === 0}
+                onChange={(event) => {
+                  const categorySlug = event.target.value;
+                  const parent = parentsOf(categories).find(
+                    (item) => item.slug === categorySlug,
+                  );
+                  setDraft({
+                    ...draft,
+                    categorySlug,
+                    category: parent?.name.fa ?? draft.category,
+                    subcategory: keptSubcategory(
+                      categorySlug,
+                      draft.subcategory,
+                      categories,
+                    ),
+                  });
+                }}
+              >
+                {(draft.categorySlug ?? "") === "" ? (
+                  <option value="">انتخاب دسته</option>
+                ) : null}
+                {parentsOf(categories).map((item) => (
+                  <option key={item.id} value={item.slug}>
+                    {item.active ? item.name.fa : `${item.name.fa} (غیرفعال)`}
+                  </option>
+                ))}
+                {draft.categorySlug &&
+                !parentsOf(categories).some(
+                  (item) => item.slug === draft.categorySlug,
+                ) ? (
+                  <option value={draft.categorySlug}>{draft.category}</option>
+                ) : null}
+              </select>
+            </Field>
+            <Field label="زیردسته">
+              <select
+                aria-label="زیردسته اثر"
+                value={draft.subcategory ?? ""}
+                disabled={locked || !draft.categorySlug}
                 onChange={(event) =>
                   setDraft({
                     ...draft,
-                    category: event.target.value as AdminProduct["category"],
+                    subcategory: event.target.value || null,
                   })
                 }
               >
-                {PRODUCT_CATEGORY_LABELS.map((label) => (
-                  <option key={label}>{label}</option>
-                ))}
+                <option value="">بدون زیردسته</option>
+                {childrenOf(draft.categorySlug ?? "", categories).map(
+                  (item) => (
+                    <option key={item.id} value={item.slug}>
+                      {item.active ? item.name.fa : `${item.name.fa} (غیرفعال)`}
+                    </option>
+                  ),
+                )}
+                {draft.subcategory &&
+                !childrenOf(draft.categorySlug ?? "", categories).some(
+                  (item) => item.slug === draft.subcategory,
+                ) ? (
+                  <option value={draft.subcategory}>{draft.subcategory}</option>
+                ) : null}
               </select>
             </Field>
           </div>

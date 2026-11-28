@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { AuthUser } from "@rad/types";
+import type { AdminCategory, AuthUser } from "@rad/types";
 import { api } from "../lib/api";
 import {
   isRemoteMediaStorage,
@@ -50,6 +50,7 @@ type AuthStatus =
 
 type ResourceKey =
   | "products"
+  | "categories"
   | "orders"
   | "members"
   | "users"
@@ -69,6 +70,7 @@ type ResourceKey =
  */
 const resourceKeys: ResourceKey[] = [
   "products",
+  "categories",
   "orders",
   "members",
   "users",
@@ -83,7 +85,8 @@ const resourceKeys: ResourceKey[] = [
 
 const sectionResources: Record<AdminSection, ResourceKey[]> = {
   overview: ["products", "orders", "commissions"],
-  products: ["products"],
+  products: ["products", "categories"],
+  categories: ["categories"],
   tags: ["products"],
   orders: ["orders", "products", "messages", "damageReports"],
   messages: ["messages", "orders"],
@@ -103,6 +106,7 @@ export function useAdminWorkspace() {
   const [authStatus, setAuthStatus] = useState<AuthStatus>("initializing");
   const [error, setError] = useState("");
   const [products, setProducts] = useState<AdminProduct[]>([]);
+  const [categories, setCategories] = useState<AdminCategory[]>([]);
   const [orders, setOrders] = useState<AdminOrder[]>([]);
   const [members, setMembers] = useState<AdminMember[]>([]);
   const [users, setUsers] = useState<AdminUser[]>([]);
@@ -172,6 +176,8 @@ export function useAdminWorkspace() {
     switch (key) {
       case "products":
         return api<AdminProduct[]>("/admin/products");
+      case "categories":
+        return api<AdminCategory[]>("/admin/categories");
       case "orders":
         return assertOrderList(await api<unknown>("/admin/orders"));
       case "members":
@@ -199,6 +205,9 @@ export function useAdminWorkspace() {
     switch (key) {
       case "products":
         setProducts(data as AdminProduct[]);
+        break;
+      case "categories":
+        setCategories(data as AdminCategory[]);
         break;
       case "orders":
         setOrders(data as AdminOrder[]);
@@ -411,6 +420,7 @@ export function useAdminWorkspace() {
       user,
       error,
       products,
+      categories,
       orders,
       members,
       users,
@@ -684,7 +694,8 @@ export function useAdminWorkspace() {
           description: product.description,
           subtitle: product.subtitle,
           storyEn: product.storyEn,
-          category: product.category,
+          category: product.categorySlug || product.category,
+          subcategory: product.subcategory ?? null,
           price: product.price,
           status: product.status,
           artist: product.artist,
@@ -717,6 +728,30 @@ export function useAdminWorkspace() {
           return [saved, ...items];
         });
         return saved;
+      },
+      async saveCategory(
+        input: {
+          slug: string;
+          name: { fa: string; en: string };
+          sortOrder: number;
+          active: boolean;
+          parentId: string | null;
+        },
+        id?: string,
+      ) {
+        await api(id ? `/admin/categories/${id}` : "/admin/categories", {
+          method: id ? "PATCH" : "POST",
+          body: JSON.stringify(input),
+        });
+        const list = await api<AdminCategory[]>("/admin/categories");
+        bumpWrite("categories");
+        setCategories(list);
+      },
+      async deleteCategory(id: string) {
+        await api(`/admin/categories/${id}`, { method: "DELETE" });
+        const list = await api<AdminCategory[]>("/admin/categories");
+        bumpWrite("categories");
+        setCategories(list);
       },
       async deleteProduct(id: string) {
         await api(`/admin/products/${id}`, { method: "DELETE" });
@@ -905,6 +940,7 @@ export function useAdminWorkspace() {
       damageReports,
       error,
       helpQuestions,
+      categories,
       loadedKeys,
       loadErrors,
       refreshingKeys,

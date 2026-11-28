@@ -39,6 +39,7 @@ export type AdminRole = "owner" | "manager" | "editor" | "viewer";
 export type AdminSection =
   | "overview"
   | "products"
+  | "categories"
   | "tags"
   | "orders"
   | "messages"
@@ -157,6 +158,10 @@ export interface AdminProduct {
    * storefront. Falls back to `description` when left blank. */
   storyEn?: string;
   category: string;
+  /** Stored parent slug from the API. Absent on fixtures that only have a label. */
+  categorySlug?: string;
+  /** Stored subcategory slug. Null when the product has no subcategory. */
+  subcategory?: string | null;
   price: number;
   status: AdminProductStatus;
   /** Same derived field the public API sends; feeds `effectiveProductStatus`. */

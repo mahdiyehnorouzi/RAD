@@ -69,6 +69,7 @@ import {
 } from "../orders/store-order-status";
 import { adminOrderRelations } from "./const/order-relations";
 import { canAdmin, type AdminPermission } from "./permissions";
+import { resolveProductParentSlug } from "../categories/resolve-product-parent";
 import { resolveProductSubcategory } from "../categories/resolve-product-subcategory";
 import {
   artistVendorId,
@@ -76,7 +77,6 @@ import {
   toAdminOrder,
   toAdminProduct,
   toAdminUser,
-  toStoreCategory,
 } from "./admin.mapper";
 import type {
   InviteMemberDto,
@@ -300,7 +300,10 @@ export class AdminService {
     }
     const vendorId = await this.ensureVendor(input.artist);
     const usdPrice = Math.max(1, Math.round(input.price / 85_000));
-    const category = toStoreCategory(input.category);
+    const category = await resolveProductParentSlug(
+      this.dataSource.getRepository(Category),
+      input.category,
+    );
     let existingSubcategoryId: string | null = null;
     if (existingId) {
       const current = await this.products.findOne({

@@ -57,6 +57,8 @@ export function productSnapshot(
     | "description"
     | "subtitle"
     | "category"
+    | "categorySlug"
+    | "subcategory"
     | "price"
     | "status"
     | "artist"
@@ -71,6 +73,8 @@ export function productSnapshot(
     description: product.description,
     subtitle: product.subtitle ?? "",
     category: product.category,
+    categorySlug: product.categorySlug ?? "",
+    subcategory: product.subcategory ?? null,
     price: product.price,
     status: product.status,
     artist: product.artist,
