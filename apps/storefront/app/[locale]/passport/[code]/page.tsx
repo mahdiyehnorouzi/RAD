@@ -57,7 +57,13 @@ export default async function PassportDetail({
   const { code } = await params;
   const [passport, { artworks }] = await Promise.all([
     resolvePassport(code),
-    getCatalog(),
+    getCatalog().catch(
+      recover(`passport catalog ${code}`, {
+        artworks: [],
+        products: [],
+        origin: "registry" as const,
+      }),
+    ),
   ]);
   if (!passport) notFound();
   const passports = passportsFrom(artworks);
