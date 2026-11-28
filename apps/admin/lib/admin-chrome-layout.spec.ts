@@ -6,6 +6,10 @@ import { test } from "node:test";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const css = readFileSync(join(root, "app/globals.css"), "utf8");
+const products = readFileSync(
+  join(root, "features/products/products-workspace.css"),
+  "utf8",
+);
 const shell = readFileSync(join(root, "components/admin-shell.tsx"), "utf8");
 
 test("active and inactive navigation rows share one fixed geometry", () => {
@@ -19,6 +23,22 @@ test("active and inactive navigation rows share one fixed geometry", () => {
   )?.[0];
   assert.match(active ?? "", /background: var\(--paper\)/);
   assert.doesNotMatch(active ?? "", /height|padding|font-size|line-height/);
+});
+
+test("product cards keep the category on one line and center the row menu on the thumbnail", () => {
+  assert.match(products, /\.product-card-category,[\s\S]*?white-space: nowrap/);
+  assert.match(
+    products,
+    /\.product-card-main > \.row-menu-anchor \{[^}]*height: 56px/,
+  );
+  assert.match(
+    products,
+    /\.product-card-top \{[^}]*justify-content: space-between/,
+  );
+  assert.match(
+    products,
+    /\.product-editor-identity \{[^}]*justify-content: space-between/,
+  );
 });
 
 test("the notice panel closes from outside, Escape, and the mobile drawer", () => {

@@ -242,7 +242,9 @@ textarea:focus-visible {
 }
 /* One geometry for route links and local buttons. Selection changes color
    only. Specificity beats `.rad-button` / `.rad-button-md` (padding, font,
-   border, inline-flex) so an active row cannot grow or shift. */
+   border, inline-flex) so an active row cannot grow or shift. Vertical
+   padding is 0: the shared line box and icon box are centered by the grid,
+   not by padding around an inherited 1.8 line-height. */
 nav.admin-nav > :is(a, button) {
   box-sizing: border-box;
   width: 100%;
@@ -282,6 +284,7 @@ nav.admin-nav > :is(a, button) svg {
   width: 18px;
   height: 18px;
   display: block;
+  align-self: center;
   justify-self: center;
 }
 nav.admin-nav > :is(a, button) svg:last-child {
@@ -1843,9 +1846,10 @@ td select,
 .nav-count {
   display: inline-grid;
   place-items: center;
+  align-self: center;
   min-width: 20px;
   height: 20px;
-  margin-inline-start: 8px;
+  margin: 0;
   padding: 0 6px;
   border-radius: 10px;
   background: var(--oxide);
@@ -1853,7 +1857,8 @@ td select,
   font-size: 11px;
   font-style: normal;
   font-variant-numeric: tabular-nums;
-  vertical-align: 1px;
+  line-height: 20px;
+  vertical-align: 0;
 }
 .admin-nav button.active .nav-count,
 .admin-nav a.active .nav-count {
@@ -4160,16 +4165,21 @@ button.identity-card {
   grid-template-columns: 22px minmax(0, 1fr);
   align-items: center;
   gap: 12px;
-  padding: 13px 14px;
+  height: 48px;
+  padding: 0 14px;
   color: #c5ccc8;
+  font-size: 14px;
+  line-height: 20px;
 }
 
 nav.admin-nav > :is(a, button) > span {
   display: flex;
   align-items: center;
+  align-self: center;
   justify-content: flex-start;
   gap: 8px;
   min-width: 0;
+  height: 20px;
   overflow: hidden;
   font-size: 14px;
   font-weight: var(--font-weight-medium);

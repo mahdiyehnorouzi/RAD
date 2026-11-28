@@ -513,15 +513,59 @@ export function ProductDialog({
   return (
     <form className="product-editor" onSubmit={submit} noValidate>
       <div className="product-editor-top">
-        <Button
-          variant="ghost"
-          className="product-back product-back-mobile"
-          onClick={onClose}
-        >
-          <ChevronRight />
-          بازگشت به لیست
-        </Button>
+        <div className="product-editor-toolbar">
+          <div className="product-editor-toolbar-start">
+            <Button variant="ghost" className="product-back" onClick={onClose}>
+              <ChevronRight />
+              بازگشت به لیست
+            </Button>
+            <div className="product-editor-actions-desktop">
+              <PreviewLink href={previewHref} />
+              <Button
+                type="submit"
+                disabled={!canWrite || unresolvedUploads}
+                loading={saving}
+              >
+                <Check />
+                {uploadingCount > 0 ? "در حال بارگذاری…" : "ذخیره تغییرات"}
+              </Button>
+            </div>
+          </div>
+          {product && onDelete ? (
+            <Button
+              variant="secondary"
+              size="sm"
+              className="product-editor-delete"
+              onClick={onDelete}
+              disabled={!canWrite}
+            >
+              <Trash2 />
+              حذف محصول
+            </Button>
+          ) : null}
+        </div>
         <div className="product-editor-identity">
+          <div className="product-editor-copy">
+            {product ? <span className="editor-kicker">ویرایش اثر</span> : null}
+            <h2 id="editor-title" tabIndex={-1} ref={titleRef}>
+              {draft.name || (product ? "ویرایش اثر" : "اثر تازه")}
+            </h2>
+            <p className="editor-meta">
+              <span>{draft.artist || "هنرمند"}</span>
+              <span className="editor-rad" dir="ltr">
+                {radLabel}
+              </span>
+            </p>
+            <StatusBadge
+              label={productStatusLabel(draft)}
+              tone={productStatusTone(draft)}
+            />
+            {isDirty ? (
+              <p className="editor-unsaved" role="status">
+                تغییرات ذخیره نشده
+              </p>
+            ) : null}
+          </div>
           <div className="product-editor-cover-stack">
             <div className="product-editor-cover">
               {mediaSrc(previewCover?.src) ? (
@@ -543,44 +587,6 @@ export function ProductDialog({
               disabled={!limits || locked}
             />
           </div>
-          <div className="product-editor-copy">
-            <span className="editor-kicker">
-              {product ? "ویرایش اثر" : "اثر تازه"}
-            </span>
-            <h2 id="editor-title" tabIndex={-1} ref={titleRef}>
-              {product ? draft.name || "ویرایش اثر" : "اثر تازه"}
-            </h2>
-            <p className="editor-meta">
-              <span>{draft.artist || "هنرمند"}</span>
-              <span className="editor-rad" dir="ltr">
-                {radLabel}
-              </span>
-            </p>
-            <StatusBadge
-              label={productStatusLabel(draft)}
-              tone={productStatusTone(draft)}
-            />
-            {isDirty ? (
-              <p className="editor-unsaved" role="status">
-                تغییرات ذخیره نشده
-              </p>
-            ) : null}
-          </div>
-        </div>
-        <div className="product-editor-actions product-editor-actions-desktop">
-          <Button variant="ghost" className="product-back" onClick={onClose}>
-            <ChevronRight />
-            بازگشت به لیست
-          </Button>
-          <PreviewLink href={previewHref} />
-          <Button
-            type="submit"
-            disabled={!canWrite || unresolvedUploads}
-            loading={saving}
-          >
-            <Check />
-            {uploadingCount > 0 ? "در حال بارگذاری…" : "ذخیره تغییرات"}
-          </Button>
         </div>
       </div>
 
@@ -942,15 +948,16 @@ export function ProductDialog({
                     </p>
                   )}
                   <div className="artwork-media-actions">
-                    {!isVideoStorage(image.storage) && !isCover && (
+                    {!isVideoStorage(image.storage) && (
                       <Button
-                        variant="secondary"
+                        variant={isCover ? "primary" : "secondary"}
                         size="sm"
-                        disabled={locked || !coverReady}
+                        className={isCover ? "is-cover-choice" : undefined}
+                        aria-pressed={isCover}
+                        disabled={locked || isCover || !coverReady}
                         onClick={() => setCover(index)}
-                        aria-label="انتخاب به‌عنوان کاور"
                       >
-                        کاور
+                        انتخاب به‌عنوان کاور
                       </Button>
                     )}
                     {upload?.error && (
@@ -1009,22 +1016,6 @@ export function ProductDialog({
           />
         </div>
       </details>
-
-      <div className="product-editor-footer">
-        {product && onDelete ? (
-          <Button
-            variant="ghost"
-            className="content-danger"
-            onClick={onDelete}
-            disabled={!canWrite}
-          >
-            <Trash2 />
-            حذف محصول
-          </Button>
-        ) : (
-          <span />
-        )}
-      </div>
 
       <div className="product-editor-dock">
         <PreviewLink href={previewHref} />
