@@ -38,6 +38,7 @@ export function toAdminProduct(
     description: product.story,
     subtitle: product.subtitle,
     category: toAdminCategory(product.category),
+    subcategory: product.subcategory?.slug ?? null,
     price: product.tomanPrice ?? 0,
     status: normalizeProductStatus(product.status),
     // `reservedUntil` matches the public mapper's derived field so Admin and

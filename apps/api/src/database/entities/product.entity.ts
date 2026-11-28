@@ -17,6 +17,7 @@ import { OrderItem } from "./order-item.entity";
 import { ProductImage } from "./product-image.entity";
 import { ProductAttributeValue } from "./product-attribute-value.entity";
 import { Review } from "./review.entity";
+import { Category } from "./category.entity";
 import { Vendor } from "./vendor.entity";
 
 /** One row per artwork; commerce reads it as a product. */
@@ -78,6 +79,15 @@ export class Product {
 
   @Column("text")
   category!: string;
+
+  /** Optional child category. Null for every product that predates subcategories. */
+  @Index()
+  @Column("text", { nullable: true })
+  subcategoryId!: string | null;
+
+  @ManyToOne(() => Category, { nullable: true, onDelete: "RESTRICT" })
+  @JoinColumn({ name: "subcategoryId" })
+  subcategory!: Category | null;
 
   @Index()
   @Column("text", { default: "draft" })

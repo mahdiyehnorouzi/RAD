@@ -39,6 +39,7 @@ import {
 import type { AdminProductImageInputDto } from "./dto";
 import {
   CartItem,
+  Category,
   Favorite,
   Order,
   PasswordResetToken,
@@ -68,6 +69,7 @@ import {
 } from "../orders/store-order-status";
 import { adminOrderRelations } from "./const/order-relations";
 import { canAdmin, type AdminPermission } from "./permissions";
+import { resolveProductSubcategory } from "../categories/resolve-product-subcategory";
 import {
   artistVendorId,
   toAdminMember,
@@ -299,6 +301,32 @@ export class AdminService {
     const vendorId = await this.ensureVendor(input.artist);
     const usdPrice = Math.max(1, Math.round(input.price / 85_000));
     const category = toStoreCategory(input.category);
+    let existingSubcategoryId: string | null = null;
+    if (existingId) {
+      const current = await this.products.findOne({
+        where: { id: existingId },
+      });
+      if (!current) throw new NotFoundException("محصول پیدا نشد.");
+      existingSubcategoryId = current.subcategoryId;
+      if (
+        input.radNumber != null &&
+        current.radNumber != null &&
+        current.radNumber !== input.radNumber
+      ) {
+        throw new ConflictException({
+          message: "شماره رَد بعد از ثبت قابل تغییر نیست.",
+          code: "rad_number_immutable",
+        });
+      }
+    }
+    const subcategoryId = await resolveProductSubcategory(
+      this.dataSource.getRepository(Category),
+      {
+        storeCategory: category,
+        subcategory: input.subcategory,
+        existingSubcategoryId,
+      },
+    );
     const details = ["تنها یک نسخه"];
     // Used only for a brand-new product (no existing value to preserve):
     // an explicit `subtitle` if admin set one, else the historical default
@@ -315,18 +343,6 @@ export class AdminService {
       details: ["One of one"],
     };
 
-    if (existingId && input.radNumber != null) {
-      const current = await this.products.findOne({
-        where: { id: existingId },
-      });
-      if (current?.radNumber != null && current.radNumber !== input.radNumber) {
-        throw new ConflictException({
-          message: "شماره رَد بعد از ثبت قابل تغییر نیست.",
-          code: "rad_number_immutable",
-        });
-      }
-    }
-
     const product = existingId
       ? await this.updateProduct(existingId, {
           slug,
@@ -339,6 +355,7 @@ export class AdminService {
           // undefined (admin didn't set one) leaves the column untouched.
           subtitle: input.subtitle?.trim() || undefined,
           vendorId,
+          ...(subcategoryId !== undefined ? { subcategoryId } : {}),
         })
       : await this.createProductWithRadNumber(
           {
@@ -351,6 +368,7 @@ export class AdminService {
             accent: "#ead9bd",
             shape: "tall",
             category,
+            subcategoryId: subcategoryId ?? null,
             status: input.status,
             story: input.description.trim(),
             details,
@@ -689,6 +707,8 @@ export class AdminService {
       story: string;
       /** Only written when admin explicitly set one; otherwise left as-is. */
       subtitle?: string;
+      /** Only written when the request set or cleared a subcategory. */
+      subcategoryId?: string | null;
       vendorId: string | null;
     },
   ) {
@@ -712,6 +732,9 @@ export class AdminService {
         tomanPrice: data.tomanPrice,
         usdPrice: data.usdPrice,
         category: data.category,
+        ...(data.subcategoryId !== undefined
+          ? { subcategoryId: data.subcategoryId }
+          : {}),
         status: data.status,
         story: data.story,
         vendorId: data.vendorId,

@@ -159,6 +159,7 @@ export function toProduct(
     accent: product.accent,
     shape: product.shape,
     category: product.category,
+    subcategory: product.subcategory?.slug ?? null,
     visual: visualForCategory(product.category),
     status,
     // Held in someone's bag or unpaid checkout: may return to the shop. Never exposes who holds it.
@@ -198,6 +199,7 @@ export function toProduct(
 export const productIncludeWithSrc = {
   images: true,
   vendor: true,
+  subcategory: true,
 } as const;
 
 export const publicProductWhere = {

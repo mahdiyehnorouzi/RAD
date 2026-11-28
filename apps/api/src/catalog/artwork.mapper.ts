@@ -71,6 +71,7 @@ export function toArtwork(
         }
       : radStudio,
     category: product.category,
+    subcategory: product.subcategory?.slug ?? null,
     status,
     reservedUntil:
       status === "sold" && product.holdExpiresAt

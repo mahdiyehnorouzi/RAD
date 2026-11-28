@@ -38,6 +38,7 @@ export function publicCatalogQuery(
   return products
     .createQueryBuilder("product")
     .leftJoinAndSelect("product.vendor", "vendor")
+    .leftJoinAndSelect("product.subcategory", "subcategory")
     .leftJoin(
       "product.images",
       "images",

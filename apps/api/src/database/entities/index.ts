@@ -13,6 +13,7 @@ import { OtpCode } from "./otp-code.entity";
 import { OtpRequestLog } from "./otp-request-log.entity";
 import { PasswordResetToken } from "./password-reset-token.entity";
 import { PaymentIntent } from "./payment-intent.entity";
+import { Category } from "./category.entity";
 import { Product } from "./product.entity";
 import { RadIdentity } from "./rad-identity.entity";
 import { RadIdentityBatch } from "./rad-identity-batch.entity";
@@ -31,6 +32,7 @@ export const entities = [
   User,
   PasswordResetToken,
   Vendor,
+  Category,
   Product,
   RadIdentity,
   RadIdentityBatch,
@@ -76,6 +78,7 @@ export {
   OtpRequestLog,
   PasswordResetToken,
   PaymentIntent,
+  Category,
   Product,
   RadIdentity,
   RadIdentityBatch,

@@ -7,8 +7,10 @@ import {
   IsObject,
   IsOptional,
   IsString,
+  MaxLength,
   Min,
   MinLength,
+  ValidateIf,
   ValidateNested,
 } from "class-validator";
 import { PRODUCT_STATUSES } from "../../inventory/const/product-status";
@@ -59,6 +61,18 @@ export class SaveProductDto {
   @ApiProperty({ example: "گلدان", enum: ADMIN_CATEGORIES })
   @IsIn(ADMIN_CATEGORIES)
   category!: string;
+
+  /**
+   * Optional subcategory slug. Omitted keeps the stored value.
+   * Null or blank clears it. When set, the API checks that the child
+   * belongs to the selected parent category.
+   */
+  @ApiPropertyOptional({ nullable: true, example: null })
+  @IsOptional()
+  @ValidateIf((_, value) => value !== null && value !== "")
+  @IsString()
+  @MaxLength(64)
+  subcategory?: string | null;
 
   @ApiProperty({ example: 8500000 })
   @Type(() => Number)
