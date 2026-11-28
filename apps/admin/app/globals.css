@@ -1068,7 +1068,8 @@ td select,
   overflow-wrap: anywhere;
   text-align: center;
 }
-.sr-file {
+.sr-file,
+.sr-only {
   position: absolute;
   width: 1px;
   height: 1px;
@@ -3395,6 +3396,18 @@ button.commission-lightbox-nav {
 .commission-thread li.from-admin {
   justify-self: end;
   margin-inline-start: 0;
+}
+/* Unread incoming message indicator (BUG-03): same dot/color used for an
+   unread contact message (`.contact-message.is-new header strong::before`). */
+.commission-thread li.from-customer.unread b::before {
+  content: "";
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-inline-end: 6px;
+  border-radius: 50%;
+  background: var(--oxide);
+  vertical-align: 2px;
 }
 .commission-message {
   display: grid;
