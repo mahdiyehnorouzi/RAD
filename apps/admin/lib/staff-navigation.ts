@@ -20,12 +20,22 @@ export function isProductsPath(pathname: string) {
   return pathname === "/products" || pathname.startsWith("/products/");
 }
 
+export function isCategoriesPath(pathname: string) {
+  return pathname === "/categories" || pathname.startsWith("/categories/");
+}
+
 export function isTagsPath(pathname: string) {
   return pathname === "/tags" || pathname.startsWith("/tags/");
 }
 
 type StudioRoute =
-  "reviews" | "help" | "messages" | "shape" | "products" | "tags";
+  | "reviews"
+  | "help"
+  | "messages"
+  | "shape"
+  | "products"
+  | "categories"
+  | "tags";
 
 const studioPath: Record<StudioRoute, string> = {
   reviews: "/reviews",
@@ -33,6 +43,7 @@ const studioPath: Record<StudioRoute, string> = {
   messages: "/messages",
   shape: "/shape",
   products: "/products",
+  categories: "/categories",
   tags: "/tags",
 };
 
@@ -43,6 +54,7 @@ function studioRoute(pathname: string): StudioRoute | null {
   if (isMessagesPath(pathname)) return "messages";
   if (isShapePath(pathname)) return "shape";
   if (isProductsPath(pathname)) return "products";
+  if (isCategoriesPath(pathname)) return "categories";
   if (isTagsPath(pathname)) return "tags";
   return null;
 }
@@ -100,6 +112,7 @@ export function planSectionSelect(
     next === "messages" ||
     next === "shape" ||
     next === "products" ||
+    next === "categories" ||
     next === "tags"
   ) {
     const pathname = studioPath[next];
@@ -303,6 +316,13 @@ export function startShapeLink(
   pending: PendingNavigation | null = null,
 ) {
   return startStudioLink(visible, "shape", pending);
+}
+
+export function startCategoriesLink(
+  visible: StudioView,
+  pending: PendingNavigation | null = null,
+) {
+  return startStudioLink(visible, "categories", pending);
 }
 
 export function startProductsLink(

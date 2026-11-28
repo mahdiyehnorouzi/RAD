@@ -108,6 +108,7 @@ export function ProductsPage() {
             onCreate={() => navigate(NEW_PRODUCT_EDIT)}
             onEdit={(product) => navigate(product.id)}
             onDelete={setDeleteTarget}
+            catalog={workspace.categories}
           />
           <div className="products-editor-pane">
             {edited.kind === "new" || edited.kind === "edit" ? (
@@ -115,6 +116,7 @@ export function ProductsPage() {
                 <ProductDialog
                   key={`${editKey ?? "list"}:${saveGeneration}`}
                   product={edited.kind === "edit" ? edited.product : null}
+                  categories={workspace.categories}
                   canWrite={canWrite}
                   onDirtyChange={onDirtyChange}
                   focusStory={searchParams.get("section") === "story"}

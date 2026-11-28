@@ -15,7 +15,6 @@ import {
 } from "class-validator";
 import { PRODUCT_STATUSES } from "../../inventory/const/product-status";
 import type { ProductStatus } from "../../inventory/type";
-import { ADMIN_CATEGORIES } from "../../catalog/category";
 import { AdminProductImageInputDto } from "./product-image-input.dto";
 import type { ProductAttributeValue } from "@rad/types";
 
@@ -58,8 +57,14 @@ export class SaveProductDto {
   @IsString()
   subtitle?: string;
 
-  @ApiProperty({ example: "گلدان", enum: ADMIN_CATEGORIES })
-  @IsIn(ADMIN_CATEGORIES)
+  /**
+   * Parent category. A category slug (`ceramics`) or a legacy Persian label
+   * (`گلدان`). The service resolves it to the stored parent slug.
+   */
+  @ApiProperty({ example: "ceramics" })
+  @IsString()
+  @MinLength(1)
+  @MaxLength(64)
   category!: string;
 
   /**

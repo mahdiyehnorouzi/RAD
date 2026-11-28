@@ -49,6 +49,16 @@ export function toAdminCategory(value: string) {
   return storeToCategory[value] ?? "سفال و سرامیک";
 }
 
+/** Persian admin labels map to a store slug. A slug that is already stored stays itself. */
+export function catalogCategoryKey(value: string) {
+  return categoryToStore[value] ?? value;
+}
+
+/** Known store slugs keep their Persian label. Any other stored slug is shown as itself. */
+export function adminCategoryLabel(value: string) {
+  return storeToCategory[value] ?? value;
+}
+
 /**
  * The canonical English `Product.category` values (mirrors `ProductCategory`
  * in `@rad/types`). Unlike `ADMIN_CATEGORIES`, this set has no duplicate

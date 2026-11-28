@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { act, createElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
+import type { AdminCategory } from "@rad/types";
 import type { AdminProduct, ProductAttribute } from "./admin-data";
 import { Products } from "../features/products/admin-products";
 import { ProductDialog } from "../features/products/admin-product-dialog";
@@ -335,6 +336,66 @@ test("a valid edit submits and calls onSave with the product", async () => {
   assert.equal(captured.length, 1);
   assert.equal(captured[0].id, p1.id);
   assert.equal(captured[0].name, p1.name);
+  restoreFetch();
+});
+
+const formCategories: AdminCategory[] = [
+  {
+    id: "cat-ceramics",
+    slug: "ceramics",
+    parentId: null,
+    name: { fa: "سفال و سرامیک", en: "Ceramics" },
+    active: true,
+    sortOrder: 0,
+    productCount: 1,
+    children: [
+      {
+        id: "cat-mugs",
+        slug: "mugs",
+        parentId: "cat-ceramics",
+        name: { fa: "ماگ", en: "Mugs" },
+        active: true,
+        sortOrder: 0,
+        productCount: 1,
+        children: [],
+      },
+    ],
+  },
+  {
+    id: "cat-painting",
+    slug: "painting",
+    parentId: null,
+    name: { fa: "نقاشی", en: "Painting" },
+    active: true,
+    sortOrder: 1,
+    productCount: 0,
+    children: [],
+  },
+];
+
+test("an existing subcategory is restored and cleared when the parent changes", async () => {
+  const captured: AdminProduct[] = [];
+  const { host, restoreFetch } = await mountDialog({
+    product: makeProduct({
+      category: "سفال و سرامیک",
+      categorySlug: "ceramics",
+      subcategory: "mugs",
+    }),
+    categories: formCategories,
+    onSave: async (product) => {
+      captured.push(product);
+    },
+  });
+  await press(buttons(host, "ذخیره تغییرات")[0]);
+  assert.equal(captured[0]?.categorySlug, "ceramics");
+  assert.equal(captured[0]?.subcategory, "mugs");
+  const parent = elements(host, "select").find(
+    (node) => node.getAttribute("aria-label") === "دسته‌بندی اثر",
+  );
+  await fill(parent!, "painting");
+  await press(buttons(host, "ذخیره تغییرات")[0]);
+  assert.equal(captured[1]?.categorySlug, "painting");
+  assert.equal(captured[1]?.subcategory, null);
   restoreFetch();
 });
 
