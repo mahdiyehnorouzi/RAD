@@ -33,7 +33,7 @@ describe("public catalog cover image", () => {
     const catalog = toCatalogImages([
       image({
         id: "vid",
-        storage: "cloudinary_video",
+        storage: "seaweedfs_video",
         objectKey: "clip",
         src: null,
         sortOrder: 0,

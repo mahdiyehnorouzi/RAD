@@ -47,18 +47,12 @@ export function PaymentResult({
 
   return (
     <section className={`payment-result${closed ? " is-closed" : ""}`}>
-      {!closed && !reviewing ? <OrderSprig /> : null}
-      {reviewing ? (
-        <img
-          className="payment-result-art"
-          src="/catalog/photos/speckled-sculpted-mug.webp"
-          alt=""
-        />
-      ) : (
-        <span className="payment-result-seal" aria-hidden="true">
-          {closed ? <CircleSlash /> : <Check />}
+      <div className="payment-result-emblems" aria-hidden="true">
+        <span className="payment-result-seal">
+          {closed ? <CircleSlash /> : reviewing ? <Clock /> : <Check />}
         </span>
-      )}
+        {!closed ? <OrderSprig /> : null}
+      </div>
       <h1 ref={headingRef} tabIndex={-1}>
         {title}
       </h1>

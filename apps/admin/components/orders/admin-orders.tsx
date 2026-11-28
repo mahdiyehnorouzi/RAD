@@ -1,8 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ChevronRight, Package, Search } from "lucide-react";
-import { Button } from "@rad/ui";
+import { AdminSearchField, Button } from "@rad/ui";
+import { useDetailScrollRestore } from "../../hooks/use-detail-scroll-restore";
 import {
   orderStatusLabels,
   orderStatusOptions,
@@ -14,6 +15,8 @@ import {
   type AdminOrderStatus,
   type AdminProduct,
 } from "../../lib/admin-data";
+import { useOptionalAdminChrome } from "../admin-shell";
+import { orderNoticeKey } from "../../lib/staff-notice-keys";
 import { coverImage } from "../../lib/product-cover";
 import {
   fulfillmentPresentation,
@@ -167,6 +170,22 @@ export function AdminOrders({
   const active = (list ?? []).find((order) => order.id === activeId) ?? null;
   const showDetail = Boolean(active) && (!mobile || selectedId === active?.id);
 
+  // Opening an order on mobile replaces the list with the detail pane in
+  // place (same scroll container, no route change), so the browser keeps
+  // whatever scrollTop the list had — landing the admin mid-way down the
+  // detail instead of at its top. See useDetailScrollRestore for how this
+  // stays inert for a background poll (same id, refreshed data) and for
+  // the exact relationship between browser Back and this component's own
+  // close button.
+  const detailScrollId = mobile && showDetail ? (active?.id ?? null) : null;
+  const { saveScroll } = useDetailScrollRestore(detailScrollId);
+
+  const readNotice = useOptionalAdminChrome()?.readNotice;
+  const noticeKey = showDetail && active ? orderNoticeKey(active) : null;
+  useEffect(() => {
+    if (noticeKey) readNotice?.(noticeKey);
+  }, [noticeKey, readNotice]);
+
   const covers = useMemo(() => {
     const map = new Map<string, string>();
     for (const product of products) {
@@ -239,20 +258,17 @@ export function AdminOrders({
           </div>
 
           <div className="orders-toolbar">
-            <label className="orders-search">
-              <Search aria-hidden="true" />
-              <span className="sr-only">جست‌وجوی سفارش</span>
-              <input
-                value={query}
-                onChange={(event) => {
-                  setQuery(event.target.value);
-                  setPage(1);
-                }}
-                placeholder="شماره سفارش، مشتری، اثر یا کد رهگیری"
-                type="search"
-                enterKeyHint="search"
-              />
-            </label>
+            <AdminSearchField
+              icon={<Search />}
+              value={query}
+              onChange={(next) => {
+                setQuery(next);
+                setPage(1);
+              }}
+              placeholder="شماره سفارش، مشتری، اثر یا کد رهگیری"
+              aria-label="جست‌وجوی سفارش"
+              enterKeyHint="search"
+            />
             <label>
               <span className="sr-only">بازه زمان ثبت</span>
               <select
@@ -314,7 +330,10 @@ export function AdminOrders({
                           fullWidth
                           className={`orders-row${selected ? " is-active" : ""}${review ? " is-review" : ""}`}
                           aria-current={selected ? "true" : undefined}
-                          onClick={() => setSelectedId(order.id)}
+                          onClick={() => {
+                            if (mobile) saveScroll();
+                            setSelectedId(order.id);
+                          }}
                         >
                           <span className="orders-row-top">
                             <StatusBadge
@@ -546,6 +565,32 @@ function OrderDetail({
         <section aria-labelledby={`address-${order.id}`}>
           <h4 id={`address-${order.id}`}>نشانی تحویل</h4>
           <dl>
+            {order.recipientName && order.recipientPhone ? (
+              <>
+                <div>
+                  <dt>نام گیرنده</dt>
+                  <dd>{order.recipientName}</dd>
+                </div>
+                <div>
+                  <dt>شماره موبایل گیرنده</dt>
+                  <dd dir="ltr">
+                    <a href={`tel:${order.recipientPhone}`}>
+                      {order.recipientPhone}
+                    </a>
+                  </dd>
+                </div>
+              </>
+            ) : null}
+            {order.giftMessage ? (
+              <div>
+                <dt>متن کارت هدیه</dt>
+                <dd
+                  style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}
+                >
+                  {order.giftMessage}
+                </dd>
+              </div>
+            ) : null}
             <div>
               <dt>شهر</dt>
               <dd>{order.city || "ثبت نشده"}</dd>

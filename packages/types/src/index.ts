@@ -1,4 +1,5 @@
 export * from "./artwork";
+export * from "./rad-identity";
 export * from "./contact";
 export * from "./customer-address";
 export * from "./content";
@@ -294,11 +295,24 @@ export function normalizeStoreOrderStatus(status: string): StoreOrderStatus {
   return legacyStoreOrderStatus[status] ?? "confirmed";
 }
 
+/** Flat Express Post charge for one order, in tomans. Not derived from weight. */
+export const EXPRESS_POST_FEE_TOMAN = 150_000;
+
+export type CheckoutShippingMethod = "express" | "courier";
+
 export interface Order {
   id: string;
   slugs: string[];
   total: number;
   usdTotal?: number;
+  /**
+   * Server-calculated shipping. `fee` is toman. Courier is `0` until dispatch.
+   * Absent on orders placed before shipping was stored.
+   */
+  shipping?: {
+    method: CheckoutShippingMethod;
+    fee: number;
+  };
   createdAt: number;
   status: StoreOrderStatus;
   delivery: { name: string; city: string; phone?: string; address?: string };
@@ -393,6 +407,37 @@ export interface Notice {
   productSlug?: string;
   read: boolean;
   createdAt: number;
+}
+
+/**
+ * Notices a customer should see: messages and decisions from the maker
+ * or the studio. Favorite, cart, welcome, and self-checkout pings are
+ * ordinary actions and stay out of this list.
+ */
+export const ARTIST_NOTICE_KINDS = [
+  "order_confirmed",
+  "order_rejected",
+  "commission_approved",
+  "commission_declined",
+  "commission_change",
+  "commission_message",
+  "commission_quote",
+  "commission_pre_kiln",
+  "commission_firing",
+  "commission_balance",
+  "commission_shipped",
+] as const satisfies readonly NoticeKind[];
+
+export function isArtistNotice(
+  kind: string,
+): kind is (typeof ARTIST_NOTICE_KINDS)[number] {
+  return (ARTIST_NOTICE_KINDS as readonly string[]).includes(kind);
+}
+
+/** A second unread copy of the same studio event is noise. Each artist message stays. */
+export function shouldSkipDuplicateNotice(kind: string, unreadMatch: boolean) {
+  if (!unreadMatch || kind === "commission_message") return false;
+  return isArtistNotice(kind);
 }
 /** Everything the storefront shell needs about the visitor, in one request. */
 export interface SessionState {

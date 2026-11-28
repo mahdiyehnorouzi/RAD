@@ -47,41 +47,24 @@
   gap: 10px;
   align-items: center;
 }
-.orders-search {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+/* The search box itself is `AdminSearchField` (@rad/ui) now, so it comes
+   with its own icon/input/clear styling — this just fits it into the
+   toolbar's flex row alongside the two <select>s below, the same sizing
+   `.orders-search` used to apply directly. */
+.orders-toolbar .rad-search-field {
   flex: 1 1 220px;
   min-width: 0;
-  border: 1px solid var(--line);
-  background: #fffaf2;
-  border-radius: var(--radius-sm);
-  padding: 0 10px;
+  max-width: none;
 }
-.orders-search svg {
-  width: 16px;
-  height: 16px;
-  flex: 0 0 auto;
-  color: #4e564e;
-}
-.orders-search input,
 .orders-toolbar select,
 .orders-ship input {
-  border: 0;
-  background: transparent;
+  border: 1px solid var(--line);
+  background: #fffaf2;
   color: var(--ink);
   min-height: 42px;
   width: 100%;
-}
-.orders-toolbar select,
-.orders-ship input {
-  border: 1px solid var(--line);
-  background: #fffaf2;
   border-radius: var(--radius-sm);
   padding: 0 10px;
-}
-.orders-search input::placeholder {
-  color: #5c635c;
 }
 .orders-layout {
   display: grid;
@@ -108,7 +91,16 @@
   padding: 0;
   list-style: none;
 }
-.orders-row {
+/* Element-scoped (not plain `.orders-row`): this renders as a <button>
+   (@rad/ui's Button) whose own `.rad-button` class sets
+   `display: inline-flex` at the same specificity as a bare class
+   selector. This file happens to load after button.css in the current
+   bundle, so the tie currently resolves correctly by source order alone —
+   but that's an accident of import order, not something the cascade
+   guarantees. Scoping to the element makes the grid layout win on
+   specificity regardless of load order, the same fix applied to the
+   custom-orders cards in globals.css (see `button.commission-card`). */
+button.orders-row {
   display: grid;
   gap: 6px;
   width: 100%;
@@ -149,7 +141,7 @@
   margin-inline-start: auto;
 }
 .orders-row strong {
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
 }
 .orders-row-product {
   display: -webkit-box;
@@ -199,7 +191,7 @@
 .orders-detail-head h3 {
   margin: 0;
   font-size: 1.15rem;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   line-height: 1.4;
   overflow-wrap: anywhere;
 }
@@ -246,7 +238,7 @@
 .orders-steps li.is-current {
   border-top-color: var(--oxide);
   color: var(--ink);
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
 }
 .orders-sheets {
   display: grid;
@@ -256,7 +248,7 @@
 .orders-detail h4 {
   margin: 0 0 8px;
   font-size: 0.95rem;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
 }
 .orders-detail dl {
   display: grid;
@@ -274,6 +266,26 @@
 .orders-detail dd {
   margin: 0;
   overflow-wrap: anywhere;
+}
+/* Phone values keep `dir="ltr"` so the digits read left-to-right, but the
+   field itself still belongs in the surrounding RTL sheet: `text-align:
+   end` resolves against that `dir="ltr"`, so it means right here (not
+   "start" of the LTR run), aligning the value the same way every other
+   `dd` in this sheet already reads. Without this the browser's LTR
+   default left-aligned the one field that happens to carry a dir
+   override, next to right-aligned Persian text above and below it. */
+.orders-detail dd[dir="ltr"] {
+  text-align: end;
+}
+.orders-detail dd a {
+  color: inherit;
+  text-decoration: none;
+  border-bottom: 1px dashed var(--line);
+}
+.orders-detail dd a:hover,
+.orders-detail dd a:focus-visible {
+  color: var(--mineral);
+  border-bottom-color: var(--mineral);
 }
 .orders-works ul {
   list-style: none;

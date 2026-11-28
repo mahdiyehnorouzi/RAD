@@ -197,6 +197,12 @@ export class ContactService implements OnModuleInit {
         fromAdmin: false,
       }),
     );
+    if (root.status === "resolved") {
+      await this.messages.update(
+        { id: root.id },
+        { status: "new", resolvedAt: null },
+      );
+    }
     return this.listThread(root.id);
   }
 

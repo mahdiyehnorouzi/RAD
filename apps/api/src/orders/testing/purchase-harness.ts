@@ -38,7 +38,7 @@ import {
 import { OrdersService } from "../orders.service";
 import { PaymentReviewService } from "../payment-review.service";
 import { ProductAttributesService } from "../../product-attributes/product-attributes.service";
-import { CloudinaryStorageService } from "../../storage/cloudinary-storage.service";
+import { SeaweedfsStorageService } from "../../storage/seaweedfs-storage.service";
 import {
   describe,
   ProcessTerminationTimeoutError,
@@ -366,8 +366,8 @@ export async function startPurchaseHarness(
       repo(ProductAttributeCategory),
       repo(ProductAttributeValue),
     ),
-    new CloudinaryStorageService(new ConfigService({})),
-    () => new CloudinaryStorageService(new ConfigService({})),
+    new SeaweedfsStorageService(new ConfigService({})),
+    () => new SeaweedfsStorageService(new ConfigService({})),
     mail,
     catalogRevalidation,
   );

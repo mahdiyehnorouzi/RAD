@@ -1,18 +1,15 @@
 import type { ProductImageStorage } from "../database/entities/product-image.entity";
 
 /**
- * Common contract both storage providers (`CloudinaryStorageService`,
- * `SeaweedfsStorageService`) implement, and the shape `AdminService` codes
- * against. Keeping this provider-agnostic is what lets `StorageModule`
- * swap the active implementation behind `MEDIA_STORAGE_PROVIDER` without
- * touching any caller.
+ * Common contract for the S3-compatible media storage service and the
+ * shape `AdminService` codes against. The stable contract keeps storage
+ * details out of callers.
  */
 export interface MediaStorageService {
   /**
-   * Params for a direct browser → storage upload. The exact shape is
-   * provider-specific (Cloudinary returns signed form fields for its own
-   * REST upload endpoint; an S3-compatible provider returns a presigned
-   * POST policy) — callers pass it through to the client unchanged.
+   * Params for direct browser-to-storage upload. The S3-compatible
+   * implementation returns a presigned POST policy, passed through to the
+   * client unchanged.
    */
   createSignedUpload(
     folder: string,
@@ -31,26 +28,14 @@ export interface MediaStorageService {
 }
 
 /**
- * DI token `AdminService` injects instead of a concrete provider class —
- * the currently *active* provider (per `MEDIA_STORAGE_PROVIDER`), used
- * only for signing brand-new uploads. A brand-new upload's sign and
- * verify steps always agree on which provider is active (nothing else
- * could have signed it), so this is the right choice there.
+ * DI token for the S3-compatible service used to sign and verify new uploads.
  */
 export const MEDIA_STORAGE = Symbol("MEDIA_STORAGE");
 
 /**
  * DI token for a function that resolves the provider a *specific,
- * already-persisted* row's `storage` kind actually lives in — not
- * whichever provider is currently "active". Switching
- * `MEDIA_STORAGE_PROVIDER` doesn't migrate existing rows: a product
- * saved under Cloudinary keeps `storage: "cloudinary"` rows after the
- * switch flips to `"seaweedfs"`, so verifying or deleting an *existing*
- * row must dispatch by that row's own storage kind, never by whichever
- * provider happens to be active right now — otherwise a provider switch
- * would make every pre-existing Cloudinary row unverifiable (and orphan
- * cleanup would try to delete a Cloudinary asset from the SeaweedFS
- * bucket, or vice versa). See `AdminService.saveProduct`/`replaceImages`.
+ * already-persisted* row's `storage` kind. Existing remote rows are
+ * dispatched to the configured S3-compatible service for cleanup.
  */
 export const MEDIA_STORAGE_RESOLVER = Symbol("MEDIA_STORAGE_RESOLVER");
 export type MediaStorageResolver = (
@@ -58,31 +43,17 @@ export type MediaStorageResolver = (
 ) => MediaStorageService;
 
 /**
- * Builds a `MediaStorageResolver` that dispatches a `seaweedfs`/
- * `seaweedfs_video` row to `seaweedfs` and everything else (including
- * `null`/legacy rows that never reach a resolver call in practice) to
- * `cloudinary` — pulled out of `storage.module.ts`'s DI factory so the
- * dispatch rule itself has a plain unit test independent of Nest's
- * container.
+ * Resolves persisted remote media to the S3-compatible storage service.
  */
 export function createMediaStorageResolver(
-  cloudinary: MediaStorageService,
   seaweedfs: MediaStorageService,
 ): MediaStorageResolver {
-  return (storage) =>
-    storage === "seaweedfs" || storage === "seaweedfs_video"
-      ? seaweedfs
-      : cloudinary;
+  return () => seaweedfs;
 }
 
-const VIDEO_STORAGES: readonly ProductImageStorage[] = [
-  "cloudinary_video",
-  "seaweedfs_video",
-];
+const VIDEO_STORAGES: readonly ProductImageStorage[] = ["seaweedfs_video"];
 
 const REMOTE_STORAGES: readonly ProductImageStorage[] = [
-  "cloudinary",
-  "cloudinary_video",
   "seaweedfs",
   "seaweedfs_video",
 ];

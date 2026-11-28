@@ -14,6 +14,9 @@ import { OtpRequestLog } from "./otp-request-log.entity";
 import { PasswordResetToken } from "./password-reset-token.entity";
 import { PaymentIntent } from "./payment-intent.entity";
 import { Product } from "./product.entity";
+import { RadIdentity } from "./rad-identity.entity";
+import { RadIdentityBatch } from "./rad-identity-batch.entity";
+import { RadIdentityEvent } from "./rad-identity-event.entity";
 import { ProductImage } from "./product-image.entity";
 import { ProductAttribute } from "./product-attribute.entity";
 import { ProductAttributeOption } from "./product-attribute-option.entity";
@@ -29,6 +32,9 @@ export const entities = [
   PasswordResetToken,
   Vendor,
   Product,
+  RadIdentity,
+  RadIdentityBatch,
+  RadIdentityEvent,
   ProductImage,
   ProductAttribute,
   ProductAttributeOption,
@@ -71,6 +77,9 @@ export {
   PasswordResetToken,
   PaymentIntent,
   Product,
+  RadIdentity,
+  RadIdentityBatch,
+  RadIdentityEvent,
   ProductImage,
   ProductAttribute,
   ProductAttributeOption,

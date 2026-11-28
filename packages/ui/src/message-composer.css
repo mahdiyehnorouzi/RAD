@@ -1,0 +1,91 @@
+.rad-message-composer {
+  display: grid;
+  gap: 8px;
+}
+
+.rad-message-composer-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.rad-message-composer-row textarea {
+  flex: 1;
+  min-width: 0;
+  resize: none;
+  overflow-y: auto;
+  /* Telegram-style: grows with content up to this many lines, then
+     scrolls internally instead of pushing the rest of the thread down
+     indefinitely. ~6 lines at the 1.5 line-height below, plus padding. */
+  max-height: 160px;
+  border: 1px solid var(--line, #ddd0b7);
+  border-radius: var(--radius-md, 14px);
+  background: var(--paper, #fffaf2);
+  color: var(--ink, #1f1a14);
+  padding: 11px 14px;
+  /* 16px minimum keeps iOS Safari from zooming the page on focus. */
+  font-size: 16px;
+  font-family: inherit;
+  line-height: 1.5;
+}
+
+.rad-message-composer-row textarea:focus-visible {
+  outline: 2px solid var(--oxide, #a8572f);
+  outline-offset: 1px;
+}
+
+.rad-message-composer-row textarea:disabled {
+  opacity: 0.6;
+}
+
+.rad-message-composer-send {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 999px;
+  background: var(--mineral, #4a3b2f);
+  color: #fff;
+  cursor: pointer;
+  transition:
+    opacity 0.15s ease,
+    transform 0.1s ease;
+}
+
+.rad-message-composer-send:active:not(:disabled) {
+  transform: scale(0.94);
+}
+
+.rad-message-composer-send:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.rad-message-composer-send svg {
+  width: 19px;
+  height: 19px;
+  /* RTL: the glyph points lower-left by default; in a right-to-left
+     thread "forward"/"send" reads as pointing lower-right instead. */
+  transform: scaleX(-1);
+}
+
+.rad-message-composer-error {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  color: var(--oxide, #a8572f);
+  font-size: 12.5px;
+}
+
+.rad-message-composer-error button {
+  border: 1px solid var(--oxide, #a8572f);
+  background: transparent;
+  color: var(--oxide, #a8572f);
+  border-radius: var(--radius-sm, 10px);
+  padding: 4px 10px;
+  font-size: 12px;
+  cursor: pointer;
+}

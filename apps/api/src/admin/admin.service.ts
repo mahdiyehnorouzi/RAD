@@ -12,14 +12,7 @@ import {
 import { InjectRepository } from "@nestjs/typeorm";
 import { randomBytes } from "node:crypto";
 import { hash } from "bcryptjs";
-import {
-  DataSource,
-  In,
-  IsNull,
-  Not,
-  QueryFailedError,
-  Repository,
-} from "typeorm";
+import { DataSource, In, IsNull, Not, Repository } from "typeorm";
 import { generateVerificationCode } from "../auth/reset-token.util";
 import { MailService } from "../mail/mail.service";
 import {
@@ -28,9 +21,9 @@ import {
   productImageLimit,
 } from "../common/image-data";
 import {
-  isValidProductImagePublicId,
+  isValidProductImageObjectKey,
   productImageFolder,
-} from "../storage/cloudinary-storage.service";
+} from "../storage/product-image-key";
 import {
   checkIssuedUpload,
   recordIssuedUpload,
@@ -58,7 +51,10 @@ import {
 } from "../database/entities";
 import type { ProductImageStorage } from "../database/entities/product-image.entity";
 import { productIncludeWithSrc } from "../catalog/product.mapper";
-import { nextRadNumber } from "../catalog/rad-number";
+import {
+  insertProductWithIdentity,
+  retireIdentitiesForProduct,
+} from "../identities/identity.allocator";
 import { CatalogRevalidationService } from "../catalog/catalog-revalidation.service";
 import { InventoryService } from "../inventory/inventory.service";
 import type { ProductStatus } from "../inventory/type";
@@ -127,25 +123,13 @@ export class AdminService {
 
   private readonly logger = new Logger(AdminService.name);
 
-  /** Whether SeaweedFS is the currently-active provider — reference equality against the resolver's own instance, not a config re-read. */
-  private isSeaweedfsActive(): boolean {
-    return this.storageFor("seaweedfs") === this.storage;
-  }
-
   /**
    * Ownership check for a remote-media `objectKey` being attached to the
    * product identified by `slug`. Namespace shape
-   * (`isValidProductImagePublicId`) is always checked first.
+   * (`isValidProductImageObjectKey`) is always checked first.
    *
-   * For Cloudinary, that namespace check plus Cloudinary's own
-   * account-level existence check (`verifyMedia`, called by every
-   * caller right after this) remains the accepted model — unchanged
-   * from before this fix, since Cloudinary mints its own `public_id`
-   * client-side and this API never gets a chance to record an upload
-   * intent before the fact.
-   *
-   * For SeaweedFS, namespace shape alone is NOT treated as sufficient
-   * (see `upload-intent.ts`'s module doc for the full reasoning):
+   * Namespace shape alone is not sufficient for an S3 object key
+   * (see `upload-intent.ts` for the full reasoning):
    * ownership is proven by exactly one of two things —
    *  1. DURABLE: this `objectKey` is ALREADY a persisted `ProductImage`
    *     row for THIS SAME product. A real Postgres row, survives
@@ -163,15 +147,13 @@ export class AdminService {
     productId: string | null,
     objectKey: string | undefined,
     kind: "image" | "video",
-    isSeaweedfs: boolean,
   ) {
     if (
       !objectKey ||
-      !isValidProductImagePublicId(productId ?? "unsaved", objectKey)
+      !isValidProductImageObjectKey(productId ?? "unsaved", objectKey)
     ) {
       throw new BadRequestException("شناسه فایل نامعتبر است.");
     }
-    if (!isSeaweedfs) return;
 
     const existingRow = await this.productImages.findOne({
       where: { objectKey },
@@ -198,12 +180,11 @@ export class AdminService {
   }
 
   /**
-   * Issues signed Cloudinary upload params for a new admin image upload.
+   * Issues a signed S3-compatible upload policy for a new admin image upload.
    * The destination folder is derived here, server-side — never from
    * anything client-supplied — so `replaceImages` can later trust a
-   * `public_id` that matches the expected namespace
-   * (`isValidProductImagePublicId`). `CLOUDINARY_API_SECRET` never leaves
-   * this process; only the signature + public params are returned.
+   * `objectKey` that matches the expected namespace
+   * (`isValidProductImageObjectKey`). The storage signature is generated server-side.
    *
    * `slug` here is only a route param for admin UX (the dialog calls this
    * before a product may even exist, e.g. with a draft/placeholder slug);
@@ -213,7 +194,7 @@ export class AdminService {
    * no product exists yet for this slug (new-product flow, image attached
    * before the first save), the folder falls back to the unassociated
    * `rad/pending` namespace; `replaceImages` accepts that pattern for any
-   * product at save time (see `cloudinary-storage.service.ts` for why no
+   * product at save time (see `seaweedfs-storage.service.ts` for why no
    * migration step is needed when that image is later attached).
    */
   async signProductImageUpload(slug: string, mime: string, size?: number) {
@@ -233,15 +214,10 @@ export class AdminService {
       kind,
       size !== undefined,
     );
-    if (this.isSeaweedfsActive()) {
-      // Records that THIS process minted this key for this product (or
-      // the shared pending namespace) — the proof
-      // `authorizeRemoteObjectKey` requires for a genuinely new
-      // SeaweedFS attachment. Cloudinary mints its own key client-side,
-      // so there is nothing to record for that branch.
-      const { objectKey } = signed as { objectKey: string };
-      recordIssuedUpload(objectKey, productId, kind);
-    }
+    // Record that this process minted the key; attaching an upload that
+    // was not issued for this flow is rejected at save time.
+    const { objectKey } = signed as { objectKey: string };
+    recordIssuedUpload(objectKey, productId, kind);
     return signed;
   }
 
@@ -259,7 +235,6 @@ export class AdminService {
       product?.id ?? null,
       objectKey,
       kind,
-      this.isSeaweedfsActive(),
     );
     return this.storage.verifyMedia(objectKey, kind);
   }
@@ -304,7 +279,6 @@ export class AdminService {
           duplicate?.id ?? null,
           image.objectKey,
           imageKind,
-          image.storage === "seaweedfs" || image.storage === "seaweedfs_video",
         );
         await this.storageFor(image.storage).verifyMedia(
           image.objectKey as string,
@@ -347,6 +321,18 @@ export class AdminService {
       details: ["One of one"],
     };
 
+    if (existingId && input.radNumber != null) {
+      const current = await this.products.findOne({
+        where: { id: existingId },
+      });
+      if (current?.radNumber != null && current.radNumber !== input.radNumber) {
+        throw new ConflictException({
+          message: "شماره رَد بعد از ثبت قابل تغییر نیست.",
+          code: "rad_number_immutable",
+        });
+      }
+    }
+
     const product = existingId
       ? await this.updateProduct(existingId, {
           slug,
@@ -361,24 +347,27 @@ export class AdminService {
           storyEn: input.storyEn?.trim() || undefined,
           vendorId,
         })
-      : await this.createProductWithRadNumber({
-          slug,
-          name: input.name.trim(),
-          subtitle,
-          tomanPrice: input.price,
-          usdPrice,
-          color: "#8a4938",
-          accent: "#ead9bd",
-          shape: "tall",
-          category,
-          status: input.status,
-          story: input.description.trim(),
-          details,
-          en,
-          vendorId,
-          year: new Date().getFullYear(),
-          sortOrder: await this.nextSortOrder(),
-        });
+      : await this.createProductWithRadNumber(
+          {
+            slug,
+            name: input.name.trim(),
+            subtitle,
+            tomanPrice: input.price,
+            usdPrice,
+            color: "#8a4938",
+            accent: "#ead9bd",
+            shape: "tall",
+            category,
+            status: input.status,
+            story: input.description.trim(),
+            details,
+            en,
+            vendorId,
+            year: new Date().getFullYear(),
+            sortOrder: await this.nextSortOrder(),
+          },
+          input.radNumber,
+        );
 
     await this.replaceImages(
       product.id,
@@ -403,35 +392,19 @@ export class AdminService {
   }
 
   /**
-   * `nextRadNumber()` reads `MAX(radNumber)` outside any lock, so two
-   * concurrent "create product" saves can read the same max and both
-   * attempt the next number. The DB's unique constraint rejects the loser
-   * rather than letting it duplicate the number, but without this retry
-   * that surfaces as a confusing failed save instead of just getting the
-   * next available number transparently.
+   * New works take a number from the identity registry: a pre-reserved tag
+   * when one was chosen, otherwise the next number after the high-water mark.
+   * The same lock covers batch reservation, so the two paths cannot collide.
    */
-  private async createProductWithRadNumber(
+  private createProductWithRadNumber(
     product: Omit<Parameters<Repository<Product>["create"]>[0], "radNumber">,
-    attempt = 1,
+    requestedRadNumber?: number,
   ): Promise<Product> {
-    try {
-      return await this.products.save(
-        this.products.create({
-          ...product,
-          radNumber: await nextRadNumber(this.products),
-        }),
-      );
-    } catch (error) {
-      const isRadNumberConflict =
-        error instanceof QueryFailedError &&
-        String((error.driverError as { detail?: string })?.detail).includes(
-          "radNumber",
-        );
-      if (isRadNumberConflict && attempt < 3) {
-        return this.createProductWithRadNumber(product, attempt + 1);
-      }
-      throw error;
-    }
+    return insertProductWithIdentity(
+      this.dataSource,
+      product,
+      requestedRadNumber,
+    );
   }
 
   async deleteProduct(id: string) {
@@ -444,6 +417,7 @@ export class AdminService {
       throw new ConflictException("این اثر در سفارش ثبت شده و قابل حذف نیست.");
     }
     await this.dataSource.transaction(async (manager) => {
+      await retireIdentitiesForProduct(manager, id);
       await manager
         .getRepository(CartItem)
         .delete({ productSlug: product.slug });
@@ -804,8 +778,7 @@ export class AdminService {
           sortOrder,
         };
       }
-      // storage is a remote-media kind (cloudinary/cloudinary_video, or
-      // seaweedfs/seaweedfs_video when MEDIA_STORAGE_PROVIDER=seaweedfs):
+      // storage is a SeaweedFS remote-media kind:
       // never trust the client's objectKey blindly, even though the
       // browser uploaded the bytes directly to the storage provider with
       // our signature — re-validate it matches exactly what our own sign
@@ -817,10 +790,10 @@ export class AdminService {
       // Namespacing by the immutable `productId` (not `slug`) means this
       // still holds even if `slug` were ever renamed. Unlike the R2
       // design this replaces, a `rad/pending/...` object key is persisted
-      // as-is — no rename/migration step — see `cloudinary-storage.service.ts`.
+      // as-is — no rename/migration step — see `seaweedfs-storage.service.ts`.
       if (
         !image.objectKey ||
-        !isValidProductImagePublicId(productId, image.objectKey)
+        !isValidProductImageObjectKey(productId, image.objectKey)
       ) {
         throw new BadRequestException(
           "کلید تصویر نامعتبر است. تصویر را دوباره بارگذاری کنید.",
@@ -878,9 +851,8 @@ export class AdminService {
     });
 
     if (orphanedObjectKeys.length) {
-      // Best-effort: an orphaned Cloudinary asset left behind is an
-      // acceptable cost; failing the whole save because the Cloudinary
-      // delete flaked is not. `destroy` treats "not found" as success, so
+      // Best-effort cleanup: a failed object delete is logged, but does not
+      // fail a database save that has already committed. `destroy` treats "not found" as success, so
       // a repeated/duplicate save of the same diff never double-deletes or
       // errors.
       for (const { objectKey, storage, kind } of orphanedObjectKeys) {

@@ -225,6 +225,64 @@ describe("ProductAttributesService", () => {
       categories: ["ceramics"],
       options: [],
     });
-    assert.deepEqual(await service.remove(other.id), { ok: true });
+    assert.deepEqual(await service.remove(other.id), {
+      ok: true,
+      purgedValues: 0,
+    });
+  });
+
+  test("a redundant artwork-number spec can be purged without changing the RAD number", async () => {
+    const attribute = await service.create({
+      key: "unic-id",
+      label: "شماره اثر",
+      inputType: "text",
+      unit: null,
+      required: true,
+      active: true,
+      categories: ["ceramics"],
+      options: [],
+    });
+    const product = await makeProduct("ceramics");
+    await dataSource
+      .getRepository(Product)
+      .update({ id: product.id }, { radNumber: 60 });
+    await service.saveValuesForProduct(product.id, "ceramics", {
+      [attribute.id]: "۶۰",
+    });
+    await assert.rejects(() => service.remove(attribute.id), ConflictException);
+    const hidden = await service.byCategory("سفال و سرامیک");
+    assert.equal(
+      hidden.some((row) => row.id === attribute.id),
+      false,
+    );
+    await service.saveValuesForProduct(product.id, "ceramics", {});
+    const display = await service.displayAttributesForProducts([
+      { id: product.id, category: "ceramics" },
+    ]);
+    assert.equal(
+      (display.get(product.id) ?? []).some((row) => row.label === "شماره اثر"),
+      false,
+    );
+    assert.deepEqual(
+      await service.remove(attribute.id, { purgeValues: true }),
+      {
+        ok: true,
+        purgedValues: 1,
+      },
+    );
+    assert.equal(
+      await dataSource.getRepository(ProductAttributeValue).count({
+        where: { attributeId: attribute.id },
+      }),
+      0,
+    );
+    assert.equal(
+      (
+        await dataSource
+          .getRepository(Product)
+          .findOneByOrFail({ id: product.id })
+      ).radNumber,
+      60,
+    );
   });
 });

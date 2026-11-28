@@ -131,19 +131,19 @@ describe("publicCatalogQuery image src projection", () => {
       }),
       images.create({
         product,
-        alt: "cloudinary image",
-        enAlt: "cloudinary image",
+        alt: "seaweedfs image",
+        enAlt: "seaweedfs image",
         sortOrder: 3,
-        storage: "cloudinary",
+        storage: "seaweedfs",
         objectKey: `rad/products/${product.id}/img1`,
         src: null,
       }),
       images.create({
         product,
-        alt: "cloudinary video",
-        enAlt: "cloudinary video",
+        alt: "seaweedfs video",
+        enAlt: "seaweedfs video",
         sortOrder: 4,
-        storage: "cloudinary_video",
+        storage: "seaweedfs_video",
         objectKey: `rad/products/${product.id}/vid1`,
         src: null,
       }),
@@ -169,23 +169,23 @@ describe("publicCatalogQuery image src projection", () => {
       "https://cdn.example.com/work.jpg",
     );
 
-    // Regression test: a `cloudinary_video` row has `src: null` just like a
-    // `cloudinary` row (both resolve their URL from `objectKey` at the
+    // Regression test: a `seaweedfs_video` row has `src: null` just like a
+    // `seaweedfs` row (both resolve their URL from `objectKey` at the
     // mapper layer, not a stored `src`). The query's LEFT JOIN condition
     // must admit BOTH storage kinds explicitly, or a src-less row for a
     // kind it doesn't name is silently dropped from the join entirely —
     // this is exactly the bug that made uploaded videos invisible on the
     // storefront (see catalog.query.ts).
     assert.ok(
-      byStorage.has("cloudinary"),
-      "expected the cloudinary image row to survive the join",
+      byStorage.has("seaweedfs"),
+      "expected the seaweedfs image row to survive the join",
     );
     assert.ok(
-      byStorage.has("cloudinary_video"),
-      "expected the cloudinary_video row to survive the join — it must not be silently dropped",
+      byStorage.has("seaweedfs_video"),
+      "expected the seaweedfs_video row to survive the join — it must not be silently dropped",
     );
     assert.equal(
-      byStorage.get("cloudinary_video")?.objectKey,
+      byStorage.get("seaweedfs_video")?.objectKey,
       `rad/products/${product.id}/vid1`,
     );
 
@@ -208,7 +208,7 @@ describe("publicCatalogQuery image src projection", () => {
   /**
    * Regression test for the production bug: `seaweedfs`/`seaweedfs_video`
    * rows also persist `src: null` (resolving their URL from `objectKey`,
-   * same as `cloudinary`), but were missing from the public query's join
+   * same as `seaweedfs`), but were missing from the public query's join
    * whitelist — so they were silently dropped from the result entirely,
    * not just left un-rendered. Confirmed against `woven-garden` (RAD-060)
    * in production: Admin's unfiltered `relations: { images: true }` load

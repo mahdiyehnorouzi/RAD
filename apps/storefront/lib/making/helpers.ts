@@ -18,26 +18,26 @@ const BIOGRAPHY_STAGES: MakingStageId[] = [
   "complete",
 ];
 export const STAGE_LABEL: Record<MakingStageId, LocaleCopy> = {
-  design_submitted: { fa: "طرح ارسال شد", en: "Design submitted" },
-  feasibility: { fa: "بازبینی امکان‌پذیری", en: "Artist feasibility review" },
-  quote: { fa: "پیشنهاد و زمان‌بندی", en: "Quote and schedule" },
+  design_submitted: { fa: "طرح به دست ما رسید", en: "Design received" },
+  feasibility: { fa: "بررسی اینکه می‌شود ساخت", en: "Can this be made?" },
+  quote: { fa: "قیمت و زمان ساخت", en: "Price and timing" },
   approval_deposit: {
-    fa: "تأیید مشتری و بیعانه",
-    en: "Customer approval and deposit",
+    fa: "تأیید شما و پیش‌پرداخت",
+    en: "Your approval and deposit",
   },
-  making: { fa: "ساخت", en: "Making" },
-  pre_kiln: { fa: "ایستگاه پیش از کوره", en: "Pre-kiln checkpoint" },
-  firing: { fa: "پخت و پرداخت", en: "Firing and finishing" },
-  reveal: { fa: "رونمایی و مانده حساب", en: "Final reveal and payment" },
-  shipping: { fa: "بسته‌بندی و ارسال", en: "Packaging and shipping" },
-  complete: { fa: "رکورد ساخت", en: "Record of Making" },
-  declined: { fa: "رد شده", en: "Declined" },
+  making: { fa: "در حال ساخت", en: "Being made" },
+  pre_kiln: { fa: "قبل از رفتن به کوره", en: "Before the kiln" },
+  firing: { fa: "پخت در کوره", en: "In the kiln" },
+  reveal: { fa: "دیدن کار تمام‌شده", en: "Seeing the finished piece" },
+  shipping: { fa: "بسته‌بندی و ارسال", en: "Packing and shipping" },
+  complete: { fa: "کار تمام شد", en: "Finished" },
+  declined: { fa: "این طرح ساخته نمی‌شود", en: "This design will not be made" },
 };
 
 const ACTOR_LABEL: Record<NextActor, LocaleCopy> = {
-  customer: { fa: "مشتری باید اقدام کند", en: "The customer needs to act" },
-  artist: { fa: "هنرمند باید اقدام کند", en: "The artist needs to act" },
-  none: { fa: "اقدام دیگری لازم نیست", en: "No further action" },
+  customer: { fa: "قدم بعدی با شماست", en: "The next step is yours" },
+  artist: { fa: "قدم بعدی با سازنده است", en: "The next step is the maker’s" },
+  none: { fa: "کار دیگری نمانده", en: "Nothing else is waiting" },
 };
 
 export function copy(value: LocaleCopy, locale: "fa" | "en") {
@@ -88,7 +88,7 @@ export function situationFor(commission: MakingCommission): {
   const openChange = commission.changeRequests.find(
     (item) => item.status === "open",
   );
-  const glaze = commission.preKiln?.glazeCode ?? "G-17";
+  const glaze = commission.preKiln?.glazeCode;
   const artist = commission.artistName;
 
   if (commission.stage === "declined") {
@@ -139,11 +139,11 @@ export function situationFor(commission: MakingCommission): {
         en: "Design submitted for artist review",
       },
       body: {
-        fa: "مفهوم، ابعاد، ماده، کاربرد، بودجه و تصویر تولیدشده ثبت شده‌اند. هنرمند حالا امکان ساخت را می‌سنجد.",
+        fa: "ایده، اندازه، جنس، کاربرد و بودجه ثبت شده است. سازنده حالا می‌بیند این کار شدنی است یا نه.",
         en: "Concept, dimensions, material, intended use, budget, and the generated image are on record. The artist now judges whether the piece can be made.",
       },
       next: {
-        fa: "هنرمند طرح را تأیید می‌کند، تغییر می‌خواهد، بدیل پیشنهاد می‌دهد، یا با دلیل رد می‌کند.",
+        fa: "سازنده طرح را می‌پذیرد، یک تغییر مشخص می‌خواهد، راه دیگری پیشنهاد می‌دهد، یا با دلیل آن را نمی‌سازد.",
         en: "The artist will approve, request a change, offer an alternative, or decline with a reason.",
       },
     },
@@ -167,7 +167,7 @@ export function situationFor(commission: MakingCommission): {
         en: "A proposal is being prepared",
       },
       body: {
-        fa: "هنرمند مشخصات نهایی، قیمت، بیعانه، مانده، پنجره تکمیل و قواعد لغو را می‌نویسد.",
+        fa: "سازنده مشخصات نهایی، قیمت، پیش‌پرداخت، باقی‌مانده، زمان تحویل و شرط لغو را می‌نویسد.",
         en: "The artist is writing the final specification, price, deposit, balance, completion window, and cancellation rules.",
       },
       next: {
@@ -181,7 +181,7 @@ export function situationFor(commission: MakingCommission): {
         en: "Approve the specification and pay the deposit",
       },
       body: {
-        fa: "این یک پیشنهاد کامل است، نه فقط یک عدد. ساخت تنها پس از پذیرش مشخصات و پرداخت بیعانه آغاز می‌شود. آنچه تأیید کنید به‌صورت غیرقابل‌تغییر ذخیره می‌شود.",
+        fa: "این فقط یک عدد نیست. ساخت وقتی شروع می‌شود که مشخصات را بپذیرید و پیش‌پرداخت را بدهید. همان چیزی که تأیید کنید، مبنای ساخت می‌ماند.",
         en: "This is a full proposal, not only a number. Making begins only after you accept the specification and pay the deposit. Exactly what you approve is stored as an immutable snapshot.",
       },
       next: {
@@ -199,7 +199,7 @@ export function situationFor(commission: MakingCommission): {
         en: `${artist} moves the order through making and may add photographs or short notes. Not every update needs your approval.`,
       },
       next: {
-        fa: "وقتی فرم پاک شد و لعاب پیشنهاد شد، ایستگاه پیش از کوره باز می‌شود.",
+        fa: "وقتی شکل کار تمیز شد و لعاب پیشنهاد شد، قبل از کوره از شما تأیید می‌گیریم.",
         en: "When the form is cleaned and a glaze is proposed, the pre-kiln checkpoint opens.",
       },
     },
@@ -209,8 +209,12 @@ export function situationFor(commission: MakingCommission): {
         en: "Pre-kiln approval required",
       },
       body: {
-        fa: `${artist} فرم‌دهی را تمام کرده و لعاب ${glaze} را پیشنهاد داده است. عکس‌ها، ابعاد و بازه رنگ مورد انتظار را ببینید. پس از تأیید، قطعه وارد کوره می‌شود و فرم و لعاب دیگر تغییرپذیر نیستند.`,
-        en: `${artist} has finished forming your piece and proposed glaze ${glaze}. Review the photographs and expected colour range. Once approved, the piece will enter the kiln and its form and glaze cannot be changed.`,
+        fa: glaze
+          ? `${artist} شکل کار را تمام کرده و لعاب ${glaze} را پیشنهاد داده است. عکس‌ها و اندازه را ببینید. بعد از تأیید شما، کار به کوره می‌رود و شکل و لعاب دیگر عوض نمی‌شود.`
+          : `${artist} شکل کار را تمام کرده و لعاب را پیشنهاد داده است. عکس‌ها و اندازه را ببینید. بعد از تأیید شما، کار به کوره می‌رود و شکل و لعاب دیگر عوض نمی‌شود.`,
+        en: glaze
+          ? `${artist} has finished forming your piece and proposed glaze ${glaze}. Look at the photographs and the size. After you approve, it goes into the kiln and the form and glaze stay as they are.`
+          : `${artist} has finished forming your piece and proposed a glaze. Look at the photographs and the size. After you approve, it goes into the kiln and the form and glaze stay as they are.`,
       },
       next: {
         fa: "تأیید شما کوره را برگشت‌ناپذیر می‌کند.",
@@ -267,17 +271,17 @@ export function situationFor(commission: MakingCommission): {
         en: "Deposit and balance are paid. The artist records packaging and adds tracking.",
       },
       next: {
-        fa: "پس از ارسال، رکورد ساخت دائمی اثر باقی می‌ماند.",
+        fa: "بعد از ارسال، شرح ساخت همین‌جا می‌ماند.",
         en: "After dispatch, the permanent Record of Making remains.",
       },
     },
     complete: {
       headline: {
-        fa: "رکورد ساخت این قطعه کامل است",
+        fa: "ساخت این کار تمام شد",
         en: "This piece’s Record of Making is complete",
       },
       body: {
-        fa: "گفت‌وگو، تصمیم‌های هنرمند، مرجع لعاب، نتیجه پخت و عکس‌ها زندگی‌نامه این اثر شده‌اند.",
+        fa: "گفتگو، تصمیم‌های سازنده، لعاب، نتیجه پخت و عکس‌ها داستان این کار شده‌اند.",
         en: "The conversation, artist decisions, glaze reference, firing result, and photographs are now this piece’s biography.",
       },
       next: {

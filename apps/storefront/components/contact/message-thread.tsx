@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { fetchOrderMessages, replyToContactMessage } from "@/lib/api";
 import { useLocale } from "@/components/i18n";
+import { Button } from "@/components/ui/button-link";
 import { helpPanelCopy } from "./const";
 import type { ContactMessageThreadItem } from "@rad/types";
 
@@ -98,13 +99,13 @@ export function MessageThread({ orderId }: { orderId: string }) {
               placeholder={c.threadReplyPlaceholder}
               rows={2}
             />
-            <button
+            <Button
               type="button"
               onClick={() => sendReply(root.id)}
               disabled={sending === root.id || !(draft[root.id] ?? "").trim()}
             >
               {sending === root.id ? c.threadReplySending : c.threadReplySend}
-            </button>
+            </Button>
           </div>
         </div>
       ))}

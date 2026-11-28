@@ -1,3 +1,4 @@
+import { normalizeIranianMobile } from "../sms/phone";
 import {
   BadRequestException,
   ConflictException,
@@ -38,6 +39,7 @@ import {
   receiptImageLimit,
 } from "../common/image-data";
 import { ORDER_POLICY_SLUGS } from "../policies/const";
+import { quoteCheckoutShipping } from "./checkout-shipping";
 import { acceptedPolicyVersions } from "../policies/policy-acceptance";
 import { ORDER_PAYMENT_WINDOW_MS } from "./const";
 import { toOrder } from "./order.mapper";
@@ -113,7 +115,11 @@ export class OrdersService implements OnModuleInit {
       phone?: string;
       address?: string;
       message?: string;
+      recipientName?: string;
+      recipientPhone?: string;
+      giftMessage?: string;
       acceptedPolicies?: Record<string, string>;
+      shippingMethod?: "express" | "courier";
     },
   ) {
     const policyVersions = acceptedPolicyVersions(
@@ -134,6 +140,33 @@ export class OrdersService implements OnModuleInit {
       });
     }
 
+    const recipientName = input.recipientName?.trim();
+    const recipientPhone = normalizeIranianMobile(input.recipientPhone);
+    if (
+      (input.recipientName !== undefined ||
+        input.recipientPhone !== undefined) &&
+      (!recipientName ||
+        recipientName.length < 2 ||
+        !recipientPhone ||
+        !input.city?.trim() ||
+        (input.address?.trim().length ?? 0) < 8)
+    ) {
+      throw new BadRequestException(
+        "نام، شماره موبایل و نشانی کامل گیرنده را وارد کنید.",
+      );
+    }
+
+    const city = input.city?.trim() || "تهران";
+    const quoted = quoteCheckoutShipping(input.shippingMethod, city);
+    if (!quoted.ok) {
+      throw new BadRequestException({
+        message:
+          quoted.code === "courier_tehran_only"
+            ? "پیک فقط برای شهر تهران است."
+            : "روش ارسال معتبر نیست.",
+        code: quoted.code,
+      });
+    }
     const phone = normalizePhone(input.phone);
     if (!phone) {
       throw new BadRequestException(
@@ -141,7 +174,6 @@ export class OrdersService implements OnModuleInit {
       );
     }
     const name = input.name?.trim() || actor.user?.name || "کاربر رَد";
-    const city = input.city?.trim() || "تهران";
     const slugs = cart.map((item) => item.productSlug);
     const provider = paymentProvider();
 
@@ -168,10 +200,11 @@ export class OrdersService implements OnModuleInit {
         });
       }
 
-      const total = products.reduce(
+      const itemsTotal = products.reduce(
         (sum, product) => sum + (product.tomanPrice ?? 0),
         0,
       );
+      const total = itemsTotal + quoted.feeToman;
       const usdTotal = products.reduce(
         (sum, product) => sum + (product.usdPrice ?? 0),
         0,
@@ -192,6 +225,11 @@ export class OrdersService implements OnModuleInit {
         phone,
         address: input.address?.trim() ?? "",
         message: input.message?.trim() || null,
+        recipientName: recipientName || null,
+        recipientPhone,
+        giftMessage: input.giftMessage?.trim() || null,
+        shippingMethod: quoted.method,
+        shippingFee: quoted.feeToman,
         policyVersions,
         policiesAcceptedAt: new Date(),
       });
@@ -248,7 +286,6 @@ export class OrdersService implements OnModuleInit {
       );
     }
 
-    await this.notices.create(actor, "order", slugs[0]);
     const saved = await this.orders.findOneOrFail({
       where: { id: order.id },
       relations: orderRelations,

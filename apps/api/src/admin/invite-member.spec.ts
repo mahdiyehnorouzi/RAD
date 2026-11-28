@@ -39,7 +39,7 @@ const catalogRevalidation = {
 } as unknown as CatalogRevalidationService;
 import { PaymentReviewService } from "../orders/payment-review.service";
 import { ProductAttributesService } from "../product-attributes/product-attributes.service";
-import { CloudinaryStorageService } from "../storage/cloudinary-storage.service";
+import { SeaweedfsStorageService } from "../storage/seaweedfs-storage.service";
 
 /**
  * DB-backed coverage for the admin invitation flow (fixes the second half
@@ -120,7 +120,7 @@ before(async () => {
     notices,
     mail,
   );
-  const storage = new CloudinaryStorageService(new ConfigService({}));
+  const storage = new SeaweedfsStorageService(new ConfigService({}));
 
   admin = new AdminService(
     dataSource,

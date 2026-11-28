@@ -23,11 +23,17 @@ export function toOrder(order: OrderRow, redirectUrl?: string) {
     createdAt: order.createdAt.getTime(),
     status,
     delivery: {
-      name: order.name,
+      name: order.recipientName ?? order.name,
       city: order.city,
-      phone: order.phone,
+      phone: order.recipientPhone ?? order.phone,
       address: order.address,
     },
+    shipping: order.shippingMethod
+      ? {
+          method: order.shippingMethod,
+          fee: order.shippingFee ?? 0,
+        }
+      : undefined,
     trackingCode: order.trackingCode || undefined,
     estimatedDeliveryAt: order.estimatedDeliveryAt?.getTime() ?? undefined,
     deliveredAt: order.deliveredAt?.getTime() ?? undefined,

@@ -74,12 +74,23 @@
   background: color-mix(in srgb, var(--canvas) 55%, var(--paper));
 }
 
+.making-messages li {
+  min-width: 0;
+  max-width: 85%;
+  overflow-wrap: anywhere;
+}
+
 .making-messages li.artist {
-  border-inline-start: 3px solid var(--moss);
+  margin-right: auto;
+  background: color-mix(in srgb, var(--moss) 12%, var(--paper));
 }
 
 .making-messages li.customer {
-  border-inline-start: 3px solid #8a4938;
+  margin-left: auto;
+}
+
+.making-messages p {
+  white-space: pre-wrap;
 }
 
 .making-messages li.internal {
@@ -144,6 +155,12 @@
 
 .making-compose .button {
   width: 100%;
+}
+
+.making-compose-error {
+  margin: 0;
+  color: var(--clay);
+  font-size: 0.85rem;
 }
 
 @media (--phone) {

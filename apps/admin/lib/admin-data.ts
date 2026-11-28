@@ -39,6 +39,7 @@ export type AdminRole = "owner" | "manager" | "editor" | "viewer";
 export type AdminSection =
   | "overview"
   | "products"
+  | "tags"
   | "orders"
   | "messages"
   | "damage"
@@ -96,17 +97,14 @@ export function attributeCategoryLabel(value: string) {
 /**
  * One product image, in the shape the API's save endpoint expects:
  * `legacy_base64`/`static`/`external` round-trip an existing `src`
- * unchanged; `cloudinary`/`seaweedfs` carry only the storage provider's
+ * unchanged; `seaweedfs`/`seaweedfs_video` carry only the storage provider's
  * object key (as `objectKey`) the signed upload wrote to — never raw
  * bytes. `src` on one of those entries is a display-only URL the API
  * derived for the editor's `<img>`/`<video>` preview (or a local blob URL
  * while a new upload is in flight) — it is never sent back as the source
- * of truth, `objectKey` is. Which provider is active server-side is
- * decided by `MEDIA_STORAGE_PROVIDER` (see `apps/api/src/storage`) — the
- * admin UI just has to handle whichever kind a successful upload returns.
+ * of truth, `objectKey` is. New uploads use the S3-compatible media store.
  */
-export type AdminRemoteMediaStorage =
-  "cloudinary" | "cloudinary_video" | "seaweedfs" | "seaweedfs_video";
+export type AdminRemoteMediaStorage = "seaweedfs" | "seaweedfs_video";
 
 export type AdminProductImage =
   | { storage: "legacy_base64"; src: string; objectKey?: null }
@@ -118,8 +116,6 @@ export type AdminProductImage =
     };
 
 const REMOTE_MEDIA_STORAGES: readonly AdminRemoteMediaStorage[] = [
-  "cloudinary",
-  "cloudinary_video",
   "seaweedfs",
   "seaweedfs_video",
 ];
@@ -133,7 +129,7 @@ export function isRemoteMediaStorage(
 
 /** True for the video variant of either provider's storage kind. */
 export function isVideoStorage(storage: AdminProductImage["storage"]) {
-  return storage === "cloudinary_video" || storage === "seaweedfs_video";
+  return storage === "seaweedfs_video";
 }
 export type AdminOrderStatus = StoreOrderStatus;
 
@@ -170,6 +166,10 @@ export interface AdminProduct {
   /** A customer holds the work (cart, unpaid order, or receipt awaiting review). */
   held?: boolean;
   artist: string;
+  /** Permanent RAD number once the registry has assigned one. */
+  radNumber?: number;
+  /** Chosen reserved number sent only when creating a product. */
+  reservedRadNumber?: number;
   images: AdminProductImage[];
   updatedAt: number;
   /** This product's saved attribute values, keyed by attribute id. */
@@ -184,6 +184,9 @@ export interface AdminOrder {
   address?: string;
   /** Optional "Message to RAD" note the buyer left at checkout. */
   message?: string;
+  recipientName?: string;
+  recipientPhone?: string;
+  giftMessage?: string;
   productName: string;
   products: Array<{ slug: string; name: string; radNumber?: number }>;
   amount: number;
@@ -336,6 +339,37 @@ export function resolveCommissionSelection(
   return commissions.some((item) => item.id === requestedId)
     ? requestedId
     : null;
+}
+
+// Two requests for the same commission (two messages sent close together,
+// or a mutation response racing the 20s poll) can resolve out of order.
+// Applying whichever lands last, unguarded, can show older data - fewer
+// messages, an earlier stage - over state the admin already sees. Each
+// incoming commission replaces the current one only if it is strictly
+// fresher (by `updatedAt`); a staler response is dropped, never applied.
+export function mergeFreshCommission(
+  current: AdminCommission[],
+  incoming: AdminCommission,
+): AdminCommission[] {
+  return current.map((item) =>
+    item.id === incoming.id && incoming.updatedAt > item.updatedAt
+      ? incoming
+      : item,
+  );
+}
+
+export function mergeFreshCommissions(
+  current: AdminCommission[],
+  incoming: AdminCommission[],
+): AdminCommission[] {
+  const byId = new Map(current.map((item) => [item.id, item]));
+  for (const next of incoming) {
+    const existing = byId.get(next.id);
+    if (!existing || next.updatedAt > existing.updatedAt) {
+      byId.set(next.id, next);
+    }
+  }
+  return [...byId.values()].sort((a, b) => b.updatedAt - a.updatedAt);
 }
 
 export const roleLabels: Record<AdminRole, string> = {

@@ -20,7 +20,12 @@ export function isProductsPath(pathname: string) {
   return pathname === "/products" || pathname.startsWith("/products/");
 }
 
-type StudioRoute = "reviews" | "help" | "messages" | "shape" | "products";
+export function isTagsPath(pathname: string) {
+  return pathname === "/tags" || pathname.startsWith("/tags/");
+}
+
+type StudioRoute =
+  "reviews" | "help" | "messages" | "shape" | "products" | "tags";
 
 const studioPath: Record<StudioRoute, string> = {
   reviews: "/reviews",
@@ -28,6 +33,7 @@ const studioPath: Record<StudioRoute, string> = {
   messages: "/messages",
   shape: "/shape",
   products: "/products",
+  tags: "/tags",
 };
 
 /** Independent studio routes. Every other section still lives on `/`. */
@@ -37,6 +43,7 @@ function studioRoute(pathname: string): StudioRoute | null {
   if (isMessagesPath(pathname)) return "messages";
   if (isShapePath(pathname)) return "shape";
   if (isProductsPath(pathname)) return "products";
+  if (isTagsPath(pathname)) return "tags";
   return null;
 }
 
@@ -92,7 +99,8 @@ export function planSectionSelect(
     next === "help" ||
     next === "messages" ||
     next === "shape" ||
-    next === "products"
+    next === "products" ||
+    next === "tags"
   ) {
     const pathname = studioPath[next];
     if (normalizeStudioPath(current.pathname) === pathname) {
@@ -302,6 +310,13 @@ export function startProductsLink(
   pending: PendingNavigation | null = null,
 ) {
   return startStudioLink(visible, "products", pending);
+}
+
+export function startTagsLink(
+  visible: StudioView,
+  pending: PendingNavigation | null = null,
+) {
+  return startStudioLink(visible, "tags", pending);
 }
 
 export type StudioAuth =

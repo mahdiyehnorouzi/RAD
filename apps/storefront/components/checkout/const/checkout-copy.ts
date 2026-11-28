@@ -1,11 +1,22 @@
 export const checkoutCopy = {
   fa: {
     stepsLabel: "مراحل خرید",
-    steps: ["کیسه خرید", "اطلاعات ارسال", "بررسی و پرداخت", "نتیجه"],
+    steps: [
+      { short: "کیسه", label: "کیسه خرید" },
+      { short: "اطلاعات", label: "اطلاعات شما" },
+      { short: "ارسال", label: "اطلاعات ارسال" },
+      { short: "پرداخت", label: "بررسی و پرداخت" },
+      { short: "نتیجه", label: "نتیجه" },
+    ],
     stepDone: "انجام شد",
     stepCurrent: "مرحله‌ی فعلی",
 
-    detailsTitle: "اطلاعات دریافت اثر",
+    contactTitle: "اطلاعات شما",
+    contactLede: "نام و شماره موبایل گیرنده را برای همین سفارش بنویسید.",
+    contactContinue: "ادامه به اطلاعات ارسال",
+    back: "بازگشت",
+
+    detailsTitle: "اطلاعات ارسال",
     detailsLede: "لطفاً اطلاعات خود را برای ارسال اثر وارد کنید.",
     nameLabel: "نام و نام خانوادگی",
     phoneLabel: "شماره تماس",
@@ -21,6 +32,11 @@ export const checkoutCopy = {
     postalError: "کد پستی را با ۱۰ رقم بنویسید، یا خالی بگذارید.",
     optional: "اختیاری",
     messageLabel: "پیام به رَد",
+    alternateRecipient: "می‌خوای به آدرس دیگه‌ای بفرستی؟",
+    recipientName: "نام گیرنده",
+    recipientPhone: "شماره موبایل گیرنده",
+    giftMessage: "متن کارت هدیه",
+    giftMessageHint: "هرچی اینجا بنویسی، روی کارت کنار هدیه می‌ذاریم.",
     messagePlaceholder: "نکته‌ای برای تیم رَد دارید؟ اینجا بنویسید.",
     savedTitle: "نشانی‌های ذخیره‌شده",
     savedLede:
@@ -65,6 +81,37 @@ export const checkoutCopy = {
     subtotal: "جمع آثار",
     shipping: "هزینه‌ی ارسال",
     shippingUnset: "پس از بررسی مشخص می‌شود",
+    shippingLegend: "روش ارسال",
+    shippingRequired: "برای ادامه، روش ارسال رو انتخاب کن.",
+    shippingExpress: "پست پیشتاز",
+    shippingExpressDetail: "هزینه ثابت این سفارش: {fee}.",
+    shippingCourier: "پیک",
+    shippingCourierLater:
+      "فقط برای تهران. قیمت پیک وقتی سفارش آماده ارسال شد مشخص می‌شود و به مبلغ همین پرداخت اضافه نمی‌شود.",
+    shippingCourierSummary:
+      "پیک تهران؛ قیمت هنگام آماده‌شدن سفارش مشخص می‌شود و به مبلغ فعلی اضافه نمی‌شود.",
+    shippingCourierOutside:
+      "پیک فقط برای شهر تهران است. این نشانی خارج از تهران است، پس پیک در دسترس نیست.",
+    accountConsent: "با همین اطلاعات یک حساب می‌سازم",
+    accountExplain:
+      "این کار اختیاری است. اگر انتخابش نکنی، خرید مهمان سر جایش می‌ماند و سفارشت ثبت می‌شود.",
+    accountUseDetails:
+      "نامی که استفاده می‌شود: {name}. شماره‌ای که استفاده می‌شود: {phone}. اگر برای این ایمیل یا شماره از قبل حساب باشد، وارد همان حساب می‌شوی و حساب تکراری ساخته نمی‌شود.",
+    accountDetailMissing: "هنوز نوشته نشده",
+    accountPhone: "با شماره موبایل",
+    accountEmail: "با ایمیل",
+    accountPhoneDetail:
+      "کد یک‌بارمصرف به همین شماره پیامک می‌شود. بعد از تأیید، اگر حسابی با این شماره نباشد ساخته می‌شود و نام همین فرم روی آن می‌نشیند. اگر حساب باشد، وارد همان حساب می‌شوی. بعد از تأیید همین‌جا، روی همین سفارش و همین مرحله می‌مانی.",
+    accountEmailDetail:
+      "نام همین فرم، به همراه ایمیل و رمزی که پایین می‌نویسی، برای ساخت حساب استفاده می‌شود.",
+    accountEmailSignIn:
+      "این ایمیل از قبل حساب دارد. رمز همان حساب را بنویس تا وارد شوی. حساب تازه‌ای ساخته نمی‌شود.",
+    accountPhoneFirst: "اول شماره موبایل همین فرم را کامل بنویس.",
+    accountNameFirst: "اول نام و نام خانوادگی همین فرم را بنویس.",
+    accountSignedIn:
+      "با نام {name} وارد شدی. همین سفارش و همین مرحله سر جایش است.",
+    accountNameKept:
+      "وارد حساب شدی. نام حساب عوض نشد؛ می‌توانی بعداً از صفحه حساب آن را ویرایش کنی.",
     total: "مبلغ نهایی",
     quantity: "تعداد: {count}",
 
@@ -101,7 +148,6 @@ export const checkoutCopy = {
     securePayTitle: "پرداخت امن",
     securePayLede: "برای تکمیل خرید، به صفحه امن پرداخت منتقل می‌شی.",
     deliveryRecapTitle: "اطلاعات گیرنده",
-    deliveryRecapEdit: "ویرایش",
     reviewTitle: "بررسی و پرداخت",
     gatewayHint: "بعد از پرداخت، به سایت رَد برمی‌گردی.",
     gatewayGo: "پرداخت و تکمیل خرید",
@@ -174,11 +220,22 @@ export const checkoutCopy = {
   },
   en: {
     stepsLabel: "Checkout steps",
-    steps: ["Bag", "Delivery", "Review & payment", "Result"],
+    steps: [
+      { short: "Bag", label: "Shopping bag" },
+      { short: "Details", label: "Your details" },
+      { short: "Delivery", label: "Delivery" },
+      { short: "Payment", label: "Review and payment" },
+      { short: "Result", label: "Result" },
+    ],
     stepDone: "done",
     stepCurrent: "current step",
 
-    detailsTitle: "Delivery details",
+    contactTitle: "Your details",
+    contactLede: "The recipient’s name and mobile number for this order.",
+    contactContinue: "Continue to delivery",
+    back: "Back",
+
+    detailsTitle: "Delivery",
     detailsLede:
       "Enter the address. Once the order is placed, you pay by card transfer and send the receipt right here.",
     nameLabel: "Full name",
@@ -195,6 +252,11 @@ export const checkoutCopy = {
     postalError: "Enter a 10-digit postal code, or leave it empty.",
     optional: "optional",
     messageLabel: "Message to RAD",
+    alternateRecipient: "Sending to someone at another address?",
+    recipientName: "Recipient name",
+    recipientPhone: "Recipient mobile number",
+    giftMessage: "Gift card message",
+    giftMessageHint: "We’ll put your message on a card with the gift.",
     messagePlaceholder: "Anything our team should know? Write it here.",
     savedTitle: "Saved addresses",
     savedLede:
@@ -239,6 +301,37 @@ export const checkoutCopy = {
     subtotal: "Works",
     shipping: "Delivery",
     shippingUnset: "Confirmed after review",
+    shippingLegend: "Shipping method",
+    shippingRequired: "Choose a shipping method to continue.",
+    shippingExpress: "Express Post",
+    shippingExpressDetail: "Flat fee for this order: {fee}.",
+    shippingCourier: "Courier",
+    shippingCourierLater:
+      "Tehran only. The courier price is confirmed when the order is ready to ship, and it is not added to the amount you pay now.",
+    shippingCourierSummary:
+      "Tehran courier; the price is confirmed when the order is ready to ship and is not added to this amount.",
+    shippingCourierOutside:
+      "Courier is only for Tehran. This address is outside Tehran, so it is not available.",
+    accountConsent: "Create an account with these details",
+    accountExplain:
+      "This is optional. Leave it unchecked and you can still place this order as a guest.",
+    accountUseDetails:
+      "Name that will be used: {name}. Mobile number that will be used: {phone}. If an account already exists for that email or number, you’ll sign in to it. A second account is not created.",
+    accountDetailMissing: "not entered yet",
+    accountPhone: "Use this mobile number",
+    accountEmail: "Use email",
+    accountPhoneDetail:
+      "A one-time code is texted to this number. After you confirm it, a new account is created if this number doesn’t have one, and the name in this form is saved on it. If an account already exists, you sign in to that account. You stay on this order and this step.",
+    accountEmailDetail:
+      "The name in this form, plus the email and password you enter below, is what the existing email sign-up uses.",
+    accountEmailSignIn:
+      "An account already exists for this email. Enter its password to sign in. A new account is not created.",
+    accountPhoneFirst: "Enter the mobile number in this form first.",
+    accountNameFirst: "Enter the full name in this form first.",
+    accountSignedIn:
+      "You’re signed in as {name}. This order and this step are unchanged.",
+    accountNameKept:
+      "You’re signed in. The account name was left as it is; you can edit it later from your account.",
     total: "Total",
     quantity: "Qty: {count}",
 
@@ -276,7 +369,6 @@ export const checkoutCopy = {
     securePayLede:
       "You'll be taken to a secure payment page to finish your order.",
     deliveryRecapTitle: "Delivery details",
-    deliveryRecapEdit: "Edit",
     reviewTitle: "Review & payment",
     gatewayHint: "You'll return to RAD once payment is done.",
     gatewayGo: "Pay and complete order",

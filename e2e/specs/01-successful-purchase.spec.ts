@@ -4,6 +4,7 @@ import {
   E2E_TEST_PRODUCT_SLUGS,
   clickPayAndFollowMockGateway,
   fillCheckoutFormAndSubmit,
+  goBack,
   mockGatewayPay,
   urls,
   waitForUrl,
@@ -19,6 +20,15 @@ test("successful purchase: PDP -> cart -> checkout -> mocked gateway success -> 
     E2E_TEST_PRODUCT_SLUGS.successfulPurchase,
   );
   const orderId = await fillCheckoutFormAndSubmit(page);
+
+  await goBack(page);
+  await expect(page).toHaveURL(/step=delivery/);
+  await expect(
+    page.getByText("Test street, no. 1", { exact: false }),
+  ).toBeVisible();
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
+  await page.getByRole("button", { name: "Continue to payment" }).click();
+  await expect(page).not.toHaveURL(/step=delivery/);
 
   await clickPayAndFollowMockGateway(page);
   await mockGatewayPay(page);

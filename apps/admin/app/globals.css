@@ -94,6 +94,8 @@
   --font: var(--font-sans);
   --font-weight-regular: 400;
   --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
   --text-body: 16px;
   --text-label: 0.8rem;
   --text-caption: 0.75rem;
@@ -195,7 +197,7 @@ textarea:focus-visible {
 .brand-mark img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
   display: block;
 }
 .login-brand {
@@ -214,7 +216,7 @@ textarea:focus-visible {
   display: grid;
 }
 .brand-lockup strong {
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 .brand-lockup small,
 .sidebar-foot small {
@@ -242,9 +244,15 @@ textarea:focus-visible {
 .admin-nav a {
   width: 100%;
   display: grid;
-  grid-template-columns: 22px 1fr 18px;
+  grid-template-columns: 22px minmax(0, 1fr) 18px;
   align-items: center;
   gap: 12px;
+  /* Explicit here, not left to the shared Button component: some nav
+     items render as <Link> (route-backed sections) and some as <Button>
+     (local sections). Without this, only the Button-rendered rows got a
+     44px tap target from `.rad-button-md`'s min-height, so rows shifted
+     height depending on which element they happened to render as. */
+  min-height: 44px;
   padding: 13px 14px;
   border: 0;
   background: transparent;
@@ -252,7 +260,7 @@ textarea:focus-visible {
   text-align: right;
   text-decoration: none;
   cursor: pointer;
-  border-radius: 3px;
+  border-radius: var(--radius-md);
 }
 .admin-nav button:hover,
 .admin-nav a:hover {
@@ -283,7 +291,7 @@ textarea:focus-visible {
 }
 .sidebar-foot strong {
   font-size: 13px;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 .sidebar-foot > button,
 .nav-close {
@@ -327,7 +335,7 @@ textarea:focus-visible {
 .eyebrow {
   color: var(--oxide);
   font-size: 12px;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
   letter-spacing: 0.02em;
 }
 .topbar-status {
@@ -427,7 +435,7 @@ textarea:focus-visible {
 }
 .kiln-dial strong {
   font-size: 52px;
-  font-weight: 400;
+  font-weight: var(--font-weight-regular);
   line-height: 1;
 }
 .kiln-dial span {
@@ -457,7 +465,7 @@ textarea:focus-visible {
   grid-row: 1/3;
   grid-column: 2;
   font-size: 48px;
-  font-weight: 400;
+  font-weight: var(--font-weight-regular);
   font-variant-numeric: tabular-nums;
 }
 .metric small {
@@ -494,7 +502,7 @@ textarea:focus-visible {
 .dark-panel h3 {
   margin: 0;
   font-size: 29px;
-  font-weight: 400;
+  font-weight: var(--font-weight-regular);
 }
 .dark-panel p {
   color: #c4cec9;
@@ -703,7 +711,7 @@ textarea:focus-visible {
 }
 .product-meta strong {
   font-size: 13px;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 .product-meta small {
   color: var(--muted);
@@ -764,7 +772,7 @@ th {
   padding: 13px 12px;
   color: var(--muted);
   font-size: 11px;
-  font-weight: 400;
+  font-weight: var(--font-weight-regular);
   text-align: right;
   border-bottom: 1px solid var(--line);
 }
@@ -820,7 +828,7 @@ td select,
   gap: 4px;
 }
 .member-row strong {
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 .member-row small {
   color: var(--muted);
@@ -862,7 +870,7 @@ td select,
 .empty-state h3 {
   color: var(--ink);
   margin: 15px 0 0;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 .empty-state p {
   font-size: 13px;
@@ -897,7 +905,7 @@ td select,
 .dialog > header h2 {
   margin: 6px 0;
   font-size: 31px;
-  font-weight: 400;
+  font-weight: var(--font-weight-regular);
 }
 .dialog > header p {
   margin: 0;
@@ -934,7 +942,7 @@ td select,
 }
 .field > span,
 .field-label > span {
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 .field input,
 .field select,
@@ -946,6 +954,7 @@ td select,
   border: 1px solid var(--line);
   background: #fffaf2;
   padding: 11px 12px;
+  border-radius: var(--radius-md);
   color: var(--ink);
   font-size: 16px;
 }
@@ -1142,7 +1151,12 @@ td select,
   z-index: 100;
   bottom: 24px;
   left: 24px;
-  min-width: 240px;
+  width: max-content;
+  min-width: min(240px, calc(100vw - 48px));
+  max-width: calc(100vw - 48px);
+  border-radius: var(--radius-md);
+  overflow-wrap: anywhere;
+  pointer-events: none;
   padding: 13px 16px;
   background: var(--ink);
   color: white;
@@ -1253,7 +1267,7 @@ td select,
 .admin-login h1 {
   margin: 10px 0 8px;
   font-size: 34px;
-  font-weight: 400;
+  font-weight: var(--font-weight-regular);
 }
 .admin-login p {
   margin: 0 0 8px;
@@ -1354,7 +1368,7 @@ td select,
   gap: 4px;
 }
 .order-process-meta b {
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 .order-process-meta span {
   font-size: 13px;
@@ -1461,7 +1475,7 @@ td select,
 .order-payment h4 {
   margin: 0;
   font-size: 13px;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 .order-payment .order-facts {
   margin: 0;
@@ -1520,7 +1534,7 @@ td select,
 .order-payment-reject legend {
   margin-bottom: 8px;
   font-size: 13px;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 .order-payment-reject label {
   display: flex;
@@ -1550,7 +1564,7 @@ td select,
 }
 .order-payment-rejected strong {
   color: #8e3e31;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   font-size: 13px;
 }
 .order-payment-rejected p {
@@ -1689,6 +1703,13 @@ td select,
     min-width: 44px;
     font-size: 0;
     padding: 0 11px;
+    /* The label text is visually collapsed (font-size: 0) rather than
+       removed, so it stays readable to assistive tech — but `.rad-button`'s
+       flex `gap: 8px` still reserved space for it as a layout item, pushing
+       the Plus/icon off-center inside the now icon-only button. Zeroing
+       the gap here removes that phantom space without touching the
+       shared Button component. */
+    gap: 0;
   }
   .view-heading .rad-button svg {
     margin: 0;
@@ -1913,7 +1934,7 @@ td select,
   min-width: 0;
 }
 .contact-message header strong {
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
   overflow-wrap: anywhere;
 }
 .contact-message header small {
@@ -1941,6 +1962,10 @@ td select,
   gap: 8px;
 }
 .contact-message-thread li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  column-gap: 8px;
   max-width: 85%;
   padding: 8px 12px;
   border-radius: var(--radius-sm, 8px);
@@ -1952,17 +1977,21 @@ td select,
   background: var(--success);
 }
 .contact-message-thread li b {
-  display: block;
+  grid-column: 1;
+  min-width: 0;
   font-size: 11px;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
   color: var(--muted);
+  overflow-wrap: anywhere;
 }
 .contact-message-thread li span {
-  float: inline-end;
+  grid-column: 2;
   color: var(--muted);
   font-size: 10.5px;
+  white-space: nowrap;
 }
 .contact-message-thread li p {
+  grid-column: 1 / -1;
   margin: 4px 0 0;
   font-size: 13px;
   line-height: 1.8;
@@ -1970,20 +1999,7 @@ td select,
   overflow-wrap: anywhere;
 }
 .contact-message-reply-box {
-  display: flex;
-  gap: 8px;
-  align-items: flex-end;
   margin-top: 10px;
-}
-.contact-message-reply-box textarea {
-  flex: 1;
-  min-width: 0;
-  border: 1px solid var(--line);
-  background: #fffaf2;
-  border-radius: var(--radius-sm, 8px);
-  padding: 8px 10px;
-  font: inherit;
-  resize: vertical;
 }
 .contact-message footer {
   display: flex;
@@ -2060,12 +2076,12 @@ td select,
   gap: 4px 10px;
   margin: 0;
   font-size: 13px;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 .order-messages h4 span {
   color: var(--oxide);
   font-size: 12px;
-  font-weight: 400;
+  font-weight: var(--font-weight-regular);
 }
 @media (max-width: 760px) {
   .contact-message {
@@ -2145,7 +2161,7 @@ td select,
 }
 .damage-claim-decision strong {
   font-size: 13px;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 .damage-claim-decision p {
   margin: 0;
@@ -2163,7 +2179,7 @@ td select,
 }
 .damage-claim-form > label {
   font-size: 13px;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 .order-policies {
   display: grid;
@@ -2179,12 +2195,12 @@ td select,
   gap: 4px 10px;
   margin: 0;
   font-size: 13px;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 .order-policies h4 span {
   color: var(--muted);
   font-size: 12px;
-  font-weight: 400;
+  font-weight: var(--font-weight-regular);
 }
 .order-policies ul {
   display: flex;
@@ -2302,7 +2318,7 @@ td select,
 .shape-choice-editor legend {
   padding: 0 6px;
   font-size: 13px;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 .shape-choice-preview {
   width: 120px;
@@ -2354,7 +2370,7 @@ td select,
 }
 .login-visual .brand-block strong {
   font-size: 14px;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 .login-visual .brand-block small {
   color: var(--muted);
@@ -2362,7 +2378,7 @@ td select,
 }
 .login-visual .visual-tagline {
   margin: 0;
-  font-family: var(--font-hand, var(--font));
+  font-family: var(--font);
   font-size: 15px;
   color: var(--ink);
   line-height: var(--leading-tight);
@@ -2384,7 +2400,7 @@ td select,
 .login-form-card h1 {
   margin: 4px 0 10px;
   font-size: 1.5rem;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
   line-height: var(--leading-tight);
 }
 .login-form-card > p {
@@ -2521,7 +2537,7 @@ td select,
 }
 .stat-tile strong {
   font-size: 34px;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
   font-variant-numeric: tabular-nums;
   line-height: 1;
 }
@@ -2579,7 +2595,7 @@ td select,
 .shortcut-tile span {
   flex: 1;
   font-size: 12.5px;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 .shortcut-tile svg:last-child {
   width: 15px;
@@ -2607,7 +2623,7 @@ td select,
 }
 .recent-card strong {
   font-size: 13px;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -2713,7 +2729,7 @@ table.products-table {
   padding: 14px 12px;
   text-align: right;
   font-size: 11.5px;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
   color: var(--muted);
   border-bottom: 1px solid var(--line);
   white-space: nowrap;
@@ -2972,7 +2988,7 @@ table.products-table {
 .editor-main-head h2 {
   margin: 0;
   font-size: 24px;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 .editor-main-head .rad-button svg {
   width: 16px;
@@ -2993,7 +3009,7 @@ table.products-table {
 .editor-section-card h3 {
   margin: 0 0 16px;
   font-size: 14px;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   display: flex;
   align-items: center;
   gap: 8px;
@@ -3036,10 +3052,26 @@ table.products-table {
   display: grid;
   align-content: start;
   gap: 10px;
+  min-width: 0;
   max-height: calc(100vh - 320px);
+  overflow-x: hidden;
   overflow-y: auto;
 }
-.commission-card {
+/* `button.commission-card` (not plain `.commission-card`): the shared
+   Button component renders this as a <button> with its own `.rad-button`
+   class carrying `display: inline-flex`. Both selectors are single
+   classes of equal specificity, so without the extra `button` qualifier
+   here the winner is whichever stylesheet happens to load second in the
+   webpack/Next bundle graph — globals.css (this file) loads first via the
+   root layout, and @rad/ui's button.css loads after it via the component
+   tree, so `.rad-button`'s row layout silently won and every card's text
+   nodes were squeezed into a single-column flex row and wrapped
+   character-by-character by the `overflow-wrap: anywhere` below. Scoping
+   to the element makes this grid layout win on specificity alone,
+   regardless of load order. */
+button.commission-card {
+  min-width: 0;
+  overflow-wrap: anywhere;
   display: grid;
   gap: 6px;
   text-align: start;
@@ -3065,7 +3097,7 @@ table.products-table {
 }
 .commission-card strong {
   font-size: 15px;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 .commission-card-id {
   color: var(--muted);
@@ -3128,7 +3160,12 @@ table.products-table {
   border-radius: var(--radius-md);
   padding: 22px;
 }
-.commission-detail-close {
+/* Scoped to the element for the same reason as `button.commission-card`
+   above: this is a <button> (@rad/ui's Button), and `display: none` here
+   must deterministically beat `.rad-button`'s `display: inline-flex`
+   regardless of CSS load order, or the mobile-only back button can leak
+   into the desktop two-column layout where it is redundant. */
+button.commission-detail-close {
   display: none;
   align-items: center;
   gap: 6px;
@@ -3143,7 +3180,7 @@ table.products-table {
 .commission-detail header h3 {
   margin: 6px 0;
   font-size: 24px;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 .commission-detail header p {
   margin: 0;
@@ -3186,7 +3223,7 @@ table.products-table {
 .commission-tabs button[aria-selected="true"] {
   color: var(--mineral);
   border-bottom-color: var(--mineral);
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 .commission-facts {
   display: grid;
@@ -3232,7 +3269,10 @@ table.products-table {
   grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
   gap: 10px;
 }
-.commission-file {
+/* Element-scoped, same cascade reason as `button.commission-card` above:
+   this is a <button> and must reliably win over `.rad-button`'s
+   `display: inline-flex`. */
+button.commission-file {
   display: block;
   width: 100%;
   aspect-ratio: 1;
@@ -3302,7 +3342,8 @@ table.products-table {
   object-fit: contain;
   border-radius: var(--radius-sm);
 }
-.commission-lightbox-nav {
+/* Element-scoped, same cascade reason as `button.commission-card` above. */
+button.commission-lightbox-nav {
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
@@ -3336,42 +3377,28 @@ table.products-table {
   gap: 14px;
 }
 .commission-thread {
-  list-style: none;
   margin: 0;
   padding: 0;
-  display: grid;
-  gap: 12px;
+  border-top: 0;
+  min-width: 0;
   max-height: 360px;
   overflow-y: auto;
+  overscroll-behavior: contain;
 }
 .commission-thread li {
-  padding: 12px 14px;
-  background: #fffaf2;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
-.commission-thread b {
-  margin-inline-end: 8px;
+.commission-thread li.from-customer {
+  justify-self: start;
 }
-.commission-thread span {
-  color: var(--muted);
-  font-size: 11px;
-}
-.commission-thread p {
-  margin: 8px 0 0;
-  line-height: 1.7;
+.commission-thread li.from-admin {
+  justify-self: end;
+  margin-inline-start: 0;
 }
 .commission-message {
   display: grid;
   gap: 8px;
-}
-.commission-message textarea {
-  width: 100%;
-  border: 1px solid var(--line);
-  background: #fffaf2;
-  padding: 10px 12px;
-  border-radius: var(--radius-sm);
-  font-size: 16px;
 }
 .commission-decide {
   display: grid;
@@ -3409,7 +3436,7 @@ table.products-table {
 }
 .commission-decision-card strong {
   font-size: 13px;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
   padding-inline-end: 22px;
 }
 .commission-decision-card span {
@@ -3481,7 +3508,7 @@ table.products-table {
 }
 .commission-history-stage.current span:last-child {
   color: var(--ink);
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 .commission-history-stage.current .commission-history-stage-marker {
   border-color: var(--oxide);
@@ -3503,7 +3530,7 @@ table.products-table {
   gap: 6px;
   margin: 0;
   font-size: 13px;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 .commission-history-heading svg {
   width: 15px;
@@ -3545,7 +3572,7 @@ table.products-table {
     grid-template-columns: 1fr;
   }
 }
-@media (max-width: 760px) {
+@media (max-width: 1100px) {
   .commission-layout {
     grid-template-columns: 1fr;
     gap: 14px;
@@ -3563,35 +3590,27 @@ table.products-table {
   .commission-view:not(.has-detail) .commission-empty-detail {
     display: none;
   }
+  .commission-view.has-detail .view-heading,
   .commission-view.has-detail .commission-list,
   .commission-view.has-detail .toolbar,
-  .commission-view.has-detail .commission-filters,
-  .commission-view.has-detail .view-heading {
+  .commission-view.has-detail .commission-filters {
     display: none;
   }
-  .commission-detail-close {
+  button.commission-detail-close {
     display: inline-flex;
   }
   .commission-detail {
-    position: fixed;
-    inset: 0;
-    z-index: 40;
-    border-radius: 0;
-    /* overflow-y:auto alone computes overflow-x to auto in Safari, so a
-       nowrap tab row widens the pane and the labels clip off-screen. */
-    overflow-x: hidden;
-    overflow-y: auto;
+    position: relative;
+    min-width: 0;
+    overflow: visible;
     padding: 16px;
-    padding-top: max(16px, env(safe-area-inset-top));
-    padding-bottom: max(16px, env(safe-area-inset-bottom));
   }
   .commission-tabs {
     position: sticky;
     top: 0;
     z-index: 3;
-    margin-inline: -16px;
-    padding-inline: 16px;
-    width: auto;
+    margin-inline: 0;
+    width: 100%;
   }
 }
 
@@ -3730,4 +3749,154 @@ table.products-table {
 }
 .product-media-actions button:disabled {
   opacity: 0.45;
+}
+
+/* Background polling must not move the content or its scroll anchor. */
+.admin-refresh-status {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.admin-notice-menu {
+  position: relative;
+  margin-inline-start: auto;
+}
+
+.admin-notice-panel {
+  position: absolute;
+  inset-inline-end: 0;
+  top: calc(100% + 8px);
+  z-index: 60;
+  display: grid;
+  gap: 8px;
+  width: min(300px, 78vw);
+  max-height: 60vh;
+  overflow-y: auto;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--paper);
+}
+
+.admin-notice-panel > a {
+  padding: 8px 12px;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 760px) {
+  .admin-notice-menu {
+    order: 3;
+    margin-inline-start: 0;
+  }
+}
+
+/* Numeric badges must not inherit navigation text or icon spacing. */
+.admin-nav .nav-count,
+.topbar-bell .nav-count {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: auto;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  line-height: 1;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+}
+
+.topbar-bell .nav-count {
+  margin: 0;
+}
+
+.tags-workspace {
+  display: grid;
+  gap: 18px;
+  min-width: 0;
+}
+
+.tags-workspace > .paper-panel {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+  padding: 20px;
+}
+
+.tags-workspace label {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.tags-workspace input,
+.tags-workspace select {
+  width: 100%;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--paper);
+}
+
+.tags-workspace p {
+  overflow-wrap: anywhere;
+}
+
+.commission-summary h4,
+.commission-history-heading {
+  font-weight: var(--font-weight-medium);
+  margin-block: 12px 8px;
+}
+
+.commission-facts dd {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.admin-nav-placeholder > div {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  padding: 13px 14px;
+  color: #c5ccc8;
+}
+
+.admin-nav > :is(a, button) > span {
+  min-width: 0;
+  overflow-wrap: normal;
+}
+
+.contact-message-thread li > b {
+  min-width: 0;
+  word-break: normal;
+  overflow-wrap: break-word;
+  white-space: normal;
+}
+
+.commission-tabs button {
+  border-radius: 0;
+}
+
+strong,
+b,
+th {
+  font-weight: var(--font-weight-semibold);
+}
+
+.member-resend {
+  grid-column: 2 / -1;
+  justify-self: start;
+}
+
+.member-row small {
+  overflow-wrap: anywhere;
 }

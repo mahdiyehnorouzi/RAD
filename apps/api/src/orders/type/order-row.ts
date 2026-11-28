@@ -8,9 +8,13 @@ export type OrderRow = {
   city: string;
   phone: string;
   address: string;
+  recipientName?: string | null;
+  recipientPhone?: string | null;
   trackingCode?: string | null;
   estimatedDeliveryAt?: Date | null;
   deliveredAt?: Date | null;
+  shippingMethod?: "express" | "courier" | null;
+  shippingFee?: number | null;
   policyVersions?: Record<string, string> | null;
   policiesAcceptedAt?: Date | null;
   paymentDueAt?: Date | null;

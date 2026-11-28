@@ -37,6 +37,9 @@ export type DomNode = {
   name: string;
   nodeValue: string | null;
   listeners: Listener[];
+  /** Plain, unlaid-out scroll offset — just enough for scroll-restore tests
+   * to read/assert what the app wrote, with no real layout behind it. */
+  scrollTop: number;
   textContent: string;
   innerHTML: string;
   firstChild: DomNode | null;
@@ -84,6 +87,8 @@ export type DomDocument = DomNode & {
   nodeType: 9;
   body: DomNode;
   documentElement: DomNode;
+  /** Mirrors the real DOM: the element `window.scrollTo`/`scrollY` act on. */
+  scrollingElement: DomNode;
   head: DomNode;
   activeElement: DomNode;
   defaultView: DomWindow;
@@ -98,12 +103,14 @@ type DomWindow = {
   HTMLIFrameElement: typeof HTMLIFrameElement;
   scrollY: number;
   scrollTo: (x: number, y: number) => void;
+  requestAnimationFrame: (callback: (time: number) => void) => number;
+  cancelAnimationFrame: (handle: number) => void;
   addEventListener: DomNode["addEventListener"];
   removeEventListener: DomNode["removeEventListener"];
   matchMedia: (query: string) => {
-    matches: boolean;
-    addEventListener: () => void;
-    removeEventListener: () => void;
+    readonly matches: boolean;
+    addEventListener: (type: string, fn: () => void) => void;
+    removeEventListener: (type: string, fn: () => void) => void;
   };
 };
 
@@ -153,6 +160,7 @@ function createNode(
     name: "",
     nodeValue: nodeType === 3 ? name : null,
     listeners: [] as Listener[],
+    scrollTop: 0,
   } as DomNode;
 
   node.setAttribute = (attr, value) => {
@@ -323,6 +331,7 @@ function createDocument(): DomDocument {
   doc.appendChild(doc.documentElement);
   doc.documentElement.appendChild(doc.head);
   doc.documentElement.appendChild(doc.body);
+  doc.scrollingElement = doc.documentElement;
   doc.activeElement = doc.body;
   doc.oninput = null;
   return doc;
@@ -336,7 +345,20 @@ const domWindow: DomWindow = {
   document,
   HTMLIFrameElement,
   scrollY: 0,
-  scrollTo() {},
+  scrollTo(_x: number, y: number) {
+    domWindow.scrollY = y;
+    document.scrollingElement.scrollTop = y;
+  },
+  // A real rAF defers to the next paint; `setTimeout(…, 0)` is the
+  // standard polyfill shape and, importantly, is genuinely async here too
+  // — tests have to await a tick/macrotask to observe its effect, the
+  // same way they already do for real browser rAF timing.
+  requestAnimationFrame(callback) {
+    return setTimeout(() => callback(Date.now()), 0) as unknown as number;
+  },
+  cancelAnimationFrame(handle) {
+    clearTimeout(handle as unknown as NodeJS.Timeout);
+  },
   addEventListener(type, fn, options) {
     windowListeners.push({ type, fn, capture: captureFlag(options) });
   },
@@ -353,15 +375,51 @@ const domWindow: DomWindow = {
     windowListeners.length = 0;
     windowListeners.push(...next);
   },
-  matchMedia() {
-    return {
-      matches: false,
-      addEventListener() {},
-      removeEventListener() {},
-    };
+  matchMedia(query: string) {
+    return getMediaQueryList(query);
   },
 };
 document.defaultView = domWindow;
+
+// A real MediaQueryList notifies its own listeners when the matched
+// state changes (e.g. `(pointer: coarse)` as a device/viewport changes) —
+// tests that need to simulate that (touch vs. mouse, a breakpoint)
+// flip it with `setMediaMatches` below rather than getting a static
+// `{ matches: false }` back no matter what they set.
+type MediaQueryListener = () => void;
+const mediaQueryLists = new Map<
+  string,
+  { matches: boolean; listeners: Set<MediaQueryListener> }
+>();
+function getMediaQueryList(query: string) {
+  let state = mediaQueryLists.get(query);
+  if (!state) {
+    state = { matches: false, listeners: new Set() };
+    mediaQueryLists.set(query, state);
+  }
+  return {
+    get matches() {
+      return state!.matches;
+    },
+    addEventListener(_type: string, fn: MediaQueryListener) {
+      state!.listeners.add(fn);
+    },
+    removeEventListener(_type: string, fn: MediaQueryListener) {
+      state!.listeners.delete(fn);
+    },
+  };
+}
+/** Test-only: sets whether `query` currently matches, and notifies any
+ * listeners already registered via `window.matchMedia(query)`. */
+export function setMediaMatches(query: string, matches: boolean) {
+  const state = mediaQueryLists.get(query) ?? {
+    matches: false,
+    listeners: new Set<MediaQueryListener>(),
+  };
+  state.matches = matches;
+  mediaQueryLists.set(query, state);
+  for (const listener of state.listeners) listener();
+}
 
 const globals = globalThis as unknown as {
   window: DomWindow;
@@ -400,7 +458,11 @@ function stopped(event: DomEvent) {
   );
 }
 
-export function dispatch(target: DomNode, type: string) {
+export function dispatch(
+  target: DomNode,
+  type: string,
+  extra: Record<string, unknown> = {},
+) {
   const event: DomEvent & { propagationStopped?: boolean } = {
     type,
     target,
@@ -418,6 +480,7 @@ export function dispatch(target: DomNode, type: string) {
     stopPropagation() {
       this.propagationStopped = true;
     },
+    ...extra,
   };
   const path: DomNode[] = [];
   let current: DomNode | null = target;
@@ -458,4 +521,13 @@ export function setControlValue(node: DomNode, value: string) {
   node.value = value;
   dispatch(node, "input");
   dispatch(node, "change");
+}
+
+/** Dispatches a "keydown" with the given key-event fields — `key`,
+ * `shiftKey`, `keyCode`, `isComposing`, etc. — merged onto the event
+ * object React reads them from (this fake DOM has no separate
+ * native/synthetic event layer: it's the same object throughout,
+ * including at `event.nativeEvent`). */
+export function pressKey(node: DomNode, init: Record<string, unknown>) {
+  return dispatch(node, "keydown", init);
 }

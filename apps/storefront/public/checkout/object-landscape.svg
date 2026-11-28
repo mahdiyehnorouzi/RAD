@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 280" fill="none" aria-hidden="true">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#faf7ef" stop-opacity="0"/>
+      <stop offset=".35" stop-color="#f4ead8" stop-opacity=".55"/>
+      <stop offset="1" stop-color="#ead9bc"/>
+    </linearGradient>
+    <linearGradient id="farHill" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#d5c7a6"/>
+      <stop offset="1" stop-color="#cbb892"/>
+    </linearGradient>
+    <linearGradient id="midHill" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#c5c9a8"/>
+      <stop offset="1" stop-color="#9aa57a"/>
+    </linearGradient>
+    <linearGradient id="nearHill" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#8f9a72"/>
+      <stop offset="1" stop-color="#6f7a58"/>
+    </linearGradient>
+    <linearGradient id="sand" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#e8d5b4"/>
+      <stop offset="1" stop-color="#d4b98d"/>
+    </linearGradient>
+    <filter id="grain" x="-10%" y="-20%" width="120%" height="150%">
+      <feTurbulence type="fractalNoise" baseFrequency=".65" numOctaves="3" seed="4" result="n"/>
+      <feColorMatrix in="n" type="matrix" values="0 0 0 0 .42  0 0 0 0 .38  0 0 0 0 .26  0 0 0 .18 0"/>
+    </filter>
+  </defs>
+  <rect width="1440" height="280" fill="url(#sky)"/>
+  <path d="M-20 118C90 96 180 132 290 118C420 100 510 72 650 88C790 104 860 138 1000 122C1130 108 1220 78 1460 98V280H-20V118Z" fill="url(#farHill)" opacity=".7"/>
+  <path d="M-20 148C140 128 250 168 400 150C560 130 660 108 820 124C990 142 1080 170 1240 154C1340 144 1400 136 1460 142V280H-20V148Z" fill="url(#midHill)"/>
+  <path d="M-20 186C160 168 300 204 480 186C670 166 790 154 980 168C1150 180 1260 200 1460 186V280H-20V186Z" fill="url(#nearHill)"/>
+  <path d="M-20 214C200 198 420 226 700 210C980 194 1180 220 1460 206V280H-20V214Z" fill="url(#sand)"/>
+  <g filter="url(#grain)" opacity=".45">
+    <path d="M-20 148C140 128 250 168 400 150C560 130 660 108 820 124C990 142 1080 170 1240 154C1340 144 1400 136 1460 142V280H-20V148Z" fill="#fff"/>
+  </g>
+  <g transform="translate(118 168)">
+    <ellipse cx="28" cy="62" rx="22" ry="8" fill="#cbb892" opacity=".55"/>
+    <path d="M10 52c2-22 10-38 18-48 8 10 16 26 18 48-6 6-24 8-36 0Z" fill="#d9c4a4"/>
+    <path d="M14 50c3 8 10 12 14 12s11-4 14-12c-5 4-10 6-14 6s-9-2-14-6Z" fill="#b8946c"/>
+    <path d="M28 4c1 10-6 18-14 22 10-2 18 2 22 10 0-12 8-20 16-24-10 2-18-4-24-8Z" fill="#6d7b56"/>
+    <path d="M22 10c-8-2-14-10-14-16 8 6 14 10 22 10-4 3-6 5-8 6Z" fill="#7e8c64"/>
+  </g>
+  <g transform="translate(1248 154)">
+    <ellipse cx="34" cy="72" rx="26" ry="9" fill="#cbb892" opacity=".5"/>
+    <path d="M16 58c4-26 12-44 18-54 10 12 20 30 22 54-8 8-28 10-40 0Z" fill="#e4d3b6"/>
+    <path d="M20 56c4 10 12 14 16 14s12-4 16-14c-6 5-12 7-16 7s-10-2-16-7Z" fill="#c4a078"/>
+    <path d="M34 6c8 14 6 28 2 40 8-8 18-10 28-6-8-12-6-26 2-36-12 4-24 0-32 2Z" fill="#748056"/>
+    <path d="M40 18c12 0 20-8 22-18-8 8-16 14-28 12 2 2 4 4 6 6Z" fill="#87946a"/>
+  </g>
+  <g transform="translate(980 176)" stroke="#5f6b4c" stroke-width="1.15" stroke-linecap="round" fill="none">
+    <path d="M18 48c2-18 4-34 0-46"/>
+    <path d="M18 18c10 2 16-4 18-12" fill="#6e7c58" stroke="none"/>
+    <path d="M16 28c-12-2-18-10-20-18" fill="#7c8a64" stroke="none"/>
+  </g>
+</svg>

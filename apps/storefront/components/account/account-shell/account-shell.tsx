@@ -5,6 +5,7 @@ import { usePublicPathname } from "@/hooks/use-public-pathname";
 import { useCommerce } from "@/components/commerce";
 import { AccountLogin } from "../account-page/account-login";
 import { ACCOUNT_HUB } from "../const";
+import { useProfileTabs } from "../profile-tabs";
 import { AccountNav } from "./account-nav";
 import {
   CardListSkeleton,
@@ -22,7 +23,9 @@ export function AccountShell({
   requireAuth?: boolean;
 }) {
   const pathname = usePublicPathname();
+  const tabs = useProfileTabs();
   const { user, ready } = useCommerce();
+  const hub = tabs ? tabs.section === "collection" : pathname === ACCOUNT_HUB;
   if (!ready) {
     return (
       <section className="section">
@@ -44,10 +47,7 @@ export function AccountShell({
     return children;
   }
   return (
-    <div
-      className="account-shell"
-      data-hub={pathname === ACCOUNT_HUB ? "" : undefined}
-    >
+    <div className="account-shell" data-hub={hub ? "" : undefined}>
       <AccountNav />
       <div className="account-shell-main">{children}</div>
     </div>

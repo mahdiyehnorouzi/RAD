@@ -2,8 +2,7 @@
 import "./checkout-payment.css";
 import "../flow/purchase-design.css";
 
-import { useEffect, useRef, useState } from "react";
-import Link from "next/link";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { ORDER_PAYMENT_WINDOW_MINUTES, type Product } from "@rad/types";
 import type { PaymentReceiptInput } from "@/types/api";
@@ -18,14 +17,13 @@ import { useCountdown } from "@/hooks/use-countdown";
 import { readableErrorMessage } from "@/lib/api";
 import { formatCountdown } from "@/lib/catalog/product-status";
 import { formatTotal } from "@/lib/money";
-import { checkoutCopy } from "../const";
+import { checkoutCopy, fillCopy } from "../const";
 import { CheckoutMeter, CheckoutSteps, CheckoutSummary } from "../flow";
 import { payLaterOffer } from "./deferred-payment";
 import { useCheckoutOrder } from "./hooks";
 import { PaymentCard } from "./payment-card";
 import { PaymentReceipt } from "./payment-receipt";
 import { PaymentResult } from "./payment-result";
-
 const RECEIPT_FORM_ID = "checkout-receipt";
 
 export function CheckoutPayment({ id }: { id: string }) {
@@ -33,20 +31,41 @@ export function CheckoutPayment({ id }: { id: string }) {
   const { confirmDemoPayment, verifyPayment, retryPayment, cancelOrder } =
     useCommerce();
   const { getProduct } = useCatalog();
-  const { locale, number, href } = useLocale();
+  const { locale, number } = useLocale();
   const c = checkoutCopy[locale];
   const remaining = useCountdown(order?.payment?.dueAt);
+
   const [busy, setBusy] = useState<"receipt" | "cancel" | "retry" | null>(null);
   const [error, setError] = useState("");
   const [asking, setAsking] = useState(false);
-  const [receiptStep, setReceiptStep] = useState(false);
+  const [step, setStep] = useState<"delivery" | "payment" | "receipt">(
+    "payment",
+  );
+  const receiptStep = step === "receipt";
   const [verifying, setVerifying] = useState(false);
   const [verifyFailed, setVerifyFailed] = useState(false);
-  useEffect(() => {
-    setReceiptStep(
-      new URLSearchParams(window.location.search).get("step") === "receipt",
-    );
-  }, []);
+  useLayoutEffect(() => {
+    const syncStep = () => {
+      const step = new URLSearchParams(window.location.search).get("step");
+      setStep(step === "delivery" || step === "receipt" ? step : "payment");
+    };
+    const url = new URL(window.location.href);
+    // On order creation, leave the saved delivery step directly behind payment.
+    if (url.searchParams.get("advance") === "payment") {
+      url.searchParams.delete("advance");
+      window.history.replaceState(null, "", url);
+      url.searchParams.delete("step");
+      window.history.pushState({ radCheckoutFromDelivery: true }, "", url);
+    }
+    syncStep();
+    const scrollRestoration = window.history.scrollRestoration;
+    window.history.scrollRestoration = "manual";
+    window.addEventListener("popstate", syncStep);
+    return () => {
+      window.removeEventListener("popstate", syncStep);
+      window.history.scrollRestoration = scrollRestoration;
+    };
+  }, [id]);
 
   // ZarinPal lands the buyer back here with `Authority` + `Status` in the
   // query string. Verify server-to-server exactly once per landing, then
@@ -74,20 +93,35 @@ export function CheckoutPayment({ id }: { id: string }) {
     void verifyOnReturn();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
-  const showReceipt = (value: boolean) => {
-    setReceiptStep(value);
+  const showStep = (next: typeof step) => {
+    if (next === step) return;
     setError("");
+    const state = window.history.state;
+    if (
+      (next === "delivery" && state?.radCheckoutFromDelivery) ||
+      (step === "receipt" && next === "payment" && state?.radCheckoutReceipt)
+    ) {
+      window.history.back();
+      return;
+    }
     const url = new URL(window.location.href);
-    if (value) url.searchParams.set("step", "receipt");
-    else url.searchParams.delete("step");
-    window.history.replaceState(window.history.state, "", url);
-    window.scrollTo({ top: 0, behavior: "instant" });
+    if (next === "payment") url.searchParams.delete("step");
+    else url.searchParams.set("step", next);
+    if (next === "receipt") {
+      window.history.pushState({ radCheckoutReceipt: true }, "", url);
+    } else if (step === "delivery") {
+      window.history.pushState({ radCheckoutFromDelivery: true }, "", url);
+    } else {
+      window.history.replaceState(null, "", url);
+    }
+    setStep(next);
   };
   const errorRef = useRef<HTMLParagraphElement>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
-  useEffect(() => {
-    headingRef.current?.focus();
-  }, [receiptStep]);
+  useLayoutEffect(() => {
+    headingRef.current?.focus({ preventScroll: true });
+    window.scrollTo({ top: 0, behavior: "instant" });
+  }, [step, order?.status, verifying]);
   const ArrowIcon = locale === "fa" ? ArrowLeft : ArrowRight;
 
   useEffect(() => {
@@ -97,7 +131,7 @@ export function CheckoutPayment({ id }: { id: string }) {
   if (!ready && !order) {
     return (
       <section className="checkout-flow section" aria-busy="true">
-        <CheckoutSteps current={2} />
+        <CheckoutSteps current="payment" />
         <CardListSkeleton count={2} />
       </section>
     );
@@ -120,7 +154,7 @@ export function CheckoutPayment({ id }: { id: string }) {
   if (verifying) {
     return (
       <section className="checkout-flow section">
-        <CheckoutSteps current={3} />
+        <CheckoutSteps current="result" />
         <div
           className="payment-result is-pending"
           role="status"
@@ -137,7 +171,7 @@ export function CheckoutPayment({ id }: { id: string }) {
   if (verifyFailed) {
     return (
       <section className="checkout-flow section">
-        <CheckoutSteps current={3} />
+        <CheckoutSteps current="result" />
         <div className="payment-result is-pending" role="alert">
           <h1>{c.verifyErrorTitle}</h1>
           <p>{c.verifyErrorBody}</p>
@@ -162,16 +196,18 @@ export function CheckoutPayment({ id }: { id: string }) {
     .map((slug) => getProduct(slug))
     .filter((item): item is Product => Boolean(item));
   const tomanDue = order.payment?.amount ?? order.total;
-  const tomanLabel =
-    locale === "fa"
-      ? formatTotal(tomanDue, "fa")
-      : `${new Intl.NumberFormat("en-US").format(tomanDue)} toman`;
+  const shippingMethod = order.shipping?.method ?? "";
+  const shippingFee = order.shipping?.fee ?? 0;
+  const itemsAmount = Math.max(0, order.total - shippingFee);
+  const tomanLabel = formatTotal(tomanDue, locale);
+  const itemsTotal = formatTotal(itemsAmount, locale);
+  const shippingFeeLabel = formatTotal(shippingFee, locale);
   const summaryTotal = tomanLabel;
 
   if (order.status !== "pending_payment") {
     return (
       <section className="checkout-flow section">
-        <CheckoutSteps current={3} />
+        <CheckoutSteps current="result" />
         <div className="checkout-flow-body is-result">
           <div className="checkout-flow-main">
             <PaymentResult order={order} amount={tomanLabel} />
@@ -179,8 +215,11 @@ export function CheckoutPayment({ id }: { id: string }) {
           <aside className="checkout-flow-aside">
             <CheckoutSummary
               items={items}
+              itemsTotal={itemsTotal}
               total={summaryTotal}
               amountDigits={String(tomanDue)}
+              shippingMethod={shippingMethod}
+              shippingFee={shippingFeeLabel}
             />
           </aside>
         </div>
@@ -249,10 +288,74 @@ export function CheckoutPayment({ id }: { id: string }) {
     receiptStep,
   });
 
+  const deliveryRecap = (
+    <section className="delivery-recap" aria-labelledby="delivery-recap-title">
+      <div className="delivery-recap-head">
+        <h2 id="delivery-recap-title">{c.deliveryRecapTitle}</h2>
+      </div>
+      <address>
+        <span>{order.delivery.name}</span>
+        <span dir="ltr">{order.delivery.phone}</span>
+        <span>
+          {[order.delivery.city, order.delivery.address]
+            .map((part) => part?.trim())
+            .filter(Boolean)
+            .join("، ")}
+        </span>
+        <span>
+          {shippingMethod === "express"
+            ? fillCopy(c.shippingExpressDetail, {
+                fee: shippingFeeLabel,
+              })
+            : shippingMethod === "courier"
+              ? c.shippingCourierSummary
+              : c.shippingUnset}
+        </span>
+      </address>
+    </section>
+  );
+
+  if (step === "delivery" && !expired) {
+    return (
+      <section className="checkout-flow section">
+        <CheckoutSteps current="delivery" />
+        <header className="checkout-flow-head">
+          <h1 ref={headingRef} tabIndex={-1}>
+            {c.detailsTitle}
+          </h1>
+        </header>
+        <div className="checkout-flow-body">
+          <div className="checkout-flow-main">{deliveryRecap}</div>
+          <div className="checkout-flow-action">
+            <button
+              type="button"
+              className="checkout-submit"
+              onClick={() => showStep("payment")}
+            >
+              {c.submit}
+              <ArrowIcon aria-hidden="true" />
+            </button>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="checkout-flow section">
-      <CheckoutSteps current={2} />
+      <CheckoutSteps current="payment" />
       <header className="checkout-flow-head">
+        {!expired ? (
+          <button
+            type="button"
+            className="checkout-back"
+            onClick={() => showStep(receiptStep ? "payment" : "delivery")}
+            disabled={busy !== null}
+          >
+            <ArrowIcon aria-hidden="true" />
+            {c.back}
+          </button>
+        ) : null}
         <h1 ref={headingRef} tabIndex={-1}>
           {receiptStep
             ? c.receiptTitle
@@ -279,29 +382,7 @@ export function CheckoutPayment({ id }: { id: string }) {
         <div
           className={`checkout-flow-main checkout-pay${receiptStep ? " checkout-receipt-step" : ""}`}
         >
-          {!receiptStep && gatewayOrder ? (
-            <section
-              className="delivery-recap"
-              aria-labelledby="delivery-recap-title"
-            >
-              <div className="delivery-recap-head">
-                <h2 id="delivery-recap-title">{c.deliveryRecapTitle}</h2>
-                <Link href={href("/checkout")} className="delivery-recap-edit">
-                  {c.deliveryRecapEdit}
-                </Link>
-              </div>
-              <address>
-                <span>{order.delivery.name}</span>
-                <span dir="ltr">{order.delivery.phone}</span>
-                <span>
-                  {[order.delivery.city, order.delivery.address]
-                    .map((part) => part?.trim())
-                    .filter(Boolean)
-                    .join("، ")}
-                </span>
-              </address>
-            </section>
-          ) : null}
+          {!receiptStep && gatewayOrder ? deliveryRecap : null}
           {!receiptStep &&
             (redirectUrl ? (
               <div className="payment-gateway">
@@ -381,6 +462,26 @@ export function CheckoutPayment({ id }: { id: string }) {
               </p>
             ))}
 
+          {redirectUrl || expired || gatewayOrder ? null : (
+            <div hidden={!receiptStep}>
+              <PaymentReceipt
+                id={RECEIPT_FORM_ID}
+                busy={busy !== null}
+                onSubmit={(receipt) => void submitReceipt(receipt)}
+              />
+            </div>
+          )}
+        </div>
+
+        <aside className="checkout-flow-aside">
+          <CheckoutSummary
+            items={items}
+            itemsTotal={itemsTotal}
+            total={summaryTotal}
+            amountDigits={String(tomanDue)}
+            shippingMethod={shippingMethod}
+            shippingFee={shippingFeeLabel}
+          />
           {remaining !== null ? (
             <CheckoutMeter
               title={
@@ -396,24 +497,6 @@ export function CheckoutPayment({ id }: { id: string }) {
               fraction={remaining / (ORDER_PAYMENT_WINDOW_MINUTES * 60_000)}
             />
           ) : null}
-
-          {redirectUrl || expired || gatewayOrder ? null : (
-            <div hidden={!receiptStep}>
-              <PaymentReceipt
-                id={RECEIPT_FORM_ID}
-                busy={busy !== null}
-                onSubmit={(receipt) => void submitReceipt(receipt)}
-              />
-            </div>
-          )}
-        </div>
-
-        <aside className="checkout-flow-aside">
-          <CheckoutSummary
-            items={items}
-            total={summaryTotal}
-            amountDigits={String(tomanDue)}
-          />
         </aside>
 
         <div className="checkout-flow-action">
@@ -450,7 +533,7 @@ export function CheckoutPayment({ id }: { id: string }) {
               <button
                 type="button"
                 className="checkout-submit"
-                onClick={() => showReceipt(true)}
+                onClick={() => showStep("receipt")}
               >
                 <span>
                   {locale === "fa"
@@ -466,18 +549,6 @@ export function CheckoutPayment({ id }: { id: string }) {
               ) : null}
             </div>
           )}
-          {receiptStep && (
-            <button
-              className="transfer-back"
-              type="button"
-              onClick={() => showReceipt(false)}
-            >
-              {locale === "fa"
-                ? "بازگشت به اطلاعات پرداخت"
-                : "Back to payment details"}
-            </button>
-          )}
-
           {paymentConflict || paymentAmbiguous ? null : (
             <div className="payment-cancel">
               {asking ? (

@@ -19,7 +19,7 @@ import {
   Tag,
   X,
 } from "lucide-react";
-import { Button } from "@rad/ui";
+import { AdminMessageComposer, AdminSearchField, Button } from "@rad/ui";
 import {
   commissionStageLabels,
   commissionStageOrder,
@@ -28,6 +28,9 @@ import {
   type AdminCommission,
   type AdminCommissionStage,
 } from "../lib/admin-data";
+import { useOptionalAdminChrome } from "./admin-shell";
+import { useDetailScrollRestore } from "../hooks/use-detail-scroll-restore";
+import { commissionNoticeKey } from "../lib/staff-notice-keys";
 import { briefExcerpt } from "../lib/product-cover";
 import {
   commissionDetailTabs,
@@ -142,6 +145,7 @@ export function AdminCommissions({
     id: string,
     body: { fa: string; en: string },
     internal?: boolean,
+    operationId?: string,
   ) => Promise<unknown>;
   onBeginReview: (id: string) => Promise<unknown>;
 }) {
@@ -160,12 +164,16 @@ export function AdminCommissions({
     "all",
   );
   const inputRef = useRef<HTMLInputElement>(null);
-  const isMobile = useIsMobileViewport();
+  const isMobile = useIsMobileViewport(1100);
 
   useEffect(() => {
     const onPopState = () => setRequestedId(readHashCommissionId());
     window.addEventListener("popstate", onPopState);
-    return () => window.removeEventListener("popstate", onPopState);
+    window.addEventListener("hashchange", onPopState);
+    return () => {
+      window.removeEventListener("popstate", onPopState);
+      window.removeEventListener("hashchange", onPopState);
+    };
   }, []);
 
   const selectedId = useMemo(
@@ -173,6 +181,23 @@ export function AdminCommissions({
     [commissions, requestedId],
   );
   const selected = commissions.find((item) => item.id === selectedId) ?? null;
+
+  // Same scroll-to-top-on-open / restore-on-close fix as AdminOrders: on
+  // mobile, opening a Custom Order replaces the list in place rather than
+  // navigating, so without this the detail pane opens at whatever
+  // scrollTop the list happened to have. `selectedId` is driven identically
+  // by the in-app close button (clearing `requestedId`) and by browser
+  // Back (the popstate listener below, re-reading the hash) — both just
+  // change this same value, so useDetailScrollRestore treats them the same
+  // way and a test against one covers the other.
+  const detailScrollId = isMobile && selected ? selectedId : null;
+  const { saveScroll } = useDetailScrollRestore(detailScrollId);
+
+  const readNotice = useOptionalAdminChrome()?.readNotice;
+  const noticeKey = selected ? commissionNoticeKey(selected) : null;
+  useEffect(() => {
+    if (noticeKey) readNotice?.(noticeKey);
+  }, [noticeKey, readNotice]);
 
   const filtered = useMemo(
     () =>
@@ -187,6 +212,7 @@ export function AdminCommissions({
   );
 
   const selectCommission = (id: string) => {
+    if (isMobile) saveScroll();
     setRequestedId(id);
     window.history.pushState(
       null,
@@ -239,30 +265,14 @@ export function AdminCommissions({
         </div>
       </div>
       <div className="toolbar">
-        <div className="search-field">
-          <Search />
-          <input
-            ref={inputRef}
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="جست‌وجو در نام سفارش، مشتری یا کد سفارش"
-            aria-label="جست‌وجوی سفارش اختصاصی"
-          />
-          {query && (
-            <Button
-              variant="ghost"
-              shape="icon"
-              size="sm"
-              onClick={() => {
-                setQuery("");
-                inputRef.current?.focus();
-              }}
-              aria-label="پاک کردن جست‌وجو"
-            >
-              <X />
-            </Button>
-          )}
-        </div>
+        <AdminSearchField
+          ref={inputRef}
+          icon={<Search />}
+          value={query}
+          onChange={setQuery}
+          placeholder="جست‌وجو در نام سفارش، مشتری یا کد سفارش"
+          aria-label="جست‌وجوی سفارش اختصاصی"
+        />
       </div>
       <div className="commission-filters">
         <Button
@@ -352,7 +362,9 @@ export function AdminCommissions({
           </div>
           {selected ? (
             <CommissionDetail
+              key={selected.id}
               commission={selected}
+              mobile={isMobile}
               canWrite={canWrite}
               onDecide={onDecide}
               onMessage={onMessage}
@@ -393,23 +405,19 @@ function asCopy(value: string) {
 
 function CommissionDetail({
   commission,
+  mobile,
   canWrite,
   onDecide,
   onMessage,
   onClose,
 }: {
   commission: AdminCommission;
+  mobile: boolean;
   canWrite: boolean;
   onDecide: Parameters<typeof AdminCommissions>[0]["onDecide"];
   onMessage: Parameters<typeof AdminCommissions>[0]["onMessage"];
   onClose: () => void;
 }) {
-  // Below the mobile breakpoint, `.commission-detail` becomes a position:
-  // fixed full-screen overlay (see the `.commission-view.has-detail` rule
-  // in globals.css) — only lock background scroll then; on desktop this
-  // is just an inline panel beside the list and must not block the page.
-  const isMobile = useIsMobileViewport();
-  useBodyScrollLock(isMobile);
   const open =
     commission.stage === "design_submitted" ||
     (commission.stage === "feasibility" && commission.nextActor === "artist");
@@ -430,15 +438,17 @@ function CommissionDetail({
 
   return (
     <div className="commission-detail">
-      <Button
-        variant="ghost"
-        className="commission-detail-close"
-        onClick={onClose}
-        aria-label="بازگشت به فهرست"
-      >
-        <ChevronRight />
-        بازگشت به فهرست
-      </Button>
+      {mobile ? (
+        <Button
+          variant="ghost"
+          className="commission-detail-close"
+          onClick={onClose}
+          aria-label="بازگشت به فهرست"
+        >
+          <ChevronRight />
+          بازگشت به فهرست
+        </Button>
+      ) : null}
       <header>
         <span className="eyebrow">{commission.id}</span>
         <h3>{commission.customerName}</h3>
@@ -571,6 +581,7 @@ function CommissionDetail({
 
       {tab === "messages" && (
         <CommissionMessages
+          key={commission.id}
           commission={commission}
           canWrite={canWrite}
           onMessage={onMessage}
@@ -799,7 +810,7 @@ function CommissionLightbox({
   );
 }
 
-function CommissionMessages({
+export function CommissionMessages({
   commission,
   canWrite,
   onMessage,
@@ -809,28 +820,45 @@ function CommissionMessages({
   onMessage: Parameters<typeof AdminCommissions>[0]["onMessage"];
 }) {
   const [message, setMessage] = useState("");
+  const pending = useRef<string | null>(null);
+  const inFlight = useRef(false);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
 
   const send = () => {
     const body = message.trim();
-    if (!body || !canWrite || sending) return;
+    if (!body || !canWrite || inFlight.current) return;
+    const operationId = pending.current ?? crypto.randomUUID();
+    pending.current = operationId;
+    inFlight.current = true;
     setSending(true);
     setError("");
-    void onMessage(commission.id, asCopy(body))
-      .then(() => setMessage(""))
+    void Promise.resolve()
+      .then(() => onMessage(commission.id, asCopy(body), false, operationId))
+      .then(() => {
+        pending.current = null;
+        setMessage("");
+      })
       .catch((err) =>
         setError((err as Error).message || "ارسال پیام ناموفق بود."),
       )
-      .finally(() => setSending(false));
+      .finally(() => {
+        inFlight.current = false;
+        setSending(false);
+      });
   };
 
   return (
     <div className="commission-messages-pane">
-      <ol className="commission-thread">
+      <ol className="contact-message-thread commission-thread" dir="rtl">
         {commission.messages.length ? (
           commission.messages.map((item) => (
-            <li key={item.id} className={item.author}>
+            <li
+              key={item.id}
+              className={
+                item.author === "artist" ? "from-admin" : "from-customer"
+              }
+            >
               <b>
                 {item.author === "artist" ? "کارگاه" : commission.customerName}
               </b>
@@ -847,38 +875,25 @@ function CommissionMessages({
           </li>
         )}
       </ol>
-      <form
-        className="commission-message"
-        onSubmit={(event) => {
-          event.preventDefault();
-          send();
-        }}
-      >
+      <div className="commission-message">
         <label htmlFor="studio-message">پیام به مشتری</label>
-        <textarea
+        <AdminMessageComposer
           id="studio-message"
           value={message}
-          onChange={(event) => setMessage(event.target.value)}
-          rows={3}
-          disabled={sending}
+          onChange={(next) => {
+            pending.current = null;
+            setMessage(next);
+          }}
+          onSend={send}
+          disabled={!canWrite}
+          sending={sending}
+          sendLabel="ارسال پیام"
+          error={error || undefined}
+          errorAction={
+            error ? { label: "تلاش دوباره", onClick: send } : undefined
+          }
         />
-        {error && (
-          <p className="commission-message-error" role="alert">
-            {error}
-            <Button variant="secondary" size="sm" onClick={send}>
-              تلاش دوباره
-            </Button>
-          </p>
-        )}
-        <Button
-          variant="secondary"
-          type="submit"
-          disabled={!canWrite || !message.trim()}
-          loading={sending}
-        >
-          ارسال پیام
-        </Button>
-      </form>
+      </div>
     </div>
   );
 }

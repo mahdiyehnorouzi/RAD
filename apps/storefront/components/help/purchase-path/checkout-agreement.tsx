@@ -44,15 +44,19 @@ export function CheckoutAgreement({ ref, checked, onChange, invalid }: Props) {
       className="checkout-agreement"
       aria-labelledby="checkout-digest-title"
     >
-      <h2 id="checkout-digest-title">{c.digestTitle}</h2>
-      <PolicyFacts
-        facts={[
-          { slug: "buying", id: "one-of-one" },
-          { slug: "buying", id: "payment-window" },
-          { slug: "returns", id: "window" },
-          { slug: "returns", id: "damage" },
-        ]}
-      />
+      <details className="checkout-digest">
+        <summary>
+          <h2 id="checkout-digest-title">{c.digestTitle}</h2>
+        </summary>
+        <PolicyFacts
+          facts={[
+            { slug: "buying", id: "one-of-one" },
+            { slug: "buying", id: "payment-window" },
+            { slug: "returns", id: "window" },
+            { slug: "returns", id: "damage" },
+          ]}
+        />
+      </details>
       <label
         className={invalid ? "checkout-agree is-invalid" : "checkout-agree"}
       >

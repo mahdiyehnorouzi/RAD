@@ -1,0 +1,73 @@
+.rad-search-field {
+  max-width: 440px;
+  width: 100%;
+  height: 46px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 13px;
+  border: 1px solid var(--line, #ddd0b7);
+  border-radius: var(--radius-sm, 10px);
+  background: var(--paper, #fffaf2);
+  box-sizing: border-box;
+}
+
+.rad-search-field:focus-within {
+  outline: 2px solid var(--oxide, #a8572f);
+  outline-offset: 1px;
+}
+
+.rad-search-field-icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  color: var(--muted, #6b6459);
+}
+
+.rad-search-field input {
+  min-width: 0;
+  flex: 1;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--ink, #1f1a14);
+  /* 16px minimum keeps iOS Safari from zooming the page on focus. */
+  font-size: 16px;
+  font-family: inherit;
+}
+
+.rad-search-field input::placeholder {
+  color: var(--muted, #6b6459);
+}
+
+/* `type="search"` gives WebKit/Blink a native clear ("x") button that
+   would otherwise sit right next to this component's own clear button —
+   two controls doing the same thing. This field owns that affordance. */
+.rad-search-field input::-webkit-search-cancel-button,
+.rad-search-field input::-webkit-search-decoration {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.rad-search-field-clear {
+  border: 0;
+  background: transparent;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  color: var(--muted, #6b6459);
+  cursor: pointer;
+  border-radius: 999px;
+}
+
+.rad-search-field-clear:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.rad-search-field-clear svg {
+  width: 16px;
+  height: 16px;
+}

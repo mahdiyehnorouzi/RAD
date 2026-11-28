@@ -1097,3 +1097,17 @@ html[dir="ltr"] .order-sprig {
     transition: none;
   }
 }
+
+/* Preserve the reading direction of identifiers without moving RTL values. */
+html[dir="rtl"] .track-facts dd[dir="ltr"] {
+  text-align: right;
+}
+
+.track-amount,
+.track-amount-copy {
+  font-family: inherit;
+}
+
+.order-detail {
+  scroll-margin-top: calc(var(--header-height) + 12px);
+}

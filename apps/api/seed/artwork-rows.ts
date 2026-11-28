@@ -1,9 +1,15 @@
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { artists, type ArtworkRecord } from "@rad/artworks";
-import { In, IsNull, Not, type DataSource, type DeepPartial } from "typeorm";
-import { nextRadNumber } from "../src/catalog/rad-number";
-import { Product, ProductImage, Vendor } from "../src/database/entities";
+import { IsNull, Not, type DataSource, type DeepPartial } from "typeorm";
+import {
+  Product,
+  ProductImage,
+  RadIdentity,
+  Vendor,
+} from "../src/database/entities";
+import { assignNewNumberToExistingProduct } from "../src/identities/identity.allocator";
+import { plannedSeedRadNumber } from "./identity-seed";
 
 const seedAssetsDir = path.join(__dirname, "seed-assets");
 
@@ -79,9 +85,9 @@ export async function seedArtists(dataSource: DataSource) {
 }
 
 /**
- * Upserts works by slug. Numbers held by other rows are released first so a
- * registry number always points at exactly one work. `status` is set only on
- * insert: after that the API owns it, and re-seeding must not resell a sold work.
+ * Upserts works by slug. A number already reserved, retired, or held by a
+ * different work is never taken. `status` is set only on insert: after that
+ * the API owns it, and re-seeding must not resell a sold work.
  */
 export async function seedArtworks(
   dataSource: DataSource,
@@ -90,19 +96,40 @@ export async function seedArtworks(
 ) {
   const products = dataSource.getRepository(Product);
   const images = dataSource.getRepository(ProductImage);
-  await products.update(
-    { radNumber: In(records.map((record) => record.radNumber)) },
-    { radNumber: null },
-  );
+  const identities = dataSource.getRepository(RadIdentity);
 
   for (const record of records) {
-    const row = artworkRow(record, sortOrderFor(record));
     const existing = await products.findOne({ where: { slug: record.slug } });
+    const holder = await products.findOne({
+      where: { radNumber: record.radNumber },
+    });
+    const identity = await identities.findOne({
+      where: { radNumber: record.radNumber },
+    });
+    const radNumber = plannedSeedRadNumber({
+      recordNumber: record.radNumber,
+      existingProductId: existing?.id ?? null,
+      existingProductNumber: existing?.radNumber ?? null,
+      holderProductId: holder?.id ?? null,
+      identity: identity
+        ? { status: identity.status, productId: identity.productId }
+        : null,
+    });
+    const row = artworkRow(
+      { ...record, radNumber: radNumber ?? record.radNumber },
+      sortOrderFor(record),
+    );
+    row.radNumber = radNumber;
     if (existing) {
       const { status: _status, ...content } = row;
+      if (existing.radNumber != null) content.radNumber = existing.radNumber;
       await products.save(products.merge(existing, content));
     } else {
       await products.save(products.create(row));
+    }
+    const saved = await products.findOne({ where: { slug: record.slug } });
+    if (saved?.radNumber != null) {
+      await ensureSeedIdentity(dataSource, saved.id, saved.radNumber);
     }
 
     const imageRows = record.images.flatMap((image, sortOrder) => {
@@ -128,16 +155,39 @@ export async function seedArtworks(
   }
 }
 
-/** Works created outside the registry (admin uploads) get the next free numbers. */
+async function ensureSeedIdentity(
+  dataSource: DataSource,
+  productId: string,
+  radNumber: number,
+) {
+  const identities = dataSource.getRepository(RadIdentity);
+  const identity = await identities.findOne({ where: { radNumber } });
+  if (!identity) {
+    await identities.save(
+      identities.create({
+        radNumber,
+        productId,
+        status: "assigned",
+        batchId: null,
+        reservedAt: new Date(),
+        assignedAt: new Date(),
+        printedAt: null,
+      }),
+    );
+    return;
+  }
+  if (identity.productId === productId && identity.status === "assigned")
+    return;
+}
+
+/** Works created outside the registry get the next number from the shared allocator. */
 export async function backfillRadNumbers(dataSource: DataSource) {
   const products = dataSource.getRepository(Product);
   const missing = await products.find({
     where: { radNumber: IsNull(), id: Not(IsNull()) },
     order: { sortOrder: "ASC", createdAt: "ASC" },
   });
-  let next = await nextRadNumber(products);
   for (const product of missing) {
-    await products.update({ id: product.id }, { radNumber: next });
-    next += 1;
+    await assignNewNumberToExistingProduct(dataSource, product.id);
   }
 }

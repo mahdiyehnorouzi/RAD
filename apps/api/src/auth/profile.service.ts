@@ -94,7 +94,7 @@ export class ProfileService {
   }
 }
 
-function isUniqueViolation(error: unknown) {
+export function isUniqueViolation(error: unknown) {
   if (!(error instanceof QueryFailedError)) return false;
   const code =
     (

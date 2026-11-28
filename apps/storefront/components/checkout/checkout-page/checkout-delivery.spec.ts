@@ -5,6 +5,11 @@ import { ApiError } from "@/lib/api";
 import { IRAN_PROVINCES } from "@/lib/geo/iran-locations";
 import { canonicalIranMobile } from "@/lib/phone/iran-mobile";
 import {
+  expressPostFeeToman,
+  isTehranCity,
+  normalizeShippingMethod,
+} from "./checkout-shipping";
+import {
   addressChoiceOf,
   checkoutAddressLoadStatus,
   defaultAddressToApply,
@@ -206,4 +211,26 @@ test("delivery fields for a saved address are a copy the order can edit", () => 
   assert.equal(fields.provinceId, tehran?.id);
   assert.equal(fields.postalCode, "");
   assert.equal(fields.name, "دفتر راد");
+});
+
+test("Express Post is a flat 150,000 tomans and courier stays Tehran-only", () => {
+  assert.equal(expressPostFeeToman(), 150_000);
+  assert.equal(isTehranCity(tehran?.id ?? "", tehranCity?.id ?? ""), true);
+  assert.equal(isTehranCity(alborz?.id ?? "", karaj?.id ?? ""), false);
+  assert.equal(
+    normalizeShippingMethod(tehran?.id ?? "", tehranCity?.id ?? "", "express"),
+    "express",
+  );
+  assert.equal(
+    normalizeShippingMethod(tehran?.id ?? "", tehranCity?.id ?? "", "courier"),
+    "courier",
+  );
+  assert.equal(
+    normalizeShippingMethod(alborz?.id ?? "", karaj?.id ?? "", "courier"),
+    "",
+  );
+  assert.equal(
+    normalizeShippingMethod(alborz?.id ?? "", karaj?.id ?? "", "express"),
+    "express",
+  );
 });

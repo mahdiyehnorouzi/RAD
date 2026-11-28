@@ -167,7 +167,7 @@ export function CartPage() {
   const many = slugs.length > 1;
   return (
     <section className={`${styles.page} section purchase-bag`}>
-      <CheckoutSteps current={0} />
+      <CheckoutSteps current="cart" />
       {canGoBack ? (
         <button
           type="button"
@@ -229,15 +229,19 @@ export function CartPage() {
           {!blocked ? (
             <div className={styles.total}>
               <div>
-                <span>{t("finalTotal")}</span>
-                <small>{c.shipping}</small>
+                <span>{c.shipping}</span>
               </div>
-              <b>{formatTotal(total, locale)}</b>
+              <div className={styles.finalRow}>
+                <span>{t("finalTotal")}</span>
+                <b>{formatTotal(total, locale)}</b>
+              </div>
             </div>
           ) : null}
 
           {blocked ? null : (
-            <CartHold endsAt={holdEndsAt} count={slugs.length} />
+            <div className={styles.holdSlot}>
+              <CartHold endsAt={holdEndsAt} count={slugs.length} />
+            </div>
           )}
 
           <div className={styles.actions}>

@@ -72,8 +72,10 @@ export function CustomerMakingDetail({ id }: { id: string }) {
       </section>,
     );
   }
-  const showProgress = commission.stage !== "complete" && commission.stage !== "shipping";
-  const showRecord = commission.stage === "complete" || commission.stage === "shipping";
+  const showProgress =
+    commission.stage !== "complete" && commission.stage !== "shipping";
+  const showRecord =
+    commission.stage === "complete" || commission.stage === "shipping";
   const showSnapshot =
     Boolean(commission.approvedSnapshot) &&
     commission.stage !== "complete" &&
@@ -82,13 +84,18 @@ export function CustomerMakingDetail({ id }: { id: string }) {
   return wrap(
     <section className="making-page making-detail section">
       <header className="making-heading">
-        <span className="eyebrow">{demo ? t("customOrdersSampleTitle") : t("makingPathTitle")}</span>
+        <span className="eyebrow">
+          {demo ? t("customOrdersSampleTitle") : t("makingPathTitle")}
+        </span>
         <h1>{copy(commission.title, locale)}</h1>
         <p>
-          {commission.artistName} · {locale === "fa" ? "تخمین تکمیل" : "Est. completion"}{" "}
+          {commission.artistName} ·{" "}
+          {locale === "fa" ? "تخمین تکمیل" : "Est. completion"}{" "}
           {formatWhen(commission.estimatedCompletion, locale)}
         </p>
-        {demo ? <p className="making-demo-banner">{t("makingDemoBanner")}</p> : null}
+        {demo ? (
+          <p className="making-demo-banner">{t("makingDemoBanner")}</p>
+        ) : null}
       </header>
       <SituationBanner commission={commission} />
       <BiographyRail commission={commission} />
@@ -101,9 +108,16 @@ export function CustomerMakingDetail({ id }: { id: string }) {
           <QuoteCard commission={commission} />
           {demo ? null : <CustomerDepositAction commission={commission} />}
           {showSnapshot ? <QuoteCard commission={commission} snapshot /> : null}
-          {showProgress ? (
+          {showProgress &&
+          commission.updates.some(
+            (item) => item.image || item.note.fa || item.note.en,
+          ) ? (
             <>
-              <h2>{locale === "fa" ? "عکس‌های پیشرفت" : "Progress photographs"}</h2>
+              <h2>
+                {locale === "fa"
+                  ? "عکس‌های مسیر ساخت"
+                  : "Photographs from the making"}
+              </h2>
               <ProgressPhotographs commission={commission} />
             </>
           ) : null}

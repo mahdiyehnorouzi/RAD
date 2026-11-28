@@ -5,7 +5,10 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1rem;
+  gap: clamp(4px, 1vw, 16px);
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
   height: var(--header-height);
   padding: 0 var(--page);
   border-bottom: 1px solid color-mix(in srgb, var(--moss) 14%, transparent);
@@ -19,7 +22,7 @@
 
 .header.is-compact {
   border-bottom-color: color-mix(in srgb, var(--line) 55%, transparent);
-  background: color-mix(in srgb, var(--paper) 78%, transparent);
+  background: var(--paper);
   -webkit-backdrop-filter: blur(18px);
   backdrop-filter: blur(18px);
 }
@@ -47,7 +50,8 @@
 
 .nav {
   display: flex;
-  gap: clamp(1.25rem, 2.4vw, 2.8rem);
+  gap: clamp(0.65rem, 1.5vw, 2.8rem);
+  min-width: 0;
 }
 
 .nav a {
@@ -93,7 +97,8 @@
 .header-actions {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: clamp(0px, 0.4vw, 6px);
+  flex-shrink: 0;
 }
 
 /* A small FA | EN switch; the active language is the filled half. */
@@ -199,6 +204,10 @@
   color: white;
   font-size: 0.58rem;
   font-style: normal;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  box-sizing: border-box;
+  white-space: nowrap;
 }
 
 @media (--tablet) {
@@ -283,5 +292,21 @@
 @media (--phone), (--tablet) {
   html[data-pdp-bare="true"] .header {
     display: none;
+  }
+}
+
+/* Keep the full set of header actions within narrow mobile viewports. */
+@media (max-width: 360px) {
+  .header {
+    padding-inline: 8px;
+    gap: 4px;
+  }
+
+  .header-actions {
+    gap: 0;
+  }
+
+  .language-switch {
+    margin-inline-end: 0;
   }
 }
