@@ -17,6 +17,7 @@ import {
 } from "../../lib/admin-data";
 import { AdminRowMenu } from "../../components/admin-row-menu";
 import { EmptyState, StatusBadge } from "../../components/admin-list-chrome";
+import { API_BASE } from "../../lib/api";
 import { coverImage } from "../../lib/product-cover";
 import "./products-workspace.css";
 
@@ -235,9 +236,6 @@ export function Products({
                           {product.category} · {product.artist}
                         </span>
                         <h3>{product.name}</h3>
-                        <span className="product-card-meta">
-                          {product.slug}
-                        </span>
                         <div className="product-card-row">
                           <StatusBadge
                             label={productStatusLabel(product)}
@@ -246,10 +244,11 @@ export function Products({
                           <strong>{money(product.price)}</strong>
                         </div>
                         <span className="product-card-meta">
+                          {product.slug}
                           {product.radNumber
-                            ? `RAD-${formatRadCode(product.radNumber)} · `
+                            ? ` · RAD-${formatRadCode(product.radNumber)}`
                             : ""}
-                          ویرایش {date(product.updatedAt)}
+                          {` · ویرایش ${date(product.updatedAt)}`}
                         </span>
                       </div>
                       <ProductThumb product={product} />
@@ -334,7 +333,18 @@ export function ProductThumb({ product }: { product: AdminProduct }) {
   const cover = coverImage(product.images);
   return (
     <div className="product-thumb">
-      {cover?.src ? <img src={cover.src} alt="" /> : <Package />}
+      {cover?.src ? (
+        <img
+          src={
+            cover.src.startsWith("/") && !cover.src.startsWith("//")
+              ? `${API_BASE}${cover.src}`
+              : cover.src
+          }
+          alt=""
+        />
+      ) : (
+        <Package />
+      )}
       <span>{number.format(product.images.length)} عکس</span>
     </div>
   );

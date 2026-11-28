@@ -44,6 +44,20 @@ import {
 
 const number = new Intl.NumberFormat("fa-IR");
 
+/** Browser-ready URL. Relative catalog paths go through the admin API proxy. */
+function mediaSrc(src?: string | null) {
+  const value = src?.trim();
+  if (!value) return undefined;
+  if (
+    value.startsWith("data:") ||
+    value.startsWith("blob:") ||
+    value.startsWith("http")
+  ) {
+    return value;
+  }
+  return value.startsWith("/") ? `${API_BASE}${value}` : value;
+}
+
 export function parsePriceInput(raw: string) {
   const persian = "۰۱۲۳۴۵۶۷۸۹";
   const arabic = "٠١٢٣٤٥٦٧٨٩";
@@ -485,13 +499,35 @@ export function ProductDialog({
   return (
     <form className="product-editor" onSubmit={submit} noValidate>
       <div className="product-editor-top">
+        <Button
+          variant="ghost"
+          className="product-back product-back-mobile"
+          onClick={onClose}
+        >
+          <ChevronRight />
+          بازگشت به لیست
+        </Button>
         <div className="product-editor-identity">
-          <div className="product-editor-cover">
-            {previewCover?.src ? (
-              <img src={previewCover.src} alt="" />
-            ) : (
-              <Package />
-            )}
+          <div className="product-editor-cover-stack">
+            <div className="product-editor-cover">
+              {mediaSrc(previewCover?.src) ? (
+                <img src={mediaSrc(previewCover?.src)} alt="" />
+              ) : (
+                <Package />
+              )}
+            </div>
+            <label htmlFor={coverInputId} className="cover-change">
+              <ImagePlus />
+              تغییر کاور
+            </label>
+            <input
+              id={coverInputId}
+              className="sr-file"
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              onChange={(event) => addImage(event, true)}
+              disabled={!limits || locked}
+            />
           </div>
           <div className="product-editor-copy">
             <span className="editor-kicker">
@@ -500,8 +536,11 @@ export function ProductDialog({
             <h2 id="editor-title" tabIndex={-1} ref={titleRef}>
               {product ? draft.name || "ویرایش اثر" : "اثر تازه"}
             </h2>
-            <p>
-              {draft.artist || "هنرمند"} · {radLabel}
+            <p className="editor-meta">
+              <span>{draft.artist || "هنرمند"}</span>
+              <span className="editor-rad" dir="ltr">
+                {radLabel}
+              </span>
             </p>
             <StatusBadge
               label={productStatusLabel(draft)}
@@ -530,19 +569,6 @@ export function ProductDialog({
           </Button>
         </div>
       </div>
-
-      <label htmlFor={coverInputId} className="cover-change">
-        <ImagePlus />
-        تغییر کاور
-      </label>
-      <input
-        id={coverInputId}
-        className="sr-file"
-        type="file"
-        accept="image/jpeg,image/png,image/webp"
-        onChange={(event) => addImage(event, true)}
-        disabled={!limits || locked}
-      />
 
       <details className="editor-accordion" id="section-basics" open>
         <summary>
@@ -610,50 +636,6 @@ export function ProductDialog({
                 </select>
               )}
             </Field>
-            {product ? (
-              <Field label="QR دائمی">
-                {draft.radNumber ? (
-                  <>
-                    {qrSvg ? (
-                      <span
-                        aria-label={`QR ${formatRadCode(draft.radNumber)}`}
-                        dangerouslySetInnerHTML={{ __html: qrSvg }}
-                        style={{
-                          display: "inline-block",
-                          width: 96,
-                          height: 96,
-                        }}
-                      />
-                    ) : (
-                      <span>{qrNote || "QR آماده نیست."}</span>
-                    )}
-                    {qrSvg ? (
-                      <div className="product-qr-actions">
-                        <Button
-                          type="button"
-                          onClick={() => void downloadProductQr("svg")}
-                        >
-                          <QrCode />
-                          دانلود SVG
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="secondary"
-                          onClick={() => void downloadProductQr("png")}
-                        >
-                          دانلود PNG
-                        </Button>
-                      </div>
-                    ) : null}
-                  </>
-                ) : (
-                  <span>
-                    این اثر شماره رَد ندارد. برای آثار قبلی شماره تازه‌ای ساخته
-                    نمی‌شود.
-                  </span>
-                )}
-              </Field>
-            ) : null}
             <Field label="هنرمند" error={errors.artist}>
               <input
                 value={draft.artist}
@@ -668,7 +650,60 @@ export function ProductDialog({
         </div>
       </details>
 
-      <details className="editor-accordion" id="section-description" open>
+      {product ? (
+        <details className="editor-accordion" id="section-identity">
+          <summary>
+            <QrCode />
+            شناسه و QR
+            <ChevronDown className="accordion-chevron" />
+          </summary>
+          <div className="editor-accordion-body">
+            <Field label="QR دائمی">
+              {draft.radNumber ? (
+                <>
+                  <p className="product-qr-url" dir="ltr">
+                    {`https://www.rad-object.com/r/${formatRadCode(draft.radNumber)}`}
+                  </p>
+                  {qrSvg ? (
+                    <span
+                      className="product-qr-preview"
+                      aria-label={`QR ${formatRadCode(draft.radNumber)}`}
+                      dangerouslySetInnerHTML={{ __html: qrSvg }}
+                    />
+                  ) : (
+                    <span>{qrNote || "QR آماده نیست."}</span>
+                  )}
+                  {qrSvg ? (
+                    <div className="product-qr-actions">
+                      <Button
+                        type="button"
+                        onClick={() => void downloadProductQr("svg")}
+                      >
+                        <QrCode />
+                        دانلود SVG
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        onClick={() => void downloadProductQr("png")}
+                      >
+                        دانلود PNG
+                      </Button>
+                    </div>
+                  ) : null}
+                </>
+              ) : (
+                <span>
+                  این اثر شماره رَد ندارد. برای آثار قبلی شماره تازه‌ای ساخته
+                  نمی‌شود.
+                </span>
+              )}
+            </Field>
+          </div>
+        </details>
+      ) : null}
+
+      <details className="editor-accordion" id="section-description">
         <summary>
           <Pencil />
           توضیحات اثر
@@ -699,7 +734,7 @@ export function ProductDialog({
         </div>
       </details>
 
-      <details className="editor-accordion" id="section-category" open>
+      <details className="editor-accordion" id="section-category">
         <summary>
           <Tag />
           دسته‌بندی
@@ -727,7 +762,7 @@ export function ProductDialog({
         </div>
       </details>
 
-      <details className="editor-accordion" id="section-attributes" open>
+      <details className="editor-accordion" id="section-attributes">
         <summary>
           <SlidersHorizontal />
           ویژگی‌های محصول
@@ -746,7 +781,7 @@ export function ProductDialog({
         </div>
       </details>
 
-      <details className="editor-accordion" id="section-pricing" open>
+      <details className="editor-accordion" id="section-pricing">
         <summary>
           <CircleDollarSign />
           وضعیت و قیمت
@@ -792,7 +827,7 @@ export function ProductDialog({
         </div>
       </details>
 
-      <details className="editor-accordion" id="section-images" open>
+      <details className="editor-accordion" id="section-images">
         <summary>
           <ImageIcon />
           تصویر و ویدیوی اثر
@@ -808,18 +843,6 @@ export function ProductDialog({
               ? `تصویر JPEG، PNG، WebP تا ${number.format(limits.image / 1024 / 1024)} مگابایت؛ ویدیوی MP4، WebM تا ${number.format(limits.video / 1024 / 1024)} مگابایت.`
               : "در حال دریافت محدودیت فایل…"}
           </p>
-          <label htmlFor={mediaInputId} className="media-add">
-            <ImagePlus /> افزودن تصویر یا ویدیو
-          </label>
-          <input
-            id={mediaInputId}
-            className="sr-file"
-            type="file"
-            multiple
-            accept="image/jpeg,image/png,image/webp,video/mp4,video/webm"
-            onChange={(event) => addImage(event)}
-            disabled={!limits || locked}
-          />
           {imageError && (
             <p className="field-error" role="alert">
               {imageError}
@@ -836,24 +859,29 @@ export function ProductDialog({
               const upload = image.src ? uploads[image.src] : undefined;
               const isCover = coverImage(draft.images, uploads) === image;
               const coverReady = canSelectAsCover(image, upload);
+              const shown = mediaSrc(image.src);
               return (
                 <div
-                  className={`artwork-media-card${isCover ? " is-cover" : ""}`}
+                  className={`artwork-media-card${isCover ? " is-cover" : ""}${shown ? "" : " is-missing"}`}
                   key={image.src || image.objectKey || index}
                 >
                   <div className="artwork-media-frame">
                     {isVideoStorage(image.storage) ? (
                       <video
-                        src={image.src ?? undefined}
+                        src={shown}
                         controls
                         playsInline
                         preload="metadata"
                       />
-                    ) : (
+                    ) : shown ? (
                       <img
-                        src={image.src ?? undefined}
+                        src={shown}
                         alt={`تصویر ${number.format(index + 1)}`}
                       />
+                    ) : (
+                      <span className="media-missing">
+                        فایل تصویر موجود نیست
+                      </span>
                     )}
                     {isCover && (
                       <span className="cover-badge">کاور انتخاب‌شده</span>
@@ -880,14 +908,15 @@ export function ProductDialog({
                     </p>
                   )}
                   <div className="artwork-media-actions">
-                    {!isVideoStorage(image.storage) && (
+                    {!isVideoStorage(image.storage) && !isCover && (
                       <Button
                         variant="secondary"
                         size="sm"
-                        disabled={locked || isCover || !coverReady}
+                        disabled={locked || !coverReady}
                         onClick={() => setCover(index)}
+                        aria-label="انتخاب به‌عنوان کاور"
                       >
-                        {isCover ? "کاور فعلی" : "انتخاب به‌عنوان کاور"}
+                        کاور
                       </Button>
                     )}
                     {upload?.error && (
@@ -932,6 +961,18 @@ export function ProductDialog({
               );
             })}
           </div>
+          <label htmlFor={mediaInputId} className="media-add">
+            <ImagePlus /> افزودن تصویر یا ویدیو
+          </label>
+          <input
+            id={mediaInputId}
+            className="sr-file"
+            type="file"
+            multiple
+            accept="image/jpeg,image/png,image/webp,video/mp4,video/webm"
+            onChange={(event) => addImage(event)}
+            disabled={!limits || locked}
+          />
         </div>
       </details>
 
